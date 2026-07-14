@@ -462,3 +462,9 @@ if (d.type === 'game') {
     this._handleGameAction(this._chId, d);
     return;
 }
+// Автоматическая инициализация
+if (typeof window !== 'undefined') {
+    window.P2PPong = P2PPong;
+    // Не запускаем автоматически, ждем вызова из UI
+    console.log('🏹 P2PPong library loaded, waiting for init...');
+}
