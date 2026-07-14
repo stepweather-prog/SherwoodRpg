@@ -161,6 +161,7 @@ class Game {
         this.p2p = p2p;
         this.isRunning = false;
         this.phaser = null;
+        this.sceneRef = null;
         this.currentScene = 'arena';
         this.gameContainer = null;
 
@@ -314,7 +315,7 @@ class Game {
         this.isRunning = false;
 
         if (this.gameContainer) this.gameContainer.style.display = 'none';
-        if (this.phaser) { this.phaser.destroy(true); this.phaser = null; }
+        if (this.phaser) { this.phaser.destroy(true); this.phaser = null; this.sceneRef = null; }
         this.stopSync();
 
         this.p2p._emit('game-stopped', {});
@@ -329,11 +330,32 @@ class Game {
         const canvasContainer = document.getElementById('phaser-canvas');
         if (!canvasContainer) return;
 
-        if (this.phaser) { this.phaser.destroy(true); this.phaser = null; }
+        if (this.phaser) {
+            this.phaser.destroy(true);
+            this.phaser = null;
+            this.sceneRef = null;
+        }
 
         const rect = canvasContainer.getBoundingClientRect();
         const width = rect.width || 400;
         const height = rect.height || 400;
+
+        const self = this;
+
+        const gameScene = {
+            preload: function() {
+                this.load.image('bg', 'assets/icons/background.webp');
+                this.load.image('player', 'assets/icons/01icon.png');
+                this.load.image('enemy', 'assets/icons/08icon.png');
+            },
+            create: function() {
+                self.sceneRef = this;
+                self.createScene();
+            },
+            update: function() {
+                self.updateScene();
+            }
+        };
 
         this.phaser = new Phaser.Game({
             type: Phaser.AUTO,
@@ -341,11 +363,7 @@ class Game {
             width: width,
             height: height,
             backgroundColor: '#1a1a2a',
-            scene: {
-                preload: () => this.preloadAssets(),
-                create: () => this.createScene(),
-                update: () => this.updateScene()
-            },
+            scene: gameScene,
             scale: {
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH
@@ -353,39 +371,36 @@ class Game {
         });
     }
 
-    preloadAssets() {
-        this.phaser.load.image('bg', 'assets/icons/background.webp');
-        this.phaser.load.image('player', 'assets/icons/01icon.png');
-        this.phaser.load.image('enemy', 'assets/icons/08icon.png');
-    }
-
     createScene() {
-        const { width, height } = this.phaser.scale;
+        const scene = this.sceneRef;
+        if (!scene) return;
 
-        const bg = this.phaser.add.image(width / 2, height / 2, 'bg');
+        const { width, height } = scene.scale;
+
+        const bg = scene.add.image(width / 2, height / 2, 'bg');
         bg.setDisplaySize(width, height);
         bg.setAlpha(0.3);
 
-        this.statusText = this.phaser.add.text(width / 2, 30, '⚔️ Арена', {
+        this.statusText = scene.add.text(width / 2, 30, '⚔️ Арена', {
             fontSize: '22px',
             fill: '#a0b0e0',
             fontFamily: 'monospace'
         }).setOrigin(0.5).setDepth(10);
 
-        this.playerSprite = this.phaser.add.image(width * 0.3, height * 0.5, 'player');
+        this.playerSprite = scene.add.image(width * 0.3, height * 0.5, 'player');
         this.playerSprite.setDisplaySize(80, 80);
         this.playerSprite.setDepth(5);
 
-        this.enemySprite = this.phaser.add.image(width * 0.7, height * 0.5, 'enemy');
+        this.enemySprite = scene.add.image(width * 0.7, height * 0.5, 'enemy');
         this.enemySprite.setDisplaySize(80, 80);
         this.enemySprite.setInteractive();
         this.enemySprite.on('pointerdown', () => this.onAttackClick());
         this.enemySprite.setDepth(5);
 
-        this.playerHpBar = this.phaser.add.graphics().setDepth(10);
-        this.enemyHpBar = this.phaser.add.graphics().setDepth(10);
+        this.playerHpBar = scene.add.graphics().setDepth(10);
+        this.enemyHpBar = scene.add.graphics().setDepth(10);
 
-        this.attackBtn = this.phaser.add.text(width / 2, height * 0.82, '⚔️ АТАКА', {
+        this.attackBtn = scene.add.text(width / 2, height * 0.82, '⚔️ АТАКА', {
             fontSize: '20px',
             fill: '#fff',
             backgroundColor: '#6b7db3',
@@ -394,7 +409,7 @@ class Game {
         }).setOrigin(0.5).setInteractive().setDepth(10);
         this.attackBtn.on('pointerdown', () => this.onAttackClick());
 
-        this.messageText = this.phaser.add.text(width / 2, height * 0.12, '', {
+        this.messageText = scene.add.text(width / 2, height * 0.12, '', {
             fontSize: '16px',
             fill: '#ffcc00',
             fontFamily: 'monospace',
@@ -415,9 +430,9 @@ class Game {
 
         const result = this.battle.attack();
 
-        if (this.enemySprite) {
+        if (this.enemySprite && this.sceneRef) {
             this.enemySprite.setTint(0xff0000);
-            this.phaser.tweens.add({
+            this.sceneRef.tweens.add({
                 targets: this.enemySprite,
                 x: this.enemySprite.x + 10,
                 duration: 50,
@@ -426,8 +441,8 @@ class Game {
             });
         }
 
-        if (this.playerSprite) {
-            this.phaser.tweens.add({
+        if (this.playerSprite && this.sceneRef) {
+            this.sceneRef.tweens.add({
                 targets: this.playerSprite,
                 x: this.playerSprite.x + 30,
                 duration: 100,
@@ -470,8 +485,9 @@ class Game {
     }
 
     updateArenaDisplay() {
-        if (!this.phaser) return;
-        const { width, height } = this.phaser.scale;
+        const scene = this.sceneRef;
+        if (!scene) return;
+        const { width, height } = scene.scale;
 
         this.playerHpBar.clear();
         this.playerHpBar.fillStyle(0x333333);
@@ -512,17 +528,15 @@ class Game {
     }
 
     showMessage(text) {
-        if (this.messageText) {
+        if (this.messageText && this.sceneRef) {
             this.messageText.setText(text);
             this.messageText.setAlpha(1);
-            if (this.phaser) {
-                this.phaser.tweens.add({
-                    targets: this.messageText,
-                    alpha: 0,
-                    delay: 2000,
-                    duration: 500
-                });
-            }
+            this.sceneRef.tweens.add({
+                targets: this.messageText,
+                alpha: 0,
+                delay: 2000,
+                duration: 500
+            });
         }
     }
 
