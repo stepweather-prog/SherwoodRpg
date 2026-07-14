@@ -825,7 +825,7 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 }
 
 console.log('🏹 Game module loaded');
-upgrade(type) {
+upgrade(type) 
         if (type === 'damage' && this.gold >= 50) {
             this.gold -= 50;
             this.damage += 5;
