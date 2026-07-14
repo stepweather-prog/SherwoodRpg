@@ -799,7 +799,7 @@ function initGame() {
             console.log('🏹 P2PPong готов, инициализируем игру');
             
     createGameInstance();
-}
+
 
 function createGameInstance() {
     if (gameInstance) return;
