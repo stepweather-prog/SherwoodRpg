@@ -262,70 +262,218 @@ const P2PPong = {
     _stopPolling() { if (this._pollTimer) { clearTimeout(this._pollTimer); this._pollTimer=null; } if (this._pollKey) this._firebaseUnlisten(this._pollKey); },
 
     async _handleIn(blobData) {
-        const chId = this._chId || Object.keys(this._channels)[0]; const ch = this._channels[chId];
-        if (ch?.secret && typeof blobData === 'string') {
-            let ur = await workerUnpackBlob(blobData, ch);
-            if (!ur) { try { const raw=JSON.parse(blobData); if (raw._ri!==undefined) { const t=parseInt(raw._ri)||0; if (t>(ch.recvIndex||0)) { const rr=await workerAdvanceRecvRatchet(ch,t); ch.recvKey=rr.finalKey; ch.recvIndex=rr.index; ch.oldRecvKeys=rr.oldKeys.slice(-3); ur=await workerUnpackBlob(blobData,ch); } } } catch(e) {} }
-            if (ur) {
-                const u = ur.data; if (u.from === this._peerId) return;
-                ch.recvKey = ur.newRecvKey || ch.recvKey; ch.recvIndex = ur.newRecvIndex || ch.recvIndex;
-                if (u.dhPubKey&&ch.dhKeyPair) await this._dhRatchetReceive(ch, u.dhPubKey);
-                ch.dhRecvCount = (ch.dhRecvCount||0)+1;
-                const dk = chId + '_' + (u.n || u._t || ''); if (this._dedupTimers[dk]) return;
-                this._dedupTimers[dk] = setTimeout(()=>delete this._dedupTimers[dk], CONFIG.CHANNEL_TTL);
-                if (u.nick) this._theirNick=u.nick; if (u.avatar) this._theirAvatar=u.avatar;
-                const dt = u.type==='voice'?'[Голосовое сообщение]':(u.d||u.text||'');
-                ch.blobs.push({ d: dt, voiceData: u.type==='voice'?u.d:null, t: u._t||Date.now(), n: u.n||'', from: 'them', status: 'delivered', nick: this._theirNick, avatar: this._theirAvatar });
-                ch.expires=Date.now()+CONFIG.CHANNEL_TTL; this._stats.messagesReceived++;
-                this._emit('message-received', { channelId: chId, text: dt, voiceData: u.type==='voice'?u.d:null, type: u.type||'text', from: 'them', timestamp: u._t||Date.now(), nick: this._theirNick, avatar: this._theirAvatar });
+    const chId = this._chId || Object.keys(this._channels)[0];
+    const ch = this._channels[chId];
+    
+    if (ch?.secret && typeof blobData === 'string') {
+        let ur = await workerUnpackBlob(blobData, ch);
+        if (!ur) {
+            try {
+                const raw = JSON.parse(blobData);
+                if (raw._ri !== undefined) {
+                    const t = parseInt(raw._ri) || 0;
+                    if (t > (ch.recvIndex || 0)) {
+                        const rr = await workerAdvanceRecvRatchet(ch, t);
+                        ch.recvKey = rr.finalKey;
+                        ch.recvIndex = rr.index;
+                        ch.oldRecvKeys = rr.oldKeys.slice(-3);
+                        ur = await workerUnpackBlob(blobData, ch);
+                    }
+                }
+            } catch(e) {}
+        }
+        if (ur) {
+            const u = ur.data;
+            if (u.from === this._peerId) return;
+            ch.recvKey = ur.newRecvKey || ch.recvKey;
+            ch.recvIndex = ur.newRecvIndex || ch.recvIndex;
+            if (u.dhPubKey && ch.dhKeyPair) await this._dhRatchetReceive(ch, u.dhPubKey);
+            ch.dhRecvCount = (ch.dhRecvCount || 0) + 1;
+            const dk = chId + '_' + (u.n || u._t || '');
+            if (this._dedupTimers[dk]) return;
+            this._dedupTimers[dk] = setTimeout(() => delete this._dedupTimers[dk], CONFIG.CHANNEL_TTL);
+            if (u.nick) this._theirNick = u.nick;
+            if (u.avatar) this._theirAvatar = u.avatar;
+            const dt = u.type === 'voice' ? '[Голосовое сообщение]' : (u.d || u.text || '');
+            ch.blobs.push({
+                d: dt,
+                voiceData: u.type === 'voice' ? u.d : null,
+                t: u._t || Date.now(),
+                n: u.n || '',
+                from: 'them',
+                status: 'delivered',
+                nick: this._theirNick,
+                avatar: this._theirAvatar
+            });
+            ch.expires = Date.now() + CONFIG.CHANNEL_TTL;
+            this._stats.messagesReceived++;
+            this._emit('message-received', {
+                channelId: chId,
+                text: dt,
+                voiceData: u.type === 'voice' ? u.d : null,
+                type: u.type || 'text',
+                from: 'them',
+                timestamp: u._t || Date.now(),
+                nick: this._theirNick,
+                avatar: this._theirAvatar
+            });
+            return;
+        }
+    }
+    
+    let d;
+    try {
+        d = JSON.parse(blobData);
+    } catch(e) {
+        return;
+    }
+    
+    if (d.peerId === this._peerId) return;
+    
+    // Обработка WebRTC сигналов
+    if (d.type && d.type.startsWith('webrtc-')) {
+        if (this._chId) {
+            if (!this._webRTC[this._chId]) {
+                if (!this._webRTCSignalBuffer[this._chId]) this._webRTCSignalBuffer[this._chId] = [];
+                this._webRTCSignalBuffer[this._chId].push(d);
+            } else {
+                this._handleWSig(this._chId, d);
+            }
+        }
+        return;
+    }
+    
+    // Обработка beacon-response
+    if (d.type === 'beacon-response' && d.pubKey && d.channelId) {
+        if (this._pending?.type !== 'creator') return;
+        this._remotePubKey = d.identityPubKey || d.pubKey;
+        this._remotePeerId = d.peerId;
+        this._chId = d.channelId;
+        const theirIdentityPub = d.identityPubKey || d.pubKey;
+        const theirSignedPreKeyPub = d.signedPreKeyPub;
+        const theirEphemeralPub = d.ephemeralPubKey;
+        const theirSignedPreKeySig = d.signedPreKeySig;
+        if (theirSignedPreKeyPub && theirSignedPreKeySig && theirIdentityPub) {
+            const isSigValid = await workerVerify(theirSignedPreKeyPub, theirSignedPreKeySig, theirIdentityPub);
+            if (!isSigValid) {
+                this._emit('error', { message: 'Подпись SignedPreKey недействительна' });
                 return;
             }
         }
-        let d; try { d=JSON.parse(blobData); } catch(e) { return; }
-        if (d.peerId===this._peerId) return;
-        if (d.type?.startsWith('webrtc-')) { if (this._chId) { if (!this._webRTC[this._chId]) { if (!this._webRTCSignalBuffer[this._chId]) this._webRTCSignalBuffer[this._chId]=[]; this._webRTCSignalBuffer[this._chId].push(d); } else this._handleWSig(this._chId,d); } return; }
-        if (d.type==='beacon-response'&&d.pubKey&&d.channelId) {
-            if (this._pending?.type!=='creator') return;
-            this._remotePubKey = d.identityPubKey || d.pubKey; this._remotePeerId = d.peerId; this._chId = d.channelId;
-            const theirIdentityPub = d.identityPubKey || d.pubKey;
-            const theirSignedPreKeyPub = d.signedPreKeyPub; const theirEphemeralPub = d.ephemeralPubKey; const theirSignedPreKeySig = d.signedPreKeySig;
-            if (theirSignedPreKeyPub && theirSignedPreKeySig && theirIdentityPub) { const isSigValid = await workerVerify(theirSignedPreKeyPub, theirSignedPreKeySig, theirIdentityPub); if (!isSigValid) { this._emit('error', { message: 'Подпись SignedPreKey недействительна' }); return; } }
-            if (theirSignedPreKeyPub && theirEphemeralPub && this._signedPreKeyPair && this._ephemeralKeyPair) { this._secret = await workerX3DHSend(this._kp.privateKey, this._ephemeralKeyPair.privateKey, theirIdentityPub, theirSignedPreKeyPub); }
-            else { this._secret = await workerDeriveSecret(this._kp.privateKey, this._remotePubKey); }
-            if (d.nick) this._theirNick = d.nick; if (d.avatar) this._theirAvatar = d.avatar;
-            this._pendingChannelData = { peerId: d.peerId, signalServer: d.signalServer, nick: d.nick, avatar: d.avatar, theirIdentityPub, theirSignedPreKeyPub, theirEphemeralPub };
-            this._startCodePoll(); return;
+        if (theirSignedPreKeyPub && theirEphemeralPub && this._signedPreKeyPair && this._ephemeralKeyPair) {
+            this._secret = await workerX3DHSend(
+                this._kp.privateKey,
+                this._ephemeralKeyPair.privateKey,
+                theirIdentityPub,
+                theirSignedPreKeyPub
+            );
+        } else {
+            this._secret = await workerDeriveSecret(this._kp.privateKey, this._remotePubKey);
         }
-        if (d.type==='beacon-ack'&&d.channelId) {
-            if (this._pending?.type!=='joiner') return;
-            this._chId = d.channelId;
-            if (!this._secret && d.identityPubKey && d.signedPreKeyPub && d.ephemeralPubKey && this._kp && this._signedPreKeyPair) {
-                this._secret = await workerX3DHReceive(this._kp.privateKey, this._signedPreKeyPair.privateKey, d.identityPubKey, d.ephemeralPubKey);
-            } else if (!this._secret && d.pubKey) {
-                this._secret = await workerDeriveSecret(this._kp.privateKey, d.pubKey);
-            }
-            if (d.peerId) this._remotePeerId = d.peerId; if (d.nick) this._theirNick = d.nick; if (d.avatar) this._theirAvatar = d.avatar;
-            this._openChannel(d.peerId, this._signalServer?.url, d.nick, d.avatar, d.identityPubKey, d.signedPreKeyPub, d.ephemeralPubKey);
-            return;
+        if (d.nick) this._theirNick = d.nick;
+        if (d.avatar) this._theirAvatar = d.avatar;
+        this._pendingChannelData = {
+            peerId: d.peerId,
+            signalServer: d.signalServer,
+            nick: d.nick,
+            avatar: d.avatar,
+            theirIdentityPub,
+            theirSignedPreKeyPub,
+            theirEphemeralPub
+        };
+        this._startCodePoll();
+        return;
+    }
+    
+    // Обработка beacon-ack
+    if (d.type === 'beacon-ack' && d.channelId) {
+        if (this._pending?.type !== 'joiner') return;
+        this._chId = d.channelId;
+        if (!this._secret && d.identityPubKey && d.signedPreKeyPub && d.ephemeralPubKey && this._kp && this._signedPreKeyPair) {
+            this._secret = await workerX3DHReceive(
+                this._kp.privateKey,
+                this._signedPreKeyPair.privateKey,
+                d.identityPubKey,
+                d.ephemeralPubKey
+            );
+        } else if (!this._secret && d.pubKey) {
+            this._secret = await workerDeriveSecret(this._kp.privateKey, d.pubKey);
         }
-        if (d.type==='verification-code'&&d.code) {
-            if (Object.keys(this._channels).length>0) return;
-            if (this._pending?.type==='creator'&&this._verificationCode&&d.code===this._verificationCode) {
-                this._remotePubKey = d.pubKey; this._remotePeerId = d.peerId;
-                if (this._pendingChannelData) {
-                    const pd = this._pendingChannelData;
-                    if (pd.theirIdentityPub && pd.theirSignedPreKeyPub && pd.theirEphemeralPub && this._ephemeralKeyPair) {
-                        this._secret = await workerX3DHSend(this._kp.privateKey, this._ephemeralKeyPair.privateKey, pd.theirIdentityPub, pd.theirSignedPreKeyPub);
-                    } else { this._secret = await workerDeriveSecret(this._kp.privateKey, d.pubKey); }
-                    this._openChannel(pd.peerId, pd.signalServer, pd.nick, pd.avatar, pd.theirIdentityPub, pd.theirSignedPreKeyPub, pd.theirEphemeralPub);
+        if (d.peerId) this._remotePeerId = d.peerId;
+        if (d.nick) this._theirNick = d.nick;
+        if (d.avatar) this._theirAvatar = d.avatar;
+        this._openChannel(
+            d.peerId,
+            this._signalServer?.url,
+            d.nick,
+            d.avatar,
+            d.identityPubKey,
+            d.signedPreKeyPub,
+            d.ephemeralPubKey
+        );
+        return;
+    }
+    
+    // Обработка verification-code
+    if (d.type === 'verification-code' && d.code) {
+        if (Object.keys(this._channels).length > 0) return;
+        if (this._pending?.type === 'creator' && this._verificationCode && d.code === this._verificationCode) {
+            this._remotePubKey = d.pubKey;
+            this._remotePeerId = d.peerId;
+            if (this._pendingChannelData) {
+                const pd = this._pendingChannelData;
+                if (pd.theirIdentityPub && pd.theirSignedPreKeyPub && pd.theirEphemeralPub && this._ephemeralKeyPair) {
+                    this._secret = await workerX3DHSend(
+                        this._kp.privateKey,
+                        this._ephemeralKeyPair.privateKey,
+                        pd.theirIdentityPub,
+                        pd.theirSignedPreKeyPub
+                    );
                 } else {
                     this._secret = await workerDeriveSecret(this._kp.privateKey, d.pubKey);
-                    this._openChannel(d.peerId, this._signalServer?.url, d.nick, d.avatar);
                 }
-                return;
+                this._openChannel(
+                    pd.peerId,
+                    pd.signalServer,
+                    pd.nick,
+                    pd.avatar,
+                    pd.theirIdentityPub,
+                    pd.theirSignedPreKeyPub,
+                    pd.theirEphemeralPub
+                );
+            } else {
+                this._secret = await workerDeriveSecret(this._kp.privateKey, d.pubKey);
+                this._openChannel(d.peerId, this._signalServer?.url, d.nick, d.avatar);
             }
             return;
         }
+        return;
+    }
+    
+    // Обработка игровых действий
+    if (d.type === 'game') {
+        this._handleGameAction(this._chId, d);
+        return;
+    }
+    
+    // Обработка ratchet-resync
+    if (d.type === 'ratchet-resync' && d.pubKey) {
+        if (ch) {
+            try {
+                const ss = await workerDeriveSecret(this._kp?.privateKey || '', d.pubKey);
+                ch.secret = ss;
+                ch.sendKey = ss;
+                ch.sendIndex = 0;
+                ch.recvKey = ss;
+                ch.recvIndex = 0;
+                ch.oldRecvKeys = [];
+            } catch(e) {
+                log('resync error', e.message);
+            }
+        }
+        return;
+    }
+}
         if (d.type==='ratchet-resync'&&d.pubKey) { if (ch) { try { const ss=await workerDeriveSecret(this._kp?.privateKey||'',d.pubKey); ch.secret=ss; ch.sendKey=ss; ch.sendIndex=0; ch.recvKey=ss; ch.recvIndex=0; ch.oldRecvKeys=[]; } catch(e) { log('resync error',e.message); } } return; }
     },
 
