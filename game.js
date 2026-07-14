@@ -825,3 +825,22 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 }
 
 console.log('🏹 Game module loaded');
+upgrade(type) {
+        if (type === 'damage' && this.gold >= 50) {
+            this.gold -= 50;
+            this.damage += 5;
+        } else if (type === 'crit' && this.gold >= 30) {
+            this.gold -= 30;
+            this.critChance += 2;
+        } else if (type === 'auto' && this.gold >= 100) {
+            this.gold -= 100;
+            this.autoDamage += 3;
+        } else {
+            return;
+        }
+        this.updateUI();
+        this.openUpgrade();
+    }
+};
+
+game.init();
