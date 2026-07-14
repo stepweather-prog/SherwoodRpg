@@ -3,200 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1a2a1a">
-    <title>Age of RobinHood RPG</title>
+    <meta name="theme-color" content="#1a1a2a">
+    <title>RobinHood P2P - Шервудская битва</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="assets/icons/01icon.png">
     <script src="lottie.min.js"></script>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline';font-src 'self' data:; media-src 'self' blob: data:; connect-src 'self' https://robincall.stephanclaps-491.workers.dev https://p2ppong-v2.onrender.com https://robinhood-server.vercel.app https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.gstatic.com blob:; img-src 'self' data: blob:; frame-src 'self'; manifest-src 'self'; form-action 'none'; base-uri 'self';">
     <style>
-        :root {
-            --bg-primary: #1a2a1a; --bg-primary-rgb: 26, 42, 26;
-            --bg-secondary: #0d1a0d; --bg-secondary-rgb: 13, 26, 13;
-            --accent: #c4a040; --accent-rgb: 196, 160, 64;
-            --accent-light: #e0c060; --accent-light-rgb: 224, 192, 96;
-            --text: #d8e0c8; --text-bright: #f0e8d0; --text-dim: #889870;
-            --border: #c4a040;
-            --btn-bg: rgba(196,160,64,0.1); --btn-border: rgba(196,160,64,0.3);
-            --danger: #c44040; --seeding-color: #4caf50;
-            --robin-accent: #e0c060;
+        /* ===== Стили мессенджера (ваши существующие) ===== */
+        :root, [data-theme="slate"] { 
+            --bg-primary: #1a1a2a; --bg-primary-rgb: 26, 26, 42;
+            --bg-secondary: #0d0d1a; --bg-secondary-rgb: 13, 13, 26;
+            --accent: #6b7db3; --accent-rgb: 107, 125, 179;
+            --accent-light: #a0b0e0; --accent-light-rgb: 160, 176, 224;
+            --text: #c8d0f0; --text-bright: #d8e0fa; --text-dim: #8090b0;
+            --border: #6b7db3;
+            --btn-bg: rgba(107,125,179,0.1); --btn-border: rgba(107,125,179,0.3); --btn-hover: rgba(107,125,179,0.25);
+            --input-bg: rgba(18,18,28,0.9); --input-text: #c8d0f0;
+            --msg-bg: rgba(20,20,30,0.85); --msg-accent: #6b7db3;
+            --robin-accent: #a0b0e0;
             --overlay-bg: rgba(0,0,0,0.6);
+            --seeding-color: #4caf50; --danger: #f44336;
+            --call-bg: linear-gradient(180deg, #1a1a2a 0%, #0d0d1a 100%);
+            --game-bg: rgba(13,13,26,0.92);
+            --game-border: rgba(107,125,179,0.3);
         }
+        
+        [data-theme="forest"] { --bg-primary: #1a2a1a; --bg-primary-rgb: 26, 42, 26; --bg-secondary: #0d1a0d; --bg-secondary-rgb: 13, 26, 13; --accent: #6b9b5a; --accent-rgb: 107, 155, 90; --accent-light: #8bc47a; --accent-light-rgb: 139, 196, 122; --text: #c8e0c8; --text-bright: #d8f0d8; --text-dim: #709870; --border: #6b9b5a; --btn-bg: rgba(107,155,90,0.1); --btn-border: rgba(107,155,90,0.3); --btn-hover: rgba(107,155,90,0.25); --input-bg: rgba(18,28,18,0.9); --input-text: #c8e0c8; --msg-bg: rgba(20,30,20,0.85); --msg-accent: #6b9b5a; --robin-accent: #8bc47a; --call-bg: linear-gradient(180deg, #1a2a1a 0%, #0d1a0d 100%); --game-bg: rgba(13,26,13,0.92); --game-border: rgba(107,155,90,0.3); }
+        [data-theme="sunset"] { --bg-primary: #2a1a1a; --bg-primary-rgb: 42, 26, 26; --bg-secondary: #1a0d0d; --bg-secondary-rgb: 26, 13, 13; --accent: #c47a4a; --accent-rgb: 196, 122, 74; --accent-light: #e0a070; --accent-light-rgb: 224, 160, 112; --text: #e0c8c0; --text-bright: #f0d8d0; --text-dim: #987060; --border: #c47a4a; --btn-bg: rgba(196,122,74,0.1); --btn-border: rgba(196,122,74,0.3); --btn-hover: rgba(196,122,74,0.25); --input-bg: rgba(28,18,18,0.9); --input-text: #e0c8c0; --msg-bg: rgba(30,20,20,0.85); --msg-accent: #c47a4a; --robin-accent: #e0a070; --call-bg: linear-gradient(180deg, #2a1a1a 0%, #1a0d0d 100%); --game-bg: rgba(26,13,13,0.92); --game-border: rgba(196,122,74,0.3); }
+        [data-theme="ocean"] { --bg-primary: #1a1a3a; --bg-primary-rgb: 26, 26, 58; --bg-secondary: #0d0d22; --bg-secondary-rgb: 13, 13, 34; --accent: #4a7ac4; --accent-rgb: 74, 122, 196; --accent-light: #70a0e0; --accent-light-rgb: 112, 160, 224; --text: #c0c8e0; --text-bright: #d0d8f0; --text-dim: #607098; --border: #4a7ac4; --btn-bg: rgba(74,122,196,0.1); --btn-border: rgba(74,122,196,0.3); --btn-hover: rgba(74,122,196,0.25); --input-bg: rgba(18,18,28,0.9); --input-text: #c0c8e0; --msg-bg: rgba(20,20,30,0.85); --msg-accent: #4a7ac4; --robin-accent: #70a0e0; --call-bg: linear-gradient(180deg, #1a1a3a 0%, #0d0d22 100%); --game-bg: rgba(13,13,34,0.92); --game-border: rgba(74,122,196,0.3); }
+        [data-theme="rose"] { --bg-primary: #2a1a24; --bg-primary-rgb: 42, 26, 36; --bg-secondary: #1a0d15; --bg-secondary-rgb: 26, 13, 21; --accent: #c46b8a; --accent-rgb: 196, 107, 138; --accent-light: #e08aaa; --accent-light-rgb: 224, 138, 170; --text: #e0c0d0; --text-bright: #f0d0e0; --text-dim: #986880; --border: #c46b8a; --btn-bg: rgba(196,107,138,0.1); --btn-border: rgba(196,107,138,0.3); --btn-hover: rgba(196,107,138,0.25); --input-bg: rgba(28,18,24,0.9); --input-text: #e0c0d0; --msg-bg: rgba(30,20,26,0.85); --msg-accent: #c46b8a; --robin-accent: #e08aaa; --call-bg: linear-gradient(180deg, #2a1a24 0%, #1a0d15 100%); --game-bg: rgba(26,13,21,0.92); --game-border: rgba(196,107,138,0.3); }
+        [data-theme="amber"] { --bg-primary: #2a2414; --bg-primary-rgb: 42, 36, 20; --bg-secondary: #1a1508; --bg-secondary-rgb: 26, 21, 8; --accent: #c4a040; --accent-rgb: 196, 160, 64; --accent-light: #e0c060; --accent-light-rgb: 224, 192, 96; --text: #e0d8c0; --text-bright: #f0e8d0; --text-dim: #988860; --border: #c4a040; --btn-bg: rgba(196,160,64,0.1); --btn-border: rgba(196,160,64,0.3); --btn-hover: rgba(196,160,64,0.25); --input-bg: rgba(28,24,18,0.9); --input-text: #e0d8c0; --msg-bg: rgba(30,26,20,0.85); --msg-accent: #c4a040; --robin-accent: #e0c060; --call-bg: linear-gradient(180deg, #2a2414 0%, #1a1508 100%); --game-bg: rgba(26,21,8,0.92); --game-border: rgba(196,160,64,0.3); }
+        [data-theme="mint"] { --bg-primary: #1a2a24; --bg-primary-rgb: 26, 42, 36; --bg-secondary: #0d1a15; --bg-secondary-rgb: 13, 26, 21; --accent: #4ac4a0; --accent-rgb: 74, 196, 160; --accent-light: #70e0c0; --accent-light-rgb: 112, 224, 192; --text: #c0e0d8; --text-bright: #d0f0e8; --text-dim: #609888; --border: #4ac4a0; --btn-bg: rgba(74,196,160,0.1); --btn-border: rgba(74,196,160,0.3); --btn-hover: rgba(74,196,160,0.25); --input-bg: rgba(18,28,24,0.9); --input-text: #c0e0d8; --msg-bg: rgba(20,30,26,0.85); --msg-accent: #4ac4a0; --robin-accent: #70e0c0; --call-bg: linear-gradient(180deg, #1a2a24 0%, #0d1a15 100%); --game-bg: rgba(13,26,21,0.92); --game-border: rgba(74,196,160,0.3); }
+        [data-theme="lavender"] { --bg-primary: #241a2a; --bg-primary-rgb: 36, 26, 42; --bg-secondary: #150d1a; --bg-secondary-rgb: 21, 13, 26; --accent: #8a6bc4; --accent-rgb: 138, 107, 196; --accent-light: #aa8ae0; --accent-light-rgb: 170, 138, 224; --text: #d0c0e0; --text-bright: #e0d0f0; --text-dim: #806898; --border: #8a6bc4; --btn-bg: rgba(138,107,196,0.1); --btn-border: rgba(138,107,196,0.3); --btn-hover: rgba(138,107,196,0.25); --input-bg: rgba(24,18,28,0.9); --input-text: #d0c0e0; --msg-bg: rgba(26,20,30,0.85); --msg-accent: #8a6bc4; --robin-accent: #aa8ae0; --call-bg: linear-gradient(180deg, #241a2a 0%, #150d1a 100%); --game-bg: rgba(21,13,26,0.92); --game-border: rgba(138,107,196,0.3); }
+        [data-theme="cherry"] { --bg-primary: #2a1418; --bg-primary-rgb: 42, 20, 24; --bg-secondary: #1a080a; --bg-secondary-rgb: 26, 8, 10; --accent: #c44050; --accent-rgb: 196, 64, 80; --accent-light: #e06070; --accent-light-rgb: 224, 96, 112; --text: #e0c0c4; --text-bright: #f0d0d4; --text-dim: #986068; --border: #c44050; --btn-bg: rgba(196,64,80,0.1); --btn-border: rgba(196,64,80,0.3); --btn-hover: rgba(196,64,80,0.25); --input-bg: rgba(28,18,20,0.9); --input-text: #e0c0c4; --msg-bg: rgba(30,20,22,0.85); --msg-accent: #c44050; --robin-accent: #e06070; --call-bg: linear-gradient(180deg, #2a1418 0%, #1a080a 100%); --game-bg: rgba(26,8,10,0.92); --game-border: rgba(196,64,80,0.3); }
+        [data-theme="emerald"] { --bg-primary: #142a20; --bg-primary-rgb: 20, 42, 32; --bg-secondary: #081a12; --bg-secondary-rgb: 8, 26, 18; --accent: #40c480; --accent-rgb: 64, 196, 128; --accent-light: #60e0a0; --accent-light-rgb: 96, 224, 160; --text: #c0e0d0; --text-bright: #d0f0e0; --text-dim: #609870; --border: #40c480; --btn-bg: rgba(64,196,128,0.1); --btn-border: rgba(64,196,128,0.3); --btn-hover: rgba(64,196,128,0.25); --input-bg: rgba(18,28,22,0.9); --input-text: #c0e0d0; --msg-bg: rgba(20,30,24,0.85); --msg-accent: #40c480; --robin-accent: #60e0a0; --call-bg: linear-gradient(180deg, #142a20 0%, #081a12 100%); --game-bg: rgba(8,26,18,0.92); --game-border: rgba(64,196,128,0.3); }
+        [data-theme="coral"] { --bg-primary: #2a1818; --bg-primary-rgb: 42, 24, 24; --bg-secondary: #1a0c0c; --bg-secondary-rgb: 26, 12, 12; --accent: #e07060; --accent-rgb: 224, 112, 96; --accent-light: #f09080; --accent-light-rgb: 240, 144, 128; --text: #e0c8c0; --text-bright: #f0d8d0; --text-dim: #987060; --border: #e07060; --btn-bg: rgba(224,112,96,0.1); --btn-border: rgba(224,112,96,0.3); --btn-hover: rgba(224,112,96,0.25); --input-bg: rgba(28,18,18,0.9); --input-text: #e0c8c0; --msg-bg: rgba(30,20,20,0.85); --msg-accent: #e07060; --robin-accent: #f09080; --call-bg: linear-gradient(180deg, #2a1818 0%, #1a0c0c 100%); --game-bg: rgba(26,12,12,0.92); --game-border: rgba(224,112,96,0.3); }
+        [data-theme="plum"] { --bg-primary: #201428; --bg-primary-rgb: 32, 20, 40; --bg-secondary: #120818; --bg-secondary-rgb: 18, 8, 24; --accent: #9a50c4; --accent-rgb: 154, 80, 196; --accent-light: #ba70e0; --accent-light-rgb: 186, 112, 224; --text: #d0c0e0; --text-bright: #e0d0f0; --text-dim: #806898; --border: #9a50c4; --btn-bg: rgba(154,80,196,0.1); --btn-border: rgba(154,80,196,0.3); --btn-hover: rgba(154,80,196,0.25); --input-bg: rgba(24,18,28,0.9); --input-text: #d0c0e0; --msg-bg: rgba(26,20,30,0.85); --msg-accent: #9a50c4; --robin-accent: #ba70e0; --call-bg: linear-gradient(180deg, #201428 0%, #120818 100%); --game-bg: rgba(18,8,24,0.92); --game-border: rgba(154,80,196,0.3); }
+
+        /* ===== Базовые стили ===== */
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         html { touch-action: manipulation; }
         html,body { height:100%; overflow:hidden; font-family:'Segoe UI','Inter',sans-serif; font-size:clamp(14px,2.5vw,16px); }
-        body { background:linear-gradient(135deg, #1a2a1a, #0d1a0d); color:var(--text); display:flex; flex-direction:column; height:100dvh; position:relative; }
-        
-        .header {
-            background: rgba(26, 42, 26, 0.65);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border-bottom: 1px solid rgba(196, 160, 64, 0.3);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
-            z-index:10; padding:6px 8px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
-        }
+        body { background:linear-gradient(135deg, var(--bg-primary), var(--bg-secondary)); color:var(--text); display:flex; flex-direction:column; height:100dvh; position:relative; }
+        .video-bg { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:0.35; pointer-events:none; }
+
+        /* ===== Хедер ===== */
+        .header { background: rgba(var(--bg-primary-rgb), 0.65); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-bottom: 1px solid rgba(var(--accent-rgb), 0.15); box-shadow: 0 4px 24px rgba(0,0,0,0.35); z-index:10; padding:6px 8px; display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
         .header-row-1{display:flex;align-items:center;gap:6px}
         .header-title-text{font-size:clamp(1em,3vw,1.3em);font-weight:bold;background:linear-gradient(135deg,var(--accent-light),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+        .header-shield{font-size:clamp(1em,2.5vw,1.2em)}
+        .header-row-2{display:flex;justify-content:space-around;align-items:center}
+        .header-row-3{display:flex;justify-content:space-around;font-size:0.6em;color:var(--text-dim);margin-top:2px}
+        .header-row-3 span{width:clamp(32px,7vw,42px);text-align:center;cursor:pointer;font-weight:500;letter-spacing:0.3px}
         
-        .resource-bar {
-            background: rgba(13, 26, 13, 0.7);
-            border-radius: 14px; padding: 8px 14px;
-            display: flex; align-items: center; gap: 12px; width: 100%;
-            border: 1px solid rgba(196, 160, 64, 0.4);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 0 14px rgba(196, 160, 64, 0.15);
-        }
-        .resource-item { display:flex; align-items:center; gap:4px; font-size:0.8em; color:var(--text-bright); }
-        .resource-item img { width:20px; height:20px; object-fit:contain; }
+        .header-btn { width:42px; height:42px; display:flex; align-items:center; justify-content:center; cursor:pointer; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid rgba(var(--accent-rgb),0.45); transition:all 0.2s ease; position:relative; box-shadow:0 0 12px rgba(var(--accent-rgb),0.15),0 2px 8px rgba(0,0,0,0.15); }
+        .header-btn:active { background:rgba(255,255,255,0.14); transform:scale(0.93); box-shadow:0 0 18px rgba(var(--accent-rgb),0.3),0 1px 4px rgba(0,0,0,0.25); }
+        .header-btn img{width:75%;height:75%;object-fit:contain}
+        .header-label{font-size:0.6em;color:var(--text-dim);text-align:center;width:clamp(32px,7vw,42px);cursor:pointer;font-weight:500}
+        .header-avatar{width:clamp(26px,6vw,32px);height:clamp(26px,6vw,32px);border-radius:50%;object-fit:cover;border:none}
         
-        .battle-area {
-            flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-            position:relative; z-index:1; padding:10px; gap:10px;
-        }
+        /* ===== Робин-бар ===== */
+        .robin-bar { background:rgba(var(--bg-secondary-rgb),0.7); border-radius:14px; padding:8px 14px; display:flex; align-items:center; gap:10px; width:100%; border:1px solid rgba(var(--accent-rgb),0.4); box-shadow:0 4px 16px rgba(0,0,0,0.25),0 0 14px rgba(var(--accent-rgb),0.15); cursor:pointer; position:relative; overflow:hidden; }
+        .robin-bar-avatar{width:40px;height:40px;border-radius:50%;border:2px solid var(--robin-accent);object-fit:cover;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.3);position:relative;z-index:1}
+        .robin-bar-text{flex:1;min-width:0;text-shadow:0 1px 2px rgba(0,0,0,0.3);position:relative;z-index:1}
+        .robin-bar-sender{font-weight:900;font-size:0.85em;color:var(--text-bright)}
+        .robin-bar-msg{font-size:0.85em;color:rgba(255,255,255,0.85);white-space:normal;word-break:break-word}
+        .robin-bar-status{flex-shrink:0;display:flex;align-items:center;gap:4px;position:relative;z-index:1}
+        .robin-bar-status img{width:14px;height:14px;object-fit:contain}
         
-        .enemy-container {
-            position:relative; text-align:center; cursor:pointer;
-            transition: transform 0.05s; user-select:none; -webkit-user-select:none;
-        }
-        .enemy-container:active { transform: scale(0.95); }
-        .enemy-image {
-            width: min(200px, 50vw); height: min(200px, 50vw);
-            border-radius: 50%; object-fit: cover;
-            border: 3px solid var(--accent);
-            box-shadow: 0 0 30px rgba(196, 160, 64, 0.3);
-            animation: enemyFloat 2s ease-in-out infinite;
-            pointer-events: none;
-        }
-        @keyframes enemyFloat {
-            0%,100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
+        @keyframes robinLeafFall { 0% { transform:translateY(-20px) rotate(0deg); opacity:0.8; } 100% { transform:translateY(60px) rotate(360deg); opacity:0; } }
         
-        .hp-bar-outer {
-            width: min(250px, 70vw); height: 16px;
-            background: rgba(0,0,0,0.5); border-radius: 8px;
-            border: 1px solid rgba(196, 160, 64, 0.3);
-            overflow: hidden; margin-top: 8px;
-        }
-        .hp-bar-inner {
-            height: 100%; background: linear-gradient(90deg, #c44040, #c4a040);
-            border-radius: 8px; transition: width 0.3s ease;
-        }
+        /* ===== Чат ===== */
+        .chat-area{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;scrollbar-width:none;z-index:1}
+        .chat-area::-webkit-scrollbar{display:none}
+        .message-row { display:flex; align-items:flex-start; gap:8px; background:rgba(var(--bg-secondary-rgb),0.7); padding:8px 10px; border-radius:14px; border-left:2px solid var(--msg-accent); box-shadow:0 2px 8px rgba(0,0,0,0.2),-2px 0 10px rgba(var(--accent-rgb),0.08); animation:msgIn 0.3s ease; }
+        @keyframes msgIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
         
-        .enemy-name { font-size:0.9em; color:var(--accent-light); margin-top:4px; }
-        .enemy-level { font-size:0.7em; color:var(--text-dim); }
+        .input-area { background:rgba(var(--bg-primary-rgb),0.85); padding:8px; display:flex; gap:6px; align-items:center; border-top:1px solid rgba(255,255,255,0.08); z-index:1; flex-shrink:0; }
+        #msg-input { flex:1; background:rgba(var(--bg-secondary-rgb),0.6); border:1px solid rgba(var(--accent-light-rgb),0.25); padding:10px 12px; color:var(--input-text); border-radius:10px; font-size:clamp(14px,2.5vw,16px); outline:none; font-family:monospace; min-width:0; transition:all 0.3s ease; }
+        #msg-input:focus { border-color:var(--accent-light); box-shadow:0 0 18px rgba(var(--accent-rgb),0.3),0 0 36px rgba(var(--accent-rgb),0.1); }
+        #btn-emoji{width:32px;height:32px;font-size:16px;border:none;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
         
-        .damage-number {
-            position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
-            font-size: 1.5em; font-weight: bold; color: #ffcc00;
-            pointer-events: none; animation: dmgFloat 1s ease-out forwards;
-            text-shadow: 0 0 10px rgba(255,200,0,0.5);
-        }
-        @keyframes dmgFloat {
-            0% { opacity:1; transform: translateX(-50%) translateY(0); }
-            100% { opacity:0; transform: translateX(-50%) translateY(-40px); }
-        }
+        .bow-button { width:48px; height:48px; cursor:pointer; flex-shrink:0; transition:transform 0.1s; border-radius:50%; background:rgba(var(--accent-rgb),0.2); border:2px solid rgba(var(--accent-rgb),0.45); box-shadow:0 0 14px rgba(var(--accent-rgb),0.15),0 2px 8px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; padding:8px; }
+        .bow-button:active { transform:scale(0.9); }
+        .bow-button img{width:100%;height:100%;object-fit:contain}
+        .bow-button.shooting{animation:bowShoot 0.4s ease-out}
+        @keyframes bowShoot{0%{transform:scale(1) rotate(0deg)}30%{transform:scale(1.2) rotate(-15deg)}60%{transform:scale(0.9) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
         
-        .bottom-panel {
-            background: rgba(26, 42, 26, 0.85);
-            border-top: 1px solid rgba(196, 160, 64, 0.2);
-            padding:8px; display:flex; gap:6px; align-items:center; z-index:1; flex-shrink:0;
-        }
+        .avatar{width:clamp(38px,8vw,44px);height:clamp(38px,8vw,44px);border-radius:50%;object-fit:cover;background-color:#2a3a25;flex-shrink:0;border:2px solid var(--border)}
+        .msg-body{flex:1;min-width:0}.msg-sender{font-weight:900;color:var(--text-bright);font-size:0.9em}
+        .msg-body div{font-size:0.9em;line-height:1.4;color:var(--text);word-break:break-word;white-space:pre-wrap}.msg-status{font-size:0.6em;color:var(--text-dim);text-align:right;margin-top:4px}
         
-        .skill-btn {
-            width: 48px; height: 48px; border-radius: 50%;
-            border: 2px solid rgba(196, 160, 64, 0.45);
-            background: rgba(196, 160, 64, 0.2);
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease; position: relative;
-            box-shadow: 0 0 14px rgba(196, 160, 64, 0.15);
-        }
-        .skill-btn:active { transform: scale(0.9); }
-        .skill-btn img { width: 60%; height: 60%; object-fit: contain; }
-        .skill-btn .cd-overlay {
-            position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
-            font-size: 0.65em; color: #ffcc00; background: rgba(0,0,0,0.7);
-            padding: 0 4px; border-radius: 4px; display: none;
-        }
-        .skill-btn.on-cd { opacity: 0.5; pointer-events: none; }
+        /* ===== Модальные окна и панели ===== */
+        .bottom-sheet,.avatar-selector { position:fixed; top:0; left:0; width:min(85%,380px); height:100%; background:rgba(var(--bg-secondary-rgb),0.92); border-right:1px solid rgba(var(--accent-rgb),0.2); box-shadow:4px 0 28px rgba(0,0,0,0.35); z-index:200; transform:translateX(-100%); transition:transform 0.3s; overflow-y:auto; }
+        .bottom-sheet.open,.avatar-selector.show{transform:translateX(0)}
+        .bottom-sheet-header{padding:16px;font-weight:bold;color:var(--accent-light);border-bottom:1px solid rgba(var(--accent-rgb),0.2);display:flex;justify-content:space-between}
+        .bottom-sheet-close{background:none;border:none;color:var(--accent-light);font-size:22px;cursor:pointer}
+        .bottom-sheet-list{padding:6px 12px}
+        .contact-item{display:flex;align-items:center;justify-content:space-between;padding:12px 10px;margin:5px 0;border-radius:12px;background:rgba(128,128,128,0.06);border:1px solid rgba(var(--accent-rgb),0.15);cursor:pointer;transition:all 0.15s;color:var(--text)}
+        .contact-item:active{background:rgba(var(--accent-rgb),0.1);transform:scale(0.97)}
+        .contact-info{display:flex;align-items:center;gap:10px;flex:1}
+        .contact-info img{width:28px;height:28px;object-fit:contain}
+        .contact-name{font-weight:600;font-size:0.9em;color:var(--accent-light)}
         
-        .hero-info {
-            display:flex; flex-direction:column; align-items:center; gap:2px;
-        }
-        .hero-name { font-size:0.8em; color:var(--accent-light); font-weight:bold; }
-        .hero-lvl { font-size:0.6em; color:var(--text-dim); }
+        .avatar-selector{padding:16px}.avatar-selector p{color:var(--accent-light);margin-bottom:12px;text-align:center}
+        #avatar-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:none}
+        #avatar-list::-webkit-scrollbar{display:none}
+        .avatar-option{width:clamp(45px,10vw,55px);height:clamp(45px,10vw,55px);border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:all 0.15s;margin:3px}
+        .avatar-option:active{border-color:var(--accent-light);transform:scale(0.9)}
         
-        .gold-gain {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-            font-size: 1em; font-weight: bold; color: #ffcc00;
-            pointer-events: none; animation: goldFloat 1.5s ease-out forwards;
-            text-shadow: 0 0 8px rgba(255,200,0,0.5); z-index:5;
-        }
-        @keyframes goldFloat {
-            0% { opacity:1; transform: translate(-50%,-50%) translateY(0); }
-            100% { opacity:0; transform: translate(-50%,-50%) translateY(-60px); }
-        }
+        .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--overlay-bg);display:none;z-index:190}
+        .overlay.show{display:block}
         
         .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:300;justify-content:center;align-items:center}
         .modal-overlay.active{display:flex}
-        .modal-dialog {
-            background: rgba(26, 42, 26, 0.92);
-            padding: 20px; border-radius: 20px; width: 85%; max-width: 380px; text-align: center;
-            border: 1px solid rgba(196, 160, 64, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-            color: var(--text); max-height: 80vh; overflow-y: auto;
-        }
+        .modal-dialog { background:rgba(var(--bg-primary-rgb),0.92); padding:20px; border-radius:20px; width:85%; max-width:380px; text-align:center; border:1px solid rgba(var(--accent-rgb),0.3); box-shadow:0 8px 32px rgba(0,0,0,0.45),0 0 22px rgba(var(--accent-rgb),0.1); color:var(--text); max-height:90vh; overflow-y:auto; }
         .modal-dialog h3{color:var(--accent-light);margin-bottom:12px}
-        .modal-dialog button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;transition:all 0.15s;background:linear-gradient(135deg,var(--accent),#8a6a20);color:#1a1f0f}
+        .modal-dialog button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;transition:all 0.15s}
         .modal-dialog button:active{transform:scale(0.95)}
-        .modal-dialog button.btn-dark{background:#3a2a1a;color:#eee}
+        .btn-primary{background:linear-gradient(135deg,var(--accent),#b8903a);color:#1a1f0f}
+        .btn-dark{background:#4a3a2a;color:#eee}.btn-cancel{background:#5a3a2a;color:#eee}
+        .code-display{background:rgba(0,0,0,0.3);border:1px solid rgba(var(--accent-rgb),0.3);color:var(--accent-light);border-radius:10px;padding:10px;font-size:0.75em;word-break:break-all;margin:12px 0;font-family:monospace;user-select:all}
         
-        .hidden{display:none!important}
+        .toggle-switch{position:relative;display:inline-block;width:44px;height:24px}
+        .toggle-switch input{opacity:0;width:0;height:0}
+        .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(128,128,128,0.15);border-radius:24px;border:2px solid var(--border)}
+        .toggle-slider:before{content:"";position:absolute;height:16px;width:16px;left:2px;bottom:2px;background:var(--text-dim);border-radius:50%}
+        .toggle-switch input:checked+.toggle-slider{background:var(--seeding-color)}
+        .toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px);background:white}
+        
+        /* ===== Игровые стили ===== */
+        .game-container { position:fixed; top:0; left:0; width:100%; height:100%; z-index:400; background:var(--game-bg); backdrop-filter:blur(8px); display:flex; flex-direction:column; overflow:hidden; animation:gameIn 0.3s ease; }
+        @keyframes gameIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+        
+        .game-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--game-border); flex-shrink:0; background:rgba(var(--bg-primary-rgb),0.5); }
+        .game-title { font-size:clamp(1em,3vw,1.4em); font-weight:bold; background:linear-gradient(135deg,var(--accent-light),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .game-close { background:none; border:none; color:var(--text-dim); font-size:clamp(20px,4vw,28px); cursor:pointer; padding:4px 8px; transition:all 0.2s; }
+        .game-close:hover { color:var(--text-bright); transform:scale(1.1); }
+        .game-stats { display:flex; gap:clamp(8px,2vw,16px); font-size:clamp(0.7em,1.5vw,0.9em); }
+        .game-stats span { background:rgba(var(--accent-rgb),0.1); padding:4px 10px; border-radius:12px; border:1px solid rgba(var(--accent-rgb),0.15); }
+        
+        .game-canvas { flex:1; position:relative; background:var(--bg-secondary); }
+        #phaser-canvas { width:100%; height:100%; }
+        
+        .game-controls { display:flex; gap:4px; padding:6px 8px; border-top:1px solid var(--game-border); flex-shrink:0; flex-wrap:wrap; justify-content:center; background:rgba(var(--bg-primary-rgb),0.3); }
+        .game-btn { padding:6px 12px; border:none; border-radius:8px; cursor:pointer; font-size:clamp(0.6em,1.5vw,0.8em); font-weight:600; transition:all 0.2s; background:rgba(var(--accent-rgb),0.15); color:var(--text); border:1px solid rgba(var(--accent-rgb),0.2); }
+        .game-btn:active { transform:scale(0.95); background:rgba(var(--accent-rgb),0.3); }
+        .game-btn.active { background:rgba(var(--accent-rgb),0.35); border-color:var(--accent-light); }
+        
+        /* ===== Игровые элементы ===== */
+        .arena-container { position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+        .arena-bg { position:absolute; width:100%; height:100%; object-fit:cover; opacity:0.3; }
+        .arena-char { position:absolute; width:clamp(60px,15vw,120px); height:clamp(80px,20vw,160px); background-size:contain; background-repeat:no-repeat; background-position:center; transition:all 0.3s; }
+        .arena-char.player { left:15%; bottom:25%; }
+        .arena-char.enemy { right:15%; bottom:25%; }
+        .arena-char.attack { animation:arenaAttack 0.5s ease; }
+        @keyframes arenaAttack{0%{transform:scale(1)}30%{transform:scale(1.2) translateX(20px)}60%{transform:scale(0.9)}100%{transform:scale(1)}}
+        
+        .arena-hp { position:absolute; width:clamp(80px,20vw,160px); height:6px; background:rgba(255,0,0,0.3); border-radius:3px; overflow:hidden; }
+        .arena-hp.player-hp { left:15%; bottom:calc(25% + clamp(80px,20vw,160px) + 8px); }
+        .arena-hp.enemy-hp { right:15%; bottom:calc(25% + clamp(80px,20vw,160px) + 8px); }
+        .arena-hp-fill { height:100%; background:linear-gradient(90deg,#4caf50,#8bc34a); border-radius:3px; transition:width 0.3s; }
+        
+        .arena-damage { position:absolute; font-size:clamp(24px,5vw,48px); font-weight:bold; color:#ff4444; text-shadow:0 0 20px rgba(255,68,68,0.5); animation:damageFloat 1s ease forwards; pointer-events:none; }
+        @keyframes damageFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.5)}}
+        
+        /* ===== Анимации ===== */
+        .smoke-anim{position:fixed;bottom:50%;left:50%;transform:translate(-50%,50%);width:280px;height:280px;z-index:500;pointer-events:none;animation:smokeRise 3s ease-out forwards}
+        @keyframes smokeRise{0%{opacity:1;transform:translate(-50%,50%) scale(0.5)}100%{opacity:0;transform:translate(-50%,-100%) scale(1.5)}}
+        .quiver-anim{position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;pointer-events:none;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);animation:fadeIn 0.3s ease}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes quiverPulse{0%,100%{transform:scale(1) rotate(0deg)}25%{transform:scale(1.2) rotate(-5deg)}75%{transform:scale(1.2) rotate(5deg)}}
+        
+        .voice-recording-indicator{position:absolute;top:-38px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;z-index:22;pointer-events:none}
+        .voice-timer-text{color:var(--danger);font-family:monospace;font-size:0.75em;background:rgba(0,0,0,0.85);padding:2px 6px;border-radius:4px;white-space:nowrap}
+        .voice-wave-bar{width:3px;background:var(--danger);border-radius:1px;animation:voiceWaveAnim 0.5s ease-in-out infinite}
+        @keyframes voiceWaveAnim{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.4)}}
+        
+        .typing-indicator{font-size:0.65em;color:var(--text-dim);padding:2px 10px;font-style:italic;min-height:16px}
+        .hidden { display:none !important; }
+        
+        /* ===== Аудио-плеер ===== */
+        .audio-player{display:flex;align-items:center;gap:8px;width:100%;max-width:250px;background:var(--msg-bg);border:1px solid var(--btn-border);border-radius:20px;padding:6px 12px}
+        .audio-play-btn{width:36px;height:36px;border-radius:50%;border:none;background:var(--accent);color:#1a1f0f;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+        .audio-wave{flex:1;display:flex;align-items:flex-end;gap:2px;height:24px}
+        .audio-wave-bar{width:3px;background:var(--accent);border-radius:1px;animation:waveAnim 0.8s ease-in-out infinite}
+        .audio-wave-bar:nth-child(1){animation-delay:0s;height:8px}.audio-wave-bar:nth-child(2){animation-delay:0.1s;height:14px}.audio-wave-bar:nth-child(3){animation-delay:0.2s;height:10px}.audio-wave-bar:nth-child(4){animation-delay:0.3s;height:18px}
+        @keyframes waveAnim{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.4)}}
+        .audio-playing .audio-wave-bar{animation-play-state:running}
+        .audio-paused .audio-wave-bar{animation-play-state:paused}
+        .audio-time{font-size:0.65em;color:var(--text-dim);min-width:32px;text-align:right;font-family:monospace}
+        
+        /* ===== Адаптивность ===== */
+        @media (max-width:480px) {
+            .game-stats span { padding:2px 6px; font-size:0.7em; }
+            .game-btn { padding:4px 8px; font-size:0.6em; }
+            .arena-char { width:clamp(40px,12vw,80px); height:clamp(60px,16vw,120px); }
+            .arena-hp { width:clamp(60px,16vw,120px); }
+            .arena-hp.player-hp { bottom:calc(25% + clamp(60px,16vw,120px) + 4px); }
+            .arena-hp.enemy-hp { bottom:calc(25% + clamp(60px,16vw,120px) + 4px); }
+        }
     </style>
 </head>
 <body>
-<div id="app-container" style="display:flex;flex-direction:column;height:100%;">
+    <video class="video-bg" autoplay muted loop playsinline>
+        <source src="" type="video/webm">
+    </video>
 
-<div class="header">
-    <div class="header-row-1"><span class="header-title-text">Age of RobinHood RPG</span><span>🏹</span></div>
-    <div class="resource-bar">
-        <div class="resource-item">🪙 <span id="gold-display">0</span></div>
-        <div class="resource-item">💎 <span id="gem-display">0</span></div>
-        <div class="resource-item">⚔️ Ур. <span id="hero-lvl-display">1</span></div>
-        <div class="resource-item">🗡 Волна <span id="wave-display">1</span></div>
+    <!-- ===== ЭКРАН ЗАГРУЗКИ ===== -->
+    <div id="loading-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg-primary);">
+        <div id="loading-lottie" style="width:min(256px,60vw);height:min(256px,60vh);"></div>
     </div>
-</div>
 
-<div class="battle-area" id="battle-area">
-    <div class="enemy-container" id="enemy-container">
-        <img class="enemy-image" id="enemy-image" src="assets/icons/05icon.png" alt="enemy">
-        <div class="hp-bar-outer"><div class="hp-bar-inner" id="hp-bar" style="width:100%;"></div></div>
-        <div class="enemy-name" id="enemy-name">Стражник</div>
-        <div class="enemy-level" id="enemy-level">Ур. 1</div>
+    <!-- ===== ОСНОВНОЙ КОНТЕЙНЕР ===== -->
+    <div id="app-container" style="display:flex;flex-direction:column;height:100%;">
+
+        <!-- ===== ХЕДЕР ===== -->
+        <div class="header">
+            <div class="header-row-1">
+                <span class="header-title-text">RobinHood P2P</span>
+                <span class="header-shield">🏹</span>
+            </div>
+            <div class="header-row-2">
+                <div class="header-btn" id="btn-avatar"><img src="assets/icons/01icon.png" class="header-avatar" id="profile-avatar-small" alt="avatar"></div>
+                <div class="header-btn" id="btn-craft"><img src="assets/icons/08icon.png" alt="craft"></div>
+                <div class="header-btn" id="btn-game"><img src="assets/icons/02icon.png" alt="game"></div>
+                <div class="header-btn" id="btn-clear"><img src="assets/icons/18icon.png" alt="clear"></div>
+                <div class="header-btn" id="btn-settings"><img src="assets/icons/11icon.png" alt="settings"></div>
+            </div>
+            <div class="header-row-3">
+                <span class="header-label" id="nick-label">Твой ник</span>
+                <span class="header-label">Открыть колчан</span>
+                <span class="header-label">Игра</span>
+                <span class="header-label">Скурить чат</span>
+                <span class="header-label">Опции</span>
+            </div>
+            <div class="robin-bar" id="robin-bar">
+                <img src="assets/icons/01icon.png" class="robin-bar-avatar" id="robin-avatar" alt="avatar">
+                <div class="robin-bar-text">
+                    <div class="robin-bar-sender" id="robin-bar-sender">RobinHood P2P</div>
+                    <div class="robin-bar-msg" id="robin-text">Святые сокеты стабильны!</div>
+                </div>
+                <div class="robin-bar-status">
+                    <img src="assets/icons/05icon.png" id="connection-icon" alt="status">
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ЧАТ ===== -->
+        <div class="chat-area" id="chat-box">
+            <div class="typing-indicator" id="typing-indicator"></div>
+        </div>
+
+        <!-- ===== ВВОД СООБЩЕНИЙ ===== -->
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="Выпустить стрелу" autocomplete="off">
+            <button id="btn-emoji">😊</button>
+            <button class="header-btn" id="btn-voice-input" style="flex-shrink:0;position:relative;">
+                <img src="assets/icons/03icon.png" alt="voice">
+            </button>
+            <div class="bow-button" id="send-btn">
+                <img src="assets/icons/02icon.png" alt="Отправить">
+            </div>
+        </div>
+
+        <!-- ===== ЭМОДЗИ-ПАНЕЛЬ ===== -->
+        <div id="emoji-panel" style="display:none;position:fixed;bottom:55px;left:0;width:100%;background:rgba(var(--bg-primary-rgb),0.92);border-top:1px solid rgba(var(--accent-rgb),0.2);z-index:50;padding:8px;max-height:180px;overflow-y:auto;">
+            <div id="emoji-grid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;text-align:center;"></div>
+        </div>
+
+        <!-- ===== ОВЕРЛЕЙ ===== -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- ===== ВЫБОР АВАТАРА ===== -->
+        <div class="avatar-selector" id="avatar-selector">
+            <p>🏹 Выбери лучника 🏹</p>
+            <div id="avatar-list"></div>
+        </div>
+
+        <!-- ===== НАСТРОЙКИ ===== -->
+        <div class="bottom-sheet" id="settings-sheet">
+            <div class="bottom-sheet-header">
+                <span>⚙️ Опции Шервуда</span>
+                <button class="bottom-sheet-close" id="settings-close">✕</button>
+            </div>
+            <div class="bottom-sheet-list">
+                <div class="contact-item" id="setting-videobg">
+                    <div class="contact-info"><span style="font-size:24px;">🎬</span><span class="contact-name">Сменить фон</span></div>
+                    <span id="videobg-name">Статика</span>
+                </div>
+                <div class="contact-item" id="setting-sound">
+                    <div class="contact-info"><img src="assets/icons/15icon.png"><span class="contact-name">Звук</span></div>
+                    <label class="toggle-switch"><input type="checkbox" id="toggle-sound" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="contact-item" id="setting-animations">
+                    <div class="contact-info"><span style="font-size:24px;">✨</span><span class="contact-name">Анимации</span></div>
+                    <label class="toggle-switch"><input type="checkbox" id="toggle-animations" checked><span class="toggle-slider"></span></label>
+                </div>
+                <div class="contact-item" id="setting-theme">
+                    <div class="contact-info"><span style="font-size:24px;">🎲</span><span class="contact-name">Авто-тема</span></div>
+                    <span id="theme-name">Авто</span>
+                </div>
+                <div class="contact-item" id="setting-self-destruct">
+                    <div class="contact-info"><span style="font-size:24px;">🍁</span><span class="contact-name">Листопад</span></div>
+                    <label class="toggle-switch"><input type="checkbox" id="toggle-selfdestruct"><span class="toggle-slider"></span></label>
+                </div>
+                <div class="contact-item" id="setting-terms">
+                    <div class="contact-info"><span style="font-size:24px;">⚜</span><span class="contact-name">Условия</span></div>
+                    <span>→</span>
+                </div>
+                <div class="contact-item setting-install-btn hidden" id="setting-install">
+                    <div class="contact-info">
+                        <img src="assets/icons/01icon.png" style="width:28px;height:28px;border-radius:6px;">
+                        <div>
+                            <div class="contact-name">RobinHood P2P</div>
+                            <div style="font-size:0.6em;color:var(--text-dim);">Установить</div>
+                        </div>
+                    </div>
+                    <span>📲</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
+        <!-- Крафт/Колчан -->
+        <div class="modal-overlay" id="craft-modal">
+            <div class="modal-dialog">
+                <h3>🏹 Открыть колчан</h3>
+                <button class="btn-primary" id="btn-craft-arrow">🏹 Крафт стрелы</button>
+                <button class="btn-dark" id="btn-scan-qr">📷 Сканировать QR</button>
+                <div class="code-display" id="craft-peer-id-display"></div>
+                <div class="code-display" id="craft-code-display" style="display:none;font-size:1.5em;letter-spacing:6px;"></div>
+                <div id="craft-qr-code" style="display:none;"></div>
+                <button class="btn-dark" id="btn-copy-peer-id">📋 Копировать</button>
+                <div style="color:var(--danger);font-size:0.7em;margin:8px 0;padding:8px;background:rgba(244,67,54,0.1);border-radius:8px;border:1px solid var(--danger);">⚠️ Не передавай стрелу и код подтверждения одним каналом связи</div>
+                <input type="text" id="peer-id-input" placeholder="Beacon ID друга..." style="width:100%;margin:8px 0;padding:8px;background:var(--input-bg);border:1px solid var(--border);color:var(--input-text);border-radius:8px;font-size:0.75em;font-family:monospace;">
+                <button class="btn-primary" id="btn-create-beacon" style="background:linear-gradient(135deg,#6b7db3,#4a5a8a);">🏹 Натянуть тетиву</button>
+                <button class="btn-dark" id="close-craft-modal">Закрыть</button>
+            </div>
+        </div>
+
+        <!-- Верификация -->
+        <div class="modal-overlay" id="verify-modal">
+            <div class="modal-dialog">
+                <h3>🔐 Подтверждение</h3>
+                <div id="verify-instruction">Введи 7-значный код</div>
+                <div style="color:var(--danger);font-size:0.7em;margin:4px 0 12px;">⚠️ Сравни код с собеседником голосом</div>
+                <div id="verify-code-display" style="font-size:2em;font-family:monospace;letter-spacing:8px;margin:12px 0;color:var(--accent-light);min-height:40px;">_______</div>
+                <div id="verify-code-grid"></div>
+                <div id="verify-error" style="color:var(--danger);font-size:0.8em;margin-top:6px;display:none;"></div>
+                <button class="btn-dark" id="btn-verify-reset" style="width:auto;display:inline-block;margin:8px auto;">↩ Сбросить</button>
+                <button class="btn-primary" id="btn-verify-confirm">✅ Подтвердить</button>
+                <button class="btn-dark" id="close-verify-modal">Закрыть</button>
+            </div>
+        </div>
+
+        <!-- Никнейм -->
+        <div class="modal-overlay" id="nick-modal">
+            <div class="modal-dialog">
+                <h3>🏷 Придумай ник</h3>
+                <input type="text" id="nick-input" placeholder="Введи ник (макс 12 символов)..." style="width:100%;margin:8px 0;padding:8px;background:var(--input-bg);border:1px solid var(--border);color:var(--input-text);border-radius:8px;font-size:0.9em;font-family:monospace;">
+                <button class="btn-primary" id="btn-save-nick">💾 Сохранить</button>
+                <button class="btn-dark" id="close-nick-modal">Закрыть</button>
+            </div>
+        </div>
+
+        <!-- Ввод -->
+        <div class="modal-overlay" id="input-modal">
+            <div class="modal-dialog">
+                <h3 id="input-modal-title">Ввод</h3>
+                <input type="text" id="input-modal-field" placeholder="..." style="width:100%;margin:8px 0;padding:8px;background:var(--input-bg);border:1px solid var(--border);color:var(--input-text);border-radius:8px;">
+                <button class="btn-primary" id="input-modal-ok">✅ ОК</button>
+                <button class="btn-dark" id="input-modal-cancel">Отмена</button>
+            </div>
+        </div>
+
+        <!-- Подтверждение -->
+        <div class="modal-overlay" id="confirm-modal">
+            <div class="modal-dialog">
+                <h3 id="confirm-modal-title">Подтверждение</h3>
+                <div id="confirm-modal-text"></div>
+                <button class="btn-primary" id="confirm-modal-yes">✅ Да</button>
+                <button class="btn-dark" id="confirm-modal-no">Нет</button>
+            </div>
+        </div>
+
     </div>
-    <div id="damage-numbers"></div>
-</div>
 
-<div class="bottom-panel">
-    <div class="hero-info">
-        <div class="hero-name" id="hero-name">Робин Гуд</div>
-        <div class="hero-lvl">Герой</div>
-    </div>
-    <div style="flex:1;"></div>
-    <div class="skill-btn" id="skill-1"><span>💥</span><span class="cd-overlay" id="cd-1"></span></div>
-    <div class="skill-btn" id="skill-2"><span>⚡</span><span class="cd-overlay" id="cd-2"></span></div>
-    <div class="skill-btn" id="skill-3"><span>🛡</span><span class="cd-overlay" id="cd-3"></span></div>
-    <button class="skill-btn" id="btn-upgrade" style="background:rgba(196,160,64,0.3);">📈</button>
-</div>
-
-</div>
-
-<div class="modal-overlay" id="upgrade-modal">
-    <div class="modal-dialog">
-        <h3>🏹 Прокачка</h3>
-        <div id="upgrade-list"></div>
-        <button id="close-upgrade-modal">Закрыть</button>
-    </div>
-</div>
-
-<script src="game.js"></script>
+    <!-- ===== ПОДКЛЮЧЕНИЕ СКРИПТОВ ===== -->
+    <script src="firebase-config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, off, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+        
+        const firebaseConfig = window.FIREBASE_CONFIG || {};
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        
+        signInAnonymously(auth).then(() => console.log('🔥 Firebase: OK')).catch(err => console.error('Firebase error:', err));
+        
+        window.firebaseDB = db;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
+        window.firebaseServerTimestamp = serverTimestamp;
+    </script>
+    
+    <script src="crypto-worker.js"></script>
+    <script src="p2ppong.js"></script>
+    <script src="robinhood-ui.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
