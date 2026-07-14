@@ -344,12 +344,18 @@ class Game {
 
     const gameScene = {
         preload: function() {
-            const base = window.location.origin;
-            this.load.image('bg', base + '/assets/icons/background.webp');
-            this.load.image('player', base + '/assets/icons/01icon.png');
-            this.load.image('enemy', base + '/assets/icons/08icon.png');
+            // Грузим с полным путём от корня
+            this.load.image('bg', '/Age-of-RobinHood/assets/icons/background.webp');
+            this.load.image('player', '/Age-of-RobinHood/assets/icons/01icon.png');
+            this.load.image('enemy', '/Age-of-RobinHood/assets/icons/08icon.png');
+            
+            // Лог для отладки
+            console.log('Phaser preload started');
+            this.load.on('complete', () => console.log('Phaser preload complete'));
+            this.load.on('loaderror', (file) => console.error('Phaser load error:', file.key, file.url));
         },
         create: function() {
+            console.log('Phaser create started');
             self.sceneRef = this;
             self.createScene();
         },
@@ -371,7 +377,6 @@ class Game {
         }
     });
 }
-
     createScene() {
         const scene = this.sceneRef;
         if (!scene) return;
