@@ -327,56 +327,50 @@ class Game {
     }
 
     async initPhaser() {
-    const canvasContainer = document.getElementById('phaser-canvas');
-    if (!canvasContainer) return;
+        const canvasContainer = document.getElementById('phaser-canvas');
+        if (!canvasContainer) return;
 
-    if (this.phaser) {
-        this.phaser.destroy(true);
-        this.phaser = null;
-        this.sceneRef = null;
+        if (this.phaser) {
+            this.phaser.destroy(true);
+            this.phaser = null;
+            this.sceneRef = null;
+        }
+
+        const rect = canvasContainer.getBoundingClientRect();
+        const width = rect.width || 400;
+        const height = rect.height || 400;
+
+        const self = this;
+
+        const gameScene = {
+            preload: function() {
+                this.load.image('bg', 'assets/icons/background.webp');
+                this.load.image('player', 'assets/icons/01icon.png');
+                this.load.image('enemy', 'assets/icons/08icon.png');
+            },
+            create: function() {
+                self.sceneRef = this;
+                self.createScene();
+            },
+            update: function() {
+                self.updateScene();
+            }
+        };
+
+        this.phaser = new Phaser.Game({
+            type: Phaser.AUTO,
+            parent: canvasContainer,
+            width: width,
+            height: height,
+            backgroundColor: '#1a1a2a',
+            scene: gameScene,
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            }
+        });
     }
 
-    const rect = canvasContainer.getBoundingClientRect();
-    const width = rect.width || 400;
-    const height = rect.height || 400;
-
-    const self = this;
-
-    const gameScene = {
-        preload: function() {
-            // Грузим с полным путём от корня
-            this.load.image('bg', '/Age-of-RobinHood/assets/icons/background.webp');
-            this.load.image('player', '/Age-of-RobinHood/assets/icons/01icon.png');
-            this.load.image('enemy', '/Age-of-RobinHood/assets/icons/08icon.png');
-            
-            // Лог для отладки
-            console.log('Phaser preload started');
-            this.load.on('complete', () => console.log('Phaser preload complete'));
-            this.load.on('loaderror', (file) => console.error('Phaser load error:', file.key, file.url));
-        },
-        create: function() {
-            console.log('Phaser create started');
-            self.sceneRef = this;
-            self.createScene();
-        },
-        update: function() {
-            self.updateScene();
-        }
-    };
-
-    this.phaser = new Phaser.Game({
-        type: Phaser.AUTO,
-        parent: canvasContainer,
-        width: width,
-        height: height,
-        backgroundColor: '#1a1a2a',
-        scene: gameScene,
-        scale: {
-            mode: Phaser.Scale.RESIZE,
-            autoCenter: Phaser.Scale.CENTER_BOTH
-        }
-    });
-}
     createScene() {
         const scene = this.sceneRef;
         if (!scene) return;
@@ -384,7 +378,7 @@ class Game {
         const { width, height } = scene.scale;
 
         const bg = scene.add.image(width / 2, height / 2, 'bg');
-        bg.setDisplaySize(width, height);
+        bg.setScale(width / bg.width, height / bg.height);
         bg.setAlpha(0.3);
 
         this.statusText = scene.add.text(width / 2, 30, '⚔️ Арена', {
@@ -394,11 +388,11 @@ class Game {
         }).setOrigin(0.5).setDepth(10);
 
         this.playerSprite = scene.add.image(width * 0.3, height * 0.5, 'player');
-        this.playerSprite.setDisplaySize(80, 80);
+        this.playerSprite.setScale(80 / this.playerSprite.width);
         this.playerSprite.setDepth(5);
 
         this.enemySprite = scene.add.image(width * 0.7, height * 0.5, 'enemy');
-        this.enemySprite.setDisplaySize(80, 80);
+        this.enemySprite.setScale(80 / this.enemySprite.width);
         this.enemySprite.setInteractive();
         this.enemySprite.on('pointerdown', () => this.onAttackClick());
         this.enemySprite.setDepth(5);
