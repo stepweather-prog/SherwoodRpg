@@ -474,8 +474,7 @@ const P2PPong = {
         return;
     }
 }
-        if (d.type==='ratchet-resync'&&d.pubKey) { if (ch) { try { const ss=await workerDeriveSecret(this._kp?.privateKey||'',d.pubKey); ch.secret=ss; ch.sendKey=ss; ch.sendIndex=0; ch.recvKey=ss; ch.recvIndex=0; ch.oldRecvKeys=[]; } catch(e) { log('resync error',e.message); } } return; }
-    },
+      //  if (d.type==='ratchet-resync'&&d.pubKey) { if (ch) { try { const ss=await workerDeriveSecret(this._kp?.privateKey||'',d.pubKey); ch.secret=ss; ch.sendKey=ss; ch.sendIndex=0; ch.recvKey=ss; ch.recvIndex=0; ch.oldRecvKeys=[]; } catch(e) { log('resync error',e.message); } } return; }),
 
     async sendMessage(chId, text) { const ch=this._channels[chId||this._chId]; if (!ch) return false; const nonce=RND(); const md=JSON.stringify({type:'text',d:text,t:Date.now(),n:nonce,from:this._peerId,nick:this._myNick,avatar:this._myAvatar}); return this._sendEncrypted(ch,chId||this._chId,md,text,nonce); },
     async sendVoiceMessage(chId, voiceBase64) { const ch=this._channels[chId||this._chId]; if (!ch) return false; if (voiceBase64.length>CONFIG.MAX_VOICE_SIZE) { this._emit('error',{message:'Голосовое слишком длинное. Максимум '+CONFIG.MAX_VOICE_DURATION+' секунд.'}); return false; } const nonce=RND(); const md=JSON.stringify({type:'voice',d:voiceBase64,t:Date.now(),n:nonce,from:this._peerId,nick:this._myNick,avatar:this._myAvatar}); return this._sendEncrypted(ch,chId||this._chId,md,'[Голосовое сообщение]',nonce); },
