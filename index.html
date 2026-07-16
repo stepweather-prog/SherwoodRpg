@@ -424,20 +424,24 @@
 <script src="js/sherwood/events.js"></script>
 <script src="js/sherwood/ui.js"></script>
 <script>
-// Инициализация игры после загрузки P2P
-P2PPong.on('ready', () => {
-    Sherwood.init().then(() => {
-        Sherwood.UI.init();
-        Sherwood.Router.navigate('main_menu');
-        Sherwood.Quests.init();
-        Sherwood.Dungeon.init();
-        Sherwood.Arena.init();
-        Sherwood.Tavern.init();
-        Sherwood.BlackMarket.init();
-        Sherwood.Events.init();
-        console.log('🏹 Шервудский лес готов!');
-    });
-});
+// Инициализация игры
+(function initSherwood() {
+    if (window.P2PPong && window.Sherwood) {
+        Sherwood.init().then(() => {
+            Sherwood.UI.init();
+            Sherwood.Router.navigate('main_menu');
+            Sherwood.Quests.init();
+            Sherwood.Dungeon.init();
+            Sherwood.Arena.init();
+            Sherwood.Tavern.init();
+            Sherwood.BlackMarket.init();
+            Sherwood.Events.init();
+            console.log('🏹 Шервудский лес готов!');
+        });
+    } else {
+        setTimeout(initSherwood, 100);
+    }
+})();
 </script>
 </body>
 </html>
