@@ -1,8 +1,6 @@
 {
     "name": "Sherwood RPG",
     "short_name": "Sherwood",
-    
-}
     "description": "P2P мессенджер с RPG игрой в стиле Шервудского леса",
     "start_url": "/",
     "display": "standalone",
