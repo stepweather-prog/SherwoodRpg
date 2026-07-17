@@ -70,7 +70,7 @@ Sherwood.UI = {
         this._container.innerHTML=`<div style="position:relative;min-height:100%;display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,0.4),rgba(0,0,0,0.6));padding:10px 16px 20px;">
             <div style="width:100%;max-width:500px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.6);border-radius:20px;padding:6px 14px;">
-                    <img src="${getAvatarUrl(p.avatar)}" style="width:28px;height:28px;border-radius:50%;border:2px solid #c9a040;" onerror="this.src='assets/icons/01icon.png'">
+                    <img src="assets/icons/01icon.png" style="width:28px;height:28px;border-radius:50%;border:2px solid #c9a040;" onerror="this.src='assets/icons/01icon.png'">
                     <span style="color:#e0c080;font-weight:bold;font-size:0.9em;">Ур.${p.level}</span>
                 </div>
                 <div style="display:flex;gap:10px;">
