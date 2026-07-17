@@ -103,18 +103,108 @@ Sherwood.UI = {
     },
     
     showProfile() {
-        const p=Sherwood.getPlayer(); if(!p)return;
-        this._container.style.background="url('"+this._bg.profile+"') center/cover no-repeat";
-        const ep=Math.min(100,(p.exp/p.expToLevel*100)).toFixed(0);
-        const parts=[{k:'head',n:'Голова',i:'🎩'},{k:'shoulders',n:'Плечи',i:'🧣'},{k:'torso',n:'Торс',i:'👕'},{k:'hands',n:'Руки',i:'🧤'},{k:'legs',n:'Ноги',i:'👖'},{k:'feet',n:'Ступни',i:'👢'},{k:'weapon1',n:'Оружие 1',i:'🏹'},{k:'weapon2',n:'Оружие 2',i:'🗡️'}];
-        let eh=''; parts.forEach(pt=>{const it=p.equipment[pt.k];const gc=it?(Sherwood.Models?.GradeColors?.[it.grade]||'#9d9d9d'):'transparent';eh+=`<div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-left:3px solid ${gc};border-radius:10px;padding:12px;margin-bottom:6px;cursor:pointer;" onclick="Sherwood.UI._onEquipSlotClick('${pt.k}')"><div style="display:flex;align-items:center;gap:8px;"><span>${pt.i}</span><div style="flex:1;"><div style="font-size:0.75em;color:#aaa;">${pt.n}</div><div style="color:${it?'#fff':'#aaa'};">${it?it.name:'Пусто'}</div></div><span style="color:#aaa;">→</span></div></div>`;});
-        let ih=p.inventory.length===0?'<div style="color:#aaa;text-align:center;padding:20px;">Пусто</div>':p.inventory.map((it,i)=>{const gc=Sherwood.Models?.GradeColors?.[it.grade]||'#9d9d9d';return`<div style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-left:3px solid ${gc};border-radius:10px;padding:10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><span>📦</span><div style="flex:1;"><div style="color:#fff;">${it.name}</div><div style="font-size:0.7em;color:${gc};">${it.grade?.toUpperCase()}</div></div><button onclick="Sherwood.UI._onEquipItem(${i})" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;">Надеть</button></div>`;}).join('');
-        this._container.innerHTML=`<div style="min-height:100%;background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.8));padding:16px;max-width:500px;margin:0 auto;"><button onclick="Sherwood.UI.showMainMenu()" style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;margin-bottom:12px;">← Назад</button>
-        <div style="text-align:center;"><img src="${getAvatarUrl(p.avatar)}" style="width:70px;height:70px;border-radius:50%;border:3px solid #c9a040;" onerror="this.src='assets/icons/01icon.png'"><h3 style="color:#e0c080;margin:6px 0;">${p.name}</h3><div style="color:#fff;">Ур.${p.level} | ✨${p.exp}/${p.expToLevel}</div><div style="background:rgba(255,255,255,0.1);border-radius:6px;height:6px;margin:6px 0;"><div style="background:#4caf50;height:100%;width:${ep}%;border-radius:6px;"></div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;font-size:0.85em;color:#fff;"><div>⚔️Атака: <b style="color:#f44336;">${p.stats.attack}</b></div><div>🛡️Защита: <b style="color:#2196f3;">${p.stats.defense}</b></div><div>❤️HP: <b style="color:#4caf50;">${p.stats.hp}/${p.stats.maxHp}</b></div><div>💨Ловкость: <b style="color:#ff9800;">${p.stats.agility}</b></div></div>
-        <h4 style="color:#e0c080;margin:12px 0 6px;">🎒 Экипировка</h4>${eh}
-        <h4 style="color:#e0c080;margin:12px 0 6px;">📦 Инвентарь (${p.inventory.length}/${p.bagSize})</h4>${ih}</div>`;
-    },
+    const p = Sherwood.getPlayer(); if (!p) return;
+    this._container.style.background = "url('" + this._bg.profile + "') center/cover no-repeat";
+    const ep = Math.min(100, (p.exp / p.expToLevel * 100)).toFixed(0);
+    
+    // Слоты экипировки с их позициями на силуэте (в процентах)
+    const slots = [
+        { key: 'head', name: 'Голова', left: 50, top: 8 },
+        { key: 'shoulders', name: 'Плечи', left: 50, top: 20 },
+        { key: 'torso', name: 'Торс', left: 50, top: 32 },
+        { key: 'hands', name: 'Руки', left: 28, top: 38 },
+        { key: 'legs', name: 'Ноги', left: 50, top: 52 },
+        { key: 'feet', name: 'Ступни', left: 50, top: 72 },
+        { key: 'weapon1', name: 'Оружие', left: 78, top: 30 },
+        { key: 'weapon2', name: 'Колчан', left: 22, top: 30 }
+    ];
+    
+    // Генерируем HTML слотов поверх силуэта
+    let slotsHtml = '';
+    slots.forEach(slot => {
+        const item = p.equipment[slot.key];
+        const hasItem = item !== null;
+        const gradeColor = hasItem ? (Sherwood.Models?.GradeColors?.[item.grade] || '#9d9d9d') : '#555';
+        
+        slotsHtml += `
+            <div onclick="Sherwood.UI._onEquipSlotClick('${slot.key}')" 
+                 style="position:absolute; left:${slot.left}%; top:${slot.top}%; 
+                        transform:translate(-50%,-50%); cursor:pointer; text-align:center;">
+                <div style="width:40px; height:40px; border-radius:50%; 
+                            background:rgba(0,0,0,0.8); 
+                            border:2px solid ${gradeColor};
+                            display:flex; align-items:center; justify-content:center;
+                            box-shadow:0 0 8px ${hasItem ? gradeColor : 'transparent'};">
+                    <span style="font-size:${hasItem ? '0.6em' : '0.5em'}; color:${hasItem ? '#fff' : '#666'}; 
+                                 max-width:36px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        ${hasItem ? item.name.substring(0, 6) : '⚪'}
+                    </span>
+                </div>
+                <div style="font-size:0.5em; color:#aaa; margin-top:1px;">${slot.name}</div>
+            </div>`;
+    });
+    
+    // Инвентарь
+    let inventoryHtml = p.inventory.length === 0 
+        ? '<div style="color:#aaa;text-align:center;padding:10px;">Пусто</div>'
+        : p.inventory.map((it, i) => {
+            const gc = Sherwood.Models?.GradeColors?.[it.grade] || '#9d9d9d';
+            return `<div style="background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.15); 
+                         border-left:3px solid ${gc}; border-radius:8px; padding:8px; margin-bottom:4px; 
+                         display:flex; align-items:center; gap:6px;">
+                <span style="font-size:1em;">📦</span>
+                <div style="flex:1;">
+                    <div style="color:#fff; font-size:0.8em;">${it.name}</div>
+                    <div style="font-size:0.6em; color:${gc};">${it.grade?.toUpperCase()}</div>
+                </div>
+                <button onclick="Sherwood.UI._onEquipItem(${i})" 
+                    style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); 
+                           color:#fff; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:0.7em;">
+                    Надеть
+                </button>
+            </div>`;
+        }).join('');
+    
+    this._container.innerHTML = `
+        <div style="min-height:100%; background:linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.8)); 
+                    padding:12px; max-width:500px; margin:0 auto;">
+            <button onclick="Sherwood.UI.showMainMenu()" 
+                style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); 
+                       color:#fff; padding:5px 12px; border-radius:6px; cursor:pointer; margin-bottom:10px;">
+                ← Назад
+            </button>
+            
+            <!-- Верхняя инфа -->
+            <div style="text-align:center; margin-bottom:10px;">
+                <img src="${getAvatarUrl(p.avatar)}" style="width:50px; height:50px; border-radius:50%; 
+                     border:2px solid #c9a040;" onerror="this.src='assets/icons/01icon.png'">
+                <div style="color:#e0c080; font-weight:bold;">${p.name}</div>
+                <div style="color:#fff; font-size:0.8em;">Ур.${p.level} | ✨${p.exp}/${p.expToLevel}</div>
+                <div style="background:rgba(255,255,255,0.1); border-radius:4px; height:4px; margin:4px 0;">
+                    <div style="background:#4caf50; height:100%; width:${ep}%; border-radius:4px;"></div>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:center; font-size:0.8em; color:#fff;">
+                    <span style="color:#f44336;">⚔️${p.stats.attack}</span>
+                    <span style="color:#2196f3;">🛡️${p.stats.defense}</span>
+                    <span style="color:#4caf50;">❤️${p.stats.hp}/${p.stats.maxHp}</span>
+                </div>
+            </div>
+            
+            <!-- СИЛУЭТ ПЕРСОНАЖА С ЯЧЕЙКАМИ -->
+            <div style="position:relative; width:100%; max-width:300px; height:350px; margin:0 auto 12px;
+                        background:rgba(0,0,0,0.5); border-radius:12px; overflow:hidden;">
+                <img src="assets/lor/Character_Body_Outline.png" 
+                     style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                            max-width:90%; max-height:90%; opacity:0.6;"
+                     onerror="this.style.display='none'">
+                ${slotsHtml}
+            </div>
+            
+            <!-- Инвентарь -->
+            <h4 style="color:#e0c080; margin:8px 0 4px;">📦 Инвентарь (${p.inventory.length}/${p.bagSize})</h4>
+            <div style="max-height:200px; overflow-y:auto;">${inventoryHtml}</div>
+        </div>`;
+},
     
     _onEquipSlotClick(pt){const p=Sherwood.getPlayer();const it=p.equipment[pt];if(it&&confirm('Снять "'+it.name+'"?')){Sherwood.unequipItem(pt);this.showProfile();}},
     _onEquipItem(i){const p=Sherwood.getPlayer();const it=p.inventory[i];if(it){Sherwood.equipItem(it);p.inventory.splice(i,1);this.showProfile();}},
