@@ -7,11 +7,11 @@ Sherwood.Dungeon = {
     _dungeon: null,
     _gridSize: 6,
     _closedTiles: Array.from({length: 14}, (_, i) => `assets/icons/Dungeon tiles${i + 1}.jpeg`),
-    _pathTiles: Array.from({length: 5}, (_, i) => `assets/icons/Sherwood dungeon path${i + 1}.jpeg`),
+    _pathTile: 'assets/lor/level_seamless_horizontal_loop_1.jpg',
     
     init() {
         this._closedTiles.forEach(src => { const img = new Image(); img.src = src; });
-        this._pathTiles.forEach(src => { const img = new Image(); img.src = src; });
+        const img = new Image(); img.src = this._pathTile;
     },
     
     generateDungeon(difficulty = 'normal') {
@@ -32,7 +32,7 @@ Sherwood.Dungeon = {
                     type: 'wall',
                     explored: false,
                     closedTile: this._closedTiles[Math.floor(Math.random() * this._closedTiles.length)],
-                    pathTile: this._pathTiles[Math.floor(Math.random() * this._pathTiles.length)]
+                    pathTile: this._pathTile
                 };
             }
         }
@@ -44,7 +44,7 @@ Sherwood.Dungeon = {
         grid[start.y][start.x] = {
             type: 'start',
             explored: true,
-            pathTile: this._pathTiles[Math.floor(Math.random() * this._pathTiles.length)]
+            pathTile: this._pathTile
         };
         
         const exit = tunnel[tunnel.length - 1];
@@ -52,16 +52,15 @@ Sherwood.Dungeon = {
             type: 'exit',
             explored: false,
             closedTile: this._closedTiles[Math.floor(Math.random() * this._closedTiles.length)],
-            pathTile: this._pathTiles[Math.floor(Math.random() * this._pathTiles.length)]
+            pathTile: this._pathTile
         };
         
         for (let i = 1; i < tunnel.length - 1; i++) {
             const p = tunnel[i];
             grid[p.y][p.x].type = 'empty';
-            grid[p.y][p.x].pathTile = this._pathTiles[Math.floor(Math.random() * this._pathTiles.length)];
+            grid[p.y][p.x].pathTile = this._pathTile;
         }
         
-        // Контент по сложности
         const monsterCount = difficulty === 'hard' ? 5 : difficulty === 'easy' ? 3 : 4;
         const chestCount = 2;
         const healCount = 2;
@@ -91,46 +90,86 @@ Sherwood.Dungeon = {
     },
     
     _generateTunnel(size) {
-        const tunnel = [];
-        const startX = Math.floor(size / 2);
-        const startY = Math.floor(size / 2);
-        
-        const corners = [{x:0,y:0},{x:size-1,y:0},{x:0,y:size-1},{x:size-1,y:size-1}];
-        const end = corners[Math.floor(Math.random() * corners.length)];
-        
-        let cx = startX, cy = startY;
-        tunnel.push({x: cx, y: cy});
-        
-        const dx = end.x > cx ? 1 : -1;
-        const dy = end.y > cy ? 1 : -1;
-        
-        while (cx !== end.x || cy !== end.y) {
-            const goX = Math.random() < 0.55 && cx !== end.x;
-            if (goX && cx !== end.x) { cx += dx; }
-            else if (cy !== end.y) { cy += dy; }
-            else if (cx !== end.x) { cx += dx; }
-            
-            cx = Math.max(0, Math.min(size - 1, cx));
-            cy = Math.max(0, Math.min(size - 1, cy));
-            
-            if (tunnel[tunnel.length - 1].x !== cx || tunnel[tunnel.length - 1].y !== cy) {
-                tunnel.push({x: cx, y: cy});
+        const maze = [];
+        for (let y = 0; y < size; y++) {
+            maze[y] = [];
+            for (let x = 0; x < size; x++) {
+                maze[y][x] = { x, y, visited: false, walls: { top: true, right: true, bottom: true, left: true } };
             }
         }
         
-        const deadEnds = Math.floor(Math.random() * 3) + 1;
-        for (let i = 0; i < deadEnds; i++) {
-            const bp = tunnel[Math.floor(Math.random() * (tunnel.length - 2)) + 1];
-            const dir = Math.random() < 0.5 ? 'x' : 'y';
-            const len = 1 + Math.floor(Math.random() * 2);
-            for (let j = 1; j <= len; j++) {
-                const bx = dir === 'x' ? bp.x + j : bp.x;
-                const by = dir === 'y' ? bp.y + j : bp.y;
-                if (bx >= 0 && bx < size && by >= 0 && by < size) {
-                    const last = tunnel[tunnel.length - 1];
-                    if (last.x !== bx || last.y !== by) tunnel.push({x: bx, y: by});
+        const startX = Math.floor(size / 2);
+        const startY = Math.floor(size / 2);
+        
+        const stack = [];
+        let current = maze[startY][startX];
+        current.visited = true;
+        stack.push(current);
+        
+        const directions = [
+            { dx: 0, dy: -1, wall: 'top', opposite: 'bottom' },
+            { dx: 1, dy: 0, wall: 'right', opposite: 'left' },
+            { dx: 0, dy: 1, wall: 'bottom', opposite: 'top' },
+            { dx: -1, dy: 0, wall: 'left', opposite: 'right' }
+        ];
+        
+        while (stack.length > 0) {
+            const shuffled = [...directions].sort(() => Math.random() - 0.5);
+            let moved = false;
+            
+            for (const dir of shuffled) {
+                const nx = current.x + dir.dx;
+                const ny = current.y + dir.dy;
+                
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size && !maze[ny][nx].visited) {
+                    current.walls[dir.wall] = false;
+                    maze[ny][nx].walls[dir.opposite] = false;
+                    maze[ny][nx].visited = true;
+                    stack.push(maze[ny][nx]);
+                    current = maze[ny][nx];
+                    moved = true;
+                    break;
                 }
             }
+            
+            if (!moved) {
+                current = stack.pop();
+            }
+        }
+        
+        const tunnel = [];
+        const visited = new Set();
+        
+        function collectPath(x, y) {
+            const key = `${x},${y}`;
+            if (visited.has(key)) return;
+            if (x < 0 || x >= size || y < 0 || y >= size) return;
+            visited.add(key);
+            tunnel.push({x, y});
+            
+            const cell = maze[y][x];
+            if (!cell.walls.top) collectPath(x, y - 1);
+            if (!cell.walls.right) collectPath(x + 1, y);
+            if (!cell.walls.bottom) collectPath(x, y + 1);
+            if (!cell.walls.left) collectPath(x - 1, y);
+        }
+        
+        collectPath(startX, startY);
+        
+        let maxDist = 0;
+        let exitPos = tunnel[0];
+        tunnel.forEach(pos => {
+            const dist = Math.abs(pos.x - startX) + Math.abs(pos.y - startY);
+            if (dist > maxDist) {
+                maxDist = dist;
+                exitPos = pos;
+            }
+        });
+        
+        const exitIndex = tunnel.findIndex(p => p.x === exitPos.x && p.y === exitPos.y);
+        if (exitIndex >= 0) {
+            tunnel.splice(exitIndex, 1);
+            tunnel.push(exitPos);
         }
         
         return tunnel;
@@ -145,10 +184,9 @@ Sherwood.Dungeon = {
             const p = available.splice(idx, 1)[0];
             
             grid[p.y][p.x].type = type;
-            grid[p.y][p.x].pathTile = this._pathTiles[Math.floor(Math.random() * this._pathTiles.length)];
+            grid[p.y][p.x].pathTile = this._pathTile;
             
             if (type === 'monster') {
-                // Определяем тир по сложности
                 const tier = difficulty === 'hard' ? 2 : 1;
                 const monster = this._getRandomMonster(tier);
                 grid[p.y][p.x].monsterId = monster.id;
@@ -173,14 +211,13 @@ Sherwood.Dungeon = {
     },
     
     _getRandomMonster(tier) {
-        // Только монстры для подземелья (не боссы)
         const dungeonMonsters = Object.values(Sherwood.Monsters).filter(m => 
             m.tier === tier && !m.isBoss && 
             ['swamp', 'deep_forest', 'cave'].includes(m.location)
         );
         
         if (dungeonMonsters.length === 0) {
-            return { id: 'forest_spider', name: 'Монстр', icon: '' };
+            return { id: 'swamp_ghoul_1', name: 'Монстр', icon: 'assets/monsters/Swamp Ghoul1.png' };
         }
         
         return dungeonMonsters[Math.floor(Math.random() * dungeonMonsters.length)];
@@ -192,14 +229,18 @@ Sherwood.Dungeon = {
         const dx = Math.abs(x - this._dungeon.playerPos.x);
         const dy = Math.abs(y - this._dungeon.playerPos.y);
         
-        if ((dx + dy) !== 1) return { success: false, reason: 'too_far' };
+        if (dx > 1 || dy > 1 || (dx === 0 && dy === 0)) {
+            return { success: false, reason: 'too_far' };
+        }
+        if (dx === 1 && dy === 1) {
+            return { success: false, reason: 'too_far' };
+        }
         
         const key = `${x},${y}`;
         if (!this._dungeon.pathSet.has(key)) return { success: false, reason: 'wall' };
         
         this._dungeon.playerPos = { x, y };
         const tile = this._dungeon.grid[y][x];
-        
         this._revealCell(x, y);
         
         return this._processTile(tile, x, y);
