@@ -13,7 +13,10 @@ Sherwood.Models = {
         LEGS: 'legs',
         FEET: 'feet',
         WEAPON_1: 'weapon1',
-        WEAPON_2: 'weapon2'
+        WEAPON_2: 'weapon2',
+        BELT: 'belt',
+        AMULET: 'amulet',
+        RING: 'ring'
     },
     
     // Редкость предметов
@@ -88,11 +91,149 @@ Sherwood.Models = {
         SCREEN_CHANGED: 'SCREEN_CHANGED',
         GAME_INITIALIZED: 'GAME_INITIALIZED',
         GAME_RESET: 'GAME_RESET'
+    },
+
+    // ==========================================================
+    // СИСТЕМА ЧАЩОБЫ (Age of Revenge 2 стиль)
+    // ==========================================================
+
+    // Типы клеток в данже
+    DungeonTileType: {
+        WALL: 'wall',
+        FLOOR: 'floor',
+        START: 'start',
+        EXIT: 'exit',
+        ENEMY: 'enemy',
+        CHEST: 'chest',
+        TRAP: 'trap',
+        HEAL: 'heal'
+    },
+
+    // Сложность данжа
+    DungeonDifficulty: {
+        EASY: 'easy',
+        NORMAL: 'normal',
+        HARD: 'hard'
+    },
+
+    // Статус данжа
+    DungeonStatus: {
+        ACTIVE: 'active',
+        COMPLETED: 'completed',
+        ABANDONED: 'abandoned',
+        FAILED: 'failed'
+    },
+
+    // Настройки данжа по сложности
+    DungeonConfig: {
+        easy: {
+            enemyCount: 4,
+            chestCount: 2,
+            roomCount: 3,
+            monsterTier: 0,
+            trapCount: 1,
+            healCount: 2
+        },
+        normal: {
+            enemyCount: 6,
+            chestCount: 3,
+            roomCount: 4,
+            monsterTier: 1,
+            trapCount: 2,
+            healCount: 2
+        },
+        hard: {
+            enemyCount: 8,
+            chestCount: 4,
+            roomCount: 5,
+            monsterTier: 2,
+            trapCount: 3,
+            healCount: 1
+        }
+    },
+
+    // Радиус видимости в данже
+    DUNGEON_VISIBILITY_RADIUS: 2,
+
+    // ==========================================================
+    // БОЕВАЯ СИСТЕМА
+    // ==========================================================
+
+    // Типы навыков
+    SkillType: {
+        POWER_SHOT: 'power_shot',
+        TRIPLE_SHOT: 'triple_shot',
+        POISON_ARROW: 'poison_arrow',
+        STUNNING_SHOT: 'stunning_shot'
+    },
+
+    // Конфиг навыков
+    SkillConfig: {
+        power_shot: {
+            name: 'Мощный выстрел',
+            damageMultiplier: 1.8,
+            cooldown: 3,
+            cost: 0,
+            description: 'Наносит 180% урона'
+        },
+        triple_shot: {
+            name: 'Тройной выстрел',
+            damageMultiplier: 0.7,
+            cooldown: 4,
+            cost: 0,
+            description: '3 выстрела по 70% урона'
+        },
+        poison_arrow: {
+            name: 'Отравленная стрела',
+            damageMultiplier: 1.0,
+            cooldown: 5,
+            cost: 0,
+            description: 'Отравляет врага на 3 хода'
+        },
+        stunning_shot: {
+            name: 'Оглушающий выстрел',
+            damageMultiplier: 0.5,
+            cooldown: 6,
+            cost: 0,
+            description: 'Оглушает врага на 1 ход'
+        }
+    },
+
+    // ==========================================================
+    // СИСТЕМА КВЕСТОВ
+    // ==========================================================
+
+    // Типы заданий
+    QuestTaskType: {
+        KILL_MONSTERS: 'kill_monsters',
+        COLLECT_ITEMS: 'collect_items',
+        EXPLORE_DUNGEON: 'explore_dungeon',
+        OPEN_CHESTS: 'open_chests',
+        WIN_BATTLES: 'win_battles'
     }
 };
 
-// Экспортируем для удобства
+// ==========================================================
+// ЭКСПОРТ ДЛЯ УДОБСТВА
+// ==========================================================
+
 Sherwood.ActionType = Sherwood.Models.ActionType;
 Sherwood.GameScreen = Sherwood.Models.GameScreen;
 Sherwood.EquipmentPart = Sherwood.Models.EquipmentPart;
 Sherwood.ItemGrade = Sherwood.Models.ItemGrade;
+Sherwood.GradeColors = Sherwood.Models.GradeColors;
+Sherwood.ResourceType = Sherwood.Models.ResourceType;
+
+// Система чащобы
+Sherwood.DungeonTileType = Sherwood.Models.DungeonTileType;
+Sherwood.DungeonDifficulty = Sherwood.Models.DungeonDifficulty;
+Sherwood.DungeonStatus = Sherwood.Models.DungeonStatus;
+Sherwood.DungeonConfig = Sherwood.Models.DungeonConfig;
+Sherwood.DUNGEON_VISIBILITY_RADIUS = Sherwood.Models.DUNGEON_VISIBILITY_RADIUS;
+
+// Боевая система
+Sherwood.SkillType = Sherwood.Models.SkillType;
+Sherwood.SkillConfig = Sherwood.Models.SkillConfig;
+
+// Система квестов
+Sherwood.QuestTaskType = Sherwood.Models.QuestTaskType;
