@@ -281,99 +281,162 @@ Sherwood.UI = {
     },
     
     _renderDungeon() {
-        const d = Sherwood.Dungeon.getDungeon();
-        if (!d) { this.showDungeon(); return; }
-        
-        const bgMap = {
-            forest: this._bg.dungeon_forest,
-            swamp: this._bg.dungeon_swamp,
-            cave: this._bg.dungeon_cave
-        };
-        this._container.style.background = "url('" + (bgMap[d.dungeonId] || this._bg.dungeon_forest) + "') center/cover no-repeat";
-        
-        const size = d.size;
-        const maxWidth = Math.min(400, window.innerWidth - 32);
-        const cellSize = Math.floor(maxWidth / size);
-        const p = Sherwood.getPlayer();
-        
-        let gridHtml = '';
-        for (let y = 0; y < size; y++) {
-            gridHtml += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;">';
-            for (let x = 0; x < size; x++) {
-                const cell = d.grid[y][x];
-                const isPlayer = d.playerPos.x === x && d.playerPos.y === y;
-                const isVisible = cell.visible || cell.explored;
-                const isWalkable = cell.walkable;
-                const isAdjacent = Math.abs(x - d.playerPos.x) + Math.abs(y - d.playerPos.y) === 1;
+    const d = Sherwood.Dungeon.getDungeon();
+    if (!d) { this.showDungeon(); return; }
+    
+    const bgMap = {
+        forest: this._bg.dungeon_forest,
+        swamp: this._bg.dungeon_swamp,
+        cave: this._bg.dungeon_cave
+    };
+    this._container.style.background = "url('" + (bgMap[d.dungeonId] || this._bg.dungeon_forest) + "') center/cover no-repeat";
+    
+    const size = d.size;
+    const maxWidth = Math.min(400, window.innerWidth - 32);
+    const cellSize = Math.floor(maxWidth / size);
+    const p = Sherwood.getPlayer();
+    
+    const pathTiles = [
+        'assets/icons/Sherwood dungeon path1.jpeg',
+        'assets/icons/Sherwood dungeon path2.jpeg',
+        'assets/icons/Sherwood dungeon path3.jpeg',
+        'assets/icons/Sherwood dungeon path4.jpeg',
+        'assets/icons/Sherwood dungeon path5.jpeg'
+    ];
+    const closedTiles = [];
+    for (let i = 1; i <= 14; i++) {
+        closedTiles.push('assets/icons/Dungeon tiles' + i + '.jpeg');
+    }
+    
+    let gridHtml = '';
+    let bossX = d.bossX;
+    let bossY = d.bossY;
+    let hasBoss = bossX !== undefined && bossY !== undefined;
+    
+    for (let y = 0; y < size; y++) {
+        gridHtml += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;">';
+        for (let x = 0; x < size; x++) {
+            const cell = d.grid[y][x];
+            const isPlayer = d.playerPos.x === x && d.playerPos.y === y;
+            const isVisible = cell.visible || cell.explored;
+            const isWalkable = cell.walkable;
+            const isAdjacent = Math.abs(x - d.playerPos.x) + Math.abs(y - d.playerPos.y) === 1;
+            
+            let bgImage = closedTiles[Math.floor(Math.random() * closedTiles.length)];
+            let content = '';
+            let cursor = 'default';
+            let clickHandler = '';
+            let borderColor = 'rgba(255,255,255,0.05)';
+            let extraStyle = '';
+            
+            // Проверяем, есть ли рядом с этой клеткой босс (для подсветки тропы)
+            const isNearBoss = hasBoss && (Math.abs(x - bossX) + Math.abs(y - bossY) === 1);
+            const isBossCell = hasBoss && (x === bossX && y === bossY);
+            
+            if (isVisible) {
+                bgImage = pathTiles[Math.floor(Math.random() * pathTiles.length)];
+                borderColor = 'rgba(255,255,255,0.1)';
                 
-                let bgColor = 'rgba(10,10,20,0.9)';
-                let borderColor = 'rgba(255,255,255,0.05)';
-                let content = '❓';
-                let cursor = 'default';
-                let clickHandler = '';
-                
-                if (isVisible) {
-                    bgColor = isWalkable ? 'rgba(30,40,30,0.4)' : 'rgba(20,20,25,0.6)';
-                    borderColor = 'rgba(255,255,255,0.1)';
-                    content = '';
-                    
-                    if (cell.type === 'start') { content = '🏠'; bgColor = 'rgba(46,125,50,0.3)'; borderColor = '#4caf50'; }
-                    else if (cell.type === 'exit') { content = '🚪'; bgColor = 'rgba(76,175,80,0.3)'; borderColor = '#4caf50'; }
-                    else if (cell.type === 'enemy') { 
-                        content = cell.isBoss ? '👑' : '👹'; 
-                        bgColor = 'rgba(244,67,54,0.3)'; 
+                if (cell.type === 'start') { content = '🏠'; }
+                else if (cell.type === 'exit') { content = '🚪'; borderColor = '#4caf50'; }
+                else if (cell.type === 'enemy') { 
+                    if (cell.isBoss) {
+                        content = '👑';
+                        borderColor = '#ff6a00';
+                        extraStyle = 'box-shadow: 0 0 30px rgba(255,106,0,0.8); animation: bossGlow 1s infinite alternate;';
+                    } else {
+                        content = '👹';
                         borderColor = '#f44336';
-                        if (isAdjacent) {
-                            cursor = 'pointer';
-                            clickHandler = `onclick="Sherwood.UI._dungeonAttack(${x},${y})"`;
-                            borderColor = '#ff1744';
-                        }
                     }
-                    else if (cell.type === 'chest') { content = cell.looted ? '📭' : '📦'; bgColor = 'rgba(255,193,7,0.2)'; borderColor = '#ffc107'; }
-                    else if (isWalkable) { content = '·'; }
-                    
-                    if (isWalkable && isAdjacent && !isPlayer && cell.type !== 'enemy' && cell.type !== 'exit') {
+                    if (isAdjacent) {
                         cursor = 'pointer';
-                        clickHandler = `onclick="Sherwood.UI._dungeonMove(${x},${y})"`;
-                        borderColor = '#4caf50';
+                        clickHandler = `onclick="Sherwood.UI._dungeonAttack(${x},${y})"`;
                     }
                 }
+                else if (cell.type === 'chest') { content = cell.looted ? '📭' : '📦'; borderColor = '#ffc107'; }
+                else if (cell.type === 'portal') { content = '🌀'; borderColor = '#9c27b0'; }
+                else if (cell.type === 'altar') { content = '🔮'; borderColor = '#4caf50'; }
+                else if (cell.type === 'trap_chest') { content = '🎭'; borderColor = '#f44336'; }
+                else if (cell.type === 'heal_spring') { content = '💧'; borderColor = '#2196f3'; }
                 
-                if (isPlayer) {
-                    content = '🏹';
-                    bgColor = 'rgba(255,215,0,0.2)';
-                    borderColor = '#ffd700';
-                    cursor = 'default';
-                    clickHandler = '';
+                // Подсветка тропы к боссу (неоткрытая клетка рядом с боссом)
+                if (isNearBoss && !isBossCell && !cell.explored) {
+                    borderColor = '#ff6a00';
+                    extraStyle = 'box-shadow: 0 0 25px rgba(255,106,0,0.5); animation: pathGlow 1.5s infinite alternate;';
                 }
                 
-                gridHtml += `<div ${clickHandler} style="width:${cellSize}px;height:${cellSize}px;background:${bgColor};border:2px solid ${borderColor};border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.5}px;cursor:${cursor};transition:0.15s;">${content}</div>`;
+                if (isWalkable && isAdjacent && !isPlayer && cell.type !== 'enemy' && cell.type !== 'exit') {
+                    cursor = 'pointer';
+                    clickHandler = `onclick="Sherwood.UI._dungeonMove(${x},${y})"`;
+                    if (!isNearBoss) {
+                        borderColor = '#4caf50';
+                        extraStyle = 'box-shadow: 0 0 8px rgba(76,175,80,0.2);';
+                    }
+                }
+            } else {
+                // Скрытая клетка — тоже подсвечиваем, если рядом босс
+                if (isNearBoss && !cell.explored) {
+                    borderColor = '#ff6a00';
+                    extraStyle = 'box-shadow: 0 0 25px rgba(255,106,0,0.3); animation: pathGlow 1.5s infinite alternate;';
+                    bgImage = closedTiles[Math.floor(Math.random() * closedTiles.length)];
+                }
+                content = '';
+                borderColor = 'rgba(255,255,255,0.03)';
             }
-            gridHtml += '</div>';
+            
+            if (isPlayer) {
+                content = '🏹';
+                borderColor = '#ffd700';
+                extraStyle = 'box-shadow: 0 0 16px rgba(255,215,0,0.5);';
+                cursor = 'default';
+                clickHandler = '';
+            }
+            
+            gridHtml += `<div ${clickHandler} style="width:${cellSize}px;height:${cellSize}px;background-image:url('${bgImage}');background-size:cover;background-position:center;border:2px solid ${borderColor};border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:${cellSize*0.5}px;cursor:${cursor};transition:0.15s;${extraStyle}text-shadow:0 0 4px rgba(0,0,0,0.8);">${content}</div>`;
         }
-        
-        this._container.innerHTML = `
-            <div style="background:rgba(0,0,0,0.5);min-height:100%;padding:12px;display:flex;flex-direction:column;align-items:center;">
-                <div style="width:100%;max-width:${cellSize*size+20}px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <button onclick="Sherwood.UI._leaveDungeon()" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:#ccc;padding:6px 12px;border-radius:6px;cursor:pointer;">← Выйти</button>
-                        <div style="color:#70a0e0;font-weight:bold;">🏰 ${d.dungeonId} Ур.${d.level} ${'⭐'.repeat(d.skulls)}</div>
-                        <div style="color:#4caf50;">❤️${p.stats.hp}</div>
-                    </div>
-                    <div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:6px;margin-bottom:8px;">
-                        <div style="display:flex;justify-content:space-around;font-size:11px;color:#aaa;">
-                            <span>👹 ${d.monstersKilled}/${d.totalEnemies}</span>
-                            <span>📦 ${d.chestsOpened}/${d.totalChests}</span>
-                            <span>🚶 ${d.steps}</span>
-                        </div>
-                    </div>
-                    ${gridHtml}
-                    <div id="dungeon-log" style="text-align:center;font-size:12px;color:#aaa;min-height:20px;margin-top:8px;background:rgba(0,0,0,0.6);border-radius:6px;padding:6px;"></div>
-                    <div style="text-align:center;font-size:10px;color:#555;margin-top:4px;">🟢 ходьба | 🔴 атака</div>
-                </div>
-            </div>
+        gridHtml += '</div>';
+    }
+    
+    // CSS анимация
+    if (!document.getElementById('dungeon-glow-style')) {
+        const style = document.createElement('style');
+        style.id = 'dungeon-glow-style';
+        style.textContent = `
+            @keyframes bossGlow {
+                0% { box-shadow: 0 0 20px rgba(255,106,0,0.5); }
+                100% { box-shadow: 0 0 50px rgba(255,106,0,0.9); }
+            }
+            @keyframes pathGlow {
+                0% { box-shadow: 0 0 10px rgba(255,106,0,0.2); }
+                100% { box-shadow: 0 0 35px rgba(255,106,0,0.7); }
+            }
         `;
-    },
+        document.head.appendChild(style);
+    }
+    
+    this._container.innerHTML = `
+        <div style="background:rgba(0,0,0,0.5);min-height:100%;padding:12px;display:flex;flex-direction:column;align-items:center;">
+            <div style="width:100%;max-width:${cellSize*size+20}px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <button onclick="Sherwood.UI._leaveDungeon()" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:#ccc;padding:6px 12px;border-radius:6px;cursor:pointer;">← Выйти</button>
+                    <div style="color:#70a0e0;font-weight:bold;">🏰 ${d.dungeonId} Ур.${d.level} ${'⭐'.repeat(d.skulls)}</div>
+                    <div style="color:#4caf50;">❤️${p.stats.hp}</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:6px;margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-around;font-size:11px;color:#aaa;">
+                        <span>👹 ${d.monstersKilled}/${d.totalEnemies}</span>
+                        <span>📦 ${d.chestsOpened}/${d.totalChests}</span>
+                        <span>🚶 ${d.steps}</span>
+                        ${hasBoss ? '<span style="color:#ff6a00;">👑 Босс рядом!</span>' : ''}
+                    </div>
+                </div>
+                ${gridHtml}
+                <div id="dungeon-log" style="text-align:center;font-size:12px;color:#aaa;min-height:20px;margin-top:8px;background:rgba(0,0,0,0.6);border-radius:6px;padding:6px;"></div>
+                <div style="text-align:center;font-size:10px;color:#555;margin-top:4px;">🟢 ходьба | 🔴 атака | 🟠 босс рядом!</div>
+            </div>
+        </div>
+    `;
+},
     
     _dungeonMove(x, y) {
         const result = Sherwood.Dungeon.moveToTile(x, y);
