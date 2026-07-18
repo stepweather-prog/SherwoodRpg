@@ -1,22 +1,19 @@
 /**
  * Sherwood Dungeon System — Age of Revenge 2 стиль
  * Карта с открытыми областями, врагами, сундуками и выходом
- * Пошаговое перемещение по сетке
  */
 
 Sherwood.Dungeon = {
     _dungeon: null,
     _gridSize: 8,
     
-    // Тайлы
     _tiles: {
-        floor: 'assets/lor/level_seamless_horizontal_loop_1.jpg',
+        floor: 'assets/icons/level_seamless_horizontal_loop_1.jpg',
         wall: 'assets/icons/Dungeon tiles1.jpeg',
-        grass: 'assets/lor/grass_tile.jpg',
-        stone: 'assets/lor/stone_floor.jpg'
+        grass: 'assets/icons/level_seamless_horizontal_loop_1.jpg',
+        stone: 'assets/icons/Dungeon tiles1.jpeg'
     },
     
-    // Цвета для разных типов клеток (для отладки/стиля)
     _colors: {
         floor: 'rgba(40,60,30,0.3)',
         explored: 'rgba(60,80,50,0.2)',
@@ -27,16 +24,18 @@ Sherwood.Dungeon = {
     },
     
     init() {
-        // Предзагрузка тайлов
         Object.values(this._tiles).forEach(src => {
-            const img = new Image();
-            img.src = src;
+            if (src) {
+                const img = new Image();
+                img.src = src;
+                img.onerror = () => console.warn('⚠️ Не загружен тайл:', src);
+            }
         });
     },
     
     generateDungeon(difficulty = 'normal') {
         const player = Sherwood.getPlayer();
-        if (player.dungeon.tickets <= 0) {
+        if (!player || player.dungeon.tickets <= 0) {
             Sherwood.dispatch({ type: 'DUNGEON_ERROR', payload: { message: 'Нет билетов!' } });
             return null;
         }
@@ -46,7 +45,7 @@ Sherwood.Dungeon = {
         const grid = [];
         const rooms = [];
         
-        // 1. Создаём пустую карту
+        // 1. Пустая карта
         for (let y = 0; y < size; y++) {
             grid[y] = [];
             for (let x = 0; x < size; x++) {
@@ -60,11 +59,11 @@ Sherwood.Dungeon = {
             }
         }
         
-        // 2. Генерируем комнаты
+        // 2. Генерация комнат
         const roomCount = difficulty === 'hard' ? 5 : difficulty === 'easy' ? 3 : 4;
         const roomsList = this._generateRooms(size, roomCount);
         
-        // 3. Размещаем комнаты на карте
+        // 3. Размещение комнат
         roomsList.forEach(room => {
             for (let y = room.y; y < room.y + room.h; y++) {
                 for (let x = room.x; x < room.x + room.w; x++) {
@@ -78,10 +77,10 @@ Sherwood.Dungeon = {
             }
         });
         
-        // 4. Соединяем комнаты коридорами
+        // 4. Соединение коридорами
         this._connectRooms(grid, roomsList, size);
         
-        // 5. Выбираем стартовую комнату
+        // 5. Стартовая комната
         const startRoom = roomsList[0];
         const startX = startRoom.x + Math.floor(startRoom.w / 2);
         const startY = startRoom.y + Math.floor(startRoom.h / 2);
@@ -89,22 +88,22 @@ Sherwood.Dungeon = {
         grid[startY][startX].explored = true;
         grid[startY][startX].visible = true;
         
-        // 6. Выбираем выход (в последней комнате)
+        // 6. Выход
         const exitRoom = roomsList[roomsList.length - 1];
         const exitX = exitRoom.x + Math.floor(exitRoom.w / 2);
         const exitY = exitRoom.y + Math.floor(exitRoom.h / 2);
         grid[exitY][exitX].type = 'exit';
         grid[exitY][exitX].walkable = true;
         
-        // 7. Размещаем врагов
+        // 7. Враги
         const enemyCount = difficulty === 'hard' ? 8 : difficulty === 'easy' ? 4 : 6;
         this._placeEnemies(grid, roomsList, enemyCount, difficulty, startRoom, exitRoom);
         
-        // 8. Размещаем сундуки
+        // 8. Сундуки
         const chestCount = difficulty === 'hard' ? 4 : difficulty === 'easy' ? 2 : 3;
         this._placeChests(grid, roomsList, chestCount, startRoom, exitRoom);
         
-        // 9. Подсчитываем общее количество клеток
+        // 9. Статистика
         let totalWalkable = 0;
         let exploredWalkable = 0;
         for (let y = 0; y < size; y++) {
@@ -134,9 +133,7 @@ Sherwood.Dungeon = {
             exitRoom
         };
         
-        // 10. Открываем видимость вокруг старта
         this._updateVisibility(startX, startY);
-        
         return this._dungeon;
     },
     
@@ -152,10 +149,8 @@ Sherwood.Dungeon = {
             const h = minSize + Math.floor(Math.random() * (maxSize - minSize + 1));
             const x = 1 + Math.floor(Math.random() * (size - w - 1));
             const y = 1 + Math.floor(Math.random() * (size - h - 1));
-            
             const room = { x, y, w, h, id: i };
             
-            // Проверка пересечений
             let overlap = false;
             for (const existing of rooms) {
                 if (x < existing.x + existing.w + 1 && x + w + 1 > existing.x &&
@@ -173,7 +168,6 @@ Sherwood.Dungeon = {
             }
         }
         
-        // Если не удалось создать все комнаты, добавляем простые
         while (rooms.length < Math.min(count, 3)) {
             const x = 1 + Math.floor(Math.random() * (size - 3));
             const y = 1 + Math.floor(Math.random() * (size - 3));
@@ -193,32 +187,26 @@ Sherwood.Dungeon = {
     },
     
     _connectRooms(grid, rooms, size) {
-        // Соединяем комнаты по порядку
         for (let i = 0; i < rooms.length - 1; i++) {
             const roomA = rooms[i];
             const roomB = rooms[i + 1];
-            
             const ax = roomA.x + Math.floor(roomA.w / 2);
             const ay = roomA.y + Math.floor(roomA.h / 2);
             const bx = roomB.x + Math.floor(roomB.w / 2);
             const by = roomB.y + Math.floor(roomB.h / 2);
-            
             this._carveCorridor(grid, ax, ay, bx, by);
         }
         
-        // Добавляем дополнительные соединения (для цикличности)
         if (rooms.length > 3) {
             for (let i = 0; i < rooms.length - 2; i += 2) {
                 const roomA = rooms[i];
                 const roomB = rooms[i + 2];
-                if (roomA && roomB) {
+                if (roomA && roomB && Math.random() < 0.4) {
                     const ax = roomA.x + Math.floor(roomA.w / 2);
                     const ay = roomA.y + Math.floor(roomA.h / 2);
                     const bx = roomB.x + Math.floor(roomB.w / 2);
                     const by = roomB.y + Math.floor(roomB.h / 2);
-                    if (Math.random() < 0.4) {
-                        this._carveCorridor(grid, ax, ay, bx, by);
-                    }
+                    this._carveCorridor(grid, ax, ay, bx, by);
                 }
             }
         }
@@ -227,16 +215,16 @@ Sherwood.Dungeon = {
     _carveCorridor(grid, x1, y1, x2, y2) {
         let x = x1;
         let y = y1;
+        const size = grid.length;
         
-        // Горизонтальный коридор
         while (x !== x2) {
-            if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length) {
+            if (x >= 0 && x < size && y >= 0 && y < size) {
                 if (grid[y][x].type === 'wall') {
                     grid[y][x].type = 'floor';
                     grid[y][x].walkable = true;
                     grid[y][x].tile = this._tiles.floor;
                 }
-                if (y + 1 < grid.length && grid[y + 1][x].type === 'wall') {
+                if (y + 1 < size && grid[y + 1][x].type === 'wall') {
                     grid[y + 1][x].type = 'floor';
                     grid[y + 1][x].walkable = true;
                     grid[y + 1][x].tile = this._tiles.floor;
@@ -250,15 +238,14 @@ Sherwood.Dungeon = {
             x += (x < x2) ? 1 : -1;
         }
         
-        // Вертикальный коридор
         while (y !== y2) {
-            if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length) {
+            if (x >= 0 && x < size && y >= 0 && y < size) {
                 if (grid[y][x].type === 'wall') {
                     grid[y][x].type = 'floor';
                     grid[y][x].walkable = true;
                     grid[y][x].tile = this._tiles.floor;
                 }
-                if (x + 1 < grid[0].length && grid[y][x + 1].type === 'wall') {
+                if (x + 1 < size && grid[y][x + 1].type === 'wall') {
                     grid[y][x + 1].type = 'floor';
                     grid[y][x + 1].walkable = true;
                     grid[y][x + 1].tile = this._tiles.floor;
@@ -277,7 +264,6 @@ Sherwood.Dungeon = {
         let placed = 0;
         const availableRooms = rooms.filter(r => r.id !== startRoom.id && r.id !== exitRoom.id);
         
-        // Сначала размещаем в комнатах
         for (const room of availableRooms) {
             if (placed >= count) break;
             const cells = this._getRoomCells(grid, room);
@@ -287,7 +273,6 @@ Sherwood.Dungeon = {
                 grid[c.y][c.x].type !== 'exit'
             );
             
-            // 1-2 врага на комнату
             const enemiesInRoom = Math.min(
                 Math.floor(Math.random() * 2) + 1,
                 walkableCells.length,
@@ -308,13 +293,13 @@ Sherwood.Dungeon = {
             }
         }
         
-        // Если не хватило, размещаем в коридорах
         if (placed < count) {
             const corridorCells = [];
             for (let y = 0; y < grid.length; y++) {
                 for (let x = 0; x < grid[0].length; x++) {
                     if (grid[y][x].walkable && grid[y][x].type === 'floor' && 
-                        !grid[y][x].roomId && grid[y][x].type !== 'start' && grid[y][x].type !== 'exit') {
+                        !grid[y][x].roomId && grid[y][x].type !== 'start' && 
+                        grid[y][x].type !== 'exit') {
                         corridorCells.push({ x, y });
                     }
                 }
@@ -362,7 +347,6 @@ Sherwood.Dungeon = {
             }
         }
         
-        // Добавляем ещё сундуков в коридоры
         while (placed < count) {
             const corridorCells = [];
             for (let y = 0; y < grid.length; y++) {
@@ -402,8 +386,9 @@ Sherwood.Dungeon = {
     },
     
     _getRandomMonster(tier) {
-        const dungeonMonsters = Object.values(Sherwood.Monsters).filter(m => 
-            (m.tier === tier || m.tier === tier + 1) && !m.isBoss
+        const monsters = Object.values(Sherwood.Monsters || {});
+        const dungeonMonsters = monsters.filter(m => 
+            m && (m.tier === tier || m.tier === tier + 1) && !m.isBoss
         );
         
         if (dungeonMonsters.length === 0) {
@@ -415,8 +400,9 @@ Sherwood.Dungeon = {
     
     _updateVisibility(x, y) {
         const d = this._dungeon;
+        if (!d) return;
         const size = d.size;
-        const radius = 2; // Радиус видимости
+        const radius = 2;
         
         for (let dy = -radius; dy <= radius; dy++) {
             for (let dx = -radius; dx <= radius; dx++) {
@@ -443,7 +429,6 @@ Sherwood.Dungeon = {
         const dx = Math.abs(x - d.playerPos.x);
         const dy = Math.abs(y - d.playerPos.y);
         
-        // Можно ходить только на соседние клетки (вверх/вниз/влево/вправо)
         if (dx + dy !== 1) {
             return { success: false, reason: 'too_far' };
         }
@@ -453,19 +438,14 @@ Sherwood.Dungeon = {
             return { success: false, reason: 'wall' };
         }
         
-        // Нельзя наступать на врага (нужно атаковать)
         if (cell.type === 'enemy') {
             return { success: false, reason: 'enemy', monsterId: cell.monsterId };
         }
         
-        // Перемещаем игрока
         d.playerPos = { x, y };
         d.steps++;
-        
-        // Открываем видимость
         this._updateVisibility(x, y);
         
-        // Обновляем исследованные клетки
         let explored = 0;
         for (let gy = 0; gy < d.size; gy++) {
             for (let gx = 0; gx < d.size; gx++) {
@@ -474,7 +454,6 @@ Sherwood.Dungeon = {
         }
         d.exploredWalkable = explored;
         
-        // Обрабатываем клетку
         return this._processTile(cell, x, y);
     },
     
@@ -485,7 +464,6 @@ Sherwood.Dungeon = {
         const dx = Math.abs(x - d.playerPos.x);
         const dy = Math.abs(y - d.playerPos.y);
         
-        // Можно атаковать только соседнюю клетку
         if (dx + dy !== 1) {
             return { success: false, reason: 'too_far' };
         }
@@ -514,7 +492,7 @@ Sherwood.Dungeon = {
                     Sherwood.addResource('silver', cell.reward.silver);
                     
                     let item = null;
-                    if (Math.random() < 0.2) {
+                    if (Math.random() < 0.2 && Sherwood.EquipmentDB) {
                         const items = Sherwood.EquipmentDB.items.filter(it => it.grade === 'common');
                         if (items.length > 0) {
                             item = items[Math.floor(Math.random() * items.length)];
@@ -536,29 +514,30 @@ Sherwood.Dungeon = {
     },
     
     fightMonster(tile) {
-        if (!tile.monsterId) return null;
+        if (!tile || !tile.monsterId) return null;
         const battle = Sherwood.Combat.startPvE(tile.monsterId);
         if (battle) {
             battle.dungeonTile = tile;
             Sherwood.once('BATTLE_VICTORY', () => {
-                this._dungeon.monstersKilled++;
-                tile.type = 'floor';
-                tile.walkable = true;
-                tile.monsterId = null;
-                tile.monsterIcon = null;
-                tile.monsterName = null;
-                // После победы обновляем видимость
-                this._updateVisibility(this._dungeon.playerPos.x, this._dungeon.playerPos.y);
+                if (this._dungeon) {
+                    this._dungeon.monstersKilled++;
+                    tile.type = 'floor';
+                    tile.walkable = true;
+                    tile.monsterId = null;
+                    tile.monsterIcon = null;
+                    tile.monsterName = null;
+                    this._updateVisibility(this._dungeon.playerPos.x, this._dungeon.playerPos.y);
+                }
             });
-            Sherwood.once('BATTLE_DEFEAT', () => {});
         }
         return battle;
     },
     
     _calculateReward() {
         const d = this._dungeon;
-        const exploredPercent = d.exploredWalkable / d.totalWalkable;
+        if (!d) return null;
         
+        const exploredPercent = d.totalWalkable > 0 ? d.exploredWalkable / d.totalWalkable : 0;
         const killBonus = d.monstersKilled * 35;
         const chestBonus = d.chestsOpened * 55;
         const exploreBonus = Math.floor(exploredPercent * 200);
@@ -573,7 +552,6 @@ Sherwood.Dungeon = {
         Sherwood.addResource('silver', reward.silver);
         Sherwood.addExp(reward.exp);
         
-        // Бонус за полное исследование
         if (exploredPercent >= 0.85) {
             Sherwood.addResource('trophies', 5);
             reward.trophies = 5;
@@ -586,11 +564,12 @@ Sherwood.Dungeon = {
     getDungeon() { return this._dungeon; },
     
     leaveDungeon() {
-        if (this._dungeon?.status === 'active') {
+        if (this._dungeon && this._dungeon.status === 'active') {
             this._dungeon.status = 'abandoned';
-            // Штраф за выход
             const player = Sherwood.getPlayer();
-            player.stats.hp = Math.floor(player.stats.maxHp * 0.7);
+            if (player) {
+                player.stats.hp = Math.floor(player.stats.maxHp * 0.7);
+            }
         }
         this._dungeon = null;
     }
