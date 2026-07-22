@@ -14,7 +14,6 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-
         body {
             background: #0a0a0f;
             display: flex;
@@ -24,7 +23,6 @@
             font-family: 'Georgia', serif;
             overflow: hidden;
         }
-
         #game-container {
             width: 100%;
             max-width: 420px;
@@ -34,10 +32,8 @@
             background: #0a0a0f;
             overflow: hidden;
             border: 1px solid #2a2a3e;
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 60px rgba(0,0,0,0.9);
         }
-
-        /* ===== ФОН ===== */
         .bg-layer {
             position: absolute;
             top: 0;
@@ -47,91 +43,95 @@
             background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat;
             z-index: 0;
         }
-
-        /* ===== СТАТУИ — ЗА ПРЕДЕЛАМИ ЭКРАНА ===== */
+        /* СТАТУИ — ВСЕГДА СНАРУЖИ */
         .statue-left {
             position: absolute;
-            left: -15%;
+            left: -18%;
             top: 0;
-            width: 30%;
+            width: 35%;
             height: 100%;
             background: url('assets/backgrounds/left_statue_of_the_main_screen.png') center/contain no-repeat;
-            z-index: 1;
+            z-index: 20;
             pointer-events: none;
         }
-
         .statue-right {
             position: absolute;
-            right: -15%;
+            right: -18%;
             top: 0;
-            width: 30%;
+            width: 35%;
             height: 100%;
             background: url('assets/backgrounds/right_statue_of_the_main_screen.png') center/contain no-repeat;
-            z-index: 1;
+            z-index: 20;
             pointer-events: none;
         }
-
-        /* ===== РАЗДЕЛИТЕЛЬ ===== */
+        /* РАЗДЕЛИТЕЛИ */
         .divider-left {
             position: absolute;
-            left: 16%;
+            left: 15%;
             top: 0;
-            width: 8px;
+            width: 10px;
             height: 100%;
             background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        .divider-right {
-            position: absolute;
-            right: 16%;
-            top: 0;
-            width: 8px;
-            height: 100%;
-            background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        /* ===== АРКА ===== */
-        .arch-layer {
-            position: absolute;
-            bottom: 24%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50%;
-            height: 40%;
-            background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat;
             z-index: 3;
             pointer-events: none;
         }
-
-        /* ===== ГЕРОЙ ===== */
-        .hero-frame {
+        .divider-right {
             position: absolute;
-            bottom: 26%;
+            right: 15%;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
+            z-index: 3;
+            pointer-events: none;
+        }
+        /* АРКА — УВЕЛИЧЕНА, ОПУЩЕНА */
+        .arch-layer {
+            position: absolute;
+            bottom: 18%;
             left: 50%;
             transform: translateX(-50%);
-            width: 26%;
-            height: 32%;
+            width: 75%;
+            height: 55%;
+            background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat;
             z-index: 4;
+            pointer-events: none;
+        }
+        /* ГЕРОЙ — В АРКЕ, НЕ ЛЕТАЕТ */
+        .hero-frame {
+            position: absolute;
+            bottom: 22%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 35%;
+            height: 40%;
+            z-index: 5;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
+        }
+        /* ВИДЕО-РАМКА ЗА ГЕРОЕМ */
+        .hero-frame .video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: url('assets/animation/animation_frame_hero.webm') center/contain no-repeat;
             background-size: contain;
+            z-index: 0;
+            pointer-events: none;
         }
-
         .hero-frame img {
-            width: 75%;
-            height: 75%;
+            position: relative;
+            z-index: 1;
+            width: 70%;
+            height: 70%;
             object-fit: contain;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.15));
+            filter: drop-shadow(0 0 20px rgba(255,215,0,0.15));
         }
-
-        /* ===== ЗАГРУЗОЧНЫЙ ЭКРАН ===== */
+        /* ЗАГРУЗОЧНЫЙ ЭКРАН */
         .loading-screen {
             position: absolute;
             top: 0;
@@ -146,12 +146,10 @@
             transition: opacity 0.6s ease;
             pointer-events: all;
         }
-
         .loading-screen.hidden {
             opacity: 0;
             pointer-events: none;
         }
-
         .loading-screen .loading-bg {
             position: absolute;
             top: 0;
@@ -162,7 +160,6 @@
             z-index: 0;
             pointer-events: none;
         }
-
         .loading-screen .play-btn {
             position: relative;
             z-index: 1;
@@ -170,27 +167,20 @@
             border: none;
             cursor: pointer;
             transition: 0.2s;
-            width: 100px;
-            height: 100px;
-            margin-top: 80px;
+            width: 120px;
+            height: 120px;
+            margin-top: 100px;
         }
-
         .loading-screen .play-btn img {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            filter: drop-shadow(0 0 30px rgba(201, 168, 76, 0.3));
+            filter: drop-shadow(0 0 30px rgba(201,168,76,0.3));
         }
+        .loading-screen .play-btn:hover { transform: scale(1.05); }
+        .loading-screen .play-btn:active { transform: scale(0.95); }
 
-        .loading-screen .play-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .loading-screen .play-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* ===== ОСНОВНОЙ ИНТЕРФЕЙС ===== */
+        /* ОСНОВНОЙ ИНТЕРФЕЙС */
         .main-interface {
             position: absolute;
             top: 0;
@@ -201,13 +191,12 @@
             display: none;
             pointer-events: none;
         }
-
         .main-interface.active {
             display: block;
             pointer-events: all;
         }
 
-        /* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+        /* ВЕРХНЯЯ ПАНЕЛЬ */
         .top-panel {
             position: absolute;
             top: 3%;
@@ -219,32 +208,25 @@
             align-items: center;
             gap: 4px;
         }
-
         .top-panel .resource {
             width: 22%;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-
         .top-panel .resource img {
             width: 100%;
-            max-width: 40px;
+            max-width: 45px;
             height: auto;
         }
-
         .top-panel .resource span {
             color: #ffd700;
-            font-size: 0.65em;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+            font-size: 0.7em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
             margin-top: 2px;
             font-weight: bold;
         }
-
-        .top-panel .resource.silver span {
-            color: #c0c0c0;
-        }
-
+        .top-panel .resource.silver span { color: #c0c0c0; }
         .top-panel .exp-bar {
             flex: 1;
             display: flex;
@@ -252,99 +234,88 @@
             align-items: center;
             padding: 0 4px;
         }
-
         .top-panel .exp-bar img {
             width: 100%;
-            max-width: 120px;
+            max-width: 130px;
             height: auto;
         }
-
         .top-panel .exp-bar .level-text {
             color: #e0c080;
-            font-size: 0.55em;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+            font-size: 0.6em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
             margin-top: 2px;
             letter-spacing: 1px;
         }
 
-        /* ===== КНОПКИ ===== */
-        .left-buttons {
+        /* КНОПКИ — УВЕЛИЧЕНЫ, С ПОДПИСЯМИ */
+        .left-buttons, .right-buttons {
             position: absolute;
-            left: 2%;
-            top: 22%;
+            top: 20%;
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 3px;
-            width: 14%;
+            gap: 6px;
             pointer-events: all;
+            width: 16%;
         }
-
-        .right-buttons {
-            position: absolute;
-            right: 2%;
-            top: 22%;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            width: 14%;
-            pointer-events: all;
-        }
+        .left-buttons { left: 2%; }
+        .right-buttons { right: 2%; }
 
         .left-buttons .btn, .right-buttons .btn {
             width: 100%;
             aspect-ratio: 1/1;
             cursor: pointer;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(201, 168, 76, 0.2);
-            border-radius: 8px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(201,168,76,0.2);
+            border-radius: 10px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: 0.15s;
-            padding: 2px;
+            padding: 3px;
+            gap: 2px;
         }
-
         .left-buttons .btn img, .right-buttons .btn img {
-            width: 80%;
-            height: 80%;
+            width: 65%;
+            height: 65%;
             object-fit: contain;
         }
-
+        .left-buttons .btn .label, .right-buttons .btn .label {
+            color: #c9a84c;
+            font-size: 0.45em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+            text-align: center;
+            line-height: 1.1;
+        }
         .left-buttons .btn:hover, .right-buttons .btn:hover {
-            background: rgba(201, 168, 76, 0.15);
-            border-color: rgba(201, 168, 76, 0.5);
+            background: rgba(201,168,76,0.15);
+            border-color: rgba(201,168,76,0.5);
             transform: scale(1.05);
         }
+        .left-buttons .btn:active, .right-buttons .btn:active { transform: scale(0.9); }
 
-        .left-buttons .btn:active, .right-buttons .btn:active {
-            transform: scale(0.9);
-        }
-
-        /* ===== НИЖНИЕ СТАТЫ (ТВОИ ДОСКИ + ТВОИ ИКОНКИ) ===== */
+        /* НИЖНИЕ СТАТЫ — УВЕЛИЧЕНЫ, ОПУЩЕНЫ */
         .bottom-stats {
             position: absolute;
-            bottom: 3%;
+            bottom: 2%;
             left: 18%;
             right: 18%;
             z-index: 10;
             display: flex;
             justify-content: space-between;
-            gap: 8px;
+            gap: 10px;
             pointer-events: none;
         }
-
         .bottom-stats .stat-block {
             width: 46%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            padding: 4px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 6px 4px;
         }
-
         .bottom-stats .stat-block .stat-board {
             width: 100%;
             height: auto;
@@ -352,86 +323,79 @@
             flex-direction: column;
             align-items: center;
         }
-
         .bottom-stats .stat-block .stat-board img {
             width: 100%;
             height: auto;
             object-fit: contain;
         }
-
         .bottom-stats .stat-block .stat-icons {
             display: flex;
-            gap: 10px;
+            gap: 14px;
             align-items: center;
-            margin-top: -18px;
-            margin-bottom: 2px;
+            margin-top: -22px;
+            margin-bottom: 4px;
         }
-
         .bottom-stats .stat-block .stat-icons img {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             object-fit: contain;
         }
-
         .bottom-stats .stat-block .stat-values {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            font-size: 0.6em;
+            gap: 16px;
+            font-size: 0.7em;
             color: #e0c080;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
             width: 100%;
             margin-top: -4px;
         }
-
         .bottom-stats .stat-block .stat-values span {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 2px 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 12px;
             border-radius: 4px;
-            border: 1px solid rgba(201, 168, 76, 0.1);
+            border: 1px solid rgba(201,168,76,0.1);
         }
-
         .stat-values .attack { color: #f44336; }
         .stat-values .defense { color: #2196f3; }
         .stat-values .agility { color: #ff9800; }
         .stat-values .hp { color: #4caf50; }
 
-        /* ===== ПЛЕЙСХОЛДЕР ===== */
+        /* ПЛЕЙСХОЛДЕР С ФОНОМ РАЗДЕЛА */
         .placeholder-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(10, 10, 15, 0.92);
             z-index: 100;
             color: #e0c080;
             font-family: 'Georgia', serif;
             padding: 20px;
             pointer-events: all;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,15,0.85);
         }
-
-        .placeholder-screen .icon {
-            font-size: 3em;
-            margin-bottom: 16px;
+        .placeholder-screen .bg-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: url('assets/backgrounds/quest_chapter_1.jpeg') center/cover no-repeat;
+            opacity: 0.3;
         }
-        .placeholder-screen .title {
-            font-size: 1.2em;
-            margin-bottom: 8px;
-        }
-        .placeholder-screen .sub {
-            font-size: 0.7em;
-            color: #888;
-        }
-
+        .placeholder-screen .icon { font-size: 3em; margin-bottom: 16px; }
+        .placeholder-screen .title { font-size: 1.2em; margin-bottom: 8px; }
+        .placeholder-screen .sub { font-size: 0.7em; color: #888; }
         .placeholder-screen .back-btn {
             margin-top: 20px;
-            background: rgba(201, 168, 76, 0.2);
-            border: 1px solid rgba(201, 168, 76, 0.3);
+            background: rgba(201,168,76,0.2);
+            border: 1px solid rgba(201,168,76,0.3);
             color: #e0c080;
             padding: 8px 24px;
             border-radius: 20px;
@@ -440,43 +404,36 @@
             font-size: 0.8em;
             transition: 0.15s;
         }
-
-        .placeholder-screen .back-btn:hover {
-            background: rgba(201, 168, 76, 0.3);
-        }
+        .placeholder-screen .back-btn:hover { background: rgba(201,168,76,0.3); }
 
         @media (max-width: 400px) {
             .top-panel .resource span { font-size: 0.5em; }
-            .top-panel .exp-bar .level-text { font-size: 0.45em; }
-            .bottom-stats .stat-block .stat-values { font-size: 0.45em; gap: 6px; }
-            .bottom-stats .stat-block .stat-icons img { width: 18px; height: 18px; }
-            .bottom-stats .stat-block .stat-icons { margin-top: -14px; }
-            .loading-screen .play-btn { width: 70px; height: 70px; margin-top: 60px; }
+            .top-panel .exp-bar .level-text { font-size: 0.5em; }
+            .bottom-stats .stat-block .stat-values { font-size: 0.55em; gap: 8px; }
+            .bottom-stats .stat-block .stat-icons img { width: 22px; height: 22px; }
+            .bottom-stats .stat-block .stat-icons { margin-top: -18px; }
+            .left-buttons .btn .label, .right-buttons .btn .label { font-size: 0.4em; }
+            .loading-screen .play-btn { width: 90px; height: 90px; margin-top: 70px; }
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-
         <!-- ФОН -->
         <div class="bg-layer"></div>
-
-        <!-- СТАТУИ ЗА ПРЕДЕЛАМИ -->
+        <!-- СТАТУИ СНАРУЖИ -->
         <div class="statue-left"></div>
         <div class="statue-right"></div>
-
         <!-- РАЗДЕЛИТЕЛИ -->
         <div class="divider-left"></div>
         <div class="divider-right"></div>
-
-        <!-- АРКА -->
+        <!-- АРКА (УВЕЛИЧЕНА, ОПУЩЕНА) -->
         <div class="arch-layer"></div>
-
-        <!-- ГЕРОЙ -->
-        <div class="hero-frame">
+        <!-- ГЕРОЙ + ВИДЕО-РАМКА -->
+        <div class="hero-frame" id="heroFrame">
+            <div class="video-bg"></div>
             <img src="assets/hero_skins/skin_1_basic.png" alt="Герой">
         </div>
-
         <!-- ЗАГРУЗОЧНЫЙ ЭКРАН -->
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-bg"></div>
@@ -484,43 +441,38 @@
                 <img src="assets/all_buttons/play.png" alt="Играть">
             </button>
         </div>
-
         <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
         <div class="main-interface" id="mainInterface">
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
             <div class="top-panel">
                 <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
                 <div class="exp-bar"><img src="assets/interface/hero_experience_scale.png" alt="Опыт"><div class="level-text">УРОВЕНЬ <span id="level-display">1</span></div></div>
                 <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
             </div>
-
-            <!-- ЛЕВЫЕ КНОПКИ (ПЕРВАЯ — HOME) -->
+            <!-- ЛЕВЫЕ КНОПКИ (С ПОДПИСЯМИ) -->
             <div class="left-buttons">
-                <div class="btn" data-action="home"><img src="assets/all_buttons/home.png" alt="Главная"></div>
-                <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png" alt="Подземка"></div>
-                <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png" alt="Рейд"></div>
-                <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png" alt="Портал"></div>
-                <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png" alt="Арена"></div>
-                <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png" alt="Таверна"></div>
-                <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"></div>
+                <div class="btn" data-action="quest"><img src="assets/all_buttons/play.png" alt="Квест"><span class="label">Квест</span></div>
+                <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png" alt="Подземка"><span class="label">Подземка</span></div>
+                <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png" alt="Рейд"><span class="label">Рейд</span></div>
+                <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png" alt="Портал"><span class="label">Портал</span></div>
+                <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png" alt="Арена"><span class="label">Арена</span></div>
+                <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png" alt="Таверна"><span class="label">Таверна</span></div>
+                <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"><span class="label">Настройки</span></div>
             </div>
-
-            <!-- ПРАВЫЕ КНОПКИ -->
+            <!-- ПРАВЫЕ КНОПКИ (С ПОДПИСЯМИ) -->
             <div class="right-buttons">
-                <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png" alt="Ежедневные"></div>
-                <div class="btn" data-action="training"><img src="assets/all_buttons/training.png" alt="Тренировка"></div>
-                <div class="btn" data-action="forge"><img src="assets/all_buttons/forge.png" alt="Кузница"></div>
-                <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png" alt="Сумка"></div>
-                <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png" alt="Рынок"></div>
-                <div class="btn" data-action="bestiary"><img src="assets/all_buttons/bestiary.png" alt="Бестиарий"></div>
-                <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"></div>
+                <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png" alt="Ежедневные"><span class="label">Ежедневные</span></div>
+                <div class="btn" data-action="training"><img src="assets/all_buttons/training.png" alt="Тренировка"><span class="label">Тренировка</span></div>
+                <div class="btn" data-action="forge"><img src="assets/all_buttons/forge.png" alt="Кузница"><span class="label">Кузница</span></div>
+                <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png" alt="Сумка"><span class="label">Сумка</span></div>
+                <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png" alt="Рынок"><span class="label">Рынок</span></div>
+                <div class="btn" data-action="bestiary"><img src="assets/all_buttons/bestiary.png" alt="Бестиарий"><span class="label">Бестиарий</span></div>
+                <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"><span class="label">Профиль</span></div>
             </div>
-
-            <!-- НИЖНИЕ СТАТЫ (ТВОИ ДОСКИ + ТВОИ ИКОНКИ) -->
+            <!-- НИЖНИЕ СТАТЫ (УВЕЛИЧЕНЫ, ОПУЩЕНЫ) -->
             <div class="bottom-stats">
                 <div class="stat-block">
-                    <div class="stat-board">
-                        <img src="assets/interface/damage_and_armor_stat_board.png" alt="Урон и защита">
-                    </div>
+                    <div class="stat-board"><img src="assets/interface/damage_and_armor_stat_board.png" alt="Урон и защита"></div>
                     <div class="stat-icons">
                         <img src="assets/interface/icon_power.png" alt="Урон">
                         <img src="assets/interface/icon_defense.png" alt="Защита">
@@ -531,9 +483,7 @@
                     </div>
                 </div>
                 <div class="stat-block">
-                    <div class="stat-board">
-                        <img src="assets/interface/stat_and_health_board.png" alt="Ловкость и здоровье">
-                    </div>
+                    <div class="stat-board"><img src="assets/interface/stat_and_health_board.png" alt="Ловкость и здоровье"></div>
                     <div class="stat-icons">
                         <img src="assets/interface/icon_dexterity.png" alt="Ловкость">
                         <img src="assets/interface/icon_health.png" alt="Здоровье">
@@ -545,9 +495,7 @@
                 </div>
             </div>
         </div>
-
     </div>
-
     <script>
         const SherwoodUI = {
             init() {
@@ -560,7 +508,6 @@
                 this.updateDisplay();
                 console.log('🏹 Sherwood UI инициализирован!');
             },
-
             bindPlayButton() {
                 this.playBtn.addEventListener('click', () => {
                     this.loadingScreen.classList.add('hidden');
@@ -568,21 +515,16 @@
                     console.log('🎮 Игра запущена!');
                 });
             },
-
             bindButtons() {
                 document.querySelectorAll('.btn').forEach(el => {
                     el.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const action = el.dataset.action;
-                        if (action && this[action]) {
-                            this[action]();
-                        } else {
-                            console.log('🔘 Кнопка:', action || 'без action');
-                        }
+                        if (action && this[action]) this[action]();
+                        else console.log('🔘 Кнопка:', action || 'без action');
                     });
                 });
             },
-
             updateDisplay(data) {
                 const d = data || { gold: 1234, silver: 5678, level: 5, attack: 124, defense: 87, agility: 43, hp: 320, maxHp: 500 };
                 document.getElementById('gold-display').textContent = this.formatNumber(d.gold);
@@ -593,33 +535,29 @@
                 document.querySelector('.stat-values .agility').textContent = d.agility;
                 document.querySelector('.stat-values .hp').textContent = d.hp + '/' + d.maxHp;
             },
-
-            formatNumber(n) {
-                return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-            },
-
-            home() { this.showPlaceholder('🏠 Главный экран'); },
-            subway() { this.showPlaceholder('🏚️ Подземка'); },
-            raid() { this.showPlaceholder('⚔️ Рейд'); },
-            portal() { this.showPlaceholder('🌀 Порталы'); },
-            arena() { this.showPlaceholder('🏟️ Арена'); },
-            tavern() { this.showPlaceholder('🍺 Таверна'); },
-            daily() { this.showPlaceholder('📋 Ежедневные задания'); },
-            training() { this.showPlaceholder('💪 Тренировка'); },
-            forge() { this.showPlaceholder('⚒️ Кузница'); },
-            bag() { this.showPlaceholder('🎒 Сумка'); },
-            market() { this.showPlaceholder('💰 Рынок'); },
-            bestiary() { this.showPlaceholder('📖 Бестиарий'); },
-            profile() { this.showPlaceholder('👤 Профиль'); },
-            settings() { this.showPlaceholder('⚙️ Настройки'); },
-
-            showPlaceholder(title) {
+            formatNumber(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); },
+            quest() { this.showPlaceholder('📜 Квесты', 'quest_chapter_1.jpeg'); },
+            subway() { this.showPlaceholder('🏚️ Подземка', 'underground_1_floor_1.jpg'); },
+            raid() { this.showPlaceholder('⚔️ Рейд', 'subway_battle3.jpeg'); },
+            portal() { this.showPlaceholder('🌀 Порталы', 'portal_1.jpeg'); },
+            arena() { this.showPlaceholder('🏟️ Арена', 'arena.jpeg'); },
+            tavern() { this.showPlaceholder('🍺 Таверна', 'tavern.jpeg'); },
+            daily() { this.showPlaceholder('📋 Ежедневные задания', 'tasks.jpeg'); },
+            training() { this.showPlaceholder('💪 Тренировка', 'training.jpeg'); },
+            forge() { this.showPlaceholder('⚒️ Кузница', 'forge.jpeg'); },
+            bag() { this.showPlaceholder('🎒 Сумка', 'bag.jpeg'); },
+            market() { this.showPlaceholder('💰 Рынок', 'market.jpeg'); },
+            bestiary() { this.showPlaceholder('📖 Бестиарий', 'bestiary.jpeg'); },
+            profile() { this.showPlaceholder('👤 Профиль', 'character_page.jpeg'); },
+            settings() { this.showPlaceholder('⚙️ Настройки', 'settings_page.jpeg'); },
+            showPlaceholder(title, bg) {
                 this.mainInterface.classList.remove('active');
                 const old = document.querySelector('.placeholder-screen');
                 if (old) old.remove();
                 const div = document.createElement('div');
                 div.className = 'placeholder-screen';
                 div.innerHTML = `
+                    <div class="bg-placeholder" style="background-image: url('assets/backgrounds/${bg || 'homepage_screen.jpeg'}');"></div>
                     <div class="icon">🏗️</div>
                     <div class="title">${title}</div>
                     <div class="sub">В разработке</div>
@@ -628,7 +566,6 @@
                 this.container.appendChild(div);
                 console.log('📌 Плейсхолдер:', title);
             },
-
             backToMenu() {
                 const placeholder = document.querySelector('.placeholder-screen');
                 if (placeholder) placeholder.remove();
@@ -636,10 +573,7 @@
                 console.log('🏠 Вернулись в меню');
             }
         };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            SherwoodUI.init();
-        });
+        document.addEventListener('DOMContentLoaded', () => { SherwoodUI.init(); });
     </script>
 </body>
 </html>
