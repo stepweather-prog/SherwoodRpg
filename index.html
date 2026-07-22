@@ -34,6 +34,8 @@
             border: 1px solid #2a2a3e;
             box-shadow: 0 0 60px rgba(0,0,0,0.9);
         }
+
+        /* ===== ФОН ===== */
         .bg-layer {
             position: absolute;
             top: 0;
@@ -43,75 +45,78 @@
             background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat;
             z-index: 0;
         }
-        /* СТАТУИ — ВСЕГДА СНАРУЖИ */
+
+        /* ===== СТАТУИ — ЗА ПРЕДЕЛАМИ ЭКРАНА ===== */
         .statue-left {
             position: absolute;
-            left: -18%;
+            left: -25%;
             top: 0;
-            width: 35%;
+            width: 45%;
             height: 100%;
             background: url('assets/backgrounds/left_statue_of_the_main_screen.png') center/contain no-repeat;
-            z-index: 20;
+            z-index: 1;
             pointer-events: none;
         }
         .statue-right {
             position: absolute;
-            right: -18%;
+            right: -25%;
             top: 0;
-            width: 35%;
+            width: 45%;
             height: 100%;
             background: url('assets/backgrounds/right_statue_of_the_main_screen.png') center/contain no-repeat;
-            z-index: 20;
+            z-index: 1;
             pointer-events: none;
         }
-        /* РАЗДЕЛИТЕЛИ */
+
+        /* ===== РАЗДЕЛИТЕЛИ ===== */
         .divider-left {
             position: absolute;
-            left: 15%;
+            left: 14%;
             top: 0;
-            width: 10px;
+            width: 12px;
             height: 100%;
             background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
-            z-index: 3;
+            z-index: 2;
             pointer-events: none;
         }
         .divider-right {
             position: absolute;
-            right: 15%;
+            right: 14%;
             top: 0;
-            width: 10px;
+            width: 12px;
             height: 100%;
             background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* ===== АРКА — УВЕЛИЧЕНА В 2 РАЗА ===== */
+        .arch-layer {
+            position: absolute;
+            bottom: 14%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            height: 60%;
+            background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat;
             z-index: 3;
             pointer-events: none;
         }
-        /* АРКА — УВЕЛИЧЕНА, ОПУЩЕНА */
-        .arch-layer {
+
+        /* ===== ГЕРОЙ — УВЕЛИЧЕН В 3 РАЗА ===== */
+        .hero-frame {
             position: absolute;
             bottom: 18%;
             left: 50%;
             transform: translateX(-50%);
-            width: 75%;
-            height: 55%;
-            background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat;
+            width: 45%;
+            height: 45%;
             z-index: 4;
-            pointer-events: none;
-        }
-        /* ГЕРОЙ — В АРКЕ, НЕ ЛЕТАЕТ */
-        .hero-frame {
-            position: absolute;
-            bottom: 22%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 35%;
-            height: 40%;
-            z-index: 5;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
         }
-        /* ВИДЕО-РАМКА ЗА ГЕРОЕМ */
         .hero-frame .video-bg {
             position: absolute;
             top: 0;
@@ -126,12 +131,13 @@
         .hero-frame img {
             position: relative;
             z-index: 1;
-            width: 70%;
-            height: 70%;
+            width: 75%;
+            height: 75%;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(255,215,0,0.15));
         }
-        /* ЗАГРУЗОЧНЫЙ ЭКРАН */
+
+        /* ===== ЗАГРУЗОЧНЫЙ ЭКРАН ===== */
         .loading-screen {
             position: absolute;
             top: 0;
@@ -180,7 +186,7 @@
         .loading-screen .play-btn:hover { transform: scale(1.05); }
         .loading-screen .play-btn:active { transform: scale(0.95); }
 
-        /* ОСНОВНОЙ ИНТЕРФЕЙС */
+        /* ===== ОСНОВНОЙ ИНТЕРФЕЙС ===== */
         .main-interface {
             position: absolute;
             top: 0;
@@ -196,12 +202,12 @@
             pointer-events: all;
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
+        /* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
         .top-panel {
             position: absolute;
             top: 3%;
-            left: 20%;
-            right: 20%;
+            left: 18%;
+            right: 18%;
             z-index: 10;
             display: flex;
             justify-content: space-between;
@@ -247,7 +253,7 @@
             letter-spacing: 1px;
         }
 
-        /* КНОПКИ — УВЕЛИЧЕНЫ, С ПОДПИСЯМИ */
+        /* ===== КНОПКИ — С ПОДПИСЯМИ ===== */
         .left-buttons, .right-buttons {
             position: absolute;
             top: 20%;
@@ -295,16 +301,16 @@
         }
         .left-buttons .btn:active, .right-buttons .btn:active { transform: scale(0.9); }
 
-        /* НИЖНИЕ СТАТЫ — УВЕЛИЧЕНЫ, ОПУЩЕНЫ */
+        /* ===== НИЖНИЕ СТАТЫ — УВЕЛИЧЕНЫ, ОПУЩЕНЫ ===== */
         .bottom-stats {
             position: absolute;
-            bottom: 2%;
-            left: 18%;
-            right: 18%;
+            bottom: 0.5%;
+            left: 16%;
+            right: 16%;
             z-index: 10;
             display: flex;
             justify-content: space-between;
-            gap: 10px;
+            gap: 12px;
             pointer-events: none;
         }
         .bottom-stats .stat-block {
@@ -312,7 +318,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.15);
             border-radius: 8px;
             padding: 6px 4px;
         }
@@ -330,21 +336,21 @@
         }
         .bottom-stats .stat-block .stat-icons {
             display: flex;
-            gap: 14px;
+            gap: 16px;
             align-items: center;
-            margin-top: -22px;
+            margin-top: -26px;
             margin-bottom: 4px;
         }
         .bottom-stats .stat-block .stat-icons img {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             object-fit: contain;
         }
         .bottom-stats .stat-block .stat-values {
             display: flex;
             justify-content: center;
-            gap: 16px;
-            font-size: 0.7em;
+            gap: 18px;
+            font-size: 0.75em;
             color: #e0c080;
             text-shadow: 0 0 10px rgba(0,0,0,0.9);
             width: 100%;
@@ -352,7 +358,7 @@
         }
         .bottom-stats .stat-block .stat-values span {
             background: rgba(0,0,0,0.5);
-            padding: 2px 12px;
+            padding: 2px 14px;
             border-radius: 4px;
             border: 1px solid rgba(201,168,76,0.1);
         }
@@ -361,7 +367,7 @@
         .stat-values .agility { color: #ff9800; }
         .stat-values .hp { color: #4caf50; }
 
-        /* ПЛЕЙСХОЛДЕР С ФОНОМ РАЗДЕЛА */
+        /* ===== ПЛЕЙСХОЛДЕР С ФОНОМ ===== */
         .placeholder-screen {
             position: absolute;
             top: 0;
@@ -377,7 +383,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(10,10,15,0.85);
         }
         .placeholder-screen .bg-placeholder {
             position: absolute;
@@ -387,7 +392,7 @@
             height: 100%;
             z-index: -1;
             background: url('assets/backgrounds/quest_chapter_1.jpeg') center/cover no-repeat;
-            opacity: 0.3;
+            opacity: 0.6;
         }
         .placeholder-screen .icon { font-size: 3em; margin-bottom: 16px; }
         .placeholder-screen .title { font-size: 1.2em; margin-bottom: 8px; }
@@ -409,9 +414,9 @@
         @media (max-width: 400px) {
             .top-panel .resource span { font-size: 0.5em; }
             .top-panel .exp-bar .level-text { font-size: 0.5em; }
-            .bottom-stats .stat-block .stat-values { font-size: 0.55em; gap: 8px; }
-            .bottom-stats .stat-block .stat-icons img { width: 22px; height: 22px; }
-            .bottom-stats .stat-block .stat-icons { margin-top: -18px; }
+            .bottom-stats .stat-block .stat-values { font-size: 0.6em; gap: 10px; }
+            .bottom-stats .stat-block .stat-icons img { width: 26px; height: 26px; }
+            .bottom-stats .stat-block .stat-icons { margin-top: -22px; }
             .left-buttons .btn .label, .right-buttons .btn .label { font-size: 0.4em; }
             .loading-screen .play-btn { width: 90px; height: 90px; margin-top: 70px; }
         }
@@ -427,10 +432,10 @@
         <!-- РАЗДЕЛИТЕЛИ -->
         <div class="divider-left"></div>
         <div class="divider-right"></div>
-        <!-- АРКА (УВЕЛИЧЕНА, ОПУЩЕНА) -->
+        <!-- АРКА (УВЕЛИЧЕНА) -->
         <div class="arch-layer"></div>
-        <!-- ГЕРОЙ + ВИДЕО-РАМКА -->
-        <div class="hero-frame" id="heroFrame">
+        <!-- ГЕРОЙ (УВЕЛИЧЕН) + ВИДЕО-РАМКА -->
+        <div class="hero-frame">
             <div class="video-bg"></div>
             <img src="assets/hero_skins/skin_1_basic.png" alt="Герой">
         </div>
