@@ -2,85 +2,436 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1a2a1a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Sherwood RPG</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="assets/icons/01icon.png">
+    <!-- ИКОНКА ВКЛАДКИ (favicon) -->
+    <link rel="icon" type="image/png" href="assets/interface/logo.png">
     <style>
-        :root, [data-theme="forest"] { 
-            --bg-primary: #1a2a1a; --bg-primary-rgb: 26, 42, 26;
-            --bg-secondary: #0d1a0d; --bg-secondary-rgb: 13, 26, 13;
-            --accent: #6b9b5a; --accent-rgb: 107, 155, 90;
-            --accent-light: #8bc47a; --accent-light-rgb: 139, 196, 122;
-            --text: #c8e0c8; --text-bright: #d8f0d8; --text-dim: #709870;
-            --border: #6b9b5a;
-            --btn-bg: rgba(107,155,90,0.1); --btn-border: rgba(107,155,90,0.3);
-            --danger: #f44336; --seeding-color: #4caf50;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
         }
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        html, body { height:100%; overflow:hidden; font-family:'Segoe UI','Inter',sans-serif; font-size:clamp(14px,2.5vw,16px); }
-        body { background:var(--bg-primary); color:var(--text); display:flex; flex-direction:column; height:100dvh; }
-        #game-container { width:100%; height:100%; overflow-y:auto; }
+
+        body {
+            background: #0a0a0f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 900px;
+            position: relative;
+            background: #1a1a2e;
+            overflow: hidden;
+            border: 1px solid #2a2a3e;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+        }
+
+        /* ===== ФОН ===== */
+        #game-container .bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat;
+            z-index: 0;
+        }
+
+        /* ===== СТАТУИ ===== */
+        #game-container .statue-left {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 18%;
+            height: 100%;
+            background: url('assets/backgrounds/left_statue_of_the_main_screen.png') center/contain no-repeat;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #game-container .statue-right {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 18%;
+            height: 100%;
+            background: url('assets/backgrounds/right_statue_of_the_main_screen.png') center/contain no-repeat;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ===== РАЗДЕЛИТЕЛИ ===== */
+        #game-container .divider-left {
+            position: absolute;
+            left: 16%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: rgba(201, 168, 76, 0.15);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #game-container .divider-right {
+            position: absolute;
+            right: 16%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: rgba(201, 168, 76, 0.15);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ===== ЛЕСТНИЦА С АРКОЙ ===== */
+        #game-container .arch-layer {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55%;
+            height: 45%;
+            background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* ===== РАМКА ГЕРОЯ ===== */
+        #game-container .hero-frame {
+            position: absolute;
+            bottom: 26%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28%;
+            height: 30%;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        #game-container .hero-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.15));
+        }
+
+        /* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+        #game-container .top-panel {
+            position: absolute;
+            top: 4%;
+            left: 18%;
+            right: 18%;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #game-container .top-panel .resource {
+            width: 22%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-container .top-panel .resource img {
+            width: 100%;
+            max-width: 40px;
+            height: auto;
+        }
+
+        #game-container .top-panel .resource span {
+            color: #ffd700;
+            font-size: 0.65em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+            margin-top: 2px;
+            font-weight: bold;
+        }
+
+        #game-container .top-panel .resource.silver span {
+            color: #c0c0c0;
+        }
+
+        #game-container .top-panel .exp-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 4px;
+        }
+
+        #game-container .top-panel .exp-bar img {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+        }
+
+        #game-container .top-panel .exp-bar .level-text {
+            color: #e0c080;
+            font-size: 0.55em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* ===== ЛЕВЫЕ КНОПКИ ===== */
+        #game-container .left-buttons {
+            position: absolute;
+            left: 3%;
+            top: 22%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            width: 13%;
+        }
+
+        #game-container .left-buttons .btn {
+            width: 100%;
+            aspect-ratio: 1/1;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+            padding: 2px;
+        }
+
+        #game-container .left-buttons .btn img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
+
+        #game-container .left-buttons .btn:hover {
+            background: rgba(201, 168, 76, 0.15);
+            border-color: rgba(201, 168, 76, 0.5);
+            transform: scale(1.05);
+        }
+
+        #game-container .left-buttons .btn:active {
+            transform: scale(0.9);
+        }
+
+        /* ===== ПРАВЫЕ КНОПКИ ===== */
+        #game-container .right-buttons {
+            position: absolute;
+            right: 3%;
+            top: 22%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            width: 13%;
+        }
+
+        #game-container .right-buttons .btn {
+            width: 100%;
+            aspect-ratio: 1/1;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(201, 168, 76, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+            padding: 2px;
+        }
+
+        #game-container .right-buttons .btn img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
+
+        #game-container .right-buttons .btn:hover {
+            background: rgba(201, 168, 76, 0.15);
+            border-color: rgba(201, 168, 76, 0.5);
+            transform: scale(1.05);
+        }
+
+        #game-container .right-buttons .btn:active {
+            transform: scale(0.9);
+        }
+
+        /* ===== НИЖНИЕ СТАТЫ ===== */
+        #game-container .bottom-stats {
+            position: absolute;
+            bottom: 3%;
+            left: 18%;
+            right: 18%;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        #game-container .bottom-stats .stat-block {
+            width: 44%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-container .bottom-stats .stat-block .stat-label {
+            color: #c9a84c;
+            font-size: 0.45em;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        #game-container .bottom-stats .stat-block .stat-values {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            font-size: 0.6em;
+            color: #e0c080;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+            width: 100%;
+        }
+
+        #game-container .bottom-stats .stat-block .stat-values span {
+            background: rgba(0,0,0,0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(201, 168, 76, 0.1);
+        }
+
+        .stat-values .attack { color: #f44336; }
+        .stat-values .defense { color: #2196f3; }
+        .stat-values .agility { color: #ff9800; }
+        .stat-values .hp { color: #4caf50; }
+
+        /* ===== АДАПТИВ ===== */
+        @media (max-width: 400px) {
+            #game-container .top-panel .resource span { font-size: 0.5em; }
+            #game-container .top-panel .exp-bar .level-text { font-size: 0.45em; }
+            #game-container .bottom-stats .stat-block .stat-values { font-size: 0.5em; gap: 6px; }
+            #game-container .bottom-stats .stat-block .stat-label { font-size: 0.4em; }
+        }
     </style>
 </head>
 <body>
-    <div id="game-container"></div>
+    <div id="game-container">
 
-    <!-- Firebase -->
-    <script src="firebase-config.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue, off, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        const firebaseConfig = window.FIREBASE_CONFIG || {};
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-        signInAnonymously(auth).then(() => console.log('🔥 Firebase: OK')).catch(err => console.error('Firebase error:', err));
-        window.firebaseDB = db; window.firebaseRef = ref; window.firebaseSet = set; 
-        window.firebaseGet = get; window.firebaseOnValue = onValue; window.firebaseOff = off; 
-        window.firebaseServerTimestamp = serverTimestamp;
-    </script>
+        <!-- ФОН -->
+        <div class="bg-layer"></div>
 
-    <!-- P2P + Crypto (для будущего PvP) -->
-    <script src="crypto-worker.js"></script>
-    <script src="p2ppong.js"></script>
+        <!-- СТАТУИ -->
+        <div class="statue-left"></div>
+        <div class="statue-right"></div>
 
-    <!-- Sherwood Game Engine -->
-    <script src="js/sherwood/core.js"></script>
-    <script src="js/sherwood/models.js"></script>
-    <script src="js/sherwood/data/monsters.js"></script>
-    <script src="js/sherwood/data/equipment.js"></script>
-    <script src="js/sherwood/router.js"></script>
-    <script src="js/sherwood/combat.js"></script>
-    <script src="js/sherwood/quests.js"></script>
-    <script src="js/sherwood/dungeon.js"></script>
-    <script src="js/sherwood/arena.js"></script>
-    <script src="js/sherwood/tavern.js"></script>
-    <script src="js/sherwood/blackmarket.js"></script>
-    <script src="js/sherwood/events.js"></script>
-    <script src="js/sherwood/ui.js"></script>
+        <!-- РАЗДЕЛИТЕЛИ -->
+        <div class="divider-left"></div>
+        <div class="divider-right"></div>
+
+        <!-- ЛЕСТНИЦА С АРКОЙ -->
+        <div class="arch-layer"></div>
+
+        <!-- РАМКА ГЕРОЯ -->
+        <div class="hero-frame">
+            <img src="assets/hero_skins/skin_1_basic.png" alt="Герой" id="hero-skin">
+        </div>
+
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+        <div class="top-panel">
+            <div class="resource">
+                <img src="assets/interface/gold_plate.png" alt="Золото">
+                <span id="gold-display">1 234</span>
+            </div>
+            <div class="exp-bar">
+                <img src="assets/interface/hero_experience_scale.png" alt="Опыт">
+                <div class="level-text">УРОВЕНЬ <span id="level-display">5</span></div>
+            </div>
+            <div class="resource silver">
+                <img src="assets/interface/silver_plaque.png" alt="Серебро">
+                <span id="silver-display">5 678</span>
+            </div>
+        </div>
+
+        <!-- ЛЕВЫЕ КНОПКИ (7 штук) -->
+        <div class="left-buttons">
+            <div class="btn" data-action="quest"><img src="assets/all_buttons/play.png" alt="Квест"></div>
+            <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png" alt="Подземка"></div>
+            <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png" alt="Рейд"></div>
+            <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png" alt="Портал"></div>
+            <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png" alt="Арена"></div>
+            <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png" alt="Таверна"></div>
+            <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"></div>
+        </div>
+
+        <!-- ПРАВЫЕ КНОПКИ (7 штук) -->
+        <div class="right-buttons">
+            <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png" alt="Ежедневные"></div>
+            <div class="btn" data-action="training"><img src="assets/all_buttons/training.png" alt="Тренировка"></div>
+            <div class="btn" data-action="forge"><img src="assets/all_buttons/forge.png" alt="Кузница"></div>
+            <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png" alt="Сумка"></div>
+            <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png" alt="Рынок"></div>
+            <div class="btn" data-action="bestiary"><img src="assets/all_buttons/bestiary.png" alt="Бестиарий"></div>
+            <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"></div>
+        </div>
+
+        <!-- НИЖНИЕ СТАТЫ -->
+        <div class="bottom-stats">
+            <div class="stat-block">
+                <div class="stat-label">Урон / Защита</div>
+                <div class="stat-values">
+                    <span class="attack">⚔️ 124</span>
+                    <span class="defense">🛡️ 87</span>
+                </div>
+            </div>
+            <div class="stat-block">
+                <div class="stat-label">Ловкость / Здоровье</div>
+                <div class="stat-values">
+                    <span class="agility">💨 43</span>
+                    <span class="hp">❤️ 320</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
     <script>
-        (function startGame() {
-            if (window.Sherwood) {
-                Sherwood.init().then(() => {
-                    Sherwood.UI.init();
-                    Sherwood.UI.showMainMenu();
-                    Sherwood.Router.navigate('main_menu');
-                    Sherwood.Quests.init();
-                    Sherwood.Dungeon.init();
-                    Sherwood.Arena.init();
-                    Sherwood.Tavern.init();
-                    Sherwood.BlackMarket.init();
-                    Sherwood.Events.init();
-                    console.log('🏹 Sherwood RPG готов!');
-                });
-            } else {
-                setTimeout(startGame, 100);
-            }
-        })();
+        // ===== ОБРАБОТЧИКИ КНОПОК =====
+        document.querySelectorAll('.btn').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const action = this.dataset.action;
+                console.log('🔘 Нажата кнопка:', action);
+                // Здесь будет переключение экранов
+            });
+        });
+
+        // ===== ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ =====
+        document.getElementById('gold-display').textContent = '1 234';
+        document.getElementById('silver-display').textContent = '5 678';
+        document.getElementById('level-display').textContent = '5';
+        document.querySelector('.stat-values .attack').textContent = '⚔️ 124';
+        document.querySelector('.stat-values .defense').textContent = '🛡️ 87';
+        document.querySelector('.stat-values .agility').textContent = '💨 43';
+        document.querySelector('.stat-values .hp').textContent = '❤️ 320';
+
+        console.log('🏹 Sherwood RPG — главный экран загружен!');
     </script>
 </body>
 </html>
