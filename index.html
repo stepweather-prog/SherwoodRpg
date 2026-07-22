@@ -49,12 +49,12 @@
             z-index: 0;
         }
 
-        /* ===== СТАТУИ (передний слой, зажим) ===== */
+        /* ===== СТАТУИ (СНАРУЖИ, ЗА ГРАНИЦАМИ) ===== */
         .statue-left {
             position: absolute;
-            left: 0;
+            left: -10%;
             top: 0;
-            width: 18%;
+            width: 30%;
             height: 100%;
             background: url('assets/backgrounds/left_statue_of_the_main_screen.png') center/contain no-repeat;
             z-index: 2;
@@ -63,77 +63,79 @@
 
         .statue-right {
             position: absolute;
-            right: 0;
+            right: -10%;
             top: 0;
-            width: 18%;
+            width: 30%;
             height: 100%;
             background: url('assets/backgrounds/right_statue_of_the_main_screen.png') center/contain no-repeat;
             z-index: 2;
             pointer-events: none;
         }
 
-        /* ===== РАЗДЕЛИТЕЛИ ===== */
+        /* ===== ВЕРТИКАЛЬНЫЕ РАЗДЕЛИТЕЛИ (ТВОИ) ===== */
         .divider-left {
             position: absolute;
-            left: 16%;
+            left: 14%;
             top: 0;
-            width: 2px;
+            width: 8px;
             height: 100%;
-            background: rgba(201, 168, 76, 0.15);
+            background: url('assets/interface/vertical_screen_divider.png') center/cover no-repeat;
             z-index: 1;
             pointer-events: none;
         }
 
         .divider-right {
             position: absolute;
-            right: 16%;
+            right: 14%;
             top: 0;
-            width: 2px;
+            width: 8px;
             height: 100%;
-            background: rgba(201, 168, 76, 0.15);
+            background: url('assets/interface/vertical_screen_divider.png') center/cover no-repeat;
             z-index: 1;
             pointer-events: none;
         }
 
-        /* ===== ЛЕСТНИЦА С АРКОЙ ===== */
+        /* ===== ЛЕСТНИЦА С АРКОЙ (ПОДНЯТА ВЫШЕ) ===== */
         .arch-layer {
             position: absolute;
-            bottom: 20%;
+            bottom: 28%;
             left: 50%;
             transform: translateX(-50%);
-            width: 55%;
-            height: 45%;
+            width: 50%;
+            height: 40%;
             background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat;
             z-index: 3;
             pointer-events: none;
         }
 
-        /* ===== РАМКА ГЕРОЯ ===== */
+        /* ===== ВИДЕО-РАМКА ЗА ГЕРОЕМ ===== */
         .hero-frame {
             position: absolute;
-            bottom: 26%;
+            bottom: 32%;
             left: 50%;
             transform: translateX(-50%);
-            width: 28%;
-            height: 30%;
-            z-index: 4;
+            width: 26%;
+            height: 28%;
+            z-index: 3;
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: none;
+            background: url('assets/animation/animation_frame_hero.webm') center/contain no-repeat;
         }
 
         .hero-frame img {
-            width: 100%;
-            height: 100%;
+            width: 80%;
+            height: 80%;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.15));
+            z-index: 4;
         }
 
         /* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
         .top-panel {
             position: absolute;
-            top: 4%;
+            top: 3%;
             left: 18%;
             right: 18%;
             z-index: 10;
@@ -193,7 +195,7 @@
         /* ===== ЛЕВЫЕ КНОПКИ ===== */
         .left-buttons {
             position: absolute;
-            left: 3%;
+            left: 2%;
             top: 22%;
             z-index: 10;
             display: flex;
@@ -235,7 +237,7 @@
         /* ===== ПРАВЫЕ КНОПКИ ===== */
         .right-buttons {
             position: absolute;
-            right: 3%;
+            right: 2%;
             top: 22%;
             z-index: 10;
             display: flex;
@@ -274,7 +276,7 @@
             transform: scale(0.9);
         }
 
-        /* ===== НИЖНИЕ СТАТЫ ===== */
+        /* ===== НИЖНИЕ СТАТЫ (С ТВОИМИ ИКОНКАМИ) ===== */
         .bottom-stats {
             position: absolute;
             bottom: 3%;
@@ -291,22 +293,30 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            padding: 4px 0;
+            border: 1px solid rgba(201, 168, 76, 0.1);
         }
 
-        .bottom-stats .stat-block .stat-label {
-            color: #c9a84c;
-            font-size: 0.45em;
-            letter-spacing: 1px;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
-            text-transform: uppercase;
+        .bottom-stats .stat-block .stat-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
             margin-bottom: 2px;
+        }
+
+        .bottom-stats .stat-block .stat-icons img {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
         }
 
         .bottom-stats .stat-block .stat-values {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            font-size: 0.6em;
+            gap: 10px;
+            font-size: 0.55em;
             color: #e0c080;
             text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
             width: 100%;
@@ -378,8 +388,8 @@
         @media (max-width: 400px) {
             .top-panel .resource span { font-size: 0.5em; }
             .top-panel .exp-bar .level-text { font-size: 0.45em; }
-            .bottom-stats .stat-block .stat-values { font-size: 0.5em; gap: 6px; }
-            .bottom-stats .stat-block .stat-label { font-size: 0.4em; }
+            .bottom-stats .stat-block .stat-values { font-size: 0.45em; gap: 6px; }
+            .bottom-stats .stat-block .stat-icons img { width: 14px; height: 14px; }
         }
     </style>
 </head>
@@ -389,18 +399,18 @@
         <!-- ФОН -->
         <div class="bg-layer"></div>
 
-        <!-- СТАТУИ -->
+        <!-- СТАТУИ (СНАРУЖИ) -->
         <div class="statue-left"></div>
         <div class="statue-right"></div>
 
-        <!-- РАЗДЕЛИТЕЛИ -->
+        <!-- ВЕРТИКАЛЬНЫЕ РАЗДЕЛИТЕЛИ (ТВОИ) -->
         <div class="divider-left"></div>
         <div class="divider-right"></div>
 
-        <!-- ЛЕСТНИЦА С АРКОЙ -->
+        <!-- ЛЕСТНИЦА С АРКОЙ (ПОДНЯТА) -->
         <div class="arch-layer"></div>
 
-        <!-- РАМКА ГЕРОЯ -->
+        <!-- ВИДЕО-РАМКА ЗА ГЕРОЕМ -->
         <div class="hero-frame">
             <img src="assets/hero_skins/skin_1_basic.png" alt="Герой" id="hero-skin">
         </div>
@@ -443,17 +453,21 @@
             <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"></div>
         </div>
 
-        <!-- НИЖНИЕ СТАТЫ -->
+        <!-- НИЖНИЕ СТАТЫ (С ТВОИМИ ИКОНКАМИ) -->
         <div class="bottom-stats">
             <div class="stat-block">
-                <div class="stat-label">Урон / Защита</div>
+                <div class="stat-icons">
+                    <img src="assets/interface/damage_and_armor_stat_board.png" alt="Урон/Защита">
+                </div>
                 <div class="stat-values">
                     <span class="attack">⚔️ 0</span>
                     <span class="defense">🛡️ 0</span>
                 </div>
             </div>
             <div class="stat-block">
-                <div class="stat-label">Ловкость / Здоровье</div>
+                <div class="stat-icons">
+                    <img src="assets/interface/stat_and_health_board.png" alt="Ловкость/Здоровье">
+                </div>
                 <div class="stat-values">
                     <span class="agility">💨 0</span>
                     <span class="hp">❤️ 0</span>
@@ -569,7 +583,6 @@
 
             // -------- ОТОБРАЖЕНИЕ ЭКРАНОВ --------
             loadHome() {
-                // Показываем все слои главного экрана
                 document.querySelectorAll('.bg-layer, .statue-left, .statue-right, .divider-left, .divider-right, .arch-layer, .hero-frame, .top-panel, .left-buttons, .right-buttons, .bottom-stats')
                     .forEach(el => el.style.display = '');
                 const placeholder = document.querySelector('.placeholder-screen');
@@ -578,15 +591,12 @@
             },
 
             showPlaceholder(title) {
-                // Скрываем слои главного экрана
                 document.querySelectorAll('.bg-layer, .statue-left, .statue-right, .divider-left, .divider-right, .arch-layer, .hero-frame, .top-panel, .left-buttons, .right-buttons, .bottom-stats')
                     .forEach(el => el.style.display = 'none');
 
-                // Убираем старый placeholder
                 const old = document.querySelector('.placeholder-screen');
                 if (old) old.remove();
 
-                // Создаём новый
                 const div = document.createElement('div');
                 div.className = 'placeholder-screen';
                 div.innerHTML = `
