@@ -562,6 +562,23 @@ html += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;tran
         var self = this; setTimeout(function() { self.tavern(); }, 800);
     },
     _tavernCancel: function() { Sherwood.Tavern.cancelQuest(); this.tavern(); },
+            _dailyTab: 1,
+
+    _claimDaily: function(i) {
+        var r = Sherwood.Daily.claimDailyReward(i);
+        var log = document.getElementById('daily-log');
+        if (r.success) { if (log) log.textContent = '✅ Награда получена!'; this.updateDisplay(); }
+        else { if (log) log.textContent = '❌ ' + r.reason; }
+        var self = this; setTimeout(function() { self.daily(); }, 800);
+    },
+
+    _claimChapter: function(ch, i) {
+        var r = Sherwood.Daily.claimChapterReward(ch, i);
+        var log = document.getElementById('daily-log');
+        if (r.success) { if (log) log.textContent = '✅ Награда получена!'; this.updateDisplay(); }
+        else { if (log) log.textContent = '❌ ' + r.reason; }
+        var self = this; setTimeout(function() { self.daily(); }, 800);
+    },
 
     // ========== ПОРТАЛЫ ==========
     portal: function() {
@@ -965,8 +982,95 @@ html += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;tran
     },
 
     // ========== ПЛЕЙСХОЛДЕРЫ ==========
-    daily: function() { this._showPlaceholder('📋 Ежедневные задания', 'daily'); },
+            daily: function() {
+        this._playSound('click');
+        if (!Sherwood.Daily) { this._showPlaceholder('📋 Ежедневные задания', 'daily'); return; }
+        var dailyQuests = Sherwood.Daily.getDailyQuests();
+        var dailyCompleted = Sherwood.Daily.getDailyCompleted();
+        var p = Sherwood.getPlayer();
+        var currentChapter = p.questProgress ? (p.questProgress.currentChapter || 1) : 1;
+        var chapterQuests = Sherwood.Daily.getChapterQuests(currentChapter);
+        var chapterCompleted = p.daily ? (p.daily.chapterCompleted || []) : [];
+        var html = '';
+        html += '<div style="display:flex;gap:4px;margin-bottom:12px;"><button onclick="SherwoodUI._dailyTab=1;SherwoodUI.daily();" style="flex:1;background:' + (!SherwoodUI._dailyTab||SherwoodUI._dailyTab===1?'#c9a040':'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (!SherwoodUI._dailyTab||SherwoodUI._dailyTab===1?'#000':'#fff') + ';cursor:pointer;font-family:\'Georgia\',serif;font-size:0.8em;">📋 Ежедневные</button><button onclick="SherwoodUI._dailyTab=2;SherwoodUI.daily();" style="flex:1;background:' + (SherwoodUI._dailyTab===2?'#c9a040':'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (SherwoodUI._dailyTab===2?'#000':'#fff') + ';cursor:pointer;font-family:\'Georgia\',serif;font-size:0.8em;">📜 Глава ' + currentChapter + '</button></div>';
+        if (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) {
+            for (var i = 0; i < dailyQuests.length; i++) {
+                var q = dailyQuests[i];
+                var claimed = dailyCompleted.indexOf(q.id) !== -1;
+                html += '<div style="background:rgba(0,0,0,0.5);border:1px solid ' + (q.completed?(claimed?'#4caf50':'#ffd700'):'#555') + ';border-radius:8px;padding:10px;margin-bottom:6px;">';
+                html += '<div style="color:#e0c080;font-size:0.85em;">' + q.name + '</div><div style="color:#aaa;font-size:0.65em;">' + q.desc + '</div>';
+                html += '<div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;margin:6px 0;overflow:hidden;"><div style="background:' + (q.completed?'#4caf50':'#c9a040') + ';height:100%;width:' + Math.round((q.progress||0)/q.target*100) + '%;"></div></div>';
+                html += '<div style="color:#aaa;font-size:0.6em;">' + (q.progress||0) + '/' + q.target + ' | 🏆 +' + q.reward.gold + '🪙 +' + q.reward.exp + 'XP</div>';
+                if (q.completed && !claimed) html += '<button onclick="SherwoodUI._claimDaily(' + i + ')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-family:\'Georgia\',serif;font-size:0.6em;">Забрать</button>';
+                if (claimed) html += '<span style="color:#4caf50;font-size:0.6em;">✅ Получено</span>';
+                html += '</div>';
+            }
+        } else {
+            for (var j = 0; j < chapterQuests.length; j++) {
+                var q = chapterQuests[j];
+                var claimed = chapterCompleted.indexOf(q.id) !== -1;
+                html += '<div style="background:rgba(0,0,0,0.5);border:1px solid ' + (q.completed?(claimed?'#4caf50':'#ffd700'):'#555') + ';border-radius:8px;padding:10px;margin-bottom:6px;">';
+                html += '<div style="color:#e0c080;font-size:0.85em;">' + q.name + '</div><div style="color:#aaa;font-size:0.65em;">' + q.desc + '</div>';
+                html += '<div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;margin:6px 0;overflow:hidden;"><div style="background:' + (q.completed?'#4caf50':'#c9a040') + ';height:100%;width:' + Math.round((q.progress||0)/q.target*100) + '%;"></div></div>';
+                html += '<div style="color:#aaa;font-size:0.6em;">' + (q.progress||0) + '/' + q.target + ' | 🏆 +' + q.reward.gold + '🪙 +' + q.reward.exp + 'XP</div>';
+                if (q.completed && !claimed) html += '<button onclick="SherwoodUI._claimChapter(' + currentChapter + ',' + j + ')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-family:\'Georgia\',serif;font-size:0.6em;">Забрать</button>';
+                if (claimed) html += '<span style="color:#4caf50;font-size:0.6em;">✅ Получено</span>';
+                html += '</div>';
+            }
+        }
+        html += '<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
+        this._openScreen('📋 Задания', 'daily', html);
+    },
 
+        // Вкладки
+        html += '<div style="display:flex;gap:4px;margin-bottom:12px;"><button onclick="SherwoodUI._dailyTab=1;SherwoodUI.daily();" style="flex:1;background:' + (!this._dailyTab||this._dailyTab===1?'#c9a040':'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (!this._dailyTab||this._dailyTab===1?'#000':'#fff') + ';cursor:pointer;font-family:\'Georgia\',serif;font-size:0.8em;">📋 Ежедневные</button><button onclick="SherwoodUI._dailyTab=2;SherwoodUI.daily();" style="flex:1;background:' + (this._dailyTab===2?'#c9a040':'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (this._dailyTab===2?'#000':'#fff') + ';cursor:pointer;font-family:\'Georgia\',serif;font-size:0.8em;">📜 Глава ' + currentChapter + '</button></div>';
+
+        if (!this._dailyTab || this._dailyTab === 1) {
+            for (var i = 0; i < dailyQuests.length; i++) {
+                var q = dailyQuests[i];
+                var claimed = dailyCompleted.indexOf(q.id) !== -1;
+                html += '<div style="background:rgba(0,0,0,0.5);border:1px solid ' + (q.completed?(claimed?'#4caf50':'#ffd700'):'#555') + ';border-radius:8px;padding:10px;margin-bottom:6px;">';
+                html += '<div style="color:#e0c080;font-size:0.85em;">' + q.name + '</div><div style="color:#aaa;font-size:0.65em;">' + q.desc + '</div>';
+                html += '<div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;margin:6px 0;overflow:hidden;"><div style="background:' + (q.completed?'#4caf50':'#c9a040') + ';height:100%;width:' + Math.round((q.progress||0)/q.target*100) + '%;"></div></div>';
+                html += '<div style="color:#aaa;font-size:0.6em;">' + (q.progress||0) + '/' + q.target + ' | 🏆 +' + q.reward.gold + '🪙 +' + q.reward.exp + 'XP</div>';
+                if (q.completed && !claimed) html += '<button onclick="SherwoodUI._claimDaily(' + i + ')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-family:\'Georgia\',serif;font-size:0.6em;">Забрать</button>';
+                if (claimed) html += '<span style="color:#4caf50;font-size:0.6em;">✅ Получено</span>';
+                html += '</div>';
+            }
+        } else {
+            for (var j = 0; j < chapterQuests.length; j++) {
+                var q = chapterQuests[j];
+                var claimed = chapterCompleted.indexOf(q.id) !== -1;
+                html += '<div style="background:rgba(0,0,0,0.5);border:1px solid ' + (q.completed?(claimed?'#4caf50':'#ffd700'):'#555') + ';border-radius:8px;padding:10px;margin-bottom:6px;">';
+                html += '<div style="color:#e0c080;font-size:0.85em;">' + q.name + '</div><div style="color:#aaa;font-size:0.65em;">' + q.desc + '</div>';
+                html += '<div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;margin:6px 0;overflow:hidden;"><div style="background:' + (q.completed?'#4caf50':'#c9a040') + ';height:100%;width:' + Math.round((q.progress||0)/q.target*100) + '%;"></div></div>';
+                html += '<div style="color:#aaa;font-size:0.6em;">' + (q.progress||0) + '/' + q.target + ' | 🏆 +' + q.reward.gold + '🪙 +' + q.reward.exp + 'XP</div>';
+                if (q.completed && !claimed) html += '<button onclick="SherwoodUI._claimChapter(' + currentChapter + ',' + j + ')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-family:\'Georgia\',serif;font-size:0.6em;">Забрать</button>';
+                if (claimed) html += '<span style="color:#4caf50;font-size:0.6em;">✅ Получено</span>';
+                html += '</div>';
+            }
+        }
+        html += '<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
+        this._openScreen('📋 Задания', 'daily', html);
+    },
+
+    _dailyTab: 1,
+
+    _claimDaily: function(i) {
+        var r = Sherwood.Daily.claimDailyReward(i);
+        var log = document.getElementById('daily-log');
+        if (r.success) { if (log) log.textContent = '✅ Награда получена!'; this.updateDisplay(); }
+        else { if (log) log.textContent = '❌ ' + r.reason; }
+        var self = this; setTimeout(function() { self.daily(); }, 800);
+    },
+
+    _claimChapter: function(ch, i) {
+        var r = Sherwood.Daily.claimChapterReward(ch, i);
+        var log = document.getElementById('daily-log');
+        if (r.success) { if (log) log.textContent = '✅ Награда получена!'; this.updateDisplay(); }
+        else { if (log) log.textContent = '❌ ' + r.reason; }
+        var self = this; setTimeout(function() { self.daily(); }, 800);
+    },
     _showPlaceholder: function(title, bgKey, backAction) {
         this._playSound('click');
         this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">🏗️</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">' + title + '</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction);
