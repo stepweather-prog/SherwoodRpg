@@ -28,7 +28,7 @@
         /* ===== СТАТУИ ===== */
         .statue-left {
             position: fixed;
-            left: calc(50% - 210px - 12%);
+            left: calc(50% - 240px - 12%);
             top: 0;
             width: 12%;
             height: 100%;
@@ -39,7 +39,7 @@
         }
         .statue-right {
             position: fixed;
-            right: calc(50% - 210px - 12%);
+            right: calc(50% - 240px - 12%);
             top: 0;
             width: 12%;
             height: 100%;
@@ -52,7 +52,7 @@
         /* ===== РАЗДЕЛИТЕЛИ ===== */
         .divider-left {
             position: fixed;
-            left: calc(50% - 210px - 12% + 12% - 8px);
+            left: calc(50% - 240px - 12% + 12% - 8px);
             top: 0;
             width: 16px;
             height: 100%;
@@ -63,7 +63,7 @@
         }
         .divider-right {
             position: fixed;
-            right: calc(50% - 210px - 12% + 12% - 8px);
+            right: calc(50% - 240px - 12% + 12% - 8px);
             top: 0;
             width: 16px;
             height: 100%;
@@ -73,10 +73,10 @@
             pointer-events: none;
         }
 
-        /* ===== ИГРОВОЙ КОНТЕЙНЕР (РАЗДВИНУТ) ===== */
+        /* ===== ИГРОВОЙ КОНТЕЙНЕР (ШИРЕ, С ОГРАНИЧЕНИЕМ) ===== */
         #game-container {
             width: 100%;
-            max-width: 100%;
+            max-width: 480px;
             height: 100vh;
             max-height: 900px;
             position: relative;
