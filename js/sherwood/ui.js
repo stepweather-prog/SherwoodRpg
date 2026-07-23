@@ -741,9 +741,114 @@ const SherwoodUI = {
 
     _sendChat() { const inp = document.getElementById('chat-input'); if (!inp) return; const t = inp.value.trim(); if (!t) return; inp.value = ''; Sherwood.Chat?.sendMessage(t); this.chat(); },
 
-    // ========== ПЛЕЙСХОЛДЕРЫ ==========
+        // ========== РЕЙД ==========
+    raid() {
+        this._playSound('click');
+        if (!Sherwood.Raid) { this._showPlaceholder('⚔️ Рейд', 'raid'); return; }
+        if (Sherwood.Raid.isRaidActive()) { this._showRaidBattle(); return; }
+        const raids = Sherwood.Raid.getAvailableRaids(); const check = Sherwood.Raid.canJoinRaid();
+        let h = '';
+        for (let i = 0; i < raids.length; i++) {
+            const r = raids[i];
+            h += `<div style="background:rgba(0,0,0,0.5);border:2px solid ${check.can?'#c9a040':'#f44336'};border-radius:10px;padding:14px;margin-bottom:8px;text-align:center;"><div style="color:#e0c080;font-weight:bold;">${r.name}</div><div style="color:#aaa;font-size:0.8em;">❤️ ${r.maxHp} | ⚔️ ${r.attack}</div><div style="color:#aaa;font-size:0.7em;">3 этапа | До 10 чел.</div>${check.can ? `<button onclick="SherwoodUI._startRaid(${i})" style="margin-top:8px;background:#c9a040;border:none;border-radius:6px;padding:8px 20px;color:#000;font-weight:bold;cursor:pointer;font-family:'Georgia',serif;">В бой!</button>` : `<div style="color:#f44336;font-size:0.7em;margin-top:8px;">${check.reason}</div>`}</div>`;
+        }
+        this._openScreen('⚔️ Рейд', 'raid', h||'<div style="color:#aaa;text-align:center;">Нет рейдов</div>');
+    },
+    _startRaid(i) { const r = Sherwood.Raid?.startRaid(i); if (!r?.success) return; this._playSound('dungeon_enter'); this._showRaidBattle(); },
+    _showRaidBattle() {
+        const s = Sherwood.Raid?.getRaidStatus(); if (!s) { this.raid(); return; }
+        const stage = s.stage; const boss = s.boss;
+        let eh = '';
+        for (const e of stage.enemies) {
+            const ehp = Math.round(((e.hp||e.maxHp||100)/(e.maxHp||100))*100);
+            eh += `<div style="margin:8px 0;"><img src="assets/all_beasts/${e.image}" style="width:60px;height:60px;object-fit:contain;border:1px solid #f44336;border-radius:8px;" onerror="this.src='assets/interface/labyrinth_of_icons.png'"><div style="color:#f44336;font-size:0.7em;">${e.name}</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;margin:2px 15%;overflow:hidden;"><div style="background:#f44336;height:100%;width:${ehp}%;"></div></div></div>`;
+        }
+        const h = `<div style="text-align:center;"><div style="color:#ff6a00;">${boss.name} — Этап ${s.stageIndex}/${s.totalStages}</div><div style="color:#aaa;font-size:0.7em;">Участников: ${s.participants.join(', ')}</div>${eh}<div style="color:#4caf50;margin-top:8px;">❤️ ${Sherwood.getPlayer().stats.hp}</div><button onclick="SherwoodUI._raidAttack()" style="margin-top:12px;background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-family:'Georgia',serif;">⚔️ Атака</button><button onclick="SherwoodUI._raidFlee()" style="margin-top:8px;background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:6px 16px;color:#f44336;cursor:pointer;font-family:'Georgia',serif;font-size:0.7em;">🏃 Выйти</button><div id="raid-log" style="text-align:center;color:#aaa;font-size:0.75em;margin-top:8px;min-height:18px;"></div></div>`;
+        this._openScreen('⚔️ Рейд', 'raid', h);
+    },
+    _raidAttack() { const r = Sherwood.Raid?.raidAttack(); const log = document.getElementById('raid-log'); if (r?.raidComplete) { if (log) log.textContent = '🎉 Рейд пройден!'; this.updateDisplay(); setTimeout(() => this.raid(), 2000); } else if (r?.stageComplete) { if (log) log.textContent = '✅ Этап пройден!'; setTimeout(() => this._showRaidBattle(), 1000); } else if (r?.playerDead) { if (log) log.textContent = '💀 Вы погибли!'; setTimeout(() => this.raid(), 1500); } else { if (log) log.textContent = `-${r.damage} | Враг: -${r.bossDamage||0}`; this.updateDisplay(); this._showRaidBattle(); } },
+    _raidFlee() { Sherwood.Raid?.fleeRaid(); this.raid(); },
+
+    // ========== ПОРТАЛЫ ==========
+    portal() {
+        this._playSound('click');
+        if (!Sherwood.Portal) { this._showPlaceholder('🌀 Порталы', 'portal'); return; }
+        if (Sherwood.Portal.isInPortal()) { this._showPortalBattle(); return; }
+        const portals = Sherwood.Portal.getAllPortals(); const player = Sherwood.getPlayer();
+        let h = '';
+        for (const p of portals) {
+            const check = Sherwood.Portal.canEnter(p.id); const unlocked = Sherwood.Portal.isPortalUnlocked(p.id); const completed = player?.portal?.completed?.includes(p.id);
+            let badge = '', bo = '0.4', bc = '#555', ca = '';
+            if (completed) { badge = '<span style="color:#4caf50;">✅</span>'; bo = '0.3'; bc = '#4caf50'; }
+            else if (check.can) { badge = '<span style="color:#ffd700;">⚔️</span>'; bo = '0.6'; bc = '#c9a040'; ca = `onclick="SherwoodUI._enterPortal(${p.id})" style="cursor:pointer;"`; }
+            else if (!unlocked) { badge = '<span style="color:#f44336;">🔒</span>'; bo = '0.2'; bc = '#f44336'; }
+            else { badge = `<span style="color:#ff9800;">⚠️ АТК ${p.statRequirement.attack}+ ЗЩТ ${p.statRequirement.defense}+</span>`; bo = '0.4'; bc = '#ff9800'; }
+            h += `<div ${ca} style="background:url('${p.bg}') center/cover no-repeat;border:2px solid ${bc};border-radius:10px;padding:12px;margin-bottom:8px;position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,${bo});z-index:0;"></div><div style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;"><div style="font-size:2em;">${p.icon}</div><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">${p.name}</div><div style="color:#aaa;font-size:0.7em;">${p.enemies.length} врагов</div>${badge}</div></div></div>`;
+        }
+        this._openScreen('🌀 Порталы', 'portal', h||'<div style="color:#aaa;text-align:center;">Нет порталов</div>');
+    },
+    _enterPortal(id) { const r = Sherwood.Portal?.enterPortal(id); if (!r?.success) { const log = document.getElementById('portal-log'); if (log) log.textContent = '❌ '+r?.reason; return; } this._playSound('dungeon_enter'); this._showPortalBattle(); },
+    _showPortalBattle() {
+        const b = Sherwood.Portal?.getCurrentBattle(); if (!b) { this.portal(); return; }
+        const e = b.enemy; const hp = Math.round(((e.hp||e.maxHp)/(e.maxHp||1))*100);
+        const tm = Math.floor(b.timeRemaining/60); const ts = b.timeRemaining%60;
+        const h = `<div style="text-align:center;"><div style="color:#aaa;font-size:0.7em;">⏱️ ${tm}:${ts.toString().padStart(2,'0')} | 💀 ${b.deathCount}</div><div style="color:#e0c080;">${b.portal.name} — ${b.level}/${b.totalLevels}</div><div style="margin:12px 0;"><img src="assets/portal_beasts/${e.image}" style="width:100px;height:100px;object-fit:contain;border:2px solid #f44336;border-radius:12px;" onerror="this.src='assets/interface/labyrinth_of_icons.png'"><div style="color:#f44336;font-weight:bold;">${e.name}${e.isBoss?' 👑':''}</div><div style="background:rgba(0,0,0,0.5);border-radius:6px;height:14px;margin:4px 20%;overflow:hidden;"><div style="background:#f44336;height:100%;width:${hp}%;"></div></div><div style="color:#aaa;font-size:0.7em;">❤️ ${Math.max(0,e.hp||e.maxHp)}/${e.maxHp||'?'}</div></div><div style="color:#ffd700;">⚔️ VS ⚔️</div><div style="margin:8px 0;color:#4caf50;">❤️ ${Sherwood.getPlayer().stats.hp}/${Sherwood.getPlayer().stats.maxHp}</div><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;"><button onclick="SherwoodUI._portalAttack()" style="background:#c9a040;border:none;border-radius:8px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;font-family:'Georgia',serif;">⚔️ Атака</button><button onclick="SherwoodUI._portalSkill('power_shot')" style="background:#ff5722;border:none;border-radius:8px;padding:8px 12px;color:#fff;cursor:pointer;font-family:'Georgia',serif;font-size:0.8em;">💥 Мощный</button><button onclick="SherwoodUI._portalSkill('triple_shot')" style="background:#2196f3;border:none;border-radius:8px;padding:8px 12px;color:#fff;cursor:pointer;font-family:'Georgia',serif;font-size:0.8em;">🏹 Тройной</button></div><button onclick="SherwoodUI._portalFlee()" style="margin-top:10px;background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:6px 16px;color:#f44336;cursor:pointer;font-family:'Georgia',serif;font-size:0.7em;">🏃 Бежать</button><div id="portal-log" style="text-align:center;color:#aaa;font-size:0.75em;margin-top:8px;min-height:18px;"></div></div>`;
+        this._openScreen('🌀 Портал', 'portal', h);
+    },
+    _portalAttack() { this._handlePortalResult(Sherwood.Portal?.portalAttack()); },
+    _portalSkill(sid) { this._handlePortalResult(Sherwood.Portal?.portalSkill(sid)); },
+    _handlePortalResult(r) {
+        if (!r) return; const log = document.getElementById('portal-log');
+        if (r.portalComplete) { if (log) log.textContent = '🎉 Портал пройден!'; this.updateDisplay(); setTimeout(() => this.portal(), 2000); return; }
+        if (r.portalFailed) { if (log) log.textContent = '💀 Провал!'; setTimeout(() => this.portal(), 2000); return; }
+        if (r.dead && r.resurrected) { if (log) log.textContent = `💀 Смерть #${r.deathCount}! Выкуп: ${r.cost.cost} ${r.cost.currency}`; this.updateDisplay(); this._showPortalBattle(); return; }
+        if (r.enemyDead) { if (log) log.textContent = '✅ Враг повержен!'; this.updateDisplay(); if (r.nextEnemy) setTimeout(() => this._showPortalBattle(), 1000); }
+        else { if (log) log.textContent = `-${r.damage} | Враг: -${r.enemyDamage||0}`; this.updateDisplay(); this._showPortalBattle(); }
+    },
+    _portalFlee() { Sherwood.Portal?.fleePortal(); this.portal(); },
+
+    // ========== АРЕНА ==========
+    arena() {
+        this._playSound('click');
+        if (!Sherwood.Arena) { this._showPlaceholder('🏟️ Арена', 'arena'); return; }
+        if (Sherwood.Arena.isInMatch()) { this._showArenaMatch(); return; }
+        const opps = Sherwood.Arena.getOpponents(); const stats = Sherwood.Arena.getStats();
+        let h = `<div style="text-align:center;margin-bottom:8px;color:#e0c080;">🏆 ${stats.rank} | 🏅 ${stats.wins} | 💀 ${stats.losses}</div>`;
+        for (const o of opps) {
+            h += `<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;"><img src="${o.skin}" style="width:40px;height:40px;object-fit:contain;border-radius:50%;" onerror="this.src='assets/hero_skins/skin_1_basic.png'"><div style="flex:1;"><div style="color:#fff;">${o.name}</div><div style="color:#aaa;font-size:0.7em;">⚔️${o.stats.attack} 🛡️${o.stats.defense} ❤️${o.stats.maxHp}</div></div><button onclick="SherwoodUI._startArenaMatch(${o.id})" style="background:#c9a040;border:none;border-radius:4px;padding:6px 12px;color:#000;cursor:pointer;font-family:'Georgia',serif;font-size:0.7em;">Бой</button></div>`;
+        }
+        h += `<button onclick="SherwoodUI._refreshArena()" style="width:100%;margin-top:8px;background:rgba(255,255,255,0.1);border:1px solid #666;border-radius:6px;padding:8px;color:#fff;cursor:pointer;font-family:'Georgia',serif;">🔄 Обновить</button>`;
+        this._openScreen('🏟️ Арена', 'arena', h);
+    },
+    _startArenaMatch(i) { const r = Sherwood.Arena?.startMatch(i); if (!r?.success) return; this._showArenaMatch(); },
+    _refreshArena() { Sherwood.Arena?.refreshOpponents(); this.arena(); },
+    _showArenaMatch() {
+        const m = Sherwood.Arena?.getCurrentMatch(); if (!m) { this.arena(); return; }
+        const o = m.opponent; const p = m.player;
+        const ohp = Math.round((o.stats.hp/o.stats.maxHp)*100); const php = Math.round((p.stats.hp/p.stats.maxHp)*100);
+        const h = `<div style="text-align:center;"><div style="color:#ffd700;">⚔️ Арена ⚔️</div><div style="display:flex;justify-content:space-around;align-items:center;margin:16px 0;"><div style="text-align:center;"><img src="${o.skin}" style="width:60px;height:60px;object-fit:contain;border:2px solid #f44336;border-radius:50%;" onerror="this.src='assets/hero_skins/skin_1_basic.png'"><div style="color:#f44336;">${o.name}</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;width:100px;overflow:hidden;"><div style="background:#f44336;height:100%;width:${ohp}%;"></div></div><div style="color:#aaa;font-size:0.6em;">${Math.max(0,o.stats.hp)}/${o.stats.maxHp}</div></div><div style="font-size:1.5em;">VS</div><div style="text-align:center;"><img src="assets/hero_skins/${Sherwood.Forge?.getActiveSkin?.()||'skin_1_basic'}.png" style="width:60px;height:60px;object-fit:contain;border:2px solid #4caf50;border-radius:50%;" onerror="this.src='assets/hero_skins/skin_1_basic.png'"><div style="color:#4caf50;">Вы</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;width:100px;overflow:hidden;"><div style="background:#4caf50;height:100%;width:${php}%;"></div></div><div style="color:#aaa;font-size:0.6em;">${p.stats.hp}/${p.stats.maxHp}</div></div></div><button onclick="SherwoodUI._arenaAttack()" style="width:100%;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-family:'Georgia',serif;margin-bottom:8px;">⚔️ Атака</button><button onclick="SherwoodUI._arenaFlee()" style="width:100%;background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:8px;color:#f44336;cursor:pointer;font-family:'Georgia',serif;font-size:0.7em;">🏃 Сдаться</button><div id="arena-log" style="text-align:center;color:#aaa;font-size:0.75em;margin-top:8px;"></div></div>`;
+        this._openScreen('🏟️ Арена', 'arena', h);
+    },
+    _arenaAttack() { const r = Sherwood.Arena?.arenaAttack(); const log = document.getElementById('arena-log'); if (r?.win) { if (log) log.textContent = `🏆 Победа! +${r.rewards?.exp||0}XP`; this.updateDisplay(); setTimeout(() => this.arena(), 1500); } else if (r?.win === false) { if (log) log.textContent = '💀 Поражение'; setTimeout(() => this.arena(), 1500); } else { if (log) log.textContent = `-${r.playerDamage} | Враг: -${r.opponentDamage||0}`; this._showArenaMatch(); } },
+    _arenaFlee() { Sherwood.Arena?.fleeMatch(); this.arena(); },
+
+    // ========== РЫНОК ==========
+    market() {
+        this._playSound('click');
+        if (!Sherwood.BlackMarket) { this._showPlaceholder('💰 Рынок', 'market'); return; }
+        const items = Sherwood.BlackMarket.getShopItems();
+        let h = '';
+        for (const item of items) {
+            h += `<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;"><img src="${item.icon}" style="width:44px;height:44px;object-fit:contain;border-radius:4px;" onerror="this.src='assets/interface/labyrinth_of_icons.png'"><div style="flex:1;"><div style="color:#e0c080;">${item.name}</div><div style="color:#aaa;font-size:0.7em;">${item.type==='consumable'?'Расходник':item.type==='resource'?'Ресурс':'Экипировка'}</div></div><div style="text-align:right;"><div style="color:${item.currency==='gold'?'#ffd700':'#c0c0c0'};">${item.price} ${item.currency==='gold'?'🪙':'⚪'}</div><button onclick="SherwoodUI._buyItem(${item.shopIndex})" style="margin-top:4px;background:#c9a040;border:none;border-radius:4px;padding:4px 10px;color:#000;cursor:pointer;font-family:'Georgia',serif;font-size:0.7em;">Купить</button></div></div>`;
+        }
+        this._openScreen('💰 Рынок', 'market', (h||'<div style="color:#aaa;text-align:center;">Товаров нет</div>') + '<div id="market-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div>');
+    },
+    _buyItem(i) { const r = Sherwood.BlackMarket?.buyItem(i); const log = document.getElementById('market-log'); if (r?.success) { if (log) log.textContent = '✅ Куплено!'; this.updateDisplay(); } else { if (log) log.textContent = '❌ ' + (r?.reason||'Ошибка'); } setTimeout(() => this.market(), 800); },
+
+    // ========== ЕЖЕДНЕВНЫЕ ==========
     daily() { this._showPlaceholder('📋 Ежедневные задания', 'daily'); },
 
+    // ========== ПЛЕЙСХОЛДЕР ==========
     _showPlaceholder(title, bgKey, backAction) {
         this._playSound('click');
         this._openScreen(title, bgKey, `<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">🏗️</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">${title}</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>`, backAction);
