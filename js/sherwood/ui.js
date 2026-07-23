@@ -22,6 +22,7 @@ const SherwoodUI = {
         settings: 'assets/backgrounds/settings_page.jpeg',
         daily: 'assets/backgrounds/tasks.jpeg',
         portal: 'assets/backgrounds/portal_1.jpeg',
+        chat: 'assets/backgrounds/chat_background.png',
         dungeon_select: 'assets/backgrounds/underground_1_floor_1.jpg',
         dungeon_forest: 'assets/backgrounds/underground_1_floor_1.jpg',
         dungeon_swamp: 'assets/backgrounds/underground_2_floor_1.jpeg',
@@ -93,7 +94,7 @@ const SherwoodUI = {
 
         this._mainElements = [
             '.bg-layer', '.arch-layer', '.hero-frame',
-            '.top-panel', '.top-actions', '.left-buttons',
+            '.top-panel', '.left-buttons',
             '.right-buttons', '.bottom-stats'
         ];
 
@@ -301,7 +302,7 @@ const SherwoodUI = {
 
     subway() { this.showDungeon(); },
 
-        showDungeon() {
+    showDungeon() {
         this._playSound('click');
         this._playMusic('dungeon_ambient');
 
@@ -321,7 +322,6 @@ const SherwoodUI = {
                 ? Sherwood.Dungeon._playerProgress[id]
                 : { level: 1, stars: 0 };
 
-            // Фон для карточки подземки
             const dungeonBgMap = {
                 forest: 'assets/backgrounds/underground_1_floor_1.jpg',
                 swamp: 'assets/backgrounds/underground_2_floor_1.jpeg',
@@ -329,22 +329,9 @@ const SherwoodUI = {
             };
             const dungeonBg = dungeonBgMap[id] || dungeonBgMap['forest'];
 
-            // Плитка для иконок уровней
-            const tileFolderMap = {
-                forest: 'dungeon1',
-                swamp: 'dungeon2',
-                cave: 'dungeon3'
-            };
-            const tileExtMap = {
-                forest: '.jpeg',
-                swamp: '.png',
-                cave: '.png'
-            };
-            const tilePrefixMap = {
-                forest: 'tiles',
-                swamp: 'tiles2.',
-                cave: 'tiles3.'
-            };
+            const tileFolderMap = { forest: 'dungeon1', swamp: 'dungeon2', cave: 'dungeon3' };
+            const tileExtMap = { forest: '.jpeg', swamp: '.png', cave: '.png' };
+            const tilePrefixMap = { forest: 'tiles', swamp: 'tiles2.', cave: 'tiles3.' };
             const tileFolder = tileFolderMap[id] || 'dungeon1';
             const tileExt = tileExtMap[id] || '.jpeg';
             const tilePrefix = tilePrefixMap[id] || 'tiles';
@@ -363,8 +350,7 @@ const SherwoodUI = {
                         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
                             ${[1,2,3,4,5,6,7].map(lvl => {
                                 const unlocked = lvl <= (progress.level || 1);
-                                const tileNum = lvl;
-                                const tileImg = `assets/dungeon_tiles/${tileFolder}/${tilePrefix}${tileNum}${tileExt}`;
+                                const tileImg = `assets/dungeon_tiles/${tileFolder}/${tilePrefix}${lvl}${tileExt}`;
                                 const lockImg = 'assets/interface/closed_level_lock_icon.png';
                                 return `
                                     <div onclick="${unlocked ? `SherwoodUI._startDungeon('${id}',${lvl})` : ''}" style="
@@ -401,7 +387,27 @@ const SherwoodUI = {
             ${list}
         `;
 
-        this._openScreen('🏰 Подземелья', 'dungeon_select', contentHTML);
+        this._mainElements.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => { el.style.display = 'none'; });
+        });
+
+        let bgPath = this._bg['dungeon_select'] || this._bg['dungeon_forest'];
+        this.container.style.background = `url('${bgPath}') center/cover no-repeat`;
+
+        if (this._screenLayer) {
+            this._screenLayer.innerHTML = `
+                <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;display:flex;flex-direction:column;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                        <button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">
+                            <img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                        </button>
+                        <span style="color:#e0c080;font-size:1.1em;">🏰 Подземелья</span>
+                    </div>
+                    <div style="flex:1;">${contentHTML}</div>
+                </div>
+            `;
+            this._screenLayer.style.display = 'block';
+        }
     },
 
     _startDungeon(dungeonId, level) {
@@ -1025,6 +1031,40 @@ const SherwoodUI = {
             this._stopMusic();
             window.location.href = 'about:blank';
         }
+    },
+
+    // ============================================================
+    //  ЧАТ
+    // ============================================================
+
+    chat() {
+        this._playSound('click');
+        const contentHTML = `
+            <div style="display:flex;flex-direction:column;height:100%;">
+                <div id="chat-messages" style="flex:1;background:rgba(0,0,0,0.5);border-radius:8px;padding:12px;margin-bottom:8px;overflow-y:auto;color:#ccc;font-size:0.85em;min-height:300px;">
+                    <div style="color:#666;">Чат загружается...</div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="chat-input" placeholder="Сообщение..." style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:8px;padding:10px;color:#fff;font-family:'Georgia',serif;">
+                    <button onclick="SherwoodUI._sendChat()" style="background:transparent;border:none;cursor:pointer;padding:0;width:44px;height:44px;">
+                        <img src="assets/all_buttons/send_text.png" style="width:100%;height:100%;object-fit:contain;">
+                    </button>
+                </div>
+            </div>
+        `;
+        this._openScreen('💬 Чат', 'chat', contentHTML);
+    },
+
+    _sendChat() {
+        const input = document.getElementById('chat-input');
+        const messages = document.getElementById('chat-messages');
+        if (!input || !messages) return;
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        // Заглушка — потом подключим сервер
+        messages.innerHTML += `<div style="margin-bottom:4px;"><span style="color:#c9a040;">Вы:</span> ${text}</div>`;
+        messages.scrollTop = messages.scrollHeight;
     },
 
     // ============================================================
