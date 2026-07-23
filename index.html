@@ -106,13 +106,14 @@
             pointer-events: none;
         }
 
+        /* ===== ГЕРОЙ + ВИДЕО-РАМКА (УМЕНЬШЕНА) ===== */
         .hero-frame {
             position: absolute;
             bottom: 18%;
             left: 50%;
             transform: translateX(-50%);
-            width: 35%;
-            height: 35%;
+            width: 32%;
+            height: 32%;
             z-index: 4;
             display: flex;
             align-items: center;
@@ -277,14 +278,14 @@
             text-align: center;
         }
 
-        /* ===== КНОПКИ НАД АРКОЙ (ОПУЩЕНЫ НИЖЕ) ===== */
+        /* ===== КНОПКИ НАД АРКОЙ (РАЗМЕР КАК У ОСТАЛЬНЫХ) ===== */
         .top-actions {
             position: absolute;
-            top: 17%;
-            left: 35%;
+            top: 19%;
+            left: 42%;
             z-index: 10;
             display: flex;
-            gap: 12px;
+            gap: 8px;
             pointer-events: none;
         }
         .top-actions .btn {
@@ -375,7 +376,7 @@
             transform: scale(0.9);
         }
 
-        /* ===== НИЖНИЕ СТАТЫ (УМЕНЬШЕНЫ НА 5%) ===== */
+        /* ===== НИЖНИЕ СТАТЫ (ВПЛОТНУЮ БЕЗ ПРОБЕЛА) ===== */
         .bottom-stats {
             position: absolute;
             bottom: -5%;
@@ -383,11 +384,10 @@
             right: 10%;
             z-index: 10;
             display: flex;
-            justify-content: space-between;
-            gap: 20px;
+            justify-content: center;
+            gap: 0;
             pointer-events: none;
             padding-bottom: 0px;
-            transform: scale(0.95);
         }
         .bottom-stats .stat-block {
             width: 46%;
@@ -523,7 +523,7 @@
             .left-buttons .btn .label, .right-buttons .btn .label { font-size: 0.4em; }
             .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; }
             .statue-left, .statue-right { width: 20%; }
-            .top-actions { left: 30%; top: 16%; }
+            .top-actions { left: 38%; top: 18%; }
             .top-actions .btn { width: 36px; height: 36px; }
         }
     </style>
@@ -564,7 +564,7 @@
                 <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
             </div>
 
-            <!-- КНОПКИ НАД АРКОЙ (ОПУЩЕНЫ) -->
+            <!-- КНОПКИ НАД АРКОЙ -->
             <div class="top-actions">
                 <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"></div>
                 <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"></div>
