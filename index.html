@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="assets/interface/logo.png">
     <link rel="manifest" href="manifest.json">
     <style>
+        /* ===== RESET ===== */
         * {
             margin: 0;
             padding: 0;
@@ -25,7 +26,7 @@
             position: relative;
         }
 
-        /* ===== СТАТУИ (СНАРУЖИ, ОБРАМЛЯЮТ) ===== */
+        /* ===== СТАТУИ (СНАРУЖИ) ===== */
         .statue-left {
             position: fixed;
             left: calc(50% - 240px - 28%);
@@ -97,7 +98,6 @@
             z-index: 0;
         }
 
-        /* ===== АРКА ===== */
         .arch-layer {
             position: absolute;
             bottom: 8%;
@@ -110,7 +110,6 @@
             pointer-events: none;
         }
 
-        /* ===== ГЕРОЙ + ВИДЕО-РАМКА ===== */
         .hero-frame {
             position: absolute;
             bottom: 26%;
@@ -152,7 +151,6 @@
             filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.15));
         }
 
-        /* ===== ЗАГРУЗОЧНЫЙ ЭКРАН ===== */
         .loading-screen {
             position: absolute;
             top: 0;
@@ -201,7 +199,6 @@
         .loading-screen .play-btn:hover { transform: scale(1.05); }
         .loading-screen .play-btn:active { transform: scale(0.95); }
 
-        /* ===== ОСНОВНОЙ ИНТЕРФЕЙС ===== */
         .main-interface {
             position: absolute;
             top: 0;
@@ -217,7 +214,6 @@
             pointer-events: all;
         }
 
-        /* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
         .top-panel {
             position: absolute;
             top: 3%;
@@ -279,7 +275,6 @@
             text-align: center;
         }
 
-        /* ===== КНОПКИ НАД АРКОЙ ===== */
         .top-actions {
             position: absolute;
             top: 14%;
@@ -315,7 +310,6 @@
         }
         .top-actions .btn:active { transform: scale(0.9); }
 
-        /* ===== БОКОВЫЕ КНОПКИ ===== */
         .left-buttons, .right-buttons {
             position: absolute;
             top: 18%;
@@ -363,7 +357,6 @@
         }
         .left-buttons .btn:active, .right-buttons .btn:active { transform: scale(0.9); }
 
-        /* ===== НИЖНИЕ СТАТЫ ===== */
         .bottom-stats {
             position: absolute;
             bottom: -5%;
@@ -439,7 +432,6 @@
         .stat-values .agility { color: #ff9800; }
         .stat-values .hp { color: #4caf50; }
 
-        /* ===== ПЛЕЙСХОЛДЕР ===== */
         .placeholder-screen {
             position: absolute;
             top: 0;
@@ -505,15 +497,15 @@
 </head>
 <body>
 
-    <!-- ===== СТАТУИ ===== -->
+    <!-- СТАТУИ -->
     <div class="statue-left"></div>
     <div class="statue-right"></div>
 
-    <!-- ===== РАЗДЕЛИТЕЛИ ===== -->
+    <!-- РАЗДЕЛИТЕЛИ -->
     <div class="divider-left"></div>
     <div class="divider-right"></div>
 
-    <!-- ===== ИГРОВОЙ КОНТЕЙНЕР ===== -->
+    <!-- ИГРОВОЙ КОНТЕЙНЕР -->
     <div id="game-container">
 
         <div class="bg-layer"></div>
@@ -526,6 +518,7 @@
             <img src="assets/hero_skins/skin_1_basic.png" alt="Герой">
         </div>
 
+        <!-- ЭКРАН ЗАГРУЗКИ -->
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-bg"></div>
             <button class="play-btn" id="playBtn">
@@ -533,6 +526,7 @@
             </button>
         </div>
 
+        <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
         <div class="main-interface" id="mainInterface">
             <div class="top-panel">
                 <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
@@ -543,13 +537,11 @@
                 <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
             </div>
 
-            <!-- КНОПКИ НАД АРКОЙ -->
             <div class="top-actions">
                 <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"></div>
                 <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"></div>
             </div>
 
-            <!-- ЛЕВЫЕ КНОПКИ -->
             <div class="left-buttons">
                 <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png" alt="Квест"><span class="label">Квест</span></div>
                 <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png" alt="Подземка"><span class="label">Подземка</span></div>
@@ -559,7 +551,6 @@
                 <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png" alt="Таверна"><span class="label">Таверна</span></div>
             </div>
 
-            <!-- ПРАВЫЕ КНОПКИ -->
             <div class="right-buttons">
                 <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png" alt="Ежедневные"><span class="label">Ежедневные</span></div>
                 <div class="btn" data-action="training"><img src="assets/all_buttons/training.png" alt="Тренировка"><span class="label">Тренировка</span></div>
@@ -569,7 +560,6 @@
                 <div class="btn" data-action="bestiary"><img src="assets/all_buttons/bestiary.png" alt="Бестиарий"><span class="label">Бестиарий</span></div>
             </div>
 
-            <!-- НИЖНИЕ СТАТЫ -->
             <div class="bottom-stats">
                 <div class="stat-block">
                     <div class="stat-board"><img src="assets/interface/damage_and_armor_stat_board.png" alt="Урон и защита"></div>
@@ -598,95 +588,22 @@
 
     </div>
 
-    <script>
-        // ============================================================
-        //  SHERWOOD UI — УПРОЩЁННЫЙ ЗАПУСК
-        // ============================================================
+    <!-- ============================================================
+         ЗАГРУЗКА JS-ФАЙЛОВ (ПОРЯДОК ВАЖЕН!)
+         ============================================================ -->
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Проверяем, загружен ли Sherwood
-            if (typeof Sherwood === 'undefined' || !Sherwood.getPlayer) {
-                console.error('❌ Sherwood не загружен!');
-                // Создаём заглушку, чтобы интерфейс работал
-                window.Sherwood = {
-                    getPlayer: function() {
-                        return {
-                            name: 'Охотник',
-                            level: 1,
-                            exp: 0,
-                            expToLevel: 100,
-                            stats: { attack: 10, defense: 5, agility: 3, hp: 100, maxHp: 100 },
-                            resources: { gold: 0, silver: 100, trophies: 0 },
-                            inventory: [],
-                            equipment: {},
-                            dungeon: { tickets: 5, maxTickets: 5 },
-                            bagSize: 10,
-                            bestiary: {},
-                            questProgress: {},
-                            trophies: [],
-                            trainingLevels: { attack: 0, defense: 0, hp: 0, agility: 0 }
-                        };
-                    },
-                    addResource: function(type, amount) {},
-                    addExp: function(amount) {},
-                    saveGame: function() {},
-                    dispatch: function(event) {},
-                    on: function(event, callback) {},
-                    once: function(event, callback) {},
-                    off: function(event, callback) {},
-                    _recalcStats: function() {},
-                    init: function() {}
-                };
-                Sherwood.Dungeon = {
-                    getAvailableDungeons: function() { return {}; },
-                    generateDungeon: function(id, level) { return null; },
-                    getDungeon: function() { return null; },
-                    movePlayer: function(dx, dy) { return { success: false, reason: 'not_loaded' }; },
-                    leaveDungeon: function() {},
-                    onMonsterDefeated: function(tile) {}
-                };
-                Sherwood.Bag = {
-                    getItems: function() { return []; },
-                    getEquipment: function() { return {}; },
-                    getMaxSlots: function() { return 10; },
-                    getFreeSlots: function() { return 10; },
-                    addItem: function(item) {},
-                    removeItem: function(index) {},
-                    equipItem: function(index) {},
-                    unequipItem: function(part) {},
-                    sellItem: function(index) {},
-                    dismantleItem: function(index) {},
-                    addLoot: function(loot) {}
-                };
-            }
+    <!-- 1. ЯДРО (САМОЕ ГЛАВНОЕ) -->
+    <script src="js/core.js"></script>
 
-            // Инициализация UI
-            if (typeof SherwoodUI !== 'undefined' && SherwoodUI.init) {
-                SherwoodUI.init();
-            } else {
-                console.error('❌ SherwoodUI не загружен!');
-                // Базовая инициализация UI
-                const container = document.getElementById('game-container');
-                const playBtn = document.getElementById('playBtn');
-                if (playBtn) {
-                    playBtn.addEventListener('click', function() {
-                        document.getElementById('loadingScreen').classList.add('hidden');
-                        document.getElementById('mainInterface').classList.add('active');
-                    });
-                }
-                // Простая загрузка данных
-                const goldEl = document.getElementById('gold-display');
-                const silverEl = document.getElementById('silver-display');
-                const expEl = document.getElementById('exp-display');
-                const expMaxEl = document.getElementById('exp-max-display');
-                if (goldEl) goldEl.textContent = '0';
-                if (silverEl) silverEl.textContent = '100';
-                if (expEl) expEl.textContent = '0';
-                if (expMaxEl) expMaxEl.textContent = '100';
-            }
+    <!-- 2. МОДЕЛИ -->
+    <script src="js/models.js"></script>
 
-            console.log('🏹 Sherwood RPG — интерфейс загружен!');
-        });
-    </script>
+    <!-- 3. ПОДСИСТЕМЫ -->
+    <script src="js/dungeon.js"></script>
+    <script src="js/bag.js"></script>
+
+    <!-- 4. UI (ПОСЛЕДНИЙ) -->
+    <script src="js/ui.js"></script>
+
 </body>
 </html>
