@@ -1,30 +1,32 @@
 /**
- * Sherwood UI — Полный контроллер интерфейса
+ * Sherwood UI — Контроллер интерфейса (v2 — слои)
  */
 
 const SherwoodUI = {
     // ============================================================
-    //  КОНСТАНТЫ
+    //  КОНСТАНТЫ ФОНОВ
     // ============================================================
 
     _bg: {
         main: 'assets/backgrounds/homepage_screen.jpeg',
-        dungeon_select: 'assets/backgrounds/thick.jpeg',
-        dungeon_forest: 'assets/backgrounds/underground_1_floor_1.jpg',
-        dungeon_swamp: 'assets/backgrounds/underground_2_floor_1.jpeg',
-        dungeon_cave: 'assets/backgrounds/underground_3_floor_1.jpeg',
-        dungeon_fight: 'assets/backgrounds/subway_battle2.jpeg',
+        dungeon_select: 'assets/backgrounds/underground_1_floor_1.jpg',
         bag: 'assets/backgrounds/bag.jpeg',
         profile: 'assets/backgrounds/character_page.jpeg',
         bestiary: 'assets/backgrounds/bestiary.jpeg',
-        quests: 'assets/backgrounds/background_of_skills.jpeg',
-        training: 'assets/backgrounds/training_background.jpeg',
-        blacksmith: 'assets/backgrounds/forge.jpeg',
+        quests: 'assets/backgrounds/skill_page.jpeg',
+        training: 'assets/backgrounds/training.jpeg',
+        forge: 'assets/backgrounds/forge.jpeg',
         tavern: 'assets/backgrounds/tavern.jpeg',
         market: 'assets/backgrounds/market.jpeg',
         arena: 'assets/backgrounds/arena.jpeg',
-        raid: 'assets/backgrounds/background_raid.png',
-        settings: 'assets/backgrounds/settings_page.jpeg'
+        raid: 'assets/backgrounds/arena.jpeg',
+        settings: 'assets/backgrounds/settings_page.jpeg',
+        daily: 'assets/backgrounds/tasks.jpeg',
+        portal: 'assets/backgrounds/portal_1.jpeg',
+        dungeon_forest: 'assets/backgrounds/underground_1_floor_1.jpg',
+        dungeon_swamp: 'assets/backgrounds/underground_2_floor_1.jpeg',
+        dungeon_cave: 'assets/backgrounds/underground_3_floor_1.jpeg',
+        dungeon_fight: 'assets/backgrounds/underground_1_floor_1.jpg'
     },
 
     // ============================================================
@@ -63,15 +65,26 @@ const SherwoodUI = {
             return;
         }
 
+        // Создаём слой для экранов
+        this._screenLayer = document.createElement('div');
+        this._screenLayer.id = 'screen-layer';
+        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
+        this.container.appendChild(this._screenLayer);
+
+        // Кешируем элементы главного экрана
+        this._mainElements = [
+            '.bg-layer', '.arch-layer', '.hero-frame',
+            '.top-panel', '.top-actions', '.left-buttons',
+            '.right-buttons', '.bottom-stats'
+        ];
+
         this._initSounds();
         this.bindButtons();
         this.bindPlayButton();
         this.updateDisplay();
-        this.loadHome();
-        this._loadAudioSettings();
 
         // Подписываемся на события
-        if (Sherwood) {
+        if (typeof Sherwood !== 'undefined') {
             Sherwood.on('RESOURCE_CHANGED', () => this.updateDisplay());
             Sherwood.on('PLAYER_LEVEL_UP', () => {
                 this._playSound('levelup');
@@ -79,7 +92,8 @@ const SherwoodUI = {
             });
         }
 
-        console.log('🏹 Sherwood UI инициализирован!');
+        this._loadAudioSettings();
+        console.log('🏹 Sherwood UI v2 инициализирован!');
     },
 
     // ============================================================
@@ -151,15 +165,14 @@ const SherwoodUI = {
     // ============================================================
 
     bindButtons() {
-        document.querySelectorAll('.btn, .top-btn').forEach(el => {
+        // Кнопки главного экрана (data-action)
+        document.querySelectorAll('#mainInterface .btn[data-action]').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const action = el.dataset.action;
-                if (action && this[action]) {
+                if (action && typeof this[action] === 'function') {
                     this._playSound('click');
                     this[action]();
-                } else {
-                    console.log('🔘 Кнопка:', action || 'без action');
                 }
             });
         });
@@ -185,20 +198,18 @@ const SherwoodUI = {
     // ============================================================
 
     updateDisplay() {
-        const p = Sherwood?.getPlayer ? Sherwood.getPlayer() : null;
+        const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
         if (!p) return;
 
         const goldEl = document.getElementById('gold-display');
         const silverEl = document.getElementById('silver-display');
         const expEl = document.getElementById('exp-display');
         const expMaxEl = document.getElementById('exp-max-display');
-        const levelEl = document.getElementById('level-display');
 
         if (goldEl) goldEl.textContent = this._formatNumber(p.resources?.gold || 0);
         if (silverEl) silverEl.textContent = this._formatNumber(p.resources?.silver || 0);
         if (expEl) expEl.textContent = this._formatNumber(p.exp || 0);
         if (expMaxEl) expMaxEl.textContent = this._formatNumber(p.expToLevel || 100);
-        if (levelEl) levelEl.textContent = p.level || 1;
 
         const attackEl = document.querySelector('.stat-values .attack');
         const defenseEl = document.querySelector('.stat-values .defense');
@@ -212,45 +223,94 @@ const SherwoodUI = {
     },
 
     _formatNumber(n) {
+        if (n === undefined || n === null) return '0';
         return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     },
 
     // ============================================================
-    //  НАВИГАЦИЯ
+    //  НАВИГАЦИЯ (СЛОИ)
     // ============================================================
 
     loadHome() {
-        const elements = ['.bg-layer', '.statue-left', '.statue-right', '.divider-left', '.divider-right', '.arch-layer', '.hero-frame', '.top-panel', '.top-actions', '.left-buttons', '.right-buttons', '.bottom-stats'];
-        elements.forEach(sel => {
-            document.querySelectorAll(sel).forEach(el => el.style.display = '');
+        // Скрываем слой экранов
+        if (this._screenLayer) {
+            this._screenLayer.style.display = 'none';
+            this._screenLayer.innerHTML = '';
+        }
+
+        // Показываем элементы главного экрана
+        this._mainElements.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                el.style.display = '';
+            });
         });
 
-        const placeholder = document.querySelector('.placeholder-screen');
-        if (placeholder) placeholder.remove();
-
-        this.container.style.background = "url('" + this._bg.main + "') center/cover no-repeat";
+        // Возвращаем фон контейнера
+        this.container.style.background = '';
         this._playMusic('forest_ambient');
+        this.updateDisplay();
         console.log('🏠 Главный экран');
+    },
+
+    /**
+     * Открыть экран. Всегда используй этот метод вместо прямого innerHTML.
+     * @param {string} title - заголовок экрана
+     * @param {string} bgKey - ключ из this._bg (или прямой путь к файлу)
+     * @param {string} contentHTML - содержимое экрана
+     */
+    _openScreen(title, bgKey, contentHTML) {
+        // Скрываем главный интерфейс
+        this._mainElements.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                el.style.display = 'none';
+            });
+        });
+
+        // Определяем фон
+        let bgPath = this._bg[bgKey] || bgKey;
+        this.container.style.background = `url('${bgPath}') center/cover no-repeat`;
+
+        // Рендерим в слой
+        if (this._screenLayer) {
+            this._screenLayer.innerHTML = `
+                <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;display:flex;flex-direction:column;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                        <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'Georgia',serif;">← Назад</button>
+                        <span style="color:#e0c080;font-size:1.1em;">${title}</span>
+                    </div>
+                    <div style="flex:1;">${contentHTML}</div>
+                </div>
+            `;
+            this._screenLayer.style.display = 'block';
+        }
     },
 
     // ============================================================
     //  ПОДЗЕМКА
     // ============================================================
 
+    subway() { this.showDungeon(); },
+
     showDungeon() {
-        this._hideMainInterface();
-        this.container.style.background = "url('" + this._bg.dungeon_select + "') center/cover no-repeat";
+        this._playSound('click');
         this._playMusic('dungeon_ambient');
 
-        const dungeons = Sherwood?.Dungeon?.getAvailableDungeons ? Sherwood.Dungeon.getAvailableDungeons() : {};
-        let list = '';
+        const dungeons = (typeof Sherwood !== 'undefined' && Sherwood.Dungeon && Sherwood.Dungeon.getAvailableDungeons)
+            ? Sherwood.Dungeon.getAvailableDungeons()
+            : {};
 
-        if (Object.keys(dungeons).length === 0) {
+        let list = '';
+        const entries = Object.entries(dungeons);
+
+        if (entries.length === 0) {
             list = '<div style="color:#aaa;text-align:center;padding:20px;">Подземелья временно недоступны</div>';
         }
 
-        for (const [id, data] of Object.entries(dungeons)) {
-            const progress = Sherwood.Dungeon._playerProgress?.[id] || { level: 1, stars: 0 };
+        for (const [id, data] of entries) {
+            const progress = (Sherwood.Dungeon._playerProgress && Sherwood.Dungeon._playerProgress[id])
+                ? Sherwood.Dungeon._playerProgress[id]
+                : { level: 1, stars: 0 };
+
             list += `
                 <div style="background:rgba(0,0,0,0.7);border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:10px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -258,30 +318,33 @@ const SherwoodUI = {
                         <span style="color:#aaa;font-size:0.8em;">Уровень ${progress.level || 1}/7</span>
                     </div>
                     <div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;">
-                        ${[1,2,3,4,5,6,7].map(level => `
-                            <button onclick="SherwoodUI._startDungeon('${id}',${level})" 
-                                    style="background:${level <= (progress.level || 1) ? '#c9a040' : '#444'};border:none;border-radius:4px;padding:4px 8px;color:${level <= (progress.level || 1) ? '#000' : '#888'};cursor:${level <= (progress.level || 1) ? 'pointer' : 'default'};font-size:0.8em;">
-                                ${level <= (progress.level || 1) ? '⭐' : '🔒'} ${level}
-                            </button>
-                        `).join('')}
+                        ${[1,2,3,4,5,6,7].map(lvl => {
+                            const unlocked = lvl <= (progress.level || 1);
+                            return `<button onclick="SherwoodUI._startDungeon('${id}',${lvl})" 
+                                style="background:${unlocked ? '#c9a040' : '#444'};border:none;border-radius:4px;padding:4px 8px;color:${unlocked ? '#000' : '#888'};cursor:${unlocked ? 'pointer' : 'default'};font-size:0.8em;">
+                                ${unlocked ? '⭐' : '🔒'} ${lvl}
+                            </button>`;
+                        }).join('')}
                     </div>
-                    <div style="color:#666;font-size:0.7em;">${(progress.level || 1) >= 7 ? '✅ Пройдено' : `Следующий: ${(progress.level || 1) + 1}`}</div>
+                    <div style="color:#666;font-size:0.7em;">${(progress.level || 1) >= 7 ? '✅ Пройдено' : 'Следующий: ' + ((progress.level || 1) + 1)}</div>
                 </div>
             `;
         }
 
-        this.container.innerHTML = `
-            <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
-                <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
-                <h2 style="color:#70a0e0;">🏰 Подземелья</h2>
-                <div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">🎫 Билетов: ${Sherwood?.getPlayer?.()?.dungeon?.tickets || 5}</div>
-                ${list}
-            </div>
+        const tickets = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer)
+            ? (Sherwood.getPlayer().dungeon?.tickets || 0)
+            : 0;
+
+        const contentHTML = `
+            <div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">🎫 Билетов: ${tickets}</div>
+            ${list}
         `;
+
+        this._openScreen('🏰 Подземелья', 'dungeon_select', contentHTML);
     },
 
     _startDungeon(dungeonId, level) {
-        if (!Sherwood?.Dungeon?.generateDungeon) {
+        if (typeof Sherwood === 'undefined' || !Sherwood.Dungeon || !Sherwood.Dungeon.generateDungeon) {
             this._showNotification('❌ Система подземелий не загружена');
             return;
         }
@@ -306,37 +369,56 @@ const SherwoodUI = {
     },
 
     _renderDungeon() {
-        const d = this._dungeon || Sherwood?.Dungeon?.getDungeon?.();
+        const d = this._dungeon || ((typeof Sherwood !== 'undefined' && Sherwood.Dungeon && Sherwood.Dungeon.getDungeon) ? Sherwood.Dungeon.getDungeon() : null);
         if (!d) { this.showDungeon(); return; }
 
+        // Фон по типу подземки
         const bgMap = {
             forest: this._bg.dungeon_forest,
             swamp: this._bg.dungeon_swamp,
             cave: this._bg.dungeon_cave
         };
-        this.container.style.background = "url('" + (bgMap[d.dungeonId] || this._bg.dungeon_forest) + "') center/cover no-repeat";
+        this.container.style.background = `url('${bgMap[d.dungeonId] || this._bg.dungeon_forest}') center/cover no-repeat`;
+
+        // Скрываем главный интерфейс
+        this._mainElements.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => el.style.display = 'none');
+        });
 
         const size = d.size || 8;
         const cellSize = Math.min(50, Math.floor((this.container.clientWidth - 32) / size));
         const grid = d.grid || [];
+
+        // Правильные пути к тайлам
+        const dungeonTileFolder = d.dungeonId || 'forest';
+        const tileBasePath = `assets/dungeon_tiles/${dungeonTileFolder}`;
 
         let gridHtml = '';
 
         for (let y = 0; y < size; y++) {
             gridHtml += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;">';
             for (let x = 0; x < size; x++) {
-                const cell = grid[y]?.[x] || { type: 'wall', walkable: false, visible: false, explored: false };
-                const isPlayer = d.playerPos?.x === x && d.playerPos?.y === y;
+                const cell = (grid[y] && grid[y][x]) ? grid[y][x] : { type: 'wall', walkable: false, visible: false, explored: false };
+                const isPlayer = d.playerPos && d.playerPos.x === x && d.playerPos.y === y;
                 const isVisible = cell.visible || cell.explored;
 
-                let bgImage = 'assets/icons/Dungeon tiles1.jpeg';
+                // Тайл по умолчанию — первый из подземки
+                let bgImage = `${tileBasePath}/tiles1.jpeg`;
+                if (dungeonTileFolder === 'swamp') bgImage = `${tileBasePath}/tiles2.1.png`;
+                if (dungeonTileFolder === 'cave') bgImage = `${tileBasePath}/tiles3.1.png`;
+
                 let content = '';
                 let borderColor = 'rgba(255,255,255,0.05)';
                 let extraStyle = '';
                 let clickHandler = '';
 
                 if (isVisible) {
-                    bgImage = 'assets/icons/level_seamless_horizontal_loop_1.jpg';
+                    // Случайный тайл пола
+                    const tileNum = 1 + Math.floor(Math.random() * 14);
+                    if (dungeonTileFolder === 'forest') bgImage = `${tileBasePath}/tiles${tileNum}.jpeg`;
+                    else if (dungeonTileFolder === 'swamp') bgImage = `${tileBasePath}/tiles2.${tileNum}.png`;
+                    else bgImage = `${tileBasePath}/tiles3.${tileNum}.png`;
+
                     borderColor = 'rgba(255,255,255,0.1)';
 
                     if (cell.type === 'start') { content = '🏠'; }
@@ -347,7 +429,7 @@ const SherwoodUI = {
                         borderColor = cell.isBoss ? '#ff6a00' : '#f44336';
                     }
 
-                    const isAdjacent = Math.abs(x - d.playerPos.x) + Math.abs(y - d.playerPos.y) === 1;
+                    const isAdjacent = d.playerPos && Math.abs(x - d.playerPos.x) + Math.abs(y - d.playerPos.y) === 1;
                     if (isAdjacent && !isPlayer && cell.walkable) {
                         clickHandler = `onclick="SherwoodUI._dungeonMove(${x},${y})"`;
                         extraStyle = 'cursor:pointer;';
@@ -355,9 +437,6 @@ const SherwoodUI = {
                             borderColor = '#4caf50';
                         }
                     }
-                } else {
-                    bgImage = 'assets/icons/Dungeon tiles1.jpeg';
-                    content = '';
                 }
 
                 if (isPlayer) {
@@ -381,7 +460,6 @@ const SherwoodUI = {
                         font-size:${cellSize * 0.4}px;
                         transition:0.15s;
                         ${extraStyle}
-                        ${isPlayer ? 'background-color:rgba(255,215,0,0.1);' : ''}
                     ">
                         ${content}
                     </div>
@@ -390,30 +468,38 @@ const SherwoodUI = {
             gridHtml += '</div>';
         }
 
-        this.container.innerHTML = `
-            <div style="min-height:100%;background:rgba(0,0,0,0.5);padding:12px;display:flex;flex-direction:column;align-items:center;">
-                <div style="width:100%;max-width:${cellSize * size + 20}px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <button onclick="SherwoodUI._leaveDungeon()" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:#ccc;padding:6px 12px;border-radius:6px;cursor:pointer;">← Выйти</button>
-                        <div style="color:#70a0e0;font-weight:bold;">${d.dungeonId || 'dungeon'} Ур.${d.level || 1}</div>
-                        <div style="color:#4caf50;">❤️${Sherwood?.getPlayer?.()?.stats?.hp || 0}</div>
-                    </div>
-                    <div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:6px;margin-bottom:8px;">
-                        <div style="display:flex;justify-content:space-around;font-size:11px;color:#aaa;">
-                            <span>👹 ${d.monstersKilled || 0}/${d.totalMonsters || 0}</span>
-                            <span>📦 ${d.chestsOpened || 0}</span>
-                            <span>🚶 ${d.steps || 0}</span>
+        const hp = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? (Sherwood.getPlayer().stats?.hp || 0) : 0;
+
+        // Рендерим подземку в слой
+        if (this._screenLayer) {
+            this._screenLayer.innerHTML = `
+                <div style="min-height:100%;background:rgba(0,0,0,0.5);padding:12px;display:flex;flex-direction:column;align-items:center;">
+                    <div style="width:100%;max-width:${cellSize * size + 20}px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <button onclick="SherwoodUI._leaveDungeon()" style="background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);color:#ccc;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'Georgia',serif;">← Выйти</button>
+                            <div style="color:#70a0e0;font-weight:bold;">${d.dungeonId || 'dungeon'} Ур.${d.level || 1}</div>
+                            <div style="color:#4caf50;">❤️${hp}</div>
                         </div>
+                        <div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:6px;margin-bottom:8px;">
+                            <div style="display:flex;justify-content:space-around;font-size:11px;color:#aaa;">
+                                <span>👹 ${d.monstersKilled || 0}/${d.totalMonsters || 0}</span>
+                                <span>📦 ${d.chestsOpened || 0}</span>
+                                <span>🚶 ${d.steps || 0}</span>
+                            </div>
+                        </div>
+                        ${gridHtml}
+                        <div id="dungeon-log" style="text-align:center;font-size:12px;color:#aaa;min-height:20px;margin-top:8px;background:rgba(0,0,0,0.6);border-radius:6px;padding:6px;"></div>
                     </div>
-                    ${gridHtml}
-                    <div id="dungeon-log" style="text-align:center;font-size:12px;color:#aaa;min-height:20px;margin-top:8px;background:rgba(0,0,0,0.6);border-radius:6px;padding:6px;"></div>
                 </div>
-            </div>
-        `;
+            `;
+            this._screenLayer.style.display = 'block';
+        }
     },
 
     _dungeonMove(x, y) {
-        const d = this._dungeon || Sherwood?.Dungeon?.getDungeon?.();
+        if (typeof Sherwood === 'undefined' || !Sherwood.Dungeon || !Sherwood.Dungeon.movePlayer) return;
+
+        const d = this._dungeon || Sherwood.Dungeon.getDungeon();
         if (!d) return;
 
         const dx = x - d.playerPos.x;
@@ -436,7 +522,8 @@ const SherwoodUI = {
 
         if (result.type === 'chest') {
             this._playSound('chest_open');
-            if (log) log.textContent = '🎁 +' + result.reward?.gold + '🪙 +' + result.reward?.silver + '⚪';
+            if (log) log.textContent = '🎁 +' + (result.reward?.gold || 0) + '🪙 +' + (result.reward?.silver || 0) + '⚪';
+            this.updateDisplay();
             this._renderDungeon();
             return;
         }
@@ -457,7 +544,7 @@ const SherwoodUI = {
     },
 
     _leaveDungeon() {
-        if (Sherwood?.Dungeon?.leaveDungeon) {
+        if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon && Sherwood.Dungeon.leaveDungeon) {
             Sherwood.Dungeon.leaveDungeon();
         }
         this._dungeon = null;
@@ -470,17 +557,15 @@ const SherwoodUI = {
     // ============================================================
 
     _renderBattle() {
-        this.container.innerHTML = `
-            <div style="min-height:100%;background:url('${this._bg.dungeon_fight}') center/cover no-repeat;position:relative;">
-                <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);"></div>
-                <div style="position:relative;z-index:1;padding:20px;text-align:center;color:#fff;">
-                    <h2 style="color:#ffd700;">⚔️ БОЙ ⚔️</h2>
-                    <div style="font-size:2em;margin:20px 0;">👹</div>
-                    <div style="color:#aaa;">Боевая система в разработке</div>
-                    <button onclick="SherwoodUI._leaveDungeon()" style="margin-top:20px;background:#c9a040;border:none;padding:10px 30px;border-radius:8px;cursor:pointer;font-weight:bold;">Назад</button>
-                </div>
+        const contentHTML = `
+            <div style="text-align:center;color:#fff;">
+                <h2 style="color:#ffd700;">⚔️ БОЙ ⚔️</h2>
+                <div style="font-size:2em;margin:20px 0;">👹</div>
+                <div style="color:#aaa;">Боевая система в разработке</div>
+                <button onclick="SherwoodUI._leaveDungeon()" style="margin-top:20px;background:#c9a040;border:none;padding:10px 30px;border-radius:8px;cursor:pointer;font-weight:bold;font-family:'Georgia',serif;">Назад</button>
             </div>
         `;
+        this._openScreen('⚔️ Бой', 'dungeon_fight', contentHTML);
     },
 
     // ============================================================
@@ -488,24 +573,22 @@ const SherwoodUI = {
     // ============================================================
 
     bag() {
-        this._hideMainInterface();
-        this.container.style.background = "url('" + this._bg.bag + "') center/cover no-repeat";
         this._playSound('click');
 
-        const bag = Sherwood?.Bag;
-        const items = bag?.getItems?.() || [];
-        const maxSlots = bag?.getMaxSlots?.() || 10;
+        const bag = (typeof Sherwood !== 'undefined' && Sherwood.Bag) ? Sherwood.Bag : null;
+        const items = bag ? bag.getItems() : [];
+        const maxSlots = bag ? bag.getMaxSlots() : 10;
 
         let itemsHtml = '';
         for (let i = 0; i < maxSlots; i++) {
             const item = items[i] || null;
             if (item) {
-                const gradeColor = Sherwood?.Models?.GradeColors?.[item.grade] || '#9d9d9d';
+                const gradeColors = (typeof Sherwood !== 'undefined' && Sherwood.GradeColors) ? Sherwood.GradeColors : {};
+                const gradeColor = gradeColors[item.grade] || '#9d9d9d';
                 itemsHtml += `
-                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid ${gradeColor};border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;" onclick="SherwoodUI._bagAction(${i})">
-                        <img src="${item.icon || 'assets/icons/default_item.png'}" style="width:32px;height:32px;object-fit:contain;">
+                    <div onclick="SherwoodUI._bagAction(${i})" style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid ${gradeColor};border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;">
+                        <img src="${item.icon || 'assets/interface/labyrinth_of_icons.png'}" style="width:32px;height:32px;object-fit:contain;">
                         ${item.quantity > 1 ? `<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;background:rgba(0,0,0,0.7);padding:0 4px;border-radius:4px;">${item.quantity}</span>` : ''}
-                        <span style="position:absolute;top:2px;left:4px;color:${gradeColor};font-size:0.4em;">${item.grade ? item.grade[0] : ''}</span>
                     </div>
                 `;
             } else {
@@ -517,22 +600,21 @@ const SherwoodUI = {
             }
         }
 
-        this.container.innerHTML = `
-            <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
-                <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
-                <h2 style="color:#e0c080;">🎒 Сумка</h2>
-                <div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">${items.length}/${maxSlots}</div>
-                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:340px;margin:0 auto;">
-                    ${itemsHtml}
-                </div>
-                <div id="bag-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на предмет для действий</div>
+        const contentHTML = `
+            <div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">${items.length}/${maxSlots}</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:340px;margin:0 auto;">
+                ${itemsHtml}
             </div>
+            <div id="bag-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на предмет для действий</div>
         `;
+
+        this._openScreen('🎒 Сумка', 'bag', contentHTML);
     },
 
     _bagAction(index) {
-        const bag = Sherwood?.Bag;
-        const items = bag?.getItems?.() || [];
+        const bag = (typeof Sherwood !== 'undefined' && Sherwood.Bag) ? Sherwood.Bag : null;
+        if (!bag) return;
+        const items = bag.getItems();
         if (index >= items.length) return;
         const item = items[index];
         if (!item) return;
@@ -542,13 +624,13 @@ const SherwoodUI = {
 
         let actions = '';
         if (item.part) {
-            actions += `<button onclick="Sherwood.Bag.equipItem(${index});SherwoodUI.bag();" style="background:#4caf50;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Надеть</button>`;
+            actions += `<button onclick="Sherwood.Bag.equipItem(${index});SherwoodUI.bag();" style="background:#4caf50;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;font-family:'Georgia',serif;">Надеть</button>`;
         }
-        actions += `<button onclick="Sherwood.Bag.sellItem(${index});SherwoodUI.bag();" style="background:#ff9800;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Продать</button>`;
-        actions += `<button onclick="Sherwood.Bag.dismantleItem(${index});SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Разобрать</button>`;
+        actions += `<button onclick="Sherwood.Bag.sellItem(${index});SherwoodUI.bag();" style="background:#ff9800;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;font-family:'Georgia',serif;">Продать</button>`;
+        actions += `<button onclick="Sherwood.Bag.dismantleItem(${index});SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;font-family:'Georgia',serif;">Разобрать</button>`;
 
         info.innerHTML = `
-            <div style="color:#fff;font-size:0.9em;">${item.name}</div>
+            <div style="color:#fff;font-size:0.9em;">${item.name || 'Предмет'}</div>
             <div style="color:#aaa;font-size:0.7em;">${item.grade || 'обычный'}</div>
             <div style="margin-top:6px;">${actions}</div>
         `;
@@ -559,98 +641,75 @@ const SherwoodUI = {
     // ============================================================
 
     profile() {
-        this._hideMainInterface();
-        this.container.style.background = "url('" + this._bg.profile + "') center/cover no-repeat";
         this._playSound('click');
 
-        const p = Sherwood?.getPlayer ? Sherwood.getPlayer() : null;
-        const bag = Sherwood?.Bag;
-        const equipment = bag?.getEquipment?.() || {};
-
+        const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
+        const bag = (typeof Sherwood !== 'undefined' && Sherwood.Bag) ? Sherwood.Bag : null;
+        const equipment = bag ? bag.getEquipment() : {};
         const ringItem = equipment.ring;
         const amuletItem = equipment.amulet;
-        const lastTrophy = this._getLastTrophy();
+        const trophies = p ? (p.trophies || []) : [];
+        const lastTrophy = trophies.length > 0 ? (trophies[trophies.length - 1]?.name || 'Трофей') : 'Нет трофеев';
 
-        this.container.innerHTML = `
-            <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
-                <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
-
-                <div style="text-align:center;margin-bottom:12px;">
-                    <img src="assets/hero_skins/skin_1_basic.png" style="width:80px;height:80px;border-radius:50%;border:2px solid #c9a040;display:inline-block;">
-                    <div style="color:#e0c080;font-weight:bold;font-size:1.1em;margin-top:4px;">${p ? p.name : 'Охотник'}</div>
-                    <div style="color:#aaa;font-size:0.8em;">Уровень ${p ? p.level : 1}</div>
-                </div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">
-                    <div style="text-align:center;"><span style="color:#f44336;">⚔️ ${p ? p.stats.attack : 0}</span></div>
-                    <div style="text-align:center;"><span style="color:#2196f3;">🛡️ ${p ? p.stats.defense : 0}</span></div>
-                    <div style="text-align:center;"><span style="color:#ff9800;">💨 ${p ? p.stats.agility : 0}</span></div>
-                    <div style="text-align:center;"><span style="color:#4caf50;">❤️ ${p ? p.stats.hp : 0}</span></div>
-                </div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
-                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI.showTrophies()">
-                        <div style="font-size:1.2em;">🏆</div>
-                        <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${lastTrophy || 'Нет трофеев'}</div>
-                    </div>
-                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #ffd700;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI.showRingInfo()">
-                        <div style="font-size:1.2em;">💍</div>
-                        <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${ringItem ? ringItem.name : 'Пусто'}</div>
-                    </div>
-                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #9c27b0;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI.showAmuletInfo()">
-                        <div style="font-size:1.2em;">📿</div>
-                        <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${amuletItem ? amuletItem.name : 'Пусто'}</div>
-                    </div>
-                </div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                    <button onclick="SherwoodUI.training()" style="background:rgba(255,152,0,0.2);border:1px solid #ff9800;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;">💪 Тренировка</button>
-                    <button onclick="SherwoodUI.forge()" style="background:rgba(121,85,72,0.2);border:1px solid #795548;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;">⚒️ Кузница</button>
-                    <button onclick="SherwoodUI.bestiary()" style="background:rgba(96,125,139,0.2);border:1px solid #607d8b;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;">📖 Бестиарий</button>
-                </div>
-
-                <div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на иконку для информации</div>
+        const contentHTML = `
+            <div style="text-align:center;margin-bottom:12px;">
+                <img src="assets/hero_skins/skin_1_basic.png" style="width:80px;height:80px;border-radius:50%;border:2px solid #c9a040;display:inline-block;">
+                <div style="color:#e0c080;font-weight:bold;font-size:1.1em;margin-top:4px;">${p ? p.name : 'Охотник'}</div>
+                <div style="color:#aaa;font-size:0.8em;">Уровень ${p ? p.level : 1}</div>
             </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">
+                <div style="text-align:center;"><span style="color:#f44336;">⚔️ ${p ? p.stats.attack : 0}</span></div>
+                <div style="text-align:center;"><span style="color:#2196f3;">🛡️ ${p ? p.stats.defense : 0}</span></div>
+                <div style="text-align:center;"><span style="color:#ff9800;">💨 ${p ? p.stats.agility : 0}</span></div>
+                <div style="text-align:center;"><span style="color:#4caf50;">❤️ ${p ? p.stats.hp : 0}</span></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+                <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI._showProfileInfo('trophies')">
+                    <div style="font-size:1.2em;">🏆</div>
+                    <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${lastTrophy}</div>
+                </div>
+                <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #ffd700;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI._showProfileInfo('ring')">
+                    <div style="font-size:1.2em;">💍</div>
+                    <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${ringItem ? ringItem.name : 'Пусто'}</div>
+                </div>
+                <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #9c27b0;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI._showProfileInfo('amulet')">
+                    <div style="font-size:1.2em;">📿</div>
+                    <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${amuletItem ? amuletItem.name : 'Пусто'}</div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <button onclick="SherwoodUI.training()" style="background:rgba(255,152,0,0.2);border:1px solid #ff9800;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">💪 Тренировка</button>
+                <button onclick="SherwoodUI.forge()" style="background:rgba(121,85,72,0.2);border:1px solid #795548;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">⚒️ Кузница</button>
+                <button onclick="SherwoodUI.bestiary()" style="background:rgba(96,125,139,0.2);border:1px solid #607d8b;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">📖 Бестиарий</button>
+            </div>
+
+            <div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на иконку для информации</div>
         `;
+
+        this._openScreen('👤 Профиль', 'profile', contentHTML);
     },
 
-    _getLastTrophy() {
-        const trophies = Sherwood?.getPlayer?.()?.trophies || [];
-        if (trophies.length === 0) return null;
-        return trophies[trophies.length - 1]?.name || 'Трофей';
-    },
-
-    showTrophies() {
-        const trophies = Sherwood?.getPlayer?.()?.trophies || [];
+    _showProfileInfo(type) {
         const info = document.getElementById('profile-info');
         if (!info) return;
-        if (trophies.length === 0) {
-            info.innerHTML = '🏆 Трофеев пока нет';
-            return;
-        }
-        info.innerHTML = trophies.map(t => `🏆 ${t.name || 'Трофей'}`).join(' | ');
-    },
 
-    showRingInfo() {
-        const ring = Sherwood?.Bag?.getEquipment?.()?.ring;
-        const info = document.getElementById('profile-info');
-        if (!info) return;
-        if (!ring) {
-            info.innerHTML = '💍 Кольцо не надето';
-            return;
+        if (type === 'trophies') {
+            const trophies = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? (Sherwood.getPlayer().trophies || []) : [];
+            if (trophies.length === 0) {
+                info.innerHTML = '🏆 Трофеев пока нет';
+                return;
+            }
+            info.innerHTML = trophies.map(t => `🏆 ${t.name || 'Трофей'}`).join(' | ');
+        } else if (type === 'ring') {
+            const ring = (typeof Sherwood !== 'undefined' && Sherwood.Bag) ? Sherwood.Bag.getEquipment().ring : null;
+            info.innerHTML = ring ? `💍 ${ring.name} (Ур.${ring.level || 1})` : '💍 Кольцо не надето';
+        } else if (type === 'amulet') {
+            const amulet = (typeof Sherwood !== 'undefined' && Sherwood.Bag) ? Sherwood.Bag.getEquipment().amulet : null;
+            info.innerHTML = amulet ? `📿 ${amulet.name} (Ур.${amulet.level || 1})` : '📿 Амулет не надет';
         }
-        info.innerHTML = `💍 ${ring.name} (Ур.${ring.level || 1})`;
-    },
-
-    showAmuletInfo() {
-        const amulet = Sherwood?.Bag?.getEquipment?.()?.amulet;
-        const info = document.getElementById('profile-info');
-        if (!info) return;
-        if (!amulet) {
-            info.innerHTML = '📿 Амулет не надет';
-            return;
-        }
-        info.innerHTML = `📿 ${amulet.name} (Ур.${amulet.level || 1})`;
     },
 
     // ============================================================
@@ -658,15 +717,72 @@ const SherwoodUI = {
     // ============================================================
 
     training() {
-        this._showPlaceholder('💪 Тренировка', 'training.jpeg');
+        this._playSound('click');
+        const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
+        const tl = p ? (p.trainingLevels || {}) : {};
+
+        const contentHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                ${['attack','defense','hp','agility'].map(stat => {
+                    const lvl = tl[stat] || 0;
+                    return `
+                        <div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;text-align:center;">
+                            <div style="color:#e0c080;">${stat === 'attack' ? '⚔️ Атака' : stat === 'defense' ? '🛡️ Защита' : stat === 'hp' ? '❤️ Здоровье' : '💨 Ловкость'}</div>
+                            <div style="color:#aaa;">Ур. ${lvl}/200</div>
+                            <button onclick="SherwoodUI._doTraining('${stat}')" style="margin-top:8px;background:#c9a040;border:none;border-radius:4px;padding:6px 16px;color:#000;cursor:pointer;font-family:'Georgia',serif;">Тренировать</button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>
+        `;
+
+        this._openScreen('💪 Тренировка', 'training', contentHTML);
+    },
+
+    _doTraining(stat) {
+        const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
+        if (!p) return;
+        if (!p.trainingLevels) p.trainingLevels = { attack: 0, defense: 0, hp: 0, agility: 0 };
+
+        const current = p.trainingLevels[stat] || 0;
+        if (current >= 200) {
+            const log = document.getElementById('training-log');
+            if (log) log.textContent = '❌ Максимальный уровень!';
+            return;
+        }
+
+        // Циклическая стоимость: каждые 4 раза серебро, 5-й золото
+        const cyclePos = (current + 1) % 5;
+        const isGold = cyclePos === 0;
+        const cost = isGold ? 5 : 200;
+        const currency = isGold ? 'gold' : 'silver';
+
+        if ((p.resources[currency] || 0) < cost) {
+            const log = document.getElementById('training-log');
+            if (log) log.textContent = `❌ Не хватает ${isGold ? 'золота' : 'серебра'}!`;
+            return;
+        }
+
+        p.resources[currency] -= cost;
+        p.trainingLevels[stat] = current + 1;
+
+        if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
+        if (typeof Sherwood.saveGame === 'function') Sherwood.saveGame();
+
+        this.updateDisplay();
+        this.training();
+
+        const log = document.getElementById('training-log');
+        if (log) log.textContent = `✅ ${stat} улучшен до ${current + 1}!`;
     },
 
     forge() {
-        this._showPlaceholder('⚒️ Кузница', 'forge.jpeg');
+        this._showPlaceholder('⚒️ Кузница', 'forge');
     },
 
     bestiary() {
-        this._showPlaceholder('📖 Бестиарий', 'bestiary.jpeg');
+        this._showPlaceholder('📖 Бестиарий', 'bestiary');
     },
 
     // ============================================================
@@ -674,54 +790,44 @@ const SherwoodUI = {
     // ============================================================
 
     settings() {
-        this._hideMainInterface();
-        this.container.style.background = "url('" + this._bg.settings + "') center/cover no-repeat";
         this._playSound('click');
 
-        const p = Sherwood?.getPlayer ? Sherwood.getPlayer() : null;
-        const currentName = p?.name || 'Охотник';
+        const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
+        const currentName = p ? p.name : 'Охотник';
 
-        this.container.innerHTML = `
-            <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
-                <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
-                <h2 style="color:#e0c080;">⚙️ Настройки</h2>
+        const contentHTML = `
+            <div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">
+                <div style="color:#fff;margin-bottom:8px;">👤 Имя персонажа</div>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="player-name-input" value="${currentName}" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:'Georgia',serif;font-size:0.9em;">
+                    <button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;font-family:'Georgia',serif;">Сохранить</button>
+                </div>
+                <div id="name-change-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div>
+            </div>
 
-                <div style="margin-top:20px;">
-                    <!-- СМЕНА ИМЕНИ -->
-                    <div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">
-                        <div style="color:#fff;margin-bottom:8px;">👤 Имя персонажа</div>
-                        <div style="display:flex;gap:8px;">
-                            <input type="text" id="player-name-input" value="${currentName}" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:'Georgia',serif;font-size:0.9em;">
-                            <button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button>
-                        </div>
-                        <div id="name-change-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div>
-                    </div>
-
-                    <!-- ЗВУКИ -->
-                    <div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <span style="color:#fff;">🔊 Звуки</span>
-                            <label style="position:relative;width:50px;height:26px;background:${this._soundEnabled ? '#4caf50' : '#555'};border-radius:13px;cursor:pointer;transition:0.2s;">
-                                <input type="checkbox" ${this._soundEnabled ? 'checked' : ''} onchange="SherwoodUI._toggleSound(this.checked)" style="display:none;">
-                                <span style="position:absolute;top:2px;left:${this._soundEnabled ? '26px' : '2px'};width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span>
-                            </label>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="color:#fff;">🎵 Музыка</span>
-                            <label style="position:relative;width:50px;height:26px;background:${this._musicEnabled ? '#4caf50' : '#555'};border-radius:13px;cursor:pointer;transition:0.2s;">
-                                <input type="checkbox" ${this._musicEnabled ? 'checked' : ''} onchange="SherwoodUI._toggleMusic(this.checked)" style="display:none;">
-                                <span style="position:absolute;top:2px;left:${this._musicEnabled ? '26px' : '2px'};width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- ВЫХОД -->
-                    <button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-top:12px;">
-                        🚪 Выйти из игры
-                    </button>
+            <div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span style="color:#fff;">🔊 Звуки</span>
+                    <label style="position:relative;width:50px;height:26px;background:${this._soundEnabled ? '#4caf50' : '#555'};border-radius:13px;cursor:pointer;transition:0.2s;">
+                        <input type="checkbox" ${this._soundEnabled ? 'checked' : ''} onchange="SherwoodUI._toggleSound(this.checked)" style="display:none;">
+                        <span style="position:absolute;top:2px;left:${this._soundEnabled ? '26px' : '2px'};width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span>
+                    </label>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:#fff;">🎵 Музыка</span>
+                    <label style="position:relative;width:50px;height:26px;background:${this._musicEnabled ? '#4caf50' : '#555'};border-radius:13px;cursor:pointer;transition:0.2s;">
+                        <input type="checkbox" ${this._musicEnabled ? 'checked' : ''} onchange="SherwoodUI._toggleMusic(this.checked)" style="display:none;">
+                        <span style="position:absolute;top:2px;left:${this._musicEnabled ? '26px' : '2px'};width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span>
+                    </label>
                 </div>
             </div>
+
+            <button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;font-family:'Georgia',serif;">
+                🚪 Выйти из игры
+            </button>
         `;
+
+        this._openScreen('⚙️ Настройки', 'settings', contentHTML);
     },
 
     _changePlayerName() {
@@ -736,10 +842,10 @@ const SherwoodUI = {
             return;
         }
 
-        const p = Sherwood?.getPlayer ? Sherwood.getPlayer() : null;
+        const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
         if (p) {
             p.name = newName;
-            if (Sherwood?.saveGame) Sherwood.saveGame();
+            if (typeof Sherwood.saveGame === 'function') Sherwood.saveGame();
             status.textContent = '✅ Имя сохранено!';
             status.style.color = '#4caf50';
         } else {
@@ -773,67 +879,38 @@ const SherwoodUI = {
 
     _exitGame() {
         if (confirm('Вы уверены, что хотите выйти?')) {
-            if (Sherwood?.saveGame) Sherwood.saveGame();
+            if (typeof Sherwood !== 'undefined' && Sherwood.saveGame) Sherwood.saveGame();
             window.location.href = 'about:blank';
-            this.container.style.display = 'none';
             this._stopMusic();
         }
     },
 
     // ============================================================
-    //  ПРОЧИЕ РЕЖИМЫ
+    //  ПРОЧИЕ РЕЖИМЫ (ПЛЕЙСХОЛДЕРЫ)
     // ============================================================
 
-    quest() { this._showPlaceholder('📜 Квесты', 'quest_chapter_1.jpeg'); },
-    subway() { this.showDungeon(); },
-    raid() { this._showPlaceholder('⚔️ Рейд', 'background_raid.png'); },
-    portal() { this._showPlaceholder('🌀 Порталы', 'portal_1.jpeg'); },
-    arena() { this._showPlaceholder('🏟️ Арена', 'arena.jpeg'); },
-    tavern() { this._showPlaceholder('🍺 Таверна', 'tavern.jpeg'); },
-    daily() { this._showPlaceholder('📋 Ежедневные задания', 'tasks.jpeg'); },
-    market() { this._showPlaceholder('💰 Рынок', 'market.jpeg'); },
+    quest() { this._showPlaceholder('📜 Квесты', 'quests'); },
+    raid() { this._showPlaceholder('⚔️ Рейд', 'raid'); },
+    portal() { this._showPlaceholder('🌀 Порталы', 'portal'); },
+    arena() { this._showPlaceholder('🏟️ Арена', 'arena'); },
+    tavern() { this._showPlaceholder('🍺 Таверна', 'tavern'); },
+    daily() { this._showPlaceholder('📋 Ежедневные задания', 'daily'); },
+    market() { this._showPlaceholder('💰 Рынок', 'market'); },
 
     // ============================================================
-    //  ВСПОМОГАТЕЛЬНЫЕ
+    //  ПЛЕЙСХОЛДЕР
     // ============================================================
 
-    _hideMainInterface() {
-        const elements = ['.bg-layer', '.statue-left', '.statue-right', '.divider-left', '.divider-right', '.arch-layer', '.hero-frame', '.top-panel', '.top-actions', '.left-buttons', '.right-buttons', '.bottom-stats'];
-        elements.forEach(sel => {
-            document.querySelectorAll(sel).forEach(el => el.style.display = 'none');
-        });
-        const placeholder = document.querySelector('.placeholder-screen');
-        if (placeholder) placeholder.remove();
-    },
-
-    _showPlaceholder(title, bg) {
-        this._hideMainInterface();
-        this.container.style.background = "url('assets/backgrounds/" + bg + "') center/cover no-repeat";
+    _showPlaceholder(title, bgKey) {
         this._playSound('click');
-
-        const div = document.createElement('div');
-        div.className = 'placeholder-screen';
-        div.style.cssText = `
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.3);
-            color: #e0c080;
-            padding: 20px;
-            z-index: 100;
+        const contentHTML = `
+            <div style="text-align:center;padding:40px 0;">
+                <div style="font-size:3em;margin-bottom:16px;">🏗️</div>
+                <div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">${title}</div>
+                <div style="font-size:0.7em;color:#888;">В разработке</div>
+            </div>
         `;
-        div.innerHTML = `
-            <div style="font-size:3em;margin-bottom:16px;">🏗️</div>
-            <div style="font-size:1.2em;margin-bottom:8px;">${title}</div>
-            <div style="font-size:0.7em;color:#888;">В разработке</div>
-            <button onclick="SherwoodUI.loadHome()" style="margin-top:20px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.3);color:#e0c080;padding:8px 24px;border-radius:20px;cursor:pointer;font-family:'Georgia',serif;font-size:0.8em;">← На главную</button>
-        `;
-        this.container.appendChild(div);
-        console.log('📌 Плейсхолдер:', title);
+        this._openScreen(title, bgKey, contentHTML);
     }
 };
 
