@@ -452,8 +452,8 @@ html += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;tran
         var h = '<div style="text-align:center;margin-bottom:12px;"><span style="color:#ff9800;">⚡ ' + energy.current + '/' + energy.max + '</span></div>';
         for (var i = 0; i < chapters.length; i++) {
             var ch = chapters[i];
-            var done = prog.completed.indexOf(ch.id) !== -1;
-            var unlocked = ch.id === 1 || prog.completed.indexOf(ch.id - 1) !== -1;
+            var done = prog.completed && prog.completed.indexOf(ch.id) !== -1;
+            var unlocked = ch.id === 1 || (prog.completed && prog.completed.indexOf(ch.id - 1) !== -1);
             var cur = !done && unlocked;
             var badge = done ? '✅' : (cur ? '⚔️' : '🔒');
             var bc = done ? '#4caf50' : (cur ? '#c9a040' : '#f44336');
@@ -942,8 +942,17 @@ html += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;tran
                 h += '<div style="background:url(\'assets/interface/bag_cell.jpeg\') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.4;"><span style="color:#555;font-size:0.6em;">пусто</span></div>';
             }
         }
-        var c = '<div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">' + items.length + '/' + max + '</div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:340px;margin:0 auto;">' + h + '</div><div id="bag-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на предмет</div>';
+                var expInfo = Sherwood.Bag.getExpansionInfo();
+        var expBtn = expInfo.canExpand ? '<button onclick="SherwoodUI._expandBag()" style="margin-top:8px;background:#c9a040;border:none;border-radius:6px;padding:6px 14px;color:#000;cursor:pointer;font-family:\'Georgia\',serif;font-size:0.7em;">Расширить +5 ячеек (' + expInfo.cost + ' 🪙)</button>' : '<span style="color:#666;font-size:0.6em;">Максимум для вашего уровня</span>';
+        var c = '<div style="color:#aaa;font-size:0.8em;margin-bottom:4px;">' + items.length + '/' + max + '</div>' + expBtn + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:340px;margin:12px auto 0;">' + h + '</div><div id="bag-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на предмет</div>';
         this._openScreen('🎒 Сумка', 'bag', c);
+    },
+        _expandBag: function() {
+        var r = Sherwood.Bag.expandBag();
+        var info = document.getElementById('bag-info');
+        if (r.success) { if (info) info.textContent = '✅ Сумка расширена до ' + r.newSlots + ' ячеек!'; this.updateDisplay(); }
+        else { if (info) info.textContent = '❌ ' + (r.reason || 'Ошибка'); }
+        var self = this; setTimeout(function() { self.bag(); }, 800);
     },
     _bagAction: function(i) {
         var bag = Sherwood.Bag; if (!bag) return; var items = bag.getItems(); if (i >= items.length) return; var item = items[i]; if (!item) return;
