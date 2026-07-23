@@ -70,6 +70,12 @@ const SherwoodUI = {
     },
 
     // ============================================================
+    //  НАВИГАЦИЯ
+    // ============================================================
+
+    _previousScreen: null,
+
+    // ============================================================
     //  ИНИЦИАЛИЗАЦИЯ
     // ============================================================
 
@@ -222,10 +228,10 @@ const SherwoodUI = {
         if (expEl) expEl.textContent = this._formatNumber(p.exp || 0);
         if (expMaxEl) expMaxEl.textContent = this._formatNumber(p.expToLevel || 100);
 
-        const attackEl = document.querySelector('.stat-values .attack');
-        const defenseEl = document.querySelector('.stat-values .defense');
-        const agilityEl = document.querySelector('.stat-values .agility');
-        const hpEl = document.querySelector('.stat-values .hp');
+        const attackEl = document.querySelector('.stat-value.attack');
+        const defenseEl = document.querySelector('.stat-value.defense');
+        const agilityEl = document.querySelector('.stat-value.agility');
+        const hpEl = document.querySelector('.stat-value.hp');
 
         if (attackEl) attackEl.textContent = p.stats?.attack || 0;
         if (defenseEl) defenseEl.textContent = p.stats?.defense || 0;
@@ -256,11 +262,12 @@ const SherwoodUI = {
 
         this.container.style.background = '';
         this._playMusic('forest_ambient');
+        this._previousScreen = null;
         this.updateDisplay();
         console.log('🏠 Главный экран');
     },
 
-    _openScreen(title, bgKey, contentHTML) {
+    _openScreen(title, bgKey, contentHTML, backAction) {
         this._mainElements.forEach(sel => {
             document.querySelectorAll(sel).forEach(el => {
                 el.style.display = 'none';
@@ -270,11 +277,13 @@ const SherwoodUI = {
         let bgPath = this._bg[bgKey] || bgKey;
         this.container.style.background = `url('${bgPath}') center/cover no-repeat`;
 
+        const goBack = backAction || 'SherwoodUI.loadHome()';
+
         if (this._screenLayer) {
             this._screenLayer.innerHTML = `
                 <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;display:flex;flex-direction:column;">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                        <button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">
                             <img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
                         <span style="color:#e0c080;font-size:1.1em;">${title}</span>
@@ -393,7 +402,6 @@ const SherwoodUI = {
         const tilePrefix = d.tilePrefix || 'tiles';
         const tileBasePath = `assets/dungeon_tiles/${tileFolder}`;
 
-        // Файлы для объектов подземки
         const dungeonChestIcons = {
             forest: { closed: 'assets/interface/locked_chest_first_dungeon.png', open: 'assets/interface/open_chest_first_dungeon.png' },
             swamp: { closed: 'assets/interface/locked_chest_second_dungeon.png', open: 'assets/interface/open_chest_of_the_second_dungeon.png' },
@@ -706,31 +714,49 @@ const SherwoodUI = {
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">
-                <div style="text-align:center;"><span style="color:#f44336;">⚔️ ${p ? p.stats.attack : 0}</span></div>
-                <div style="text-align:center;"><span style="color:#2196f3;">🛡️ ${p ? p.stats.defense : 0}</span></div>
-                <div style="text-align:center;"><span style="color:#ff9800;">💨 ${p ? p.stats.agility : 0}</span></div>
-                <div style="text-align:center;"><span style="color:#4caf50;">❤️ ${p ? p.stats.hp : 0}</span></div>
+                <div style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <img src="assets/interface/icon_power.png" style="width:22px;height:22px;object-fit:contain;">
+                    <span style="color:#f44336;">${p ? p.stats.attack : 0}</span>
+                </div>
+                <div style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <img src="assets/interface/icon_defense.png" style="width:22px;height:22px;object-fit:contain;">
+                    <span style="color:#2196f3;">${p ? p.stats.defense : 0}</span>
+                </div>
+                <div style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <img src="assets/interface/icon_dexterity.png" style="width:22px;height:22px;object-fit:contain;">
+                    <span style="color:#ff9800;">${p ? p.stats.agility : 0}</span>
+                </div>
+                <div style="text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <img src="assets/interface/icon_health.png" style="width:22px;height:22px;object-fit:contain;">
+                    <span style="color:#4caf50;">${p ? p.stats.hp : 0}</span>
+                </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
                 <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI._showProfileInfo('trophies')">
-                    <div style="font-size:1.2em;">🏆</div>
-                    <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${lastTrophy}</div>
+                    <img src="assets/all_trophies/trophies_chapters/chapter_1_broken_hunting_horn_of_the_league.png" style="width:32px;height:32px;object-fit:contain;margin:0 auto;">
+                    <div style="color:#aaa;font-size:0.5em;word-break:break-all;margin-top:4px;">${lastTrophy}</div>
                 </div>
                 <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #ffd700;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI._showProfileInfo('ring')">
-                    <div style="font-size:1.2em;">💍</div>
-                    <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${ringItem ? ringItem.name : 'Пусто'}</div>
+                    <img src="assets/interface/ring_first_level.png" style="width:32px;height:32px;object-fit:contain;margin:0 auto;">
+                    <div style="color:#aaa;font-size:0.5em;word-break:break-all;margin-top:4px;">${ringItem ? ringItem.name : 'Пусто'}</div>
                 </div>
                 <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #9c27b0;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI._showProfileInfo('amulet')">
-                    <div style="font-size:1.2em;">📿</div>
-                    <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${amuletItem ? amuletItem.name : 'Пусто'}</div>
+                    <img src="assets/interface/sherwood_amulet_level_one.png" style="width:32px;height:32px;object-fit:contain;margin:0 auto;">
+                    <div style="color:#aaa;font-size:0.5em;word-break:break-all;margin-top:4px;">${amuletItem ? amuletItem.name : 'Пусто'}</div>
                 </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                <button onclick="SherwoodUI.training()" style="background:rgba(255,152,0,0.2);border:1px solid #ff9800;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">💪 Тренировка</button>
-                <button onclick="SherwoodUI.forge()" style="background:rgba(121,85,72,0.2);border:1px solid #795548;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">⚒️ Кузница</button>
-                <button onclick="SherwoodUI.bestiary()" style="background:rgba(96,125,139,0.2);border:1px solid #607d8b;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">📖 Бестиарий</button>
+                <button onclick="SherwoodUI._previousScreen='profile';SherwoodUI.training();" style="background:rgba(255,152,0,0.2);border:1px solid #ff9800;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">
+                    <img src="assets/all_buttons/training.png" style="width:24px;height:24px;object-fit:contain;display:block;margin:0 auto 4px;">Тренировка
+                </button>
+                <button onclick="SherwoodUI._previousScreen='profile';SherwoodUI.forge();" style="background:rgba(121,85,72,0.2);border:1px solid #795548;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">
+                    <img src="assets/all_buttons/forge.png" style="width:24px;height:24px;object-fit:contain;display:block;margin:0 auto 4px;">Кузница
+                </button>
+                <button onclick="SherwoodUI._previousScreen='profile';SherwoodUI.bestiary();" style="background:rgba(96,125,139,0.2);border:1px solid #607d8b;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;font-family:'Georgia',serif;">
+                    <img src="assets/all_buttons/bestiary.png" style="width:24px;height:24px;object-fit:contain;display:block;margin:0 auto 4px;">Бестиарий
+                </button>
             </div>
 
             <div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на иконку для информации</div>
@@ -764,6 +790,9 @@ const SherwoodUI = {
     // ============================================================
 
     training() {
+        const goBack = (this._previousScreen === 'profile') ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome()';
+        this._previousScreen = null;
+
         this._playSound('click');
         const p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null;
         const tl = p ? (p.trainingLevels || {}) : {};
@@ -792,7 +821,7 @@ const SherwoodUI = {
             <div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>
         `;
 
-        this._openScreen('💪 Тренировка', 'training', contentHTML);
+        this._openScreen('💪 Тренировка', 'training', contentHTML, goBack);
     },
 
     _doTraining(stat) {
@@ -832,11 +861,15 @@ const SherwoodUI = {
     },
 
     forge() {
-        this._showPlaceholder('⚒️ Кузница', 'forge');
+        const goBack = (this._previousScreen === 'profile') ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome()';
+        this._previousScreen = null;
+        this._showPlaceholder('⚒️ Кузница', 'forge', goBack);
     },
 
     bestiary() {
-        this._showPlaceholder('📖 Бестиарий', 'bestiary');
+        const goBack = (this._previousScreen === 'profile') ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome()';
+        this._previousScreen = null;
+        this._showPlaceholder('📖 Бестиарий', 'bestiary', goBack);
     },
 
     // ============================================================
@@ -959,7 +992,7 @@ const SherwoodUI = {
     //  ПЛЕЙСХОЛДЕР
     // ============================================================
 
-    _showPlaceholder(title, bgKey) {
+    _showPlaceholder(title, bgKey, backAction) {
         this._playSound('click');
         const contentHTML = `
             <div style="text-align:center;padding:40px 0;">
@@ -968,7 +1001,7 @@ const SherwoodUI = {
                 <div style="font-size:0.7em;color:#888;">В разработке</div>
             </div>
         `;
-        this._openScreen(title, bgKey, contentHTML);
+        this._openScreen(title, bgKey, contentHTML, backAction);
     }
 };
 
