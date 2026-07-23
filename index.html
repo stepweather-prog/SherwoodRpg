@@ -49,12 +49,12 @@
             pointer-events: none;
         }
 
-        /* ===== РАЗДЕЛИТЕЛИ — В ДВОЕ ШИРЕ ===== */
+        /* ===== РАЗДЕЛИТЕЛИ ===== */
         .divider-left {
             position: fixed;
             left: calc(50% - 210px - 12% + 12% - 8px);
             top: 0;
-            width: 48px;
+            width: 16px;
             height: 100%;
             background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
             background-size: cover;
@@ -65,7 +65,7 @@
             position: fixed;
             right: calc(50% - 210px - 12% + 12% - 8px);
             top: 0;
-            width: 48px;
+            width: 16px;
             height: 100%;
             background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
             background-size: cover;
@@ -73,10 +73,10 @@
             pointer-events: none;
         }
 
-        /* ===== ИГРОВОЙ КОНТЕЙНЕР ===== */
+        /* ===== ИГРОВОЙ КОНТЕЙНЕР (РАЗДВИНУТ) ===== */
         #game-container {
             width: 100%;
-            max-width: 420px;
+            max-width: 100%;
             height: 100vh;
             max-height: 900px;
             position: relative;
@@ -110,7 +110,7 @@
             pointer-events: none;
         }
 
-        /* ===== ГЕРОЙ + РАМКА (УМЕНЬШЕНА, ПОДНЯТА) ===== */
+        /* ===== ГЕРОЙ + РАМКА ===== */
         .hero-frame {
             position: absolute;
             bottom: 10%;
@@ -334,10 +334,10 @@
             transform: scale(0.9);
         }
 
-        /* ===== НИЖНИЕ СТАТЫ ===== */
+        /* ===== НИЖНИЕ СТАТЫ (ОПУЩЕНЫ) ===== */
         .bottom-stats {
             position: absolute;
-            bottom: 0%;
+            bottom: -15%;
             left: 10%;
             right: 10%;
             z-index: 10;
@@ -452,18 +452,24 @@
         }
         .placeholder-screen .back-btn {
             margin-top: 20px;
-            background: rgba(201, 168, 76, 0.2);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            color: #e0c080;
-            padding: 8px 24px;
-            border-radius: 20px;
+            background: transparent;
+            border: none;
             cursor: pointer;
-            font-family: 'Georgia', serif;
-            font-size: 0.8em;
-            transition: 0.15s;
+            transition: 0.2s;
+            width: 60px;
+            height: 60px;
+        }
+        .placeholder-screen .back-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(201, 168, 76, 0.2));
         }
         .placeholder-screen .back-btn:hover {
-            background: rgba(201, 168, 76, 0.3);
+            transform: scale(1.05);
+        }
+        .placeholder-screen .back-btn:active {
+            transform: scale(0.95);
         }
 
         @media (max-width: 400px) {
@@ -516,7 +522,7 @@
             <div class="video-bg">
                 <video src="assets/animation/animation_frame_hero.webm" autoplay loop muted playsinline></video>
             </div>
-            <img src="assets/hero_skins/skin_15.png" alt="Герой">
+            <img src="assets/hero_skins/skin_1_basic.png" alt="Герой">
         </div>
 
         <div class="loading-screen" id="loadingScreen">
@@ -643,12 +649,14 @@
                 const div = document.createElement('div');
                 div.className = 'placeholder-screen';
                 div.innerHTML = `
-                        <div class="bg-placeholder" style="background-image: url('assets/backgrounds/${bg || 'homepage_screen.jpeg'}');"></div>
-                        <div class="icon">🏗️</div>
-                        <div class="title">${title}</div>
-                        <div class="sub">В разработке</div>
-                        <button class="back-btn" onclick="SherwoodUI.backToMenu()">← Назад</button>
-                    `;
+                    <div class="bg-placeholder" style="background-image: url('assets/backgrounds/${bg || 'homepage_screen.jpeg'}');"></div>
+                    <div class="icon">🏗️</div>
+                    <div class="title">${title}</div>
+                    <div class="sub">В разработке</div>
+                    <button class="back-btn" onclick="SherwoodUI.backToMenu()">
+                        <img src="assets/all_buttons/back.png" alt="Назад">
+                    </button>
+                `;
                 this.container.appendChild(div);
                 console.log('📌 Плейсхолдер:', title);
             },
