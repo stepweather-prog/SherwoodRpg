@@ -1,214 +1,177 @@
-/**
- * Sherwood Tavern — Таверна (100 квестов, автобой)
- */
-
 Sherwood.Tavern = {
-    _quests: [],
-    _dailyQuests: [],
     _currentQuest: null,
     _questsCompleted: 0,
-    _autoMode: false,
+    _dailyCompleted: 0,
+    _lastAttemptTime: 0,
+    _battleMode: true,
+    _cooldown: 25 * 60 * 1000,
+    _rowCooldown: 12 * 60 * 60 * 1000,
+    _allCompleted: false,
+
+    ROWS: [
+        {
+            id: 'row1', name: 'Заботы Шервудского леса', npc: 'Старый егерь Бертрам',
+            unlockChapter: 1,
+            quests: [
+                { name: 'Волчья стая', desc: 'Разогнать стаю волков у восточной опушки.', enemy: { name: 'Матерый волк', image: 'image (32).png', hp: 250, atk: 22, def: 8 }, reward: { exp: 60, gold: 50, silver: 200 } },
+                { name: 'Пропавший дровосек', desc: 'Найти дровосека в туманной чаще.', enemy: { name: 'Болотный упырь', image: 'image (17).png', hp: 200, atk: 20, def: 6 }, reward: { exp: 55, gold: 45, silver: 180 } },
+                { name: 'Ядовитые споры', desc: 'Собрать образцы спор.', enemy: { name: 'Лесной дух', image: 'image (1).png', hp: 180, atk: 16, def: 5 }, reward: { exp: 50, gold: 40, silver: 150 } },
+                { name: 'Браконьеры', desc: 'Прогнать браконьеров из рощи.', enemy: { name: 'Призрак разбойника', image: 'image (41).png', hp: 300, atk: 26, def: 10 }, reward: { exp: 70, gold: 55, silver: 220 } }
+            ]
+        },
+        {
+            id: 'row2', name: 'Тревоги Первородного болота', npc: 'Травница Мора',
+            unlockChapter: 5,
+            quests: [
+                { name: 'Трясина', desc: 'Найти редкий болотный цветок.', enemy: { name: 'Кикимора болотная', image: 'image (13).png', hp: 350, atk: 30, def: 12 }, reward: { exp: 80, gold: 65, silver: 300 } },
+                { name: 'Утопленник', desc: 'Упокоить бродячего утопленника.', enemy: { name: 'Болотный утопленник', image: 'image (12).png', hp: 400, atk: 34, def: 14 }, reward: { exp: 90, gold: 75, silver: 350 } },
+                { name: 'Змеиное логово', desc: 'Зачистить логово гадюк.', enemy: { name: 'Костяной гигант', image: 'image (14).png', hp: 500, atk: 40, def: 18 }, reward: { exp: 110, gold: 100, silver: 450 } },
+                { name: 'Дух трясины', desc: 'Изгнать злого духа.', enemy: { name: 'Рогатая кикимора', image: 'image (16).png', hp: 550, atk: 44, def: 20 }, reward: { exp: 130, gold: 120, silver: 500 } }
+            ]
+        },
+        {
+            id: 'row3', name: 'Опасности Базальтовых шахт', npc: 'Шахтёр Грим',
+            unlockChapter: 9,
+            quests: [
+                { name: 'Обвал', desc: 'Спасти шахтёров из-под завала.', enemy: { name: 'Трёхглавый пёс', image: 'image (10).png', hp: 600, atk: 50, def: 24 }, reward: { exp: 140, gold: 130, silver: 600 } },
+                { name: 'Кристальная жила', desc: 'Добыть редкий кристалл.', enemy: { name: 'Кристаллический ёж', image: 'image (37).png', hp: 700, atk: 56, def: 28 }, reward: { exp: 160, gold: 150, silver: 700 } },
+                { name: 'Пещерный ужас', desc: 'Убить тварь в шахтах.', enemy: { name: 'Волк-оборотень', image: 'image (34).png', hp: 800, atk: 62, def: 32 }, reward: { exp: 200, gold: 180, silver: 850 } },
+                { name: 'Древний механизм', desc: 'Активировать механизм гномов.', enemy: { name: 'Заражённый секач', image: 'image (11).png', hp: 900, atk: 68, def: 36 }, reward: { exp: 240, gold: 220, silver: 1000 } }
+            ]
+        },
+        {
+            id: 'row4', name: 'Поручения Хранителя', npc: 'Хранитель Шервуда',
+            unlockChapter: 13,
+            quests: [
+                { name: 'Скрижаль портала', desc: 'Добыть скрижаль для портала.', enemy: { name: 'Изумрудный призрак', image: 'image (77).png', hp: 1200, atk: 80, def: 42 }, reward: { exp: 300, gold: 280, silver: 1500 } },
+                { name: 'Отродье', desc: 'Уничтожить отродье из разлома.', enemy: { name: 'Мясной инсектоид', image: 'image (55).png', hp: 1500, atk: 95, def: 50 }, reward: { exp: 400, gold: 380, silver: 2000 } },
+                { name: 'Древний страж', desc: 'Одолеть стража врат.', enemy: { name: 'Рунический Джаггернаут', image: 'image (79).png', hp: 2000, atk: 115, def: 60 }, reward: { exp: 550, gold: 500, silver: 3000 } },
+                { name: 'Последний долг', desc: 'Запечатать последний разлом.', enemy: { name: 'Шервудское Отродье', image: 'image (2).png', hp: 3000, atk: 140, def: 75 }, reward: { exp: 800, gold: 750, silver: 5000 } }
+            ]
+        }
+    ],
 
     init: function() {
-        this._generateQuestPool();
-        this._loadDailyQuests();
-        const player = Sherwood.getPlayer();
-        if (!player.tavern) {
-            player.tavern = { questsCompleted: 0, dailyQuestsDone: 0, lastRefresh: Date.now() };
+        var p = Sherwood.getPlayer();
+        if (!p.tavern) p.tavern = {
+            questsCompleted: 0, dailyCompleted: 0, lastAttempt: 0, battleMode: true,
+            completedQuests: [], rowCooldowns: {}, allCompleted: false, lastDailyReset: ''
+        };
+        var t = p.tavern;
+        this._questsCompleted = t.questsCompleted || 0;
+        this._dailyCompleted = t.dailyCompleted || 0;
+        this._lastAttemptTime = t.lastAttempt || 0;
+        this._battleMode = t.battleMode !== false;
+        this._allCompleted = t.allCompleted || false;
+        var today = new Date().toDateString();
+        if (t.lastDailyReset !== today) { t.dailyCompleted = 0; t.lastDailyReset = today; this._dailyCompleted = 0; }
+        if (this._questsCompleted >= 100) this._allCompleted = true;
+    },
+
+    getAvailableRows: function() {
+        var p = Sherwood.getPlayer();
+        var completed = p.questProgress ? (p.questProgress.completed || []) : [];
+        var rows = [];
+        for (var i = 0; i < this.ROWS.length; i++) {
+            var row = this.ROWS[i];
+            if (row.unlockChapter === 1 || completed.indexOf(row.unlockChapter - 1) !== -1) {
+                var t = p.tavern;
+                var rowCd = (t.rowCooldowns && t.rowCooldowns[row.id]) ? t.rowCooldowns[row.id] : 0;
+                if (rowCd && Date.now() - rowCd < this._rowCooldown) continue;
+                rows.push(row);
+            }
         }
-        this._questsCompleted = player.tavern.questsCompleted || 0;
+        return rows;
     },
 
-    _generateQuestPool: function() {
-        const templates = [
-            { name: 'Волчья охота', desc: 'Убить 5 волков', target: 5, reward: { gold: 50, exp: 30 } },
-            { name: 'Сбор трав', desc: 'Найти 3 целебные травы', target: 3, reward: { gold: 40, exp: 25 } },
-            { name: 'Зачистка логова', desc: 'Уничтожить логово упырей', target: 1, reward: { gold: 80, exp: 50 } },
-            { name: 'Пропавший караван', desc: 'Найти следы каравана', target: 1, reward: { gold: 60, exp: 35 } },
-            { name: 'Кости древних', desc: 'Собрать 4 кости', target: 4, reward: { gold: 45, exp: 28 } },
-            { name: 'Грибная охота', desc: 'Собрать 6 грибов', target: 6, reward: { gold: 35, exp: 20 } },
-            { name: 'Паучий шёлк', desc: 'Добыть 3 кокона', target: 3, reward: { gold: 55, exp: 32 } },
-            { name: 'Руда гномов', desc: 'Найти 2 слитка', target: 2, reward: { gold: 70, exp: 40 } },
-            { name: 'Призрачный шёпот', desc: 'Упокоить 3 духов', target: 3, reward: { gold: 65, exp: 38 } },
-            { name: 'Крысиный король', desc: 'Убить крысиного короля', target: 1, reward: { gold: 90, exp: 55 } },
-            { name: 'Ядовитые spores', desc: 'Собрать 5 спор', target: 5, reward: { gold: 42, exp: 26 } },
-            { name: 'Бандитский лагерь', desc: 'Разгромить лагерь', target: 1, reward: { gold: 100, exp: 60 } },
-            { name: 'Рыбный день', desc: 'Поймать 4 рыбы', target: 4, reward: { gold: 38, exp: 22 } },
-            { name: 'Медвежья берлога', desc: 'Обследовать берлогу', target: 1, reward: { gold: 75, exp: 45 } },
-            { name: 'Цветок папоротника', desc: 'Найти цветок', target: 1, reward: { gold: 120, exp: 70 } },
-            { name: 'Следопыт', desc: 'Выследить 3 зверей', target: 3, reward: { gold: 48, exp: 30 } },
-            { name: 'Кровавый след', desc: 'Найти источник крови', target: 1, reward: { gold: 55, exp: 33 } },
-            { name: 'Лунный камень', desc: 'Добыть лунный камень', target: 1, reward: { gold: 85, exp: 50 } },
-            { name: 'Стая воронов', desc: 'Разогнать стаю', target: 1, reward: { gold: 30, exp: 18 } },
-            { name: 'Зельеварение', desc: 'Собрать ингредиенты', target: 3, reward: { gold: 52, exp: 31 } },
-            { name: 'Троллий мост', desc: 'Пройти мост', target: 1, reward: { gold: 95, exp: 58 } },
-            { name: 'Упырь на болоте', desc: 'Убить упыря', target: 1, reward: { gold: 72, exp: 42 } },
-            { name: 'Светлячки', desc: 'Поймать 7 светлячков', target: 7, reward: { gold: 32, exp: 19 } },
-            { name: 'Древний алтарь', desc: 'Активировать алтарь', target: 1, reward: { gold: 110, exp: 65 } },
-            { name: 'Кожа носорога', desc: 'Добыть шкуру', target: 1, reward: { gold: 88, exp: 52 } },
-            { name: 'Пыльца фей', desc: 'Собрать 4 пыльцы', target: 4, reward: { gold: 46, exp: 27 } },
-            { name: 'Змеиное гнездо', desc: 'Зачистить гнездо', target: 1, reward: { gold: 68, exp: 40 } },
-            { name: 'Эхо прошлого', desc: 'Найти 2 артефакта', target: 2, reward: { gold: 78, exp: 46 } },
-            { name: 'Пещерный жук', desc: 'Убить 3 жуков', target: 3, reward: { gold: 44, exp: 26 } },
-            { name: 'Ледяной осколок', desc: 'Найти осколок', target: 1, reward: { gold: 92, exp: 55 } },
-            { name: 'Дым над лесом', desc: 'Исследовать дым', target: 1, reward: { gold: 58, exp: 34 } },
-            { name: 'Коготь виверны', desc: 'Добыть коготь', target: 1, reward: { gold: 105, exp: 62 } },
-            { name: 'Песчаный червь', desc: 'Убить червя', target: 1, reward: { gold: 82, exp: 48 } },
-            { name: 'Целебный источник', desc: 'Найти источник', target: 1, reward: { gold: 40, exp: 24 } },
-            { name: 'Статуя героя', desc: 'Обследовать статую', target: 1, reward: { gold: 65, exp: 38 } },
-            { name: 'Вампирская пыль', desc: 'Собрать 3 порции', target: 3, reward: { gold: 56, exp: 33 } },
-            { name: 'Гоблинский клад', desc: 'Найти клад', target: 1, reward: { gold: 115, exp: 68 } },
-            { name: 'Теневой плащ', desc: 'Добыть плащ', target: 1, reward: { gold: 98, exp: 57 } },
-            { name: 'Шипы розы', desc: 'Собрать 5 шипов', target: 5, reward: { gold: 36, exp: 21 } },
-            { name: 'Огненный шар', desc: 'Найти шар', target: 1, reward: { gold: 125, exp: 75 } },
-            { name: 'Ледяная корона', desc: 'Добыть корону', target: 1, reward: { gold: 130, exp: 78 } },
-            { name: 'Крыло дракона', desc: 'Найти крыло', target: 1, reward: { gold: 150, exp: 90 } },
-            { name: 'Слеза богини', desc: 'Найти слезу', target: 1, reward: { gold: 140, exp: 85 } },
-            { name: 'Перо феникса', desc: 'Добыть перо', target: 1, reward: { gold: 160, exp: 95 } },
-            { name: 'Рог единорога', desc: 'Найти рог', target: 1, reward: { gold: 145, exp: 88 } },
-            { name: 'Чешуя змея', desc: 'Собрать 4 чешуи', target: 4, reward: { gold: 50, exp: 30 } },
-            { name: 'Паутина', desc: 'Собрать 6 паутин', target: 6, reward: { gold: 34, exp: 20 } },
-            { name: 'Кристалл маны', desc: 'Найти кристалл', target: 1, reward: { gold: 108, exp: 64 } },
-            { name: 'Демонический глаз', desc: 'Добыть глаз', target: 1, reward: { gold: 135, exp: 80 } },
-            { name: 'Сердце тьмы', desc: 'Уничтожить сердце', target: 1, reward: { gold: 170, exp: 100 } },
-            { name: 'Янтарная смола', desc: 'Собрать 3 смолы', target: 3, reward: { gold: 54, exp: 32 } },
-            { name: 'Горный цветок', desc: 'Найти цветок', target: 1, reward: { gold: 42, exp: 25 } },
-            { name: 'Морской жемчуг', desc: 'Найти 2 жемчуга', target: 2, reward: { gold: 62, exp: 37 } },
-            { name: 'Кость великана', desc: 'Найти кость', target: 1, reward: { gold: 75, exp: 44 } },
-            { name: 'Язык пламени', desc: 'Собрать 4 языка', target: 4, reward: { gold: 48, exp: 28 } },
-            { name: 'Зуб тролля', desc: 'Выбить зуб', target: 1, reward: { gold: 58, exp: 34 } },
-            { name: 'Копыто демона', desc: 'Добыть копыто', target: 1, reward: { gold: 85, exp: 50 } },
-            { name: 'Шкура медведя', desc: 'Добыть шкуру', target: 1, reward: { gold: 68, exp: 40 } },
-            { name: 'Эльфийский лук', desc: 'Найти лук', target: 1, reward: { gold: 95, exp: 56 } },
-            { name: 'Кинжал теней', desc: 'Найти кинжал', target: 1, reward: { gold: 88, exp: 52 } },
-            { name: 'Амулет защиты', desc: 'Найти амулет', target: 1, reward: { gold: 72, exp: 42 } },
-            { name: 'Кольцо силы', desc: 'Найти кольцо', target: 1, reward: { gold: 78, exp: 46 } },
-            { name: 'Плащ невидимка', desc: 'Найти плащ', target: 1, reward: { gold: 110, exp: 65 } },
-            { name: 'Сапоги скорости', desc: 'Найти сапоги', target: 1, reward: { gold: 65, exp: 38 } },
-            { name: 'Шлем мудрости', desc: 'Найти шлем', target: 1, reward: { gold: 70, exp: 41 } },
-            { name: 'Щит отражения', desc: 'Найти щит', target: 1, reward: { gold: 82, exp: 48 } },
-            { name: 'Меч рассвета', desc: 'Найти меч', target: 1, reward: { gold: 120, exp: 72 } },
-            { name: 'Посох мага', desc: 'Найти посох', target: 1, reward: { gold: 105, exp: 62 } },
-            { name: 'Книга заклинаний', desc: 'Найти книгу', target: 1, reward: { gold: 90, exp: 54 } },
-            { name: 'Зелье удачи', desc: 'Сварить зелье', target: 1, reward: { gold: 55, exp: 33 } },
-            { name: 'Эликсир жизни', desc: 'Собрать ингредиенты', target: 3, reward: { gold: 60, exp: 36 } },
-            { name: 'Яд скорпиона', desc: 'Добыть 2 порции', target: 2, reward: { gold: 48, exp: 28 } },
-            { name: 'Слёзы русалки', desc: 'Найти слёзы', target: 1, reward: { gold: 100, exp: 60 } },
-            { name: 'Песнь сирены', desc: 'Услышать песнь', target: 1, reward: { gold: 75, exp: 45 } },
-            { name: 'Тень дракона', desc: 'Увидеть тень', target: 1, reward: { gold: 130, exp: 78 } },
-            { name: 'Вздох ветра', desc: 'Поймать вздох', target: 1, reward: { gold: 45, exp: 27 } },
-            { name: 'Капля дождя', desc: 'Собрать 5 капель', target: 5, reward: { gold: 30, exp: 18 } },
-            { name: 'Луч солнца', desc: 'Поймать луч', target: 1, reward: { gold: 35, exp: 21 } },
-            { name: 'Отражение луны', desc: 'Увидеть отражение', target: 1, reward: { gold: 40, exp: 24 } },
-            { name: 'Звёздная пыль', desc: 'Собрать 3 пыли', target: 3, reward: { gold: 52, exp: 31 } },
-            { name: 'Крыло бабочки', desc: 'Поймать 4 бабочек', target: 4, reward: { gold: 28, exp: 16 } },
-            { name: 'Шёпот леса', desc: 'Услышать шёпот', target: 1, reward: { gold: 38, exp: 22 } },
-            { name: 'Голос гор', desc: 'Услышать голос', target: 1, reward: { gold: 42, exp: 25 } },
-            { name: 'Плач реки', desc: 'Услышать плач', target: 1, reward: { gold: 36, exp: 21 } },
-            { name: 'Смех эха', desc: 'Услышать смех', target: 1, reward: { gold: 33, exp: 19 } },
-            { name: 'Взгляд бездны', desc: 'Заглянуть в бездну', target: 1, reward: { gold: 150, exp: 90 } },
-            { name: 'Крик ястреба', desc: 'Услышать крик', target: 1, reward: { gold: 28, exp: 16 } },
-            { name: 'Вой волка', desc: 'Услышать вой', target: 1, reward: { gold: 32, exp: 18 } },
-            { name: 'Рык медведя', desc: 'Услышать рык', target: 1, reward: { gold: 35, exp: 20 } },
-            { name: 'Шипение змеи', desc: 'Услышать шипение', target: 1, reward: { gold: 30, exp: 17 } },
-            { name: 'Треск костра', desc: 'Развести костёр', target: 1, reward: { gold: 25, exp: 15 } },
-            { name: 'Запах дыма', desc: 'Найти источник', target: 1, reward: { gold: 40, exp: 24 } },
-            { name: 'Вкус победы', desc: 'Победить в дуэли', target: 1, reward: { gold: 60, exp: 36 } },
-            { name: 'Тяжесть доспеха', desc: 'Найти доспех', target: 1, reward: { gold: 85, exp: 50 } },
-            { name: 'Лёгкость пера', desc: 'Найти перо', target: 1, reward: { gold: 55, exp: 32 } },
-            { name: 'Горечь поражения', desc: 'Пережить поражение', target: 1, reward: { gold: 20, exp: 12 } },
-            { name: 'Сладость мёда', desc: 'Найти 3 улья', target: 3, reward: { gold: 38, exp: 22 } },
-            { name: 'Острота клинка', desc: 'Заточить клинок', target: 1, reward: { gold: 45, exp: 26 } },
-            { name: 'Туман забвения', desc: 'Пройти через туман', target: 1, reward: { gold: 70, exp: 42 } }
-        ];
-        this._quests = templates;
+    getCurrentQuest: function() { return this._currentQuest; },
+    isOnCooldown: function() { return Date.now() - this._lastAttemptTime < this._cooldown; },
+    getCooldownRemaining: function() {
+        var r = this._cooldown - (Date.now() - this._lastAttemptTime);
+        return r <= 0 ? 0 : Math.ceil(r / 60000);
+    },
+    getBattleMode: function() { return this._battleMode; },
+    isAllCompleted: function() { return this._allCompleted; },
+
+    startQuest: function(rowIndex, questIndex) {
+        if (this.isOnCooldown()) return { success: false, reason: 'Перезарядка ' + this.getCooldownRemaining() + ' мин.' };
+        var rows = this.getAvailableRows();
+        if (rowIndex < 0 || rowIndex >= rows.length) return { success: false, reason: 'Ряд недоступен' };
+        var row = rows[rowIndex];
+        if (questIndex < 0 || questIndex >= row.quests.length) return { success: false, reason: 'Квест не найден' };
+        this._currentQuest = { row: row, quest: row.quests[questIndex], rowIndex: rowIndex, questIndex: questIndex };
+        return { success: true, quest: this._currentQuest, mode: (this._allCompleted || !this._battleMode) ? 'auto' : 'battle' };
     },
 
-    _loadDailyQuests: function() {
-        const saved = localStorage.getItem('sherwood_tavern_daily');
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                if (Date.now() - data.date < 86400000) {
-                    this._dailyQuests = data.quests;
-                    return;
-                }
-            } catch(e) {}
+    completeQuest: function() {
+        if (!this._currentQuest) return null;
+        var q = this._currentQuest.quest;
+        var r = q.reward;
+        Sherwood.addExp(r.exp);
+        Sherwood.addResource('gold', r.gold);
+        Sherwood.addResource('silver', r.silver);
+        if (Math.random() < 0.2) Sherwood.addResource('scrolls', 1 + Math.floor(Math.random() * 2));
+        this._questsCompleted++;
+        this._dailyCompleted++;
+        this._lastAttemptTime = Date.now();
+        this._battleMode = this._allCompleted ? true : !this._battleMode;
+        var p = Sherwood.getPlayer();
+        var t = p.tavern;
+        t.questsCompleted = this._questsCompleted;
+        t.dailyCompleted = this._dailyCompleted;
+        t.lastAttempt = this._lastAttemptTime;
+        t.battleMode = this._battleMode;
+        t.allCompleted = this._allCompleted;
+        if (!t.completedQuests) t.completedQuests = [];
+        t.completedQuests.push(this._currentQuest.quest.name);
+        if (this._questsCompleted >= 100) { this._allCompleted = true; t.allCompleted = true; }
+        var row = this._currentQuest.row;
+        var rowComplete = row.quests.every(function(q) { return t.completedQuests.indexOf(q.name) !== -1; });
+        if (rowComplete) {
+            if (!t.rowCooldowns) t.rowCooldowns = {};
+            t.rowCooldowns[row.id] = Date.now();
         }
-        this._refreshDailyQuests();
-    },
-
-    _refreshDailyQuests: function() {
-        const pool = [...this._quests];
-        this._dailyQuests = [];
-        for (let i = 0; i < 10; i++) {
-            if (pool.length === 0) break;
-            const idx = Math.floor(Math.random() * pool.length);
-            this._dailyQuests.push({ ...pool[idx], id: i, progress: 0, completed: false });
-            pool.splice(idx, 1);
+        var dailyBonus = null;
+        if (this._dailyCompleted > 0 && this._dailyCompleted % 10 === 0) {
+            dailyBonus = { autoRuns: 5, dungeonTickets: 5 };
+            p.dungeon.tickets = Math.min(p.dungeon.maxTickets || 5, (p.dungeon.tickets || 0) + 5);
         }
-        localStorage.setItem('sherwood_tavern_daily', JSON.stringify({ date: Date.now(), quests: this._dailyQuests }));
+        Sherwood.saveGame();
+        var result = { success: true, reward: r, nextMode: this._battleMode, dailyBonus: dailyBonus };
+        this._currentQuest = null;
+        return result;
     },
 
-    getDailyQuests: function() {
-        return this._dailyQuests;
+    failQuest: function() {
+        this._lastAttemptTime = Date.now();
+        this._battleMode = false;
+        var p = Sherwood.getPlayer();
+        p.tavern.lastAttempt = this._lastAttemptTime;
+        p.tavern.battleMode = false;
+        this._currentQuest = null;
+        Sherwood.saveGame();
     },
 
-    startQuest: function(index) {
-        if (index < 0 || index >= this._dailyQuests.length) return { success: false, reason: 'Неверный индекс' };
-        const quest = this._dailyQuests[index];
-        if (quest.completed) return { success: false, reason: 'Уже выполнено' };
-        this._currentQuest = { ...quest, index: index };
-        return { success: true, quest: this._currentQuest };
-    },
-
-    getCurrentQuest: function() {
-        return this._currentQuest;
-    },
+    cancelQuest: function() { this._currentQuest = null; return { success: true }; },
+    getCompletedCount: function() { return this._questsCompleted; },
+    getDailyCompleted: function() { return this._dailyCompleted; },
+    getBattleMode: function() { return this._battleMode; },
 
     autoBattle: function() {
         if (!this._currentQuest) return { success: false, reason: 'Нет активного квеста' };
-        const player = Sherwood.getPlayer();
-        const winChance = Math.min(90, 50 + player.stats.attack * 0.3 + player.stats.agility * 0.2);
-        const success = Math.random() * 100 < winChance;
-        
-        if (success) {
-            this._currentQuest.progress++;
-            if (this._currentQuest.progress >= this._currentQuest.target) {
-                this._currentQuest.completed = true;
-                this._dailyQuests[this._currentQuest.index].completed = true;
-                const quest = this._currentQuest;
-                this._currentQuest = null;
-                Sherwood.addExp(quest.reward.exp);
-                Sherwood.addResource('gold', quest.reward.gold);
-                Sherwood.addResource('silver', Math.floor(quest.reward.gold * 0.5));
-                const player = Sherwood.getPlayer();
-                player.tavern.questsCompleted++;
-                player.tavern.dailyQuestsDone++;
-                this._questsCompleted++;
-                return { success: true, completed: true, quest: quest, progress: quest.progress, target: quest.target };
-            }
-            return { success: true, completed: false, quest: this._currentQuest, progress: this._currentQuest.progress, target: this._currentQuest.target };
-        } else {
-            return { success: true, failed: true, damage: Math.floor(Math.random() * 20) + 5 };
+        var p = Sherwood.getPlayer();
+        var e = this._currentQuest.quest.enemy;
+        var chance = Math.min(90, 50 + p.stats.attack * 0.2 + p.stats.agility * 0.1);
+        if (Math.random() * 100 < chance) {
+            var r = this.completeQuest();
+            return { success: true, completed: true, reward: r.reward, dailyBonus: r.dailyBonus };
         }
-    },
-
-    manualBattle: function() {
-        return this.autoBattle();
-    },
-
-    cancelQuest: function() {
-        this._currentQuest = null;
-        return { success: true };
-    },
-
-    getCompletedCount: function() {
-        return this._questsCompleted;
-    },
-
-    getDailyQuestsDone: function() {
-        const player = Sherwood.getPlayer();
-        return player.tavern ? (player.tavern.dailyQuestsDone || 0) : 0;
+        this._lastAttemptTime = Date.now();
+        this._battleMode = false;
+        var p2 = Sherwood.getPlayer();
+        p2.tavern.lastAttempt = this._lastAttemptTime;
+        p2.tavern.battleMode = false;
+        Sherwood.saveGame();
+        return { success: true, completed: false, failed: true, damage: Math.floor(Math.random() * 25) + 10 };
     }
 };
