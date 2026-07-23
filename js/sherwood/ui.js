@@ -69,7 +69,6 @@ const SherwoodUI = {
         this.updateDisplay();
         this.loadHome();
 
-        // Загружаем настройки звука
         this._loadAudioSettings();
 
         console.log('🏹 Sherwood UI инициализирован!');
@@ -343,7 +342,6 @@ const SherwoodUI = {
                 }
 
                 if (isPlayer) {
-                    // Иконка героя из папки interface
                     content = '<img src="assets/interface/labyrinth_of_icons.png" style="width:80%;height:80%;object-fit:contain;">';
                     borderColor = '#ffd700';
                     extraStyle += 'box-shadow:0 0 16px rgba(255,215,0,0.5);';
@@ -474,7 +472,7 @@ const SherwoodUI = {
     },
 
     // ============================================================
-    //  СУМКА
+    //  СУМКА (10 ячеек, 2 ряда)
     // ============================================================
 
     bag() {
@@ -484,58 +482,202 @@ const SherwoodUI = {
 
         const bag = Sherwood.Bag;
         const items = bag.getItems();
-        const equipment = bag.getEquipment();
+        const maxSlots = 10;
 
         let itemsHtml = '';
-        if (items.length === 0) {
-            itemsHtml = '<div style="color:#aaa;text-align:center;padding:20px;">🎒 Сумка пуста</div>';
-        } else {
-            itemsHtml = items.map((item, index) => {
+        for (let i = 0; i < maxSlots; i++) {
+            const item = items[i] || null;
+            if (item) {
                 const gradeColor = Sherwood.Models?.GradeColors?.[item.grade] || '#9d9d9d';
-                return `
-                    <div style="background:rgba(0,0,0,0.6);border:1px solid ${gradeColor};border-radius:8px;padding:8px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
-                        <img src="${item.icon || 'assets/icons/default_item.png'}" style="width:40px;height:40px;object-fit:contain;">
-                        <div style="flex:1;">
-                            <div style="color:#fff;">${item.name}</div>
-                            <div style="color:${gradeColor};font-size:0.7em;">${item.grade || 'обычный'}</div>
-                            ${item.quantity > 1 ? `<div style="color:#aaa;font-size:0.6em;">×${item.quantity}</div>` : ''}
-                        </div>
-                        ${item.part ? `<button onclick="Sherwood.Bag.equipItem(${index});SherwoodUI.bag();" style="background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;">Надеть</button>` : ''}
-                        <button onclick="Sherwood.Bag.sellItem(${index});SherwoodUI.bag();" style="background:#ff9800;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;">💰</button>
-                        <button onclick="Sherwood.Bag.dismantleItem(${index});SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;">🔨</button>
+                itemsHtml += `
+                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid ${gradeColor};border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;" onclick="SherwoodUI._bagAction(${i})">
+                        <img src="${item.icon || 'assets/icons/default_item.png'}" style="width:32px;height:32px;object-fit:contain;">
+                        ${item.quantity > 1 ? `<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;background:rgba(0,0,0,0.7);padding:0 4px;border-radius:4px;">${item.quantity}</span>` : ''}
+                        <span style="position:absolute;top:2px;left:4px;color:${gradeColor};font-size:0.4em;">${item.grade ? item.grade[0] : ''}</span>
                     </div>
                 `;
-            }).join('');
-        }
-
-        let equipmentHtml = '';
-        const partNames = {
-            head: 'Голова', torso: 'Тело', hands: 'Руки', legs: 'Ноги', feet: 'Ступни',
-            weapon1: 'Оружие 1', weapon2: 'Оружие 2', belt: 'Пояс', amulet: 'Амулет', ring: 'Кольцо'
-        };
-        for (const [part, name] of Object.entries(partNames)) {
-            const item = equipment[part];
-            equipmentHtml += `
-                <div style="background:rgba(0,0,0,0.4);border:1px solid #555;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                    <span style="color:#aaa;font-size:0.7em;">${name}</span>
-                    ${item ? `<span style="color:#fff;font-size:0.8em;">${item.name}</span><button onclick="Sherwood.Bag.unequipItem('${part}');SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:0.6em;">✕</span>` : '<span style="color:#666;font-size:0.7em;">пусто</span>'}
-                </div>
-            `;
+            } else {
+                itemsHtml += `
+                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.4;">
+                        <span style="color:#555;font-size:0.6em;">пусто</span>
+                    </div>
+                `;
+            }
         }
 
         this.container.innerHTML = `
             <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
                 <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
                 <h2 style="color:#e0c080;">🎒 Сумка</h2>
-                <div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">Свободно: ${bag.getFreeSlots()}/${bag.getMaxSlots()}</div>
-
-                <h3 style="color:#c9a84c;font-size:0.9em;margin:12px 0 8px;">📦 Инвентарь</h3>
-                <div style="max-height:300px;overflow-y:auto;">${itemsHtml}</div>
-
-                <h3 style="color:#c9a84c;font-size:0.9em;margin:12px 0 8px;">⚔️ Экипировка</h3>
-                <div>${equipmentHtml}</div>
+                <div style="color:#aaa;font-size:0.8em;margin-bottom:12px;">${items.length}/${maxSlots}</div>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:340px;margin:0 auto;">
+                    ${itemsHtml}
+                </div>
+                <div id="bag-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на предмет для действий</div>
             </div>
         `;
+    },
+
+    _bagAction(index) {
+        const bag = Sherwood.Bag;
+        const items = bag.getItems();
+        if (index >= items.length) return;
+        const item = items[index];
+        if (!item) return;
+
+        const info = document.getElementById('bag-info');
+        if (!info) return;
+
+        let actions = '';
+        if (item.part) {
+            actions += `<button onclick="Sherwood.Bag.equipItem(${index});SherwoodUI.bag();" style="background:#4caf50;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Надеть</button>`;
+        }
+        actions += `<button onclick="Sherwood.Bag.sellItem(${index});SherwoodUI.bag();" style="background:#ff9800;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Продать</button>`;
+        actions += `<button onclick="Sherwood.Bag.dismantleItem(${index});SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Разобрать</button>`;
+
+        info.innerHTML = `
+            <div style="color:#fff;font-size:0.9em;">${item.name}</div>
+            <div style="color:#aaa;font-size:0.7em;">${item.grade || 'обычный'}</div>
+            <div style="margin-top:6px;">${actions}</div>
+        `;
+    },
+
+    // ============================================================
+    //  ПРОФИЛЬ (с тренировкой, кузницей, бестиарием)
+    // ============================================================
+
+    profile() {
+        this._hideMainInterface();
+        this.container.style.background = "url('" + this._bg.profile + "') center/cover no-repeat";
+        this._playSound('click');
+
+        const p = Sherwood.getPlayer();
+        const bag = Sherwood.Bag;
+        const equipment = bag.getEquipment();
+
+        // Сборка информации о кольцах и амулетах
+        const ringItem = equipment.ring;
+        const amuletItem = equipment.amulet;
+        const lastTrophy = this._getLastTrophy();
+
+        const ringDisplay = ringItem ? ringItem.name : 'Пусто';
+        const amuletDisplay = amuletItem ? amuletItem.name : 'Пусто';
+        const trophyDisplay = lastTrophy || 'Нет трофеев';
+
+        this.container.innerHTML = `
+            <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
+                <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
+
+                <!-- СКИН ГЕРОЯ -->
+                <div style="text-align:center;margin-bottom:12px;">
+                    <img src="assets/hero_skins/skin_1_basic.png" style="width:80px;height:80px;border-radius:50%;border:2px solid #c9a040;display:inline-block;">
+                    <div style="color:#e0c080;font-weight:bold;font-size:1.1em;margin-top:4px;">${p ? p.name : 'Охотник'}</div>
+                    <div style="color:#aaa;font-size:0.8em;">Уровень ${p ? p.level : 1}</div>
+                </div>
+
+                <!-- СТАТЫ -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <div style="text-align:center;"><span style="color:#f44336;">⚔️ ${p ? p.stats.attack : 0}</span></div>
+                    <div style="text-align:center;"><span style="color:#2196f3;">🛡️ ${p ? p.stats.defense : 0}</span></div>
+                    <div style="text-align:center;"><span style="color:#ff9800;">💨 ${p ? p.stats.agility : 0}</span></div>
+                    <div style="text-align:center;"><span style="color:#4caf50;">❤️ ${p ? p.stats.hp : 0}</span></div>
+                </div>
+
+                <!-- ТРОФЕИ, КОЛЬЦА, АМУЛЕТЫ -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI.showTrophies()">
+                        <div style="font-size:1.2em;">🏆</div>
+                        <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${trophyDisplay}</div>
+                    </div>
+                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #ffd700;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI.showRingInfo()">
+                        <div style="font-size:1.2em;">💍</div>
+                        <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${ringDisplay}</div>
+                    </div>
+                    <div style="background:url('assets/interface/bag_cell.jpeg') center/contain no-repeat;background-size:cover;border:2px solid #9c27b0;border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="SherwoodUI.showAmuletInfo()">
+                        <div style="font-size:1.2em;">📿</div>
+                        <div style="color:#aaa;font-size:0.55em;word-break:break-all;">${amuletDisplay}</div>
+                    </div>
+                </div>
+
+                <!-- КНОПКИ: ТРЕНИРОВКА, КУЗНИЦА, БЕСТИАРИЙ -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                    <button onclick="SherwoodUI.training()" style="background:rgba(255,152,0,0.2);border:1px solid #ff9800;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;">
+                        💪 Тренировка
+                    </button>
+                    <button onclick="SherwoodUI.forge()" style="background:rgba(121,85,72,0.2);border:1px solid #795548;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;">
+                        ⚒️ Кузница
+                    </button>
+                    <button onclick="SherwoodUI.bestiary()" style="background:rgba(96,125,139,0.2);border:1px solid #607d8b;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;">
+                        📖 Бестиарий
+                    </button>
+                </div>
+
+                <div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на иконку для информации</div>
+            </div>
+        `;
+    },
+
+    _getLastTrophy() {
+        const trophies = Sherwood.getPlayer()?.trophies || [];
+        if (trophies.length === 0) return null;
+        return trophies[trophies.length - 1].name || 'Трофей';
+    },
+
+    showTrophies() {
+        const trophies = Sherwood.getPlayer()?.trophies || [];
+        const info = document.getElementById('profile-info');
+        if (!info) return;
+        if (trophies.length === 0) {
+            info.innerHTML = '🏆 Трофеев пока нет';
+            return;
+        }
+        info.innerHTML = trophies.map(t => `🏆 ${t.name || 'Трофей'}`).join(' | ');
+    },
+
+    showRingInfo() {
+        const ring = Sherwood.Bag.getEquipment().ring;
+        const info = document.getElementById('profile-info');
+        if (!info) return;
+        if (!ring) {
+            info.innerHTML = '💍 Кольцо не надето';
+            return;
+        }
+        info.innerHTML = `💍 ${ring.name} (Ур.${ring.level || 1}) ${ring.stats ? Object.entries(ring.stats).map(([k,v]) => `${k}+${v}`).join(' ') : ''}`;
+    },
+
+    showAmuletInfo() {
+        const amulet = Sherwood.Bag.getEquipment().amulet;
+        const info = document.getElementById('profile-info');
+        if (!info) return;
+        if (!amulet) {
+            info.innerHTML = '📿 Амулет не надет';
+            return;
+        }
+        info.innerHTML = `📿 ${amulet.name} (Ур.${amulet.level || 1}) ${amulet.stats ? Object.entries(amulet.stats).map(([k,v]) => `${k}+${v}`).join(' ') : ''}`;
+    },
+
+    // ============================================================
+    //  ТРЕНИРОВКА
+    // ============================================================
+
+    training() {
+        this._showPlaceholder('💪 Тренировка', 'training.jpeg');
+    },
+
+    // ============================================================
+    //  КУЗНИЦА
+    // ============================================================
+
+    forge() {
+        this._showPlaceholder('⚒️ Кузница', 'forge.jpeg');
+    },
+
+    // ============================================================
+    //  БЕСТИАРИЙ
+    // ============================================================
+
+    bestiary() {
+        this._showPlaceholder('📖 Бестиарий', 'bestiary.jpeg');
     },
 
     // ============================================================
@@ -582,13 +724,12 @@ const SherwoodUI = {
         this._soundEnabled = enabled;
         this._saveAudioSettings();
         if (!enabled) {
-            // Останавливаем все звуки
             for (const sound of Object.values(this._sounds)) {
                 sound.pause();
                 sound.currentTime = 0;
             }
         }
-        this.settings(); // Обновляем интерфейс
+        this.settings();
     },
 
     _toggleMusic(enabled) {
@@ -599,16 +740,13 @@ const SherwoodUI = {
         } else {
             this._playMusic('forest_ambient');
         }
-        this.settings(); // Обновляем интерфейс
+        this.settings();
     },
 
     _exitGame() {
         if (confirm('Вы уверены, что хотите выйти?')) {
-            // Сохраняем игру
             Sherwood.saveGame();
-            // Закрываем окно или перезагружаем
             window.location.href = 'about:blank';
-            // Если не сработало - скрываем контейнер
             this.container.style.display = 'none';
             document.getElementById('app-container').style.display = 'flex';
             this._stopMusic();
@@ -619,17 +757,14 @@ const SherwoodUI = {
     //  ПРОЧИЕ РЕЖИМЫ
     // ============================================================
 
-    profile() { this._showPlaceholder('👤 Профиль', 'character_page.jpeg'); },
     quest() { this._showPlaceholder('📜 Квесты', 'quest_chapter_1.jpeg'); },
+    subway() { this.showDungeon(); },
     raid() { this._showPlaceholder('⚔️ Рейд', 'background_raid.png'); },
     portal() { this._showPlaceholder('🌀 Порталы', 'portal_1.jpeg'); },
     arena() { this._showPlaceholder('🏟️ Арена', 'arena.jpeg'); },
     tavern() { this._showPlaceholder('🍺 Таверна', 'tavern.jpeg'); },
     daily() { this._showPlaceholder('📋 Ежедневные задания', 'tasks.jpeg'); },
-    training() { this._showPlaceholder('💪 Тренировка', 'training.jpeg'); },
-    forge() { this._showPlaceholder('⚒️ Кузница', 'forge.jpeg'); },
     market() { this._showPlaceholder('💰 Рынок', 'market.jpeg'); },
-    bestiary() { this._showPlaceholder('📖 Бестиарий', 'bestiary.jpeg'); },
 
     // ============================================================
     //  ВСПОМОГАТЕЛЬНЫЕ
