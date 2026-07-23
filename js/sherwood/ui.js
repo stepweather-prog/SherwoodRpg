@@ -1,6 +1,5 @@
 /**
  * Sherwood UI — Полный контроллер интерфейса
- * Включает: главное меню, подземку, сумку, аудио
  */
 
 const SherwoodUI = {
@@ -36,15 +35,12 @@ const SherwoodUI = {
     _currentMusic: null,
     _currentMusicKey: null,
     _soundEnabled: true,
+    _musicEnabled: true,
 
     _audioFiles: {
-        // Музыка
         'forest_ambient': 'assets/sounds/forest_ambient.ogg',
         'dungeon_ambient': 'assets/sounds/dungeon_ambient.wav',
         'tavern_ambient': 'assets/sounds/tavern_ambient.wav',
-        'battle_theme': 'assets/sounds/battle_theme.wav',
-
-        // Звуки
         'click': 'assets/sounds/button_click.ogg',
         'shot': 'assets/sounds/shot.mp3',
         'arrow_hit': 'assets/sounds/arrow_hit.wav',
@@ -73,6 +69,9 @@ const SherwoodUI = {
         this.updateDisplay();
         this.loadHome();
 
+        // Загружаем настройки звука
+        this._loadAudioSettings();
+
         console.log('🏹 Sherwood UI инициализирован!');
     },
 
@@ -99,7 +98,7 @@ const SherwoodUI = {
     },
 
     _playMusic(key) {
-        if (!this._soundEnabled) return;
+        if (!this._musicEnabled) return;
         if (this._currentMusicKey === key && this._currentMusic && !this._currentMusic.paused) return;
 
         this._stopMusic();
@@ -120,6 +119,24 @@ const SherwoodUI = {
             this._currentMusic.currentTime = 0;
             this._currentMusic = null;
             this._currentMusicKey = null;
+        }
+    },
+
+    _saveAudioSettings() {
+        localStorage.setItem('sherwood_audio_settings', JSON.stringify({
+            soundEnabled: this._soundEnabled,
+            musicEnabled: this._musicEnabled
+        }));
+    },
+
+    _loadAudioSettings() {
+        const saved = localStorage.getItem('sherwood_audio_settings');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                this._soundEnabled = data.soundEnabled !== undefined ? data.soundEnabled : true;
+                this._musicEnabled = data.musicEnabled !== undefined ? data.musicEnabled : true;
+            } catch (e) {}
         }
     },
 
@@ -231,7 +248,7 @@ const SherwoodUI = {
         for (const [id, data] of Object.entries(dungeons)) {
             const progress = Sherwood.Dungeon._playerProgress[id];
             list += `
-                <div class="dungeon-card" style="background:rgba(0,0,0,0.7);border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:10px;">
+                <div style="background:rgba(0,0,0,0.7);border:1px solid #555;border-radius:10px;padding:12px;margin-bottom:10px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <span style="color:#e0c080;font-size:1.1em;">${data.icon} ${data.name}</span>
                         <span style="color:#aaa;font-size:0.8em;">Уровень ${data.level}/7</span>
@@ -312,7 +329,6 @@ const SherwoodUI = {
                         borderColor = cell.isBoss ? '#ff6a00' : '#f44336';
                     }
 
-                    // Клик на соседнюю клетку
                     const isAdjacent = Math.abs(x - d.playerPos.x) + Math.abs(y - d.playerPos.y) === 1;
                     if (isAdjacent && !isPlayer && cell.walkable) {
                         clickHandler = `onclick="SherwoodUI._dungeonMove(${x},${y})"`;
@@ -327,7 +343,8 @@ const SherwoodUI = {
                 }
 
                 if (isPlayer) {
-                    content = '🏹';
+                    // Иконка героя из папки interface
+                    content = '<img src="assets/interface/labyrinth_of_icons.png" style="width:80%;height:80%;object-fit:contain;">';
                     borderColor = '#ffd700';
                     extraStyle += 'box-shadow:0 0 16px rgba(255,215,0,0.5);';
                 }
@@ -347,7 +364,7 @@ const SherwoodUI = {
                         font-size:${cellSize * 0.4}px;
                         transition:0.15s;
                         ${extraStyle}
-                        text-shadow:0 0 4px rgba(0,0,0,0.8);
+                        ${isPlayer ? 'background-color:rgba(255,215,0,0.1);' : ''}
                     ">
                         ${content}
                     </div>
@@ -393,7 +410,6 @@ const SherwoodUI = {
         if (result.type === 'battle') {
             if (log) log.textContent = '⚔️ Бой с ' + (result.isBoss ? 'БОССОМ!' : 'монстром!');
             this._playSound('shot');
-            // Запускаем бой
             const battle = Sherwood.Combat.startPvE(result.monsterId);
             if (battle) {
                 battle.dungeonTile = result.tile;
@@ -406,7 +422,6 @@ const SherwoodUI = {
                     this._playSound('defeat');
                     this._leaveDungeon();
                 });
-                // Переключаемся на экран боя
                 this._renderBattle();
             }
             return;
@@ -445,7 +460,6 @@ const SherwoodUI = {
     // ============================================================
 
     _renderBattle() {
-        // Здесь будет боевой интерфейс (пока заглушка)
         this.container.innerHTML = `
             <div style="min-height:100%;background:url('${this._bg.dungeon_fight}') center/cover no-repeat;position:relative;">
                 <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);"></div>
@@ -453,7 +467,7 @@ const SherwoodUI = {
                     <h2 style="color:#ffd700;">⚔️ БОЙ ⚔️</h2>
                     <div style="font-size:2em;margin:20px 0;">👹</div>
                     <div style="color:#aaa;">Боевая система в разработке</div>
-                    <button onclick="SherwoodUI._dungeonMove(0,0)" style="margin-top:20px;background:#c9a040;border:none;padding:10px 30px;border-radius:8px;cursor:pointer;font-weight:bold;">Назад</button>
+                    <button onclick="SherwoodUI._leaveDungeon()" style="margin-top:20px;background:#c9a040;border:none;padding:10px 30px;border-radius:8px;cursor:pointer;font-weight:bold;">Назад</button>
                 </div>
             </div>
         `;
@@ -525,23 +539,86 @@ const SherwoodUI = {
     },
 
     // ============================================================
-    //  ВСПОМОГАТЕЛЬНЫЕ
+    //  НАСТРОЙКИ
     // ============================================================
 
-    _hideMainInterface() {
-        document.querySelectorAll('.bg-layer, .statue-left, .statue-right, .divider-left, .divider-right, .arch-layer, .hero-frame, .top-panel, .top-actions, .left-buttons, .right-buttons, .bottom-stats')
-            .forEach(el => {
-                if (el) el.style.display = 'none';
-            });
-        const placeholder = document.querySelector('.placeholder-screen');
-        if (placeholder) placeholder.remove();
+    settings() {
+        this._hideMainInterface();
+        this.container.style.background = "url('" + this._bg.settings + "') center/cover no-repeat";
+        this._playSound('click');
+
+        this.container.innerHTML = `
+            <div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;max-width:500px;margin:0 auto;">
+                <button onclick="SherwoodUI.loadHome()" style="background:rgba(255,255,255,0.1);border:1px solid #666;color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">← Назад</button>
+                <h2 style="color:#e0c080;">⚙️ Настройки</h2>
+
+                <div style="margin-top:20px;">
+                    <div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <span style="color:#fff;">🔊 Звуки</span>
+                            <label style="position:relative;width:50px;height:26px;background:${this._soundEnabled ? '#4caf50' : '#555'};border-radius:13px;cursor:pointer;transition:0.2s;">
+                                <input type="checkbox" ${this._soundEnabled ? 'checked' : ''} onchange="SherwoodUI._toggleSound(this.checked)" style="display:none;">
+                                <span style="position:absolute;top:2px;left:${this._soundEnabled ? '26px' : '2px'};width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span>
+                            </label>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="color:#fff;">🎵 Музыка</span>
+                            <label style="position:relative;width:50px;height:26px;background:${this._musicEnabled ? '#4caf50' : '#555'};border-radius:13px;cursor:pointer;transition:0.2s;">
+                                <input type="checkbox" ${this._musicEnabled ? 'checked' : ''} onchange="SherwoodUI._toggleMusic(this.checked)" style="display:none;">
+                                <span style="position:absolute;top:2px;left:${this._musicEnabled ? '26px' : '2px'};width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-top:12px;">
+                        🚪 Выйти из игры
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    _toggleSound(enabled) {
+        this._soundEnabled = enabled;
+        this._saveAudioSettings();
+        if (!enabled) {
+            // Останавливаем все звуки
+            for (const sound of Object.values(this._sounds)) {
+                sound.pause();
+                sound.currentTime = 0;
+            }
+        }
+        this.settings(); // Обновляем интерфейс
+    },
+
+    _toggleMusic(enabled) {
+        this._musicEnabled = enabled;
+        this._saveAudioSettings();
+        if (!enabled) {
+            this._stopMusic();
+        } else {
+            this._playMusic('forest_ambient');
+        }
+        this.settings(); // Обновляем интерфейс
+    },
+
+    _exitGame() {
+        if (confirm('Вы уверены, что хотите выйти?')) {
+            // Сохраняем игру
+            Sherwood.saveGame();
+            // Закрываем окно или перезагружаем
+            window.location.href = 'about:blank';
+            // Если не сработало - скрываем контейнер
+            this.container.style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            this._stopMusic();
+        }
     },
 
     // ============================================================
     //  ПРОЧИЕ РЕЖИМЫ
     // ============================================================
 
-    settings() { this._showPlaceholder('⚙️ Настройки', 'settings_page.jpeg'); },
     profile() { this._showPlaceholder('👤 Профиль', 'character_page.jpeg'); },
     quest() { this._showPlaceholder('📜 Квесты', 'quest_chapter_1.jpeg'); },
     raid() { this._showPlaceholder('⚔️ Рейд', 'background_raid.png'); },
@@ -554,9 +631,23 @@ const SherwoodUI = {
     market() { this._showPlaceholder('💰 Рынок', 'market.jpeg'); },
     bestiary() { this._showPlaceholder('📖 Бестиарий', 'bestiary.jpeg'); },
 
+    // ============================================================
+    //  ВСПОМОГАТЕЛЬНЫЕ
+    // ============================================================
+
+    _hideMainInterface() {
+        document.querySelectorAll('.bg-layer, .statue-left, .statue-right, .divider-left, .divider-right, .arch-layer, .hero-frame, .top-panel, .top-actions, .left-buttons, .right-buttons, .bottom-stats')
+            .forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+        const placeholder = document.querySelector('.placeholder-screen');
+        if (placeholder) placeholder.remove();
+    },
+
     _showPlaceholder(title, bg) {
         this._hideMainInterface();
         this.container.style.background = "url('assets/backgrounds/" + bg + "') center/cover no-repeat";
+        this._playSound('click');
 
         const div = document.createElement('div');
         div.className = 'placeholder-screen';
