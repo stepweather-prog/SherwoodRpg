@@ -387,6 +387,41 @@
         .stat-value.defense { color: #2196f3; }
         .stat-value.agility { color: #ff9800; }
         .stat-value.hp { color: #4caf50; }
+        .hit-epic-combo {
+  animation: epicShockwave 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes epicShockwave {
+  0% {
+    transform: rotate(0deg);
+    filter: brightness(1) blur(0px) saturate(1);
+  }
+  15% {
+    transform: rotate(-1.5deg);
+    filter: brightness(1.6) saturate(1.8) blur(1px);
+  }
+  45% {
+    transform: rotate(0.8deg);
+    filter: brightness(1) saturate(1) blur(3px);
+  }
+  75% {
+    transform: rotate(-0.3deg);
+    filter: blur(1px);
+  }
+  100% {
+    transform: rotate(0deg);
+    filter: brightness(1) blur(0px) saturate(1);
+  }
+}
+
+.hp-burn {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hp-burn-flash {
+  background: #ff4444 !important;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease !important;
+}
 
         @media (max-width: 400px) {
             .top-panel .resource span { font-size: 0.7em; }
