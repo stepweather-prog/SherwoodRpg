@@ -315,15 +315,15 @@ const SherwoodUI = {
         html += '<div style="text-align:center;flex-shrink:0;">';
         html += '<div style="position:relative;display:inline-block;">';
         html += '<img src="assets/interface/frame_of_beasts.png" style="width:180px;height:180px;position:absolute;top:-10px;left:-10px;z-index:1;pointer-events:none;">';
-        html += '<img src="assets/all_beasts/' + (b.enemyImage || 'image (1).png') + '" style="width:160px;height:160px;object-fit:contain;position:relative;z-index:0;border-radius:12px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        html += '<img src="assets/all_beasts/' + (b.enemyImage || 'image (1).png') + '" id="enemy-card" style="width:160px;height:160px;object-fit:contain;position:relative;z-index:0;border-radius:12px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         html += '</div>';
         html += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-top:4px;">' + (b.enemyName || 'Монстр') + (b.isBoss ? ' 👑' : '') + '</div>';
         // HP врага
         html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;">';
         html += '<img src="assets/interface/filling_the_beasts\'_health_bar.jpeg" style="width:120px;height:14px;object-fit:contain;">';
         html += '<div style="background:rgba(0,0,0,0.5);border-radius:6px;height:12px;width:120px;overflow:hidden;position:relative;">';
-        html += '<div style="background:#f44336;height:100%;width:' + ehp + '%;transition:0.3s;"></div>';
-        html += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.55em;text-shadow:0 0 4px #000;">' + b.enemyHp + '/' + b.enemyMaxHp + '</span></div></div>';
+        html += '<div id="enemy-hp-bar" class="hp-burn" style="background:#f44336;height:100%;width:' + ehp + '%;transition:0.3s;"></div>';
+html += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.55em;text-shadow:0 0 4px #000;">' + b.enemyHp + '/' + b.enemyMaxHp + '</span>';
         // Броня врага
         if (b.enemyMaxArmor > 0) {
             html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;">';
@@ -370,6 +370,25 @@ const SherwoodUI = {
         if (r.fail) return;
         this._handleCombat(r);
     },
+        _playHitAnimation: function() {
+        var card = document.getElementById('enemy-card');
+        if (!card) return;
+        card.classList.remove('hit-epic-combo');
+        void card.offsetWidth;
+        card.classList.add('hit-epic-combo');
+    },
+
+    _updateEnemyHP: function(newHp, maxHp) {
+        var bar = document.getElementById('enemy-hp-bar');
+        var text = document.getElementById('enemy-hp-text');
+        if (bar) {
+            var pct = maxHp > 0 ? Math.round((newHp / maxHp) * 100) : 0;
+            bar.classList.add('hp-burn-flash');
+            bar.style.width = pct + '%';
+            setTimeout(function() { bar.classList.remove('hp-burn-flash'); }, 300);
+        }
+        if (text) text.textContent = newHp + '/' + maxHp;
+    },
     _combatFlee: function() {
         var r = Sherwood.Combat.flee();
         if (r.success) { this._leaveDungeon(); return; }
@@ -399,6 +418,8 @@ const SherwoodUI = {
             var self = this;
             setTimeout(function() { self._leaveDungeon(); }, 1500);
         } else {
+            this._playHitAnimation();
+            this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
             var msg = (r.crit ? '💥 КРИТ! ' : '⚔️ ') + '-' + r.damage;
             if (r.armorDmg) msg += ' 🛡️-' + r.armorDmg + ' брони';
             this._addCombatLog(msg, r.crit ? '#ff6a00' : '#fff');
