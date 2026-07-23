@@ -258,7 +258,7 @@
         }
         .top-panel .exp-bar img {
             width: 100%;
-            max-width: 160px;
+            max-width: 180px;
             height: auto;
             display: block;
         }
@@ -275,42 +275,6 @@
             width: 100%;
             text-align: center;
         }
-
-        .top-actions {
-            position: absolute;
-            top: 13%;
-            right: 3%;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            pointer-events: none;
-        }
-        .top-actions .btn {
-            width: 48px;
-            height: 48px;
-            cursor: pointer;
-            background: rgba(0,0,0,0.35);
-            border: 1px solid rgba(201,168,76,0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.15s;
-            pointer-events: all;
-            flex-shrink: 0;
-        }
-        .top-actions .btn img {
-            width: 75%;
-            height: 75%;
-            object-fit: contain;
-        }
-        .top-actions .btn:hover {
-            background: rgba(201,168,76,0.15);
-            border-color: rgba(201,168,76,0.5);
-            transform: scale(1.05);
-        }
-        .top-actions .btn:active { transform: scale(0.9); }
 
         .left-buttons, .right-buttons {
             position: absolute;
@@ -432,8 +396,6 @@
             .left-buttons .btn .label, .right-buttons .btn .label { font-size: 0.35em; }
             .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; }
             .statue-left, .statue-right { width: 20%; }
-            .top-actions { right: 2%; top: 12%; }
-            .top-actions .btn { width: 40px; height: 40px; }
             .left-buttons, .right-buttons { width: 21%; top: 16%; bottom: 16%; }
         }
     </style>
@@ -480,12 +442,6 @@
                 </div>
             </div>
 
-            <div class="top-actions">
-                <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png" alt="Чат"></div>
-                <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"></div>
-                <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"></div>
-            </div>
-
             <div class="left-buttons">
                 <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png" alt="Квест"><span class="label">Квест</span></div>
                 <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png" alt="Подземка"><span class="label">Подземка</span></div>
@@ -497,11 +453,11 @@
 
             <div class="right-buttons">
                 <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png" alt="Ежедневные"><span class="label">Ежедневные</span></div>
-                <div class="btn" data-action="training"><img src="assets/all_buttons/training.png" alt="Тренировка"><span class="label">Тренировка</span></div>
-                <div class="btn" data-action="forge"><img src="assets/all_buttons/forge.png" alt="Кузница"><span class="label">Кузница</span></div>
                 <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png" alt="Сумка"><span class="label">Сумка</span></div>
                 <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png" alt="Рынок"><span class="label">Рынок</span></div>
-                <div class="btn" data-action="bestiary"><img src="assets/all_buttons/bestiary.png" alt="Бестиарий"><span class="label">Бестиарий</span></div>
+                <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"><span class="label">Профиль</span></div>
+                <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"><span class="label">Настройки</span></div>
+                <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png" alt="Чат"><span class="label">Чат</span></div>
             </div>
 
             <div class="bottom-stats">
