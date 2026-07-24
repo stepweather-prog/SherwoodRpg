@@ -20,13 +20,13 @@ const SherwoodUI = {
     },
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
 
-    init: function() {
+        init: function() {
         this.container = document.getElementById('game-container'); if (!this.container) return;
         this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
         this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
         this.container.appendChild(this._screenLayer);
         this._mainElements = ['.bg-layer', '.arch-layer', '.hero-frame', '.top-panel', '.left-buttons', '.right-buttons', '.bottom-stats'];
-        this._initSounds(); this.bindButtons(); this.bindPlayButton(); this.updateDisplay();
+        this._initSounds(); this.bindPlayButton(); this.updateDisplay();
         if (typeof Sherwood !== 'undefined') {
             Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); });
             Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); });
