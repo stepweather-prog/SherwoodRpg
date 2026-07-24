@@ -142,7 +142,7 @@ const SherwoodUI = {
     _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showNotification('❌ Нет билетов!'); return; } this._playSound('dungeon_enter'); this._playMusic('dungeon_ambient'); this._renderDungeon(); },
     _showNotification: function(msg) { var log = document.getElementById('dungeon-log'); if (log) { log.textContent = msg; log.style.color = '#f44336'; setTimeout(function() { log.style.color = '#aaa'; }, 2000); } },
 
-    _renderDungeon: function() {
+        _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
         var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
         this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
@@ -157,11 +157,36 @@ const SherwoodUI = {
         var completeIcons = { forest: 'assets/interface/exit_completion_dungeon.png', swamp: 'assets/interface/completion_of_the_second_underground_level.png', cave: 'assets/interface/completion_of_level_three_subway.png' };
         var ci = chestIcons[d.id] || chestIcons['forest'], ai = altarIcons[d.id] || altarIcons['forest'], cai = cauldronIcons[d.id] || cauldronIcons['forest'], compi = completeIcons[d.id] || completeIcons['forest'];
         var potionIcon = d.id === 'cave' ? 'assets/interface/resource_high_level_health_potion.png' : 'assets/interface/resource_life_potion.png';
-        var gridW = cs * size, html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridW + 'px;margin:0 auto;">';
+        // Радиус обзора — соседние клетки
+        var visible = {}; var px = d.px, py = d.py;
+        visible[py+','+px] = true;
+        var adj = [[0,-1],[0,1],[-1,0],[1,0]];
+        for (var i = 0; i < adj.length; i++) { var nx = px+adj[i][0], ny = py+adj[i][1]; if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true; }
+        var gridW = cs * size;
+        var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridW + 'px;margin:0 auto;background:#000;">';
+        // Открытые клетки — дорога
         for (var y = 0; y < size; y++) { for (var x = 0; x < size; x++) { if (d.grid[y][x].open) html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + floorBg + '\');background-size:cover;background-position:center;z-index:0;"></div>'; } }
-        html += '<div style="position:relative;z-index:1;">';
-        for (var y = 0; y < size; y++) { html += '<div style="display:flex;gap:0;margin:0;">'; for (var x = 0; x < size; x++) { var cell = d.grid[y][x], isPlayer = (d.px === x && d.py === y), bg = '', border = 'rgba(255,255,255,0.06)', content = '', cursor = '', onclick = ''; if (cell.open) { bg = 'transparent'; border = 'rgba(255,255,255,0.04)'; if (cell.monster) { content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;" onerror="this.style.display=\'none\'">'; border = '#f44336'; } else if (cell.chest) { content = '<img src="' + (cell.looted ? ci.open : ci.closed) + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffc107'; } else if (cell.altar) { content = '<img src="' + ai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#9c27b0'; } else if (cell.cauldron) { content = '<img src="' + cai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#4caf50'; } else if (cell.potion) { content = '<img src="' + potionIcon + '" style="width:70%;height:70%;object-fit:contain;">'; border = '#4caf50'; } else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="' + compi + '" style="width:80%;height:80%;object-fit:contain;">'; border = cell.locked ? '#f44336' : '#4caf50'; } if (!isPlayer) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; } } else { var tn = 1 + ((x*7+y*3)%14); bg = "url('" + tp + tn + te + "')"; var adj = Math.abs(x-d.px)+Math.abs(y-d.py)===1; if (adj) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; border = '#4caf50'; } } if (isPlayer) { content = '<img src="assets/hero_skins/skin_1_basic.png" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffd700'; bg = 'transparent'; } html += '<div ' + onclick + ' style="width:' + cs + 'px;height:' + cs + 'px;' + (bg==='transparent'?'':'background-image:'+bg+';background-size:cover;background-position:center;') + 'border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;' + cursor + '">' + content + '</div>'; } html += '</div>'; }
-        html += '</div></div>';
+        // Объекты и игрок (видны если открыты ИЛИ в радиусе обзора)
+        for (var y = 0; y < size; y++) {
+            for (var x = 0; x < size; x++) {
+                var cell = d.grid[y][x], isPlayer = (x === px && y === py);
+                var canSee = cell.open || visible[y+','+x];
+                if (!canSee && !isPlayer) continue;
+                var content = '', border = 'rgba(255,255,255,0.04)', cursor = '', onclick = '';
+                if (canSee) {
+                    if (cell.monster) { content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;" onerror="this.style.display=\'none\'">'; border = '#f44336'; }
+                    else if (cell.chest) { content = '<img src="' + (cell.looted ? ci.open : ci.closed) + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffc107'; }
+                    else if (cell.altar) { content = '<img src="' + ai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#9c27b0'; }
+                    else if (cell.cauldron) { content = '<img src="' + cai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#4caf50'; }
+                    else if (cell.potion) { content = '<img src="' + potionIcon + '" style="width:70%;height:70%;object-fit:contain;">'; border = '#4caf50'; }
+                    else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="' + compi + '" style="width:80%;height:80%;object-fit:contain;">'; border = cell.locked ? '#f44336' : '#4caf50'; }
+                    if (!isPlayer && cell.open) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
+                }
+                if (isPlayer) { content = '<img src="assets/hero_skins/skin_1_basic.png" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffd700'; }
+                html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:1;' + cursor + '">' + content + '</div>';
+            }
+        }
+        html += '</div>';
         var hp = Sherwood.getPlayer().stats.hp || 0;
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);padding:4px;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;max-width:' + (gridW+10) + 'px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.8em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.8em;">❤️' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:3px;margin-bottom:4px;"><div style="display:flex;justify-content:space-around;font-size:9px;color:#aaa;"><span>👹 ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + '</span><span>🔒 Выход: ' + (d.monstersKilled >= d.totalMonsters ? 'открыт' : 'закрыт') + '</span></div></div>' + html + '<div id="dungeon-log" style="text-align:center;font-size:10px;color:#aaa;min-height:16px;margin-top:4px;background:rgba(0,0,0,0.6);border-radius:6px;padding:3px;"></div></div></div>'; this._screenLayer.style.display = 'block'; }
     },
@@ -210,47 +235,74 @@ const SherwoodUI = {
     _buyItem: function(i) { var r=Sherwood.BlackMarket.buyItem(i),log=document.getElementById('market-log'); if(r.success) { if(log) log.textContent='✅ Куплено!'; this.updateDisplay(); } else { if(log) log.textContent='❌ '+(r.reason||'Ошибка'); } var self=this; setTimeout(function(){self.market();},800); },
 
     // ========== БОЙ (ЕДИНЫЙ) ==========
-    _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
+        _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
         var e = enemyData, p = Sherwood.getPlayer();
         var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
         var h = '<div style="text-align:center;">';
         h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:6px;">' + modeTitle + '</div>';
-        h += '<div style="position:relative;width:280px;height:24px;margin:4px auto;"><img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:3px;left:3px;right:3px;bottom:3px;overflow:hidden;z-index:1;"><div id="enemy-hp-bar" style="background:url(\'assets/interface/filling_the_beasts\'_health_bar.jpeg\') left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div></div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+        // HP врага — рамка + заполнитель внутри
+        h += '<div style="position:relative;width:300px;height:30px;margin:4px auto;">';
+        h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
+        h += '<div style="position:absolute;top:4px;left:4px;right:4px;bottom:4px;background:#1a0000;border-radius:4px;overflow:hidden;z-index:0;">';
+        h += '<div id="enemy-hp-bar" style="background:url(\'assets/interface/filling_the_beasts\'_health_bar.jpeg\') left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div>';
+        h += '</div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
         h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
+        // Карта бестии
         h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="assets/all_beasts/' + e.image + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
+        // Кнопка атаки
         h += '<button onclick="' + onAttack + '" style="margin:6px auto;background:url(\'assets/skills/skill_shot_normal.png\') center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;display:block;"></button>';
-        h += '<div style="position:relative;width:240px;height:20px;margin:6px auto;"><img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:2px;left:2px;right:2px;bottom:2px;overflow:hidden;z-index:1;"><div style="background:url(\'assets/interface/life_interface_asset_horizontal_progress_bar.jpeg\') left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div></div><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.55em;z-index:2;text-shadow:0 0 6px #000;">❤️ ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+        // HP героя — рамка + заполнитель внутри
+        h += '<div style="position:relative;width:260px;height:26px;margin:6px auto;">';
+        h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
+        h += '<div style="position:absolute;top:4px;left:4px;right:4px;bottom:4px;background:#001a00;border-radius:4px;overflow:hidden;z-index:0;">';
+        h += '<div style="background:url(\'assets/interface/life_interface_asset_horizontal_progress_bar.jpeg\') left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div>';
+        h += '</div><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.55em;z-index:2;text-shadow:0 0 6px #000;">❤️ ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+        // Статы + иконка
         h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">⚔️' + p.stats.attack + '</span> <span style="color:#2196f3;">🛡️' + p.stats.defense + '</span> <span style="color:#ff9800;">💨' + p.stats.agility + '</span><img src="assets/hero_skins/skin_1_basic.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
+        // Диалог боя
         h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:4px 8%;min-height:90px;max-height:90px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;line-height:1.4;"></div>';
         h += '</div>';
         this._openScreen('⚔️ Бой', 'dungeon_fight', h);
     },
-    _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
-    _hitEnemyCard: function() { var card = document.getElementById('enemy-card'); if (!card) return; card.style.filter = 'brightness(1.4) saturate(2.5) hue-rotate(-10deg)'; setTimeout(function() { card.style.filter = ''; }, 200); card.classList.remove('hit-epic-combo'); void card.offsetWidth; card.classList.add('hit-epic-combo'); },
-    _updateEnemyHP: function(hp, max) { var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + '%'; } if (txt) txt.textContent = hp + '/' + max; },
 
-    _showCombatScreen: function() { var b = Sherwood.Combat.getState(); if (!b) { this._renderDungeon(); return; } this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, 'dungeon', (b.isBoss ? '👑 БОСС: ' : '') + b.enemyName, '', 'SherwoodUI._combatAttack()', 'SherwoodUI._combatFlee()'); },
-    _combatAttack: function() { this._playHitSounds(); this._handleCombat(Sherwood.Combat.attack()); },
-    _combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this._stopBattleMusic(); this._leaveDungeon(); return; } if (r.lose) { this._showDialog('💀 Поражение...', '#f44336'); this._stopBattleMusic(); var self = this; setTimeout(function() { self._leaveDungeon(); }, 1200); return; } this._showDialog('❌ Побег не удался! Враг: -' + r.damage, '#ff9800'); this._showCombatScreen(); },
-    _handleCombat: function(r) {
-        if (!r) return;
-        if (r.win) {
-            if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
-            this._stopBattleMusic(); this.updateDisplay();
-            var scrolls = Math.random() < 0.2 ? 1 + Math.floor(Math.random() * 3) : 0;
-            var ingots = Math.random() < 0.1 ? 1 + Math.floor(Math.random() * 2) : 0;
-            if (scrolls) Sherwood.addResource('scrolls', scrolls);
-            if (ingots) Sherwood.addResource('ingots', ingots);
-            this._pendingRewards = { exp: r.exp, gold: r.gold, silver: Math.floor(r.gold * 2), scrolls: scrolls, ingots: ingots };
-            this._afterRewardAction = function() { SherwoodUI._renderDungeon(); };
-            this._showVictoryScreen(this._pendingRewards);
-        } else if (r.lose) {
-            this._stopBattleMusic(); this.updateDisplay();
-            var scrolls = Math.random() < 0.08 ? 1 : 0;
-            if (scrolls) Sherwood.addResource('scrolls', scrolls);
-            this._pendingRewards = { exp: Math.floor(r.exp * 0.3), silver: Math.floor(r.gold * 1.5), scrolls: scrolls };
-            this._afterRewardAction = function() { SherwoodUI._leaveDungeon(); };
-            this._showDefeatScreen(this._pendingRewards);
+    _hitEnemyCard: function() {
+        var card = document.getElementById('enemy-card'); if (!card) return;
+        card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)';
+        setTimeout(function() { card.style.filter = ''; }, 250);
+        card.classList.remove('hit-epic-combo'); void card.offsetWidth; card.classList.add('hit-epic-combo');
+    },
+
+    _showVictoryScreen: function(rewards) {
+        var h = '<div style="text-align:center;padding:10px;">';
+        h += '<div style="position:relative;display:inline-block;">';
+        h += '<img src="assets/interface/vertical_slab_victory.png" style="width:300px;height:auto;display:block;">';
+        h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
+        h += '<div style="color:#ffd700;font-size:1.1em;font-weight:bold;">🏆 ПОБЕДА!</div>';
+        if (rewards.exp) h += '<div style="color:#fff;font-size:0.85em;">+ ' + rewards.exp + ' XP</div>';
+        if (rewards.gold) h += '<div style="color:#ffd700;">+ ' + rewards.gold + ' 🪙</div>';
+        if (rewards.silver) h += '<div style="color:#c0c0c0;">+ ' + rewards.silver + ' ⚪</div>';
+        if (rewards.scrolls) h += '<div style="color:#9c27b0;">+ ' + rewards.scrolls + ' 📜</div>';
+        if (rewards.ingots) h += '<div style="color:#ff9800;">+ ' + rewards.ingots + ' 🔩</div>';
+        h += '</div>';
+        h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:8px 24px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;z-index:2;">Забрать</button>';
+        h += '</div></div>';
+        this._openScreen('🏆 Победа', 'dungeon_fight', h);
+    },
+
+    _showDefeatScreen: function(rewards) {
+        var h = '<div style="text-align:center;padding:10px;">';
+        h += '<div style="position:relative;display:inline-block;">';
+        h += '<img src="assets/interface/vertical_slab_defeat.png" style="width:300px;height:auto;display:block;">';
+        h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
+        h += '<div style="color:#f44336;font-size:1.1em;font-weight:bold;">💀 ПОРАЖЕНИЕ</div>';
+        if (rewards.exp) h += '<div style="color:#fff;font-size:0.85em;">+ ' + rewards.exp + ' XP</div>';
+        if (rewards.silver) h += '<div style="color:#c0c0c0;">+ ' + rewards.silver + ' ⚪</div>';
+        if (rewards.scrolls) h += '<div style="color:#9c27b0;">+ ' + rewards.scrolls + ' 📜</div>';
+        h += '</div>';
+        h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:8px 24px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;z-index:2;">Забрать</button>';
+        h += '</div></div>';
+        this._openScreen('💀 Поражение', 'dungeon_fight', h);
+    },
         } else {
             this._hitEnemyCard(); this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
             this._showDialog((r.crit ? '💥 КРИТ! ' : '⚔️ ') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
