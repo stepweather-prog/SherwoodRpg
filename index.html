@@ -11,13 +11,13 @@
         body { background: #0a0a0f; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; font-family: 'Georgia', serif; overflow-y: auto; overflow-x: hidden; position: relative; }
         .statue-left { position: fixed; left: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat; z-index: 9999; pointer-events: none; }
         .statue-right { position: fixed; right: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat; z-index: 9999; pointer-events: none; }
-        .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 4px); top: 0; width: 8px; height: 100%; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: cover; z-index: 9999; pointer-events: none; }
-        .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 4px); top: 0; width: 8px; height: 100%; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: cover; z-index: 9999; pointer-events: none; }
+        .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 30px); top: 0; width: 60px; height: 100%; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: contain; z-index: 9999; pointer-events: none; }
+        .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 30px); top: 0; width: 60px; height: 100%; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: contain; z-index: 9999; pointer-events: none; }
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow-y: auto; overflow-x: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
         .arch-layer { position: absolute; bottom: 0%; left: 50%; transform: translateX(-50%); width: 95%; height: 60%; background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat; z-index: 3; pointer-events: none; }
         .hero-frame { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); width: 42%; height: 42%; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
-        .hero-frame .video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; border-radius: 12px; overflow: hidden; border: 2px solid rgba(201,168,76,0.2); box-shadow: 0 0 30px rgba(201,168,76,0.1); }
+        .hero-frame .video-bg { position: absolute; top: 10px; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; border-radius: 12px; overflow: hidden; border: 2px solid rgba(201,168,76,0.2); box-shadow: 0 0 30px rgba(201,168,76,0.1); }
         .hero-frame .video-bg video { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
         .hero-frame img { position: relative; z-index: 1; width: 105%; height: 105%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 20px rgba(255,215,0,0.15)); }
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
@@ -29,18 +29,18 @@
         .loading-screen .play-btn:active { transform: scale(0.95); }
         .main-interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; }
         .main-interface.active { display: block; pointer-events: all; }
-        .top-panel { position: absolute; top: 1%; left: 2%; right: 2%; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 2px; }
+        .top-panel { position: absolute; top: calc(1% - 10px); left: 2%; right: 2%; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 2px; }
         .top-panel .resource { width: 24%; display: flex; flex-direction: column; align-items: center; position: relative; }
         .top-panel .resource img { width: 100%; max-width: 80px; height: auto; display: block; }
         .top-panel .resource span { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); color: #ffd700; font-size: 0.9em; text-shadow: 0 0 10px rgba(0,0,0,0.9); font-weight: bold; white-space: nowrap; }
         .top-panel .resource.silver span { color: #c0c0c0; left: 50%; }
         .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
-        .top-panel .exp-bar img { width: 100%; max-width: 300px; height: 56px; display: block; object-fit: fill; }
+        .top-panel .exp-bar img { width: 100%; max-width: 240px; height: 80px; display: block; object-fit: fill; }
         .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
         .bottom-stats { position: absolute; top: 10%; left: 2%; right: 2%; z-index: 10; display: flex; justify-content: center; pointer-events: none; }
         .bottom-stats .stat-block { width: 96%; display: flex; flex-direction: row; align-items: center; justify-content: space-around; position: relative; padding: 8px 4px; }
         .bottom-stats .stat-block .stat-board { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .bottom-stats .stat-block .stat-board img { width: 100%; height: 100%; object-fit: fill; display: block; opacity: 0.95; }
+        .bottom-stats .stat-block .stat-board img { width: 100%; height: 80px; object-fit: fill; display: block; opacity: 0.95; }
         .bottom-stats .stat-block .stat-item { display: flex; flex-direction: column; align-items: center; z-index: 1; min-width: 44px; }
         .bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
         .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.75em; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.9); background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(201,168,76,0.2); margin-top: 2px; }
@@ -48,8 +48,8 @@
         .left-buttons, .right-buttons { position: absolute; top: 17%; bottom: 16%; z-index: 10; display: flex; flex-direction: column; justify-content: center; gap: 4px; pointer-events: all; width: 22%; }
         .left-buttons { left: 1%; }
         .right-buttons { right: 1%; }
-        .left-buttons .btn, .right-buttons .btn { width: 100%; aspect-ratio: 1/1; cursor: pointer; background: rgba(0,0,0,0.4); border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.15s; padding: 2px; gap: 1px; flex-shrink: 1; min-height: 0; }
-        .left-buttons .btn img, .right-buttons .btn img { width: 80%; height: 80%; object-fit: contain; }
+        .left-buttons .btn, .right-buttons .btn { width: 100%; aspect-ratio: 1/1; cursor: pointer; background: none; border: none; border-radius: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.15s; padding: 0; gap: 1px; flex-shrink: 1; min-height: 0; }
+        .left-buttons .btn img, .right-buttons .btn img { width: 80px; height: 80px; object-fit: contain; }
         .left-buttons .btn .label, .right-buttons .btn .label { color: #c9a84c; font-size: 0.6em; text-shadow: 0 0 10px rgba(0,0,0,0.9); text-align: center; line-height: 1.1; }
         .hit-epic-combo { animation: epicShockwave 0.25s cubic-bezier(0.25,1,0.5,1); }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
