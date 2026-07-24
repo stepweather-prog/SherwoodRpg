@@ -289,7 +289,7 @@ const SherwoodUI = {
         this._openScreen('🏆 Победа', 'dungeon_fight', h);
     },
 
-    _showDefeatScreen: function(rewards) {
+        _showDefeatScreen: function(rewards) {
         var h = '<div style="text-align:center;padding:10px;">';
         h += '<div style="position:relative;display:inline-block;">';
         h += '<img src="assets/interface/vertical_slab_defeat.png" style="width:300px;height:auto;display:block;">';
@@ -303,6 +303,26 @@ const SherwoodUI = {
         h += '</div></div>';
         this._openScreen('💀 Поражение', 'dungeon_fight', h);
     },
+
+    _handleCombat: function(r) {
+        if (!r) return;
+        if (r.win) {
+            if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
+            this._stopBattleMusic(); this.updateDisplay();
+            var scrolls = Math.random() < 0.2 ? 1 + Math.floor(Math.random() * 3) : 0;
+            var ingots = Math.random() < 0.1 ? 1 + Math.floor(Math.random() * 2) : 0;
+            if (scrolls) Sherwood.addResource('scrolls', scrolls);
+            if (ingots) Sherwood.addResource('ingots', ingots);
+            this._pendingRewards = { exp: r.exp, gold: r.gold, silver: Math.floor(r.gold * 2), scrolls: scrolls, ingots: ingots };
+            this._afterRewardAction = function() { SherwoodUI._renderDungeon(); };
+            this._showVictoryScreen(this._pendingRewards);
+        } else if (r.lose) {
+            this._stopBattleMusic(); this.updateDisplay();
+            var scrolls = Math.random() < 0.08 ? 1 : 0;
+            if (scrolls) Sherwood.addResource('scrolls', scrolls);
+            this._pendingRewards = { exp: Math.floor(r.exp * 0.3), silver: Math.floor(r.gold * 1.5), scrolls: scrolls };
+            this._afterRewardAction = function() { SherwoodUI._leaveDungeon(); };
+            this._showDefeatScreen(this._pendingRewards);
         } else {
             this._hitEnemyCard(); this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
             this._showDialog((r.crit ? '💥 КРИТ! ' : '⚔️ ') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
