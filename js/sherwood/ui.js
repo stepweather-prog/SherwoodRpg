@@ -59,17 +59,18 @@ const SherwoodUI = {
     _saveAudioSettings: function() { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: this._soundEnabled, music: this._musicEnabled })); },
     _loadAudioSettings: function() { var s = localStorage.getItem('sherwood_audio'); if (s) { try { var d = JSON.parse(s); this._soundEnabled = d.sound !== false; this._musicEnabled = d.music !== false; } catch(e) {} } },
 
-    bindButtons: function() {
+        bindButtons: function() {
         var self = this;
-        setTimeout(function() {
-            document.querySelectorAll('#mainInterface .btn[data-action]').forEach(function(el) {
+        var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
+        for (var i = 0; i < buttons.length; i++) {
+            (function(el) {
                 el.addEventListener('click', function(e) {
                     e.stopPropagation();
                     var a = el.dataset.action;
                     if (a && typeof self[a] === 'function') { self._playSound('click'); self[a](); }
                 });
-            });
-        }, 300);
+            })(buttons[i]);
+        }
     },
         bindPlayButton: function() {
         var self = this;
