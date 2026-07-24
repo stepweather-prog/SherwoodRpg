@@ -186,3 +186,16 @@ SherwoodUI._refreshArena = function() { Sherwood.Arena.refreshOpponents(); this.
 SherwoodUI._showArenaMatch = function() { var m=Sherwood.Arena.getCurrentMatch(); if(!m) { this.arena(); return; } var o=m.opponent,p=m.player,ohp=Math.round((o.stats.hp/o.stats.maxHp)*100),php=Math.round((p.stats.hp/p.stats.maxHp)*100),h='<div style="text-align:center;"><div style="color:#ffd700;">⚔️ Арена ⚔️</div><div style="display:flex;justify-content:space-around;align-items:center;margin:16px 0;"><div style="text-align:center;"><img src="'+o.skin+'" style="width:60px;height:60px;border-radius:50%;border:2px solid #f44336;" onerror="this.src=\'assets/hero_skins/skin_1_basic.png\'"><div style="color:#f44336;">'+o.name+'</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;width:100px;overflow:hidden;"><div style="background:#f44336;height:100%;width:'+ohp+'%;"></div></div><div style="color:#aaa;font-size:0.6em;">'+Math.max(0,o.stats.hp)+'/'+o.stats.maxHp+'</div></div><div style="font-size:1.5em;">VS</div><div style="text-align:center;"><img src="assets/hero_skins/skin_1_basic.png" style="width:60px;height:60px;border-radius:50%;border:2px solid #4caf50;"><div style="color:#4caf50;">Вы</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;width:100px;overflow:hidden;"><div style="background:#4caf50;height:100%;width:'+php+'%;"></div></div><div style="color:#aaa;font-size:0.6em;">'+p.stats.hp+'/'+p.stats.maxHp+'</div></div></div><button onclick="SherwoodUI._arenaAttack()" style="width:100%;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;margin-bottom:8px;">⚔️ Атака</button><button onclick="SherwoodUI._arenaFlee()" style="width:100%;background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:8px;color:#f44336;cursor:pointer;font-size:0.7em;">🏃 Сдаться</button><div id="arena-log" style="color:#aaa;font-size:0.75em;margin-top:8px;"></div></div>'; this._openScreen('🏟️ Арена','arena',h); };
 SherwoodUI._arenaAttack = function() { var r=Sherwood.Arena.arenaAttack(),log=document.getElementById('arena-log'); if(r.win) { if(log) log.textContent='🏆 Победа! +'+(r.rewards?r.rewards.exp:0)+'XP'; this._stopBattleMusic(); this.updateDisplay(); var self=this; setTimeout(function(){self._playMusic('forest_ambient');self.arena();},1500); } else if(r.win===false) { if(log) log.textContent='💀 Поражение'; this._stopBattleMusic(); var self=this; setTimeout(function(){self._playMusic('forest_ambient');self.arena();},1500); } else { if(log) log.textContent='-'+r.playerDamage+' | Враг: -'+(r.opponentDamage||0); this._showArenaMatch(); } };
 SherwoodUI._arenaFlee = function() { this._stopBattleMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('forest_ambient'); this.arena(); };
+(function() {
+    var self = SherwoodUI;
+    var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
+    for (var i = 0; i < buttons.length; i++) {
+        (function(el) {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var a = el.dataset.action;
+                if (a && typeof self[a] === 'function') { self._playSound('click'); self[a](); }
+            });
+        })(buttons[i]);
+    }
+})();
