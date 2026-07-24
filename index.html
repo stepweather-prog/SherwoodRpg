@@ -11,8 +11,8 @@
         body { background: #0a0a0f; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; font-family: 'Georgia', serif; overflow-y: auto; overflow-x: hidden; position: relative; }
         .statue-left { position: fixed; left: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat; z-index: 9999; pointer-events: none; }
         .statue-right { position: fixed; right: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat; z-index: 9999; pointer-events: none; }
-        .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 30px); top: 0; width: 60px; height: 100%; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: contain; z-index: 9999; pointer-events: none; }
-        .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 30px); top: 0; width: 60px; height: 100%; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: contain; z-index: 9999; pointer-events: none; }
+                .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 30px); top: 0; width: 60px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
+        .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 30px); top: 0; width: 60px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow-y: auto; overflow-x: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
         .arch-layer { position: absolute; bottom: 0%; left: 50%; transform: translateX(-50%); width: 95%; height: 60%; background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat; z-index: 3; pointer-events: none; }
@@ -47,7 +47,7 @@
     display: block;
     position: relative;
     left: 50%;
-    top: -60px;          /* подняли на 25px вверх */
+    top: -80px;
     transform: translateX(-50%);
     opacity: 0.95;
 }
