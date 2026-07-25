@@ -140,13 +140,16 @@ const SherwoodUI = {
     _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showNotification('❌ Нет билетов!'); return; } this._playSound('dungeon_enter'); this._playMusic('dungeon_ambient'); this._renderDungeon(); },
     _showNotification: function(msg) { var log = document.getElementById('dungeon-log'); if (log) { log.textContent = msg; log.style.color = '#f44336'; setTimeout(function() { log.style.color = '#aaa'; }, 2000); } },
 
-    _renderDungeon: function() {
+        _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
         var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
         this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
         var size = d.size, cs = Math.floor((this.container.clientWidth - 4) / size);
         var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === 'forest' ? '1' : d.id === 'swamp' ? '2' : '3') + ".png";
+        var tp = "assets/dungeon_tiles/" + dd.tiles + "/tiles", te = dd.ext;
+        if (dd.tiles === 'dungeon2') tp = "assets/dungeon_tiles/dungeon2/tiles2.";
+        if (dd.tiles === 'dungeon3') tp = "assets/dungeon_tiles/dungeon3/tiles3.";
         var chestIcons = { forest: { closed: 'assets/interface/locked_chest_first_dungeon.png', open: 'assets/interface/open_chest_first_dungeon.png' }, swamp: { closed: 'assets/interface/locked_chest_second_dungeon.png', open: 'assets/interface/open_chest_of_the_second_dungeon.png' }, cave: { closed: 'assets/interface/locked_chest_third_dungeon.png', open: 'assets/interface/open_chest_third_dungeon.png' } };
         var altarIcons = { forest: 'assets/interface/altar_of_the_first_dungeon.png', swamp: 'assets/interface/altar_of_the_second_dungeon.png', cave: 'assets/interface/the_third_altar_of_the_dungeon.png' };
         var cauldronIcons = { forest: 'assets/interface/cauldron_first_dungeon.png', swamp: 'assets/interface/cauldron_of_the_second_dungeon.png', cave: 'assets/interface/the_third_cauldron_of_the_dungeon.png' };
@@ -158,40 +161,51 @@ const SherwoodUI = {
         var adj = [[0,-1],[0,1],[-1,0],[1,0]];
         for (var i = 0; i < adj.length; i++) { var nx = px+adj[i][0], ny = py+adj[i][1]; if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true; }
         var gridW = cs * size;
-        var textureScale = cs * 2;
-        var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridW + 'px;margin:0 auto;background-image:url(\'' + floorBg + '\');background-size:' + textureScale + 'px ' + textureScale + 'px;background-repeat:repeat;overflow:hidden;background-color:#000;">';
+        var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridW + 'px;margin:0 auto;background-color:#000;">';
+        // Слой 0: Пол (единый фон)
+        html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background-image:url(\'' + floorBg + '\');background-size:cover;background-position:center;z-index:0;"></div>';
+        // Слой 1: Плитки (стены лабиринта)
+        for (var y = 0; y < size; y++) {
+            for (var x = 0; x < size; x++) {
+                if (!d.grid[y] || !d.grid[y][x]) continue;
+                var cell = d.grid[y][x];
+                if (cell.type === 0) { // Стена
+                    var tn = 1 + ((x*7+y*3)%14);
+                    var tileImg = tp + tn + te;
+                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + tileImg + '\');background-size:cover;background-position:center;z-index:1;"></div>';
+                }
+            }
+        }
+        // Слой 2: Туман войны
+        for (var y = 0; y < size; y++) {
+            for (var x = 0; x < size; x++) {
+                if (!d.grid[y] || !d.grid[y][x]) continue;
+                var cell = d.grid[y][x];
+                var isOpen = cell.open, inSight = visible[y+','+x];
+                var overlayCSS = '';
+                if (!inSight && !isOpen) { overlayCSS = 'background: rgba(0,0,0,0.85);'; }
+                else if (!inSight && isOpen) { overlayCSS = 'background: rgba(0,0,0,0.58);'; }
+                else { overlayCSS = 'background: transparent;'; }
+                html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;z-index:2;' + overlayCSS + '"></div>';
+            }
+        }
+        // Слой 3: Объекты и игрок
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
                 var cell = d.grid[y][x], isPlayer = (x === px && y === py);
                 var isOpen = cell.open, inSight = visible[y+','+x];
-                var wallHTML = '';
-                if (cell.wall && cell.wallId) {
-                    var tp = "assets/dungeon_tiles/" + dd.tiles + "/tiles";
-                    if (dd.tiles === 'dungeon2') tp = "assets/dungeon_tiles/dungeon2/tiles2.";
-                    if (dd.tiles === 'dungeon3') tp = "assets/dungeon_tiles/dungeon3/tiles3.";
-                    wallHTML = '<img src="' + tp + cell.wallId + dd.ext + '" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;z-index:1;">';
-                }
-                var overlayCSS = '';
-                if (!inSight && !isOpen) { overlayCSS = 'background: rgba(0,0,0,0.85);'; }
-                else if (!inSight && isOpen) { overlayCSS = 'background: rgba(0,0,0,0.58);'; }
-                else if (inSight) { overlayCSS = 'background: rgba(0,0,0,0);'; }
-                html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;z-index:2;' + overlayCSS + '">' + wallHTML + '</div>';
+                if (!cell.open && !isPlayer) continue;
                 var content = '', border = 'rgba(255,255,255,0)', cursor = '', onclick = '';
-                if (inSight) {
-                    if (cell.monster) { content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;" onerror="this.style.display=\'none\'">'; border = '#f44336'; }
-                    else if (cell.chest) { content = '<img src="' + (cell.looted ? ci.open : ci.closed) + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffc107'; }
-                    else if (cell.altar) { content = '<img src="' + ai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#9c27b0'; }
-                    else if (cell.cauldron) { content = '<img src="' + cai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#4caf50'; }
-                    else if (cell.potion) { content = '<img src="' + potionIcon + '" style="width:70%;height:70%;object-fit:contain;">'; border = '#4caf50'; }
-                    else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="' + compi + '" style="width:80%;height:80%;object-fit:contain;">'; border = cell.locked ? '#f44336' : '#4caf50'; }
-                }
-                if (!isPlayer && !cell.wall && (inSight || isOpen)) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
-                if (isPlayer) {
-                    var haloHTML = '<div class="diablo-light-halo" style="position:absolute;width:300%;height:300%;top:-100%;left:-100%;pointer-events:none;z-index:3;background:radial-gradient(circle, rgba(255,235,180,0.38) 0%, rgba(255,180,80,0.08) 40%, rgba(0,0,0,0) 70%);mix-blend-mode:screen;"></div>';
-                    content = haloHTML + '<img src="assets/hero_skins/skin_1_basic.png" style="width:80%;height:80%;object-fit:contain;position:relative;z-index:4;">'; border = '#ffd700';
-                }
-                if (content) { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:4;' + cursor + '">' + content + '</div>'; }
+                if (cell.monster) { content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;" onerror="this.style.display=\'none\'">'; border = '#f44336'; }
+                else if (cell.chest) { content = '<img src="' + (cell.looted ? ci.open : ci.closed) + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffc107'; }
+                else if (cell.altar) { content = '<img src="' + ai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#9c27b0'; }
+                else if (cell.cauldron) { content = '<img src="' + cai + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#4caf50'; }
+                else if (cell.potion) { content = '<img src="' + potionIcon + '" style="width:70%;height:70%;object-fit:contain;">'; border = '#4caf50'; }
+                else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="' + compi + '" style="width:80%;height:80%;object-fit:contain;">'; border = cell.locked ? '#f44336' : '#4caf50'; }
+                if (!isPlayer && cell.type !== 0 && (inSight || isOpen)) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
+                if (isPlayer) { content = '<img src="assets/hero_skins/skin_1_basic.png" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffd700'; }
+                if (content) { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:3;' + cursor + '">' + content + '</div>'; }
             }
         }
         html += '</div>';
