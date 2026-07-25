@@ -79,33 +79,60 @@ Sherwood.Combat = {
         Sherwood.addExp(r.exp);
         Sherwood.addResource('gold', r.gold);
         Sherwood.addResource('silver', Math.floor(r.gold * 2));
-        // Скрижали
         if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1 + Math.floor(Math.random()*3));
-        // Слитки
         if (Math.random() < 0.10) Sherwood.addResource('ingots', 1 + Math.floor(Math.random()*2));
-        // Предмет в сумку
-        if (Math.random() < 0.15 && typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
-            var grades = ['common', 'common', 'uncommon', 'rare'];
-            var grade = grades[Math.floor(Math.random() * grades.length)];
-            var mult = { common: 1, uncommon: 2, rare: 4 };
-            var parts = ['weapon1', 'torso', 'head', 'hands', 'legs', 'feet'];
-            var part = parts[Math.floor(Math.random() * parts.length)];
-            var partNames = { weapon1: 'Лук', torso: 'Броня', head: 'Шлем', hands: 'Перчатки', legs: 'Поножи', feet: 'Сапоги' };
+        // Кожа с каждой бестии — всегда
+        if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
             Sherwood.Bag.addItem({
-                id: 'loot_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-                name: (grade === 'rare' ? 'Редкий ' : '') + partNames[part],
-                icon: 'assets/interface/labyrinth_of_icons.png',
-                part: part,
-                grade: grade,
-                type: 'equipment',
-                stats: {
-                    attack: Math.floor(Math.random() * 5 * mult[grade]) + mult[grade],
-                    defense: Math.floor(Math.random() * 3 * mult[grade]) + Math.floor(mult[grade] / 2)
-                },
-                sellPrice: 5 * mult[grade],
+                id: 'skin_' + Date.now() + '_' + Math.floor(Math.random()*10000),
+                name: 'Кожа шервудской твари',
+                icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+                grade: 'common',
+                type: 'resource',
                 quantity: 1,
-                maxStack: 1
+                maxStack: 99,
+                sellPrice: 5
             });
+            // Шанс 15% на ингредиент для стрел
+            if (Math.random() < 0.15) {
+                var ings = [
+                    { id: 'branch', name: 'Ветка проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png' },
+                    { id: 'feather', name: 'Перо бестии', icon: 'assets/interface/feather_beast_1.png' },
+                    { id: 'bone', name: 'Костяной нарост бестии', icon: 'assets/interface/bone_growth_of_the_beast.png' }
+                ];
+                var ing = ings[Math.floor(Math.random() * 3)];
+                Sherwood.Bag.addItem({
+                    id: ing.id + '_' + Date.now(),
+                    name: ing.name,
+                    icon: ing.icon,
+                    grade: 'common',
+                    type: 'resource',
+                    quantity: 1,
+                    maxStack: 99,
+                    sellPrice: 3
+                });
+            }
+            // Шанс 15% на предмет экипировки
+            if (Math.random() < 0.15) {
+                var grades = ['common', 'common', 'uncommon', 'rare'];
+                var grade = grades[Math.floor(Math.random() * grades.length)];
+                var mult = { common: 1, uncommon: 2, rare: 4 };
+                var parts = ['weapon1', 'torso', 'head', 'hands', 'legs', 'feet'];
+                var part = parts[Math.floor(Math.random() * parts.length)];
+                var partNames = { weapon1: 'Лук', torso: 'Броня', head: 'Шлем', hands: 'Перчатки', legs: 'Поножи', feet: 'Сапоги' };
+                Sherwood.Bag.addItem({
+                    id: 'loot_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                    name: (grade === 'rare' ? 'Редкий ' : '') + partNames[part],
+                    icon: 'assets/interface/labyrinth_of_icons.png',
+                    part: part,
+                    grade: grade,
+                    type: 'equipment',
+                    stats: { attack: Math.floor(Math.random() * 5 * mult) + mult, defense: Math.floor(Math.random() * 3 * mult) + Math.floor(mult/2) },
+                    sellPrice: 5 * mult,
+                    quantity: 1,
+                    maxStack: 1
+                });
+            }
         }
         Sherwood.saveGame();
     },
