@@ -140,7 +140,7 @@ const SherwoodUI = {
     _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showNotification('❌ Нет билетов!'); return; } this._playSound('dungeon_enter'); this._playMusic('dungeon_ambient'); this._renderDungeon(); },
     _showNotification: function(msg) { var log = document.getElementById('dungeon-log'); if (log) { log.textContent = msg; log.style.color = '#f44336'; setTimeout(function() { log.style.color = '#aaa'; }, 2000); } },
 
-        _renderDungeon: function() {
+            _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
         var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
         this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
