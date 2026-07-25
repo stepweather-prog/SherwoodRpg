@@ -227,7 +227,7 @@ const SherwoodUI = {
         var hp = Sherwood.getPlayer().stats.hp || 0;
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">❤️' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">👹 ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | 🔒 ' + (d.monstersKilled >= d.totalMonsters ? 'Выход открыт' : 'Убито мало') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
     },
-    _dungeonMove: function(tx, ty) {
+        _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         if (tx > d.px) d.heroDirection = 'right';
         else if (tx < d.px) d.heroDirection = 'left';
@@ -235,11 +235,12 @@ const SherwoodUI = {
         else if (ty < d.py) d.heroDirection = 'up';
         d.heroFrame = 1;
         var moved = false;
-        // Идём по пути до цели
         while (d.px !== tx || d.py !== ty) {
             var nx = d.px, ny = d.py;
-            if (d.px < tx) nx++; else if (d.px > tx) nx--;
-            else if (d.py < ty) ny++; else if (d.py > ty) ny--;
+            if (d.px < tx) nx++;
+            else if (d.px > tx) nx--;
+            else if (d.py < ty) ny++;
+            else if (d.py > ty) ny--;
             var res = Sherwood.Dungeon.move(nx, ny);
             if (!res || !res.ok) break;
             moved = true;
@@ -247,8 +248,7 @@ const SherwoodUI = {
             if (res.type === 'battle') {
                 this._renderDungeon();
                 setTimeout(function() { d.heroFrame = 0; SherwoodUI._renderDungeon(); }, 150);
-                this._stopMusic();
-                this._playSound('trap');
+                this._stopMusic(); this._playSound('trap');
                 var self = this;
                 setTimeout(function() { self._showCombatScreen(); }, 400);
                 Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon');
