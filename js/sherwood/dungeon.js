@@ -80,30 +80,21 @@ Sherwood.Dungeon = {
 
     getDungeon: function() { return this._dungeon; },
 
-    move: function(tx, ty) {
+        move: function(tx, ty) {
         var d = this._dungeon;
-        if (!d) return { ok: false };
+        if (!d) return { ok: false, reason: 'Нет подземки' };
         var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
         if (dist !== 1) return { ok: false, reason: 'Далеко' };
         var cell = d.grid[ty][tx];
-        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
+        if (!cell) return { ok: false, reason: 'Нет клетки' };
+        if (cell.type === 0) return { ok: false, reason: 'Стена' };
         cell.open = true;
         d.px = tx; d.py = ty;
-        if (cell.type === this.TILE.MONSTER) {
-            var mid = d.monsterPool[Math.floor(Math.random() * d.monsterPool.length)];
-            cell.monsterId = mid;
-            return { ok: true, type: 'battle', monsterId: mid, boss: false };
-        }
-        if (cell.type === this.TILE.CHEST) {
-            d.chestsOpened++;
-            var g = 25 + Math.floor(Math.random() * 80), s = 100 + Math.floor(Math.random() * 400);
-            Sherwood.addResource('gold', g); Sherwood.addResource('silver', s);
-            cell.type = this.TILE.EMPTY; cell.chest = false;
-            return { ok: true, type: 'chest', gold: g, silver: s };
-        }
-        if (cell.type === this.TILE.ALTAR) { cell.type = this.TILE.EMPTY; cell.altar = false; return { ok: true, type: 'altar' }; }
-        if (cell.type === this.TILE.CAULDRON) { cell.type = this.TILE.EMPTY; cell.cauldron = false; return { ok: true, type: 'cauldron' }; }
-        if (cell.type === this.TILE.POTION) { cell.type = this.TILE.EMPTY; cell.potion = false; return { ok: true, type: 'potion' }; }
+        if (cell.type === 2) { var mid = d.monsterPool[Math.floor(Math.random() * d.monsterPool.length)]; cell.monsterId = mid; return { ok: true, type: 'battle', monsterId: mid, boss: false }; }
+        if (cell.type === 3) { d.chestsOpened++; var g = 25 + Math.floor(Math.random() * 80), s = 100 + Math.floor(Math.random() * 400); Sherwood.addResource('gold', g); Sherwood.addResource('silver', s); cell.type = 1; cell.chest = false; return { ok: true, type: 'chest', gold: g, silver: s }; }
+        if (cell.type === 7) { cell.type = 1; cell.altar = false; return { ok: true, type: 'altar' }; }
+        if (cell.type === 8) { cell.type = 1; cell.cauldron = false; return { ok: true, type: 'cauldron' }; }
+        if (cell.type === 9) { cell.type = 1; cell.potion = false; return { ok: true, type: 'potion' }; }
         if (cell.exit && cell.locked) return { ok: true, type: 'exit_locked' };
         if (cell.exit && !cell.locked) return { ok: true, type: 'exit' };
         return { ok: true, type: 'move' };
