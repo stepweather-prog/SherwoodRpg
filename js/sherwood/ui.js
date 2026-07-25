@@ -159,10 +159,10 @@ const SherwoodUI = {
         var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridH + 'px;background-color:#000;overflow:hidden;">';
         html += '<div style="position:absolute;left:' + (-scrollX) + 'px;top:' + (-scrollY) + 'px;width:' + gridW + 'px;height:' + gridH + 'px;">';
         // Плитки
+                // Плитки — один файл для всех подземок
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
-                var tn = 1 + ((x*7+y*3)%14);
-                html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + tp + tn + te + '\');background-size:cover;background-position:center;z-index:0;"></div>';
+                html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'assets/interface/labyrinth_asset.png\');background-size:cover;background-position:center;z-index:0;"></div>';
             }
         }
         // Пол
