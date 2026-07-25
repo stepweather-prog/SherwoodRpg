@@ -13,7 +13,7 @@ const SherwoodUI = {
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
             _audioFiles: {
         'forest_ambient': 'assets/sounds/main_topic.ogg', 'dungeon_ambient': 'assets/sounds/subway_1_2.flac', 'tavern_ambient': 'assets/sounds/tavern_ambient.wav',
-        'click': 'assets/sounds/button_click.ogg', 'shot': 'assets/sounds/normal_hit.flac', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
+        'click': 'assets/sounds/button_click.ogg', 'shot': 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
         'chest_open': 'assets/sounds/chest_opens.wav', 'dungeon_enter': 'assets/sounds/subway_1_2.flac', 'trap': 'assets/sounds/trap.wav',
         'steps': 'assets/sounds/hero_steps.flac', 'altar': 'assets/sounds/altar_underground.mp3', 'bottle_health': 'assets/sounds/bottle_health.mp3'
@@ -52,10 +52,8 @@ const SherwoodUI = {
     },
     _stopMusic: function() { try { if (this._currentMusic) { this._currentMusic.pause(); this._currentMusic.currentTime = 0; this._currentMusic = null; this._currentMusicKey = null; } } catch(e) {} },
     _stopBattleMusic: function() { try { var bgm = this._sounds['battle_bgm']; if (bgm) { bgm.pause(); bgm.currentTime = 0; } } catch(e) {} },
-    _playHitSounds: function() {
-        try { this._playSound('shot'); } catch(e) {}
-        try { var self = this; setTimeout(function() { self._playSound('arrow_hit'); }, 60); } catch(e) {}
-        try { var snd = this._sounds['arrow_hit_2']; if (snd) { snd.currentTime = 0; snd.play().catch(function() {}); setTimeout(function() { snd.pause(); }, 2000); } } catch(e) {}
+        _playHitSounds: function() {
+        this._playSound('shot');
         try { var bgm = this._sounds['battle_bgm']; if (bgm && bgm.paused) { bgm.currentTime = 0; bgm.play().catch(function() {}); } } catch(e) {}
     },
     _saveAudioSettings: function() { try { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: this._soundEnabled, music: this._musicEnabled })); } catch(e) {} },
