@@ -11,9 +11,9 @@ const SherwoodUI = {
     },
     _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', agility: 'assets/interface/icon_dexterity.png', hp: 'assets/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
-        _audioFiles: {
+            _audioFiles: {
         'forest_ambient': 'assets/sounds/main_topic.ogg', 'dungeon_ambient': 'assets/sounds/subway_1_2.flac', 'tavern_ambient': 'assets/sounds/tavern_ambient.wav',
-        'click': 'assets/sounds/button_click.ogg', 'shot': 'assets/sounds/normal_hit.flac', 'arrow_hit': 'assets/sounds/normal_hit.flac',
+        'click': 'assets/sounds/button_click.ogg', 'shot': 'assets/sounds/normal_hit.flac', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
         'chest_open': 'assets/sounds/chest_opens.wav', 'dungeon_enter': 'assets/sounds/subway_1_2.flac', 'trap': 'assets/sounds/trap.wav',
         'steps': 'assets/sounds/hero_steps.flac', 'altar': 'assets/sounds/altar_underground.mp3', 'bottle_health': 'assets/sounds/bottle_health.mp3'
