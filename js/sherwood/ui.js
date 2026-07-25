@@ -140,7 +140,7 @@ const SherwoodUI = {
     _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showNotification('❌ Нет билетов!'); return; } this._playSound('dungeon_enter'); this._playMusic('dungeon_ambient'); this._renderDungeon(); },
     _showNotification: function(msg) { var log = document.getElementById('dungeon-log'); if (log) { log.textContent = msg; log.style.color = '#f44336'; setTimeout(function() { log.style.color = '#aaa'; }, 2000); } },
 
-        _renderDungeon: function() {
+            _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
         var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
         this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
@@ -153,26 +153,27 @@ const SherwoodUI = {
         var px = d.px, py = d.py;
         var gridW = cs * size;
         var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridW + 'px;margin:0 auto;background-color:#000;">';
+        // Открытые клетки — пол
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
-                var cell = d.grid[y][x];
-                if (cell.open) {
+                if (d.grid[y][x].open) {
                     html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + floorBg + '\');background-size:cover;background-position:center;z-index:0;"></div>';
                 }
             }
         }
+        // Неоткрытые клетки — плитки + туман
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
-                var cell = d.grid[y][x];
-                if (!cell.open) {
+                if (!d.grid[y][x].open) {
                     var tn = 1 + ((x*7+y*3)%14);
                     html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + tp + tn + te + '\');background-size:cover;background-position:center;z-index:1;"></div>';
-                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,0.35);z-index:2;"></div>';
+                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,0.7);z-index:2;"></div>';
                 }
             }
         }
+        // Объекты + игрок (только на открытых)
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -206,7 +207,7 @@ const SherwoodUI = {
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);padding:4px;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;max-width:' + (gridW+10) + 'px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.8em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.8em;">❤️' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:3px;margin-bottom:4px;"><div style="display:flex;justify-content:space-around;font-size:9px;color:#aaa;"><span>👹 ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + '</span><span>🔒 Выход: ' + (d.monstersKilled >= d.totalMonsters ? 'открыт' : 'закрыт') + '</span></div></div>' + html + '<div id="dungeon-log" style="text-align:center;font-size:10px;color:#aaa;min-height:16px;margin-top:4px;background:rgba(0,0,0,0.6);border-radius:6px;padding:3px;"></div></div></div>'; this._screenLayer.style.display = 'block'; }
     },
 
-    _dungeonMove: function(x, y) {
+            _dungeonMove: function(x, y) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         if (x > d.px) d.heroDirection = 'right';
         else if (x < d.px) d.heroDirection = 'left';
