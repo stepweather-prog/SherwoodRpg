@@ -54,20 +54,14 @@ Sherwood.Dungeon = {
         var empties = [];
         for (var y = 0; y < h; y++) { for (var x = 0; x < w; x++) { if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) empties.push({x:x, y:y}); } }
         empties.sort(function() { return Math.random() - 0.5; });
-        // 10 врагов
         var totalMonsters = 10;
         for (var i = 0; i < totalMonsters; i++) { if (empties.length === 0) break; var mc = empties.pop(); grid[mc.y][mc.x].type = this.TILE.MONSTER; grid[mc.y][mc.x].monster = true; }
-        // Алтарь
         if (empties.length > 0) { var ac = empties.pop(); grid[ac.y][ac.x].type = this.TILE.ALTAR; grid[ac.y][ac.x].altar = true; }
-        // Котёл
         if (empties.length > 0) { var cc = empties.pop(); grid[cc.y][cc.x].type = this.TILE.CAULDRON; grid[cc.y][cc.x].cauldron = true; }
-        // 5 банок
         for (var i = 0; i < 5; i++) { if (empties.length === 0) break; var pc = empties.pop(); grid[pc.y][pc.x].type = this.TILE.POTION; grid[pc.y][pc.x].potion = true; }
-        // Выход (закрыт пока все 10 не убиты)
         var bestDist = -1, exitX = spawnX, exitY = spawnY;
         for (var i = 0; i < empties.length; i++) { var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY); if (dist > bestDist) { bestDist = dist; exitX = empties[i].x; exitY = empties[i].y; } }
         if (bestDist >= 0) { grid[exitY][exitX].type = this.TILE.EXIT; grid[exitY][exitX].exit = true; grid[exitY][exitX].locked = true; }
-        // Монстры
         var monsters = {
             forest: { easy: ['image (1).png','image (3).png','image (74).png'], medium: ['image (9).png','image (29).png','image (75).png'], boss: 'image (15).png' },
             swamp: { easy: ['image (12).png','image (13).png','image (59).png'], medium: ['image (14).png','image (16).png','image (52).png'], boss: 'image (54).png' },
@@ -75,7 +69,6 @@ Sherwood.Dungeon = {
         };
         var pool = monsters[dungeonId] || monsters['forest'];
         var monList = level <= 3 ? pool.easy : pool.medium;
-
         this._dungeon = {
             id: dungeonId, level: level, size: w, grid: grid,
             px: spawnX, py: spawnY, movesLeft: 999, monstersKilled: 0, totalMonsters: totalMonsters,
@@ -89,15 +82,10 @@ Sherwood.Dungeon = {
     move: function(tx, ty) {
         var d = this._dungeon;
         if (!d) return { ok: false };
+        var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
+        if (dist !== 1) return { ok: false, reason: 'Далеко' };
         var cell = d.grid[ty][tx];
         if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
-        // Если клетка открыта — телепорт
-        if (cell.open) {
-            d.px = tx; d.py = ty;
-            if (cell.exit && !cell.locked) return { ok: true, type: 'exit' };
-            return { ok: true, type: 'move' };
-        }
-        // Открываем клетку
         cell.open = true;
         d.px = tx; d.py = ty;
         if (cell.type === this.TILE.MONSTER) {
@@ -116,6 +104,7 @@ Sherwood.Dungeon = {
         if (cell.type === this.TILE.CAULDRON) { cell.type = this.TILE.EMPTY; cell.cauldron = false; return { ok: true, type: 'cauldron' }; }
         if (cell.type === this.TILE.POTION) { cell.type = this.TILE.EMPTY; cell.potion = false; return { ok: true, type: 'potion' }; }
         if (cell.exit && cell.locked) return { ok: true, type: 'exit_locked' };
+        if (cell.exit && !cell.locked) return { ok: true, type: 'exit' };
         return { ok: true, type: 'move' };
     },
 
