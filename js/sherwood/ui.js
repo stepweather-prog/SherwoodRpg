@@ -140,7 +140,7 @@ const SherwoodUI = {
     _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showNotification('❌ Нет билетов!'); return; } this._playSound('dungeon_enter'); this._playMusic('dungeon_ambient'); this._renderDungeon(); },
     _showNotification: function(msg) { var log = document.getElementById('dungeon-log'); if (log) { log.textContent = msg; log.style.color = '#f44336'; setTimeout(function() { log.style.color = '#aaa'; }, 2000); } },
 
-                        _renderDungeon: function() {
+        _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
         var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
         this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
@@ -151,17 +151,28 @@ const SherwoodUI = {
         if (dd.tiles === 'dungeon2') tp = "assets/dungeon_tiles/dungeon2/tiles2.";
         if (dd.tiles === 'dungeon3') tp = "assets/dungeon_tiles/dungeon3/tiles3.";
         var px = d.px, py = d.py;
-        var visible = {}; visible[py+','+px] = true;
-        var adj = [[0,-1],[0,1],[-1,0],[1,0]];
-        for (var i = 0; i < adj.length; i++) { var nx = px+adj[i][0], ny = py+adj[i][1]; if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true; }
+        // Радиус факела — 2 клетки вокруг героя
+        var visible = {};
+        for (var dy = -2; dy <= 2; dy++) {
+            for (var dx = -2; dx <= 2; dx++) {
+                var nx = px + dx, ny = py + dy;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                    var dist = Math.abs(dx) + Math.abs(dy);
+                    if (dist <= 2) visible[ny+','+nx] = Math.max(0.15, 1 - dist * 0.35);
+                }
+            }
+        }
+        visible[py+','+px] = 1;
         var gridW = cs * size;
         var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridW + 'px;margin:0 auto;background-color:#000;">';
+        // Плитки
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 var tn = 1 + ((x*7+y*3)%14);
                 html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + tp + tn + te + '\');background-size:cover;background-position:center;z-index:0;"></div>';
             }
         }
+        // Пол на открытых
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -170,21 +181,27 @@ const SherwoodUI = {
                 }
             }
         }
+        // Туман с учётом света факела
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
-                if (!d.grid[y][x].open) {
-                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,0.4);z-index:2;"></div>';
+                if (d.grid[y][x].open) continue;
+                var brightness = visible[y+','+x];
+                if (brightness === undefined) {
+                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,0.85);z-index:2;"></div>';
+                } else {
+                    var alpha = (1 - brightness).toFixed(2);
+                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,' + alpha + ');z-index:2;"></div>';
                 }
             }
         }
+        // Объекты и игрок
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
                 var cell = d.grid[y][x], isPlayer = (x === px && y === py);
                 var content = '', border = 'rgba(255,255,255,0)', cursor = '', onclick = '';
-                var inSight = visible[y+','+x];
-                if (cell.open) {
+                if (cell.open && !isPlayer) {
                     if (cell.monster) { content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;" onerror="this.style.display=\'none\'">'; border = '#f44336'; }
                     else if (cell.chest) { content = '<img src="' + (cell.looted ? 'assets/interface/open_chest_first_dungeon.png' : 'assets/interface/locked_chest_first_dungeon.png') + '" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffc107'; }
                     else if (cell.altar) { content = '<img src="assets/interface/altar_of_the_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">'; border = '#9c27b0'; }
@@ -192,8 +209,9 @@ const SherwoodUI = {
                     else if (cell.potion) { content = '<img src="assets/interface/resource_life_potion.png" style="width:70%;height:70%;object-fit:contain;">'; border = '#4caf50'; }
                     else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">'; border = cell.locked ? '#f44336' : '#4caf50'; }
                 }
+                var clickDist = Math.abs(px - x) + Math.abs(py - y);
                 if (!isPlayer && cell.type !== 0) {
-                    if (inSight && !cell.open) { border = '#4caf50'; cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
+                    if (clickDist === 1 && visible[y+','+x] !== undefined && !cell.open) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
                     else if (cell.open) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
                 }
                 if (isPlayer) {
@@ -202,11 +220,11 @@ const SherwoodUI = {
                     if (d.heroDirection === 'down') directionY = 25;
                     if (d.heroDirection === 'left') directionY = 50;
                     if (d.heroDirection === 'right') directionY = 75;
-                    var frameX = (d.heroFrame || 0) * 25;
-                    content = '<div class="hero-sprite" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;background-position:' + frameX + '% ' + directionY + '%;"></div><div class="diablo-light-halo" style="position:absolute;width:300%;height:300%;top:-100%;left:-100%;pointer-events:none;z-index:5;background:radial-gradient(circle, rgba(255,235,180,0.38) 0%, rgba(255,180,80,0.08) 40%, rgba(0,0,0,0) 70%);mix-blend-mode:screen;"></div>';
+                    var frameX = (d.heroFrame || 0) * 33.333;
+                    content = '<div class="hero-sprite" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;background-position:' + frameX + '% ' + directionY + '%;"></div>';
                     border = '#ffd700';
                 }
-                if (content || onclick || border !== 'rgba(255,255,255,0)') { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:3;' + cursor + '">' + content + '</div>'; }
+                if (content || onclick) { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:3;' + cursor + '">' + content + '</div>'; }
             }
         }
         html += '</div>';
