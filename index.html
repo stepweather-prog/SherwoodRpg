@@ -64,6 +64,17 @@
         .hit-epic-combo { animation: epicShockwave 0.25s cubic-bezier(0.25,1,0.5,1); }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
         @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .top-panel .resource span { font-size: 0.7em; } .top-panel .exp-bar img { height: 40px; max-width: 200px; } .top-panel .exp-bar .exp-text { font-size: 0.55em; } .left-buttons .btn .label, .right-buttons .btn .label { font-size: 0.45em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
+                .diablo-light-halo {
+            position: absolute;
+            width: 300%;
+            height: 300%;
+            top: -100%;
+            left: -100%;
+            pointer-events: none;
+            z-index: 2;
+            background: radial-gradient(circle, rgba(255,235,180,0.45) 0%, rgba(255,200,100,0.15) 30%, rgba(0,0,0,0) 70%);
+            mix-blend-mode: screen;
+        }    
     </style>
 </head>
 <body>
