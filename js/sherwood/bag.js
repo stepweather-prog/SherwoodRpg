@@ -3,7 +3,6 @@ Sherwood.Bag = {
     _equipment: { head: null, torso: null, hands: null, legs: null, feet: null, weapon1: null, weapon2: null, belt: null, amulet: null, ring: null },
     _maxSlots: 10,
 
-    // Расширение сумки по уровням (каждые ~4.6 уровня +5 ячеек, кап 150 на 70 уровне)
     _slotsPerLevel: function(level) {
         if (level >= 70) return 150;
         return Math.min(150, 10 + Math.floor((level - 1) / 4.6) * 5);
@@ -21,7 +20,7 @@ Sherwood.Bag = {
         this._maxSlots = this._slotsPerLevel(player.level || 1);
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
         if (this._inventory.length === 0 && !this._equipment.weapon1) {
-            this._inventory.push({
+            this.addItem({
                 id: 'starter_bow',
                 name: 'Лук новичка',
                 icon: 'assets/interface/labyrinth_of_icons.png',
@@ -33,7 +32,6 @@ Sherwood.Bag = {
                 quantity: 1,
                 maxStack: 10
             });
-            this._save();
         }
     },
 
@@ -75,22 +73,32 @@ Sherwood.Bag = {
             return false;
         }
         var maxStack = item.maxStack || 10;
-        if (item.quantity && item.id) {
+        // Стакаем одинаковые предметы
+        if (item.id) {
             for (var i = 0; i < this._inventory.length; i++) {
                 var existing = this._inventory[i];
                 if (existing.id === item.id && (existing.quantity || 1) < maxStack) {
                     existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
-                    if (existing.quantity > maxStack) existing.quantity = maxStack;
+                    if (existing.quantity > maxStack) {
+                        // Переполнение — создаём новый стак
+                        var overflow = existing.quantity - maxStack;
+                        existing.quantity = maxStack;
+                        var newItem = Object.assign({}, item);
+                        newItem.quantity = overflow;
+                        this._inventory.push(newItem);
+                    }
                     this._save();
                     return true;
                 }
             }
         }
-        item.quantity = item.quantity || 1;
-        item.maxStack = maxStack;
-        this._inventory.push(Object.assign({}, item));
+        // Новый предмет
+        var newItem = Object.assign({}, item);
+        newItem.quantity = newItem.quantity || 1;
+        newItem.maxStack = maxStack;
+        this._inventory.push(newItem);
         this._save();
-        Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
+        Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: newItem } });
         return true;
     },
 
@@ -115,7 +123,13 @@ Sherwood.Bag = {
         if (!item || !item.part) return false;
         var part = item.part;
         var oldItem = this._equipment[part];
-        if (oldItem) this._inventory.push(oldItem);
+        if (oldItem) {
+            if (this.isFull()) {
+                Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
+                return false;
+            }
+            this._inventory.push(oldItem);
+        }
         this._equipment[part] = item;
         this._inventory.splice(index, 1);
         if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
@@ -127,7 +141,10 @@ Sherwood.Bag = {
     unequipItem: function(part) {
         if (!part || !this._equipment[part]) return false;
         var item = this._equipment[part];
-        if (this.isFull()) { Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } }); return false; }
+        if (this.isFull()) {
+            Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
+            return false;
+        }
         this._inventory.push(item);
         this._equipment[part] = null;
         if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
@@ -140,10 +157,10 @@ Sherwood.Bag = {
         if (index < 0 || index >= this._inventory.length) return false;
         var item = this._inventory[index];
         if (!item) return false;
-        var price = item.sellPrice;
-        if (!price && item.buyPrice) price = Math.floor(item.buyPrice * 0.4);
-        if (!price || price < 5) price = 5;
-        price = price * (item.quantity || 1);
+        var price = item.sellPrice || 5;
+        if (item.quantity && item.quantity > 1) {
+            price = price * item.quantity;
+        }
         Sherwood.addResource('silver', price);
         this._inventory.splice(index, 1);
         this._save();
@@ -155,23 +172,18 @@ Sherwood.Bag = {
         if (index < 0 || index >= this._inventory.length) return false;
         var item = this._inventory[index];
         if (!item) return false;
-        var gm = { common: 1, uncommon: 2, rare: 4, epic: 8, legendary: 16 };
-        var mult = gm[item.grade] || 1;
-        var materials = {
-            silver: (5 + Math.floor(Math.random() * 10)) * mult,
-            wood: Math.floor(Math.random() * 3) * mult,
-            scraps: Math.floor(Math.random() * 2) * mult
-        };
+        var gradeMultiplier = { common: 1, uncommon: 2, rare: 4, epic: 8, legendary: 16 };
+        var mult = gradeMultiplier[item.grade] || 1;
+        var quantity = item.quantity || 1;
+        Sherwood.addResource('silver', (5 + Math.floor(Math.random() * 10)) * mult * quantity);
+        Sherwood.addResource('wood', Math.floor(Math.random() * 3) * mult * quantity);
+        Sherwood.addResource('scraps', Math.floor(Math.random() * 2) * mult * quantity);
         if (item.grade === 'rare' || item.grade === 'epic' || item.grade === 'legendary') {
-            materials.gold = Math.floor(Math.random() * 5) * mult;
+            Sherwood.addResource('gold', Math.floor(Math.random() * 5) * mult * quantity);
         }
-        if (materials.gold) Sherwood.addResource('gold', materials.gold);
-        if (materials.silver) Sherwood.addResource('silver', materials.silver);
-        if (materials.wood) Sherwood.addResource('wood', materials.wood);
-        if (materials.scraps) Sherwood.addResource('scraps', materials.scraps);
         this._inventory.splice(index, 1);
         this._save();
-        Sherwood.dispatch({ type: 'ITEM_DISMANTLED', payload: { item: item, materials: materials } });
+        Sherwood.dispatch({ type: 'ITEM_DISMANTLED', payload: { item: item } });
         return true;
     },
 
@@ -181,7 +193,9 @@ Sherwood.Bag = {
         if (loot.silver) Sherwood.addResource('silver', loot.silver);
         if (loot.exp) Sherwood.addExp(loot.exp);
         if (loot.items && loot.items.length > 0) {
-            for (var i = 0; i < loot.items.length; i++) this.addItem(loot.items[i]);
+            for (var i = 0; i < loot.items.length; i++) {
+                this.addItem(loot.items[i]);
+            }
         }
         Sherwood.dispatch({ type: 'LOOT_ACQUIRED', payload: { loot: loot } });
     },
