@@ -23,7 +23,7 @@ Sherwood.Dungeon = {
         return list;
     },
 
-    generate: function(dungeonId, level) {
+        generate: function(dungeonId, level) {
         var p = Sherwood.getPlayer();
         if (p.dungeon.tickets <= 0) return null;
         p.dungeon.tickets--;
@@ -35,18 +35,17 @@ Sherwood.Dungeon = {
                 grid[y][x] = { type: 0, open: false, monster: false, chest: false, altar: false, cauldron: false, potion: false, exit: false, boss: false, locked: false, monsterId: null };
             }
         }
-        var cx = 1 + Math.floor(Math.random() * (size - 2));
-        var cy = 1 + Math.floor(Math.random() * (size - 2));
+        // Бурим коридоры
+        var cx = 2 + Math.floor(Math.random() * (size - 4));
+        var cy = 2 + Math.floor(Math.random() * (size - 4));
         grid[cy][cx].type = 1;
         var emptyCount = 1;
         var target = Math.floor(size * size * 0.35);
         var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-        var steps = 0;
-        while (emptyCount < target && steps < 50000) {
-            steps++;
+        while (emptyCount < target) {
             var dir = dirs[Math.floor(Math.random() * 4)];
             var nx = cx + dir[0], ny = cy + dir[1];
-            if (nx >= 1 && nx < size-1 && ny >= 1 && ny < size-1) {
+            if (nx >= 2 && nx < size-2 && ny >= 2 && ny < size-2) {
                 if (grid[ny][nx].type === 0) {
                     grid[ny][nx].type = 1;
                     emptyCount++;
@@ -54,10 +53,30 @@ Sherwood.Dungeon = {
                 cx = nx; cy = ny;
             }
         }
-        var spawnX = 1 + Math.floor(Math.random() * (size - 2));
-        var spawnY = 1 + Math.floor(Math.random() * (size - 2));
-        while (grid[spawnY][spawnX].type !== 1) { spawnX = 1 + Math.floor(Math.random() * (size - 2)); spawnY = 1 + Math.floor(Math.random() * (size - 2)); }
+        // Точка входа — случайная из проходов, но не край
+        var spawnX, spawnY;
+        var candidates = [];
+        for (var y = 3; y < size-3; y++) {
+            for (var x = 3; x < size-3; x++) {
+                if (grid[y][x].type === 1) {
+                    // Проверяем что есть хотя бы 2 соседних прохода
+                    var openNeighbors = 0;
+                    for (var d = 0; d < 4; d++) {
+                        var nx = x + dirs[d][0], ny = y + dirs[d][1];
+                        if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx].type === 1) openNeighbors++;
+                    }
+                    if (openNeighbors >= 2) candidates.push({x:x, y:y});
+                }
+            }
+        }
+        if (candidates.length > 0) {
+            var spawn = candidates[Math.floor(Math.random() * candidates.length)];
+            spawnX = spawn.x; spawnY = spawn.y;
+        } else {
+            spawnX = Math.floor(size / 2); spawnY = Math.floor(size / 2);
+        }
         grid[spawnY][spawnX].type = 5; grid[spawnY][spawnX].open = true;
+        // Собираем пустые
         var empties = [];
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
@@ -67,12 +86,13 @@ Sherwood.Dungeon = {
             }
         }
         empties.sort(function() { return Math.random() - 0.5; });
-        var totalMonsters = 10;
+        // 10 монстров не рядом
         var placedMonsters = 0;
         var monsterCells = [];
-        for (var i = 0; i < empties.length && placedMonsters < totalMonsters; i++) {
+        for (var i = 0; i < empties.length && placedMonsters < 10; i++) {
             var cell = empties[i];
             var tooClose = false;
+            if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
             for (var m = 0; m < monsterCells.length; m++) {
                 if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) { tooClose = true; break; }
             }
