@@ -27,7 +27,7 @@ Sherwood.Dungeon = {
         var p = Sherwood.getPlayer();
         if (p.dungeon.tickets <= 0) return null;
         p.dungeon.tickets--;
-        var size = 14 + Math.floor(level / 2); if (size > 22) size = 22;
+        var size = 20;
         var grid = [];
         for (var y = 0; y < size; y++) {
             grid[y] = [];
@@ -35,7 +35,6 @@ Sherwood.Dungeon = {
                 grid[y][x] = { type: 0, open: false, monster: false, chest: false, altar: false, cauldron: false, potion: false, exit: false, boss: false, locked: false, monsterId: null };
             }
         }
-        // Бурим коридоры
         var cx = 1 + Math.floor(Math.random() * (size - 2));
         var cy = 1 + Math.floor(Math.random() * (size - 2));
         grid[cy][cx].type = 1;
@@ -43,7 +42,7 @@ Sherwood.Dungeon = {
         var target = Math.floor(size * size * 0.35);
         var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
         var steps = 0;
-        while (emptyCount < target && steps < 10000) {
+        while (emptyCount < target && steps < 50000) {
             steps++;
             var dir = dirs[Math.floor(Math.random() * 4)];
             var nx = cx + dir[0], ny = cy + dir[1];
@@ -55,12 +54,10 @@ Sherwood.Dungeon = {
                 cx = nx; cy = ny;
             }
         }
-        // Спавн
         var spawnX = 1 + Math.floor(Math.random() * (size - 2));
         var spawnY = 1 + Math.floor(Math.random() * (size - 2));
         while (grid[spawnY][spawnX].type !== 1) { spawnX = 1 + Math.floor(Math.random() * (size - 2)); spawnY = 1 + Math.floor(Math.random() * (size - 2)); }
         grid[spawnY][spawnX].type = 5; grid[spawnY][spawnX].open = true;
-        // Собираем пустые клетки
         var empties = [];
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
@@ -70,39 +67,42 @@ Sherwood.Dungeon = {
             }
         }
         empties.sort(function() { return Math.random() - 0.5; });
-        // 10 монстров
         var totalMonsters = 10;
-        var maxMonsters = Math.min(totalMonsters, Math.floor(empties.length * 0.15));
-        for (var i = 0; i < maxMonsters; i++) {
-            var mc = empties.pop();
-            grid[mc.y][mc.x].type = 2; grid[mc.y][mc.x].monster = true;
+        var placedMonsters = 0;
+        var monsterCells = [];
+        for (var i = 0; i < empties.length && placedMonsters < totalMonsters; i++) {
+            var cell = empties[i];
+            var tooClose = false;
+            for (var m = 0; m < monsterCells.length; m++) {
+                if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) { tooClose = true; break; }
+            }
+            if (!tooClose) {
+                grid[cell.y][cell.x].type = 2; grid[cell.y][cell.x].monster = true;
+                monsterCells.push(cell); placedMonsters++;
+                empties.splice(i, 1); i--;
+            }
         }
-        // 4 алтаря
-        var altars = Math.min(4, empties.length);
-        for (var i = 0; i < altars; i++) {
-            var ac = empties.pop();
-            grid[ac.y][ac.x].type = 7; grid[ac.y][ac.x].altar = true;
+        for (var i = 0; i < 4 && empties.length > 0; i++) {
+            var idx = Math.floor(Math.random() * empties.length);
+            var cell = empties.splice(idx, 1)[0];
+            grid[cell.y][cell.x].type = 7; grid[cell.y][cell.x].altar = true;
         }
-        // 4 котла
-        var cauldrons = Math.min(4, empties.length);
-        for (var i = 0; i < cauldrons; i++) {
-            var cc = empties.pop();
-            grid[cc.y][cc.x].type = 8; grid[cc.y][cc.x].cauldron = true;
+        for (var i = 0; i < 4 && empties.length > 0; i++) {
+            var idx = Math.floor(Math.random() * empties.length);
+            var cell = empties.splice(idx, 1)[0];
+            grid[cell.y][cell.x].type = 8; grid[cell.y][cell.x].cauldron = true;
         }
-        // 5 банок здоровья
-        var potions = Math.min(5, empties.length);
-        for (var i = 0; i < potions; i++) {
-            var pc = empties.pop();
-            grid[pc.y][pc.x].type = 9; grid[pc.y][pc.x].potion = true;
+        for (var i = 0; i < 5 && empties.length > 0; i++) {
+            var idx = Math.floor(Math.random() * empties.length);
+            var cell = empties.splice(idx, 1)[0];
+            grid[cell.y][cell.x].type = 9; grid[cell.y][cell.x].potion = true;
         }
-        // Выход
         var bestDist = -1, exitX = spawnX, exitY = spawnY;
         for (var i = 0; i < empties.length; i++) {
             var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY);
             if (dist > bestDist) { bestDist = dist; exitX = empties[i].x; exitY = empties[i].y; }
         }
         if (bestDist >= 0) { grid[exitY][exitX].type = 6; grid[exitY][exitX].exit = true; grid[exitY][exitX].locked = true; }
-        // Монстры
         var monsters = {
             forest: { easy: ['image (1).png','image (3).png','image (74).png'], medium: ['image (9).png','image (29).png','image (75).png'], boss: 'image (15).png' },
             swamp: { easy: ['image (12).png','image (13).png','image (59).png'], medium: ['image (14).png','image (16).png','image (52).png'], boss: 'image (54).png' },
@@ -112,7 +112,7 @@ Sherwood.Dungeon = {
         var monList = level <= 3 ? pool.easy : pool.medium;
         this._dungeon = {
             id: dungeonId, level: level, size: size, grid: grid,
-            px: spawnX, py: spawnY, movesLeft: 999, monstersKilled: 0, totalMonsters: maxMonsters,
+            px: spawnX, py: spawnY, movesLeft: 999, monstersKilled: 0, totalMonsters: placedMonsters,
             chestsOpened: 0, monsterPool: monList, isBossLevel: level === 7,
             heroDirection: 'down', heroFrame: 0
         };
