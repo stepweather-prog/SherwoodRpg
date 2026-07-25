@@ -37,7 +37,7 @@ Sherwood.Dungeon = {
             }
         }
         var cx = Math.floor(Math.random() * w), cy = Math.floor(Math.random() * h);
-        grid[cy][cx].type = this.TILE.EMPTY; grid[cy][cx].open = true;
+        grid[cy][cx].type = this.TILE.EMPTY;
         var emptyCount = 1, target = Math.floor(w * h * 0.6);
         var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
         while (emptyCount < target) {
@@ -72,7 +72,8 @@ Sherwood.Dungeon = {
         this._dungeon = {
             id: dungeonId, level: level, size: w, grid: grid,
             px: spawnX, py: spawnY, movesLeft: 999, monstersKilled: 0, totalMonsters: totalMonsters,
-            chestsOpened: 0, monsterPool: monList, isBossLevel: level === 7
+            chestsOpened: 0, monsterPool: monList, isBossLevel: level === 7,
+            heroDirection: 'down', heroFrame: 0
         };
         return this._dungeon;
     },
