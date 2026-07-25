@@ -204,10 +204,19 @@ const SherwoodUI = {
                 else if (cell.potion) { content = '<img src="' + potionIcon + '" style="width:70%;height:70%;object-fit:contain;">'; border = '#4caf50'; }
                 else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="' + compi + '" style="width:80%;height:80%;object-fit:contain;">'; border = cell.locked ? '#f44336' : '#4caf50'; }
                 if (!isPlayer && cell.type !== 0 && (inSight || isOpen)) { cursor = 'cursor:pointer;'; onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"'; }
-                if (isPlayer) { content = '<img src="assets/hero_skins/skin_1_basic.png" style="width:80%;height:80%;object-fit:contain;">'; border = '#ffd700'; }
+                    if (isPlayer) { 
+                    var directionY = 25;
+                    if (d.heroDirection === 'up')    directionY = 0;
+                    if (d.heroDirection === 'down')  directionY = 25;
+                    if (d.heroDirection === 'left')  directionY = 50;
+                    if (d.heroDirection === 'right') directionY = 75;
+                    var currentFrame = d.heroFrame || 0;
+                    var frameX = currentFrame * 25;
+                    var haloHTML = '<div class="diablo-light-halo" style="position:absolute;width:300%;height:300%;top:-100%;left:-100%;pointer-events:none;z-index:2;background:radial-gradient(circle, rgba(255,235,180,0.38) 0%, rgba(255,180,80,0.08) 40%, rgba(0,0,0,0) 70%);mix-blend-mode:screen;"></div>';
+                    content = haloHTML + '<div class="hero-sprite" style="width:100%;height:100%;background-position:' + frameX + '% ' + directionY + '%;"></div>'; 
+                    border = '#ffd700'; 
+                }
                 if (content) { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;border:1px solid ' + border + ';display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:3;' + cursor + '">' + content + '</div>'; }
-            }
-        }
         html += '</div>';
         var hp = Sherwood.getPlayer().stats.hp || 0;
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);padding:4px;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;max-width:' + (gridW+10) + 'px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.8em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.8em;">❤️' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);border-radius:6px;padding:3px;margin-bottom:4px;"><div style="display:flex;justify-content:space-around;font-size:9px;color:#aaa;"><span>👹 ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + '</span><span>🔒 Выход: ' + (d.monstersKilled >= d.totalMonsters ? 'открыт' : 'закрыт') + '</span></div></div>' + html + '<div id="dungeon-log" style="text-align:center;font-size:10px;color:#aaa;min-height:16px;margin-top:4px;background:rgba(0,0,0,0.6);border-radius:6px;padding:3px;"></div></div></div>'; this._screenLayer.style.display = 'block'; }
@@ -216,6 +225,11 @@ const SherwoodUI = {
     _dungeonMove: function(x, y) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         this._playSound('steps');
+        if (x > d.px) d.heroDirection = 'right';
+        else if (x < d.px) d.heroDirection = 'left';
+        else if (y > d.py) d.heroDirection = 'down';
+        else if (y < d.py) d.heroDirection = 'up';
+        d.heroFrame = ((d.heroFrame || 0) + 1) % 4;
         var r = Sherwood.Dungeon.move(x, y); if (!r || !r.ok) return;
         if (r.type === 'battle') { this._stopMusic(); this._playSound('trap'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); Sherwood.Combat.start(r.monsterId, r.boss, 'dungeon'); return; }
         if (r.type === 'chest') { this._playSound('chest_open'); this.updateDisplay(); }
