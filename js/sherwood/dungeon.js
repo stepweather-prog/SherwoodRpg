@@ -74,12 +74,13 @@ Sherwood.Dungeon = {
             }
         }
 
-        var spawnX = Math.floor(size / 2);
-        var spawnY = Math.floor(size / 2);
-        for (var y = Math.floor(size/2)-2; y <= Math.floor(size/2)+2; y++) {
-            for (var x = Math.floor(size/2)-2; x <= Math.floor(size/2)+2; x++) {
-                if (x >= 0 && x < size && y >= 0 && y < size && grid[y][x].type === this.TILE.EMPTY) {
+        var spawnX = 1;
+        var spawnY = 1;
+        for (var y = 1; y < size-1; y++) {
+            for (var x = 1; x < size-1; x++) {
+                if (grid[y][x].type === this.TILE.EMPTY) {
                     spawnX = x; spawnY = y;
+                    y = size; break;
                 }
             }
         }
