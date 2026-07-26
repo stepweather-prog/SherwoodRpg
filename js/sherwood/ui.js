@@ -240,12 +240,7 @@ const SherwoodUI = {
         if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); this.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('forest_ambient'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.gold * 2 }); }
     },
 
-    _leaveDungeon: function() {
-        if (Sherwood.Dungeon) Sherwood.Dungeon.leaveDungeon();
-        this._stopBattleMusic();
-        this._playMusic('forest_ambient');
-        this.showDungeon();
-    },
+        _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('forest_ambient'); this.showDungeon(); },
 
     // ========== БОЙ (ЕДИНЫЙ) ==========
     _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
