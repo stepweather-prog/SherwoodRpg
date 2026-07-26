@@ -140,34 +140,28 @@ const SherwoodUI = {
     _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showNotification('❌ Нет билетов!'); return; } this._playSound('dungeon_enter'); this._playMusic('dungeon_ambient'); this._renderDungeon(); },
     _showNotification: function(msg) { var log = document.getElementById('dungeon-log'); if (log) { log.textContent = msg; log.style.color = '#f44336'; setTimeout(function() { log.style.color = '#aaa'; }, 2000); } },
 
-                    _renderDungeon: function() {
+             _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
         var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
         this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
-        var size = d.size, cs = Math.floor(Math.min(this.container.clientWidth, this.container.clientHeight - 60) / 5);
+        var size = d.size, cs = Math.floor(Math.min(this.container.clientWidth, this.container.clientHeight - 80) / 5);
         var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === 'forest' ? '1' : d.id === 'swamp' ? '2' : '3') + ".png";
         var px = d.px, py = d.py;
-        // Подсветка соседних клеток
         var visible = {};
         visible[py+','+px] = true;
         var adj = [[0,-1],[0,1],[-1,0],[1,0]];
-        for (var i = 0; i < adj.length; i++) {
-            var nx = px+adj[i][0], ny = py+adj[i][1];
-            if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true;
-        }
+        for (var i = 0; i < adj.length; i++) { var nx = px+adj[i][0], ny = py+adj[i][1]; if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true; }
         var gridW = cs * size, gridH = cs * size;
-        var scrollX = Math.max(0, px * cs - this.container.clientWidth / 2 + cs / 2);
-        var scrollY = Math.max(0, py * cs - (this.container.clientHeight - 60) / 2 + cs / 2);
+        var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
+        var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
         var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridH + 'px;background-color:#000;overflow:hidden;">';
         html += '<div style="position:absolute;left:' + (-scrollX) + 'px;top:' + (-scrollY) + 'px;width:' + gridW + 'px;height:' + gridH + 'px;">';
-        // Плитки
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'assets/interface/labyrinth_asset.png\');background-size:cover;background-position:center;z-index:0;"></div>';
             }
         }
-        // Пол на открытых
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -176,7 +170,6 @@ const SherwoodUI = {
                 }
             }
         }
-        // Туман: неоткрытые и не в видимости — тёмные, в видимости — светлее
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -188,7 +181,6 @@ const SherwoodUI = {
                 }
             }
         }
-        // Объекты + игрок
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -202,7 +194,6 @@ const SherwoodUI = {
                     else if (cell.potion) { content = '<img src="assets/interface/resource_life_potion.png" style="width:70%;height:70%;object-fit:contain;">'; }
                     else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">'; }
                 }
-                // Клик: открытые клетки или соседние в видимости
                 if (!isPlayer) {
                     var clickDist = Math.abs(px - x) + Math.abs(py - y);
                     if (cell.open) {
@@ -247,6 +238,7 @@ const SherwoodUI = {
         if (res.type === 'potion') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); }
         if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); this.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('forest_ambient'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.gold * 2 }); }
     },
+        _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('forest_ambient'); this.showDungeon(); },
     // ========== БОЙ (ЕДИНЫЙ) ==========
     _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
         var e = enemyData, p = Sherwood.getPlayer();
@@ -297,7 +289,7 @@ const SherwoodUI = {
     _handleQuestResult: function(r) { if (!r) return; if (r.enemyDead) { this._showDialog('✅ Враг повержен!','#4caf50'); this.updateDisplay(); if (r.chapterComplete) { this._showDialog('🎉 Глава пройдена! +'+r.rewards.exp+'XP +'+r.rewards.gold+'🪙','#ffd700'); this._playSound('victory'); this._stopBattleMusic(); var scrolls = Math.random() < 0.25 ? 1 + Math.floor(Math.random() * 3) : 0; if (scrolls) Sherwood.addResource('scrolls', scrolls); this._pendingRewards = { exp: r.rewards.exp, gold: r.rewards.gold, silver: r.rewards.silver, scrolls: scrolls }; this._afterRewardAction = function() { SherwoodUI._playMusic('forest_ambient'); SherwoodUI.quest(); }; this._showVictoryScreen(this._pendingRewards); } else { var self=this; setTimeout(function(){self._showQuestBattle();},1200); } } else if (r.playerDead) { this._showDialog('💀 Поражение...','#f44336'); this._playSound('defeat'); this._stopBattleMusic(); var scrolls = Math.random() < 0.08 ? 1 : 0; if (scrolls) Sherwood.addResource('scrolls', scrolls); this._pendingRewards = { exp: Math.floor(r.rewards?r.rewards.exp*0.3:10), silver: Math.floor(r.rewards?r.rewards.silver*0.5:50), scrolls: scrolls }; this._afterRewardAction = function() { SherwoodUI.quest(); }; this._showDefeatScreen(this._pendingRewards); } else { this._hitEnemyCard(); this._updateEnemyHP(r.enemyHp,r.enemyMaxHp); this._showDialog((r.crit?'💥 КРИТ! ':'⚔️ ')+'Вы нанесли '+r.damage+' урона',r.crit?'#ff6a00':'#fff'); if (r.enemyDamage) { var self=this; setTimeout(function(){self._showDialog('💢 Враг нанёс '+r.enemyDamage+' урона','#f44336');},700); } var self=this; setTimeout(function(){self._showQuestBattle();},1000); } },
 
     // ===== ТАВЕРНА =====
-    tavern: function() { this._playSound('click'); this._playMusic('tavern_ambient'); if (!Sherwood.Tavern) { this._showPlaceholder('🍺 Таверна','tavern'); return; } var rows=Sherwood.Tavern.getAvailableRows(),active=Sherwood.Tavern.getCurrentQuest(),cooldown=Sherwood.Tavern.isOnCooldown(),cdRemain=Sherwood.Tavern.getCooldownRemaining(),battleMode=Sherwood.Tavern.getBattleMode(),html=''; if (active) { var q=active.quest; html+='<div style="background:rgba(0,0,0,0.6);border:2px solid #c9a040;border-radius:10px;padding:14px;margin-bottom:12px;"><div style="display:flex;align-items:center;gap:10px;"><img src="assets/interface/old_huntsman_bertram.png" style="width:50px;height:50px;border-radius:50%;border:2px solid #c9a040;"><div style="color:#ffd700;font-weight:bold;">⚔️ '+q.row.npc+'</div></div><div style="color:#fff;font-size:0.9em;">'+q.quest.name+'</div><div style="color:#aaa;font-size:0.7em;">'+q.quest.desc+'</div><div style="color:#f44336;font-size:0.7em;margin-top:4px;">Противник: '+q.quest.enemy.name+' (❤️'+q.quest.enemy.hp+')</div><div style="color:#aaa;font-size:0.7em;">Режим: '+(battleMode?'⚔️ Ручной бой':'⚡ Автобой')+'</div><div style="display:flex;gap:8px;margin-top:8px;">'; if (battleMode) html+='<button onclick="SherwoodUI._tavernBattle()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;cursor:pointer;">⚔️ В бой</button>'; else html+='<button onclick="SherwoodUI._tavernAuto()" style="background:#4caf50;border:none;border-radius:6px;padding:8px 16px;color:#fff;cursor:pointer;">⚡ Автобой</button>'; html+='<button onclick="SherwoodUI._tavernCancel()" style="background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:8px 12px;color:#f44336;cursor:pointer;">Отменить</button></div></div>'; } if (cooldown) html+='<div style="text-align:center;color:#ff9800;padding:12px;background:rgba(0,0,0,0.4);border-radius:8px;margin-bottom:12px;">⏳ Перезарядка: '+cdRemain+' мин.</div>'; if (!active&&!cooldown) { for (var r=0;r<rows.length;r++) { var row=rows[r]; html+='<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><img src="assets/interface/old_huntsman_bertram.png" style="width:36px;height:36px;border-radius:50%;border:2px solid #c9a040;"><div><div style="color:#e0c080;font-weight:bold;">📜 '+row.name+'</div><div style="color:#aaa;font-size:0.7em;">'+row.npc+'</div></div></div>'; for (var q=0;q<row.quests.length;q++) { var quest=row.quests[q]; html+='<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><div><div style="color:#e0c080;font-size:0.85em;">'+quest.name+'</div><div style="color:#aaa;font-size:0.65em;">'+quest.desc+'</div><div style="color:#f44336;font-size:0.6em;">Противник: '+quest.enemy.name+'</div><div style="color:#ffd700;font-size:0.6em;">🏆 +'+quest.reward.exp+'XP +'+quest.reward.gold+'🪙</div></div><button onclick="SherwoodUI._tavernStart('+r+','+q+')" style="background:#c9a040;border:none;border-radius:4px;padding:6px 12px;color:#000;cursor:pointer;font-size:0.7em;">Взять</button></div>'; } html+='</div>'; } } html+='<div style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;">✅ Всего: '+Sherwood.Tavern.getCompletedCount()+' | След: '+(Sherwood.Tavern.getBattleMode()?'⚔️ Бой':'⚡ Авто')+'</div><div id="tavern-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>'; this._openScreen('🍺 Таверна','tavern',html); },
+    tavern: function() { this._playSound('click'); this._playMusic('tavern_ambient'); if (!Sherwood.Tavern) { this._showPlaceholder('🍺 Таверна','tavern'); return; } var rows=Sherwood.Tavern.getAvailableRows(),active=Sherwood.Tavern.getCurrentQuest(),cooldown=Sherwood.Tavern.isOnCooldown(),cdRemain=Sherwood.Tavern.getCooldownRemaining(),battleMode=Sherwood.Tavern.getBattleMode(),html=''; if (active) { var q=active.quest; html+='<div style="background:rgba(0,0,0,0.6);border:2px solid #c9a040;border-radius:10px;padding:14px;margin-bottom:12px;"><div style="display:flex;align-items:center;gap:10px;"><img src="assets/interface/old_huntsman_bertram.png" style="width:80px;height:80px;object-fit:contain;"><div style="color:#ffd700;font-weight:bold;">⚔️ '+q.row.npc+'</div></div><div style="color:#fff;font-size:0.9em;">'+q.quest.name+'</div><div style="color:#aaa;font-size:0.7em;">'+q.quest.desc+'</div><div style="color:#f44336;font-size:0.7em;margin-top:4px;">Противник: '+q.quest.enemy.name+' (❤️'+q.quest.enemy.hp+')</div><div style="color:#aaa;font-size:0.7em;">Режим: '+(battleMode?'⚔️ Ручной бой':'⚡ Автобой')+'</div><div style="display:flex;gap:8px;margin-top:8px;">'; if (battleMode) html+='<button onclick="SherwoodUI._tavernBattle()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;cursor:pointer;">⚔️ В бой</button>'; else html+='<button onclick="SherwoodUI._tavernAuto()" style="background:#4caf50;border:none;border-radius:6px;padding:8px 16px;color:#fff;cursor:pointer;">⚡ Автобой</button>'; html+='<button onclick="SherwoodUI._tavernCancel()" style="background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:8px 12px;color:#f44336;cursor:pointer;">Отменить</button></div></div>'; } if (cooldown) html+='<div style="text-align:center;color:#ff9800;padding:12px;background:rgba(0,0,0,0.4);border-radius:8px;margin-bottom:12px;">⏳ Перезарядка: '+cdRemain+' мин.</div>'; if (!active&&!cooldown) { for (var r=0;r<rows.length;r++) { var row=rows[r]; html+='<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><img src="assets/interface/old_huntsman_bertram.png" style="width:60px;height:60px;object-fit:contain;"><div><div style="color:#e0c080;font-weight:bold;">📜 '+row.name+'</div><div style="color:#aaa;font-size:0.7em;">'+row.npc+'</div></div></div>'; for (var q=0;q<row.quests.length;q++) { var quest=row.quests[q]; html+='<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><div><div style="color:#e0c080;font-size:0.85em;">'+quest.name+'</div><div style="color:#aaa;font-size:0.65em;">'+quest.desc+'</div><div style="color:#f44336;font-size:0.6em;">Противник: '+quest.enemy.name+'</div><div style="color:#ffd700;font-size:0.6em;">🏆 +'+quest.reward.exp+'XP +'+quest.reward.gold+'🪙</div></div><button onclick="SherwoodUI._tavernStart('+r+','+q+')" style="background:#c9a040;border:none;border-radius:4px;padding:6px 12px;color:#000;cursor:pointer;font-size:0.7em;">Взять</button></div>'; } html+='</div>'; } } html+='<div style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;">✅ Всего: '+Sherwood.Tavern.getCompletedCount()+' | След: '+(Sherwood.Tavern.getBattleMode()?'⚔️ Бой':'⚡ Авто')+'</div><div id="tavern-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>'; this._openScreen('🍺 Таверна','tavern',html); },
     _tavernStart: function(r,q) { var result=Sherwood.Tavern.startQuest(r,q); if(!result.success) { var log=document.getElementById('tavern-log'); if(log) log.textContent='❌ '+result.reason; return; } if(result.mode==='battle') { this._stopMusic(); this._showTavernBattle(); } else this._tavernAuto(); },
     _tavernBattle: function() { this._stopMusic(); this._showTavernBattle(); },
     _showTavernBattle: function() { var active=Sherwood.Tavern.getCurrentQuest(); if(!active) { this.tavern(); return; } var e=active.quest.enemy; if(!e.maxHp) e.maxHp=e.hp||100; this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp||100, maxHp:e.maxHp },'tavern','🍺 '+active.row.npc+' — '+active.quest.name,'','SherwoodUI._tavernBattleAttack()','SherwoodUI._tavernCancel()'); },
@@ -329,10 +321,48 @@ const SherwoodUI = {
     arena: function() { this._playSound('click'); if(!Sherwood.Arena) { this._showPlaceholder('🏟️ Арена','arena'); return; } if(Sherwood.Arena.isInMatch()) { this._showArenaMatch(); return; } var opps=Sherwood.Arena.getOpponents(),stats=Sherwood.Arena.getStats(),h='<div style="text-align:center;margin-bottom:8px;color:#e0c080;">🏆 '+stats.rank+' | 🏅 '+stats.wins+' | 💀 '+stats.losses+'</div>'; for (var i=0;i<opps.length;i++) { var o=opps[i]; h+='<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;"><img src="'+o.skin+'" style="width:40px;height:40px;border-radius:50%;" onerror="this.src=\'assets/hero_skins/skin_1_basic.png\'"><div style="flex:1;"><div style="color:#fff;">'+o.name+'</div><div style="color:#aaa;font-size:0.7em;">⚔️'+o.stats.attack+' 🛡️'+o.stats.defense+' ❤️'+o.stats.maxHp+'</div></div><button onclick="SherwoodUI._startArenaMatch('+o.id+')" style="background:#c9a040;border:none;border-radius:4px;padding:6px 12px;color:#000;cursor:pointer;font-size:0.7em;">Бой</button></div>'; } h+='<button onclick="SherwoodUI._refreshArena()" style="width:100%;margin-top:8px;background:rgba(255,255,255,0.1);border:1px solid #666;border-radius:6px;padding:8px;color:#fff;cursor:pointer;">🔄 Обновить</button>'; this._openScreen('🏟️ Арена','arena',h); },
     _startArenaMatch: function(i) { this._stopMusic(); Sherwood.Arena.startMatch(i); this._showArenaMatch(); },
     _refreshArena: function() { Sherwood.Arena.refreshOpponents(); this.arena(); },
-    _showArenaMatch: function() { var m=Sherwood.Arena.getCurrentMatch(); if(!m) { this.arena(); return; } var o=m.opponent,p=m.player,ohp=Math.round((o.stats.hp/o.stats.maxHp)*100),php=Math.round((p.stats.hp/p.stats.maxHp)*100),h='<div style="text-align:center;"><div style="color:#ffd700;">⚔️ Арена ⚔️</div><div style="display:flex;justify-content:space-around;align-items:center;margin:16px 0;"><div style="text-align:center;"><img src="'+o.skin+'" style="width:60px;height:60px;border-radius:50%;border:2px solid #f44336;" onerror="this.src=\'assets/hero_skins/skin_1_basic.png\'"><div style="color:#f44336;">'+o.name+'</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;width:100px;overflow:hidden;"><div style="background:#f44336;height:100%;width:'+ohp+'%;"></div></div><div style="color:#aaa;font-size:0.6em;">'+Math.max(0,o.stats.hp)+'/'+o.stats.maxHp+'</div></div><div style="font-size:1.5em;">VS</div><div style="text-align:center;"><img src="assets/hero_skins/skin_1_basic.png" style="width:60px;height:60px;border-radius:50%;border:2px solid #4caf50;"><div style="color:#4caf50;">Вы</div><div style="background:rgba(0,0,0,0.5);border-radius:4px;height:10px;width:100px;overflow:hidden;"><div style="background:#4caf50;height:100%;width:'+php+'%;"></div></div><div style="color:#aaa;font-size:0.6em;">'+p.stats.hp+'/'+p.stats.maxHp+'</div></div></div><button onclick="SherwoodUI._arenaAttack()" style="width:100%;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;margin-bottom:8px;">⚔️ Атака</button><button onclick="SherwoodUI._arenaFlee()" style="width:100%;background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:6px;padding:8px;color:#f44336;cursor:pointer;font-size:0.7em;">🏃 Сдаться</button><div id="arena-log" style="color:#aaa;font-size:0.75em;margin-top:8px;"></div></div>'; this._openScreen('🏟️ Арена','arena',h); },
-    _arenaAttack: function() { var r=Sherwood.Arena.arenaAttack(),log=document.getElementById('arena-log'); if(r.win) { if(log) log.textContent='🏆 Победа! +'+(r.rewards?r.rewards.exp:0)+'XP'; this._stopBattleMusic(); this.updateDisplay(); var self=this; setTimeout(function(){self._playMusic('forest_ambient');self.arena();},1500); } else if(r.win===false) { if(log) log.textContent='💀 Поражение'; this._stopBattleMusic(); var self=this; setTimeout(function(){self._playMusic('forest_ambient');self.arena();},1500); } else { if(log) log.textContent='-'+r.playerDamage+' | Враг: -'+(r.opponentDamage||0); this._showArenaMatch(); } },
+        _startArenaMatch: function(i) { this._stopMusic(); Sherwood.Arena.startMatch(i); this._showArenaMatch(); },
+    _refreshArena: function() { Sherwood.Arena.refreshOpponents(); this.arena(); },
+    _showArenaMatch: function() {
+        var m = Sherwood.Arena.getCurrentMatch(); if (!m) { this.arena(); return; }
+        var o = m.opponent, p = m.player;
+        this._showBattleScreen(
+            { name: o.name, image: o.skin.replace('assets/hero_skins/', ''), hp: o.stats.hp, maxHp: o.stats.maxHp },
+            'arena',
+            '🏟️ Арена — ' + o.name,
+            '',
+            'SherwoodUI._arenaAttack()',
+            'SherwoodUI._arenaFlee()'
+        );
+    },
+    _arenaAttack: function() {
+        this._playHitSounds();
+        var r = Sherwood.Arena.arenaAttack();
+        var log = document.getElementById('arena-log');
+        if (r.win) {
+            this._showDialog('🏆 Победа! +' + (r.rewards ? r.rewards.exp : 0) + 'XP', '#ffd700');
+            this._stopBattleMusic();
+            this.updateDisplay();
+            var self = this;
+            setTimeout(function() { self._playMusic('forest_ambient'); self.arena(); }, 1500);
+        } else if (r.win === false) {
+            this._showDialog('💀 Поражение', '#f44336');
+            this._stopBattleMusic();
+            var self = this;
+            setTimeout(function() { self._playMusic('forest_ambient'); self.arena(); }, 1500);
+        } else {
+            this._hitEnemyCard();
+            this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
+            this._showDialog((r.crit ? '💥 КРИТ! ' : '⚔️ ') + 'Вы нанесли ' + r.playerDamage + ' урона', r.crit ? '#ff6a00' : '#fff');
+            if (r.opponentDamage) {
+                var self = this;
+                setTimeout(function() { self._showDialog('💢 Враг нанёс ' + r.opponentDamage + ' урона', '#f44336'); }, 700);
+            }
+            this.updateDisplay();
+            this._showArenaMatch();
+        }
+    },
     _arenaFlee: function() { this._stopBattleMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('forest_ambient'); this.arena(); },
-
     // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
     settings: function() { this._playSound('click'); var p=Sherwood.getPlayer(),nm=p?p.name:'Охотник',h='<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">👤 Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="'+nm+'" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;"><button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div><div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div><div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">🔊 Звуки</span><label style="position:relative;width:50px;height:26px;background:'+(this._soundEnabled?'#4caf50':'#555')+';border-radius:13px;cursor:pointer;"><input type="checkbox" '+(this._soundEnabled?'checked':'')+' onchange="SherwoodUI._toggleSound(this.checked)" style="display:none;"><span style="position:absolute;top:2px;left:'+(this._soundEnabled?'26px':'2px')+';width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span></label></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">🎵 Музыка</span><label style="position:relative;width:50px;height:26px;background:'+(this._musicEnabled?'#4caf50':'#555')+';border-radius:13px;cursor:pointer;"><input type="checkbox" '+(this._musicEnabled?'checked':'')+' onchange="SherwoodUI._toggleMusic(this.checked)" style="display:none;"><span style="position:absolute;top:2px;left:'+(this._musicEnabled?'26px':'2px')+';width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span></label></div></div><button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">🚪 Выйти</button>'; this._openScreen('⚙️ Настройки','settings',h); },
     _changePlayerName: function() { var inp=document.getElementById('pni'),st=document.getElementById('name-status'); if(!inp||!st) return; var nm=inp.value.trim(); if(!nm) { st.textContent='❌ Пустое имя'; st.style.color='#f44336'; return; } var p=Sherwood.getPlayer(); if(p) { p.name=nm; Sherwood.saveGame(); if(Sherwood.Chat) Sherwood.Chat.setUsername(nm); st.textContent='✅ Сохранено!'; st.style.color='#4caf50'; } },
