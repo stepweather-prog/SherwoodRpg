@@ -149,9 +149,14 @@ const SherwoodUI = {
         var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === 'forest' ? '1' : d.id === 'swamp' ? '2' : '3') + ".png";
         var px = d.px, py = d.py;
         var visible = {};
-        visible[py+','+px] = true;
-        var adj = [[0,-1],[0,1],[-1,0],[1,0]];
-        for (var i = 0; i < adj.length; i++) { var nx = px+adj[i][0], ny = py+adj[i][1]; if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true; }
+        for (var dy = -2; dy <= 2; dy++) {
+            for (var dx = -2; dx <= 2; dx++) {
+                var nx = px + dx, ny = py + dy;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                    if (Math.abs(dx) + Math.abs(dy) <= 2) visible[ny + ',' + nx] = true;
+                }
+            }
+        }
         var gridW = cs * size, gridH = cs * size;
         var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
         var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
@@ -203,13 +208,10 @@ const SherwoodUI = {
                     }
                 }
                 if (isPlayer) {
-                    var directionY = 25;
-                    if (d.heroDirection === 'up') directionY = 0;
-                    if (d.heroDirection === 'down') directionY = 25;
-                    if (d.heroDirection === 'left') directionY = 50;
-                    if (d.heroDirection === 'right') directionY = 75;
+                    var directionMap = { up: 0, down: 1, left: 2, right: 3 };
+                    var directionIndex = directionMap[d.heroDirection] || 1;
                     var frameX = (d.heroFrame || 0) * 33.333;
-                    content = '<div class="hero-sprite" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;background-position:' + frameX + '% ' + directionY + '%;"></div>';
+                    content = '<div class="hero-sprite" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;background-position:' + frameX + '% ' + (directionIndex * 33.333) + '%;"></div>';
                 }
                 if (content || isPlayer) { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:3;cursor:pointer;">' + (content||'') + '</div>'; }
             }
@@ -221,6 +223,8 @@ const SherwoodUI = {
 
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
+        var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
+        if (dist !== 1) return;
         if (tx > d.px) d.heroDirection = 'right';
         else if (tx < d.px) d.heroDirection = 'left';
         else if (ty > d.py) d.heroDirection = 'down';
@@ -228,7 +232,7 @@ const SherwoodUI = {
         d.heroFrame = 1;
         this._playSound('steps');
         var res = Sherwood.Dungeon.move(tx, ty);
-        if (!res || !res.ok) return;
+        if (!res || !res.ok) { d.heroFrame = 0; this._renderDungeon(); return; }
         this._renderDungeon();
         setTimeout(function() { d.heroFrame = 0; SherwoodUI._renderDungeon(); }, 150);
         this.updateDisplay();
@@ -251,7 +255,7 @@ const SherwoodUI = {
         h += '<div style="position:relative;width:300px;height:30px;margin:4px auto;">';
         h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;" onerror="this.src=\'assets/interface/stone_slab_empty_plate.png\'">';
         h += '<div style="position:absolute;top:4px;left:4px;right:4px;bottom:4px;background:#1a0000;border-radius:4px;overflow:hidden;z-index:0;">';
-        h += '<div id="enemy-hp-bar" style="background:url(\'assets/interface/filling_the_beasts\'_health_bar.jpeg\') left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div>';
+        h += '<div id="enemy-hp-bar" style="background:url(\'assets/interface/filling_the_beasts_health_bar.jpeg\') left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div>';
         h += '</div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
         h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
         var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
@@ -516,7 +520,6 @@ const SherwoodUI = {
         this._playHitSounds();
         var r = Sherwood.Arena.arenaAttack();
         var log = document.getElementById('arena-log');
-        // Проверка на null
         if (!r) {
             if (log) log.textContent = '❌ Ошибка боя';
             return;
@@ -581,14 +584,11 @@ const SherwoodUI = {
         var trophies = p.trophies || [];
         var lastTrophy = trophies.length > 0 ? trophies[trophies.length - 1].name : 'Нет трофеев';
 
-        // Информация о скинах
         var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin) ? Sherwood.Forge.getActiveSkin() : 'skin_1_basic';
         var unlockedSkins = (Sherwood.Forge && Sherwood.Forge.getUnlockedSkins) ? Sherwood.Forge.getUnlockedSkins() : ['skin_1_basic'];
 
-        // Список всех скинов
         var allSkins = ['skin_1_basic', 'skin_2', 'skin_3', 'skin_4', 'skin_5', 'skin_6', 'skin_7', 'skin_8', 'skin_9', 'skin_10', 'skin_11', 'skin_12', 'skin_13', 'skin_14', 'skin_15'];
 
-        // Строим вкладки
         var tabContent = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;">';
         for (var i = 0; i < allSkins.length; i++) {
             var sid = allSkins[i];
@@ -631,7 +631,6 @@ const SherwoodUI = {
         h += '<button onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.bestiary();" style="background:rgba(96,125,139,0.2);border:1px solid #607d8b;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:0.8em;"><img src="assets/all_buttons/bestiary.png" style="width:24px;height:24px;display:block;margin:0 auto 4px;">Бестиарий</button>';
         h += '</div>';
 
-        // ВКЛАДКА СКИНОВ
         h += '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">';
         h += '<div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">🎨 Скины</div>';
         h += tabContent;
