@@ -12,7 +12,6 @@ Sherwood.Dungeon = {
 
     _startTicketRegeneration: function() {
         var self = this;
-        // Регенерация билетов каждые 40 минут
         if (this._ticketTimer) clearInterval(this._ticketTimer);
         this._ticketTimer = setInterval(function() {
             var p = Sherwood.getPlayer();
@@ -22,7 +21,7 @@ Sherwood.Dungeon = {
                     Sherwood.saveGame();
                 }
             }
-        }, 40 * 60 * 1000); // 40 минут
+        }, 40 * 60 * 1000);
     },
 
     getAvailable: function() {
@@ -46,7 +45,6 @@ Sherwood.Dungeon = {
         p.dungeon.tickets--;
         Sherwood.saveGame();
 
-        // Размер карты — 12x12 для мобильного экрана
         var size = 12;
         var grid = [];
         for (var y = 0; y < size; y++) {
@@ -56,7 +54,6 @@ Sherwood.Dungeon = {
             }
         }
 
-        // Генерация лабиринта методом бурильщика
         var cx = Math.floor(size / 2);
         var cy = Math.floor(size / 2);
         grid[cy][cx].type = this.TILE.EMPTY;
@@ -77,10 +74,8 @@ Sherwood.Dungeon = {
             }
         }
 
-        // Точка входа
         var spawnX = Math.floor(size / 2);
         var spawnY = Math.floor(size / 2);
-        // Ищем открытую клетку ближе к центру
         for (var y = Math.floor(size/2)-2; y <= Math.floor(size/2)+2; y++) {
             for (var x = Math.floor(size/2)-2; x <= Math.floor(size/2)+2; x++) {
                 if (x >= 0 && x < size && y >= 0 && y < size && grid[y][x].type === this.TILE.EMPTY) {
@@ -91,7 +86,6 @@ Sherwood.Dungeon = {
         grid[spawnY][spawnX].type = this.TILE.SPAWN;
         grid[spawnY][spawnX].open = true;
 
-        // Собираем пустые клетки
         var empties = [];
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
@@ -102,7 +96,6 @@ Sherwood.Dungeon = {
         }
         empties.sort(function() { return Math.random() - 0.5; });
 
-        // Монстры (6-8 штук)
         var monsters = {
             forest: { easy: ['image (1).png','image (3).png','image (74).png'], medium: ['image (9).png','image (29).png','image (75).png'], boss: 'image (15).png' },
             swamp: { easy: ['image (12).png','image (13).png','image (59).png'], medium: ['image (14).png','image (16).png','image (52).png'], boss: 'image (54).png' },
@@ -134,7 +127,6 @@ Sherwood.Dungeon = {
             }
         }
 
-        // Алтари и котлы
         var specialTypes = [
             { type: this.TILE.ALTAR, count: 3, prop: 'altar' },
             { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
@@ -155,7 +147,6 @@ Sherwood.Dungeon = {
             }
         }
 
-        // Выход — в самой дальней клетке
         var bestDist = -1, exitX = spawnX, exitY = spawnY;
         for (var i = 0; i < empties.length; i++) {
             var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY);
@@ -167,11 +158,9 @@ Sherwood.Dungeon = {
             grid[exitY][exitX].locked = true;
         }
 
-        // Босс на 7-м уровне
         var isBossLevel = (level === 7);
         if (isBossLevel) {
             var bossCell = null;
-            // Ищем клетку рядом с выходом для босса
             for (var y = -2; y <= 2; y++) {
                 for (var x = -2; x <= 2; x++) {
                     var nx = exitX + x, ny = exitY + y;
@@ -190,7 +179,6 @@ Sherwood.Dungeon = {
             }
         }
 
-        // Открываем стартовую видимость
         this._revealArea(grid, size, spawnX, spawnY, 2);
 
         this._dungeon = {
@@ -229,113 +217,70 @@ Sherwood.Dungeon = {
     },
 
     move: function(tx, ty) {
-    var d = this._dungeon;
-    if (!d) return { ok: false, reason: 'Нет подземки' };
-    var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
-    if (dist !== 1) return { ok: false, reason: 'Далеко' };
-    var cell = d.grid[ty][tx];
-    if (!cell) return { ok: false, reason: 'Нет клетки' };
-    if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
-    
-    // Сначала открываем клетку
-    cell.open = true;
-    
-    // Сохраняем тип клетки ДО перемещения, но ПОСЛЕ открытия
-    var cellType = cell.type;
-    var cellData = {
-        monsterId: cell.monsterId,
-        isBoss: cell.isBoss || false,
-        looted: cell.looted,
-        reward: cell.reward,
-        locked: cell.locked,
-        exit: cell.exit,
-        altar: cell.altar,
-        cauldron: cell.cauldron,
-        potion: cell.potion
-    };
-    
-    // Перемещаем игрока
-    d.px = tx;
-    d.py = ty;
-    this._revealArea(d.grid, d.size, tx, ty, 2);
-    
-    // Теперь обрабатываем событие на клетке
-    if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
-        return { ok: true, type: 'battle', monsterId: cellData.monsterId, boss: cellData.isBoss };
-    }
-    
-    if (cellType === this.TILE.CHEST && !cellData.looted) {
-        cell.looted = true;
-        d.chestsOpened++;
-        var g = cellData.reward ? (cellData.reward.gold || 20 + Math.floor(Math.random() * 60)) : (20 + Math.floor(Math.random() * 60));
-        var s = cellData.reward ? (cellData.reward.silver || 80 + Math.floor(Math.random() * 300)) : (80 + Math.floor(Math.random() * 300));
-        Sherwood.addResource('gold', g);
-        Sherwood.addResource('silver', s);
-        // Не меняем тип клетки на EMPTY сразу — оставляем визуально сундук, но помечаем как открытый
-        // cell.type = this.TILE.EMPTY; // УБИРАЕМ эту строку
-        return { ok: true, type: 'chest', gold: g, silver: s };
-    }
-    
-    if (cellType === this.TILE.ALTAR && cellData.altar) {
-        cell.type = this.TILE.EMPTY;
-        cell.altar = false;
-        return { ok: true, type: 'altar' };
-    }
-    
-    if (cellType === this.TILE.CAULDRON && cellData.cauldron) {
-        cell.type = this.TILE.EMPTY;
-        cell.cauldron = false;
-        return { ok: true, type: 'cauldron' };
-    }
-    
-    if (cellType === this.TILE.POTION && cellData.potion) {
-        cell.type = this.TILE.EMPTY;
-        cell.potion = false;
-        return { ok: true, type: 'potion' };
-    }
-    
-    if (cellData.exit && cellData.locked) {
-        var allDead = d.monstersKilled >= d.totalMonsters;
-        if (allDead) {
-            cell.locked = false;
-            return { ok: true, type: 'exit' };
+        var d = this._dungeon;
+        if (!d) return { ok: false, reason: 'Нет подземки' };
+        var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
+        if (dist !== 1) return { ok: false, reason: 'Далеко' };
+        var cell = d.grid[ty][tx];
+        if (!cell) return { ok: false, reason: 'Нет клетки' };
+        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
+        
+        cell.open = true;
+        
+        var cellType = cell.type;
+        var cellData = {
+            monsterId: cell.monsterId,
+            isBoss: cell.isBoss || false,
+            looted: cell.looted,
+            reward: cell.reward,
+            locked: cell.locked,
+            exit: cell.exit,
+            altar: cell.altar,
+            cauldron: cell.cauldron,
+            potion: cell.potion
+        };
+        
+        d.px = tx;
+        d.py = ty;
+        this._revealArea(d.grid, d.size, tx, ty, 2);
+        
+        if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
+            return { ok: true, type: 'battle', monsterId: cellData.monsterId, boss: cellData.isBoss };
         }
-        return { ok: true, type: 'exit_locked' };
-    }
-    
-    if (cellData.exit && !cellData.locked) {
-        return { ok: true, type: 'exit' };
-    }
-    
-    return { ok: true, type: 'move' };
-},
-        if (cell.type === this.TILE.CHEST && !cell.looted) {
+        
+        if (cellType === this.TILE.CHEST && !cellData.looted) {
             cell.looted = true;
             d.chestsOpened++;
-            var g = cell.reward.gold || 20 + Math.floor(Math.random() * 60);
-            var s = cell.reward.silver || 80 + Math.floor(Math.random() * 300);
+            var g = cellData.reward ? (cellData.reward.gold || 20 + Math.floor(Math.random() * 60)) : (20 + Math.floor(Math.random() * 60));
+            var s = cellData.reward ? (cellData.reward.silver || 80 + Math.floor(Math.random() * 300)) : (80 + Math.floor(Math.random() * 300));
             Sherwood.addResource('gold', g);
             Sherwood.addResource('silver', s);
-            cell.type = this.TILE.EMPTY;
             return { ok: true, type: 'chest', gold: g, silver: s };
         }
-        if (cell.type === this.TILE.ALTAR) {
+        
+        if (cellType === this.TILE.CHEST && cellData.looted) {
+            return { ok: true, type: 'move' };
+        }
+        
+        if (cellType === this.TILE.ALTAR && cellData.altar) {
             cell.type = this.TILE.EMPTY;
             cell.altar = false;
             return { ok: true, type: 'altar' };
         }
-        if (cell.type === this.TILE.CAULDRON) {
+        
+        if (cellType === this.TILE.CAULDRON && cellData.cauldron) {
             cell.type = this.TILE.EMPTY;
             cell.cauldron = false;
             return { ok: true, type: 'cauldron' };
         }
-        if (cell.type === this.TILE.POTION) {
+        
+        if (cellType === this.TILE.POTION && cellData.potion) {
             cell.type = this.TILE.EMPTY;
             cell.potion = false;
             return { ok: true, type: 'potion' };
         }
-        if (cell.exit && cell.locked) {
-            // Проверяем, всех ли монстров убили
+        
+        if (cellData.exit && cellData.locked) {
             var allDead = d.monstersKilled >= d.totalMonsters;
             if (allDead) {
                 cell.locked = false;
@@ -343,16 +288,17 @@ Sherwood.Dungeon = {
             }
             return { ok: true, type: 'exit_locked' };
         }
-        if (cell.exit && !cell.locked) {
+        
+        if (cellData.exit && !cellData.locked) {
             return { ok: true, type: 'exit' };
         }
+        
         return { ok: true, type: 'move' };
     },
 
     killMonster: function() {
         if (!this._dungeon) return;
         this._dungeon.monstersKilled++;
-        // Проверяем, всех ли убили
         if (this._dungeon.monstersKilled >= this._dungeon.totalMonsters) {
             for (var y = 0; y < this._dungeon.size; y++) {
                 for (var x = 0; x < this._dungeon.size; x++) {
@@ -373,7 +319,6 @@ Sherwood.Dungeon = {
         Sherwood.addResource('silver', gold * 2);
         Sherwood.addExp(exp);
 
-        // Сохраняем прогресс для любого уровня
         var prog = this._progress[d.id] || { level: 1 };
         if (d.level >= prog.level) {
             prog.level = Math.min(8, d.level + 1);
