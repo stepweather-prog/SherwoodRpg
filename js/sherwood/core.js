@@ -1,13 +1,14 @@
 /**
  * Sherwood RPG — Core
  * Ядро игры: игрок, сохранение, ресурсы, статы, события, формулы
+ * СКИНЫ: прирост статов до +225%, крафт за скрижали
  */
 
 if (typeof Sherwood === 'undefined') { var Sherwood = {}; }
 
 Sherwood._player = null;
 Sherwood._saveTimeout = null;
-Sherwood._saveDelay = 500; // мс задержка автосохранения
+Sherwood._saveDelay = 500;
 
 // ============================================================
 //  ИГРОК
@@ -80,7 +81,7 @@ Sherwood._ensureDefaults = function() {
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
         trainingLevels: { attack: 0, defense: 0, hp: 0, agility: 0 },
-        unlockedSkins: [],
+        unlockedSkins: ['skin_1_basic'],
         activeSkin: 'skin_1_basic',
         questEnergy: { current: 50, max: 50 },
         portal: { completed: [] },
@@ -97,7 +98,6 @@ Sherwood._ensureDefaults = function() {
         }
     }
 
-    // Проверка вложенных объектов
     if (!p.stats) p.stats = defaults.stats;
     if (!p.resources) p.resources = defaults.resources;
     if (!p.dungeon) p.dungeon = defaults.dungeon;
@@ -108,8 +108,15 @@ Sherwood._ensureDefaults = function() {
     if (!p.arena) p.arena = defaults.arena;
     if (!p.raid) p.raid = defaults.raid;
     if (!p.tavern) p.tavern = defaults.tavern;
+    
+    // Проверка скинов
+    if (!p.unlockedSkins || p.unlockedSkins.length === 0) {
+        p.unlockedSkins = ['skin_1_basic'];
+    }
+    if (!p.activeSkin) {
+        p.activeSkin = 'skin_1_basic';
+    }
 
-    // Если currentChapter отсутствует
     if (p.questProgress && p.questProgress.currentChapter === undefined) {
         p.questProgress.currentChapter = 1;
     }
@@ -131,7 +138,7 @@ Sherwood._createNewPlayer = function() {
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
         trainingLevels: { attack: 0, defense: 0, hp: 0, agility: 0 },
-        unlockedSkins: [],
+        unlockedSkins: ['skin_1_basic'],
         activeSkin: 'skin_1_basic',
         questEnergy: { current: 50, max: 50 },
         portal: { completed: [] },
@@ -268,57 +275,181 @@ Sherwood.calculateCrit = function(agility) {
 };
 
 // ============================================================
-//  ПЕРЕСЧЁТ СТАТОВ
+//  СКИНЫ И ИХ БОНУСЫ
 // ============================================================
 
-Sherwood._recalcStats = function() {
+Sherwood.SKIN_BONUSES = {
+    'skin_1_basic': { name: 'Охотник', bonus: 0, chapter: 1 },
+    'skin_2': { name: 'Следопыт', bonus: 5, chapter: 2 },
+    'skin_3': { name: 'Лесной страж', bonus: 10, chapter: 3 },
+    'skin_4': { name: 'Болотный охотник', bonus: 15, chapter: 4 },
+    'skin_5': { name: 'Пещерный воин', bonus: 20, chapter: 5 },
+    'skin_6': { name: 'Рыцарь Шервуда', bonus: 30, chapter: 6 },
+    'skin_7': { name: 'Теневой лучник', bonus: 40, chapter: 7 },
+    'skin_8': { name: 'Изумрудный следопыт', bonus: 55, chapter: 8 },
+    'skin_9': { name: 'Проклятый охотник', bonus: 70, chapter: 9 },
+    'skin_10': { name: 'Владыка порталов', bonus: 90, chapter: 10 },
+    'skin_11': { name: 'Страж бездны', bonus: 110, chapter: 11 },
+    'skin_12': { name: 'Королевский егерь', bonus: 135, chapter: 12 },
+    'skin_13': { name: 'Хранитель склепа', bonus: 160, chapter: 13 },
+    'skin_14': { name: 'Отродье Шервуда', bonus: 190, chapter: 14 },
+    'skin_15': { name: 'Вечный Хранитель', bonus: 225, chapter: 15 }
+};
+
+Sherwood.SKIN_CRAFT_COSTS = {
+    'skin_2': { tablets: 5, silver: 5000, ingots: 10 },
+    'skin_3': { tablets: 10, silver: 15000, ingots: 25 },
+    'skin_4': { tablets: 20, silver: 30000, ingots: 50 },
+    'skin_5': { tablets: 35, silver: 50000, ingots: 80 },
+    'skin_6': { tablets: 50, silver: 75000, ingots: 120 },
+    'skin_7': { tablets: 75, silver: 100000, ingots: 170 },
+    'skin_8': { tablets: 110, silver: 150000, ingots: 230 },
+    'skin_9': { tablets: 150, silver: 200000, ingots: 300 },
+    'skin_10': { tablets: 200, silver: 275000, ingots: 400 },
+    'skin_11': { tablets: 280, silver: 375000, ingots: 550 },
+    'skin_12': { tablets: 380, silver: 500000, ingots: 750 },
+    'skin_13': { tablets: 500, silver: 650000, ingots: 1000 },
+    'skin_14': { tablets: 650, silver: 800000, ingots: 1300 },
+    'skin_15': { tablets: 800, silver: 1000000, ingots: 1500 }
+};
+
+// Получить бонус скина
+Sherwood.getSkinBonus = function(skinId) {
+    var skin = this.SKIN_BONUSES[skinId];
+    return skin ? skin.bonus : 0;
+};
+
+// Получить текущий бонус активного скина
+Sherwood.getActiveSkinBonus = function() {
     var p = this.getPlayer();
-    if (!p) return;
+    if (!p) return 0;
+    var skinId = p.activeSkin || 'skin_1_basic';
+    return this.getSkinBonus(skinId);
+};
 
-    var ba = 0, bd = 0, bag = 0, bh = 0;
-
-    // Экипировка
-    for (var k in p.equipment) {
-        if (p.equipment.hasOwnProperty(k)) {
-            var eq = p.equipment[k];
-            if (eq && eq.stats) {
-                ba += eq.stats.attack || 0;
-                bd += eq.stats.defense || 0;
-                bag += eq.stats.agility || 0;
-                bh += eq.stats.hp || 0;
-            }
-        }
+// Проверить, может ли игрок крафтить скин
+Sherwood.canCraftSkin = function(skinId) {
+    var p = this.getPlayer();
+    if (!p) return { can: false, reason: 'Игрок не найден' };
+    
+    var skinData = this.SKIN_BONUSES[skinId];
+    if (!skinData) return { can: false, reason: 'Скин не найден' };
+    
+    // Проверка главы
+    var progress = p.questProgress || { completed: [] };
+    if (skinData.chapter > 1 && progress.completed.indexOf(skinData.chapter - 1) === -1) {
+        return { can: false, reason: 'Нужно пройти главу ' + (skinData.chapter - 1) };
     }
-
-    // Тренировки
-    var tl = p.trainingLevels || {};
-    ba += (tl.attack || 0) * 2;
-    bd += (tl.defense || 0) * 2;
-    bag += (tl.agility || 0) * 1;
-    bh += (tl.hp || 0) * 10;
-
-    // Трофеи
-    for (var i = 0; i < (p.trophies || []).length; i++) {
-        var t = p.trophies[i];
-        if (t && t.bonus) {
-            ba += t.bonus.attack || 0;
-            bd += t.bonus.defense || 0;
-            bag += t.bonus.agility || 0;
-            bh += t.bonus.hp || 0;
-        }
+    
+    // Проверка ресурсов
+    var cost = this.SKIN_CRAFT_COSTS[skinId];
+    if (!cost) return { can: false, reason: 'Нет данных о стоимости' };
+    
+    var resources = p.resources || {};
+    if ((resources.scrolls || 0) < cost.tablets) {
+        return { can: false, reason: 'Нужно ' + cost.tablets + ' скрижалей (у вас ' + (resources.scrolls || 0) + ')' };
     }
-
-    var MAX = 30000;
-    p.stats.attack = Math.min(Math.floor(10 + (p.level - 1) * 2 + ba), MAX);
-    p.stats.defense = Math.min(Math.floor(5 + (p.level - 1) * 1 + bd), MAX);
-    p.stats.agility = Math.min(Math.floor(3 + (p.level - 1) * 0.5 + bag), MAX);
-    p.stats.maxHp = Math.min(Math.floor(100 + (p.level - 1) * 15 + bh), MAX);
-
-    if (!p.stats.hp || p.stats.hp > p.stats.maxHp) {
-        p.stats.hp = p.stats.maxHp;
+    if ((resources.silver || 0) < cost.silver) {
+        return { can: false, reason: 'Нужно ' + cost.silver + ' серебра' };
     }
+    if ((resources.ingots || 0) < cost.ingots) {
+        return { can: false, reason: 'Нужно ' + cost.ingots + ' слитков' };
+    }
+    
+    if (p.unlockedSkins && p.unlockedSkins.indexOf(skinId) !== -1) {
+        return { can: false, reason: 'Уже разблокирован' };
+    }
+    
+    return { can: true };
+};
 
+// Крафт скина
+Sherwood.craftSkin = function(skinId) {
+    var check = this.canCraftSkin(skinId);
+    if (!check.can) return check;
+    
+    var p = this.getPlayer();
+    var cost = this.SKIN_CRAFT_COSTS[skinId];
+    
+    p.resources.scrolls -= cost.tablets;
+    p.resources.silver -= cost.silver;
+    p.resources.ingots -= cost.ingots;
+    
+    if (!p.unlockedSkins) p.unlockedSkins = [];
+    p.unlockedSkins.push(skinId);
+    
+    // Если это первый скин после базового — активируем
+    if (p.unlockedSkins.length === 1) {
+        p.activeSkin = skinId;
+    }
+    
+    this._recalcStats();
     this.saveGame();
+    this.dispatch({ type: 'SKIN_UNLOCKED', payload: { skinId: skinId } });
+    
+    return { success: true, skinId: skinId };
+};
+
+// Надеть скин
+Sherwood.equipSkin = function(skinId) {
+    var p = this.getPlayer();
+    if (!p) return { success: false, reason: 'Игрок не найден' };
+    if (!p.unlockedSkins || p.unlockedSkins.indexOf(skinId) === -1) {
+        return { success: false, reason: 'Скин не разблокирован' };
+    }
+    p.activeSkin = skinId;
+    this._recalcStats();
+    this.saveGame();
+    this.dispatch({ type: 'SKIN_EQUIPPED', payload: { skinId: skinId } });
+    return { success: true, skinId: skinId };
+};
+
+// ============================================================
+//  СКРИЖАЛИ (ПОКУПКА ЗА ЗОЛОТО)
+// ============================================================
+
+Sherwood.SCROLL_PRICES = {
+    'skin': 5,   // Скрижаль обликов
+    'ring': 10,  // Скрижаль колец
+    'amulet': 10 // Скрижаль амулетов
+};
+
+// Купить скрижали за золото
+Sherwood.buyScrolls = function(type, count) {
+    if (!count || count <= 0) return { success: false, reason: 'Неверное количество' };
+    var price = this.SCROLL_PRICES[type];
+    if (!price) return { success: false, reason: 'Неизвестный тип скрижалей' };
+    
+    var p = this.getPlayer();
+    if (!p) return { success: false, reason: 'Игрок не найден' };
+    
+    var totalCost = price * count;
+    if ((p.resources.gold || 0) < totalCost) {
+        return { success: false, reason: 'Нужно ' + totalCost + ' золота (у вас ' + (p.resources.gold || 0) + ')' };
+    }
+    
+    p.resources.gold -= totalCost;
+    var scrollType = type === 'skin' ? 'scrolls' : (type + '_scrolls');
+    p.resources[scrollType] = (p.resources[scrollType] || 0) + count;
+    
+    this.saveGame();
+    this.dispatch({
+        type: 'SCROLLS_BOUGHT',
+        payload: { type: type, count: count, cost: totalCost }
+    });
+    
+    return { success: true, type: type, count: count, cost: totalCost };
+};
+
+// Получить количество скрижалей определённого типа
+Sherwood.getScrollCount = function(type) {
+    var p = this.getPlayer();
+    if (!p) return 0;
+    if (type === 'skin') {
+        return p.resources.scrolls || 0;
+    } else {
+        return p.resources[type + '_scrolls'] || 0;
+    }
 };
 
 // ============================================================
@@ -352,6 +483,69 @@ Sherwood.getTrophies = function() {
 };
 
 // ============================================================
+//  ПЕРЕСЧЁТ СТАТОВ (С УЧЁТОМ СКИНА)
+// ============================================================
+
+Sherwood._recalcStats = function() {
+    var p = this.getPlayer();
+    if (!p) return;
+
+    var ba = 0, bd = 0, bag = 0, bh = 0;
+
+    // Экипировка (кольца и амулеты)
+    for (var k in p.equipment) {
+        if (p.equipment.hasOwnProperty(k)) {
+            var eq = p.equipment[k];
+            if (eq && eq.stats) {
+                ba += eq.stats.attack || 0;
+                bd += eq.stats.defense || 0;
+                bag += eq.stats.agility || 0;
+                bh += eq.stats.hp || 0;
+            }
+        }
+    }
+
+    // Тренировки
+    var tl = p.trainingLevels || {};
+    ba += (tl.attack || 0) * 2;
+    bd += (tl.defense || 0) * 2;
+    bag += (tl.agility || 0) * 1;
+    bh += (tl.hp || 0) * 10;
+
+    // Трофеи
+    for (var i = 0; i < (p.trophies || []).length; i++) {
+        var t = p.trophies[i];
+        if (t && t.bonus) {
+            ba += t.bonus.attack || 0;
+            bd += t.bonus.defense || 0;
+            bag += t.bonus.agility || 0;
+            bh += t.bonus.hp || 0;
+        }
+    }
+
+    var MAX = 30000;
+    var baseAttack = Math.min(Math.floor(10 + (p.level - 1) * 2 + ba), MAX);
+    var baseDefense = Math.min(Math.floor(5 + (p.level - 1) * 1 + bd), MAX);
+    var baseAgility = Math.min(Math.floor(3 + (p.level - 1) * 0.5 + bag), MAX);
+    var baseMaxHp = Math.min(Math.floor(100 + (p.level - 1) * 15 + bh), MAX);
+
+    // ПРИМЕНЯЕМ БОНУС ОТ СКИНА
+    var skinBonus = this.getActiveSkinBonus();
+    var skinMultiplier = 1 + skinBonus / 100;
+
+    p.stats.attack = Math.min(Math.floor(baseAttack * skinMultiplier), MAX);
+    p.stats.defense = Math.min(Math.floor(baseDefense * skinMultiplier), MAX);
+    p.stats.agility = Math.min(Math.floor(baseAgility * skinMultiplier), MAX);
+    p.stats.maxHp = Math.min(Math.floor(baseMaxHp * skinMultiplier), MAX);
+
+    if (!p.stats.hp || p.stats.hp > p.stats.maxHp) {
+        p.stats.hp = p.stats.maxHp;
+    }
+
+    this.saveGame();
+};
+
+// ============================================================
 //  ИНИЦИАЛИЗАЦИЯ
 // ============================================================
 
@@ -359,7 +553,7 @@ Sherwood.init = function() {
     this.getPlayer();
     this._recalcStats();
 
-    // Инициализация подсистем (только если они есть)
+    // Инициализация подсистем
     var subsystems = ['Dungeon', 'Bag', 'Quests', 'Tavern', 'Daily', 'Portal', 'Forge', 'Raid', 'Arena', 'BlackMarket', 'Chat', 'Bestiary', 'Combat'];
     for (var i = 0; i < subsystems.length; i++) {
         var name = subsystems[i];
