@@ -12,21 +12,7 @@ Sherwood.Bag = {
         this._expansionLevel = player.bagExpansion || 0;
         this._maxSlots = 10 + this._expansionLevel * 10;
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
-        if (this._inventory.length === 0 && !this._equipment.weapon1) {
-            this.addItem({
-                id: 'starter_bow',
-                name: 'Лук новичка',
-                icon: 'assets/interface/labyrinth_of_icons.png',
-                part: 'weapon1',
-                grade: 'common',
-                type: 'weapon',
-                stats: { attack: 5 },
-                sellPrice: 10,
-                quantity: 1,
-                maxStack: 1
-            });
-        }
-    },
+        
 
     getItems: function() { return this._inventory; },
     getEquipment: function() { return this._equipment; },
