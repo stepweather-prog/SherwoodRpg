@@ -7,6 +7,7 @@ Sherwood.Combat = {
 
     start: function(monsterId, isBoss, mode) {
         var p = Sherwood.getPlayer();
+        if (!p) return { success: false, reason: 'Нет игрока' };
         var img = monsterId || 'image (1).png';
         var monsterNames = {
             'image (1).png': 'Леший','image (3).png': 'Проклятый олень','image (74).png': 'Древесный голем','image (9).png': 'Рогатый Леший',
@@ -24,128 +25,407 @@ Sherwood.Combat = {
         var def = isBoss ? 15 : 3 + Math.floor(Math.random() * 10);
         var armor = isBoss ? 40 : 10 + Math.floor(Math.random() * 20);
         this._battle = {
-            enemyImage: img, enemyName: name,
-            enemyHp: hp, enemyMaxHp: hp,
-            enemyAtk: atk, enemyDef: def,
-            enemyArmor: armor, enemyMaxArmor: armor,
-            isBoss: !!isBoss, mode: mode || 'dungeon',
-            playerHp: p.stats.hp, playerMaxHp: p.stats.maxHp,
-            playerAtk: p.stats.attack, playerDef: p.stats.defense, playerAgi: p.stats.agility,
-            playerArmor: p.stats.defense, playerMaxArmor: p.stats.defense
+            enemyImage: img,
+            enemyName: name,
+            enemyHp: hp,
+            enemyMaxHp: hp,
+            enemyAtk: atk,
+            enemyDef: def,
+            enemyArmor: armor,
+            enemyMaxArmor: armor,
+            isBoss: !!isBoss,
+            mode: mode || 'dungeon',
+            // Игрок — сохраняем все статы
+            playerHp: p.stats.hp,
+            playerMaxHp: p.stats.maxHp,
+            playerAtk: p.stats.attack,
+            playerDef: p.stats.defense,
+            playerAgi: p.stats.agility,
+            playerArmor: Math.floor(p.stats.defense * 0.3), // Броня = 30% от защиты
+            playerMaxArmor: Math.floor(p.stats.defense * 0.3)
         };
-        this._effects = []; this._turn = 1; this._hitCount = 0; this._cooldowns = {};
+        this._effects = [];
+        this._turn = 1;
+        this._hitCount = 0;
+        this._cooldowns = {};
         return { success: true };
     },
 
     getState: function() {
-        var b = this._battle; if (!b) return null;
-        return { enemyImage: b.enemyImage, enemyName: b.enemyName, enemyHp: b.enemyHp, enemyMaxHp: b.enemyMaxHp, enemyArmor: b.enemyArmor, enemyMaxArmor: b.enemyMaxArmor, playerHp: b.playerHp, playerMaxHp: b.playerMaxHp, isBoss: b.isBoss, cooldowns: Object.assign({}, this._cooldowns) };
+        var b = this._battle;
+        if (!b) return null;
+        return {
+            enemyImage: b.enemyImage,
+            enemyName: b.enemyName,
+            enemyHp: b.enemyHp,
+            enemyMaxHp: b.enemyMaxHp,
+            enemyArmor: b.enemyArmor,
+            enemyMaxArmor: b.enemyMaxArmor,
+            playerHp: b.playerHp,
+            playerMaxHp: b.playerMaxHp,
+            isBoss: b.isBoss,
+            cooldowns: Object.assign({}, this._cooldowns)
+        };
     },
 
     isActive: function() { return !!this._battle; },
 
-    _calcDamage: function(atk, def) { if (def <= 0) def = 1; return Math.max(1, Math.floor((atk * atk) / (atk + def))); },
+    _calcDamage: function(atk, def) {
+        if (def <= 0) def = 1;
+        return Math.max(1, Math.floor((atk * atk) / (atk + def)));
+    },
 
     attack: function() {
-        var b = this._battle; if (!b) return null;
-        var raw = this._calcDamage(b.playerAtk, b.enemyDef), crit = Math.random() * 100 < 15;
+        var b = this._battle;
+        if (!b) return null;
+
+        // --- АТАКА ИГРОКА ---
+        var raw = this._calcDamage(b.playerAtk, b.enemyDef);
+        var crit = Math.random() * 100 < 15;
         if (crit) raw = Math.floor(raw * 1.8);
-        var armDmg = Math.min(Math.floor(raw * 0.3), b.enemyArmor), hpDmg = raw - armDmg;
+        var armDmg = Math.min(Math.floor(raw * 0.3), b.enemyArmor);
+        var hpDmg = raw - armDmg;
         if (b.enemyArmor > 0) hpDmg = Math.floor(hpDmg * 0.5);
         hpDmg = Math.max(1, hpDmg);
-        b.enemyArmor -= armDmg; b.enemyHp -= hpDmg; if (b.enemyHp < 0) b.enemyHp = 0;
-        var r = { type: 'attack', damage: hpDmg, armorDmg: armDmg, crit: crit, enemyHp: b.enemyHp, enemyMaxHp: b.enemyMaxHp };
-        if (b.enemyHp <= 0) { r.win = true; r.exp = b.isBoss ? 150 : 35; r.gold = b.isBoss ? 120 : 25; this._giveReward(r); this._battle = null; return r; }
-        var er = this._enemyTurn(); r.enemy = er;
-        if (b.playerHp <= 0) { r.lose = true; this._battle = null; }
+        b.enemyArmor -= armDmg;
+        if (b.enemyArmor < 0) b.enemyArmor = 0;
+        b.enemyHp -= hpDmg;
+        if (b.enemyHp < 0) b.enemyHp = 0;
+
+        this._hitCount++;
+
+        var r = {
+            type: 'attack',
+            damage: hpDmg,
+            armorDmg: armDmg,
+            crit: crit,
+            enemyHp: b.enemyHp,
+            enemyMaxHp: b.enemyMaxHp
+        };
+
+        // --- ПРОВЕРКА ПОБЕДЫ ---
+        if (b.enemyHp <= 0) {
+            r.win = true;
+            r.exp = b.isBoss ? 150 : 35;
+            r.gold = b.isBoss ? 120 : 25;
+            this._giveReward(r);
+            this._battle = null;
+            return r;
+        }
+
+        // --- ХОД ВРАГА ---
+        var er = this._enemyTurn();
+        r.enemy = er;
+        r.enemyName = b.enemyName;
+
+        if (b.playerHp <= 0) {
+            r.lose = true;
+            r.exp = Math.floor((b.isBoss ? 150 : 35) * 0.3);
+            r.gold = Math.floor((b.isBoss ? 120 : 25) * 0.3);
+            this._giveReward(r);
+            this._battle = null;
+        }
+
         return r;
     },
 
     _enemyTurn: function() {
         var b = this._battle;
-        for (var i = this._effects.length-1; i >= 0; i--) {
+        if (!b) return null;
+
+        // Проверяем эффекты на враге
+        for (var i = this._effects.length - 1; i >= 0; i--) {
             var e = this._effects[i];
-            if (e.target==='enemy' && e.type==='stun') { e.turns--; if (e.turns<=0) this._effects.splice(i,1); return { stun: true }; }
-            if (e.target==='enemy' && e.type==='poison') { b.enemyHp -= e.dmg; if (b.enemyHp<0) b.enemyHp=0; e.turns--; if (e.turns<=0) this._effects.splice(i,1); return { poison: true, dmg: e.dmg }; }
+            if (e.target === 'enemy') {
+                if (e.type === 'stun') {
+                    e.turns--;
+                    if (e.turns <= 0) this._effects.splice(i, 1);
+                    return { stun: true };
+                }
+                if (e.type === 'poison') {
+                    b.enemyHp -= e.dmg;
+                    if (b.enemyHp < 0) b.enemyHp = 0;
+                    e.turns--;
+                    if (e.turns <= 0) this._effects.splice(i, 1);
+                    var result = { poison: true, dmg: e.dmg, enemyHp: b.enemyHp };
+                    // Если враг умер от яда
+                    if (b.enemyHp <= 0) {
+                        this._battle = null;
+                        return { poison: true, dmg: e.dmg, win: true };
+                    }
+                    return result;
+                }
+            }
         }
-        var raw = this._calcDamage(b.enemyAtk, b.playerDef), armDmg = Math.min(Math.floor(raw*0.3), b.playerArmor), hpDmg = raw - armDmg;
-        if (b.playerArmor > 0) hpDmg = Math.floor(hpDmg*0.5);
+
+        // АТАКА ВРАГА
+        var raw = this._calcDamage(b.enemyAtk, b.playerDef);
+        var armDmg = Math.min(Math.floor(raw * 0.3), b.playerArmor);
+        var hpDmg = raw - armDmg;
+        if (b.playerArmor > 0) hpDmg = Math.floor(hpDmg * 0.5);
         hpDmg = Math.max(1, hpDmg);
-        b.playerArmor -= armDmg; b.playerHp -= hpDmg; if (b.playerHp < 0) b.playerHp = 0;
-        return { damage: hpDmg, armorDmg: armDmg, playerHp: b.playerHp };
+        b.playerArmor -= armDmg;
+        if (b.playerArmor < 0) b.playerArmor = 0;
+        b.playerHp -= hpDmg;
+        if (b.playerHp < 0) b.playerHp = 0;
+
+        // Шанс использовать навык врага (если есть)
+        if (Math.random() < 0.2 && b.isBoss) {
+            return {
+                damage: hpDmg,
+                armorDmg: armDmg,
+                playerHp: b.playerHp,
+                isSkill: true,
+                skillName: 'Мощный удар',
+                playerArmor: b.playerArmor
+            };
+        }
+
+        return {
+            damage: hpDmg,
+            armorDmg: armDmg,
+            playerHp: b.playerHp,
+            playerArmor: b.playerArmor
+        };
     },
 
     _giveReward: function(r) {
-        Sherwood.addExp(r.exp);
-        Sherwood.addResource('gold', r.gold);
-        Sherwood.addResource('silver', Math.floor(r.gold * 2));
-        if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1 + Math.floor(Math.random()*3));
-        if (Math.random() < 0.10) Sherwood.addResource('ingots', 1 + Math.floor(Math.random()*2));
+        if (!r) return;
+        if (r.exp) Sherwood.addExp(r.exp);
+        if (r.gold) Sherwood.addResource('gold', r.gold);
+        if (r.gold) Sherwood.addResource('silver', Math.floor(r.gold * 2));
+
+        if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1 + Math.floor(Math.random() * 3));
+        if (Math.random() < 0.10) Sherwood.addResource('ingots', 1 + Math.floor(Math.random() * 2));
+
         // Кожа с каждой бестии — всегда
-        if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
-            Sherwood.Bag.addItem({
-                id: 'skin_' + Date.now() + '_' + Math.floor(Math.random()*10000),
-                name: 'Кожа шервудской твари',
-                icon: 'assets/interface/skin_of_the_sherwood_creature.png',
-                grade: 'common',
-                type: 'resource',
-                quantity: 1,
-                maxStack: 99,
-                sellPrice: 5
-            });
-            // Шанс 15% на ингредиент для стрел
-            if (Math.random() < 0.15) {
-                var ings = [
-                    { id: 'branch', name: 'Ветка проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png' },
-                    { id: 'feather', name: 'Перо бестии', icon: 'assets/interface/feather_beast_1.png' },
-                    { id: 'bone', name: 'Костяной нарост бестии', icon: 'assets/interface/bone_growth_of_the_beast.png' }
-                ];
-                var ing = ings[Math.floor(Math.random() * 3)];
+        try {
+            if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
                 Sherwood.Bag.addItem({
-                    id: ing.id + '_' + Date.now(),
-                    name: ing.name,
-                    icon: ing.icon,
+                    id: 'skin_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                    name: 'Кожа шервудской твари',
+                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
                     grade: 'common',
                     type: 'resource',
                     quantity: 1,
                     maxStack: 99,
-                    sellPrice: 3
+                    sellPrice: 5
                 });
+
+                // Шанс 15% на ингредиент для стрел
+                if (Math.random() < 0.15) {
+                    var ings = [
+                        { id: 'branch', name: 'Ветка проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png' },
+                        { id: 'feather', name: 'Перо бестии', icon: 'assets/interface/feather_beast_1.png' },
+                        { id: 'bone', name: 'Костяной нарост бестии', icon: 'assets/interface/bone_growth_of_the_beast.png' }
+                    ];
+                    var ing = ings[Math.floor(Math.random() * 3)];
+                    Sherwood.Bag.addItem({
+                        id: ing.id + '_' + Date.now(),
+                        name: ing.name,
+                        icon: ing.icon,
+                        grade: 'common',
+                        type: 'resource',
+                        quantity: 1,
+                        maxStack: 99,
+                        sellPrice: 3
+                    });
+                }
+
+                // Шанс 15% на предмет экипировки
+                if (Math.random() < 0.15) {
+                    var grades = ['common', 'common', 'uncommon', 'rare'];
+                    var grade = grades[Math.floor(Math.random() * grades.length)];
+                    var mult = { common: 1, uncommon: 2, rare: 4 };
+                    var parts = ['weapon1', 'torso', 'head', 'hands', 'legs', 'feet'];
+                    var part = parts[Math.floor(Math.random() * parts.length)];
+                    var partNames = { weapon1: 'Лук', torso: 'Броня', head: 'Шлем', hands: 'Перчатки', legs: 'Поножи', feet: 'Сапоги' };
+                    Sherwood.Bag.addItem({
+                        id: 'loot_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                        name: (grade === 'rare' ? 'Редкий ' : '') + partNames[part],
+                        icon: 'assets/interface/labyrinth_of_icons.png',
+                        part: part,
+                        grade: grade,
+                        type: 'equipment',
+                        stats: {
+                            attack: Math.floor(Math.random() * 5 * mult[grade]) + mult[grade],
+                            defense: Math.floor(Math.random() * 3 * mult[grade]) + Math.floor(mult[grade] / 2)
+                        },
+                        sellPrice: 5 * mult[grade],
+                        quantity: 1,
+                        maxStack: 1
+                    });
+                }
             }
-            // Шанс 15% на предмет экипировки
-            if (Math.random() < 0.15) {
-                var grades = ['common', 'common', 'uncommon', 'rare'];
-                var grade = grades[Math.floor(Math.random() * grades.length)];
-                var mult = { common: 1, uncommon: 2, rare: 4 };
-                var parts = ['weapon1', 'torso', 'head', 'hands', 'legs', 'feet'];
-                var part = parts[Math.floor(Math.random() * parts.length)];
-                var partNames = { weapon1: 'Лук', torso: 'Броня', head: 'Шлем', hands: 'Перчатки', legs: 'Поножи', feet: 'Сапоги' };
-                Sherwood.Bag.addItem({
-                    id: 'loot_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-                    name: (grade === 'rare' ? 'Редкий ' : '') + partNames[part],
-                    icon: 'assets/interface/labyrinth_of_icons.png',
-                    part: part,
-                    grade: grade,
-                    type: 'equipment',
-                    stats: { attack: Math.floor(Math.random() * 5 * mult) + mult, defense: Math.floor(Math.random() * 3 * mult) + Math.floor(mult/2) },
-                    sellPrice: 5 * mult,
-                    quantity: 1,
-                    maxStack: 1
-                });
-            }
+        } catch(e) {
+            // Если Bag не инициализирован — игнорируем
         }
+
         Sherwood.saveGame();
     },
 
     flee: function() {
-        if (!this._battle) return { fail: true };
         var b = this._battle;
-        if (Math.random()*100 < 40 + (b.playerAgi||0)*0.5) { this._battle = null; return { success: true }; }
-        var raw = this._calcDamage(b.enemyAtk, b.playerDef), armDmg = Math.min(Math.floor(raw*0.3), b.playerArmor), hpDmg = raw - armDmg;
-        if (b.playerArmor > 0) hpDmg = Math.floor(hpDmg*0.5);
+        if (!b) return { success: false, reason: 'Нет боя' };
+
+        var chance = 40 + (b.playerAgi || 0) * 0.5;
+        if (Math.random() * 100 < chance) {
+            this._battle = null;
+            return { success: true };
+        }
+
+        // Неудачный побег — враг атакует
+        var raw = this._calcDamage(b.enemyAtk, b.playerDef);
+        var armDmg = Math.min(Math.floor(raw * 0.3), b.playerArmor);
+        var hpDmg = raw - armDmg;
+        if (b.playerArmor > 0) hpDmg = Math.floor(hpDmg * 0.5);
         hpDmg = Math.max(1, hpDmg);
-        b.playerArmor -= armDmg; b.playerHp -= hpDmg;
-        if (b.playerHp <= 0) { this._battle = null; return { fail: true, lose: true, damage: hpDmg }; }
-        return { fail: true, damage: hpDmg };
+        b.playerArmor -= armDmg;
+        if (b.playerArmor < 0) b.playerArmor = 0;
+        b.playerHp -= hpDmg;
+        if (b.playerHp < 0) b.playerHp = 0;
+
+        if (b.playerHp <= 0) {
+            this._battle = null;
+            return { success: false, lose: true, damage: hpDmg };
+        }
+
+        return { success: false, damage: hpDmg };
+    },
+
+    // ============================================================
+    //  НАВЫКИ (ЗАГЛУШКА — ЖДЁТ АКТИВАЦИИ)
+    // ============================================================
+
+    getSkills: function() {
+        // Возвращает список доступных навыков игрока
+        return {
+            power_shot: {
+                id: 'power_shot',
+                name: 'Мощный выстрел',
+                damageMultiplier: 1.8,
+                cooldown: 3,
+                description: 'Наносит 180% урона',
+                icon: 'assets/skills/skill_critical_shot.gif',
+                unlocked: false,
+                cost: 200
+            },
+            triple_shot: {
+                id: 'triple_shot',
+                name: 'Тройной выстрел',
+                damageMultiplier: 0.7,
+                cooldown: 4,
+                description: '3 выстрела по 70% урона',
+                icon: 'assets/skills/triple_shot_skill.png',
+                unlocked: false,
+                cost: 300
+            },
+            poison_arrow: {
+                id: 'poison_arrow',
+                name: 'Отравленная стрела',
+                damageMultiplier: 1.0,
+                cooldown: 5,
+                description: 'Отравляет врага на 3 хода',
+                icon: 'assets/skills/poison_shot_skill.gif',
+                unlocked: false,
+                cost: 250
+            },
+            stunning_shot: {
+                id: 'stunning_shot',
+                name: 'Оглушающий выстрел',
+                damageMultiplier: 0.5,
+                cooldown: 6,
+                description: 'Оглушает врага на 1 ход',
+                icon: 'assets/skills/control_skill.png',
+                unlocked: false,
+                cost: 350
+            }
+        };
+    },
+
+    unlockSkill: function(skillId) {
+        var skills = this.getSkills();
+        if (!skills[skillId]) return { success: false, reason: 'Навык не найден' };
+        if (skills[skillId].unlocked) return { success: false, reason: 'Уже открыт' };
+        var cost = skills[skillId].cost;
+        var p = Sherwood.getPlayer();
+        if (!p) return { success: false, reason: 'Нет игрока' };
+        if ((p.resources.gold || 0) < cost) return { success: false, reason: 'Не хватает золота' };
+        p.resources.gold -= cost;
+        skills[skillId].unlocked = true;
+        Sherwood.saveGame();
+        return { success: true, skill: skillId };
+    },
+
+    useSkill: function(skillId) {
+        var b = this._battle;
+        if (!b) return null;
+        var skills = this.getSkills();
+        if (!skills[skillId] || !skills[skillId].unlocked) return { error: 'Навык не открыт' };
+        if (this._cooldowns[skillId] && this._cooldowns[skillId] > 0) {
+            return { error: 'Перезарядка: ' + this._cooldowns[skillId] + ' ходов' };
+        }
+
+        var skill = skills[skillId];
+        var raw = this._calcDamage(b.playerAtk, b.enemyDef) * skill.damageMultiplier;
+        var crit = Math.random() * 100 < 20;
+        if (crit) raw = Math.floor(raw * 1.8);
+        var hpDmg = Math.max(1, Math.floor(raw));
+        b.enemyHp -= hpDmg;
+        if (b.enemyHp < 0) b.enemyHp = 0;
+
+        // Эффекты навыков
+        if (skillId === 'poison_arrow') {
+            this._effects.push({ target: 'enemy', type: 'poison', dmg: Math.floor(hpDmg * 0.2) + 5, turns: 3 });
+        }
+        if (skillId === 'stunning_shot') {
+            this._effects.push({ target: 'enemy', type: 'stun', turns: 1 });
+        }
+
+        // Кулдаун
+        this._cooldowns[skillId] = skill.cooldown;
+
+        var r = {
+            type: 'skill',
+            skillId: skillId,
+            skillName: skill.name,
+            damage: hpDmg,
+            crit: crit,
+            enemyHp: b.enemyHp,
+            enemyMaxHp: b.enemyMaxHp
+        };
+
+        if (b.enemyHp <= 0) {
+            r.win = true;
+            r.exp = b.isBoss ? 150 : 35;
+            r.gold = b.isBoss ? 120 : 25;
+            this._giveReward(r);
+            this._battle = null;
+            return r;
+        }
+
+        var er = this._enemyTurn();
+        r.enemy = er;
+        if (b.playerHp <= 0) {
+            r.lose = true;
+            r.exp = Math.floor((b.isBoss ? 150 : 35) * 0.3);
+            r.gold = Math.floor((b.isBoss ? 120 : 25) * 0.3);
+            this._giveReward(r);
+            this._battle = null;
+        }
+
+        return r;
+    },
+
+    getCooldowns: function() {
+        var result = {};
+        for (var key in this._cooldowns) {
+            if (this._cooldowns.hasOwnProperty(key)) {
+                result[key] = this._cooldowns[key];
+                // Уменьшаем кулдаун на каждом ходу
+                if (this._cooldowns[key] > 0) this._cooldowns[key]--;
+            }
+        }
+        return result;
     }
 };
