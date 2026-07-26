@@ -251,7 +251,8 @@ const SherwoodUI = {
         h += '<div id="enemy-hp-bar" style="background:url(\'assets/interface/filling_the_beasts\'_health_bar.jpeg\') left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);"></div>';
         h += '</div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
         h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
-        h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="assets/all_beasts/' + e.image + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
+        var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
+h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
         h += '<button onclick="' + onAttack + '" style="margin:6px auto;background:url(\'assets/skills/skill_shot_normal.png\') center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;display:block;"></button>';
         h += '<div style="position:relative;width:260px;height:26px;margin:6px auto;">';
         h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
@@ -323,11 +324,11 @@ const SherwoodUI = {
     _refreshArena: function() { Sherwood.Arena.refreshOpponents(); this.arena(); },
         _startArenaMatch: function(i) { this._stopMusic(); Sherwood.Arena.startMatch(i); this._showArenaMatch(); },
     _refreshArena: function() { Sherwood.Arena.refreshOpponents(); this.arena(); },
-    _showArenaMatch: function() {
+        _showArenaMatch: function() {
         var m = Sherwood.Arena.getCurrentMatch(); if (!m) { this.arena(); return; }
         var o = m.opponent, p = m.player;
         this._showBattleScreen(
-            { name: o.name, image: o.skin.replace('assets/hero_skins/', ''), hp: o.stats.hp, maxHp: o.stats.maxHp },
+            { name: o.name, image: o.skin, hp: o.stats.hp, maxHp: o.stats.maxHp },
             'arena',
             '🏟️ Арена — ' + o.name,
             '',
