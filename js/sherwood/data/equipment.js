@@ -1,6 +1,6 @@
 /**
  * Sherwood Equipment Database
- * Только аксессуары — оружие и доспехи заменены скинами
+ * Только амулеты и кольца — всё остальное заменяется скинами
  */
 
 Sherwood.EquipmentDB = {
@@ -23,53 +23,6 @@ Sherwood.EquipmentDB = {
     },
     
     items: [
-        // ===== ПОЯС =====
-        {
-            id: 'cloth_belt',
-            part: 'belt',
-            grade: 'common',
-            name: 'Тканый пояс',
-            stats: { hp: 5 },
-            price: { gold: 6 },
-            description: 'Простой тканый пояс.'
-        },
-        {
-            id: 'leather_belt',
-            part: 'belt',
-            grade: 'uncommon',
-            name: 'Кожаный пояс',
-            stats: { hp: 10, defense: 1 },
-            price: { gold: 20 },
-            description: 'Пояс из дублёной кожи.'
-        },
-        {
-            id: 'ranger_belt',
-            part: 'belt',
-            grade: 'rare',
-            name: 'Пояс следопыта',
-            stats: { hp: 20, defense: 2, agility: 1 },
-            price: { gold: 60 },
-            description: 'Удобный пояс с множеством карманов.'
-        },
-        {
-            id: 'sherwood_belt',
-            part: 'belt',
-            grade: 'epic',
-            name: 'Пояс Шервуда',
-            stats: { hp: 35, defense: 3, agility: 2 },
-            price: { gold: 200 },
-            description: 'Пояс лесных королей.'
-        },
-        {
-            id: 'legendary_belt',
-            part: 'belt',
-            grade: 'legendary',
-            name: 'Пояс Вечности',
-            stats: { hp: 50, defense: 5, agility: 3 },
-            price: { gold: 600 },
-            description: 'Пояс, сплетённый из корней древнего дуба.'
-        },
-        
         // ===== АМУЛЕТ =====
         {
             id: 'copper_amulet',
@@ -225,7 +178,7 @@ Sherwood.EquipmentDB = {
     },
     
     getAllParts: function() {
-        return ['belt', 'amulet', 'ring'];
+        return ['amulet', 'ring'];
     },
     
     getAllGrades: function() {
@@ -280,9 +233,8 @@ Sherwood.EquipmentDB = {
         return item;
     },
     
-    // Проверка, является ли предмет аксессуаром
     isAccessory: function(item) {
         if (!item || !item.part) return false;
-        return ['belt', 'amulet', 'ring'].indexOf(item.part) !== -1;
+        return ['amulet', 'ring'].indexOf(item.part) !== -1;
     }
 };
