@@ -229,21 +229,86 @@ Sherwood.Dungeon = {
     },
 
     move: function(tx, ty) {
-        var d = this._dungeon;
-        if (!d) return { ok: false, reason: 'Нет подземки' };
-        var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
-        if (dist !== 1) return { ok: false, reason: 'Далеко' };
-        var cell = d.grid[ty][tx];
-        if (!cell) return { ok: false, reason: 'Нет клетки' };
-        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
-        cell.open = true;
-        d.px = tx;
-        d.py = ty;
-        this._revealArea(d.grid, d.size, tx, ty, 2);
-
-        if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
-            return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
+    var d = this._dungeon;
+    if (!d) return { ok: false, reason: 'Нет подземки' };
+    var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
+    if (dist !== 1) return { ok: false, reason: 'Далеко' };
+    var cell = d.grid[ty][tx];
+    if (!cell) return { ok: false, reason: 'Нет клетки' };
+    if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
+    
+    // Сначала открываем клетку
+    cell.open = true;
+    
+    // Сохраняем тип клетки ДО перемещения, но ПОСЛЕ открытия
+    var cellType = cell.type;
+    var cellData = {
+        monsterId: cell.monsterId,
+        isBoss: cell.isBoss || false,
+        looted: cell.looted,
+        reward: cell.reward,
+        locked: cell.locked,
+        exit: cell.exit,
+        altar: cell.altar,
+        cauldron: cell.cauldron,
+        potion: cell.potion
+    };
+    
+    // Перемещаем игрока
+    d.px = tx;
+    d.py = ty;
+    this._revealArea(d.grid, d.size, tx, ty, 2);
+    
+    // Теперь обрабатываем событие на клетке
+    if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
+        return { ok: true, type: 'battle', monsterId: cellData.monsterId, boss: cellData.isBoss };
+    }
+    
+    if (cellType === this.TILE.CHEST && !cellData.looted) {
+        cell.looted = true;
+        d.chestsOpened++;
+        var g = cellData.reward ? (cellData.reward.gold || 20 + Math.floor(Math.random() * 60)) : (20 + Math.floor(Math.random() * 60));
+        var s = cellData.reward ? (cellData.reward.silver || 80 + Math.floor(Math.random() * 300)) : (80 + Math.floor(Math.random() * 300));
+        Sherwood.addResource('gold', g);
+        Sherwood.addResource('silver', s);
+        // Не меняем тип клетки на EMPTY сразу — оставляем визуально сундук, но помечаем как открытый
+        // cell.type = this.TILE.EMPTY; // УБИРАЕМ эту строку
+        return { ok: true, type: 'chest', gold: g, silver: s };
+    }
+    
+    if (cellType === this.TILE.ALTAR && cellData.altar) {
+        cell.type = this.TILE.EMPTY;
+        cell.altar = false;
+        return { ok: true, type: 'altar' };
+    }
+    
+    if (cellType === this.TILE.CAULDRON && cellData.cauldron) {
+        cell.type = this.TILE.EMPTY;
+        cell.cauldron = false;
+        return { ok: true, type: 'cauldron' };
+    }
+    
+    if (cellType === this.TILE.POTION && cellData.potion) {
+        cell.type = this.TILE.EMPTY;
+        cell.potion = false;
+        return { ok: true, type: 'potion' };
+    }
+    
+    if (cellData.exit && cellData.locked) {
+        var allDead = d.monstersKilled >= d.totalMonsters;
+        if (allDead) {
+            cell.locked = false;
+            return { ok: true, type: 'exit' };
         }
+        return { ok: true, type: 'exit_locked' };
+    }
+    
+    if (cellData.exit && !cellData.locked) {
+        return { ok: true, type: 'exit' };
+    }
+    
+    return { ok: true, type: 'move' };
+},
         if (cell.type === this.TILE.CHEST && !cell.looted) {
             cell.looted = true;
             d.chestsOpened++;
