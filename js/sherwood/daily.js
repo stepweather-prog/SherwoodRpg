@@ -1,6 +1,6 @@
 Sherwood.Daily = {
     _dailyQuests: [],
-    _chapterQuests: [],
+    _chapterQuests: {},
     _dailyCompleted: [],
     _chapterCompleted: [],
     _lastRefresh: '',
@@ -46,57 +46,102 @@ Sherwood.Daily = {
 
     init: function() {
         var p = Sherwood.getPlayer();
-        if (!p.daily) p.daily = { completed: [], chapterCompleted: [], lastRefresh: '', progress: {} };
+        if (!p) return;
+        if (!p.daily) {
+            p.daily = { completed: [], chapterCompleted: [], lastRefresh: '', dailyQuests: [], chapterQuests: {}, progress: {} };
+        }
+
         var today = new Date().toDateString();
         if (p.daily.lastRefresh !== today) {
             p.daily.completed = [];
+            p.daily.dailyQuests = this._generateDailyQuests();
             p.daily.lastRefresh = today;
-            this._generateDaily();
+            // Сбрасываем прогресс ежедневных заданий
+            if (p.daily.progress) {
+                for (var key in p.daily.progress) {
+                    if (p.daily.progress.hasOwnProperty(key)) {
+                        p.daily.progress[key] = 0;
+                    }
+                }
+            }
+            Sherwood.saveGame();
         }
+
+        this._dailyQuests = p.daily.dailyQuests || [];
         this._dailyCompleted = p.daily.completed || [];
         this._chapterCompleted = p.daily.chapterCompleted || [];
-        this._dailyQuests = p.daily.dailyQuests || this._generateDaily();
-        this._chapterQuests = p.daily.chapterQuests || [];
+        this._chapterQuests = p.daily.chapterQuests || {};
+        this._lastRefresh = p.daily.lastRefresh || today;
+
+        // Восстанавливаем прогресс из сохранения
+        if (p.daily.progress) {
+            for (var key in p.daily.progress) {
+                if (p.daily.progress.hasOwnProperty(key)) {
+                    // Применяем сохранённый прогресс к квестам
+                    for (var i = 0; i < this._dailyQuests.length; i++) {
+                        if (this._dailyQuests[i].id === key) {
+                            this._dailyQuests[i].progress = p.daily.progress[key];
+                            if (this._dailyQuests[i].progress >= this._dailyQuests[i].target) {
+                                this._dailyQuests[i].completed = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     },
 
-    _generateDaily: function() {
+    _generateDailyQuests: function() {
         var pool = this.DAILY_TEMPLATES.slice();
         var quests = [];
         for (var i = 0; i < 5; i++) {
             if (pool.length === 0) break;
             var idx = Math.floor(Math.random() * pool.length);
-            quests.push(Object.assign({}, pool[idx], { progress: 0, completed: false }));
+            var q = Object.assign({}, pool[idx], { progress: 0, completed: false });
+            quests.push(q);
             pool.splice(idx, 1);
         }
-        var p = Sherwood.getPlayer();
-        p.daily.dailyQuests = quests;
-        this._dailyQuests = quests;
-        Sherwood.saveGame();
         return quests;
     },
 
     getChapterQuests: function(chapterId) {
         var template = null;
         for (var i = 0; i < this.CHAPTER_TEMPLATES.length; i++) {
-            if (this.CHAPTER_TEMPLATES[i].chapter === chapterId) { template = this.CHAPTER_TEMPLATES[i]; break; }
+            if (this.CHAPTER_TEMPLATES[i].chapter === chapterId) {
+                template = this.CHAPTER_TEMPLATES[i];
+                break;
+            }
         }
         if (!template) return [];
+
         var p = Sherwood.getPlayer();
         if (!p.daily.chapterQuests) p.daily.chapterQuests = {};
         if (!p.daily.chapterQuests[chapterId]) {
-            p.daily.chapterQuests[chapterId] = template.quests.map(function(q) { return Object.assign({}, q, { progress: 0, completed: false }); });
+            p.daily.chapterQuests[chapterId] = template.quests.map(function(q) {
+                return Object.assign({}, q, { progress: 0, completed: false });
+            });
             Sherwood.saveGame();
         }
-        this._chapterQuests = p.daily.chapterQuests[chapterId] || [];
-        return this._chapterQuests;
+
+        this._chapterQuests = p.daily.chapterQuests;
+        return this._chapterQuests[chapterId] || [];
     },
 
-    getDailyQuests: function() { return this._dailyQuests; },
-    getDailyCompleted: function() { return this._dailyCompleted; },
+    getDailyQuests: function() {
+        return this._dailyQuests;
+    },
+
+    getDailyCompleted: function() {
+        return this._dailyCompleted;
+    },
 
     isChapterComplete: function(chapterId) {
         var quests = this.getChapterQuests(chapterId);
-        return quests.length > 0 && quests.every(function(q) { return q.completed; });
+        if (quests.length === 0) return false;
+        for (var i = 0; i < quests.length; i++) {
+            if (!quests[i].completed) return false;
+        }
+        return true;
     },
 
     canProgressToNextChapter: function(chapterId) {
@@ -104,29 +149,45 @@ Sherwood.Daily = {
     },
 
     claimDailyReward: function(questIndex) {
-        if (questIndex < 0 || questIndex >= this._dailyQuests.length) return { success: false, reason: 'Квест не найден' };
+        if (questIndex < 0 || questIndex >= this._dailyQuests.length) {
+            return { success: false, reason: 'Квест не найден' };
+        }
         var q = this._dailyQuests[questIndex];
-        if (!q.completed) return { success: false, reason: 'Квест не выполнен' };
-        if (this._dailyCompleted.indexOf(q.id) !== -1) return { success: false, reason: 'Награда уже получена' };
+        if (!q.completed) {
+            return { success: false, reason: 'Квест не выполнен' };
+        }
+        if (this._dailyCompleted.indexOf(q.id) !== -1) {
+            return { success: false, reason: 'Награда уже получена' };
+        }
+
         this._dailyCompleted.push(q.id);
         Sherwood.addExp(q.reward.exp);
         Sherwood.addResource('gold', q.reward.gold);
-        Sherwood.getPlayer().daily.completed = this._dailyCompleted;
+
+        var p = Sherwood.getPlayer();
+        p.daily.completed = this._dailyCompleted;
         Sherwood.saveGame();
         return { success: true, reward: q.reward };
     },
 
     claimChapterReward: function(chapterId, questIndex) {
         var quests = this.getChapterQuests(chapterId);
-        if (questIndex < 0 || questIndex >= quests.length) return { success: false, reason: 'Квест не найден' };
+        if (questIndex < 0 || questIndex >= quests.length) {
+            return { success: false, reason: 'Квест не найден' };
+        }
         var q = quests[questIndex];
-        if (!q.completed) return { success: false, reason: 'Квест не выполнен' };
-        if (!this._chapterCompleted) this._chapterCompleted = [];
-        if (this._chapterCompleted.indexOf(q.id) !== -1) return { success: false, reason: 'Награда уже получена' };
+        if (!q.completed) {
+            return { success: false, reason: 'Квест не выполнен' };
+        }
+        if (this._chapterCompleted.indexOf(q.id) !== -1) {
+            return { success: false, reason: 'Награда уже получена' };
+        }
+
         this._chapterCompleted.push(q.id);
         Sherwood.addExp(q.reward.exp);
         Sherwood.addResource('gold', q.reward.gold);
         if (q.reward.silver) Sherwood.addResource('silver', q.reward.silver);
+
         var p = Sherwood.getPlayer();
         p.daily.chapterCompleted = this._chapterCompleted;
         Sherwood.saveGame();
@@ -135,25 +196,63 @@ Sherwood.Daily = {
 
     updateProgress: function(type, amount) {
         var updated = false;
+        var p = Sherwood.getPlayer();
+        if (!p.daily.progress) p.daily.progress = {};
+
+        // Обновляем ежедневные квесты
         for (var i = 0; i < this._dailyQuests.length; i++) {
             var q = this._dailyQuests[i];
             if (q.type === type && !q.completed) {
                 q.progress = (q.progress || 0) + (amount || 1);
-                if (q.progress >= q.target) { q.progress = q.target; q.completed = true; updated = true; }
+                p.daily.progress[q.id] = q.progress;
+                if (q.progress >= q.target) {
+                    q.progress = q.target;
+                    q.completed = true;
+                    updated = true;
+                }
+                updated = true;
             }
         }
-        var p = Sherwood.getPlayer();
-        var chapterQuests = p.daily && p.daily.chapterQuests ? p.daily.chapterQuests : {};
+
+        // Обновляем квесты глав
+        var chapterQuests = p.daily.chapterQuests || {};
         for (var chId in chapterQuests) {
+            if (!chapterQuests.hasOwnProperty(chId)) continue;
             var quests = chapterQuests[chId];
             for (var j = 0; j < quests.length; j++) {
                 var q = quests[j];
                 if (q.type === type && !q.completed) {
                     q.progress = (q.progress || 0) + (amount || 1);
-                    if (q.progress >= q.target) { q.progress = q.target; q.completed = true; updated = true; }
+                    if (q.progress >= q.target) {
+                        q.progress = q.target;
+                        q.completed = true;
+                        updated = true;
+                    }
+                    updated = true;
                 }
             }
         }
-        if (updated) Sherwood.saveGame();
+
+        if (updated) {
+            // Сохраняем изменения
+            p.daily.dailyQuests = this._dailyQuests;
+            p.daily.chapterQuests = chapterQuests;
+            Sherwood.saveGame();
+        }
+    },
+
+    // Сброс прогресса (для отладки или тестирования)
+    reset: function() {
+        var p = Sherwood.getPlayer();
+        if (p && p.daily) {
+            p.daily.completed = [];
+            p.daily.chapterCompleted = [];
+            p.daily.progress = {};
+            p.daily.dailyQuests = this._generateDailyQuests();
+            this._dailyCompleted = [];
+            this._chapterCompleted = [];
+            this._dailyQuests = p.daily.dailyQuests;
+            Sherwood.saveGame();
+        }
     }
 };
