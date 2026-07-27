@@ -190,11 +190,15 @@ const SherwoodUI = {
                 }
                 
                 if (isPlayer) {
-                    var directionMap = { up: 0, down: 1, left: 2, right: 3 };
-                    var directionIndex = directionMap[d.heroDirection] || 1;
-                    var frameX = (d.heroFrame || 0) * 33.333;
-                    content = '<div class="hero-sprite" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;background-position:' + frameX + '% ' + (directionIndex * 33.333) + '%;"></div>';
-                }
+    var videoFile = 'step_down.mp4';
+    if (d.heroDirection === 'up') videoFile = 'step_up.mp4';
+    else if (d.heroDirection === 'left') videoFile = 'step_left.mp4';
+    else if (d.heroDirection === 'right') videoFile = 'step_right.mp4';
+    
+    content = '<video autoplay loop muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;">' +
+        '<source src="assets/animation/' + videoFile + '" type="video/mp4">' +
+    '</video>';
+}
                 
                 html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:2;cursor:' + (onclick ? 'pointer' : 'default') + ';">' + (content||'') + '</div>';
             }
