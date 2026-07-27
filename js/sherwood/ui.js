@@ -85,18 +85,19 @@ const SherwoodUI = {
     },
 
     updateDisplay: function() {
-        try {
-            var p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null; if (!p) return;
-            try { document.getElementById('gold-display').textContent = this._fmt(p.resources ? p.resources.gold || 0 : 0); } catch(e) {}
-            try { document.getElementById('silver-display').textContent = this._fmt(p.resources ? p.resources.silver || 0 : 0); } catch(e) {}
-            try { document.getElementById('exp-display').textContent = this._fmt(p.exp || 0); } catch(e) {}
-            try { document.getElementById('exp-max-display').textContent = this._fmt(p.expToLevel || 100); } catch(e) {}
-            try { var ae = document.querySelector('.stat-value.attack'); if (ae) ae.textContent = p.stats ? p.stats.attack || 0 : 0; } catch(e) {}
-            try { var de = document.querySelector('.stat-value.defense'); if (de) de.textContent = p.stats ? p.stats.defense || 0 : 0; } catch(e) {}
-            try { var ge = document.querySelector('.stat-value.agility'); if (ge) ge.textContent = p.stats ? p.stats.agility || 0 : 0; } catch(e) {}
-            try { var he = document.querySelector('.stat-value.hp'); if (he) he.textContent = p.stats ? p.stats.hp || 0 : 0; } catch(e) {}
-        } catch(e) {}
-    },
+    try {
+        var p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null; if (!p) return;
+        try { document.getElementById('gold-display').textContent = this._fmt(p.resources ? p.resources.gold || 0 : 0); } catch(e) {}
+        try { document.getElementById('silver-display').textContent = this._fmt(p.resources ? p.resources.silver || 0 : 0); } catch(e) {}
+        try { document.getElementById('exp-display').textContent = this._fmt(p.exp || 0); } catch(e) {}
+        try { document.getElementById('exp-max-display').textContent = this._fmt(p.expToLevel || 100); } catch(e) {}
+        try { var expPct = Sherwood.getLevelProgress(); var fill = document.getElementById('exp-fill'); if (fill) fill.style.width = expPct + '%'; } catch(e) {}
+        try { var ae = document.querySelector('.stat-value.attack'); if (ae) ae.textContent = p.stats ? p.stats.attack || 0 : 0; } catch(e) {}
+        try { var de = document.querySelector('.stat-value.defense'); if (de) de.textContent = p.stats ? p.stats.defense || 0 : 0; } catch(e) {}
+        try { var ge = document.querySelector('.stat-value.agility'); if (ge) ge.textContent = p.stats ? p.stats.agility || 0 : 0; } catch(e) {}
+        try { var he = document.querySelector('.stat-value.hp'); if (he) he.textContent = p.stats ? p.stats.hp || 0 : 0; } catch(e) {}
+    } catch(e) {}
+},
     _fmt: function(n) { return (n === undefined || n === null) ? '0' : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); },
 
     loadHome: function() {
