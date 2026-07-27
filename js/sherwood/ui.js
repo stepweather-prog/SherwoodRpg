@@ -234,10 +234,10 @@ _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var h = '<div style="text-align:center;">';
     h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:6px;">' + modeTitle + '</div>';
-    h += '<div style="position:relative;width:300px;height:30px;margin:4px auto;">';
-h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:relative;width:300px;height:80px;margin:4px auto;">';
+h += '<img src="assets/interface/life_scale.png" style="width:100%;height:150%;position:absolute;top:0;left:0;z-index:1;">';
 h += '<div style="position:absolute;top:12px;left:12px;right:12px;bottom:12px;overflow:hidden;z-index:0;">';
-h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left center/100% 100% no-repeat;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
+h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left center/100% 100% no-repeat;height:150%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
 h += '</div>';
 h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
