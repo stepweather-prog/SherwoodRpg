@@ -294,9 +294,9 @@ _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var h = '<div style="text-align:center;">';
     h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:6px;">' + modeTitle + '</div>';
-    h += '<div style="position:relative;width:300px;height:80px;margin:4px auto;">';
+    h += '<div style="position:relative;width:300px;height:100px;margin:4px auto;">';
 h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-h += '<div style="position:absolute;top:50px;left:14px;right:14px;bottom:40px;overflow:hidden;z-index:0;">';
+h += '<div style="position:absolute;top:40px;left:14px;right:14px;bottom:30px;overflow:hidden;z-index:0;">';
 h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left center/100% 100% no-repeat;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
 h += '</div>';
 h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
@@ -304,9 +304,9 @@ h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transfo
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
     h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;"></div>';
     h += '<button onclick="' + onAttack + '" style="margin:6px auto;background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;display:block;"></button>';
-    h += '<div style="position:relative;width:300px;height:80px;margin:4px auto;">';
+    h += '<div style="position:relative;width:300px;height:100px;margin:4px auto;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:50px;left:14px;right:14px;bottom:40px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:40px;left:14px;right:14px;bottom:30px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
     h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
