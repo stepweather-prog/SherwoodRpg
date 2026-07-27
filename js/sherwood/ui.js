@@ -279,8 +279,8 @@ const SherwoodUI = {
     h += "</div>";
     this._openScreen("⚔️ Бой", "dungeon_fight", h);
 },
-    _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
-    _hitEnemyCard: function() { var card = document.getElementById('enemy-card'); if (!card) return; card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)'; setTimeout(function() { card.style.filter = ''; }, 250); card.classList.remove('hit-epic-combo'); void card.offsetWidth; card.classList.add('hit-epic-combo'); },
+    _showDialog: function(msg, color) { var dlg = document.getElementById("battle-dialog"); if (dlg) { dlg.innerHTML += "<div style=\"color:" + (color||"#fff") + ";margin:1px 0;\">" + msg + "</div>"; dlg.scrollTop = dlg.scrollHeight; } },
+_hitEnemyCard: function() { var card = document.getElementById("enemy-card"); if (!card) return; card.style.filter = "brightness(1.5) saturate(2.5) hue-rotate(-15deg)"; setTimeout(function() { card.style.filter = ""; }, 250); card.classList.remove("hit-epic-combo"); void card.offsetWidth; card.classList.add("hit-epic-combo"); },
     _updateEnemyHP: function(hp, max) { 
     var bar = document.getElementById("enemy-hp-bar"), txt = document.getElementById("enemy-hp-text"); 
     if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + "%"; } 
