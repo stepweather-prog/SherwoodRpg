@@ -12,7 +12,6 @@ Sherwood.Bag = {
         this._expansionLevel = player.bagExpansion || 0;
         this._maxSlots = 10 + this._expansionLevel * 10;
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
-        // Стартовый скин
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
             player.unlockedSkins = ['skin_1_basic'];
             player.activeSkin = 'skin_1_basic';
@@ -43,7 +42,6 @@ Sherwood.Bag = {
         var info = this.getExpansionInfo();
         if (!info.canExpand) return { success: false, reason: 'Максимум 150 слотов' };
 
-        // Подсчёт шкур
         var skins = 0;
         for (var i = 0; i < this._inventory.length; i++) {
             var item = this._inventory[i];
@@ -60,10 +58,8 @@ Sherwood.Bag = {
             return { success: false, reason: 'Нужно ' + info.costSilver + ' серебра' };
         }
 
-        // Списываем серебро
         player.resources.silver -= info.costSilver;
 
-        // Списываем шкуры
         var toRemove = info.costSkin;
         for (var i = this._inventory.length - 1; i >= 0 && toRemove > 0; i--) {
             var item = this._inventory[i];
@@ -79,7 +75,6 @@ Sherwood.Bag = {
             }
         }
 
-        // Расширяем
         this._expansionLevel++;
         this._maxSlots = 10 + this._expansionLevel * 10;
         player.bagSize = this._maxSlots;
@@ -92,24 +87,19 @@ Sherwood.Bag = {
 
     addItem: function(item) {
         if (!item) return false;
-        if (this.isFull()) {
-            Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
-            return false;
-        }
 
-        var maxStack = item.maxStack || 99;
+        var maxStack = item.maxStack || 25;
         var quantity = item.quantity || 1;
 
-        // Если предмет стакается и есть id — ищем существующий
-        if (item.id && maxStack > 1) {
+        // Ищем такой же предмет для стакинга
+        if (item.id) {
             for (var i = 0; i < this._inventory.length; i++) {
                 var existing = this._inventory[i];
-                if (existing.id === item.id && (existing.quantity || 1) < maxStack) {
+                if (existing.id === item.id && existing.grade === item.grade && (existing.quantity || 1) < maxStack) {
                     var space = maxStack - (existing.quantity || 1);
                     var add = Math.min(quantity, space);
                     existing.quantity = (existing.quantity || 1) + add;
                     quantity -= add;
-
                     if (quantity <= 0) {
                         this._save();
                         Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
@@ -119,12 +109,18 @@ Sherwood.Bag = {
             }
         }
 
-        // Если осталось или предмет не стакается — создаём новый
-        if (quantity > 0) {
+        // Если осталось — добавляем в новую ячейку
+        while (quantity > 0) {
+            if (this.isFull()) {
+                Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
+                return false;
+            }
+            var addQty = Math.min(quantity, maxStack);
             var newItem = Object.assign({}, item);
-            newItem.quantity = quantity;
+            newItem.quantity = addQty;
             newItem.maxStack = maxStack;
             this._inventory.push(newItem);
+            quantity -= addQty;
         }
 
         this._save();
@@ -157,9 +153,7 @@ Sherwood.Bag = {
         var part = item.part;
         var oldItem = this._equipment[part];
 
-        // Кольца и амулеты — особый случай
         if (part === 'ring' || part === 'amulet') {
-            // Если есть старый предмет — возвращаем в инвентарь
             if (oldItem) {
                 if (this.isFull()) {
                     Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
@@ -175,7 +169,6 @@ Sherwood.Bag = {
             return true;
         }
 
-        // Обычная экипировка
         if (oldItem) {
             if (this.isFull()) {
                 Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
@@ -243,20 +236,19 @@ Sherwood.Bag = {
         if (loot.skins) {
             for (var i = 0; i < loot.skins; i++) {
                 this.addItem({
-                    id: 'skin_of_the_sherwood_creature_' + Date.now() + '_' + i,
+                    id: 'skin_of_the_sherwood_creature',
                     name: 'Кожа шервудской твари',
                     icon: 'assets/interface/skin_of_the_sherwood_creature.png',
                     grade: 'common',
                     type: 'resource',
                     quantity: 1,
-                    maxStack: 99,
+                    maxStack: 25,
                     sellPrice: 5
                 });
             }
         }
     },
 
-    // Получить количество шкур в инвентаре
     getSkinCount: function() {
         var count = 0;
         for (var i = 0; i < this._inventory.length; i++) {
