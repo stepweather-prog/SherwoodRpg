@@ -216,6 +216,7 @@ const SherwoodUI = {
     var hp = Sherwood.getPlayer().stats.hp || 0;
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">HP ' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">Monsters ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | ' + (d.monstersKilled >= d.totalMonsters ? 'Exit open' : 'Kill more') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
 },
+    _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     if (dist !== 1) return;
