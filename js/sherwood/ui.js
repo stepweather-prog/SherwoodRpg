@@ -305,11 +305,11 @@ const SherwoodUI = {
     _showCombatScreen: function() { 
     var b = Sherwood.Combat.getState(); 
     if (!b) { this._renderDungeon(); return; } 
-    this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, 'dungeon', (b.isBoss ? '👑 БОСС: ' : '') + b.enemyName, '', 'SherwoodUI._combatAttack()', 'SherwoodUI._combatFlee()); 
+    this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, "dungeon", (b.isBoss ? "👑 БОСС: " : "") + b.enemyName, "", "SherwoodUI._combatAttack()", "SherwoodUI._combatFlee()); 
 },
-    _combatAttack: function() { this._playHitSounds(); this._handleCombat(Sherwood.Combat.attack()); },
-    _combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this._stopBattleMusic(); this._leaveDungeon(); return; } if (r.lose) { this._showDialog('💀 Поражение...', '#f44336'); this._stopBattleMusic(); var self = this; setTimeout(function() { self._leaveDungeon(); }, 1200); return; } this._showDialog('❌ Побег не удался! Враг: -' + r.damage, '#ff9800'); this._showCombatScreen(); },
-    _handleCombat: function(r) {
+_combatAttack: function() { this._playHitSounds(); this._handleCombat(Sherwood.Combat.attack()); },
+_combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this._stopBattleMusic(); this._leaveDungeon(); return; } if (r.lose) { this._showDialog("💀 Поражение...", "#f44336"); this._stopBattleMusic(); var self = this; setTimeout(function() { self._leaveDungeon(); }, 1200); return; } this._showDialog("❌ Побег не удался! Враг: -" + r.damage, "#ff9800"); this._showCombatScreen(); },
+_handleCombat: function(r) {
     if (!r) return;
     if (r.win) {
         if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
@@ -319,24 +319,24 @@ const SherwoodUI = {
     } else if (r.lose) {
         this._stopBattleMusic(); this.updateDisplay();
         var scrolls = Math.random() < 0.08 ? 1 : 0;
-        if (scrolls) Sherwood.addResource('scrolls', scrolls);
+        if (scrolls) Sherwood.addResource("scrolls", scrolls);
         this._pendingRewards = { exp: Math.floor(r.exp * 0.3), silver: Math.floor(r.gold * 1.5), scrolls: scrolls };
         this._afterRewardAction = function() { SherwoodUI._leaveDungeon(); };
         this._showDefeatScreen(this._pendingRewards);
     } else {
         this._hitEnemyCard();
         this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-        this._showDialog((r.crit ? '💥 КРИТ! ' : '⚔️ ') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
-        if (r.armorDmg) this._showDialog('🛡️ Снято брони: ' + r.armorDmg, '#2196f3');
+        this._showDialog((r.crit ? "💥 КРИТ! " : "⚔️ ") + "Вы нанесли " + r.damage + " урона", r.crit ? "#ff6a00" : "#fff");
+        if (r.armorDmg) this._showDialog("🛡️ Снято брони: " + r.armorDmg, "#2196f3");
         if (r.enemy && r.enemy.damage) { 
             var self = this; 
             setTimeout(function() { 
-                self._showDialog('💢 ' + (r.enemyName || 'Враг') + ' нанёс ' + r.enemy.damage + ' урона', '#f44336');
+                self._showDialog("💢 " + (r.enemyName || "Враг") + " нанёс " + r.enemy.damage + " урона", "#f44336");
                 var p = Sherwood.getPlayer();
-                var playerBar = document.getElementById('player-hp-bar');
+                var playerBar = document.getElementById("player-hp-bar");
                 if (playerBar && p) {
                     var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0;
-                    playerBar.style.width = php + '%';
+                    playerBar.style.width = php + "%";
                 }
             }, 700); 
         }
