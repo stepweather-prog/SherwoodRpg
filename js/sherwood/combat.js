@@ -232,32 +232,57 @@ Sherwood.Combat = {
                     });
                 }
 
-                // Шанс 15% на предмет экипировки
-                if (Math.random() < 0.15) {
-                    var grades = ['common', 'common', 'uncommon', 'rare'];
-                    var grade = grades[Math.floor(Math.random() * grades.length)];
-                    var mult = { common: 1, uncommon: 2, rare: 4 };
-                    var parts = ['weapon1', 'torso', 'head', 'hands', 'legs', 'feet'];
-                    var part = parts[Math.floor(Math.random() * parts.length)];
-                    var partNames = { weapon1: 'Лук', torso: 'Броня', head: 'Шлем', hands: 'Перчатки', legs: 'Поножи', feet: 'Сапоги' };
-                    Sherwood.Bag.addItem({
-                        id: 'loot_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-                        name: (grade === 'rare' ? 'Редкий ' : '') + partNames[part],
-                        icon: 'assets/interface/labyrinth_of_icons.png',
-                        part: part,
-                        grade: grade,
-                        type: 'equipment',
-                        stats: {
-                            attack: Math.floor(Math.random() * 5 * mult[grade]) + mult[grade],
-                            defense: Math.floor(Math.random() * 3 * mult[grade]) + Math.floor(mult[grade] / 2)
-                        },
-                        sellPrice: 5 * mult[grade],
-                        quantity: 1,
-                        maxStack: 1
-                    });
-                }
+                                        // Дроп с монстра
+            var lootRoll = Math.random();
+            var chapter = Sherwood.getPlayer().questProgress.currentChapter || 1;
+
+            if (lootRoll < 0.15) {
+                Sherwood.Bag.addItem({
+                    id: 'skin_of_the_sherwood_creature',
+                    name: 'Кожа шервудской твари',
+                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+                    grade: 'common', type: 'resource', quantity: 1, maxStack: 25, sellPrice: 5
+                });
+            } else if (lootRoll < 0.25) {
+                var arrowParts = [
+                    { id: 'branch', name: 'Ветка', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
+                    { id: 'feather', name: 'Перо', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
+                    { id: 'bone', name: 'Кость', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 }
+                ];
+                var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
+                Sherwood.Bag.addItem({
+                    id: part.id, name: part.name, icon: part.icon,
+                    grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
+                });
+            } else if (lootRoll < 0.30) {
+                Sherwood.addResource('scrolls', 1);
+            } else if (lootRoll < 0.35) {
+                Sherwood.Bag.addItem({
+                    id: 'ingot_chapter_' + chapter,
+                    name: 'Слиток обликов (Глава ' + chapter + ')',
+                    icon: 'assets/interface/ingot_chapter_' + chapter + '.png',
+                    grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20
+                });
+            } else if (lootRoll < 0.40) {
+                Sherwood.Bag.addItem({
+                    id: 'ring_' + Date.now(),
+                    name: 'Кольцо',
+                    icon: 'assets/interface/ring_first_level.png',
+                    part: 'ring', grade: 'uncommon', type: 'equipment',
+                    stats: { attack: 2 + Math.floor(Math.random() * 3), defense: 1 + Math.floor(Math.random() * 2) },
+                    sellPrice: 15, quantity: 1, maxStack: 1
+                });
+            } else if (lootRoll < 0.45) {
+                Sherwood.Bag.addItem({
+                    id: 'amulet_' + Date.now(),
+                    name: 'Амулет',
+                    icon: 'assets/interface/sherwood_amulet_level_one.png',
+                    part: 'amulet', grade: 'uncommon', type: 'equipment',
+                    stats: { hp: 10 + Math.floor(Math.random() * 20), agility: 1 + Math.floor(Math.random() * 2) },
+                    sellPrice: 15, quantity: 1, maxStack: 1
+                });
             }
-        } catch(e) {
+        } catch(e) {}
             // Если Bag не инициализирован — игнорируем
         }
 
