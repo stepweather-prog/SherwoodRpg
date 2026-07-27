@@ -111,12 +111,11 @@ Sherwood.Dungeon = {
         var monsterCells = [];
         for (var i = 0; i < empties.length && placedMonsters < monsterCount; i++) {
             var cell = empties[i];
-            var tooClose = false;
             if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
+            var tooClose = false;
             for (var m = 0; m < monsterCells.length; m++) {
                 if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) {
-                    tooClose = true;
-                    break;
+                    tooClose = true; break;
                 }
             }
             if (!tooClose) {
@@ -128,25 +127,26 @@ Sherwood.Dungeon = {
             }
         }
 
-        var specialTypes = [
-            { type: this.TILE.ALTAR, count: 3, prop: 'altar' },
-            { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
-            { type: this.TILE.POTION, count: 4, prop: 'potion' },
-            { type: this.TILE.CHEST, count: 4, prop: 'chest' }
+        // Алтари, котлы, зелья (без сундуков)
+        var specials = [
+            { type: this.TILE.ALTAR, count: 3 },
+            { type: this.TILE.CAULDRON, count: 3 },
+            { type: this.TILE.POTION, count: 5 }
         ];
-        for (var t = 0; t < specialTypes.length; t++) {
-            var st = specialTypes[t];
+        for (var t = 0; t < specials.length; t++) {
+            var st = specials[t];
             for (var i = 0; i < st.count && empties.length > 0; i++) {
                 var idx = Math.floor(Math.random() * empties.length);
                 var cell = empties.splice(idx, 1)[0];
                 grid[cell.y][cell.x].type = st.type;
-                grid[cell.y][cell.x][st.prop] = true;
-                if (st.type === this.TILE.CHEST) {
-                    grid[cell.y][cell.x].looted = false;
-                    grid[cell.y][cell.x].reward = { gold: 1 + Math.floor(Math.random() * 3), silver: 200 + Math.floor(Math.random() * 400) };
-                }
+                if (st.type === this.TILE.ALTAR) grid[cell.y][cell.x].altar = true;
+                if (st.type === this.TILE.CAULDRON) grid[cell.y][cell.x].cauldron = true;
+                if (st.type === this.TILE.POTION) grid[cell.y][cell.x].potion = true;
             }
         }
+
+        // Сундук только один — выпадает с последнего убитого монстра
+        // Пока не размещаем, добавим при убийстве последнего монстра
 
         var bestDist = -1, exitX = spawnX, exitY = spawnY;
         for (var i = 0; i < empties.length; i++) {
@@ -166,8 +166,7 @@ Sherwood.Dungeon = {
                 for (var x = -2; x <= 2; x++) {
                     var nx = exitX + x, ny = exitY + y;
                     if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx].type === this.TILE.EMPTY) {
-                        bossCell = {x: nx, y: ny};
-                        break;
+                        bossCell = {x: nx, y: ny}; break;
                     }
                 }
                 if (bossCell) break;
@@ -180,117 +179,66 @@ Sherwood.Dungeon = {
             }
         }
 
-       this._dungeon = {
-    id: dungeonId,
-    level: level,
-    size: size,
-    grid: grid,
-    px: spawnX,
-    py: spawnY,
-    monstersKilled: 0,
-    totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
-    chestsOpened: 0,
-    isBossLevel: isBossLevel,
-    heroDirection: 'down',
-    isMoving: false
-};
+        this._dungeon = {
+            id: dungeonId, level: level, size: size, grid: grid,
+            px: spawnX, py: spawnY,
+            monstersKilled: 0, totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
+            chestsOpened: 0, isBossLevel: isBossLevel,
+            heroDirection: 'down', isMoving: false,
+            chestPlaced: false
+        };
         return this._dungeon;
     },
 
-    _revealArea: function(grid, size, cx, cy, radius) {
-        for (var y = cy - radius; y <= cy + radius; y++) {
-            for (var x = cx - radius; x <= cx + radius; x++) {
-                if (x >= 0 && x < size && y >= 0 && y < size) {
-                    if (Math.abs(x - cx) + Math.abs(y - cy) <= radius) {
-                        if (grid[y][x].type !== this.TILE.WALL) {
-                            grid[y][x].open = true;
-                        }
-                    }
-                }
-            }
-        }
-    },
-
-    getDungeon: function() {
-        return this._dungeon;
-    },
+    getDungeon: function() { return this._dungeon; },
 
     move: function(tx, ty) {
         var d = this._dungeon;
-        if (!d) return { ok: false, reason: 'Нет подземки' };
-        var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
-        if (dist !== 1) return { ok: false, reason: 'Далеко' };
+        if (!d) return { ok: false, reason: 'No dungeon' };
         var cell = d.grid[ty][tx];
-        if (!cell) return { ok: false, reason: 'Нет клетки' };
-        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Стена' };
-        
+        if (!cell) return { ok: false, reason: 'No cell' };
+        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Wall' };
+
         cell.open = true;
-        
-        var cellType = cell.type;
-        var cellData = {
-            monsterId: cell.monsterId,
-            isBoss: cell.isBoss || false,
-            looted: cell.looted,
-            reward: cell.reward,
-            locked: cell.locked,
-            exit: cell.exit,
-            altar: cell.altar,
-            cauldron: cell.cauldron,
-            potion: cell.potion
-        };
-        
         d.px = tx;
         d.py = ty;
-        
+
+        var cellType = cell.type;
+
         if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
-            return { ok: true, type: 'battle', monsterId: cellData.monsterId, boss: cellData.isBoss };
+            return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
         }
-        
-        if (cellType === this.TILE.CHEST && !cellData.looted) {
+        if (cellType === this.TILE.CHEST && !cell.looted) {
             cell.looted = true;
             d.chestsOpened++;
-            var g = cellData.reward ? (cellData.reward.gold || 1) : 1;
-            var s = cellData.reward ? (cellData.reward.silver || 200) : 200;
+            var g = cell.reward ? (cell.reward.gold || 1) : 1;
+            var s = cell.reward ? (cell.reward.silver || 200) : 200;
             Sherwood.addResource('gold', g);
             Sherwood.addResource('silver', s);
             return { ok: true, type: 'chest', gold: g, silver: s };
         }
-        
-        if (cellType === this.TILE.CHEST && cellData.looted) {
-            return { ok: true, type: 'move' };
-        }
-        
-        if (cellType === this.TILE.ALTAR && cellData.altar) {
-            cell.type = this.TILE.EMPTY;
-            cell.altar = false;
+        if (cellType === this.TILE.ALTAR && cell.altar) {
+            cell.type = this.TILE.EMPTY; cell.altar = false;
             return { ok: true, type: 'altar' };
         }
-        
-        if (cellType === this.TILE.CAULDRON && cellData.cauldron) {
-            cell.type = this.TILE.EMPTY;
-            cell.cauldron = false;
+        if (cellType === this.TILE.CAULDRON && cell.cauldron) {
+            cell.type = this.TILE.EMPTY; cell.cauldron = false;
             return { ok: true, type: 'cauldron' };
         }
-        
-        if (cellType === this.TILE.POTION && cellData.potion) {
-            cell.type = this.TILE.EMPTY;
-            cell.potion = false;
+        if (cellType === this.TILE.POTION && cell.potion) {
+            cell.type = this.TILE.EMPTY; cell.potion = false;
             return { ok: true, type: 'potion' };
         }
-        
-        if (cellData.exit && cellData.locked) {
-            var allDead = d.monstersKilled >= d.totalMonsters;
-            if (allDead) {
-                cell.locked = false;
-                return { ok: true, type: 'exit' };
+        if (cell.exit) {
+            if (cell.locked) {
+                if (d.monstersKilled >= d.totalMonsters) {
+                    cell.locked = false;
+                    return { ok: true, type: 'exit' };
+                }
+                return { ok: true, type: 'exit_locked' };
             }
-            return { ok: true, type: 'exit_locked' };
-        }
-        
-        if (cellData.exit && !cellData.locked) {
             return { ok: true, type: 'exit' };
         }
-        
         return { ok: true, type: 'move' };
     },
 
@@ -304,6 +252,14 @@ Sherwood.Dungeon = {
             cell.monsterId = null;
             cell.type = this.TILE.EMPTY;
         }
+        // Последний монстр — дропаем сундук на его место
+        if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced) {
+            d.chestPlaced = true;
+            cell.chest = true;
+            cell.type = this.TILE.CHEST;
+            cell.looted = false;
+            cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
+        }
         if (d.monstersKilled >= d.totalMonsters) {
             for (var y = 0; y < d.size; y++) {
                 for (var x = 0; x < d.size; x++) {
@@ -316,25 +272,19 @@ Sherwood.Dungeon = {
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
-        var gold = (d.isBossLevel ? 10 : 3) + d.chestsOpened * 1;
-        var silver = d.monstersKilled * 50 + d.chestsOpened * 25 + 100;
+        var gold = (d.isBossLevel ? 10 : 3) + d.chestsOpened * 2;
+        var silver = d.monstersKilled * 50 + d.chestsOpened * 50 + 100;
         var exp = d.monstersKilled * 30 + d.chestsOpened * 20 + 20;
         Sherwood.addResource('gold', gold);
         Sherwood.addResource('silver', silver);
         Sherwood.addExp(exp);
-
         var prog = this._progress[d.id] || { level: 1 };
-        if (d.level >= prog.level) {
-            prog.level = Math.min(8, d.level + 1);
-        }
+        if (d.level >= prog.level) prog.level = Math.min(8, d.level + 1);
         this._progress[d.id] = prog;
         localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
-
         this._dungeon = null;
         return { gold: gold, silver: silver, exp: exp };
     },
 
-    leave: function() {
-        this._dungeon = null;
-    }
+    leave: function() { this._dungeon = null; }
 };
