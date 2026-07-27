@@ -159,48 +159,27 @@ const SherwoodUI = {
         html += '<div style="position:absolute;left:' + (-scrollX) + 'px;top:' + (-scrollY) + 'px;width:' + gridW + 'px;height:' + gridH + 'px;">';
         for (var y = 0; y < size; y++) {
             for (var x = 0; x < size; x++) {
-                html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'assets/interface/labyrinth_asset.png\');background-size:cover;background-position:center;z-index:0;"></div>';
-            }
-        }
-        for (var y = 0; y < size; y++) {
-            for (var x = 0; x < size; x++) {
-                if (!d.grid[y] || !d.grid[y][x]) continue;
-                if (d.grid[y][x].open) {
-                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + floorBg + '\');background-size:cover;background-position:center;z-index:1;"></div>';
-                }
-            }
-        }
-        for (var y = 0; y < size; y++) {
-            for (var x = 0; x < size; x++) {
-                if (!d.grid[y] || !d.grid[y][x]) continue;
-                if (d.grid[y][x].open) continue;
-                if (visible[y+','+x]) {
-                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,0.3);z-index:2;"></div>';
-                } else {
-                    html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background:rgba(0,0,0,0.75);z-index:2;"></div>';
-                }
-            }
-        }
-        for (var y = 0; y < size; y++) {
-            for (var x = 0; x < size; x++) {
                 if (!d.grid[y] || !d.grid[y][x]) continue;
                 var cell = d.grid[y][x], isPlayer = (x === px && y === py);
-                var content = '', onclick = '';
-                if (cell.open && !isPlayer) {
-                    if (cell.monster) { content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;" onerror="this.style.display=\'none\'">'; }
-                    else if (cell.chest) { content = '<img src="' + (cell.looted ? 'assets/interface/open_chest_first_dungeon.png' : 'assets/interface/locked_chest_first_dungeon.png') + '" style="width:80%;height:80%;object-fit:contain;">'; }
-                    else if (cell.altar) { content = '<img src="assets/interface/altar_of_the_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">'; }
-                    else if (cell.cauldron) { content = '<img src="assets/interface/cauldron_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">'; }
-                    else if (cell.potion) { content = '<img src="assets/interface/resource_life_potion.png" style="width:70%;height:70%;object-fit:contain;">'; }
-                    else if (cell.exit) { content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">'; }
-                }
+                var bgStyle = 'background-image:url(\'assets/interface/labyrinth_asset.png\');background-size:cover;';
+                if (cell.open) bgStyle = 'background-image:url(\'' + floorBg + '\');background-size:cover;';
+                var opacity = '';
+                if (!cell.open && visible[y+','+x]) opacity = 'background:rgba(0,0,0,0.3);';
+                else if (!cell.open && !visible[y+','+x]) opacity = 'background:rgba(0,0,0,0.75);';
+                var onclick = '';
                 if (!isPlayer) {
                     var clickDist = Math.abs(px - x) + Math.abs(py - y);
-                    if (cell.open) {
-                        onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
-                    } else if (clickDist === 1 && visible[y+','+x] && cell.type !== 0) {
-                        onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
-                    }
+                    if (cell.open && clickDist === 1) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
+                    else if (clickDist === 1 && visible[y+','+x] && cell.type !== 0) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
+                }
+                var content = '';
+                if (cell.open && !isPlayer) {
+                    if (cell.monster) content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;">';
+                    else if (cell.chest) content = '<img src="' + (cell.looted ? 'assets/interface/open_chest_first_dungeon.png' : 'assets/interface/locked_chest_first_dungeon.png') + '" style="width:80%;height:80%;object-fit:contain;">';
+                    else if (cell.altar) content = '<img src="assets/interface/altar_of_the_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
+                    else if (cell.cauldron) content = '<img src="assets/interface/cauldron_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
+                    else if (cell.potion) content = '<img src="assets/interface/resource_life_potion.png" style="width:70%;height:70%;object-fit:contain;">';
+                    else if (cell.exit) content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
                 }
                 if (isPlayer) {
                     var directionMap = { up: 0, down: 1, left: 2, right: 3 };
@@ -208,14 +187,13 @@ const SherwoodUI = {
                     var frameX = (d.heroFrame || 0) * 33.333;
                     content = '<div class="hero-sprite" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;background-position:' + frameX + '% ' + (directionIndex * 33.333) + '%;"></div>';
                 }
-                if (content || isPlayer) { html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:3;cursor:pointer;">' + (content||'') + '</div>'; }
+                html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;' + bgStyle + opacity + 'display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:1;cursor:' + (onclick ? 'pointer' : 'default') + ';">' + (content||'') + '</div>';
             }
         }
         html += '</div></div>';
         var hp = Sherwood.getPlayer().stats.hp || 0;
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">❤️' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">👹 ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | 🔒 ' + (d.monstersKilled >= d.totalMonsters ? 'Выход открыт' : 'Убито мало') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
     },
-
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
