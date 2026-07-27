@@ -143,7 +143,7 @@ Sherwood.Dungeon = {
                 grid[cell.y][cell.x][st.prop] = true;
                 if (st.type === this.TILE.CHEST) {
                     grid[cell.y][cell.x].looted = false;
-                    grid[cell.y][cell.x].reward = { gold: 20 + Math.floor(Math.random() * 60), silver: 80 + Math.floor(Math.random() * 300) };
+                    grid[cell.y][cell.x].reward = { gold: 1 + Math.floor(Math.random() * 3), silver: 200 + Math.floor(Math.random() * 400) };
                 }
             }
         }
@@ -179,8 +179,6 @@ Sherwood.Dungeon = {
                 grid[bossCell.y][bossCell.x].isBoss = true;
             }
         }
-
-        this._revealArea(grid, size, spawnX, spawnY, 2);
 
         this._dungeon = {
             id: dungeonId,
@@ -243,7 +241,6 @@ Sherwood.Dungeon = {
         
         d.px = tx;
         d.py = ty;
-        this._revealArea(d.grid, d.size, tx, ty, 2);
         
         if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
             return { ok: true, type: 'battle', monsterId: cellData.monsterId, boss: cellData.isBoss };
@@ -252,8 +249,8 @@ Sherwood.Dungeon = {
         if (cellType === this.TILE.CHEST && !cellData.looted) {
             cell.looted = true;
             d.chestsOpened++;
-            var g = cellData.reward ? (cellData.reward.gold || 20 + Math.floor(Math.random() * 60)) : (20 + Math.floor(Math.random() * 60));
-            var s = cellData.reward ? (cellData.reward.silver || 80 + Math.floor(Math.random() * 300)) : (80 + Math.floor(Math.random() * 300));
+            var g = cellData.reward ? (cellData.reward.gold || 1) : 1;
+            var s = cellData.reward ? (cellData.reward.silver || 200) : 200;
             Sherwood.addResource('gold', g);
             Sherwood.addResource('silver', s);
             return { ok: true, type: 'chest', gold: g, silver: s };
@@ -299,13 +296,18 @@ Sherwood.Dungeon = {
 
     killMonster: function() {
         if (!this._dungeon) return;
-        this._dungeon.monstersKilled++;
-        if (this._dungeon.monstersKilled >= this._dungeon.totalMonsters) {
-            for (var y = 0; y < this._dungeon.size; y++) {
-                for (var x = 0; x < this._dungeon.size; x++) {
-                    if (this._dungeon.grid[y][x].exit) {
-                        this._dungeon.grid[y][x].locked = false;
-                    }
+        var d = this._dungeon;
+        d.monstersKilled++;
+        var cell = d.grid[d.py][d.px];
+        if (cell && cell.monster) {
+            cell.monster = false;
+            cell.monsterId = null;
+            cell.type = this.TILE.EMPTY;
+        }
+        if (d.monstersKilled >= d.totalMonsters) {
+            for (var y = 0; y < d.size; y++) {
+                for (var x = 0; x < d.size; x++) {
+                    if (d.grid[y][x].exit) d.grid[y][x].locked = false;
                 }
             }
         }
@@ -314,10 +316,11 @@ Sherwood.Dungeon = {
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
-        var gold = d.monstersKilled * 35 + d.chestsOpened * 25 + 30;
+        var gold = (d.isBossLevel ? 10 : 3) + d.chestsOpened * 1;
+        var silver = d.monstersKilled * 50 + d.chestsOpened * 25 + 100;
         var exp = d.monstersKilled * 30 + d.chestsOpened * 20 + 20;
         Sherwood.addResource('gold', gold);
-        Sherwood.addResource('silver', gold * 2);
+        Sherwood.addResource('silver', silver);
         Sherwood.addExp(exp);
 
         var prog = this._progress[d.id] || { level: 1 };
@@ -328,7 +331,7 @@ Sherwood.Dungeon = {
         localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
 
         this._dungeon = null;
-        return { gold: gold, exp: exp };
+        return { gold: gold, silver: silver, exp: exp };
     },
 
     leave: function() {
