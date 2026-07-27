@@ -156,15 +156,15 @@ const SherwoodUI = {
     html += '<div style="position:absolute;left:' + (-scrollX) + 'px;top:' + (-scrollY) + 'px;width:' + gridW + 'px;height:' + gridH + 'px;">';
     for (var y = 0; y < size; y++) { for (var x = 0; x < size; x++) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(assets/interface/labyrinth_asset.png);background-size:cover;background-position:center;z-index:0;"></div>'; } }
     for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-            if (!d.grid[y] || !d.grid[y][x]) continue;
-            var cell = d.grid[y][x], isPlayer = (x === px && y === py);
-            if (cell.open) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(' + floorBg + ');background-size:cover;background-position:center;z-index:1;"></div>'; }
-            var onclick = '';
-            if (!isPlayer) {
-                var clickDist = Math.abs(px - x) + Math.abs(py - y);
-                if (cell.open && clickDist === 1) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
-                else if (!cell.open && clickDist === 1 && cell.type !== 0) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
+    for (var x = 0; x < size; x++) {
+    if (!d.grid[y] || !d.grid[y][x]) continue;
+    var cell = d.grid[y][x], isPlayer = (x === px && y === py);
+    if (cell.open) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(' + floorBg + ');background-size:cover;background-position:center;z-index:1;"></div>'; }
+    var onclick = '';
+    if (!isPlayer) {
+    var clickDist = Math.abs(px - x) + Math.abs(py - y);
+    if (cell.open && clickDist === 1) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
+    else if (!cell.open && clickDist === 1 && cell.type !== 0) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
             }
             var content = '';
             if (!isPlayer && cell.open) {
@@ -190,7 +190,7 @@ const SherwoodUI = {
     html += '</div></div>';
     var hp = Sherwood.getPlayer().stats.hp || 0;
     if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ur.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">HP ' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">Monsters ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | ' + (d.monstersKilled >= d.totalMonsters ? 'Exit open' : 'Kill more') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
-},
+    },
 
 _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
@@ -271,7 +271,7 @@ _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this
 _showCombatScreen: function() { 
     var b = Sherwood.Combat.getState(); 
     if (!b) { this._renderDungeon(); return; } 
-        this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, 'dungeon', (b.isBoss ? 'BOSS: ' : '') + b.enemyName, '', 'SherwoodUI._combatAttack()', 'SherwoodUI._combatFlee()); 
+    this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, "dungeon", (b.isBoss ? "BOSS: " : "") + b.enemyName, "", "SherwoodUI._combatAttack()", "SherwoodUI._combatFlee"); 
 },
 _combatAttack: function() { this._playHitSounds(); this._handleCombat(Sherwood.Combat.attack()); },
 _combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this._stopBattleMusic(); this._leaveDungeon(); return; } if (r.lose) { this._showDialog('💀 Поражение...', '#f44336'); this._stopBattleMusic(); var self = this; setTimeout(function() { self._leaveDungeon(); }, 1200); return; } this._showDialog('❌ Побег не удался! Враг: -' + r.damage, '#ff9800'); this._showCombatScreen(); },
