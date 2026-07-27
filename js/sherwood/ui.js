@@ -154,32 +154,18 @@ const SherwoodUI = {
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridH + 'px;background-color:#000;overflow:hidden;">';
     html += '<div style="position:absolute;left:' + (-scrollX) + 'px;top:' + (-scrollY) + 'px;width:' + gridW + 'px;height:' + gridH + 'px;">';
-    
-    for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-            html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'assets/interface/labyrinth_asset.png\');background-size:cover;background-position:center;z-index:0;"></div>';
-        }
-    }
-    
+    for (var y = 0; y < size; y++) { for (var x = 0; x < size; x++) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(assets/interface/labyrinth_asset.png);background-size:cover;background-position:center;z-index:0;"></div>'; } }
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
             var cell = d.grid[y][x], isPlayer = (x === px && y === py);
-            
-            if (cell.open) {
-                html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(\'' + floorBg + '\');background-size:cover;background-position:center;z-index:1;"></div>';
-            }
-            
+            if (cell.open) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(' + floorBg + ');background-size:cover;background-position:center;z-index:1;"></div>'; }
             var onclick = '';
             if (!isPlayer) {
                 var clickDist = Math.abs(px - x) + Math.abs(py - y);
-                if (cell.open && clickDist === 1) {
-                    onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
-                } else if (!cell.open && clickDist === 1 && cell.type !== 0) {
-                    onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
-                }
+                if (cell.open && clickDist === 1) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
+                else if (!cell.open && clickDist === 1 && cell.type !== 0) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
             }
-            
             var content = '';
             if (!isPlayer && cell.open) {
                 if (cell.monster) content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;">';
@@ -189,27 +175,18 @@ const SherwoodUI = {
                 else if (cell.potion) content = '<img src="assets/interface/resource_life_potion.png" style="width:70%;height:70%;object-fit:contain;">';
                 else if (cell.exit) content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
             }
-            
             if (isPlayer) {
                 if (d.isMoving) {
-                    var videoFile = 'step_down.webm';
-                    if (d.heroDirection === 'up') videoFile = 'step_up.webm';
-                    else if (d.heroDirection === 'left') videoFile = 'step_left.webm';
-                    else if (d.heroDirection === 'right') videoFile = 'step_right.webm';
-                    content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;"><source src="assets/animation/' + videoFile + '" type="video/webm"></video>';
+                    var vf = 'step_down.webm'; if (d.heroDirection === 'up') vf = 'step_up.webm'; else if (d.heroDirection === 'left') vf = 'step_left.webm'; else if (d.heroDirection === 'right') vf = 'step_right.webm';
+                    content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;"><source src="assets/animation/' + vf + '" type="video/webm"></video>';
                 } else {
-                    var heroImg = 'assets/animation/step_down.png';
-                    if (d.heroDirection === 'up') heroImg = 'assets/animation/step_up.png';
-                    else if (d.heroDirection === 'left') heroImg = 'assets/animation/step_left.png';
-                    else if (d.heroDirection === 'right') heroImg = 'assets/animation/step_right.png';
-                    content = '<img src="' + heroImg + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;">';
+                    var hi = 'assets/animation/step_down.png'; if (d.heroDirection === 'up') hi = 'assets/animation/step_up.png'; else if (d.heroDirection === 'left') hi = 'assets/animation/step_left.png'; else if (d.heroDirection === 'right') hi = 'assets/animation/step_right.png';
+                    content = '<img src="' + hi + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;">';
                 }
             }
-            
             html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:2;cursor:' + (onclick ? 'pointer' : 'default') + ';">' + (content||'') + '</div>';
         }
     }
-    
     html += '</div></div>';
     var hp = Sherwood.getPlayer().stats.hp || 0;
     if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ur.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">HP ' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">Monsters ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | ' + (d.monstersKilled >= d.totalMonsters ? 'Exit open' : 'Kill more') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
