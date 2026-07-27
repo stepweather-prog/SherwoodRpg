@@ -271,7 +271,7 @@ _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this
 _showCombatScreen: function() { 
     var b = Sherwood.Combat.getState(); 
     if (!b) { this._renderDungeon(); return; } 
-    this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, 'dungeon', (b.isBoss ? '👑 БОСС: ' : '') + b.enemyName, '', 'SherwoodUI._combatAttack()', 'SherwoodUI._combatFlee()); 
+        this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp }, 'dungeon', (b.isBoss ? 'BOSS: ' : '') + b.enemyName, '', 'SherwoodUI._combatAttack()', 'SherwoodUI._combatFlee()); 
 },
 _combatAttack: function() { this._playHitSounds(); this._handleCombat(Sherwood.Combat.attack()); },
 _combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this._stopBattleMusic(); this._leaveDungeon(); return; } if (r.lose) { this._showDialog('💀 Поражение...', '#f44336'); this._stopBattleMusic(); var self = this; setTimeout(function() { self._leaveDungeon(); }, 1200); return; } this._showDialog('❌ Побег не удался! Враг: -' + r.damage, '#ff9800'); this._showCombatScreen(); },
