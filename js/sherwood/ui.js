@@ -189,26 +189,23 @@ const SherwoodUI = {
                     else if (cell.exit) content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
                 }
                 
-                if (isPlayer) {
-    if (d.isMoving) {
-        var videoFile = 'step_down.mp4';
-        if (d.heroDirection === 'up') videoFile = 'step_up.mp4';
-        else if (d.heroDirection === 'left') videoFile = 'step_left.mp4';
-        else if (d.heroDirection === 'right') videoFile = 'step_right.mp4';
-        
-        content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;">' +
-            '<source src="assets/animation/' + videoFile + '" type="video/mp4">' +
-        '</video>';
-    } else {
-        var heroImg = 'assets/animation/step_down.png';
-        if (d.heroDirection === 'up') heroImg = 'assets/animation/step_up.png';
-        else if (d.heroDirection === 'left') heroImg = 'assets/animation/step_left.png';
-        else if (d.heroDirection === 'right') heroImg = 'assets/animation/step_right.png';
-        
-        content = '<img src="' + heroImg + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;">';
-    }
-}
-                
+                if (d.isMoving) {
+    var videoFile = 'step_down.webm';
+    if (d.heroDirection === 'up') videoFile = 'step_up.webm';
+    else if (d.heroDirection === 'left') videoFile = 'step_left.webm';
+    else if (d.heroDirection === 'right') videoFile = 'step_right.webm';
+    
+    content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;">' +
+        '<source src="assets/animation/' + videoFile + '" type="video/webm">' +
+    '</video>';
+} else {
+    var heroImg = 'assets/animation/step_down.png';
+    if (d.heroDirection === 'up') heroImg = 'assets/animation/step_up.png';
+    else if (d.heroDirection === 'left') heroImg = 'assets/animation/step_left.png';
+    else if (d.heroDirection === 'right') heroImg = 'assets/animation/step_right.png';
+    
+    content = '<img src="' + heroImg + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;">';
+}     
                 html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:2;cursor:' + (onclick ? 'pointer' : 'default') + ';">' + (content||'') + '</div>';
             }
         }
@@ -226,6 +223,8 @@ const SherwoodUI = {
     else if (tx < d.px) d.heroDirection = 'left';
     else if (ty > d.py) d.heroDirection = 'down';
     else if (ty < d.py) d.heroDirection = 'up';
+    
+    this._playSound('steps');
     
     d.isMoving = true;
     this._renderDungeon();
