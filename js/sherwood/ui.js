@@ -190,14 +190,23 @@ const SherwoodUI = {
                 }
                 
                 if (isPlayer) {
-    var videoFile = 'step_down.mp4';
-    if (d.heroDirection === 'up') videoFile = 'step_up.mp4';
-    else if (d.heroDirection === 'left') videoFile = 'step_left.mp4';
-    else if (d.heroDirection === 'right') videoFile = 'step_right.mp4';
-    
-    content = '<video autoplay loop muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;">' +
-        '<source src="assets/animation/' + videoFile + '" type="video/mp4">' +
-    '</video>';
+    if (d.isMoving) {
+        var videoFile = 'step_down.mp4';
+        if (d.heroDirection === 'up') videoFile = 'step_up.mp4';
+        else if (d.heroDirection === 'left') videoFile = 'step_left.mp4';
+        else if (d.heroDirection === 'right') videoFile = 'step_right.mp4';
+        
+        content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;">' +
+            '<source src="assets/animation/' + videoFile + '" type="video/mp4">' +
+        '</video>';
+    } else {
+        var heroImg = 'assets/animation/step_down.png';
+        if (d.heroDirection === 'up') heroImg = 'assets/animation/step_up.png';
+        else if (d.heroDirection === 'left') heroImg = 'assets/animation/step_left.png';
+        else if (d.heroDirection === 'right') heroImg = 'assets/animation/step_right.png';
+        
+        content = '<img src="' + heroImg + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;">';
+    }
 }
                 
                 html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:2;cursor:' + (onclick ? 'pointer' : 'default') + ';">' + (content||'') + '</div>';
@@ -213,30 +222,24 @@ const SherwoodUI = {
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     if (dist !== 1) return;
     
-    // Определяем направление и запускаем видео-анимацию
-    var videoFile = '';
-    if (tx > d.px) { d.heroDirection = 'right'; videoFile = 'step_right.mp4'; }
-    else if (tx < d.px) { d.heroDirection = 'left'; videoFile = 'step_left.mp4'; }
-    else if (ty > d.py) { d.heroDirection = 'down'; videoFile = 'step_down.mp4'; }
-    else if (ty < d.py) { d.heroDirection = 'up'; videoFile = 'step_up.mp4'; }
+    if (tx > d.px) d.heroDirection = 'right';
+    else if (tx < d.px) d.heroDirection = 'left';
+    else if (ty > d.py) d.heroDirection = 'down';
+    else if (ty < d.py) d.heroDirection = 'up';
     
-    // Проигрываем видео со звуком шагов (скрытое)
-    var video = document.getElementById('step-video');
-    if (!video) {
-        video = document.createElement('video');
-        video.id = 'step-video';
-        video.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;';
-        document.body.appendChild(video);
-    }
-    video.src = 'assets/animation/' + videoFile;
-    video.play().catch(function(){});
-    
-    d.heroFrame = 1;
-    var res = Sherwood.Dungeon.move(tx, ty);
-    if (!res || !res.ok) { d.heroFrame = 0; this._renderDungeon(); return; }
+    d.isMoving = true;
     this._renderDungeon();
-    setTimeout(function() { d.heroFrame = 0; SherwoodUI._renderDungeon(); }, 150);
+    
+    var self = this;
+    setTimeout(function() {
+        d.isMoving = false;
+        self._renderDungeon();
+    }, 400);
+    
+    var res = Sherwood.Dungeon.move(tx, ty);
+    if (!res || !res.ok) { d.isMoving = false; this._renderDungeon(); return; }
     this.updateDisplay();
+    
     if (res.type === 'battle') { this._stopMusic(); this._playSound('trap'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); return; }
     if (res.type === 'chest') { this._playSound('chest_open'); }
     if (res.type === 'altar') { this._playSound('altar'); var p = Sherwood.getPlayer(); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + Math.floor(p.stats.maxHp * 0.3)); }
