@@ -180,20 +180,20 @@ Sherwood.Dungeon = {
             }
         }
 
-        this._dungeon = {
-            id: dungeonId,
-            level: level,
-            size: size,
-            grid: grid,
-            px: spawnX,
-            py: spawnY,
-            monstersKilled: 0,
-            totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
-            chestsOpened: 0,
-            isBossLevel: isBossLevel,
-            heroDirection: 'down',
-            heroFrame: 0
-        };
+       this._dungeon = {
+    id: dungeonId,
+    level: level,
+    size: size,
+    grid: grid,
+    px: spawnX,
+    py: spawnY,
+    monstersKilled: 0,
+    totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
+    chestsOpened: 0,
+    isBossLevel: isBossLevel,
+    heroDirection: 'down',
+    isMoving: false
+};
         return this._dungeon;
     },
 
