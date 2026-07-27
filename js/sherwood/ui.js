@@ -149,14 +149,9 @@ const SherwoodUI = {
         var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === 'forest' ? '1' : d.id === 'swamp' ? '2' : '3') + ".png";
         var px = d.px, py = d.py;
         var visible = {};
-        for (var dy = -2; dy <= 2; dy++) {
-            for (var dx = -2; dx <= 2; dx++) {
-                var nx = px + dx, ny = py + dy;
-                if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-                    if (Math.abs(dx) + Math.abs(dy) <= 2) visible[ny + ',' + nx] = true;
-                }
-            }
-        }
+        visible[py+','+px] = true;
+        var adj = [[0,-1],[0,1],[-1,0],[1,0]];
+        for (var i = 0; i < adj.length; i++) { var nx = px+adj[i][0], ny = py+adj[i][1]; if (nx>=0 && nx<size && ny>=0 && ny<size) visible[ny+','+nx] = true; }
         var gridW = cs * size, gridH = cs * size;
         var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
         var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
