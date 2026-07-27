@@ -95,7 +95,7 @@ Sherwood.Bag = {
         if (item.id) {
             for (var i = 0; i < this._inventory.length; i++) {
                 var existing = this._inventory[i];
-                if (existing.id === item.id && existing.grade === item.grade && (existing.quantity || 1) < maxStack) {
+                if (existing.id === item.id && existing.name === item.name && (existing.quantity || 1) < maxStack) {
                     var space = maxStack - (existing.quantity || 1);
                     var add = Math.min(quantity, space);
                     existing.quantity = (existing.quantity || 1) + add;
@@ -236,15 +236,15 @@ Sherwood.Bag = {
         if (loot.skins) {
             for (var i = 0; i < loot.skins; i++) {
                 this.addItem({
-                    id: 'skin_of_the_sherwood_creature',
-                    name: 'Кожа шервудской твари',
-                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
-                    grade: 'common',
-                    type: 'resource',
-                    quantity: 1,
-                    maxStack: 25,
-                    sellPrice: 5
-                });
+    id: 'skin_of_the_sherwood_creature',
+    name: 'Кожа шервудской твари',
+    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+    grade: 'common',
+    type: 'resource',
+    quantity: 1,
+    maxStack: 50,
+    sellPrice: 5
+});
             }
         }
     },
