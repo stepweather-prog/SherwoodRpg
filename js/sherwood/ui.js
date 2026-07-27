@@ -143,54 +143,58 @@ const SherwoodUI = {
 
     _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
-    var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: 'dungeon1', ext: '.jpeg' };
-    this.container.style.background = "url('" + dd.bg + "') center/cover no-repeat";
-    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
+    var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: "dungeon1", ext: ".jpeg" };
+    this.container.style.background = "url(" + dd.bg + ") center/cover no-repeat";
+    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = "none"; }); }); } catch(e) {}
     var size = d.size, cs = Math.floor(Math.min(this.container.clientWidth, this.container.clientHeight - 80) / 5);
-    var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === 'forest' ? '1' : d.id === 'swamp' ? '2' : '3') + ".png";
+    var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === "forest" ? "1" : d.id === "swamp" ? "2" : "3") + ".png";
     var px = d.px, py = d.py;
     var gridW = cs * size, gridH = cs * size;
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
-    var html = '<div style="position:relative;width:' + gridW + 'px;height:' + gridH + 'px;background-color:#000;overflow:hidden;">';
-    html += '<div style="position:absolute;left:' + (-scrollX) + 'px;top:' + (-scrollY) + 'px;width:' + gridW + 'px;height:' + gridH + 'px;">';
-    for (var y = 0; y < size; y++) { for (var x = 0; x < size; x++) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(assets/interface/labyrinth_asset.png);background-size:cover;background-position:center;z-index:0;"></div>'; } }
+    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-color:#000;overflow:hidden;'>";
+    html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;'>";
+    for (var y = 0; y < size; y++) { for (var x = 0; x < size; x++) { html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:cover;background-position:center;z-index:0;'></div>"; } }
     for (var y = 0; y < size; y++) {
-    for (var x = 0; x < size; x++) {
-    if (!d.grid[y] || !d.grid[y][x]) continue;
-    var cell = d.grid[y][x], isPlayer = (x === px && y === py);
-    if (cell.open) { html += '<div style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;background-image:url(' + floorBg + ');background-size:cover;background-position:center;z-index:1;"></div>'; }
-    var onclick = '';
-    if (!isPlayer) {
-    var clickDist = Math.abs(px - x) + Math.abs(py - y);
-    if (cell.open && clickDist === 1) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
-    else if (!cell.open && clickDist === 1 && cell.type !== 0) onclick = 'onclick="SherwoodUI._dungeonMove(' + x + ',' + y + ')"';
+        for (var x = 0; x < size; x++) {
+            if (!d.grid[y] || !d.grid[y][x]) continue;
+            var cell = d.grid[y][x], isPlayer = (x === px && y === py);
+            if (cell.open) { html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(" + floorBg + ");background-size:cover;background-position:center;z-index:1;'></div>"; }
+            var onclick = "", glow = "";
+            if (!isPlayer) {
+                var clickDist = Math.abs(px - x) + Math.abs(py - y);
+                if (cell.open) {
+                    onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
+                } else if (clickDist === 1 && cell.type !== 0) {
+                    onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
+                    glow = "box-shadow:inset 0 0 12px rgba(255,255,200,0.5);";
+                }
             }
-            var content = '';
+            var content = "";
             if (!isPlayer && cell.open) {
-                if (cell.monster) content = '<img src="assets/all_beasts/' + (cell.monsterId || 'image (1).png') + '" style="width:90%;height:90%;object-fit:contain;">';
-                else if (cell.chest) content = '<img src="' + (cell.looted ? 'assets/interface/open_chest_first_dungeon.png' : 'assets/interface/locked_chest_first_dungeon.png') + '" style="width:80%;height:80%;object-fit:contain;">';
-                else if (cell.altar) content = '<img src="assets/interface/altar_of_the_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
-                else if (cell.cauldron) content = '<img src="assets/interface/cauldron_first_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
-                else if (cell.potion) content = '<img src="assets/interface/resource_life_potion.png" style="width:70%;height:70%;object-fit:contain;">';
-                else if (cell.exit) content = cell.locked ? '<img src="assets/interface/closed_level_lock_icon.png" style="width:80%;height:80%;object-fit:contain;">' : '<img src="assets/interface/exit_completion_dungeon.png" style="width:80%;height:80%;object-fit:contain;">';
+                if (cell.monster) content = "<img src='assets/all_beasts/" + (cell.monsterId || "image (1).png") + "' style='width:90%;height:90%;object-fit:contain;'>";
+                else if (cell.chest) content = "<img src='" + (cell.looted ? "assets/interface/open_chest_first_dungeon.png" : "assets/interface/locked_chest_first_dungeon.png") + "' style='width:80%;height:80%;object-fit:contain;'>";
+                else if (cell.altar) content = "<img src='assets/interface/altar_of_the_first_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
+                else if (cell.cauldron) content = "<img src='assets/interface/cauldron_first_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
+                else if (cell.potion) content = "<img src='assets/interface/resource_life_potion.png' style='width:70%;height:70%;object-fit:contain;'>";
+                else if (cell.exit) content = cell.locked ? "<img src='assets/interface/closed_level_lock_icon.png' style='width:80%;height:80%;object-fit:contain;'>" : "<img src='assets/interface/exit_completion_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
             }
             if (isPlayer) {
                 if (d.isMoving) {
-                    var vf = 'step_down.webm'; if (d.heroDirection === 'up') vf = 'step_up.webm'; else if (d.heroDirection === 'left') vf = 'step_left.webm'; else if (d.heroDirection === 'right') vf = 'step_right.webm';
-                    content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;"><source src="assets/animation/' + vf + '" type="video/webm"></video>';
+                    var vf = "step_down.webm"; if (d.heroDirection === "up") vf = "step_up.webm"; else if (d.heroDirection === "left") vf = "step_left.webm"; else if (d.heroDirection === "right") vf = "step_right.webm";
+                    content = "<video autoplay muted playsinline style='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;'><source src='assets/animation/" + vf + "' type='video/webm'></video>";
                 } else {
-                    var hi = 'assets/animation/step_down.png'; if (d.heroDirection === 'up') hi = 'assets/animation/step_up.png'; else if (d.heroDirection === 'left') hi = 'assets/animation/step_left.png'; else if (d.heroDirection === 'right') hi = 'assets/animation/step_right.png';
-                    content = '<img src="' + hi + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;">';
+                    var hi = "assets/animation/step_down.png"; if (d.heroDirection === "up") hi = "assets/animation/step_up.png"; else if (d.heroDirection === "left") hi = "assets/animation/step_left.png"; else if (d.heroDirection === "right") hi = "assets/animation/step_right.png";
+                    content = "<img src='" + hi + "' style='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;'>";
                 }
             }
-            html += '<div ' + onclick + ' style="position:absolute;left:' + (x*cs) + 'px;top:' + (y*cs) + 'px;width:' + cs + 'px;height:' + cs + 'px;display:flex;align-items:center;justify-content:center;font-size:' + (cs*0.35) + 'px;z-index:2;cursor:' + (onclick ? 'pointer' : 'default') + ';">' + (content||'') + '</div>';
+            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:2;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
         }
     }
-    html += '</div></div>';
+    html += "</div></div>";
     var hp = Sherwood.getPlayer().stats.hp || 0;
-    if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ur.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">HP ' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">Monsters ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | ' + (d.monstersKilled >= d.totalMonsters ? 'Exit open' : 'Kill more') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
-    },
+    if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'><div style='padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='color:#4caf50;font-size:0.85em;'>HP " + hp + "</div></div><div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div><div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
+},
 
 _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
@@ -237,17 +241,17 @@ _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this
     h += '<div style="position:relative;width:300px;height:80px;margin:4px auto;">';
 h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
 h += '<div style="position:absolute;top:12px;left:12px;right:12px;bottom:12px;overflow:hidden;z-index:0;">';
-h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left center/100% 100% no-repeat;height:150%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
+h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left center/100% 100% no-repeat;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
 h += '</div>';
 h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
     h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;"></div>';
     h += '<button onclick="' + onAttack + '" style="margin:6px auto;background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;display:block;"></button>';
-    h += '<div style="position:relative;width:300px;height:155px;margin:4px auto;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:relative;width:300px;height:80px;margin:4px auto;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
     h += '<div style="position:absolute;top:10px;left:14px;right:14px;bottom:10px;background:#1a0000;border-radius:4px;overflow:hidden;z-index:0;">';
-    h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:150%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
+    h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
     h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">ATK ' + p.stats.attack + '</span> <span style="color:#2196f3;">DEF ' + p.stats.defense + '</span> <span style="color:#ff9800;">AGI ' + p.stats.agility + '</span><img src="assets/hero_skins/skin_1_basic.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
