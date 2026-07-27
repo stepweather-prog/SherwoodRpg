@@ -196,9 +196,7 @@ const SherwoodUI = {
                     if (d.heroDirection === 'up') videoFile = 'step_up.webm';
                     else if (d.heroDirection === 'left') videoFile = 'step_left.webm';
                     else if (d.heroDirection === 'right') videoFile = 'step_right.webm';
-                    content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;">' +
-                        '<source src="assets/animation/' + videoFile + '" type="video/webm">' +
-                    '</video>';
+                    content = '<video autoplay muted playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:4;"><source src="assets/animation/' + videoFile + '" type="video/webm"></video>';
                 } else {
                     var heroImg = 'assets/animation/step_down.png';
                     if (d.heroDirection === 'up') heroImg = 'assets/animation/step_up.png';
@@ -214,9 +212,10 @@ const SherwoodUI = {
     
     html += '</div></div>';
     var hp = Sherwood.getPlayer().stats.hp || 0;
-        if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ур.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">HP ' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">Monsters ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | ' + (d.monstersKilled >= d.totalMonsters ? 'Exit open' : 'Kill more') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
+    if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;"><div style="padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;"><button onclick="SherwoodUI._leaveDungeon()" style="background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><div style="color:#70a0e0;font-weight:bold;font-size:0.85em;">' + (d.id||'') + ' Ur.' + (d.level||1) + '</div><div style="color:#4caf50;font-size:0.85em;">HP ' + hp + '</div></div><div style="background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;"><span style="font-size:10px;color:#aaa;">Monsters ' + (d.monstersKilled||0) + '/' + (d.totalMonsters||0) + ' | ' + (d.monstersKilled >= d.totalMonsters ? 'Exit open' : 'Kill more') + '</span></div><div style="flex:1;overflow:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
 },
-    _dungeonMove: function(tx, ty) {
+
+_dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     if (dist !== 1) return;
@@ -247,12 +246,12 @@ const SherwoodUI = {
     if (res.type === 'cauldron') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + Math.floor(p.stats.maxHp * 0.2)); }
     if (res.type === 'potion') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); }
     if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); this.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('forest_ambient'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
-    if (res.type === 'exit_locked') { this._showNotification('🔒 Убейте всех монстров!'); }
+    if (res.type === 'exit_locked') { this._showNotification('Locked! Kill all monsters!'); }
 },
 
-        _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('forest_ambient'); this.showDungeon(); },
+_leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('forest_ambient'); this.showDungeon(); },
 
-    // ========== БОЙ (ЕДИНЫЙ) ==========
+// ========== БОЙ (ЕДИНЫЙ) ==========
     _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
     var e = enemyData, p = Sherwood.getPlayer();
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
