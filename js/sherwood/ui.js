@@ -632,36 +632,33 @@ _handleCombat: function(r) {
         );
     },
     _arenaAttack: function() {
-        this._playHitSounds();
-        var r = Sherwood.Arena.arenaAttack();
-        var log = document.getElementById('arena-log');
-        if (!r) {
-            if (log) log.textContent = '❌ Ошибка боя';
-            return;
-        }
-        if (r.win) {
-            this._showDialog('🏆 Победа! +' + (r.rewards ? r.rewards.exp : 0) + 'XP', '#ffd700');
-            this._stopBattleMusic();
-            this.updateDisplay();
+    this._playHitSounds();
+    var r = Sherwood.Arena.arenaAttack();
+    var log = document.getElementById("arena-log");
+    if (!r) { if (log) log.textContent = "Error"; return; }
+    if (r.win) {
+        this._showDialog("Win! +" + (r.rewards ? r.rewards.exp : 0) + "XP", "#ffd700");
+        this._stopBattleMusic();
+        SherwoodUI.updateDisplay();
+        var self = this;
+        setTimeout(function() { self._playMusic("main_theme"); self.arena(); }, 1500);
+    } else if (r.win === false) {
+        this._showDialog("Lose", "#f44336");
+        this._stopBattleMusic();
+        var self = this;
+        setTimeout(function() { self._playMusic("main_theme"); self.arena(); }, 1500);
+    } else {
+        this._hitEnemyCard();
+        this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
+        this._showDialog((r.crit ? "CRIT " : "") + "Dmg: " + r.playerDamage, r.crit ? "#ff6a00" : "#fff");
+        if (r.opponentDamage) {
             var self = this;
-            setTimeout(function() { self._playMusic('forest_ambient'); self.arena(); }, 1500);
-        } else if (r.win === false) {
-            this._showDialog('💀 Поражение', '#f44336');
-            this._stopBattleMusic();
-            var self = this;
-            setTimeout(function() { self._playMusic('forest_ambient'); self.arena(); }, 1500);
-        } else {
-            this._hitEnemyCard();
-            this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-            this._showDialog((r.crit ? '💥 КРИТ! ' : '⚔️ ') + 'Вы нанесли ' + r.playerDamage + ' урона', r.crit ? '#ff6a00' : '#fff');
-            if (r.opponentDamage) {
-                var self = this;
-                setTimeout(function() { self._showDialog('💢 Враг нанёс ' + r.opponentDamage + ' урона', '#f44336'); }, 700);
-            }
-            this.updateDisplay();
-            this._showArenaMatch();
+            setTimeout(function() { self._showDialog("Enemy: " + r.opponentDamage + " dmg", "#f44336"); }, 700);
         }
-    },
+        SherwoodUI.updateDisplay();
+        this._showArenaMatch();
+    }
+},
     _arenaFlee: function() { this._stopBattleMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('forest_ambient'); this.arena(); },
 
     // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
