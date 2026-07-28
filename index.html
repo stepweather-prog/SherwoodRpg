@@ -92,25 +92,17 @@
         .bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
         .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.75em; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.9); background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(201,168,76,0.2); margin-top: 2px; }
         .stat-value.attack { color: #f44336; } .stat-value.defense { color: #2196f3; } .stat-value.agility { color: #ff9800; } .stat-value.hp { color: #4caf50; }
-                .left-buttons, .right-buttons { position: absolute; top: 30%; bottom: 12%; z-index: 10; display: flex; flex-direction: column; justify-content: center; gap: 4px; pointer-events: all; width: 22%; }
-        .left-buttons { left: 1%; }
-        .right-buttons { right: 1%; }
-        .left-buttons .btn, .right-buttons .btn, #top-buttons-bar .btn { 
+        #top-buttons-bar .btn { 
     width: 56px; height: 56px; cursor: pointer; background: none; border: none;
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
-    padding: 2px 0 0 0; overflow: visible; position: relative;
+    padding: 2px 0 0 0; overflow: visible;
 }
-.left-buttons .btn img, .right-buttons .btn img, #top-buttons-bar .btn img { 
-    width: 44px; height: 44px; object-fit: contain; 
-}
-.left-buttons .btn .label, .right-buttons .btn .label, #top-buttons-bar .btn .label { 
-    color: #ffa500; font-size: 7px; font-weight: bold;
+#top-buttons-bar .btn img { width: 42px; height: 42px; object-fit: contain; }
+#top-buttons-bar .btn .label { 
+    color: #ffa500; font-size: 8px; font-weight: bold;
     text-shadow: 0 0 4px #000, 0 0 6px #000;
     text-align: center; line-height: 1; margin-top: 1px;
     max-width: 56px; overflow: hidden; white-space: nowrap;
-}
-#top-buttons-bar {
-    display: flex !important; flex-direction: row !important; gap: 4px; width: 240px;
 }
         .hit-epic-combo { animation: epicShockwave 0.25s cubic-bezier(0.25,1,0.5,1); }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
@@ -146,41 +138,26 @@
         <div class="main-interface" id="mainInterface">
             <div class="top-panel">
                 <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
-                <div class="exp-bar" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 2px;">
-    <img src="assets/interface/hero_experience_scale.png" alt="Опыт" style="width:100%;max-width:240px;height:auto;display:block;object-fit:contain;position:relative;z-index:1;">
-    <div style="position:absolute;top:2px;left:12px;right:12px;bottom:2px;overflow:hidden;z-index:0;">
-        <div id="exp-fill" style="background:url('assets/interface/filling_the_hero\'s_experience_bar.png') left center/100% 100% no-repeat;height:100%;width:0%;transition:width 0.5s ease-out;"></div>
+                <div id="top-buttons-bar" style="position:absolute;top:18%;left:50%;transform:translateX(-50%);z-index:15;display:flex;flex-direction:column;gap:4px;width:440px;align-items:center;">
+    <div style="display:flex;gap:4px;justify-content:center;">
+        <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><span class="label">Квест</span></div>
+        <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><span class="label">Подземка</span></div>
+        <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><span class="label">Рейд</span></div>
+        <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><span class="label">Портал</span></div>
+        <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><span class="label">Арена</span></div>
+        <div class="btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
+        <div class="btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
     </div>
-    <span class="exp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e0c080;font-size:0.75em;text-shadow:0 0 10px rgba(0,0,0,0.9);letter-spacing:1px;white-space:nowrap;width:100%;text-align:center;z-index:2;">
-        <span id="exp-display">0</span> / <span id="exp-max-display">100</span> XP
-    </span>
+    <div style="display:flex;gap:4px;justify-content:center;">
+        <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><span class="label">Таверна</span></div>
+        <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><span class="label">Задания</span></div>
+        <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><span class="label">Сумка</span></div>
+        <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
+        <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
+        <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
+        <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
+    </div>
 </div>
-                <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
-            </div>
-            <div class="bottom-stats"><div class="stat-block"><div class="stat-board"><img src="assets/interface/stone_slab_empty_plate.png" alt=""></div><div class="stat-item"><img src="assets/interface/icon_power.png" alt="Урон"><span class="stat-value attack">0</span></div><div class="stat-item"><img src="assets/interface/icon_defense.png" alt="Защита"><span class="stat-value defense">0</span></div><div class="stat-item"><img src="assets/interface/icon_dexterity.png" alt="Ловкость"><span class="stat-value agility">0</span></div><div class="stat-item"><img src="assets/interface/icon_health.png" alt="Здоровье"><span class="stat-value hp">0</span></div></div></div>
-    <div id="top-buttons-bar" style="position:absolute;top:22%;left:50%;transform:translateX(-50%);z-index:15;display:flex;gap:3px;width:249px;justify-content:center;">
-    <div class="btn" data-action="tavern" style="width:60px;height:60px;"><img src="assets/all_buttons/tavern.png" style="width:100%;height:100%;object-fit:contain;"><span class="label">Таверна</span></div>
-    <div class="btn" data-action="hearth" style="width:60px;height:60px;"><img src="assets/all_buttons/button_hearth.png" style="width:100%;height:100%;object-fit:contain;"><span class="label">Очаг</span></div>
-    <div class="btn" data-action="talents" style="width:60px;height:60px;"><img src="assets/all_buttons/ranger_skills_button.png" style="width:100%;height:100%;object-fit:contain;"><span class="label">Таланты</span></div>
-    <div class="btn" data-action="chat" style="width:60px;height:60px;"><img src="assets/all_buttons/chat_button.png" style="width:100%;height:100%;object-fit:contain;"><span class="label">Чат</span></div>
-</div>
-
-<div class="left-buttons">
-    <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png" alt="Квест"><span class="label">Квест</span></div>
-    <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png" alt="Подземка"><span class="label">Подземка</span></div>
-    <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png" alt="Рейд"><span class="label">Рейд</span></div>
-    <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png" alt="Портал"><span class="label">Портал</span></div>
-    <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png" alt="Арена"><span class="label">Арена</span></div>
-</div>
-
-<div class="right-buttons">
-    <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png" alt="Ежедневные"><span class="label">Ежедневные</span></div>
-    <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png" alt="Сумка"><span class="label">Сумка</span></div>
-    <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png" alt="Рынок"><span class="label">Рынок</span></div>
-    <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png" alt="Профиль"><span class="label">Профиль</span></div>
-    <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png" alt="Настройки"><span class="label">Настройки</span></div>
-</div>
-        </div>
     </div>
     <script src="js/sherwood/core.js"></script>
     <script src="js/sherwood/models.js"></script>
