@@ -300,7 +300,7 @@ Sherwood.Combat = {
                 damageMultiplier: 1.0,
                 cooldown: 5,
                 description: 'Отравляет врага на 3 хода',
-                icon: 'assets/skills/assets/skills/poison_shot_skill.png',
+                icon: 'assets/skills/poison_shot_skill.png',
                 unlocked: false,
                 cost: 250
             },
