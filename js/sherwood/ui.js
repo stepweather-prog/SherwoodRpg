@@ -111,7 +111,7 @@ bindButtons: function() {
         try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
         try { this.container.style.background = ''; } catch(e) {}
-        try { this._stopBattleMusic(); this._playMusic('forest_ambient'); } catch(e) {}
+        try { this._stopBattleMusic(); this._playMusic('main_theme'); } catch(e) {}
         this._previousScreen = null;
         try { this.updateDisplay(); } catch(e) {}
     },
