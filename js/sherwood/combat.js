@@ -201,10 +201,10 @@ Sherwood.Combat = {
                     });
                 } else if (lootRoll < 0.35) {
                     var arrowParts = [
-                        { id: 'branch', name: 'Ветка', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
-                        { id: 'feather', name: 'Перо', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
-                        { id: 'bone', name: 'Кость', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 }
-                    ];
+    { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', sellPrice: 3 },
+    { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', sellPrice: 3 },
+    { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', sellPrice: 3 }
+];
                     var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
                     Sherwood.Bag.addItem({
                         id: part.id, name: part.name, icon: part.icon,
