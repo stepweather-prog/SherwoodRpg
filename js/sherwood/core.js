@@ -558,13 +558,15 @@ Sherwood._recalcStats = function() {
     var baseAgility = Math.min(Math.floor(3 + (p.level - 1) * 0.5 + bag), MAX);
     var baseMaxHp = Math.min(Math.floor(100 + (p.level - 1) * 15 + bh), MAX);
 
+    var hearthBonus = 0;
+    if (p.hearthBonus && p.hearthBonus.active && Date.now() < p.hearthBonus.endTime) hearthBonus = 0.2;
     var skinBonus = this.getActiveSkinBonus();
-    var skinMultiplier = 1 + skinBonus / 100;
+    var totalMultiplier = 1 + skinBonus / 100 + hearthBonus;
 
-    p.stats.attack = Math.min(Math.floor(baseAttack * skinMultiplier), MAX);
-    p.stats.defense = Math.min(Math.floor(baseDefense * skinMultiplier), MAX);
-    p.stats.agility = Math.min(Math.floor(baseAgility * skinMultiplier), MAX);
-    p.stats.maxHp = Math.min(Math.floor(baseMaxHp * skinMultiplier), MAX);
+    p.stats.attack = Math.min(Math.floor(baseAttack * totalMultiplier), MAX);
+    p.stats.defense = Math.min(Math.floor(baseDefense * totalMultiplier), MAX);
+    p.stats.agility = Math.min(Math.floor(baseAgility * totalMultiplier), MAX);
+    p.stats.maxHp = Math.min(Math.floor(baseMaxHp * totalMultiplier), MAX);
 
     if (!p.stats.hp || p.stats.hp > p.stats.maxHp) {
         p.stats.hp = p.stats.maxHp;
