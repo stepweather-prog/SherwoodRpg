@@ -975,6 +975,8 @@ _claimBestiaryReward: function(beastId) {
     if (r.success) { this.updateDisplay(); this.bestiary(); }
 },
 
+};
+
 (function() {
     var self = SherwoodUI;
     var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
