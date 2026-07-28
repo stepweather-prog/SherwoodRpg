@@ -290,89 +290,69 @@ Sherwood.Quests = {
         this._lastAttempt = 0; p.questAttempts.lastAttempt = 0;
         Sherwood.saveGame(); return { success: true };
     },
+    getAttemptsToday: function() { return this._attemptsToday; },
+    getBattle: function() {
+        if (!this._inBattle) return null;
+        return { chapter: this._currentChapter, stage: this._currentStage + 1, total: this._currentChapter.stages, enemy: this._currentEnemy };
+    },
     startChapter: function(id) {
-    var ch = this.getChapter(id);
-    if (!ch) return { success: false, reason: 'Глава не найдена' };
-    if (!this.isUnlocked(id)) return { success: false, reason: 'Глава заблокирована' };
-    if (this.isOnCooldown()) return { success: false, reason: 'Перезарядка ' + this.getCooldownRemaining() + ' мин.', cooldown: true };
-    var p = Sherwood.getPlayer();
-    if ((p.questEnergy.current || 0) < ch.energyCost) return { success: false, reason: 'Недостаточно энергии' };
-    p.questEnergy.current -= ch.energyCost;
-    this._currentChapter = ch;
-    this._currentStage = 0;
-    
-    var firstEnemy = ch.enemies[0];
-    this._currentEnemy = {
-        name: firstEnemy.name, image: firstEnemy.image,
-        hp: firstEnemy.hp, maxHp: firstEnemy.hp,
-        atk: firstEnemy.atk, def: firstEnemy.def,
-        exp: firstEnemy.exp, gold: firstEnemy.gold,
-        isBoss: false
-    };
-    
-    this._inBattle = true;
-    this._lastAttempt = Date.now();
-    p.questAttempts.today = (p.questAttempts.today || 0) + 1;
-    p.questAttempts.lastAttempt = this._lastAttempt;
-    this._attemptsToday = p.questAttempts.today;
-    Sherwood.saveGame();
-    return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
-},
-
-attack: function() {
-    if (!this._inBattle) return null;
-    var p = Sherwood.getPlayer();
-    var e = this._currentEnemy;
-    var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + e.def)));
-    var crit = Math.random() * 100 < 15;
-    if (crit) dmg = Math.floor(dmg * 1.8);
-    e.hp -= dmg;
-    if (e.hp < 0) e.hp = 0;
-    var r = { damage: dmg, crit: crit, enemyHp: e.hp, enemyMaxHp: e.maxHp, enemyDead: e.hp <= 0 };
-    
-    if (e.hp <= 0) {
-        if (Sherwood.Bestiary && e.image) Sherwood.Bestiary.registerKill(e.image);
-        Sherwood.addExp(e.exp);
-        if (this._attemptsToday <= 4) Sherwood.addResource('gold', e.gold);
-        if (Math.random() < 0.1) Sherwood.addResource('ingots', 1);
-        if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1);
-        
-        this._currentStage++;
-        var ch = this._currentChapter;
-        
-        if (this._currentStage >= ch.stages) {
-            // Босс
-            var boss = ch.boss;
-            this._currentEnemy = {
-                name: boss.name, image: boss.image,
-                hp: boss.hp, maxHp: boss.hp,
-                atk: boss.atk, def: boss.def,
-                exp: boss.exp, gold: boss.gold,
-                isBoss: true
-            };
-            this._inBattle = false;
-            r.nextEnemy = this._currentEnemy;
-            r.stageComplete = true;
+        var ch = this.getChapter(id);
+        if (!ch) return { success: false, reason: 'Глава не найдена' };
+        if (!this.isUnlocked(id)) return { success: false, reason: 'Глава заблокирована' };
+        if (this.isOnCooldown()) return { success: false, reason: 'Перезарядка ' + this.getCooldownRemaining() + ' мин.', cooldown: true };
+        var p = Sherwood.getPlayer();
+        if ((p.questEnergy.current || 0) < ch.energyCost) return { success: false, reason: 'Недостаточно энергии' };
+        p.questEnergy.current -= ch.energyCost;
+        this._currentChapter = ch;
+        this._currentStage = 0;
+        var firstEnemy = ch.enemies[0];
+        this._currentEnemy = { name: firstEnemy.name, image: firstEnemy.image, hp: firstEnemy.hp, maxHp: firstEnemy.hp, atk: firstEnemy.atk, def: firstEnemy.def, exp: firstEnemy.exp, gold: firstEnemy.gold, isBoss: false };
+        this._inBattle = true;
+        this._lastAttempt = Date.now();
+        p.questAttempts.today = (p.questAttempts.today || 0) + 1;
+        p.questAttempts.lastAttempt = this._lastAttempt;
+        this._attemptsToday = p.questAttempts.today;
+        Sherwood.saveGame();
+        return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
+    },
+    attack: function() {
+        if (!this._inBattle) return null;
+        var p = Sherwood.getPlayer();
+        var e = this._currentEnemy;
+        var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + e.def)));
+        var crit = Math.random() * 100 < 15;
+        if (crit) dmg = Math.floor(dmg * 1.8);
+        e.hp -= dmg;
+        if (e.hp < 0) e.hp = 0;
+        var r = { damage: dmg, crit: crit, enemyHp: e.hp, enemyMaxHp: e.maxHp, enemyDead: e.hp <= 0 };
+        if (e.hp <= 0) {
+            if (Sherwood.Bestiary && e.image) Sherwood.Bestiary.registerKill(e.image);
+            Sherwood.addExp(e.exp);
+            if (this._attemptsToday <= 4) Sherwood.addResource('gold', e.gold);
+            if (Math.random() < 0.1) Sherwood.addResource('ingots', 1);
+            if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1);
+            this._currentStage++;
+            var ch = this._currentChapter;
+            if (this._currentStage >= ch.stages) {
+                var boss = ch.boss;
+                this._currentEnemy = { name: boss.name, image: boss.image, hp: boss.hp, maxHp: boss.hp, atk: boss.atk, def: boss.def, exp: boss.exp, gold: boss.gold, isBoss: true };
+                this._inBattle = false;
+                r.nextEnemy = this._currentEnemy;
+                r.stageComplete = true;
+            } else {
+                var nextEnemy = ch.enemies[this._currentStage];
+                this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
+                this._inBattle = false;
+                r.nextEnemy = this._currentEnemy;
+                r.stageComplete = true;
+            }
         } else {
-            var nextEnemy = ch.enemies[this._currentStage];
-            this._currentEnemy = {
-                name: nextEnemy.name, image: nextEnemy.image,
-                hp: nextEnemy.hp, maxHp: nextEnemy.hp,
-                atk: nextEnemy.atk, def: nextEnemy.def,
-                exp: nextEnemy.exp, gold: nextEnemy.gold,
-                isBoss: false
-            };
-            this._inBattle = false;
-            r.nextEnemy = this._currentEnemy;
-            r.stageComplete = true;
+            var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
+            p.stats.hp = Math.max(0, p.stats.hp - edmg);
+            r.enemyDamage = edmg; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
         }
-    } else {
-        var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
-        p.stats.hp = Math.max(0, p.stats.hp - edmg);
-        r.enemyDamage = edmg; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
-    }
-    Sherwood.saveGame();
-    return r;
-},
+        Sherwood.saveGame();
+        return r;
+    },
     flee: function() { this._inBattle = false; this._currentEnemy = null; return { success: true }; }
 };
