@@ -336,7 +336,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     // Шкала бестии
     h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:92px;left:26px;right:26px;bottom:12px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
     h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
@@ -364,7 +364,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     // Шкала героя
     h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:92px;left:26px;right:26px;bottom:12px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
     h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
