@@ -6,57 +6,20 @@
     <title>Sherwood RPG</title>
     <link rel="icon" type="image/png" href="assets/interface/logo.png">
     <link rel="manifest" href="manifest.json">
-        <style>
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: #0a0a0f; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; font-family: 'Georgia', serif; overflow-y: auto; overflow-x: hidden; position: relative; }
         .statue-left { position: fixed; left: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat; z-index: 9999; pointer-events: none; }
         .statue-right { position: fixed; right: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat; z-index: 9999; pointer-events: none; }
-                .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
+        .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
         .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow-y: auto; overflow-x: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
         .arch-layer { position: absolute; bottom: 0%; left: 50%; transform: translateX(-50%); width: 95%; height: 60%; background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat; z-index: 3; pointer-events: none; }
-        .hero-frame { 
-    position: absolute; 
-    bottom: 12%; 
-    left: 50%; 
-    transform: translateX(-50%); 
-    width: 200px;
-    height: 300px;
-    z-index: 4; 
-    display: flex; 
-    align-items: flex-end; 
-    justify-content: center; 
-    pointer-events: none; 
-}
-.hero-frame .video-bg { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 200px;
-    height: 300px;
-    z-index: 0; 
-    pointer-events: none; 
-    border-radius: 12px; 
-    overflow: hidden; 
-    border: 2px solid rgba(201,168,76,0.2); 
-    box-shadow: 0 0 30px rgba(201,168,76,0.1); 
-}
-.hero-frame .video-bg video { 
-    width: 200px;
-    height: 300px;
-    object-fit: cover; 
-    opacity: 0.6; 
-}
-.hero-frame img { 
-    position: relative; 
-    z-index: 1; 
-    width: 200px;
-    height: 300px;
-    object-fit: contain; 
-    object-position: bottom center; 
-    filter: drop-shadow(0 0 20px rgba(255,215,0,0.15)); 
-}
+        .hero-frame { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); width: 200px; height: 300px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+        .hero-frame .video-bg { position: absolute; top: 0; left: 0; width: 200px; height: 300px; z-index: 0; pointer-events: none; border-radius: 12px; overflow: hidden; border: 2px solid rgba(201,168,76,0.2); box-shadow: 0 0 30px rgba(201,168,76,0.1); }
+        .hero-frame .video-bg video { width: 200px; height: 300px; object-fit: cover; opacity: 0.6; }
+        .hero-frame img { position: relative; z-index: 1; width: 200px; height: 300px; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 20px rgba(255,215,0,0.15)); }
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
         .loading-screen .loading-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/loading_screen_with_logo.png') center/cover no-repeat; z-index: 0; pointer-events: none; }
@@ -72,61 +35,25 @@
         .top-panel .resource span { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); color: #ffd700; font-size: 0.9em; text-shadow: 0 0 10px rgba(0,0,0,0.9); font-weight: bold; white-space: nowrap; }
         .top-panel .resource.silver span { color: #c0c0c0; left: 50%; }
         .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
-         .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
+        .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
         .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
         .bottom-stats { position: absolute; top: 10%; left: 2%; right: 2%; z-index: 10; display: flex; justify-content: center; pointer-events: none; }
         .bottom-stats .stat-block { width: 96%; display: flex; flex-direction: row; align-items: center; justify-content: space-around; position: relative; padding: 8px 4px; }
         .bottom-stats .stat-block .stat-board { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .bottom-stats .stat-block .stat-board img {
-    width: 180%;
-    height: 300px;
-    object-fit: fill;
-    display: block;
-    position: relative;
-    left: 50%;
-    top: -120px;
-    transform: translateX(-50%);
-    opacity: 0.95;
-}
+        .bottom-stats .stat-block .stat-board img { width: 180%; height: 300px; object-fit: fill; display: block; position: relative; left: 50%; top: -120px; transform: translateX(-50%); opacity: 0.95; }
         .bottom-stats .stat-block .stat-item { display: flex; flex-direction: column; align-items: center; z-index: 1; min-width: 44px; }
         .bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
         .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.75em; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.9); background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(201,168,76,0.2); margin-top: 2px; }
         .stat-value.attack { color: #f44336; } .stat-value.defense { color: #2196f3; } .stat-value.agility { color: #ff9800; } .stat-value.hp { color: #4caf50; }
-        #top-buttons-bar .btn { 
-    width: 56px; height: 56px; cursor: pointer; background: none; border: none;
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
-    padding: 2px 0 0 0; overflow: visible;
-}
-#top-buttons-bar .btn img { width: 42px; height: 42px; object-fit: contain; }
-#top-buttons-bar .btn .label { 
-    color: #ffa500; font-size: 8px; font-weight: bold;
-    text-shadow: 0 0 4px #000, 0 0 6px #000;
-    text-align: center; line-height: 1; margin-top: 1px;
-    max-width: 56px; overflow: hidden; white-space: nowrap;
-}
+        #top-buttons-bar { position: absolute; top: calc(1% + 70px); left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 4px; width: 440px; max-width: 96%; justify-content: center; }
+        #top-buttons-bar .btn { width: 56px; height: 56px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
+        #top-buttons-bar .btn img { width: 40px; height: 40px; object-fit: contain; }
+        #top-buttons-bar .btn .label { color: #ffa500; font-size: 7px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; line-height: 1; margin-top: 1px; max-width: 56px; overflow: hidden; white-space: nowrap; }
         .hit-epic-combo { animation: epicShockwave 0.25s cubic-bezier(0.25,1,0.5,1); }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
-        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .top-panel .resource span { font-size: 0.7em; } .top-panel .exp-bar img { height: 40px; max-width: 200px; } .top-panel .exp-bar .exp-text { font-size: 0.55em; } .left-buttons .btn .label, .right-buttons .btn .label { font-size: 0.45em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
-                .diablo-light-halo {
-            position: absolute;
-            width: 300%;
-            height: 300%;
-            top: -100%;
-            left: -100%;
-            pointer-events: none;
-            z-index: 2;
-            background: radial-gradient(circle, rgba(255,235,180,0.45) 0%, rgba(255,200,100,0.15) 30%, rgba(0,0,0,0) 70%);
-            mix-blend-mode: screen;
-        }
-                    .hero-sprite {
-            background-image: url('assets/hero_skins/archer_spritesheet.png');
-            background-size: 400% 400%;
-            background-repeat: no-repeat;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            position: relative;
-            z-index: 4;
-        }
+        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .top-panel .resource span { font-size: 0.7em; } .top-panel .exp-bar img { height: 40px; max-width: 200px; } .top-panel .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
+        .diablo-light-halo { position: absolute; width: 300%; height: 300%; top: -100%; left: -100%; pointer-events: none; z-index: 2; background: radial-gradient(circle, rgba(255,235,180,0.45) 0%, rgba(255,200,100,0.15) 30%, rgba(0,0,0,0) 70%); mix-blend-mode: screen; }
+        .hero-sprite { background-image: url('assets/hero_skins/archer_spritesheet.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; image-rendering: crisp-edges; position: relative; z-index: 4; }
     </style>
 </head>
 <body>
@@ -138,26 +65,35 @@
         <div class="main-interface" id="mainInterface">
             <div class="top-panel">
                 <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
-                <div id="top-buttons-bar" style="position:absolute;top:18%;left:50%;transform:translateX(-50%);z-index:15;display:flex;flex-direction:column;gap:4px;width:440px;align-items:center;">
-    <div style="display:flex;gap:4px;justify-content:center;">
-        <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><span class="label">Квест</span></div>
-        <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><span class="label">Подземка</span></div>
-        <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><span class="label">Рейд</span></div>
-        <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><span class="label">Портал</span></div>
-        <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><span class="label">Арена</span></div>
-        <div class="btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
-        <div class="btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
-    </div>
-    <div style="display:flex;gap:4px;justify-content:center;">
-        <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><span class="label">Таверна</span></div>
-        <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><span class="label">Задания</span></div>
-        <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><span class="label">Сумка</span></div>
-        <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
-        <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
-        <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
-        <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
-    </div>
-</div>
+                <div class="exp-bar" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 2px;">
+                    <img src="assets/interface/hero_experience_scale.png" alt="Опыт" style="width:100%;max-width:240px;height:auto;display:block;object-fit:contain;position:relative;z-index:1;">
+                    <div style="position:absolute;top:2px;left:12px;right:12px;bottom:2px;overflow:hidden;z-index:0;">
+                        <div id="exp-fill" style="background:url('assets/interface/filling_the_hero\'s_experience_bar.png') left center/100% 100% no-repeat;height:100%;width:0%;transition:width 0.5s ease-out;"></div>
+                    </div>
+                    <span class="exp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e0c080;font-size:0.75em;text-shadow:0 0 10px rgba(0,0,0,0.9);letter-spacing:1px;white-space:nowrap;width:100%;text-align:center;z-index:2;">
+                        <span id="exp-display">0</span> / <span id="exp-max-display">100</span> XP
+                    </span>
+                </div>
+                <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
+            </div>
+            <div class="bottom-stats"><div class="stat-block"><div class="stat-board"><img src="assets/interface/stone_slab_empty_plate.png" alt=""></div><div class="stat-item"><img src="assets/interface/icon_power.png" alt="Урон"><span class="stat-value attack">0</span></div><div class="stat-item"><img src="assets/interface/icon_defense.png" alt="Защита"><span class="stat-value defense">0</span></div><div class="stat-item"><img src="assets/interface/icon_dexterity.png" alt="Ловкость"><span class="stat-value agility">0</span></div><div class="stat-item"><img src="assets/interface/icon_health.png" alt="Здоровье"><span class="stat-value hp">0</span></div></div></div>
+            <div id="top-buttons-bar">
+                <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><span class="label">Квест</span></div>
+                <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><span class="label">Подземка</span></div>
+                <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><span class="label">Рейд</span></div>
+                <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><span class="label">Портал</span></div>
+                <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><span class="label">Арена</span></div>
+                <div class="btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
+                <div class="btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
+                <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><span class="label">Таверна</span></div>
+                <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><span class="label">Задания</span></div>
+                <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><span class="label">Сумка</span></div>
+                <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
+                <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
+                <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
+                <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
+            </div>
+        </div>
     </div>
     <script src="js/sherwood/core.js"></script>
     <script src="js/sherwood/models.js"></script>
@@ -175,6 +111,5 @@
     <script src="js/sherwood/bestiary.js"></script>
     <script src="js/sherwood/daily.js"></script>
     <script src="js/sherwood/ui.js"></script>
-    
 </body>
 </html>
