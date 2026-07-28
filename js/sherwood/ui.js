@@ -14,67 +14,72 @@ const SherwoodUI = {
     _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', agility: 'assets/interface/icon_dexterity.png', hp: 'assets/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _audioFiles: {
-        'forest_ambient': 'assets/sounds/main_topic.ogg', 'dungeon_ambient': 'assets/sounds/subway_1_2.flac', 'tavern_ambient': 'assets/sounds/tavern_ambient.wav',
+        'main_theme': 'assets/sounds/sherwood_rpg.mp3',
         'click': 'assets/sounds/button_click.ogg', 'shot': 'assets/sounds/arrow_hit_2.wav', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
-        'chest_open': 'assets/sounds/chest_opens.wav', 'dungeon_enter': 'assets/sounds/subway_1_2.flac', 'trap': 'assets/sounds/trap.wav',
+        'chest_open': 'assets/sounds/chest_opens.wav', 'trap': 'assets/sounds/trap.wav',
         'steps': 'assets/sounds/hero_steps.flac', 'altar': 'assets/sounds/altar_underground.mp3', 'bottle_health': 'assets/sounds/bottle_health.mp3'
     },
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
 
     init: function() {
-        this._mainElements = ['.bg-layer', '.arch-layer', '.hero-frame', '.top-panel', '.left-buttons', '.right-buttons', '.bottom-stats'];
-        this.container = document.getElementById('game-container'); if (!this.container) return;
-        this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
-        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
-        this.container.appendChild(this._screenLayer);
-        try { this._initSounds(); } catch(e) {}
-        this.bindPlayButton();
-        try { this.updateDisplay(); } catch(e) {}
-        if (typeof Sherwood !== 'undefined') {
-            try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {}
-            try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {}
+    this._mainElements = ['.bg-layer', '.arch-layer', '.hero-frame', '.top-panel', '.left-buttons', '.right-buttons', '.bottom-stats'];
+    this.container = document.getElementById('game-container'); if (!this.container) return;
+    this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
+    this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
+    this.container.appendChild(this._screenLayer);
+    try { this._initSounds(); } catch(e) {}
+    this.bindPlayButton();
+    try { this._playMusic('main_theme'); } catch(e) {}
+    try { this.updateDisplay(); } catch(e) {}
+    if (typeof Sherwood !== 'undefined') {
+        try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {}
+        try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {}
+    }
+    try { this._loadAudioSettings(); } catch(e) {}
+},
+
+_initSounds: function() {
+    for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
+    try { var bgm = new Audio('assets/sounds/subway_3.wav'); bgm.preload = 'auto'; bgm.loop = true; bgm.volume = 0.25; this._sounds['battle_bgm'] = bgm; } catch(e) {}
+    try { var main = new Audio('assets/sounds/sherwood_rpg.mp3'); main.preload = 'auto'; main.loop = true; main.volume = 0.5; this._sounds['main_theme'] = main; } catch(e) {}
+},
+
+_playMusic: function(k) {
+    try {
+        if (!this._musicEnabled) return;
+        if (k === 'main_theme' && Sherwood.Dungeon && Sherwood.Dungeon.getDungeon()) return;
+        if (k === 'main_theme' && Sherwood.Combat && Sherwood.Combat.isActive && Sherwood.Combat.isActive()) return;
+        if (this._currentMusicKey === k && this._currentMusic && !this._currentMusic.paused) return;
+        this._stopMusic(); this._stopBattleMusic();
+        var m = this._sounds[k]; if (m) { m.loop = true; m.volume = 0.7; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
+    } catch(e) {}
+},
+
+_stopMusic: function() { try { if (this._currentMusic) { this._currentMusic.pause(); this._currentMusic.currentTime = 0; this._currentMusic = null; this._currentMusicKey = null; } } catch(e) {} },
+_stopBattleMusic: function() { try { var bgm = this._sounds['battle_bgm']; if (bgm) { bgm.pause(); bgm.currentTime = 0; } } catch(e) {} },
+_playHitSounds: function() {
+    try { this._playSound('shot'); } catch(e) {}
+    try { var bgm = this._sounds['battle_bgm']; if (bgm && bgm.paused) { bgm.currentTime = 0; bgm.play().catch(function() {}); } } catch(e) {}
+},
+_saveAudioSettings: function() { try { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: this._soundEnabled, music: this._musicEnabled })); } catch(e) {} },
+_loadAudioSettings: function() { try { var s = localStorage.getItem('sherwood_audio'); if (s) { var d = JSON.parse(s); this._soundEnabled = d.sound !== false; this._musicEnabled = d.music !== false; } } catch(e) {} },
+
+bindButtons: function() {
+    var self = this;
+    try {
+        var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
+        for (var i = 0; i < buttons.length; i++) {
+            (function(el) {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var a = el.dataset.action;
+                    if (a && typeof self[a] === 'function') { try { self._playSound('click'); } catch(e) {} self[a](); }
+                });
+            })(buttons[i]);
         }
-        try { this._loadAudioSettings(); } catch(e) {}
-    },
-
-    _initSounds: function() {
-        for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
-        try { var bgm = new Audio('assets/sounds/subway_3.wav'); bgm.preload = 'auto'; bgm.loop = true; bgm.volume = 0.25; this._sounds['battle_bgm'] = bgm; } catch(e) {}
-    },
-    _playSound: function(k) { try { if (!this._soundEnabled) return; var s = this._sounds[k]; if (s) { s.currentTime = 0; s.play().catch(function() {}); } } catch(e) {} },
-    _playMusic: function(k) {
-        try {
-            if (!this._musicEnabled) return;
-            if (this._currentMusicKey === k && this._currentMusic && !this._currentMusic.paused) return;
-            this._stopMusic(); this._stopBattleMusic();
-            var m = this._sounds[k]; if (m) { m.loop = true; m.volume = 0.7; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
-        } catch(e) {}
-    },
-    _stopMusic: function() { try { if (this._currentMusic) { this._currentMusic.pause(); this._currentMusic.currentTime = 0; this._currentMusic = null; this._currentMusicKey = null; } } catch(e) {} },
-    _stopBattleMusic: function() { try { var bgm = this._sounds['battle_bgm']; if (bgm) { bgm.pause(); bgm.currentTime = 0; } } catch(e) {} },
-    _playHitSounds: function() {
-        try { this._playSound('shot'); } catch(e) {}
-        try { var bgm = this._sounds['battle_bgm']; if (bgm && bgm.paused) { bgm.currentTime = 0; bgm.play().catch(function() {}); } } catch(e) {}
-    },
-    _saveAudioSettings: function() { try { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: this._soundEnabled, music: this._musicEnabled })); } catch(e) {} },
-    _loadAudioSettings: function() { try { var s = localStorage.getItem('sherwood_audio'); if (s) { var d = JSON.parse(s); this._soundEnabled = d.sound !== false; this._musicEnabled = d.music !== false; } } catch(e) {} },
-
-    bindButtons: function() {
-        var self = this;
-        try {
-            var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
-            for (var i = 0; i < buttons.length; i++) {
-                (function(el) {
-                    el.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        var a = el.dataset.action;
-                        if (a && typeof self[a] === 'function') { try { self._playSound('click'); } catch(e) {} self[a](); }
-                    });
-                })(buttons[i]);
-            }
-        } catch(e) { setTimeout(function() { self.bindButtons(); }, 500); }
-    },
+    } catch(e) { setTimeout(function() { self.bindButtons(); }, 500); }
+},
     bindPlayButton: function() {
         try {
             var self = this; var btn = document.getElementById('playBtn');
