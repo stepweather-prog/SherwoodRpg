@@ -280,7 +280,7 @@ Sherwood.Combat = {
                 damageMultiplier: 1.8,
                 cooldown: 3,
                 description: 'Наносит 180% урона',
-                icon: 'assets/skills/skill_critical_shot.gif',
+                icon: 'assets/skills/skill_critical_shot.png',
                 unlocked: false,
                 cost: 200
             },
@@ -300,7 +300,7 @@ Sherwood.Combat = {
                 damageMultiplier: 1.0,
                 cooldown: 5,
                 description: 'Отравляет врага на 3 хода',
-                icon: 'assets/skills/poison_shot_skill.gif',
+                icon: 'assets/skills/assets/skills/poison_shot_skill.png',
                 unlocked: false,
                 cost: 250
             },
