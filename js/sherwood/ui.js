@@ -198,24 +198,16 @@ const SherwoodUI = {
 
 _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
-    
-    // Если кликнули на текущую клетку — игнорируем
     if (tx === d.px && ty === d.py) return;
-    
-    // Если клетка не открыта и не соседняя — игнорируем
     var cell = d.grid[ty][tx];
     if (!cell) return;
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     if (!cell.open && dist !== 1) return;
     if (!cell.open && dist === 1 && cell.type === 0) return;
-    
-    // Если клетка открыта и далеко — строим путь
     if (cell.open && dist > 1) {
         this._walkPath(tx, ty);
         return;
     }
-    
-    // Обычный шаг на соседнюю клетку
     this._doStep(tx, ty);
 },
 
@@ -231,13 +223,19 @@ _walkPath: function(toX, toY) {
         var cur = queue.shift();
         if (cur.x === toX && cur.y === toY) {
             if (cur.path.length === 0) return;
+            d.isMoving = true;
+            this._renderDungeon();
             var self = this;
             var i = 0;
             function nextStep() {
-                if (i >= cur.path.length) return;
+                if (i >= cur.path.length) {
+                    d.isMoving = false;
+                    self._renderDungeon();
+                    return;
+                }
                 self._doStep(cur.path[i].x, cur.path[i].y);
                 i++;
-                setTimeout(nextStep, 200);
+                setTimeout(nextStep, 100);
             }
             nextStep();
             return;
@@ -266,16 +264,8 @@ _doStep: function(tx, ty) {
     var res = Sherwood.Dungeon.move(tx, ty);
     if (!res || !res.ok) { this._renderDungeon(); return; }
     
-    d.isMoving = true;
     this._playSound('steps');
     this._renderDungeon();
-    
-    var self = this;
-    setTimeout(function() {
-        d.isMoving = false;
-        self._renderDungeon();
-    }, 400);
-    
     this.updateDisplay();
     
     if (res.type === 'battle') { d.isMoving = false; this._stopMusic(); this._playSound('trap'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); return; }
@@ -286,6 +276,7 @@ _doStep: function(tx, ty) {
     if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); this.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('forest_ambient'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
     if (res.type === 'exit_locked') { this._showNotification('Locked! Kill all monsters!'); }
 },
+
 _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('forest_ambient'); this.showDungeon(); },
 
 // ========== БОЙ (ЕДИНЫЙ) ==========
