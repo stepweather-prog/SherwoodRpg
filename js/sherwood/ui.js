@@ -44,7 +44,7 @@ _initSounds: function() {
     try { var bgm = new Audio('assets/sounds/subway_3.wav'); bgm.preload = 'auto'; bgm.loop = true; bgm.volume = 0.25; this._sounds['battle_bgm'] = bgm; } catch(e) {}
     try { var main = new Audio('assets/sounds/sherwood_rpg.mp3'); main.preload = 'auto'; main.loop = true; main.volume = 0.5; this._sounds['main_theme'] = main; } catch(e) {}
 },
-
+_playSound: function(k) { try { if (!this._soundEnabled) return; var s = this._sounds[k]; if (s) { s.currentTime = 0; s.play().catch(function() {}); } } catch(e) {} },
 _playMusic: function(k) {
     try {
         if (!this._musicEnabled) return;
