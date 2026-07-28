@@ -40,155 +40,154 @@ Sherwood.Dungeon = {
     },
 
     generate: function(dungeonId, level) {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.dungeon || p.dungeon.tickets <= 0) return null;
-        p.dungeon.tickets--;
-        Sherwood.saveGame();
+    var p = Sherwood.getPlayer();
+    if (!p || !p.dungeon || p.dungeon.tickets <= 0) return null;
+    p.dungeon.tickets--;
+    Sherwood.saveGame();
 
-        var size = 12;
-        var grid = [];
-        for (var y = 0; y < size; y++) {
-            grid[y] = [];
-            for (var x = 0; x < size; x++) {
-                grid[y][x] = { type: this.TILE.WALL, open: false };
+    var size = 12;
+    var grid = [];
+    for (var y = 0; y < size; y++) {
+        grid[y] = [];
+        for (var x = 0; x < size; x++) {
+            grid[y][x] = { type: this.TILE.WALL, open: false };
+        }
+    }
+
+    var cx = Math.floor(size / 2);
+    var cy = Math.floor(size / 2);
+    grid[cy][cx].type = this.TILE.EMPTY;
+    var emptyCount = 1;
+    var target = Math.floor(size * size * 0.35);
+    var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+
+    while (emptyCount < target) {
+        var dir = dirs[Math.floor(Math.random() * 4)];
+        var nx = cx + dir[0], ny = cy + dir[1];
+        if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1) {
+            if (grid[ny][nx].type === this.TILE.WALL) {
+                grid[ny][nx].type = this.TILE.EMPTY;
+                emptyCount++;
+            }
+            cx = nx;
+            cy = ny;
+        }
+    }
+
+    var spawnX = 1;
+    var spawnY = 1;
+    for (var y = 1; y < size-1; y++) {
+        for (var x = 1; x < size-1; x++) {
+            if (grid[y][x].type === this.TILE.EMPTY) {
+                spawnX = x; spawnY = y;
+                y = size; break;
             }
         }
+    }
+    grid[spawnY][spawnX].type = this.TILE.SPAWN;
+    grid[spawnY][spawnX].open = true;
 
-        var cx = Math.floor(size / 2);
-        var cy = Math.floor(size / 2);
-        grid[cy][cx].type = this.TILE.EMPTY;
-        var emptyCount = 1;
-        var target = Math.floor(size * size * 0.35);
-        var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+    var empties = [];
+    for (var y = 1; y < size-1; y++) {
+        for (var x = 1; x < size-1; x++) {
+            if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) {
+                empties.push({x:x, y:y});
+            }
+        }
+    }
+    empties.sort(function() { return Math.random() - 0.5; });
 
-        while (emptyCount < target) {
-            var dir = dirs[Math.floor(Math.random() * 4)];
-            var nx = cx + dir[0], ny = cy + dir[1];
-            if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1) {
-                if (grid[ny][nx].type === this.TILE.WALL) {
-                    grid[ny][nx].type = this.TILE.EMPTY;
-                    emptyCount++;
+    var monsters = {
+        forest: { easy: ['image (1).png','image (3).png','image (74).png'], medium: ['image (9).png','image (29).png','image (75).png'], boss: 'image (15).png' },
+        swamp: { easy: ['image (12).png','image (13).png','image (59).png'], medium: ['image (14).png','image (16).png','image (52).png'], boss: 'image (54).png' },
+        cave: { easy: ['image (32).png','image (35).png','image (10).png'], medium: ['image (33).png','image (36).png','image (49).png'], boss: 'image (34).png' }
+    };
+    var pool = monsters[dungeonId] || monsters['forest'];
+    var monList = level <= 3 ? pool.easy : pool.medium;
+    var monsterCount = level <= 3 ? 6 : 8;
+    if (level === 7) monsterCount = 8;
+
+    var placedMonsters = 0;
+    var monsterCells = [];
+    for (var i = 0; i < empties.length && placedMonsters < monsterCount; i++) {
+        var cell = empties[i];
+        if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
+        var tooClose = false;
+        for (var m = 0; m < monsterCells.length; m++) {
+            if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) {
+                tooClose = true; break;
+            }
+        }
+        if (!tooClose) {
+            grid[cell.y][cell.x].type = this.TILE.MONSTER;
+            grid[cell.y][cell.x].monster = true;
+            grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
+            monsterCells.push(cell);
+            placedMonsters++;
+            // Убираем эту клетку из empties чтобы не затереть объектами
+            empties.splice(i, 1);
+            i--;
+        }
+    }
+
+    // Алтари, котлы, зелья — ТОЛЬКО на оставшихся пустых
+    var specials = [
+        { type: this.TILE.ALTAR, count: 3, prop: 'altar' },
+        { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
+        { type: this.TILE.POTION, count: 5, prop: 'potion' }
+    ];
+    for (var t = 0; t < specials.length; t++) {
+        var st = specials[t];
+        for (var i = 0; i < st.count && empties.length > 0; i++) {
+            var idx = Math.floor(Math.random() * empties.length);
+            var cell = empties.splice(idx, 1)[0];
+            grid[cell.y][cell.x].type = st.type;
+            grid[cell.y][cell.x][st.prop] = true;
+        }
+    }
+
+    // Выход
+    var bestDist = -1, exitX = spawnX, exitY = spawnY;
+    for (var i = 0; i < empties.length; i++) {
+        var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY);
+        if (dist > bestDist) { bestDist = dist; exitX = empties[i].x; exitY = empties[i].y; }
+    }
+    if (bestDist >= 0) {
+        grid[exitY][exitX].type = this.TILE.EXIT;
+        grid[exitY][exitX].exit = true;
+        grid[exitY][exitX].locked = true;
+    }
+
+    var isBossLevel = (level === 7);
+    if (isBossLevel) {
+        var bossCell = null;
+        for (var y = -2; y <= 2; y++) {
+            for (var x = -2; x <= 2; x++) {
+                var nx = exitX + x, ny = exitY + y;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx].type === this.TILE.EMPTY) {
+                    bossCell = {x: nx, y: ny}; break;
                 }
-                cx = nx;
-                cy = ny;
             }
+            if (bossCell) break;
         }
-
-        var spawnX = 1;
-        var spawnY = 1;
-        for (var y = 1; y < size-1; y++) {
-            for (var x = 1; x < size-1; x++) {
-                if (grid[y][x].type === this.TILE.EMPTY) {
-                    spawnX = x; spawnY = y;
-                    y = size; break;
-                }
-            }
+        if (bossCell) {
+            grid[bossCell.y][bossCell.x].type = this.TILE.BOSS;
+            grid[bossCell.y][bossCell.x].monster = true;
+            grid[bossCell.y][bossCell.x].monsterId = pool.boss;
+            grid[bossCell.y][bossCell.x].isBoss = true;
         }
-        grid[spawnY][spawnX].type = this.TILE.SPAWN;
-        grid[spawnY][spawnX].open = true;
+    }
 
-        var empties = [];
-        for (var y = 1; y < size-1; y++) {
-            for (var x = 1; x < size-1; x++) {
-                if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) {
-                    empties.push({x:x, y:y});
-                }
-            }
-        }
-        empties.sort(function() { return Math.random() - 0.5; });
-
-        var monsters = {
-            forest: { easy: ['image (1).png','image (3).png','image (74).png'], medium: ['image (9).png','image (29).png','image (75).png'], boss: 'image (15).png' },
-            swamp: { easy: ['image (12).png','image (13).png','image (59).png'], medium: ['image (14).png','image (16).png','image (52).png'], boss: 'image (54).png' },
-            cave: { easy: ['image (32).png','image (35).png','image (10).png'], medium: ['image (33).png','image (36).png','image (49).png'], boss: 'image (34).png' }
-        };
-        var pool = monsters[dungeonId] || monsters['forest'];
-        var monList = level <= 3 ? pool.easy : pool.medium;
-        var monsterCount = level <= 3 ? 6 : 8;
-        if (level === 7) monsterCount = 8;
-
-        var placedMonsters = 0;
-        var monsterCells = [];
-        for (var i = 0; i < empties.length && placedMonsters < monsterCount; i++) {
-            var cell = empties[i];
-            if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
-            var tooClose = false;
-            for (var m = 0; m < monsterCells.length; m++) {
-                if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) {
-                    tooClose = true; break;
-                }
-            }
-            if (!tooClose) {
-                grid[cell.y][cell.x].type = this.TILE.MONSTER;
-                grid[cell.y][cell.x].monster = true;
-                grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
-                monsterCells.push(cell);
-                placedMonsters++;
-            }
-        }
-
-        // Алтари, котлы, зелья (без сундуков)
-        var specials = [
-            { type: this.TILE.ALTAR, count: 3 },
-            { type: this.TILE.CAULDRON, count: 3 },
-            { type: this.TILE.POTION, count: 5 }
-        ];
-        for (var t = 0; t < specials.length; t++) {
-            var st = specials[t];
-            for (var i = 0; i < st.count && empties.length > 0; i++) {
-                var idx = Math.floor(Math.random() * empties.length);
-                var cell = empties.splice(idx, 1)[0];
-                grid[cell.y][cell.x].type = st.type;
-                if (st.type === this.TILE.ALTAR) grid[cell.y][cell.x].altar = true;
-                if (st.type === this.TILE.CAULDRON) grid[cell.y][cell.x].cauldron = true;
-                if (st.type === this.TILE.POTION) grid[cell.y][cell.x].potion = true;
-            }
-        }
-
-        // Сундук только один — выпадает с последнего убитого монстра
-        // Пока не размещаем, добавим при убийстве последнего монстра
-
-        var bestDist = -1, exitX = spawnX, exitY = spawnY;
-        for (var i = 0; i < empties.length; i++) {
-            var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY);
-            if (dist > bestDist) { bestDist = dist; exitX = empties[i].x; exitY = empties[i].y; }
-        }
-        if (bestDist >= 0) {
-            grid[exitY][exitX].type = this.TILE.EXIT;
-            grid[exitY][exitX].exit = true;
-            grid[exitY][exitX].locked = true;
-        }
-
-        var isBossLevel = (level === 7);
-        if (isBossLevel) {
-            var bossCell = null;
-            for (var y = -2; y <= 2; y++) {
-                for (var x = -2; x <= 2; x++) {
-                    var nx = exitX + x, ny = exitY + y;
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx].type === this.TILE.EMPTY) {
-                        bossCell = {x: nx, y: ny}; break;
-                    }
-                }
-                if (bossCell) break;
-            }
-            if (bossCell) {
-                grid[bossCell.y][bossCell.x].type = this.TILE.BOSS;
-                grid[bossCell.y][bossCell.x].monster = true;
-                grid[bossCell.y][bossCell.x].monsterId = pool.boss;
-                grid[bossCell.y][bossCell.x].isBoss = true;
-            }
-        }
-
-        this._dungeon = {
-            id: dungeonId, level: level, size: size, grid: grid,
-            px: spawnX, py: spawnY,
-            monstersKilled: 0, totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
-            chestsOpened: 0, isBossLevel: isBossLevel,
-            heroDirection: 'down', isMoving: false,
-            chestPlaced: false
-        };
-        return this._dungeon;
-    },
+    this._dungeon = {
+        id: dungeonId, level: level, size: size, grid: grid,
+        px: spawnX, py: spawnY,
+        monstersKilled: 0, totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
+        chestsOpened: 0, isBossLevel: isBossLevel,
+        heroDirection: 'down', isMoving: false,
+        chestPlaced: false
+    };
+    return this._dungeon;
+},
 
     getDungeon: function() { return this._dungeon; },
 
@@ -243,31 +242,50 @@ Sherwood.Dungeon = {
     },
 
     killMonster: function() {
-        if (!this._dungeon) return;
-        var d = this._dungeon;
-        d.monstersKilled++;
-        var cell = d.grid[d.py][d.px];
-        if (cell && cell.monster) {
-            cell.monster = false;
-            cell.monsterId = null;
-            cell.type = this.TILE.EMPTY;
-        }
-        // Последний монстр — дропаем сундук на его место
-        if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced) {
-            d.chestPlaced = true;
-            cell.chest = true;
-            cell.type = this.TILE.CHEST;
-            cell.looted = false;
-            cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
-        }
-        if (d.monstersKilled >= d.totalMonsters) {
-            for (var y = 0; y < d.size; y++) {
-                for (var x = 0; x < d.size; x++) {
-                    if (d.grid[y][x].exit) d.grid[y][x].locked = false;
+    if (!this._dungeon) return;
+    var d = this._dungeon;
+    d.monstersKilled++;
+    
+    // Ищем клетку с монстром вокруг игрока
+    var cell = null;
+    if (d.grid[d.py][d.px].monster) {
+        cell = d.grid[d.py][d.px];
+    } else {
+        // Ищем соседнюю клетку с монстром
+        var dirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
+        for (var i = 0; i < dirs.length; i++) {
+            var nx = d.px + dirs[i][0], ny = d.py + dirs[i][1];
+            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+                if (d.grid[ny][nx].monster) {
+                    cell = d.grid[ny][nx];
+                    break;
                 }
             }
         }
-    },
+    }
+    
+    if (cell && cell.monster) {
+        cell.monster = false;
+        cell.monsterId = null;
+        cell.isBoss = false;
+        cell.type = this.TILE.EMPTY;
+    }
+    
+    if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced && cell) {
+        d.chestPlaced = true;
+        cell.chest = true;
+        cell.type = this.TILE.CHEST;
+        cell.looted = false;
+        cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
+    }
+    if (d.monstersKilled >= d.totalMonsters) {
+        for (var y = 0; y < d.size; y++) {
+            for (var x = 0; x < d.size; x++) {
+                if (d.grid[y][x].exit) d.grid[y][x].locked = false;
+            }
+        }
+    }
+},
 
     complete: function() {
         var d = this._dungeon;
