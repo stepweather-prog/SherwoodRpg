@@ -540,62 +540,57 @@ _handleCombat: function(r) {
         );
     },
     _tavernBattleAttack: function() {
-        this._playHitSounds();
-        var active = Sherwood.Tavern.getCurrentQuest ? Sherwood.Tavern.getCurrentQuest() : null;
-        if (!active || !active.quest || !active.quest.enemy) { this.tavern(); return; }
-        var p = Sherwood.getPlayer();
-        var e = active.quest.enemy;
-        if (!e.maxHp) e.maxHp = e.hp || 100;
-        var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + (e.def || 5))));
-        var crit = Math.random() * 100 < 15;
-        if (crit) dmg = Math.floor(dmg * 1.8);
-        e.hp -= dmg;
-        if (e.hp <= 0) {
-            var r = Sherwood.Tavern.completeQuest();
-            this._showDialog('🏆 Победа! +' + r.reward.exp + 'XP +' + r.reward.gold + '🪙', '#ffd700');
-            this._stopBattleMusic();
-            this.updateDisplay();
+    this._playHitSounds();
+    var active = Sherwood.Tavern.getCurrentQuest ? Sherwood.Tavern.getCurrentQuest() : null;
+    if (!active || !active.quest || !active.quest.enemy) { this.tavern(); return; }
+    var p = Sherwood.getPlayer();
+    var e = active.quest.enemy;
+    if (!e.maxHp) e.maxHp = e.hp || 100;
+    var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + (e.def || 5))));
+    var crit = Math.random() * 100 < 15;
+    if (crit) dmg = Math.floor(dmg * 1.8);
+    e.hp -= dmg;
+    if (e.hp <= 0) {
+        var r = Sherwood.Tavern.completeQuest();
+        this._showDialog('Win! +' + r.reward.exp + 'XP +' + r.reward.gold + 'G', '#ffd700');
+        this._stopBattleMusic();
+        SherwoodUI.updateDisplay();
+        var self = this;
+        setTimeout(function() { self._playMusic('tavern_ambient'); self.tavern(); }, 1500);
+    } else {
+        var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
+        p.stats.hp = Math.max(0, p.stats.hp - edmg);
+        this._hitEnemyCard();
+        this._updateEnemyHP(e.hp, e.maxHp);
+        this._showDialog((crit ? 'CRIT! ' : '') + 'You: ' + dmg + ' dmg', crit ? '#ff6a00' : '#fff');
+        if (p.stats.hp <= 0) {
             var self = this;
+            setTimeout(function() { self._showDialog('Defeat...', '#f44336'); }, 700);
+            Sherwood.Tavern.failQuest();
+            p.stats.hp = 1;
+            this._stopBattleMusic();
             setTimeout(function() { self._playMusic('tavern_ambient'); self.tavern(); }, 1500);
         } else {
-            var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
-            p.stats.hp = Math.max(0, p.stats.hp - edmg);
-            this._hitEnemyCard();
-            this._updateEnemyHP(e.hp, e.maxHp);
-            this._showDialog((crit ? '💥 КРИТ! ' : '⚔️ ') + 'Вы нанесли ' + dmg + ' урона', crit ? '#ff6a00' : '#fff');
-            if (p.stats.hp <= 0) {
-                var self = this;
-                setTimeout(function() { self._showDialog('💀 Поражение...', '#f44336'); }, 700);
-                Sherwood.Tavern.failQuest();
-                p.stats.hp = 1;
-                this._stopBattleMusic();
-                setTimeout(function() { self._playMusic('tavern_ambient'); self.tavern(); }, 1500);
-            } else {
-                var self = this;
-                setTimeout(function() { self._showDialog('💢 Враг нанёс ' + edmg + ' урона', '#f44336'); }, 700);
-                setTimeout(function() { self._showTavernBattle(); }, 1200);
-            }
+            var self = this;
+            setTimeout(function() { self._showDialog('Enemy: ' + edmg + ' dmg', '#f44336'); }, 700);
+            setTimeout(function() { self._showTavernBattle(); }, 1200);
         }
-        this.updateDisplay();
-    },
-    _tavernAuto: function() {
-        var r = Sherwood.Tavern.autoBattle ? Sherwood.Tavern.autoBattle() : { completed: false };
-        var log = document.getElementById('tavern-log');
-        if (r.completed) {
-            if (log) log.textContent = '🎉 Выполнено! +' + r.reward.exp + 'XP';
-            this.updateDisplay();
-        } else if (r.failed) {
-            if (log) log.textContent = '❌ Неудача! -' + r.damage + ' HP';
-        }
-        var self = this;
-        setTimeout(function() { self.tavern(); }, 800);
-    },
-    _tavernCancel: function() {
-        this._stopBattleMusic();
-        if (Sherwood.Tavern.cancelQuest) Sherwood.Tavern.cancelQuest();
-        this._playMusic('tavern_ambient');
-        this.tavern();
-    },
+    }
+    SherwoodUI.updateDisplay();
+},
+_tavernAuto: function() {
+    var r = Sherwood.Tavern.autoBattle ? Sherwood.Tavern.autoBattle() : { completed: false };
+    var log = document.getElementById('tavern-log');
+    if (r.completed) { if (log) log.textContent = 'Done! +' + r.reward.exp + 'XP'; SherwoodUI.updateDisplay(); }
+    else if (r.failed) { if (log) log.textContent = 'Fail! -' + r.damage + ' HP'; }
+    var self = this; setTimeout(function() { self.tavern(); }, 800);
+},
+_tavernCancel: function() {
+    this._stopBattleMusic();
+    if (Sherwood.Tavern.cancelQuest) Sherwood.Tavern.cancelQuest();
+    this._playMusic('tavern_ambient');
+    this.tavern();
+},
 
     // ===== ЕЖЕДНЕВНЫЕ =====
     daily: function() { this._playSound('click'); if (!Sherwood.Daily) { this._showPlaceholder('📋 Ежедневные задания','daily'); return; } var dailyQuests=Sherwood.Daily.getDailyQuests(),dailyCompleted=Sherwood.Daily.getDailyCompleted(),p=Sherwood.getPlayer(),currentChapter=p.questProgress?(p.questProgress.currentChapter||1):1,chapterQuests=Sherwood.Daily.getChapterQuests(currentChapter),chapterCompleted=p.daily?(p.daily.chapterCompleted||[]):[],html=''; var t1b=(!SherwoodUI._dailyTab||SherwoodUI._dailyTab===1)?'#c9a040':'rgba(255,255,255,0.1)',t1c=(!SherwoodUI._dailyTab||SherwoodUI._dailyTab===1)?'#000':'#fff',t2b=(SherwoodUI._dailyTab===2)?'#c9a040':'rgba(255,255,255,0.1)',t2c=(SherwoodUI._dailyTab===2)?'#000':'#fff'; html+='<div style="display:flex;gap:4px;margin-bottom:12px;"><button onclick="SherwoodUI._dailyTab=1;SherwoodUI.daily();" style="flex:1;background:'+t1b+';border:1px solid #555;border-radius:6px;padding:8px;color:'+t1c+';cursor:pointer;font-size:0.8em;">📋 Ежедневные</button><button onclick="SherwoodUI._dailyTab=2;SherwoodUI.daily();" style="flex:1;background:'+t2b+';border:1px solid #555;border-radius:6px;padding:8px;color:'+t2c+';cursor:pointer;font-size:0.8em;">📜 Глава '+currentChapter+'</button></div>'; if (!SherwoodUI._dailyTab||SherwoodUI._dailyTab===1) { for (var i=0;i<dailyQuests.length;i++) { var q=dailyQuests[i],claimed=dailyCompleted.indexOf(q.id)!==-1; html+='<div style="background:rgba(0,0,0,0.5);border:1px solid '+(q.completed?(claimed?'#4caf50':'#ffd700'):'#555')+';border-radius:8px;padding:10px;margin-bottom:6px;"><div style="color:#e0c080;font-size:0.85em;">'+q.name+'</div><div style="color:#aaa;font-size:0.65em;">'+q.desc+'</div><div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;margin:6px 0;overflow:hidden;"><div style="background:'+(q.completed?'#4caf50':'#c9a040')+';height:100%;width:'+Math.round((q.progress||0)/q.target*100)+'%;"></div></div><div style="color:#aaa;font-size:0.6em;">'+(q.progress||0)+'/'+q.target+' | 🏆 +'+q.reward.gold+'🪙 +'+q.reward.exp+'XP</div>'; if(q.completed&&!claimed) html+='<button onclick="SherwoodUI._claimDaily('+i+')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-size:0.6em;">Забрать</button>'; if(claimed) html+='<span style="color:#4caf50;font-size:0.6em;">✅ Получено</span>'; html+='</div>'; } } else { for (var j=0;j<chapterQuests.length;j++) { var q=chapterQuests[j],claimed=chapterCompleted.indexOf(q.id)!==-1; html+='<div style="background:rgba(0,0,0,0.5);border:1px solid '+(q.completed?(claimed?'#4caf50':'#ffd700'):'#555')+';border-radius:8px;padding:10px;margin-bottom:6px;"><div style="color:#e0c080;font-size:0.85em;">'+q.name+'</div><div style="color:#aaa;font-size:0.65em;">'+q.desc+'</div><div style="background:rgba(0,0,0,0.3);border-radius:4px;height:8px;margin:6px 0;overflow:hidden;"><div style="background:'+(q.completed?'#4caf50':'#c9a040')+';height:100%;width:'+Math.round((q.progress||0)/q.target*100)+'%;"></div></div><div style="color:#aaa;font-size:0.6em;">'+(q.progress||0)+'/'+q.target+' | 🏆 +'+q.reward.gold+'🪙 +'+q.reward.exp+'XP</div>'; if(q.completed&&!claimed) html+='<button onclick="SherwoodUI._claimChapter('+currentChapter+','+j+')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-size:0.6em;">Забрать</button>'; if(claimed) html+='<span style="color:#4caf50;font-size:0.6em;">✅ Получено</span>'; html+='</div>'; } } html+='<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>'; this._openScreen('📋 Задания','daily',html); },
