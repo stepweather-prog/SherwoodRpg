@@ -235,7 +235,7 @@ _walkPath: function(toX, toY) {
                 }
                 self._doStep(cur.path[i].x, cur.path[i].y);
                 i++;
-                setTimeout(nextStep, 100);
+                setTimeout(nextStep, 400);
             }
             nextStep();
             return;
