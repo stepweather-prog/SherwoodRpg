@@ -35,13 +35,12 @@ Sherwood.Combat = {
             enemyMaxArmor: armor,
             isBoss: !!isBoss,
             mode: mode || 'dungeon',
-            // Игрок — сохраняем все статы
             playerHp: p.stats.hp,
             playerMaxHp: p.stats.maxHp,
             playerAtk: p.stats.attack,
             playerDef: p.stats.defense,
             playerAgi: p.stats.agility,
-            playerArmor: Math.floor(p.stats.defense * 0.3), // Броня = 30% от защиты
+            playerArmor: Math.floor(p.stats.defense * 0.3),
             playerMaxArmor: Math.floor(p.stats.defense * 0.3)
         };
         this._effects = [];
@@ -79,7 +78,6 @@ Sherwood.Combat = {
         var b = this._battle;
         if (!b) return null;
 
-        // --- АТАКА ИГРОКА ---
         var raw = this._calcDamage(b.playerAtk, b.enemyDef);
         var crit = Math.random() * 100 < 15;
         if (crit) raw = Math.floor(raw * 1.8);
@@ -103,7 +101,6 @@ Sherwood.Combat = {
             enemyMaxHp: b.enemyMaxHp
         };
 
-        // --- ПРОВЕРКА ПОБЕДЫ ---
         if (b.enemyHp <= 0) {
             r.win = true;
             r.exp = b.isBoss ? 150 : 35;
@@ -113,7 +110,6 @@ Sherwood.Combat = {
             return r;
         }
 
-        // --- ХОД ВРАГА ---
         var er = this._enemyTurn();
         r.enemy = er;
         r.enemyName = b.enemyName;
@@ -133,7 +129,6 @@ Sherwood.Combat = {
         var b = this._battle;
         if (!b) return null;
 
-        // Проверяем эффекты на враге
         for (var i = this._effects.length - 1; i >= 0; i--) {
             var e = this._effects[i];
             if (e.target === 'enemy') {
@@ -148,7 +143,6 @@ Sherwood.Combat = {
                     e.turns--;
                     if (e.turns <= 0) this._effects.splice(i, 1);
                     var result = { poison: true, dmg: e.dmg, enemyHp: b.enemyHp };
-                    // Если враг умер от яда
                     if (b.enemyHp <= 0) {
                         this._battle = null;
                         return { poison: true, dmg: e.dmg, win: true };
@@ -158,7 +152,6 @@ Sherwood.Combat = {
             }
         }
 
-        // АТАКА ВРАГА
         var raw = this._calcDamage(b.enemyAtk, b.playerDef);
         var armDmg = Math.min(Math.floor(raw * 0.3), b.playerArmor);
         var hpDmg = raw - armDmg;
@@ -169,7 +162,6 @@ Sherwood.Combat = {
         b.playerHp -= hpDmg;
         if (b.playerHp < 0) b.playerHp = 0;
 
-        // Шанс использовать навык врага (если есть)
         if (Math.random() < 0.2 && b.isBoss) {
             return {
                 damage: hpDmg,
@@ -195,96 +187,59 @@ Sherwood.Combat = {
         if (r.gold) Sherwood.addResource('gold', r.gold);
         if (r.gold) Sherwood.addResource('silver', Math.floor(r.gold * 2));
 
-        if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1 + Math.floor(Math.random() * 3));
-        if (Math.random() < 0.10) Sherwood.addResource('ingots', 1 + Math.floor(Math.random() * 2));
-
-        // Кожа с каждой бестии — всегда
         try {
             if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
-                Sherwood.Bag.addItem({
-                    id: 'skin_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-                    name: 'Кожа шервудской твари',
-                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
-                    grade: 'common',
-                    type: 'resource',
-                    quantity: 1,
-                    maxStack: 99,
-                    sellPrice: 5
-                });
+                var chapter = Sherwood.getPlayer().questProgress.currentChapter || 1;
+                var lootRoll = Math.random();
 
-                // Шанс 15% на ингредиент для стрел
-                if (Math.random() < 0.15) {
-                    var ings = [
-                        { id: 'branch', name: 'Ветка проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png' },
-                        { id: 'feather', name: 'Перо бестии', icon: 'assets/interface/feather_beast_1.png' },
-                        { id: 'bone', name: 'Костяной нарост бестии', icon: 'assets/interface/bone_growth_of_the_beast.png' }
-                    ];
-                    var ing = ings[Math.floor(Math.random() * 3)];
+                if (lootRoll < 0.20) {
                     Sherwood.Bag.addItem({
-                        id: ing.id + '_' + Date.now(),
-                        name: ing.name,
-                        icon: ing.icon,
-                        grade: 'common',
-                        type: 'resource',
-                        quantity: 1,
-                        maxStack: 99,
-                        sellPrice: 3
+                        id: 'skin_of_the_sherwood_creature',
+                        name: 'Кожа шервудской твари',
+                        icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+                        grade: 'common', type: 'resource', quantity: 1, maxStack: 25, sellPrice: 5
+                    });
+                } else if (lootRoll < 0.35) {
+                    var arrowParts = [
+                        { id: 'branch', name: 'Ветка', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
+                        { id: 'feather', name: 'Перо', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
+                        { id: 'bone', name: 'Кость', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 }
+                    ];
+                    var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
+                    Sherwood.Bag.addItem({
+                        id: part.id, name: part.name, icon: part.icon,
+                        grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
+                    });
+                } else if (lootRoll < 0.45) {
+                    Sherwood.addResource('scrolls', 1);
+                } else if (lootRoll < 0.52) {
+                    Sherwood.Bag.addItem({
+                        id: 'ingot_chapter_' + chapter,
+                        name: 'Слиток обликов (Глава ' + chapter + ')',
+                        icon: 'assets/interface/ingot_chapter_' + chapter + '.png',
+                        grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20
+                    });
+                } else if (lootRoll < 0.57) {
+                    Sherwood.Bag.addItem({
+                        id: 'ring_' + Date.now(),
+                        name: 'Кольцо',
+                        icon: 'assets/interface/ring_first_level.png',
+                        part: 'ring', grade: 'uncommon', type: 'equipment',
+                        stats: { attack: 2 + Math.floor(Math.random() * 3), defense: 1 + Math.floor(Math.random() * 2) },
+                        sellPrice: 15, quantity: 1, maxStack: 1
+                    });
+                } else if (lootRoll < 0.62) {
+                    Sherwood.Bag.addItem({
+                        id: 'amulet_' + Date.now(),
+                        name: 'Амулет',
+                        icon: 'assets/interface/sherwood_amulet_level_one.png',
+                        part: 'amulet', grade: 'uncommon', type: 'equipment',
+                        stats: { hp: 10 + Math.floor(Math.random() * 20), agility: 1 + Math.floor(Math.random() * 2) },
+                        sellPrice: 15, quantity: 1, maxStack: 1
                     });
                 }
-
-                                        // Дроп с монстра
-            var lootRoll = Math.random();
-            var chapter = Sherwood.getPlayer().questProgress.currentChapter || 1;
-
-            if (lootRoll < 0.15) {
-                Sherwood.Bag.addItem({
-                    id: 'skin_of_the_sherwood_creature',
-                    name: 'Кожа шервудской твари',
-                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
-                    grade: 'common', type: 'resource', quantity: 1, maxStack: 25, sellPrice: 5
-                });
-            } else if (lootRoll < 0.25) {
-                var arrowParts = [
-                    { id: 'branch', name: 'Ветка', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
-                    { id: 'feather', name: 'Перо', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 },
-                    { id: 'bone', name: 'Кость', icon: 'assets/interface/labyrinth_of_icons.png', sellPrice: 3 }
-                ];
-                var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
-                Sherwood.Bag.addItem({
-                    id: part.id, name: part.name, icon: part.icon,
-                    grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
-                });
-            } else if (lootRoll < 0.30) {
-                Sherwood.addResource('scrolls', 1);
-            } else if (lootRoll < 0.35) {
-                Sherwood.Bag.addItem({
-                    id: 'ingot_chapter_' + chapter,
-                    name: 'Слиток обликов (Глава ' + chapter + ')',
-                    icon: 'assets/interface/ingot_chapter_' + chapter + '.png',
-                    grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20
-                });
-            } else if (lootRoll < 0.40) {
-                Sherwood.Bag.addItem({
-                    id: 'ring_' + Date.now(),
-                    name: 'Кольцо',
-                    icon: 'assets/interface/ring_first_level.png',
-                    part: 'ring', grade: 'uncommon', type: 'equipment',
-                    stats: { attack: 2 + Math.floor(Math.random() * 3), defense: 1 + Math.floor(Math.random() * 2) },
-                    sellPrice: 15, quantity: 1, maxStack: 1
-                });
-            } else if (lootRoll < 0.45) {
-                Sherwood.Bag.addItem({
-                    id: 'amulet_' + Date.now(),
-                    name: 'Амулет',
-                    icon: 'assets/interface/sherwood_amulet_level_one.png',
-                    part: 'amulet', grade: 'uncommon', type: 'equipment',
-                    stats: { hp: 10 + Math.floor(Math.random() * 20), agility: 1 + Math.floor(Math.random() * 2) },
-                    sellPrice: 15, quantity: 1, maxStack: 1
-                });
             }
         } catch(e) {}
-            // Если Bag не инициализирован — игнорируем
-        }
 
         Sherwood.saveGame();
     },
@@ -299,7 +254,6 @@ Sherwood.Combat = {
             return { success: true };
         }
 
-        // Неудачный побег — враг атакует
         var raw = this._calcDamage(b.enemyAtk, b.playerDef);
         var armDmg = Math.min(Math.floor(raw * 0.3), b.playerArmor);
         var hpDmg = raw - armDmg;
@@ -318,12 +272,7 @@ Sherwood.Combat = {
         return { success: false, damage: hpDmg };
     },
 
-    // ============================================================
-    //  НАВЫКИ (ЗАГЛУШКА — ЖДЁТ АКТИВАЦИИ)
-    // ============================================================
-
     getSkills: function() {
-        // Возвращает список доступных навыков игрока
         return {
             power_shot: {
                 id: 'power_shot',
@@ -399,7 +348,6 @@ Sherwood.Combat = {
         b.enemyHp -= hpDmg;
         if (b.enemyHp < 0) b.enemyHp = 0;
 
-        // Эффекты навыков
         if (skillId === 'poison_arrow') {
             this._effects.push({ target: 'enemy', type: 'poison', dmg: Math.floor(hpDmg * 0.2) + 5, turns: 3 });
         }
@@ -407,7 +355,6 @@ Sherwood.Combat = {
             this._effects.push({ target: 'enemy', type: 'stun', turns: 1 });
         }
 
-        // Кулдаун
         this._cooldowns[skillId] = skill.cooldown;
 
         var r = {
@@ -447,7 +394,6 @@ Sherwood.Combat = {
         for (var key in this._cooldowns) {
             if (this._cooldowns.hasOwnProperty(key)) {
                 result[key] = this._cooldowns[key];
-                // Уменьшаем кулдаун на каждом ходу
                 if (this._cooldowns[key] > 0) this._cooldowns[key]--;
             }
         }
