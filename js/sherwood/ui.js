@@ -285,7 +285,7 @@ _walkPath: function(toX, toY) {
                 }
                 self._doStep(cur.path[i].x, cur.path[i].y);
                 i++;
-                setTimeout(nextStep, 400);
+                setTimeout(nextStep, 150);
             }
             nextStep();
             return;
@@ -318,16 +318,16 @@ _doStep: function(tx, ty) {
     this._renderDungeon();
     this.updateDisplay();
     
-    if (res.type === 'battle') { d.isMoving = false; this._stopMusic(); this._playSound('trap'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); return; }
+    if (res.type === 'battle') { d.isMoving = false; this._stopMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
     if (res.type === 'chest') { this._playSound('chest_open'); }
     if (res.type === 'altar') { this._playSound('altar'); var p = Sherwood.getPlayer(); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + Math.floor(p.stats.maxHp * 0.3)); }
     if (res.type === 'cauldron') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + Math.floor(p.stats.maxHp * 0.2)); }
     if (res.type === 'potion') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); }
-    if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); this.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('forest_ambient'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
+    if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); this.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
     if (res.type === 'exit_locked') { this._showNotification('Locked! Kill all monsters!'); }
 },
 
-_leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('forest_ambient'); this.showDungeon(); },
+_leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('main_theme'); this.showDungeon(); },
 
 // ========== БОЙ (ЕДИНЫЙ) ==========
     _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
