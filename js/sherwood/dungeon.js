@@ -25,19 +25,22 @@ Sherwood.Dungeon = {
     },
 
     getAvailable: function() {
-        var list = {};
-        var duns = {
-            forest: { name: 'Проклятая чаща', icon: '🌲', bg: 'assets/backgrounds/underground_1_floor_1.jpg', tiles: 'dungeon1', ext: '.jpeg' },
-            swamp: { name: 'Первородное болото', icon: '🌿', bg: 'assets/backgrounds/underground_2_floor_1.jpeg', tiles: 'dungeon2', ext: '.png' },
-            cave: { name: 'Базальтовые шахты', icon: '🪨', bg: 'assets/backgrounds/underground_3_floor_1.jpeg', tiles: 'dungeon3', ext: '.png' }
-        };
-        for (var id in duns) {
-            var dd = duns[id];
-            var prog = this._progress[id] || { level: 1 };
+    var list = {};
+    var duns = {
+        forest: { name: 'Проклятая чаща', icon: '🌲', bg: 'assets/backgrounds/underground_1_floor_1.jpg', tiles: 'dungeon1', ext: '.jpeg', unlockLevel: 1 },
+        swamp: { name: 'Первородное болото', icon: '🌿', bg: 'assets/backgrounds/underground_2_floor_1.jpeg', tiles: 'dungeon2', ext: '.png', unlockLevel: 4, requiredDungeon: 'forest' },
+        cave: { name: 'Базальтовые шахты', icon: '🪨', bg: 'assets/backgrounds/underground_3_floor_1.jpeg', tiles: 'dungeon3', ext: '.png', unlockLevel: 4, requiredDungeon: 'swamp' }
+    };
+    for (var id in duns) {
+        var dd = duns[id];
+        var prog = this._progress[id] || { level: 1 };
+        var requiredProg = dd.requiredDungeon ? (this._progress[dd.requiredDungeon] || { level: 1 }) : { level: 99 };
+        if (id === 'forest' || (requiredProg.level >= dd.unlockLevel)) {
             list[id] = { id: id, name: dd.name, icon: dd.icon, bg: dd.bg, tiles: dd.tiles, ext: dd.ext, level: prog.level };
         }
-        return list;
-    },
+    }
+    return list;
+},
 
     generate: function(dungeonId, level) {
     var p = Sherwood.getPlayer();
