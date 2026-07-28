@@ -58,77 +58,60 @@ _initSounds: function() {
     try { var bgm = new Audio('assets/sounds/subway_3.wav'); bgm.preload = 'auto'; bgm.loop = true; bgm.volume = 0.25; this._sounds['battle_bgm'] = bgm; } catch(e) {}
     try { var main = new Audio('assets/sounds/sherwood_rpg.mp3'); main.preload = 'auto'; main.loop = true; main.volume = 0.5; this._sounds['main_theme'] = main; } catch(e) {}
 },
+
 _playSound: function(k) { try { if (!this._soundEnabled) return; var s = this._sounds[k]; if (s) { s.currentTime = 0; s.play().catch(function() {}); } } catch(e) {} },
+
 _playMusic: function(k) {
     try {
         if (!this._musicEnabled) return;
         if (k === 'main_theme' && Sherwood.Dungeon && Sherwood.Dungeon.getDungeon()) return;
-        if (k === 'main_theme' && Sherwood.Combat && Sherwood.Combat.isActive && Sherwood.Combat.isActive()) return;
+        if (k === 'main_theme' && Sherwood.Combat && Sherwood.Combat._battle) return;
         if (this._currentMusicKey === k && this._currentMusic && !this._currentMusic.paused) return;
-        this._stopMusic(); this._stopBattleMusic();
-        var m = this._sounds[k]; if (m) { m.loop = true; m.volume = 0.7; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
+        this._stopMusic();
+        var m = this._sounds[k]; 
+        if (m) { m.loop = true; m.volume = 0.7; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
     } catch(e) {}
 },
 
 _stopMusic: function() { try { if (this._currentMusic) { this._currentMusic.pause(); this._currentMusic.currentTime = 0; this._currentMusic = null; this._currentMusicKey = null; } } catch(e) {} },
+
 _stopBattleMusic: function() { try { var bgm = this._sounds['battle_bgm']; if (bgm) { bgm.pause(); bgm.currentTime = 0; } } catch(e) {} },
+
 _playHitSounds: function() {
     try { this._playSound('shot'); } catch(e) {}
     try { var bgm = this._sounds['battle_bgm']; if (bgm && bgm.paused) { bgm.currentTime = 0; bgm.play().catch(function() {}); } } catch(e) {}
 },
+
 _saveAudioSettings: function() { try { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: this._soundEnabled, music: this._musicEnabled })); } catch(e) {} },
+
 _loadAudioSettings: function() { try { var s = localStorage.getItem('sherwood_audio'); if (s) { var d = JSON.parse(s); this._soundEnabled = d.sound !== false; this._musicEnabled = d.music !== false; } } catch(e) {} },
 
-bindButtons: function() {
-    var self = this;
+bindPlayButton: function() {
     try {
-        var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
-        for (var i = 0; i < buttons.length; i++) {
-            (function(el) {
-                el.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    var a = el.dataset.action;
-                    if (a && typeof self[a] === 'function') { try { self._playSound('click'); } catch(e) {} self[a](); }
-                });
-            })(buttons[i]);
-        }
-    } catch(e) { setTimeout(function() { self.bindButtons(); }, 500); }
-},
-    bindPlayButton: function() {
-        try {
-            var self = this; var btn = document.getElementById('playBtn');
-            if (btn) btn.addEventListener('click', function() {
-                try { document.getElementById('loadingScreen').classList.add('hidden'); } catch(e) {}
-                try { document.getElementById('mainInterface').classList.add('active'); } catch(e) {}
-                try { self._playMusic('forest_ambient'); } catch(e) {}
-            });
-        } catch(e) {}
-    },
-
-    updateDisplay: function() {
-    try {
-        var p = (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) ? Sherwood.getPlayer() : null; if (!p) return;
-        try { document.getElementById('gold-display').textContent = this._fmt(p.resources ? p.resources.gold || 0 : 0); } catch(e) {}
-        try { document.getElementById('silver-display').textContent = this._fmt(p.resources ? p.resources.silver || 0 : 0); } catch(e) {}
-        try { document.getElementById('exp-display').textContent = this._fmt(p.exp || 0); } catch(e) {}
-        try { document.getElementById('exp-max-display').textContent = this._fmt(p.expToLevel || 100); } catch(e) {}
-        try { var expPct = Sherwood.getLevelProgress(); var fill = document.getElementById('exp-fill'); if (fill) fill.style.width = expPct + '%'; } catch(e) {}
-        try { var ae = document.querySelector('.stat-value.attack'); if (ae) ae.textContent = p.stats ? p.stats.attack || 0 : 0; } catch(e) {}
-        try { var de = document.querySelector('.stat-value.defense'); if (de) de.textContent = p.stats ? p.stats.defense || 0 : 0; } catch(e) {}
-        try { var ge = document.querySelector('.stat-value.agility'); if (ge) ge.textContent = p.stats ? p.stats.agility || 0 : 0; } catch(e) {}
-        try { var he = document.querySelector('.stat-value.hp'); if (he) he.textContent = p.stats ? p.stats.hp || 0 : 0; } catch(e) {}
+        var self = this; var btn = document.getElementById('playBtn');
+        if (btn) btn.addEventListener('click', function() {
+            try { document.getElementById('loadingScreen').classList.add('hidden'); } catch(e) {}
+            try { document.getElementById('mainInterface').classList.add('active'); } catch(e) {}
+            try { self._playSound('click'); self._playMusic('main_theme'); } catch(e) {}
+        });
     } catch(e) {}
 },
-    _fmt: function(n) { return (n === undefined || n === null) ? '0' : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); },
 
-    loadHome: function() {
-        try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
-        try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
-        try { this.container.style.background = ''; } catch(e) {}
-        try { this._stopBattleMusic(); this._playMusic('main_theme'); } catch(e) {}
-        this._previousScreen = null;
-        try { this.updateDisplay(); } catch(e) {}
-    },
+loadHome: function() {
+    try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
+    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
+    try { this.container.style.background = ''; } catch(e) {}
+    try { this._stopBattleMusic(); this._playMusic('main_theme'); } catch(e) {}
+    this._previousScreen = null;
+    try { this.updateDisplay(); } catch(e) {}
+},
+
+_toggleMusic: function(en) { 
+    this._musicEnabled = en; this._saveAudioSettings(); 
+    if (!en) { this._stopMusic(); this._stopBattleMusic(); } 
+    else this._playMusic('main_theme'); 
+    this.settings(); 
+},
     _openScreen: function(title, bgKey, html, backFn) {
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
         try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {}
