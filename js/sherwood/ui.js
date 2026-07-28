@@ -344,52 +344,48 @@ _doStep: function(tx, ty) {
 _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('main_theme'); this.showDungeon(); },
 
 // ========== БОЙ (ЕДИНЫЙ) ==========
-    _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
+_showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
     var e = enemyData, p = Sherwood.getPlayer();
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var h = '<div style="text-align:center;">';
-    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:6px;">' + modeTitle + '</div>';
+    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:4px;">' + modeTitle + '</div>';
     
-    h += '<div style="position:relative;width:300px;height:30px;margin:4px auto;">';
+    h += '<div style="position:relative;width:300px;height:26px;margin:2px auto;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:4px;left:14px;right:14px;bottom:4px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:3px;left:12px;right:12px;bottom:3px;overflow:hidden;z-index:0;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
     
-    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
+    h += '<div style="color:#f44336;font-weight:bold;font-size:1em;">' + e.name + '</div>';
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
-    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:200px;height:200px;position:absolute;top:-10px;left:-10px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:180px;height:180px;object-fit:contain;position:relative;z-index:1;border-radius:12px;transition:filter 0.15s;"></div>';
+    h += '<div style="margin:4px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:180px;height:180px;position:absolute;top:-8px;left:-8px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:160px;height:160px;object-fit:contain;position:relative;z-index:1;border-radius:12px;transition:filter 0.15s;"></div>';
     
-    // Навыки слева и справа от кнопки атаки
     var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
     var unlockedSkills = [];
     for (var id in skills) { if (skills[id].unlocked) unlockedSkills.push(skills[id]); }
     
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0;">';
-    // Левые скиллы
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:2px 0;">';
     for (var i = 0; i < Math.min(2, unlockedSkills.length); i++) {
         var sk = unlockedSkills[i];
-        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:2px solid #c9a040;border-radius:8px;width:56px;height:56px;cursor:pointer;padding:4px;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;"><div style="color:#fff;font-size:0.45em;">' + sk.name + '</div></button>';
+        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:6px;width:50px;height:50px;cursor:pointer;padding:2px;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;"><div style="color:#fff;font-size:0.4em;">' + sk.name + '</div></button>';
     }
-    // Кнопка атаки
-    h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
-    // Правые скиллы
+    h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:60px;height:60px;border:2px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
     for (var i = 2; i < unlockedSkills.length; i++) {
         var sk = unlockedSkills[i];
-        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:2px solid #c9a040;border-radius:8px;width:56px;height:56px;cursor:pointer;padding:4px;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;"><div style="color:#fff;font-size:0.45em;">' + sk.name + '</div></button>';
+        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:6px;width:50px;height:50px;cursor:pointer;padding:2px;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;"><div style="color:#fff;font-size:0.4em;">' + sk.name + '</div></button>';
     }
     h += '</div>';
     
-    h += '<div style="position:relative;width:300px;height:30px;margin:6px auto;">';
+    h += '<div style="position:relative;width:300px;height:26px;margin:2px auto;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:4px;left:14px;right:14px;bottom:4px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:3px;left:12px;right:12px;bottom:3px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">ATK ' + p.stats.attack + '</span> <span style="color:#2196f3;">DEF ' + p.stats.defense + '</span> <span style="color:#ff9800;">AGI ' + p.stats.agility + '</span></div>';
-    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:4px 8%;min-height:70px;max-height:70px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;line-height:1.4;"></div>';
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:2px 0;color:#aaa;font-size:0.65em;"><span style="color:#f44336;">ATK ' + p.stats.attack + '</span> <span style="color:#2196f3;">DEF ' + p.stats.defense + '</span> <span style="color:#ff9800;">AGI ' + p.stats.agility + '</span></div>';
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:2px 8%;min-height:50px;max-height:50px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
     h += '</div>';
     this._openScreen('Battle', 'dungeon_fight', h);
 },
@@ -401,17 +397,15 @@ _useSkill: function(skillId) {
     if (r && r.error) { this._showDialog(r.error, '#ff9800'); this._showCombatScreen(); return; }
     this._handleCombat(r);
 },
-    _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
-    _hitEnemyCard: function() { var card = document.getElementById('enemy-card'); if (!card) return; card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)'; setTimeout(function() { card.style.filter = ''; }, 250); card.classList.remove('hit-epic-combo'); void card.offsetWidth; card.classList.add('hit-epic-combo'); },
-    _updateEnemyHP: function(hp, max) { 
+
+_showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
+_hitEnemyCard: function() { var card = document.getElementById('enemy-card'); if (!card) return; card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)'; setTimeout(function() { card.style.filter = ''; }, 250); },
+_updateEnemyHP: function(hp, max) { 
     var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); 
     if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + '%'; } 
     if (txt) txt.textContent = hp + '/' + max; 
     var p = Sherwood.getPlayer();
-    if (p) {
-        var playerBar = document.getElementById('player-hp-bar');
-        if (playerBar) { var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0; playerBar.style.width = php + '%'; }
-    }
+    if (p) { var playerBar = document.getElementById('player-hp-bar'); if (playerBar) { var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0; playerBar.style.width = php + '%'; } }
 },
 
 _showCombatScreen: function() { 
