@@ -96,18 +96,21 @@
         .left-buttons { left: 1%; }
         .right-buttons { right: 1%; }
         .left-buttons .btn, .right-buttons .btn, #top-buttons-bar .btn { 
-    width: 60px; height: 60px;
-    cursor: pointer; background: none; border: none;
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 0;
+    width: 56px; height: 56px; cursor: pointer; background: none; border: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+    padding: 2px 0 0 0; overflow: visible; position: relative;
 }
 .left-buttons .btn img, .right-buttons .btn img, #top-buttons-bar .btn img { 
-    width: 46px; height: 46px; object-fit: contain; 
+    width: 44px; height: 44px; object-fit: contain; 
 }
 .left-buttons .btn .label, .right-buttons .btn .label, #top-buttons-bar .btn .label { 
-    color: #fff; font-size: 0.4em; font-weight: bold;
-    text-shadow: 0 0 4px #000, 0 0 8px #000;
-    text-align: center; line-height: 1.1; margin-top: 1px;
-    max-width: 60px; overflow: hidden; white-space: nowrap;
+    color: #ffa500; font-size: 7px; font-weight: bold;
+    text-shadow: 0 0 4px #000, 0 0 6px #000;
+    text-align: center; line-height: 1; margin-top: 1px;
+    max-width: 56px; overflow: hidden; white-space: nowrap;
+}
+#top-buttons-bar {
+    display: flex !important; flex-direction: row !important; gap: 4px; width: 240px;
 }
         .hit-epic-combo { animation: epicShockwave 0.25s cubic-bezier(0.25,1,0.5,1); }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
