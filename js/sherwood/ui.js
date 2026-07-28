@@ -7,8 +7,10 @@ const SherwoodUI = {
         daily: 'assets/backgrounds/tasks.jpeg', portal: 'assets/backgrounds/portal_1.jpeg', chat: 'assets/backgrounds/chat_background.png',
         dungeon_select: 'assets/backgrounds/underground_1_floor_1.jpg', dungeon_forest: 'assets/backgrounds/underground_1_floor_1.jpg',
         dungeon_swamp: 'assets/backgrounds/underground_2_floor_1.jpeg', dungeon_cave: 'assets/backgrounds/underground_3_floor_1.jpeg',
-        dungeon_fight: 'assets/backgrounds/underground_1_floor_1.jpg'
+        dungeon_fight: 'assets/backgrounds/underground_1_floor_1.jpg',
+        hearth: 'assets/backgrounds/background_hearth.jpeg', talents: 'assets/backgrounds/background_talents.png'
     },
+    
     _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', agility: 'assets/interface/icon_dexterity.png', hp: 'assets/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _audioFiles: {
@@ -119,6 +121,49 @@ const SherwoodUI = {
     _showVictoryScreen: function(rewards) { var h = '<div style="text-align:center;padding:10px;"><div style="position:relative;display:inline-block;"><img src="assets/interface/vertical_slab_victory.png" style="width:300px;height:auto;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;"><div style="color:#ffd700;font-size:1.1em;font-weight:bold;">🏆 ПОБЕДА!</div>'; if (rewards.exp) h += '<div style="color:#fff;font-size:0.85em;">+ ' + rewards.exp + ' XP</div>'; if (rewards.gold) h += '<div style="color:#ffd700;">+ ' + rewards.gold + ' 🪙</div>'; if (rewards.silver) h += '<div style="color:#c0c0c0;">+ ' + rewards.silver + ' ⚪</div>'; if (rewards.scrolls) h += '<div style="color:#9c27b0;">+ ' + rewards.scrolls + ' 📜</div>'; if (rewards.ingots) h += '<div style="color:#ff9800;">+ ' + rewards.ingots + ' 🔩</div>'; h += '</div><button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:8px 24px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;z-index:2;">Забрать</button></div></div>'; this._openScreen('🏆 Победа', 'dungeon_fight', h); },
     _showDefeatScreen: function(rewards) { var h = '<div style="text-align:center;padding:10px;"><div style="position:relative;display:inline-block;"><img src="assets/interface/vertical_slab_defeat.png" style="width:300px;height:auto;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;"><div style="color:#f44336;font-size:1.1em;font-weight:bold;">💀 ПОРАЖЕНИЕ</div>'; if (rewards.exp) h += '<div style="color:#fff;font-size:0.85em;">+ ' + rewards.exp + ' XP</div>'; if (rewards.silver) h += '<div style="color:#c0c0c0;">+ ' + rewards.silver + ' ⚪</div>'; if (rewards.scrolls) h += '<div style="color:#9c27b0;">+ ' + rewards.scrolls + ' 📜</div>'; h += '</div><button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:8px 24px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;z-index:2;">Забрать</button></div></div>'; this._openScreen('💀 Поражение', 'dungeon_fight', h); },
     _claimReward: function() { this._pendingRewards = null; if (this._afterRewardAction) { var cb = this._afterRewardAction; this._afterRewardAction = null; cb(); } },
+    hearth: function() {
+    this._playSound('click');
+    var p = Sherwood.getPlayer();
+    var bonusActive = p.hearthBonus && p.hearthBonus.active;
+    var bonusEnd = p.hearthBonus ? p.hearthBonus.endTime || 0 : 0;
+    var now = Date.now();
+    var cooldown = p.hearthCooldown || 0;
+    var wood = 0;
+    try { var bag = Sherwood.Bag.getItems(); for (var i=0;i<bag.length;i++) { if (bag[i].id === 'wood' || bag[i].name === 'Дерево') wood += bag[i].quantity || 0; } } catch(e) {}
+    var canActivate = wood >= 100 && now > cooldown;
+    var h = '<div style="text-align:center;padding:20px;"><div style="font-size:3em;">🔥</div><div style="color:#e0c080;font-size:1.2em;margin:12px 0;">Очаг Шервуда</div><div style="color:#aaa;font-size:0.85em;">Дерева в сумке: ' + wood + ' / 100</div>';
+    if (bonusActive && now < bonusEnd) { var rem = Math.ceil((bonusEnd - now)/3600000); h += '<div style="color:#4caf50;margin:12px 0;">✅ Бонус +20% активен! Осталось: ' + rem + ' ч.</div>'; }
+    else if (canActivate) { h += '<button onclick="SherwoodUI._activateHearth()" style="margin-top:12px;background:#c9a040;border:none;border-radius:8px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;">Подкинуть дров (100 🌿)</button>'; }
+    else if (now <= cooldown) { var cd = Math.ceil((cooldown - now)/3600000); h += '<div style="color:#ff9800;margin:12px 0;">⏳ Перезарядка: ' + cd + ' ч.</div>'; }
+    else { h += '<div style="color:#f44336;margin:12px 0;">Недостаточно дерева (нужно 100)</div>'; }
+    h += '</div>';
+    this._openScreen('🔥 Очаг', 'hearth', h);
+},
+
+_activateHearth: function() {
+    var p = Sherwood.getPlayer();
+    var spent = 0;
+    try { var bag = Sherwood.Bag.getItems(); for (var i=bag.length-1;i>=0&&spent<100;i--) { if (bag[i].id==='wood'||bag[i].name==='Дерево') { var q=bag[i].quantity||1; var t=Math.min(q,100-spent); spent+=t; if(q<=t) bag.splice(i,1); else bag[i].quantity-=t; } } Sherwood.Bag._save(); } catch(e) {}
+    p.hearthBonus = { active: true, endTime: Date.now() + 86400000 };
+    p.hearthCooldown = Date.now() + 604800000;
+    Sherwood._recalcStats();
+    Sherwood.saveGame();
+    this.hearth();
+},
+
+talents: function() {
+    this._playSound('click');
+    var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-size:1.1em;text-align:center;margin-bottom:12px;">🌿 Таланты</div>';
+    for (var id in skills) { var s=skills[id]; h+='<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><img src="'+s.icon+'" style="width:44px;height:44px;object-fit:contain;"><div style="flex:1;"><div style="color:#e0c080;">'+s.name+'</div><div style="color:#aaa;font-size:0.7em;">'+s.description+'</div></div>';
+    if (s.unlocked) h+='<div style="color:#4caf50;font-size:0.7em;">Открыт</div>';
+    else h+='<button onclick="SherwoodUI._unlockTalent(\''+id+'\')" style="background:#c9a040;border:none;border-radius:4px;padding:4px 10px;color:#000;cursor:pointer;font-size:0.7em;">Изучить ('+s.cost+' 🪙)</button>';
+    h+='</div>'; }
+    h += '</div>';
+    this._openScreen('🌿 Таланты', 'talents', h);
+},
+
+_unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill) return; var r=Sherwood.Combat.unlockSkill(id); if(r.success){this.updateDisplay();this.talents();} else this._showNotification(r.reason||'Ошибка'); },
 
     // ========== ПОДЗЕМКА ==========
     subway: function() { this.showDungeon(); },
