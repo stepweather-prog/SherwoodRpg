@@ -251,6 +251,13 @@ Sherwood.Dungeon = {
     }
     return { ok: true, type: 'move' };
 },
+    _moveSilent: function(tx, ty) {
+    var d = this._dungeon;
+    if (!d) return;
+    d.grid[ty][tx].open = true;
+    d.px = tx;
+    d.py = ty;
+},
     killMonster: function() {
     if (!this._dungeon) return;
     var d = this._dungeon;
