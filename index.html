@@ -37,13 +37,13 @@
         .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
         .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
         .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
-        .bottom-stats { position: absolute; bottom: 0; left: 2%; right: 2%; z-index: 10; display: flex; flex-direction: column; gap: 4px; pointer-events: none; padding-bottom: 4px; }
-.bottom-stats .stat-block { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .bottom-stats { position: absolute; bottom: 0; left: 2%; right: 2%; z-index: 10; display: flex; flex-direction: column; gap: 0; pointer-events: none; padding-bottom: 4px; }
+.bottom-stats .stat-block { display: flex; flex-direction: column; gap: 0; width: 100%; }
 .bottom-stats .stat-block .stat-board { display: none; }
-.bottom-stats .stat-block .stat-item { display: flex; align-items: center; gap: 8px; width: 100%; height: 28px; position: relative; }
+.bottom-stats .stat-block .stat-item { display: flex; align-items: center; gap: 8px; width: 100%; height: 36px; position: relative; }
 .bottom-stats .stat-block .stat-item::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
-.bottom-stats .stat-block .stat-item img { width: 22px; height: 22px; object-fit: contain; z-index: 1; margin-left: 8px; }
-.bottom-stats .stat-block .stat-item .stat-value { font-size: 0.8em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; z-index: 1; position: absolute; left: 50%; transform: translateX(-50%); }
+.bottom-stats .stat-block .stat-item img { width: 26px; height: 26px; object-fit: contain; z-index: 1; margin-left: 10px; }
+.bottom-stats .stat-block .stat-item .stat-value { font-size: 0.9em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; z-index: 1; position: absolute; left: 50%; transform: translateX(-50%); }
 
 #top-buttons-bar { position: absolute; top: 6%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 4px; width: 440px; max-width: 96%; justify-content: center; }
 #top-buttons-bar .btn { width: 72px; height: 72px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
