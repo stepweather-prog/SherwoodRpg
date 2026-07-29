@@ -37,18 +37,18 @@
         .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
         .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
         .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
-        .bottom-stats { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; flex-direction: column; gap: 0; pointer-events: none; }
-.bottom-stats .stat-block { display: flex; flex-direction: column; gap: 0; width: 100%; }
+        .bottom-stats { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; pointer-events: none; }
+.bottom-stats .stat-block { display: flex; flex-direction: column-reverse; gap: 0; width: 100%; }
 .bottom-stats .stat-block .stat-board { display: none; }
-.bottom-stats .stat-block .stat-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; position: relative; }
+.bottom-stats .stat-block .stat-item { display: flex; align-items: center; width: 100%; height: 80px; position: relative; margin: 0; padding: 0; }
 .bottom-stats .stat-block .stat-item::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
-.bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; z-index: 1; margin-left: 12px; }
-.bottom-stats .stat-block .stat-item .stat-value { font-size: 1em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; z-index: 1; position: absolute; left: 50%; transform: translateX(-50%); }
+.bottom-stats .stat-block .stat-item img { width: 40px; height: 40px; object-fit: contain; z-index: 1; margin-left: 16px; }
+.bottom-stats .stat-block .stat-item .stat-value { font-size: 1.3em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; z-index: 1; position: absolute; left: 50%; transform: translateX(-50%); }
 
-#top-buttons-bar { position: absolute; top: 19%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 4px; width: 440px; max-width: 96%; justify-content: center; }
-#top-buttons-bar .btn { width: 72px; height: 72px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
-#top-buttons-bar .btn img { width: 54px; height: 54px; object-fit: contain; }
-#top-buttons-bar .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; line-height: 1; margin-top: 2px; max-width: 64px; overflow: hidden; white-space: nowrap; }
+#top-buttons-bar { position: absolute; top: 19%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 2px; width: 440px; max-width: 96%; justify-content: center; }
+#top-buttons-bar .btn { width: 64px; height: 64px; }
+#top-buttons-bar .btn img { width: 48px; height: 48px; }
+#top-buttons-bar .btn .label { font-size: 9px; }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
         @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .top-panel .resource span { font-size: 0.7em; } .top-panel .exp-bar img { height: 40px; max-width: 200px; } .top-panel .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
         .diablo-light-halo { position: absolute; width: 300%; height: 300%; top: -100%; left: -100%; pointer-events: none; z-index: 2; background: radial-gradient(circle, rgba(255,235,180,0.45) 0%, rgba(255,200,100,0.15) 30%, rgba(0,0,0,0) 70%); mix-blend-mode: screen; }
