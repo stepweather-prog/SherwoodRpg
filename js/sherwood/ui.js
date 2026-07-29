@@ -941,4 +941,49 @@ bestiary: function() {
             h+='<img src="assets/all_beasts/'+b.id+'" style="width:40px;height:40px;object-fit:contain;border-radius:4px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
             h+='<div style="flex:1;"><div style="color:'+(disc?'#fff':'#888')+';">'+(disc?b.name:'???')+'</div><div style="color:#aaa;font-size:0.6em;">'+b.floor+' | '+b.type+'</div></div>';
             h+='<div style="color:#aaa;font-size:0.7em;">Kills: '+b.kills+'</div>';
-            if(disc && !b.rewardClaimed) h+='<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+
+            if(disc && !b.rewardClaimed) h+='<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="background:#ff9800;border:none;border-radius:4px;padding:2px 6px;color:#fff;cursor:pointer;font-size:0.55em;">+'+b.reward+' Silver</button>';
+            if(disc && b.rewardClaimed) h+='<span style="color:#4caf50;font-size:0.55em;">Claimed</span>';
+            h+='</div>';
+        }
+    }
+    this._openScreen('Bestiary','bestiary',h||'<div style="color:#aaa;text-align:center;">Bestiary is empty</div>',gb); 
+},
+
+_showBeastInfo: function(beastId) {
+    var b = Sherwood.Bestiary.getBeast(beastId);
+    if (!b) return;
+    var h = '<div style="text-align:center;padding:16px;">';
+    h += '<img src="assets/all_beasts/' + b.id + '" style="width:120px;height:120px;object-fit:contain;border:2px solid #c9a040;border-radius:8px;">';
+    h += '<div style="color:#e0c080;font-size:1.1em;margin:8px 0;">' + b.name + '</div>';
+    h += '<div style="color:#aaa;font-size:0.8em;">' + b.floor + ' | ' + b.type + '</div>';
+    h += '<div style="color:#ccc;font-size:0.8em;margin:12px 0;">' + b.lore + '</div>';
+    h += '<div style="color:#aaa;font-size:0.75em;">Kills: ' + b.kills + ' | Reward: ' + (b.reward || 50) + ' Silver</div>';
+    if (!b.rewardClaimed && b.kills > 0) h += '<button onclick="SherwoodUI._claimBestiaryReward(\'' + b.id + '\')" style="margin-top:8px;background:#ff9800;border:none;border-radius:6px;padding:6px 16px;color:#fff;cursor:pointer;">Claim ' + (b.reward || 50) + ' Silver</button>';
+    if (b.rewardClaimed) h += '<div style="color:#4caf50;margin-top:8px;">Reward claimed</div>';
+    h += '</div>';
+    this._openScreen(b.name, 'bestiary', h, 'SherwoodUI.bestiary()');
+},
+
+_claimBestiaryReward: function(beastId) {
+    if (!Sherwood.Bestiary) return;
+    var r = Sherwood.Bestiary.claimReward(beastId);
+    if (r.success) { this.updateDisplay(); this.bestiary(); }
+},
+
+};
+
+(function() {
+    var self = SherwoodUI;
+    var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
+    for (var i = 0; i < buttons.length; i++) {
+        (function(el) {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var a = el.dataset.action;
+                if (a && typeof self[a] === 'function') { try { self._playSound('click'); } catch(e) {} self[a](); }
+            });
+        })(buttons[i]);
+    }
+})();
+
+document.addEventListener('DOMContentLoaded', function() { if (typeof SherwoodUI !== 'undefined' && SherwoodUI.init) SherwoodUI.init(); });
