@@ -354,10 +354,14 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
-    var cardW = (mode === 'arena') ? '200px' : '250px';
-    var cardH = (mode === 'arena') ? '300px' : '250px';
-    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:' + cardW + ';height:' + cardH + ';object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
-    
+if (mode === 'arena') {
+    h += '<div style="margin:8px auto;position:relative;width:200px;height:300px;">';
+    h += '<img src="assets/interface/frame_of_beasts.png" style="position:absolute;top:0;left:0;width:200px;height:300px;object-fit:fill;z-index:1;pointer-events:none;">';
+    h += '<img src="' + imgPath + '" id="enemy-card" style="position:absolute;top:0;left:0;width:200px;height:300px;object-fit:contain;z-index:0;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'">';
+    h += '</div>';
+} else {
+    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
+}
     var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
     var unlockedSkills = [];
     for (var id in skills) { if (skills[id].unlocked) unlockedSkills.push(skills[id]); }
