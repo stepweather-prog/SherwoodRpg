@@ -231,7 +231,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             }
             var content = "";
             if (!isPlayer) {
-                if (cell.monster && (cell.open || (Math.abs(px - x) + Math.abs(py - y) === 1))) content = "<img src='assets/all_beasts/" + (cell.monsterId || "image (1).png") + "' style='width:90%;height:90%;object-fit:contain;'>";
+                if (cell.open && cell.monster) content = "<img src='assets/all_beasts/" + (cell.monsterId || "image (1).png") + "' style='width:90%;height:90%;object-fit:contain;'>";
                 else if (cell.open && cell.chest) content = "<img src='" + (cell.looted ? "assets/interface/open_chest_first_dungeon.png" : "assets/interface/locked_chest_first_dungeon.png") + "' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.altar) content = "<img src='assets/interface/altar_of_the_first_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.cauldron) content = "<img src='assets/interface/cauldron_first_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
