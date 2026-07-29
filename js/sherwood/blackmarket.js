@@ -4,29 +4,14 @@ Sherwood.BlackMarket = {
     _shopTab: 1,
 
     SHOP_TEMPLATES: [
-        { id: 'scrolls', name: 'Скрижали', icon: 'assets/interface/resource_appearance_crafting_tablet.png', price: 200, currency: 'silver', type: 'resource', gives: { scrolls: 10 }, desc: '+10 скрижалей' },
+        { id: 'scrolls', name: 'Скрижали', icon: 'assets/interface/resource_appearance_crafting_tablet.png', price: 30, currency: 'gold', type: 'resource', gives: { scrolls: 1 }, desc: '+1 скрижаль' },
+        { id: 'ingot_current', name: 'Слиток', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png', price: 25, currency: 'gold', type: 'resource', gives: { ingots: 1 }, desc: '+1 слиток' },
         { id: 'wood_pack', name: 'Древесина', icon: 'assets/interface/resource_wood.png', price: 100, currency: 'silver', type: 'resource', gives: { wood: 20 }, desc: '+20 древесины' },
         { id: 'feather_pack', name: 'Перья', icon: 'assets/interface/feather_beast_1.png', price: 80, currency: 'silver', type: 'resource', gives: { feathers: 15 }, desc: '+15 перьев' },
         { id: 'branch_pack', name: 'Ветки', icon: 'assets/interface/branch_of_the_damned_yew.png', price: 80, currency: 'silver', type: 'resource', gives: { branches: 15 }, desc: '+15 веток' },
         { id: 'bone_pack', name: 'Кости', icon: 'assets/interface/bone_growth_of_the_beast.png', price: 80, currency: 'silver', type: 'resource', gives: { bones: 15 }, desc: '+15 костей' },
         { id: 'skin_pack', name: 'Шкуры', icon: 'assets/interface/skin_of_the_sherwood_creature.png', price: 150, currency: 'silver', type: 'resource', gives: { skins: 5 }, desc: '+5 шкур' },
         { id: 'ticket_autofight', name: 'Билет автобоя', icon: 'assets/interface/ticket_autofight.png', price: 300, currency: 'silver', type: 'consumable', gives: { tickets: 1 }, desc: '+1 билет автобоя' }
-    ],
-
-    _INGOT_TYPES: [
-        { id: 'ingot_chapter_1', name: 'Слиток главы 1', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png' },
-        { id: 'ingot_chapter_2', name: 'Слиток главы 2', icon: 'assets/ingots resource crafting skin/ingot_chapter_2.png' },
-        { id: 'ingot_chapter_3', name: 'Слиток главы 3', icon: 'assets/ingots resource crafting skin/ingot_chapter_3.png' },
-        { id: 'ingot_chapter_5', name: 'Слиток главы 5', icon: 'assets/ingots resource crafting skin/ingot_chapter_5.png' },
-        { id: 'ingot_chapter_6', name: 'Слиток главы 6', icon: 'assets/ingots resource crafting skin/ingot_chapter_6.png' },
-        { id: 'ingot_chapter_7', name: 'Слиток главы 7', icon: 'assets/ingots resource crafting skin/ingot_chapter_7.png' },
-        { id: 'ingot_chapter_8', name: 'Слиток главы 8', icon: 'assets/ingots resource crafting skin/ingot_chapter_8.png' },
-        { id: 'ingot_chapter_9', name: 'Слиток главы 9', icon: 'assets/ingots resource crafting skin/ingot_chapter_9.png' },
-        { id: 'ingot_chapter_10', name: 'Слиток главы 10', icon: 'assets/ingots resource crafting skin/ingot_chapter_10.png' },
-        { id: 'ingot_chapter_11', name: 'Слиток главы 11', icon: 'assets/ingots resource crafting skin/ingot_chapter_11.png' },
-        { id: 'ingot_chapter_12', name: 'Слиток главы 12', icon: 'assets/ingots resource crafting skin/ingot_chapter_12.png' },
-        { id: 'ingot_chapter_13', name: 'Слиток главы 13', icon: 'assets/ingots resource crafting skin/ingot_chapter_13.png' },
-        { id: 'ingot_chapter_14', name: 'Слиток главы 14', icon: 'assets/ingots resource crafting skin/ingot_chapter_14.png' }
     ],
 
     init: function() {
@@ -41,33 +26,25 @@ Sherwood.BlackMarket = {
         
         // Базовые товары
         for (var i = 0; i < this.SHOP_TEMPLATES.length; i++) {
-            var item = Object.assign({}, this.SHOP_TEMPLATES[i], { shopIndex: this._shopItems.length, tab: 1 });
+            var item = Object.assign({}, this.SHOP_TEMPLATES[i]);
+            // Слиток текущей главы
+            if (item.id === 'ingot_current') {
+                var ingot = null;
+                for (var j = 0; j < this._INGOT_TYPES.length; j++) {
+                    if (this._INGOT_TYPES[j].id === 'ingot_chapter_' + chapter) {
+                        ingot = this._INGOT_TYPES[j];
+                        break;
+                    }
+                }
+                if (ingot) {
+                    item.name = ingot.name;
+                    item.icon = ingot.icon;
+                }
+            }
+            item.shopIndex = this._shopItems.length;
+            item.tab = 1;
             this._shopItems.push(item);
         }
-        
-        // Слиток текущей главы
-        var ingot = null;
-        for (var i = 0; i < this._INGOT_TYPES.length; i++) {
-            if (this._INGOT_TYPES[i].id === 'ingot_chapter_' + chapter) {
-                ingot = this._INGOT_TYPES[i];
-                break;
-            }
-        }
-        if (!ingot) {
-            ingot = { id: 'ingot_chapter_1', name: 'Слиток главы 1', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png' };
-        }
-        this._shopItems.push({
-            id: 'ingot_current',
-            name: ingot.name,
-            icon: ingot.icon,
-            price: 500,
-            currency: 'silver',
-            type: 'resource',
-            gives: { ingots: 5 },
-            desc: '+5 ' + ingot.name,
-            shopIndex: this._shopItems.length,
-            tab: 1
-        });
 
         // Скины со скидкой
         var skins = Sherwood.Forge ? Sherwood.Forge.getCraftSkins() : [];
@@ -92,6 +69,12 @@ Sherwood.BlackMarket = {
             var fullPrice = skin.cost.scrolls * 30 + skin.cost.ingots * 100 + skin.cost.silver;
             var discount = fullPrice - totalPrice;
             
+            var descText = '';
+            if (needScrolls > 0) descText += needScrolls + ' скр. ';
+            if (needIngots > 0) descText += needIngots + ' сл. ';
+            if (needSilver > 0) descText += needSilver + ' сер. ';
+            if (discount > 0) descText = 'Скидка ' + discount + ' | ' + descText;
+            
             this._shopItems.push({
                 id: 'skin_' + skin.id,
                 name: skin.name,
@@ -100,7 +83,7 @@ Sherwood.BlackMarket = {
                 currency: 'silver',
                 type: 'skin',
                 skinId: skin.id,
-                desc: 'Скидка: ' + discount + ' | Осталось: ' + needScrolls + ' скр. ' + needIngots + ' сл. ' + needSilver + ' сер.',
+                desc: descText || 'Бесплатно',
                 shopIndex: this._shopItems.length,
                 tab: 2
             });
@@ -108,6 +91,22 @@ Sherwood.BlackMarket = {
 
         this._lastRefresh = Date.now();
     },
+
+    _INGOT_TYPES: [
+        { id: 'ingot_chapter_1', name: 'Слиток главы 1', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png' },
+        { id: 'ingot_chapter_2', name: 'Слиток главы 2', icon: 'assets/ingots resource crafting skin/ingot_chapter_2.png' },
+        { id: 'ingot_chapter_3', name: 'Слиток главы 3', icon: 'assets/ingots resource crafting skin/ingot_chapter_3.png' },
+        { id: 'ingot_chapter_5', name: 'Слиток главы 5', icon: 'assets/ingots resource crafting skin/ingot_chapter_5.png' },
+        { id: 'ingot_chapter_6', name: 'Слиток главы 6', icon: 'assets/ingots resource crafting skin/ingot_chapter_6.png' },
+        { id: 'ingot_chapter_7', name: 'Слиток главы 7', icon: 'assets/ingots resource crafting skin/ingot_chapter_7.png' },
+        { id: 'ingot_chapter_8', name: 'Слиток главы 8', icon: 'assets/ingots resource crafting skin/ingot_chapter_8.png' },
+        { id: 'ingot_chapter_9', name: 'Слиток главы 9', icon: 'assets/ingots resource crafting skin/ingot_chapter_9.png' },
+        { id: 'ingot_chapter_10', name: 'Слиток главы 10', icon: 'assets/ingots resource crafting skin/ingot_chapter_10.png' },
+        { id: 'ingot_chapter_11', name: 'Слиток главы 11', icon: 'assets/ingots resource crafting skin/ingot_chapter_11.png' },
+        { id: 'ingot_chapter_12', name: 'Слиток главы 12', icon: 'assets/ingots resource crafting skin/ingot_chapter_12.png' },
+        { id: 'ingot_chapter_13', name: 'Слиток главы 13', icon: 'assets/ingots resource crafting skin/ingot_chapter_13.png' },
+        { id: 'ingot_chapter_14', name: 'Слиток главы 14', icon: 'assets/ingots resource crafting skin/ingot_chapter_14.png' }
+    ],
 
     getShopItems: function() {
         return this._shopItems;
