@@ -33,7 +33,7 @@ const SherwoodUI = {
     this.container.appendChild(this._screenLayer);
     try { this._initSounds(); } catch(e) {}
     this.bindPlayButton();
-        try {
+    try {
         var silverEl = document.getElementById('silver-display');
         if (silverEl) {
             silverEl.parentElement.style.cursor = 'pointer';
@@ -42,16 +42,14 @@ const SherwoodUI = {
             };
         }
     } catch(e) {}
-    try { this._playMusic('main_theme'); } catch(e) {}
+    try { this._loadAudioSettings(); } catch(e) {}
+    try { if (this._musicEnabled) this._playMusic('main_theme'); } catch(e) {}
     try { this.updateDisplay(); } catch(e) {}
     if (typeof Sherwood !== 'undefined') {
         try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {}
         try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {}
     }
-    try { this._loadAudioSettings(); } catch(e) {}
 },
-
-updateDisplay: function() {
     var p = Sherwood.getPlayer(); if (!p) return;
     try { var el = document.getElementById('gold-display'); if (el) el.textContent = p.resources.gold || 0; } catch(e) {}
     try { var el = document.getElementById('silver-display'); if (el) el.textContent = p.resources.silver || 0; } catch(e) {}
@@ -401,6 +399,7 @@ _doStep: function(tx, ty) {
     if (res.type === 'cauldron') { this._playSound('bottle_health'); this._showInteractButton('cauldron'); return; }
     if (res.type === 'potion') { this._playSound('bottle_health'); this._showInteractButton('potion'); return; }
     if (res.type === 'chest') { this._showInteractButton('chest'); return; }
+    if (res.type === 'lootBag') { this._showInteractButton('lootBag'); return; }
     if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
     if (res.type === 'exit_locked') { this._showNotification('Закрыто! Убейте всех монстров!'); }
 },
@@ -412,6 +411,7 @@ _doStep: function(tx, ty) {
     else if (type === 'cauldron') { icon = 'assets/interface/cauldron_first_dungeon.png'; action = 'SherwoodUI._collectCauldron()'; }
     else if (type === 'potion') { icon = 'assets/interface/resource_life_potion.png'; action = 'SherwoodUI._collectPotion()'; }
     else if (type === 'chest') { icon = 'assets/interface/locked_chest_first_dungeon.png'; action = 'SherwoodUI._collectChest()'; }
+    else if (type === 'lootBag') { icon = 'assets/interface/loot_bag_of_beasts.png'; action = 'SherwoodUI._collectLootBag()'; }
     
     var btn = document.createElement('div');
     btn.id = 'interact-btn';
@@ -484,7 +484,7 @@ _collectChest: function() {
     SherwoodUI.updateDisplay();
     this._renderDungeon();
 },
-
+if (Sherwood.Daily) Sherwood.Daily.updateProgress('open_chests', 1);
 _showFlyingLoot: function(items) {
     var self = this;
     var bagIcon = document.querySelector('.btn[data-action="bag"]');
@@ -604,6 +604,7 @@ _handleCombat: function(r) {
         if (r.exp) Sherwood.addExp(r.exp);
         if (r.gold) { Sherwood.addResource('gold', r.gold); Sherwood.addResource('silver', Math.floor(r.gold * 2)); }
         Sherwood.saveGame();
+        if (Sherwood.Daily) { Sherwood.Daily.updateProgress('kill_beasts', 1); Sherwood.Daily.updateProgress('collect_loot', 1); }
         if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
         if (Sherwood.Bestiary && r.enemyImage) Sherwood.Bestiary.registerKill(r.enemyImage);
         this._stopMusic();
@@ -643,6 +644,7 @@ _handleCombat: function(r) {
         if (b && b.enemy && b.enemy.image) {
             if (Sherwood.Bestiary) Sherwood.Bestiary.registerKill(b.enemy.image);
         }
+        if (Sherwood.Daily) Sherwood.Daily.updateProgress('quest_fights', 1);
         this._showDialog('Враг повержен!','#4caf50');
         this.updateDisplay();
         if (r.chapterComplete) {
@@ -862,9 +864,10 @@ _tavernCancel: function() {
     // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
     settings: function() { this._playSound('click'); var p=Sherwood.getPlayer(),nm=p?p.name:'Охотник',h='<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="'+nm+'" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;"><button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div><div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div><div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">Звуки</span><button onclick="SherwoodUI._toggleSound(' + !this._soundEnabled + ')" style="width:60px;height:30px;background:'+(this._soundEnabled?'#4caf50':'#555')+';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;'+(this._soundEnabled?'right:3px;':'left:3px;')+'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">Музыка</span><button onclick="SherwoodUI._toggleMusic(' + !this._musicEnabled + ')" style="width:60px;height:30px;background:'+(this._musicEnabled?'#4caf50':'#555')+';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;'+(this._musicEnabled?'right:3px;':'left:3px;')+'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div></div><button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">Выйти</button>'; this._openScreen('Настройки','settings',h); },
     _changePlayerName: function() { var inp=document.getElementById('pni'),st=document.getElementById('name-status'); if(!inp||!st) return; var nm=inp.value.trim(); if(!nm) { st.textContent='Пустое имя'; st.style.color='#f44336'; return; } var p=Sherwood.getPlayer(); if(p) { p.name=nm; Sherwood.saveGame(); if(Sherwood.Chat) Sherwood.Chat.setUsername(nm); st.textContent='Сохранено!'; st.style.color='#4caf50'; } },
-    _toggleSound: function(en) { 
-    this._soundEnabled = en; this._saveAudioSettings(); 
-    if (!en) { for (var k in this._sounds) { try { this._sounds[k].pause(); this._sounds[k].currentTime = 0; } catch(e) {} } }
+    _toggleMusic: function(en) { 
+    this._musicEnabled = en; this._saveAudioSettings(); 
+    if (!en) { this._stopMusic(); } 
+    else { this._playMusic('main_theme'); }
     this.settings();
 },
 
