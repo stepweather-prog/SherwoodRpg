@@ -30,17 +30,12 @@ const SherwoodUI = {
     this.container.appendChild(this._screenLayer);
     try { this._initSounds(); } catch(e) {}
     this.bindPlayButton();
-    try {
+        try {
         var silverEl = document.getElementById('silver-display');
         if (silverEl) {
             silverEl.parentElement.style.cursor = 'pointer';
             silverEl.parentElement.onclick = function() {
-                var amount = prompt('Обменять золото на серебро.\nКурс: 1 золото = 100 серебра.\nСколько золота обменять?', '1');
-                if (amount && parseInt(amount) > 0) {
-                    var r = Sherwood.convertGoldToSilver(parseInt(amount));
-                    if (r.success) SherwoodUI.updateDisplay();
-                    else alert(r.reason);
-                }
+                SherwoodUI._showExchangePanel();
             };
         }
     } catch(e) {}
@@ -70,7 +65,40 @@ updateDisplay: function() {
         if (stats.length >= 4) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.agility; stats[3].textContent = p.stats.hp + '/' + p.stats.maxHp; }
     } catch(e) {}
 },
+_showExchangePanel: function() {
+    var p = Sherwood.getPlayer();
+    var maxGold = p.resources.gold || 0;
+    if (maxGold <= 0) { alert('Нет золота для обмена'); return; }
+    
+    var h = '<div style="text-align:center;padding:20px;">';
+    h += '<div style="color:#e0c080;font-size:1.1em;margin-bottom:12px;">Обмен золота на серебро</div>';
+    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:4px;">Курс: 1 золото = 100 серебра</div>';
+    h += '<div style="color:#ffd700;font-size:0.9em;margin-bottom:12px;">Доступно: ' + maxGold + ' золота</div>';
+    h += '<div style="margin-bottom:12px;">';
+    h += '<input id="exchange-amount" type="range" min="1" max="' + maxGold + '" value="1" oninput="document.getElementById(\'exchange-value\').textContent = this.value + \' золота = \' + (this.value * 100) + \' серебра\'" style="width:80%;">';
+    h += '</div>';
+    h += '<div id="exchange-value" style="color:#fff;font-size:0.9em;margin-bottom:16px;">1 золота = 100 серебра</div>';
+    h += '<div style="display:flex;gap:12px;justify-content:center;">';
+    h += '<button onclick="SherwoodUI._doExchange()" style="background:transparent;border:none;cursor:pointer;padding:0;width:80px;height:80px;"><img src="assets/all_buttons/exchange_button.png" style="width:100%;height:100%;object-fit:contain;"></button>';
+    h += '<button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:80px;height:80px;"><img src="assets/all_buttons/cancel_button.png" style="width:100%;height:100%;object-fit:contain;"></button>';
+    h += '</div></div>';
+    this._openScreen('Обмен', 'market', h);
+},
 
+_doExchange: function() {
+    var amountEl = document.getElementById('exchange-amount');
+    if (!amountEl) return;
+    var amount = parseInt(amountEl.value);
+    if (amount > 0) {
+        var r = Sherwood.convertGoldToSilver(amount);
+        if (r.success) {
+            SherwoodUI.updateDisplay();
+            SherwoodUI._showExchangePanel();
+        } else {
+            alert(r.reason);
+        }
+    }
+},
 _initSounds: function() {
     for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
     try { var bgm = new Audio('assets/sounds/subway_3.wav'); bgm.preload = 'auto'; bgm.loop = true; bgm.volume = 0.25; this._sounds['battle_bgm'] = bgm; } catch(e) {}
