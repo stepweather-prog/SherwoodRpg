@@ -1,33 +1,21 @@
-/**
- * Sherwood BlackMarket — Рынок
- * Исправлен: генерация предметов, цены, валюта, типы товаров
- */
-
 Sherwood.BlackMarket = {
     _shopItems: [],
     _lastRefresh: null,
 
     SHOP_TEMPLATES: [
-        // ТОЛЬКО СКРИЖАЛИ И РЕСУРСЫ (кольца и амулеты УБРАНЫ)
-        { id: 'ring_crafting', name: 'Скрижаль колец', icon: 'assets/interface/ring_crafting_tablet_resource.png', price: 150, currency: 'silver', type: 'resource', gives: { scrolls: 5 }, desc: '+5 скрижалей колец' },
-        { id: 'amulet_crafting', name: 'Скрижаль амулетов', icon: 'assets/interface/amulet_crafting_tablet_resource.png', price: 150, currency: 'silver', type: 'resource', gives: { scrolls: 5 }, desc: '+5 скрижалей амулетов' },
-        { id: 'appearance_tablet', name: 'Скрижаль обликов', icon: 'assets/interface/resource_appearance_crafting_tablet.png', price: 200, currency: 'silver', type: 'resource', gives: { scrolls: 8 }, desc: '+8 скрижалей обликов' },
-        { id: 'ingot_pack', name: 'Набор слитков', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png', price: 500, currency: 'silver', type: 'resource', gives: { ingots: 10 }, desc: '+10 слитков' },
+        { id: 'scrolls', name: 'Скрижали', icon: 'assets/interface/resource_appearance_crafting_tablet.png', price: 200, currency: 'silver', type: 'resource', gives: { scrolls: 10 }, desc: '+10 скрижалей' },
         { id: 'wood_pack', name: 'Древесина', icon: 'assets/interface/resource_wood.png', price: 100, currency: 'silver', type: 'resource', gives: { wood: 20 }, desc: '+20 древесины' },
-        { id: 'feather_pack', name: 'Перья', icon: 'assets/interface/resource_feathers.png', price: 80, currency: 'silver', type: 'resource', gives: { feathers: 15 }, desc: '+15 перьев' },
-        // Зелья — оставляем
-        { id: 'health_potion', name: 'Зелье здоровья', icon: 'assets/interface/resource_life_potion.png', price: 50, currency: 'gold', type: 'consumable', effect: { heal: 100 }, desc: 'Восстанавливает 100 HP' },
-        { id: 'high_health_potion', name: 'Большое зелье', icon: 'assets/interface/resource_high_level_health_potion.png', price: 120, currency: 'gold', type: 'consumable', effect: { heal: 300 }, desc: 'Восстанавливает 300 HP' },
-        // Жетоны порталов
-        { id: 'portal_token_1', name: 'Жетон портала', icon: 'assets/interface/resource_token_on_entrance_portal_1.png', price: 300, currency: 'gold', type: 'consumable', effect: { portalToken: 1 }, desc: '+1 жетон портала' }
+        { id: 'feather_pack', name: 'Перья', icon: 'assets/interface/feather_beast_1.png', price: 80, currency: 'silver', type: 'resource', gives: { feathers: 15 }, desc: '+15 перьев' },
+        { id: 'branch_pack', name: 'Ветки', icon: 'assets/interface/branch_of_the_damned_yew.png', price: 80, currency: 'silver', type: 'resource', gives: { branches: 15 }, desc: '+15 веток' },
+        { id: 'bone_pack', name: 'Кости', icon: 'assets/interface/bone_growth_of_the_beast.png', price: 80, currency: 'silver', type: 'resource', gives: { bones: 15 }, desc: '+15 костей' },
+        { id: 'skin_pack', name: 'Шкуры', icon: 'assets/interface/skin_of_the_sherwood_creature.png', price: 150, currency: 'silver', type: 'resource', gives: { skins: 5 }, desc: '+5 шкур' },
+        { id: 'ticket_autofight', name: 'Билет автобоя', icon: 'assets/interface/ticket_autofight.png', price: 300, currency: 'silver', type: 'consumable', gives: { tickets: 1 }, desc: '+1 билет автобоя' }
     ],
 
-    // СЛИТКИ ДЛЯ РАЗНЫХ ГЛАВ
     _INGOT_TYPES: [
         { id: 'ingot_chapter_1', name: 'Слиток главы 1', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png' },
         { id: 'ingot_chapter_2', name: 'Слиток главы 2', icon: 'assets/ingots resource crafting skin/ingot_chapter_2.png' },
         { id: 'ingot_chapter_3', name: 'Слиток главы 3', icon: 'assets/ingots resource crafting skin/ingot_chapter_3.png' },
-        { id: 'ingot_chapter_4', name: 'Слиток главы 4', icon: 'assets/ingots resource crafting skin/ingot_chapter_4.png' },
         { id: 'ingot_chapter_5', name: 'Слиток главы 5', icon: 'assets/ingots resource crafting skin/ingot_chapter_5.png' },
         { id: 'ingot_chapter_6', name: 'Слиток главы 6', icon: 'assets/ingots resource crafting skin/ingot_chapter_6.png' },
         { id: 'ingot_chapter_7', name: 'Слиток главы 7', icon: 'assets/ingots resource crafting skin/ingot_chapter_7.png' },
@@ -45,25 +33,73 @@ Sherwood.BlackMarket = {
     },
 
     _refreshShop: function() {
-        var pool = this.SHOP_TEMPLATES.slice();
+        var player = Sherwood.getPlayer();
+        var chapter = player.questProgress ? (player.questProgress.currentChapter || 1) : 1;
+        
         this._shopItems = [];
-
-        // Добавляем случайные слитки в пул (если они нужны)
-        // Берём 6 случайных товаров из шаблонов
-        var shuffled = pool.sort(function() { return Math.random() - 0.5; });
-        var count = Math.min(6, shuffled.length);
-
-        for (var i = 0; i < count; i++) {
-            var item = Object.assign({}, shuffled[i], { shopIndex: i });
-            // Если это набор слитков — добавляем конкретный тип
-            if (item.id === 'ingot_pack') {
-                var ingot = this._INGOT_TYPES[Math.floor(Math.random() * this._INGOT_TYPES.length)];
-                item.name = ingot.name;
-                item.icon = ingot.icon;
-                item.gives = { ingots: 5 };
-                item.desc = '+5 ' + ingot.name;
-            }
+        
+        // Базовые товары
+        for (var i = 0; i < this.SHOP_TEMPLATES.length; i++) {
+            var item = Object.assign({}, this.SHOP_TEMPLATES[i], { shopIndex: this._shopItems.length });
             this._shopItems.push(item);
+        }
+        
+        // Слиток текущей главы
+        var ingot = null;
+        for (var i = 0; i < this._INGOT_TYPES.length; i++) {
+            if (this._INGOT_TYPES[i].id === 'ingot_chapter_' + chapter) {
+                ingot = this._INGOT_TYPES[i];
+                break;
+            }
+        }
+        if (!ingot) {
+            ingot = { id: 'ingot_chapter_1', name: 'Слиток главы 1', icon: 'assets/ingots resource crafting skin/ingot_chapter_1.png' };
+        }
+        this._shopItems.push({
+            id: 'ingot_current',
+            name: ingot.name,
+            icon: ingot.icon,
+            price: 500,
+            currency: 'silver',
+            type: 'resource',
+            gives: { ingots: 5 },
+            desc: '+5 ' + ingot.name,
+            shopIndex: this._shopItems.length
+        });
+
+        // Скины со скидкой
+        var skins = Sherwood.Forge ? Sherwood.Forge.getCraftSkins() : [];
+        var unlocked = player.unlockedSkins || [];
+        for (var i = 0; i < skins.length; i++) {
+            var skin = skins[i];
+            if (skin.id === 'skin_1_basic') continue;
+            if (unlocked.indexOf(skin.id) !== -1) continue;
+            
+            var skinData = Sherwood.SKIN_BONUSES ? Sherwood.SKIN_BONUSES[skin.id] : null;
+            if (!skinData || skinData.chapter > chapter) continue;
+            
+            var playerScrolls = player.resources.scrolls || 0;
+            var playerIngots = player.resources.ingots || 0;
+            var playerSilver = player.resources.silver || 0;
+            
+            var needScrolls = Math.max(0, skin.cost.scrolls - playerScrolls);
+            var needIngots = Math.max(0, skin.cost.ingots - playerIngots);
+            var needSilver = Math.max(0, skin.cost.silver - playerSilver);
+            
+            var totalPrice = needScrolls * 30 + needIngots * 100 + needSilver;
+            var discount = skin.cost.scrolls * 30 + skin.cost.ingots * 100 + skin.cost.silver - totalPrice;
+            
+            this._shopItems.push({
+                id: 'skin_' + skin.id,
+                name: skin.name + ' (Скидка ' + discount + ')',
+                icon: skin.icon,
+                price: totalPrice,
+                currency: 'silver',
+                type: 'skin',
+                skinId: skin.id,
+                desc: 'Не хватает: ' + needScrolls + ' скр. ' + needIngots + ' сл. ' + needSilver + ' сер.',
+                shopIndex: this._shopItems.length
+            });
         }
 
         this._lastRefresh = Date.now();
@@ -86,23 +122,13 @@ Sherwood.BlackMarket = {
             return { success: false, reason: 'Недостаточно средств' };
         }
 
-        // Списываем
         player.resources[item.currency] -= item.price;
 
-        // Применяем эффект
-        if (item.type === 'consumable') {
-            if (item.effect) {
-                if (item.effect.heal) {
-                    player.stats.hp = Math.min(player.stats.maxHp, player.stats.hp + item.effect.heal);
-                }
-                if (item.effect.addTickets) {
-                    player.dungeon.tickets = Math.min(player.dungeon.maxTickets, player.dungeon.tickets + item.effect.addTickets);
-                }
-                if (item.effect.portalToken) {
-                    player.resources.portalTokens = (player.resources.portalTokens || 0) + 1;
-                }
-            }
-        } else if (item.type === 'resource' && item.gives) {
+        if (item.type === 'skin') {
+            if (!player.unlockedSkins) player.unlockedSkins = [];
+            player.unlockedSkins.push(item.skinId);
+            player.resources.scrolls = Math.max(0, (player.resources.scrolls || 0) - Math.max(0, (Sherwood.Forge.getCraftSkins().find(function(s) { return s.id === item.skinId; }) || { cost: { scrolls: 0 } }).cost.scrolls - (player.resources.scrolls || 0)));
+        } else if (item.gives) {
             for (var res in item.gives) {
                 if (item.gives.hasOwnProperty(res)) {
                     if (res === 'scrolls') {
@@ -113,6 +139,21 @@ Sherwood.BlackMarket = {
                         player.resources.wood = (player.resources.wood || 0) + item.gives[res];
                     } else if (res === 'feathers') {
                         player.resources.feathers = (player.resources.feathers || 0) + item.gives[res];
+                    } else if (res === 'branches') {
+                        player.resources.branches = (player.resources.branches || 0) + item.gives[res];
+                    } else if (res === 'bones') {
+                        player.resources.bones = (player.resources.bones || 0) + item.gives[res];
+                    } else if (res === 'skins') {
+                        for (var j = 0; j < item.gives[res]; j++) {
+                            Sherwood.Bag.addItem({
+                                id: 'skin_of_the_sherwood_creature',
+                                name: 'Шкура шервудской твари',
+                                icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+                                grade: 'common', type: 'resource', quantity: 1, maxStack: 50, sellPrice: 5
+                            });
+                        }
+                    } else if (res === 'tickets') {
+                        player.dungeon.tickets = Math.min(player.dungeon.maxTickets, (player.dungeon.tickets || 0) + item.gives[res]);
                     } else {
                         player.resources[res] = (player.resources[res] || 0) + item.gives[res];
                     }
@@ -120,14 +161,12 @@ Sherwood.BlackMarket = {
             }
         }
 
-        // Обновляем инвентарь игрока
         Sherwood._recalcStats();
         Sherwood.saveGame();
 
         return { success: true, item: item };
     },
 
-    // Получить цену для конкретного товара
     getItemPrice: function(itemId) {
         for (var i = 0; i < this._shopItems.length; i++) {
             if (this._shopItems[i].id === itemId) {
@@ -137,7 +176,6 @@ Sherwood.BlackMarket = {
         return null;
     },
 
-    // Обновить ассортимент (можно вызвать вручную)
     refresh: function() {
         this._refreshShop();
     }
