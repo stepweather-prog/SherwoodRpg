@@ -37,15 +37,19 @@
         .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
         .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
         .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
-        .bottom-stats { position: absolute; bottom: 5%; left: 2%; right: 2%; z-index: 10; display: flex; justify-content: center; pointer-events: none; }
-.bottom-stats .stat-block { width: 96%; display: flex; flex-direction: row; align-items: center; justify-content: space-around; position: relative; padding: 8px 4px; }
-.bottom-stats .stat-block .stat-board { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 60px; z-index: 0; }
-.bottom-stats .stat-block .stat-board img { width: 100%; height: 100%; object-fit: fill; display: block; opacity: 0.7; }
-.bottom-stats .stat-block .stat-item { display: flex; flex-direction: column; align-items: center; z-index: 1; min-width: 44px; }
-.bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
-.bottom-stats .stat-block .stat-item .stat-value { font-size: 0.75em; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.9); background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(201,168,76,0.3); margin-top: 2px; }
+        .bottom-stats { position: absolute; bottom: 2%; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; justify-content: center; pointer-events: none; width: 90%; max-width: 400px; height: 80px; }
+.bottom-stats .stat-block { width: 100%; height: 100%; position: relative; }
+.bottom-stats .stat-block .stat-board { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+.bottom-stats .stat-block .stat-board img { width: 100%; height: 100%; object-fit: fill; display: block; }
+.bottom-stats .stat-block .stat-item { position: absolute; right: 15%; z-index: 1; display: flex; align-items: center; justify-content: flex-end; }
+.bottom-stats .stat-block .stat-item:nth-child(2) { top: 5%; height: 25%; }
+.bottom-stats .stat-block .stat-item:nth-child(3) { top: 30%; height: 25%; }
+.bottom-stats .stat-block .stat-item:nth-child(4) { top: 55%; height: 25%; }
+.bottom-stats .stat-block .stat-item:nth-child(5) { top: 80%; height: 20%; }
+.bottom-stats .stat-block .stat-item img { display: none; }
+.bottom-stats .stat-block .stat-item .stat-value { font-size: 0.7em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; background: none; padding: 0; border-radius: 0; border: none; }
 
-#top-buttons-bar { position: absolute; top: 14%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 4px; width: 440px; max-width: 96%; justify-content: center; }
+#top-buttons-bar { position: absolute; top: 8%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 4px; width: 440px; max-width: 96%; justify-content: center; }
 #top-buttons-bar .btn { width: 72px; height: 72px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
 #top-buttons-bar .btn img { width: 54px; height: 54px; object-fit: contain; }
 #top-buttons-bar .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; line-height: 1; margin-top: 2px; max-width: 64px; overflow: hidden; white-space: nowrap; }
