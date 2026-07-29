@@ -244,6 +244,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
 
     _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
+    var p = Sherwood.getPlayer();
     var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: "dungeon1", ext: ".jpeg" };
     this.container.style.background = "url(" + dd.bg + ") center/cover no-repeat";
     try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = "none"; }); }); } catch(e) {}
@@ -264,17 +265,19 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             var onclick = "", glow = "";
             if (!isPlayer) {
                 var clickDist = Math.abs(px - x) + Math.abs(py - y);
-                if (cell.open) {
-                    onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
-                } else if (clickDist === 1 && cell.type !== 0) {
+                if (!cell.open && clickDist === 1 && cell.type !== 0) {
                     onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
                     glow = "box-shadow:inset 0 0 12px rgba(255,255,200,0.5);";
+                } else if (cell.open) {
+                    onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
                 }
             }
             var content = "";
             if (!isPlayer) {
                 if (cell.open && cell.monster) content = "<img src='assets/all_beasts/" + (cell.monsterId || "image (1).png") + "' style='width:90%;height:90%;object-fit:contain;'>";
                 else if (cell.open && cell.chest) content = "<img src='" + (cell.looted ? "assets/interface/open_chest_first_dungeon.png" : "assets/interface/locked_chest_first_dungeon.png") + "' style='width:80%;height:80%;object-fit:contain;'>";
+                else if (cell.open && cell.lootBag && !cell.lootCollected) content = "<img src='assets/interface/loot_bag_of_beasts.png' style='width:70%;height:70%;object-fit:contain;'>";
+                else if (cell.open && cell.lootCollected) content = "<img src='assets/interface/empty_bag_of_loot_beasts.png' style='width:70%;height:70%;object-fit:contain;'>";
                 else if (cell.open && cell.altar) content = "<img src='assets/interface/altar_of_the_first_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.cauldron) content = "<img src='assets/interface/cauldron_first_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.potion) content = "<img src='assets/interface/resource_life_potion.png' style='width:70%;height:70%;object-fit:contain;'>";
@@ -293,8 +296,25 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         }
     }
     html += "</div></div>";
-    var hp = Sherwood.getPlayer().stats.hp || 0;
-    if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'><div style='padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='color:#4caf50;font-size:0.85em;'>HP " + hp + "</div></div><div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div><div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
+    
+    var hp = p.stats.hp || 0;
+    var maxHp = p.stats.maxHp || 100;
+    var hpPct = maxHp > 0 ? Math.round((hp / maxHp) * 100) : 0;
+    
+    var topBar = "<div style='padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;'>" +
+    "<button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button>" +
+    "<div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div>" +
+    "<div style='position:relative;width:180px;height:28px;'>" +
+    "<img src='assets/interface/life_scale.png' style='width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;object-fit:fill;'>" +
+    "<div style='position:absolute;top:3px;left:20px;right:20px;bottom:3px;overflow:hidden;z-index:0;'>" +
+    "<div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;transition:width 0.5s;'></div>" +
+    "</div>" +
+    "<span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 4px #000;'>" + hp + "/" + maxHp + "</span>" +
+    "</div>" +
+    "</div>" +
+    "<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
+    
+    if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
 },
 
 _dungeonMove: function(tx, ty) {
@@ -496,8 +516,7 @@ _showFlyingLoot: function(items) {
     }
 },
 
-_leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('main_theme'); this.showDungeon(); },
-
+_leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopMusic(); this._playMusic('main_theme'); this.showDungeon(); },
 // ========== БОЙ ==========
 _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
     var e = enemyData, p = Sherwood.getPlayer();
