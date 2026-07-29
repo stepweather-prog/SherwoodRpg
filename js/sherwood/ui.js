@@ -71,19 +71,22 @@ updateDisplay: function() {
 _showExchangePanel: function() {
     var p = Sherwood.getPlayer();
     var maxGold = p.resources.gold || 0;
-    if (maxGold <= 0) { alert('Нет золота для обмена'); return; }
+    if (maxGold <= 0) {
+        this._showNotification('Нет золота для обмена');
+        return;
+    }
     
     var h = '<div style="text-align:center;padding:20px;">';
-    h += '<div style="color:#e0c080;font-size:1.1em;margin-bottom:12px;">Обмен золота на серебро</div>';
-    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:4px;">Курс: 1 золото = 100 серебра</div>';
-    h += '<div style="color:#ffd700;font-size:0.9em;margin-bottom:12px;">Доступно: ' + maxGold + ' золота</div>';
-    h += '<div style="margin-bottom:12px;">';
-    h += '<input id="exchange-amount" type="range" min="1" max="' + maxGold + '" value="1" oninput="document.getElementById(\'exchange-value\').textContent = this.value + \' золота = \' + (this.value * 100) + \' серебра\'" style="width:80%;">';
+    h += '<div style="color:#e0c080;font-size:1.2em;margin-bottom:16px;">Обмен золота на серебро</div>';
+    h += '<div style="color:#aaa;font-size:0.85em;margin-bottom:4px;">Курс: 1 золото = 100 серебра</div>';
+    h += '<div style="color:#ffd700;font-size:1em;margin-bottom:20px;">Доступно: ' + maxGold + ' золота</div>';
+    h += '<div style="margin-bottom:20px;">';
+    h += '<input id="exchange-amount" type="range" min="1" max="' + maxGold + '" value="1" oninput="document.getElementById(\'exchange-value\').textContent = this.value + \' золота = \' + (this.value * 100) + \' серебра\'" style="width:80%;height:8px;">';
     h += '</div>';
-    h += '<div id="exchange-value" style="color:#fff;font-size:0.9em;margin-bottom:16px;">1 золота = 100 серебра</div>';
-    h += '<div style="display:flex;gap:12px;justify-content:center;">';
-    h += '<button onclick="SherwoodUI._doExchange()" style="background:transparent;border:none;cursor:pointer;padding:0;width:80px;height:80px;"><img src="assets/all_buttons/exchange_button.png" style="width:100%;height:100%;object-fit:contain;"></button>';
-    h += '<button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:80px;height:80px;"><img src="assets/all_buttons/cancel_button.png" style="width:100%;height:100%;object-fit:contain;"></button>';
+    h += '<div id="exchange-value" style="color:#fff;font-size:1em;margin-bottom:24px;">1 золота = 100 серебра</div>';
+    h += '<div style="display:flex;gap:24px;justify-content:center;">';
+    h += '<button onclick="SherwoodUI._doExchange()" style="background:transparent;border:none;cursor:pointer;padding:0;width:120px;height:120px;"><img src="assets/all_buttons/exchange_button.png" style="width:100%;height:100%;object-fit:contain;"></button>';
+    h += '<button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:120px;height:120px;"><img src="assets/all_buttons/cancel_button.png" style="width:100%;height:100%;object-fit:contain;"></button>';
     h += '</div></div>';
     this._openScreen('Обмен', 'market', h);
 },
@@ -96,9 +99,16 @@ _doExchange: function() {
         var r = Sherwood.convertGoldToSilver(amount);
         if (r.success) {
             SherwoodUI.updateDisplay();
-            SherwoodUI._showExchangePanel();
+            var p = Sherwood.getPlayer();
+            var maxGold = p.resources.gold || 0;
+            if (maxGold > 0) {
+                SherwoodUI._showExchangePanel();
+            } else {
+                SherwoodUI.loadHome();
+            }
         } else {
-            alert(r.reason);
+            var log = document.getElementById('market-log');
+            if (log) { log.textContent = r.reason; log.style.color = '#f44336'; }
         }
     }
 },
