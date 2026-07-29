@@ -320,7 +320,15 @@ _walkPath: function(toX, toY) {
                     self._renderDungeon();
                     return;
                 }
-                self._doStep(cur.path[i].x, cur.path[i].y);
+                var step = cur.path[i];
+                // Меняем направление
+                if (step.x > d.px) d.heroDirection = 'right';
+                else if (step.x < d.px) d.heroDirection = 'left';
+                else if (step.y > d.py) d.heroDirection = 'down';
+                else if (step.y < d.py) d.heroDirection = 'up';
+                // Двигаем без полной перерисовки
+                Sherwood.Dungeon._moveSilent(step.x, step.y);
+                self._playSound('steps');
                 i++;
                 setTimeout(nextStep, 150);
             }
@@ -339,7 +347,6 @@ _walkPath: function(toX, toY) {
         }
     }
 },
-
 _doStep: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     
@@ -356,12 +363,123 @@ _doStep: function(tx, ty) {
     SherwoodUI.updateDisplay();
     
     if (res.type === 'battle') { d.isMoving = false; this._stopMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
-    if (res.type === 'chest') { this._playSound('chest_open'); }
-    if (res.type === 'altar') { this._playSound('altar'); var p = Sherwood.getPlayer(); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + Math.floor(p.stats.maxHp * 0.3)); }
-    if (res.type === 'cauldron') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + Math.floor(p.stats.maxHp * 0.2)); }
-    if (res.type === 'potion') { this._playSound('bottle_health'); var p = Sherwood.getPlayer(); var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); }
+    if (res.type === 'altar') { this._playSound('altar'); this._showInteractButton('altar'); return; }
+    if (res.type === 'cauldron') { this._playSound('bottle_health'); this._showInteractButton('cauldron'); return; }
+    if (res.type === 'potion') { this._playSound('bottle_health'); this._showInteractButton('potion'); return; }
+    if (res.type === 'chest') { this._showInteractButton('chest'); return; }
     if (res.type === 'exit') { this._stopBattleMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
     if (res.type === 'exit_locked') { this._showNotification('Закрыто! Убейте всех монстров!'); }
+},
+    _showInteractButton: function(type) {
+    var self = this;
+    var icon = '';
+    var action = '';
+    if (type === 'altar') { icon = 'assets/interface/altar_of_the_first_dungeon.png'; action = 'SherwoodUI._collectAltar()'; }
+    else if (type === 'cauldron') { icon = 'assets/interface/cauldron_first_dungeon.png'; action = 'SherwoodUI._collectCauldron()'; }
+    else if (type === 'potion') { icon = 'assets/interface/resource_life_potion.png'; action = 'SherwoodUI._collectPotion()'; }
+    else if (type === 'chest') { icon = 'assets/interface/locked_chest_first_dungeon.png'; action = 'SherwoodUI._collectChest()'; }
+    
+    var btn = document.createElement('div');
+    btn.id = 'interact-btn';
+    btn.style.cssText = 'position:absolute;bottom:20%;left:50%;transform:translateX(-50%);z-index:100;width:64px;height:64px;background:rgba(0,0,0,0.7);border:2px solid #c9a040;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    btn.innerHTML = '<img src="' + icon + '" style="width:48px;height:48px;object-fit:contain;">';
+    btn.onclick = function() {
+        eval(action);
+        btn.remove();
+    };
+    this._screenLayer.appendChild(btn);
+},
+    _collectAltar: function() {
+    var d = Sherwood.Dungeon.getDungeon();
+    if (!d) return;
+    var cell = d.grid[d.py][d.px];
+    if (!cell || !cell.altar) return;
+    var scrolls = 1 + Math.floor(Math.random() * 3);
+    var silver = 100 + Math.floor(Math.random() * 200);
+    Sherwood.addResource('scrolls', scrolls);
+    Sherwood.addResource('silver', silver);
+    this._playSound('chest_open');
+    this._showFlyingLoot([{ icon: 'assets/interface/resource_appearance_crafting_tablet.png', text: '+' + scrolls }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
+    SherwoodUI.updateDisplay();
+},
+
+_collectCauldron: function() {
+    var d = Sherwood.Dungeon.getDungeon();
+    if (!d) return;
+    var cell = d.grid[d.py][d.px];
+    if (!cell || !cell.cauldron) return;
+    var gold = 1 + Math.floor(Math.random() * 3);
+    var silver = 50 + Math.floor(Math.random() * 150);
+    Sherwood.addResource('gold', gold);
+    Sherwood.addResource('silver', silver);
+    this._playSound('chest_open');
+    this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + gold }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
+    SherwoodUI.updateDisplay();
+},
+
+_collectPotion: function() {
+    var d = Sherwood.Dungeon.getDungeon();
+    if (!d) return;
+    var cell = d.grid[d.py][d.px];
+    if (!cell || !cell.potion) return;
+    var p = Sherwood.getPlayer();
+    var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2);
+    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+    cell.type = Sherwood.Dungeon.TILE.EMPTY;
+    cell.potion = false;
+    this._playSound('bottle_health');
+    this._showFlyingLoot([{ icon: 'assets/interface/icon_health.png', text: '+' + heal + ' HP' }]);
+    Sherwood.saveGame();
+    SherwoodUI.updateDisplay();
+    this._renderDungeon();
+},
+
+_collectChest: function() {
+    var d = Sherwood.Dungeon.getDungeon();
+    if (!d) return;
+    var cell = d.grid[d.py][d.px];
+    if (!cell || !cell.chest || cell.looted) return;
+    cell.looted = true;
+    d.chestsOpened++;
+    var g = cell.reward ? (cell.reward.gold || 1) : 1;
+    var s = cell.reward ? (cell.reward.silver || 200) : 200;
+    Sherwood.addResource('gold', g);
+    Sherwood.addResource('silver', s);
+    this._playSound('chest_open');
+    this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + g }, { icon: 'assets/interface/silver_plaque.png', text: '+' + s }]);
+    SherwoodUI.updateDisplay();
+    this._renderDungeon();
+},
+
+_showFlyingLoot: function(items) {
+    var self = this;
+    var bagIcon = document.querySelector('.btn[data-action="bag"]');
+    if (!bagIcon) return;
+    var bagRect = bagIcon.getBoundingClientRect();
+    var containerRect = this.container.getBoundingClientRect();
+    var targetX = bagRect.left - containerRect.left + bagRect.width / 2;
+    var targetY = bagRect.top - containerRect.top;
+    
+    for (var i = 0; i < items.length; i++) {
+        (function(item, index) {
+            var el = document.createElement('div');
+            el.style.cssText = 'position:absolute;bottom:25%;left:50%;z-index:200;width:40px;height:40px;background:rgba(0,0,0,0.8);border:1px solid #c9a040;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all 0.8s ease-out;';
+            el.innerHTML = '<img src="' + item.icon + '" style="width:24px;height:24px;object-fit:contain;"><span style="color:#ffd700;font-size:0.5em;">' + item.text + '</span>';
+            self._screenLayer.appendChild(el);
+            
+            setTimeout(function() {
+                el.style.left = targetX + 'px';
+                el.style.top = targetY + 'px';
+                el.style.bottom = 'auto';
+                el.style.opacity = '0';
+                el.style.transform = 'scale(0.5)';
+            }, 50 + index * 100);
+            
+            setTimeout(function() {
+                el.remove();
+            }, 900 + index * 100);
+        })(items[i], i);
+    }
 },
 
 _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopBattleMusic(); this._playMusic('main_theme'); this.showDungeon(); },
