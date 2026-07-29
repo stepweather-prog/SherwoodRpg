@@ -182,68 +182,49 @@ Sherwood.Combat = {
     },
 
     _giveReward: function(r) {
-        if (!r) return;
-        if (r.exp) Sherwood.addExp(r.exp);
-        if (r.gold) Sherwood.addResource('gold', r.gold);
-        if (r.gold) Sherwood.addResource('silver', Math.floor(r.gold * 2));
+    if (!r) return;
+    if (r.exp) Sherwood.addExp(r.exp);
+    if (r.gold) Sherwood.addResource('gold', r.gold);
+    if (r.gold) Sherwood.addResource('silver', Math.floor(r.gold * 2));
 
-        try {
-            if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
+    try {
+        if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
+            var lootRoll = Math.random();
+
+            if (lootRoll < 0.20) {
+                Sherwood.Bag.addItem({
+                    id: 'skin_of_the_sherwood_creature',
+                    name: 'Шкура шервудской твари',
+                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+                    grade: 'common', type: 'resource', quantity: 1, maxStack: 50, sellPrice: 5
+                });
+            } else if (lootRoll < 0.35) {
+                var arrowParts = [
+                    { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', sellPrice: 3 },
+                    { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', sellPrice: 3 },
+                    { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', sellPrice: 3 }
+                ];
+                var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
+                Sherwood.Bag.addItem({
+                    id: part.id, name: part.name, icon: part.icon,
+                    grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
+                });
+            } else if (lootRoll < 0.45) {
+                Sherwood.addResource('scrolls', 1);
+            } else if (lootRoll < 0.52) {
                 var chapter = Sherwood.getPlayer().questProgress.currentChapter || 1;
-                var lootRoll = Math.random();
-
-                if (lootRoll < 0.20) {
-                    Sherwood.Bag.addItem({
-                        id: 'skin_of_the_sherwood_creature',
-                        name: 'Кожа шервудской твари',
-                        icon: 'assets/interface/skin_of_the_sherwood_creature.png',
-                        grade: 'common', type: 'resource', quantity: 1, maxStack: 25, sellPrice: 5
-                    });
-                } else if (lootRoll < 0.35) {
-                    var arrowParts = [
-    { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', sellPrice: 3 },
-    { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', sellPrice: 3 },
-    { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', sellPrice: 3 }
-];
-                    var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
-                    Sherwood.Bag.addItem({
-                        id: part.id, name: part.name, icon: part.icon,
-                        grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
-                    });
-                } else if (lootRoll < 0.45) {
-                    Sherwood.addResource('scrolls', 1);
-                } else if (lootRoll < 0.52) {
-                    Sherwood.Bag.addItem({
-                        id: 'ingot_chapter_' + chapter,
-                        name: 'Слиток обликов (Глава ' + chapter + ')',
-                        icon: 'assets/interface/ingot_chapter_' + chapter + '.png',
-                        grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20
-                    });
-                } else if (lootRoll < 0.57) {
-                    Sherwood.Bag.addItem({
-                        id: 'ring_' + Date.now(),
-                        name: 'Кольцо',
-                        icon: 'assets/interface/ring_first_level.png',
-                        part: 'ring', grade: 'uncommon', type: 'equipment',
-                        stats: { attack: 2 + Math.floor(Math.random() * 3), defense: 1 + Math.floor(Math.random() * 2) },
-                        sellPrice: 15, quantity: 1, maxStack: 1
-                    });
-                } else if (lootRoll < 0.62) {
-                    Sherwood.Bag.addItem({
-                        id: 'amulet_' + Date.now(),
-                        name: 'Амулет',
-                        icon: 'assets/interface/sherwood_amulet_level_one.png',
-                        part: 'amulet', grade: 'uncommon', type: 'equipment',
-                        stats: { hp: 10 + Math.floor(Math.random() * 20), agility: 1 + Math.floor(Math.random() * 2) },
-                        sellPrice: 15, quantity: 1, maxStack: 1
-                    });
-                }
+                Sherwood.Bag.addItem({
+                    id: 'ingot_chapter_' + chapter,
+                    name: 'Слиток обликов (Глава ' + chapter + ')',
+                    icon: 'assets/interface/ingot_chapter_' + chapter + '.png',
+                    grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20
+                });
             }
-        } catch(e) {}
+        }
+    } catch(e) {}
 
-        Sherwood.saveGame();
-    },
-
+    Sherwood.saveGame();
+},
     flee: function() {
         var b = this._battle;
         if (!b) return { success: false, reason: 'Нет боя' };
