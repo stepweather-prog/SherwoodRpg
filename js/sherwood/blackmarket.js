@@ -1,6 +1,7 @@
 Sherwood.BlackMarket = {
     _shopItems: [],
     _lastRefresh: null,
+    _shopTab: 1,
 
     SHOP_TEMPLATES: [
         { id: 'scrolls', name: 'Скрижали', icon: 'assets/interface/resource_appearance_crafting_tablet.png', price: 200, currency: 'silver', type: 'resource', gives: { scrolls: 10 }, desc: '+10 скрижалей' },
@@ -40,7 +41,7 @@ Sherwood.BlackMarket = {
         
         // Базовые товары
         for (var i = 0; i < this.SHOP_TEMPLATES.length; i++) {
-            var item = Object.assign({}, this.SHOP_TEMPLATES[i], { shopIndex: this._shopItems.length });
+            var item = Object.assign({}, this.SHOP_TEMPLATES[i], { shopIndex: this._shopItems.length, tab: 1 });
             this._shopItems.push(item);
         }
         
@@ -64,12 +65,17 @@ Sherwood.BlackMarket = {
             type: 'resource',
             gives: { ingots: 5 },
             desc: '+5 ' + ingot.name,
-            shopIndex: this._shopItems.length
+            shopIndex: this._shopItems.length,
+            tab: 1
         });
 
         // Скины со скидкой
         var skins = Sherwood.Forge ? Sherwood.Forge.getCraftSkins() : [];
         var unlocked = player.unlockedSkins || [];
+        var playerScrolls = player.resources.scrolls || 0;
+        var playerIngots = player.resources.ingots || 0;
+        var playerSilver = player.resources.silver || 0;
+        
         for (var i = 0; i < skins.length; i++) {
             var skin = skins[i];
             if (skin.id === 'skin_1_basic') continue;
@@ -78,27 +84,25 @@ Sherwood.BlackMarket = {
             var skinData = Sherwood.SKIN_BONUSES ? Sherwood.SKIN_BONUSES[skin.id] : null;
             if (!skinData || skinData.chapter > chapter) continue;
             
-            var playerScrolls = player.resources.scrolls || 0;
-            var playerIngots = player.resources.ingots || 0;
-            var playerSilver = player.resources.silver || 0;
-            
             var needScrolls = Math.max(0, skin.cost.scrolls - playerScrolls);
             var needIngots = Math.max(0, skin.cost.ingots - playerIngots);
             var needSilver = Math.max(0, skin.cost.silver - playerSilver);
             
             var totalPrice = needScrolls * 30 + needIngots * 100 + needSilver;
-            var discount = skin.cost.scrolls * 30 + skin.cost.ingots * 100 + skin.cost.silver - totalPrice;
+            var fullPrice = skin.cost.scrolls * 30 + skin.cost.ingots * 100 + skin.cost.silver;
+            var discount = fullPrice - totalPrice;
             
             this._shopItems.push({
                 id: 'skin_' + skin.id,
-                name: skin.name + ' (Скидка ' + discount + ')',
+                name: skin.name,
                 icon: skin.icon,
                 price: totalPrice,
                 currency: 'silver',
                 type: 'skin',
                 skinId: skin.id,
-                desc: 'Не хватает: ' + needScrolls + ' скр. ' + needIngots + ' сл. ' + needSilver + ' сер.',
-                shopIndex: this._shopItems.length
+                desc: 'Скидка: ' + discount + ' | Осталось: ' + needScrolls + ' скр. ' + needIngots + ' сл. ' + needSilver + ' сер.',
+                shopIndex: this._shopItems.length,
+                tab: 2
             });
         }
 
@@ -127,7 +131,6 @@ Sherwood.BlackMarket = {
         if (item.type === 'skin') {
             if (!player.unlockedSkins) player.unlockedSkins = [];
             player.unlockedSkins.push(item.skinId);
-            player.resources.scrolls = Math.max(0, (player.resources.scrolls || 0) - Math.max(0, (Sherwood.Forge.getCraftSkins().find(function(s) { return s.id === item.skinId; }) || { cost: { scrolls: 0 } }).cost.scrolls - (player.resources.scrolls || 0)));
         } else if (item.gives) {
             for (var res in item.gives) {
                 if (item.gives.hasOwnProperty(res)) {
@@ -136,13 +139,29 @@ Sherwood.BlackMarket = {
                     } else if (res === 'ingots') {
                         player.resources.ingots = (player.resources.ingots || 0) + item.gives[res];
                     } else if (res === 'wood') {
-                        player.resources.wood = (player.resources.wood || 0) + item.gives[res];
+                        Sherwood.Bag.addItem({
+                            id: 'wood', name: 'Дерево',
+                            icon: 'assets/interface/resource_wood.png',
+                            grade: 'common', type: 'resource', quantity: item.gives[res], maxStack: 99, sellPrice: 2
+                        });
                     } else if (res === 'feathers') {
-                        player.resources.feathers = (player.resources.feathers || 0) + item.gives[res];
+                        Sherwood.Bag.addItem({
+                            id: 'feather', name: 'Перо',
+                            icon: 'assets/interface/feather_beast_1.png',
+                            grade: 'common', type: 'resource', quantity: item.gives[res], maxStack: 99, sellPrice: 3
+                        });
                     } else if (res === 'branches') {
-                        player.resources.branches = (player.resources.branches || 0) + item.gives[res];
+                        Sherwood.Bag.addItem({
+                            id: 'branch', name: 'Ветка',
+                            icon: 'assets/interface/branch_of_the_damned_yew.png',
+                            grade: 'common', type: 'resource', quantity: item.gives[res], maxStack: 99, sellPrice: 3
+                        });
                     } else if (res === 'bones') {
-                        player.resources.bones = (player.resources.bones || 0) + item.gives[res];
+                        Sherwood.Bag.addItem({
+                            id: 'bone', name: 'Кость',
+                            icon: 'assets/interface/bone_growth_of_the_beast.png',
+                            grade: 'common', type: 'resource', quantity: item.gives[res], maxStack: 99, sellPrice: 3
+                        });
                     } else if (res === 'skins') {
                         for (var j = 0; j < item.gives[res]; j++) {
                             Sherwood.Bag.addItem({
