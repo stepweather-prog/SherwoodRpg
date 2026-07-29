@@ -212,63 +212,45 @@ Sherwood.Dungeon = {
     getDungeon: function() { return this._dungeon; },
 
     move: function(tx, ty) {
-        var d = this._dungeon;
-        if (!d) return { ok: false, reason: 'No dungeon' };
-        var cell = d.grid[ty][tx];
-        if (!cell) return { ok: false, reason: 'No cell' };
-        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Wall' };
+    var d = this._dungeon;
+    if (!d) return { ok: false, reason: 'No dungeon' };
+    var cell = d.grid[ty][tx];
+    if (!cell) return { ok: false, reason: 'No cell' };
+    if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Wall' };
 
-        cell.open = true;
-        d.px = tx;
-        d.py = ty;
+    cell.open = true;
+    d.px = tx;
+    d.py = ty;
 
-        var cellType = cell.type;
+    var cellType = cell.type;
 
-        if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
-            return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
-        }
-        if (cellType === this.TILE.CHEST && !cell.looted) {
-            cell.looted = true;
-            d.chestsOpened++;
-            var g = cell.reward ? (cell.reward.gold || 1) : 1;
-            var s = cell.reward ? (cell.reward.silver || 200) : 200;
-            Sherwood.addResource('gold', g);
-            Sherwood.addResource('silver', s);
-            return { ok: true, type: 'chest', gold: g, silver: s };
-        }
-        if (cellType === this.TILE.ALTAR && cell.altar) {
-            cell.type = this.TILE.EMPTY; cell.altar = false;
-            var scrolls = 1 + Math.floor(Math.random() * 3);
-            var silver = 100 + Math.floor(Math.random() * 200);
-            Sherwood.addResource('scrolls', scrolls);
-            Sherwood.addResource('silver', silver);
-            return { ok: true, type: 'altar', scrolls: scrolls, silver: silver };
-        }
-        if (cellType === this.TILE.CAULDRON && cell.cauldron) {
-            cell.type = this.TILE.EMPTY; cell.cauldron = false;
-            var gold = 1 + Math.floor(Math.random() * 3);
-            var silver = 50 + Math.floor(Math.random() * 150);
-            Sherwood.addResource('gold', gold);
-            Sherwood.addResource('silver', silver);
-            return { ok: true, type: 'cauldron', gold: gold, silver: silver };
-        }
-        if (cellType === this.TILE.POTION && cell.potion) {
-            cell.type = this.TILE.EMPTY; cell.potion = false;
-            return { ok: true, type: 'potion' };
-        }
-        if (cell.exit) {
-            if (cell.locked) {
-                if (d.monstersKilled >= d.totalMonsters) {
-                    cell.locked = false;
-                    return { ok: true, type: 'exit' };
-                }
-                return { ok: true, type: 'exit_locked' };
+    if (cellType === this.TILE.MONSTER || cellType === this.TILE.BOSS) {
+        return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
+    }
+    if (cellType === this.TILE.CHEST && !cell.looted) {
+        return { ok: true, type: 'chest' };
+    }
+    if (cellType === this.TILE.ALTAR && cell.altar) {
+        return { ok: true, type: 'altar' };
+    }
+    if (cellType === this.TILE.CAULDRON && cell.cauldron) {
+        return { ok: true, type: 'cauldron' };
+    }
+    if (cellType === this.TILE.POTION && cell.potion) {
+        return { ok: true, type: 'potion' };
+    }
+    if (cell.exit) {
+        if (cell.locked) {
+            if (d.monstersKilled >= d.totalMonsters) {
+                cell.locked = false;
+                return { ok: true, type: 'exit' };
             }
-            return { ok: true, type: 'exit' };
+            return { ok: true, type: 'exit_locked' };
         }
-        return { ok: true, type: 'move' };
-    },
-
+        return { ok: true, type: 'exit' };
+    }
+    return { ok: true, type: 'move' };
+},
     killMonster: function() {
     if (!this._dungeon) return;
     var d = this._dungeon;
