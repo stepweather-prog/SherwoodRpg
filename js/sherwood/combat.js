@@ -253,50 +253,66 @@ Sherwood.Combat = {
     },
 
     getSkills: function() {
-        return {
-            power_shot: {
-                id: 'power_shot',
-                name: 'Мощный выстрел',
-                damageMultiplier: 1.8,
-                cooldown: 3,
-                description: 'Наносит 180% урона',
-                icon: 'assets/skills/skill_critical_shot.png',
-                unlocked: false,
-                cost: 200
-            },
-            triple_shot: {
-                id: 'triple_shot',
-                name: 'Тройной выстрел',
-                damageMultiplier: 0.7,
-                cooldown: 4,
-                description: '3 выстрела по 70% урона',
-                icon: 'assets/skills/triple_shot_skill.png',
-                unlocked: false,
-                cost: 300
-            },
-            poison_arrow: {
-                id: 'poison_arrow',
-                name: 'Отравленная стрела',
-                damageMultiplier: 1.0,
-                cooldown: 5,
-                description: 'Отравляет врага на 3 хода',
-                icon: 'assets/skills/poison_shot_skill.png',
-                unlocked: false,
-                cost: 250
-            },
-            stunning_shot: {
-                id: 'stunning_shot',
-                name: 'Оглушающий выстрел',
-                damageMultiplier: 0.5,
-                cooldown: 6,
-                description: 'Оглушает врага на 1 ход',
-                icon: 'assets/skills/control_skill.png',
-                unlocked: false,
-                cost: 350
-            }
-        };
-    },
+    var p = Sherwood.getPlayer();
+    var unlocked = p ? (p.unlockedSkills || []) : [];
+    return {
+        power_shot: {
+            id: 'power_shot',
+            name: 'Мощный выстрел',
+            damageMultiplier: 1.8,
+            cooldown: 3,
+            description: 'Наносит 180% урона',
+            icon: 'assets/skills/skill_critical_shot.png',
+            unlocked: unlocked.indexOf('power_shot') !== -1,
+            cost: 200
+        },
+        triple_shot: {
+            id: 'triple_shot',
+            name: 'Тройной выстрел',
+            damageMultiplier: 0.7,
+            cooldown: 4,
+            description: '3 выстрела по 70% урона',
+            icon: 'assets/skills/triple_shot_skill.png',
+            unlocked: unlocked.indexOf('triple_shot') !== -1,
+            cost: 300
+        },
+        poison_arrow: {
+            id: 'poison_arrow',
+            name: 'Отравленная стрела',
+            damageMultiplier: 1.0,
+            cooldown: 5,
+            description: 'Отравляет врага на 3 хода',
+            icon: 'assets/skills/poison_shot_skill.png',
+            unlocked: unlocked.indexOf('poison_arrow') !== -1,
+            cost: 250
+        },
+        stunning_shot: {
+            id: 'stunning_shot',
+            name: 'Оглушающий выстрел',
+            damageMultiplier: 0.5,
+            cooldown: 6,
+            description: 'Оглушает врага на 1 ход',
+            icon: 'assets/skills/control_skill.png',
+            unlocked: unlocked.indexOf('stunning_shot') !== -1,
+            cost: 350
+        }
+    };
+},
 
+unlockSkill: function(skillId) {
+    var skills = this.getSkills();
+    if (!skills[skillId]) return { success: false, reason: 'Навык не найден' };
+    if (skills[skillId].unlocked) return { success: false, reason: 'Уже открыт' };
+    var cost = skills[skillId].cost;
+    var p = Sherwood.getPlayer();
+    if (!p) return { success: false, reason: 'Нет игрока' };
+    if ((p.resources.gold || 0) < cost) return { success: false, reason: 'Не хватает золота' };
+    p.resources.gold -= cost;
+    if (!p.unlockedSkills) p.unlockedSkills = [];
+    p.unlockedSkills.push(skillId);
+    Sherwood.saveGame();
+    return { success: true, skill: skillId };
+},
     unlockSkill: function(skillId) {
         var skills = this.getSkills();
         if (!skills[skillId]) return { success: false, reason: 'Навык не найден' };
