@@ -631,34 +631,46 @@ _tavernCancel: function() {
     var m = Sherwood.Arena.getCurrentMatch(); if (!m) { this.arena(); return; }
     var o = m.opponent, p = m.player;
     var ohp = o.stats.maxHp > 0 ? Math.round((o.stats.hp / o.stats.maxHp) * 100) : 100;
-    var h = '<div style="text-align:center;padding:10px;">';
-    h += '<div style="color:#e0c080;font-size:1em;margin-bottom:8px;">🏟️ Арена — ' + o.name + '</div>';
+    var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     
-    // Враг в рамке
-    h += '<div style="position:relative;display:inline-block;margin:0 auto 12px;">';
-    h += '<img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:relative;z-index:1;pointer-events:none;">';
-    h += '<img src="' + (o.skin || 'assets/hero_skins/skin_1_basic.png') + '" id="enemy-card" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;object-fit:contain;z-index:0;transition:transform 0.1s,filter 0.15s;">';
+    var h = '<div style="text-align:center;">';
+    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:6px;">Арена - ' + o.name + '</div>';
+    
+    // Шкала бестии (противника)
+    h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ohp + '%;transition:width 0.5s ease-out;"></div>';
+    h += '</div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + o.stats.hp + '/' + o.stats.maxHp + '</span></div>';
+    
+    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + o.name + '</div>';
+    
+    // Карточка врага в рамке
+    h += '<div style="margin:8px 0;position:relative;display:inline-block;">';
+    h += '<img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;">';
+    h += '<img src="' + (o.skin || 'assets/hero_skins/skin_1_basic.png') + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
+    
+    // Кнопка атаки
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:4px 0;">';
+    h += '<button onclick="SherwoodUI._arenaAttack()" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
     h += '</div>';
     
-    // Шкала HP врага
-    h += '<div style="position:relative;width:200px;height:20px;margin:4px auto;background:rgba(0,0,0,0.7);border:1px solid #f44336;border-radius:4px;overflow:hidden;">';
-    h += '<div id="enemy-hp-bar" style="background:#f44336;height:100%;width:' + ohp + '%;transition:width 0.5s;"></div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6em;">' + o.stats.hp + '/' + o.stats.maxHp + '</span></div>';
-    h += '<div style="color:#aaa;font-size:0.6em;">ATK ' + o.stats.attack + ' | DEF ' + o.stats.defense + '</div>';
+    // Шкала героя
+    h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
+    h += '</div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     
-    // VS
-    h += '<div style="font-size:1.5em;color:#ffd700;margin:8px 0;">⚔️ VS ⚔️</div>';
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;">';
+    h += '<span style="color:#f44336;">ATK ' + p.stats.attack + '</span> <span style="color:#2196f3;">DEF ' + p.stats.defense + '</span> <span style="color:#ff9800;">AGI ' + p.stats.agility + '</span>';
+    h += '<img src="assets/hero_skins/' + (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin_1_basic') + '.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
     
-    // Игрок
-    h += '<div style="color:#4caf50;font-weight:bold;">' + (Sherwood.getPlayer().name || 'Вы') + '</div>';
-    h += '<div style="color:#aaa;font-size:0.6em;">HP ' + p.stats.hp + '/' + p.stats.maxHp + ' | ATK ' + p.stats.attack + ' | DEF ' + p.stats.defense + '</div>';
-    
-    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:8px 8%;min-height:50px;max-height:80px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;"></div>';
-    h += '<div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">';
-    h += '<button onclick="SherwoodUI._arenaAttack()" style="background:#c9a040;border:none;border-radius:8px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;">⚔️ Атака</button>';
-    h += '<button onclick="SherwoodUI._arenaFlee()" style="background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:8px;padding:10px 16px;color:#f44336;cursor:pointer;">🏃 Бежать</button>';
-    h += '</div></div>';
-    this._openScreen('🏟️ Арена', 'arena', h);
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:4px 8%;min-height:90px;max-height:90px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;line-height:1.4;"></div>';
+    h += '</div>';
+    this._openScreen('Battle', 'dungeon_fight', h);
 },
     // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
     settings: function() { this._playSound('click'); var p=Sherwood.getPlayer(),nm=p?p.name:'Охотник',h='<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">👤 Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="'+nm+'" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;"><button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div><div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div><div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">🔊 Звуки</span><label style="position:relative;width:50px;height:26px;background:'+(this._soundEnabled?'#4caf50':'#555')+';border-radius:13px;cursor:pointer;"><input type="checkbox" '+(this._soundEnabled?'checked':'')+' onchange="SherwoodUI._toggleSound(this.checked)" style="display:none;"><span style="position:absolute;top:2px;left:'+(this._soundEnabled?'26px':'2px')+';width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span></label></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">🎵 Музыка</span><label style="position:relative;width:50px;height:26px;background:'+(this._musicEnabled?'#4caf50':'#555')+';border-radius:13px;cursor:pointer;"><input type="checkbox" '+(this._musicEnabled?'checked':'')+' onchange="SherwoodUI._toggleMusic(this.checked)" style="display:none;"><span style="position:absolute;top:2px;left:'+(this._musicEnabled?'26px':'2px')+';width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span></label></div></div><button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">🚪 Выйти</button>'; this._openScreen('⚙️ Настройки','settings',h); },
