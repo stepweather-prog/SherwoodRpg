@@ -263,12 +263,21 @@ Sherwood.Dungeon = {
     var d = this._dungeon;
     d.monstersKilled++;
     
-    var cell = d.grid[d.py][d.px];
-    if (cell && cell.monster) {
-        cell.monster = false;
-        cell.monsterId = null;
-        cell.isBoss = false;
-        cell.type = this.TILE.EMPTY;
+    // Ищем клетку монстра вокруг игрока и ставим мешок
+    var dirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
+    for (var i = 0; i < dirs.length; i++) {
+        var nx = d.px + dirs[i][0], ny = d.py + dirs[i][1];
+        if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+            if (d.grid[ny][nx].monster) {
+                d.grid[ny][nx].monster = false;
+                d.grid[ny][nx].monsterId = null;
+                d.grid[ny][nx].isBoss = false;
+                d.grid[ny][nx].type = this.TILE.EMPTY;
+                d.grid[ny][nx].lootBag = true;
+                d.grid[ny][nx].lootCollected = false;
+                break;
+            }
+        }
     }
     
     if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced) {
@@ -278,6 +287,14 @@ Sherwood.Dungeon = {
         d.grid[d.py][d.px].looted = false;
         d.grid[d.py][d.px].reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
     }
+    if (d.monstersKilled >= d.totalMonsters) {
+        for (var y = 0; y < d.size; y++) {
+            for (var x = 0; x < d.size; x++) {
+                if (d.grid[y][x].exit) d.grid[y][x].locked = false;
+            }
+        }
+    }
+},
     if (d.monstersKilled >= d.totalMonsters) {
         for (var y = 0; y < d.size; y++) {
             for (var x = 0; x < d.size; x++) {
