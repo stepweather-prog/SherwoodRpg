@@ -18,6 +18,9 @@ const SherwoodUI = {
         'click': 'assets/sounds/button_click.ogg', 'shot': 'assets/sounds/arrow_hit_2.wav', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
         'chest_open': 'assets/sounds/chest_opens.wav', 'trap': 'assets/sounds/trap.wav',
+        'loot_drop': 'assets/sounds/loot_bag_drop.flac',
+        'bag_collected': 'assets/sounds/collected_bag_of_loot.flac',
+        'dungeon_ambient': 'assets/sounds/atmosphere_ambient_1.mp3',
         'steps': 'assets/sounds/hero_steps.flac', 'altar': 'assets/sounds/altar_underground.mp3', 'bottle_health': 'assets/sounds/bottle_health.mp3'
     },
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
@@ -101,8 +104,8 @@ _doExchange: function() {
 },
 _initSounds: function() {
     for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
-    try { var bgm = new Audio('assets/sounds/subway_3.wav'); bgm.preload = 'auto'; bgm.loop = true; bgm.volume = 0.25; this._sounds['battle_bgm'] = bgm; } catch(e) {}
     try { var main = new Audio('assets/sounds/sherwood_rpg.mp3'); main.preload = 'auto'; main.loop = true; main.volume = 0.5; this._sounds['main_theme'] = main; } catch(e) {}
+    try { var ambient = new Audio('assets/sounds/atmosphere_ambient_1.mp3'); ambient.preload = 'auto'; ambient.loop = true; ambient.volume = 0.4; this._sounds['dungeon_ambient'] = ambient; } catch(e) {}
 },
 
 _playSound: function(k) { try { if (!this._soundEnabled) return; var s = this._sounds[k]; if (s) { s.currentTime = 0; s.play().catch(function() {}); } } catch(e) {} },
@@ -115,17 +118,18 @@ _playMusic: function(k) {
         if (this._currentMusicKey === k && this._currentMusic && !this._currentMusic.paused) return;
         this._stopMusic();
         var m = this._sounds[k]; 
-        if (m) { m.loop = true; m.volume = 0.7; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
+        if (m) { m.loop = true; m.volume = (k === 'dungeon_ambient') ? 0.4 : 0.7; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
     } catch(e) {}
 },
 
 _stopMusic: function() { try { if (this._currentMusic) { this._currentMusic.pause(); this._currentMusic.currentTime = 0; this._currentMusic = null; this._currentMusicKey = null; } } catch(e) {} },
 
-_stopBattleMusic: function() { try { var bgm = this._sounds['battle_bgm']; if (bgm) { bgm.pause(); bgm.currentTime = 0; } } catch(e) {} },
+_pauseMusic: function() { try { if (this._currentMusic) { this._currentMusic.pause(); } } catch(e) {} },
+
+_resumeMusic: function() { try { if (this._currentMusic && this._musicEnabled) { this._currentMusic.play().catch(function() {}); } } catch(e) {} },
 
 _playHitSounds: function() {
     try { this._playSound('shot'); } catch(e) {}
-    try { var bgm = this._sounds['battle_bgm']; if (bgm && bgm.paused) { bgm.currentTime = 0; bgm.play().catch(function() {}); } } catch(e) {}
 },
 
 _saveAudioSettings: function() { try { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: this._soundEnabled, music: this._musicEnabled })); } catch(e) {} },
@@ -568,11 +572,16 @@ _combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this.
 _handleCombat: function(r) {
     if (!r) return;
     if (r.win) {
-        if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
-        if (Sherwood.Bestiary && r.enemyImage) Sherwood.Bestiary.registerKill(r.enemyImage);
-        this._stopBattleMusic(); this.updateDisplay();
-        this._renderDungeon();
-    } else if (r.lose) {
+    if (r.exp) Sherwood.addExp(r.exp);
+    if (r.gold) { Sherwood.addResource('gold', r.gold); Sherwood.addResource('silver', Math.floor(r.gold * 2)); }
+    Sherwood.saveGame();
+    if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
+    if (Sherwood.Bestiary && r.enemyImage) Sherwood.Bestiary.registerKill(r.enemyImage);
+    this._stopBattleMusic();
+    this._playSound('loot_drop');
+    this.updateDisplay();
+    this._renderDungeon();
+} else if (r.lose) {
         this._stopBattleMusic(); this.updateDisplay();
         var scrolls = Math.random() < 0.08 ? 1 : 0;
         if (scrolls) Sherwood.addResource('scrolls', scrolls);
