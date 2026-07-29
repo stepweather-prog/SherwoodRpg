@@ -308,6 +308,7 @@ Sherwood.Dungeon = {
         Sherwood.addResource('gold', gold);
         Sherwood.addResource('silver', silver);
         Sherwood.addExp(exp);
+        if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
         var prog = this._progress[d.id] || { level: 1 };
         if (d.level >= prog.level) prog.level = Math.min(8, d.level + 1);
         this._progress[d.id] = prog;
@@ -315,6 +316,6 @@ Sherwood.Dungeon = {
         this._dungeon = null;
         return { gold: gold, silver: silver, exp: exp };
     },
-
+      
     leave: function() { this._dungeon = null; }
 };
