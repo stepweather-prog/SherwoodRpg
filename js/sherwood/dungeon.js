@@ -48,7 +48,7 @@ Sherwood.Dungeon = {
     p.dungeon.tickets--;
     Sherwood.saveGame();
 
-    var size = 12;
+    var size = 14;
     var grid = [];
     for (var y = 0; y < size; y++) {
         grid[y] = [];
@@ -108,17 +108,20 @@ Sherwood.Dungeon = {
     var pool = monsters[dungeonId] || monsters['forest'];
     var monList = level <= 3 ? pool.easy : pool.medium;
     var monsterCount = level <= 3 ? 6 : 8;
-    if (level === 7) monsterCount = 8;
+    if (level === 7) monsterCount = 10;
 
+    // Перемешиваем все empties — монстры, спецобъекты и выход будут из одного пула
+    var allCells = empties.slice();
+    
+    // Монстры
     var placedMonsters = 0;
     var monsterCells = [];
-    for (var i = 0; i < empties.length && placedMonsters < monsterCount; i++) {
-        var cell = empties[i];
-        if (!cell) continue;
+    for (var i = 0; i < allCells.length && placedMonsters < monsterCount; i++) {
+        var cell = allCells[i];
         if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
         var tooClose = false;
         for (var m = 0; m < monsterCells.length; m++) {
-            if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) {
+            if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 2) {
                 tooClose = true; break;
             }
         }
@@ -127,76 +130,67 @@ Sherwood.Dungeon = {
             grid[cell.y][cell.x].monster = true;
             grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
             monsterCells.push(cell);
+            cell.used = true;
             placedMonsters++;
         }
     }
 
     var isBossLevel = (level === 7);
     if (isBossLevel) {
-        var bossCell = null;
-        var bossPlaced = false;
-        for (var y = 2; y < size-2 && !bossPlaced; y++) {
-            for (var x = 2; x < size-2 && !bossPlaced; x++) {
-                if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) {
-                    var tooCloseToSpawn = Math.abs(x - spawnX) + Math.abs(y - spawnY) < 5;
-                    var tooCloseToMonster = false;
-                    for (var m = 0; m < monsterCells.length; m++) {
-                        if (Math.abs(x - monsterCells[m].x) + Math.abs(y - monsterCells[m].y) < 3) {
-                            tooCloseToMonster = true; break;
-                        }
-                    }
-                    if (!tooCloseToSpawn && !tooCloseToMonster) {
-                        grid[y][x].type = this.TILE.BOSS;
-                        grid[y][x].monster = true;
-                        grid[y][x].monsterId = pool.boss;
-                        grid[y][x].isBoss = true;
-                        bossPlaced = true;
-                    }
+        for (var i = 0; i < allCells.length; i++) {
+            var cell = allCells[i];
+            if (cell.used) continue;
+            if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 5) continue;
+            var tooClose = false;
+            for (var m = 0; m < monsterCells.length; m++) {
+                if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) {
+                    tooClose = true; break;
                 }
             }
-        }
-    }
-
-    // Пересобираем empties после размещения всех монстров и босса
-    empties = [];
-    for (var y = 1; y < size-1; y++) {
-        for (var x = 1; x < size-1; x++) {
-            if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) {
-                empties.push({x: x, y: y});
+            if (!tooClose) {
+                grid[cell.y][cell.x].type = this.TILE.BOSS;
+                grid[cell.y][cell.x].monster = true;
+                grid[cell.y][cell.x].monsterId = pool.boss;
+                grid[cell.y][cell.x].isBoss = true;
+                cell.used = true;
+                break;
             }
         }
     }
-    empties.sort(function() { return Math.random() - 0.5; });
 
-    // Алтари, котлы, зелья
+    // Спецобъекты — 5 зелий, 3 котла, 2 алтаря
     var specials = [
-        { type: this.TILE.ALTAR, count: 3, prop: 'altar' },
+        { type: this.TILE.POTION, count: 5, prop: 'potion' },
         { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
-        { type: this.TILE.POTION, count: 5, prop: 'potion' }
+        { type: this.TILE.ALTAR, count: 2, prop: 'altar' }
     ];
     for (var t = 0; t < specials.length; t++) {
         var st = specials[t];
-        for (var i = 0; i < st.count && empties.length > 0; i++) {
-            var idx = Math.floor(Math.random() * empties.length);
-            var cell = empties.splice(idx, 1)[0];
+        var placed = 0;
+        for (var i = 0; i < allCells.length && placed < st.count; i++) {
+            var cell = allCells[i];
+            if (cell.used) continue;
+            if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 2) continue;
             grid[cell.y][cell.x].type = st.type;
             grid[cell.y][cell.x][st.prop] = true;
+            cell.used = true;
+            placed++;
         }
     }
 
     // Выход
-    var bestDist = -1, exitX = spawnX, exitY = spawnY;
-    for (var i = 0; i < empties.length; i++) {
-        var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY);
-        if (dist > bestDist) { bestDist = dist; exitX = empties[i].x; exitY = empties[i].y; }
-    }
-    if (bestDist >= 0) {
-        grid[exitY][exitX].type = this.TILE.EXIT;
-        grid[exitY][exitX].exit = true;
-        grid[exitY][exitX].locked = true;
+    var exitPlaced = false;
+    for (var i = allCells.length - 1; i >= 0; i--) {
+        var cell = allCells[i];
+        if (cell.used) continue;
+        if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 4) continue;
+        grid[cell.y][cell.x].type = this.TILE.EXIT;
+        grid[cell.y][cell.x].exit = true;
+        grid[cell.y][cell.x].locked = true;
+        exitPlaced = true;
+        break;
     }
 
-    // Подсчёт общего числа монстров
     var totalMonsters = 0;
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
@@ -244,11 +238,19 @@ Sherwood.Dungeon = {
         }
         if (cellType === this.TILE.ALTAR && cell.altar) {
             cell.type = this.TILE.EMPTY; cell.altar = false;
-            return { ok: true, type: 'altar' };
+            var scrolls = 1 + Math.floor(Math.random() * 3);
+            var silver = 100 + Math.floor(Math.random() * 200);
+            Sherwood.addResource('scrolls', scrolls);
+            Sherwood.addResource('silver', silver);
+            return { ok: true, type: 'altar', scrolls: scrolls, silver: silver };
         }
         if (cellType === this.TILE.CAULDRON && cell.cauldron) {
             cell.type = this.TILE.EMPTY; cell.cauldron = false;
-            return { ok: true, type: 'cauldron' };
+            var gold = 1 + Math.floor(Math.random() * 3);
+            var silver = 50 + Math.floor(Math.random() * 150);
+            Sherwood.addResource('gold', gold);
+            Sherwood.addResource('silver', silver);
+            return { ok: true, type: 'cauldron', gold: gold, silver: silver };
         }
         if (cellType === this.TILE.POTION && cell.potion) {
             cell.type = this.TILE.EMPTY; cell.potion = false;
