@@ -295,15 +295,7 @@ Sherwood.Dungeon = {
         }
     }
 },
-    if (d.monstersKilled >= d.totalMonsters) {
-        for (var y = 0; y < d.size; y++) {
-            for (var x = 0; x < d.size; x++) {
-                if (d.grid[y][x].exit) d.grid[y][x].locked = false;
-            }
-        }
-    }
-},
-
+    
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
