@@ -394,16 +394,15 @@ _useSkill: function(skillId) {
 },
 
 _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
-_hitEnemyCard: function() {
-    var card = document.getElementById('enemy-card');
-    if (!card) return;
-    card.style.transition = 'transform 0.1s, filter 0.15s';
-    card.style.transform = 'translateX(4px) rotate(2deg)';
-    card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)';
-    setTimeout(function() {
+_hitEnemyCard: function() { 
+    var card = document.getElementById('enemy-card'); 
+    if (!card) return; 
+    card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)'; 
+    card.style.transform = 'translateX(3px) rotate(1deg)';
+    setTimeout(function() { 
+        card.style.filter = ''; 
         card.style.transform = '';
-        card.style.filter = '';
-    }, 250);
+    }, 250); 
 },
 _updateEnemyHP: function(hp, max) { 
     var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); 
