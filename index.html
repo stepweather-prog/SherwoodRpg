@@ -37,10 +37,10 @@
         .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
         .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
         .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
-       .bottom-stats { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; pointer-events: none; }
-.bottom-stats .stat-block { width: 100%; height: 150px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: space-around; }
+       .bottom-stats { position: absolute; bottom: -5px; left: 0; right: 0; z-index: 10; pointer-events: none; }
+.bottom-stats .stat-block { width: 100%; height: 160px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: space-around; padding: 0 5px; }
 .bottom-stats .stat-block .stat-board { display: none; }
-.bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 6px; z-index: 1; }
+.bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 1px; z-index: 1; }
 .bottom-stats .stat-block .stat-item img { width: 32px; height: 32px; object-fit: contain; }
 .bottom-stats .stat-block .stat-item .stat-value { font-size: 1em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
 .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
