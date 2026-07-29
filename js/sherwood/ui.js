@@ -384,7 +384,18 @@ _useSkill: function(skillId) {
 },
 
 _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
-_hitEnemyCard: function() { var card = document.getElementById('enemy-card'); if (!card) return; card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)'; setTimeout(function() { card.style.filter = ''; }, 250); },
+_hitEnemyCard: function() {
+    var card = document.getElementById('enemy-card');
+    if (!card) return;
+    card.style.transition = 'transform 0.08s, filter 0.15s';
+    card.style.transform = 'translate(calc(-50% + 6px), calc(-50% + 3px)) rotate(2deg)';
+    card.style.filter = 'brightness(1.4) saturate(1.8)';
+    var self = this;
+    setTimeout(function() {
+        card.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+        card.style.filter = '';
+    }, 120);
+},
 _updateEnemyHP: function(hp, max) { 
     var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); 
     if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + '%'; } 
@@ -617,47 +628,38 @@ _tavernCancel: function() {
     _startArenaMatch: function(i) { this._stopMusic(); Sherwood.Arena.startMatch(i); this._showArenaMatch(); },
     _refreshArena: function() { Sherwood.Arena.refreshOpponents(); this.arena(); },
     _showArenaMatch: function() {
-        var m = Sherwood.Arena.getCurrentMatch(); if (!m) { this.arena(); return; }
-        var o = m.opponent, p = m.player;
-        this._showBattleScreen(
-            { name: o.name, image: o.skin, hp: o.stats.hp, maxHp: o.stats.maxHp },
-            'arena',
-            '🏟️ Арена — ' + o.name,
-            '',
-            'SherwoodUI._arenaAttack()',
-            'SherwoodUI._arenaFlee()'
-        );
-    },
-    _arenaAttack: function() {
-    this._playHitSounds();
-    var r = Sherwood.Arena.arenaAttack();
-    var log = document.getElementById("arena-log");
-    if (!r) { if (log) log.textContent = "Error"; return; }
-    if (r.win) {
-        this._showDialog("Win! +" + (r.rewards ? r.rewards.exp : 0) + "XP", "#ffd700");
-        this._stopBattleMusic();
-        SherwoodUI.updateDisplay();
-        var self = this;
-        setTimeout(function() { self._playMusic("main_theme"); self.arena(); }, 1500);
-    } else if (r.win === false) {
-        this._showDialog("Lose", "#f44336");
-        this._stopBattleMusic();
-        var self = this;
-        setTimeout(function() { self._playMusic("main_theme"); self.arena(); }, 1500);
-    } else {
-        this._hitEnemyCard();
-        this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-        this._showDialog((r.crit ? "CRIT " : "") + "Dmg: " + r.playerDamage, r.crit ? "#ff6a00" : "#fff");
-        if (r.opponentDamage) {
-            var self = this;
-            setTimeout(function() { self._showDialog("Enemy: " + r.opponentDamage + " dmg", "#f44336"); }, 700);
-        }
-        SherwoodUI.updateDisplay();
-        this._showArenaMatch();
-    }
+    var m = Sherwood.Arena.getCurrentMatch(); if (!m) { this.arena(); return; }
+    var o = m.opponent, p = m.player;
+    var ohp = o.stats.maxHp > 0 ? Math.round((o.stats.hp / o.stats.maxHp) * 100) : 100;
+    var h = '<div style="text-align:center;padding:10px;">';
+    h += '<div style="color:#e0c080;font-size:1em;margin-bottom:8px;">🏟️ Арена — ' + o.name + '</div>';
+    
+    // Враг в рамке
+    h += '<div style="position:relative;display:inline-block;margin:0 auto 12px;">';
+    h += '<img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:relative;z-index:1;pointer-events:none;">';
+    h += '<img src="' + (o.skin || 'assets/hero_skins/skin_1_basic.png') + '" id="enemy-card" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;object-fit:contain;z-index:0;transition:transform 0.1s,filter 0.15s;">';
+    h += '</div>';
+    
+    // Шкала HP врага
+    h += '<div style="position:relative;width:200px;height:20px;margin:4px auto;background:rgba(0,0,0,0.7);border:1px solid #f44336;border-radius:4px;overflow:hidden;">';
+    h += '<div id="enemy-hp-bar" style="background:#f44336;height:100%;width:' + ohp + '%;transition:width 0.5s;"></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6em;">' + o.stats.hp + '/' + o.stats.maxHp + '</span></div>';
+    h += '<div style="color:#aaa;font-size:0.6em;">ATK ' + o.stats.attack + ' | DEF ' + o.stats.defense + '</div>';
+    
+    // VS
+    h += '<div style="font-size:1.5em;color:#ffd700;margin:8px 0;">⚔️ VS ⚔️</div>';
+    
+    // Игрок
+    h += '<div style="color:#4caf50;font-weight:bold;">' + (Sherwood.getPlayer().name || 'Вы') + '</div>';
+    h += '<div style="color:#aaa;font-size:0.6em;">HP ' + p.stats.hp + '/' + p.stats.maxHp + ' | ATK ' + p.stats.attack + ' | DEF ' + p.stats.defense + '</div>';
+    
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:8px 8%;min-height:50px;max-height:80px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;"></div>';
+    h += '<div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">';
+    h += '<button onclick="SherwoodUI._arenaAttack()" style="background:#c9a040;border:none;border-radius:8px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;">⚔️ Атака</button>';
+    h += '<button onclick="SherwoodUI._arenaFlee()" style="background:rgba(244,67,54,0.2);border:1px solid #f44336;border-radius:8px;padding:10px 16px;color:#f44336;cursor:pointer;">🏃 Бежать</button>';
+    h += '</div></div>';
+    this._openScreen('🏟️ Арена', 'arena', h);
 },
-    _arenaFlee: function() { this._stopBattleMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('forest_ambient'); this.arena(); },
-
     // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
     settings: function() { this._playSound('click'); var p=Sherwood.getPlayer(),nm=p?p.name:'Охотник',h='<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">👤 Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="'+nm+'" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;"><button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div><div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div><div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">🔊 Звуки</span><label style="position:relative;width:50px;height:26px;background:'+(this._soundEnabled?'#4caf50':'#555')+';border-radius:13px;cursor:pointer;"><input type="checkbox" '+(this._soundEnabled?'checked':'')+' onchange="SherwoodUI._toggleSound(this.checked)" style="display:none;"><span style="position:absolute;top:2px;left:'+(this._soundEnabled?'26px':'2px')+';width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span></label></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">🎵 Музыка</span><label style="position:relative;width:50px;height:26px;background:'+(this._musicEnabled?'#4caf50':'#555')+';border-radius:13px;cursor:pointer;"><input type="checkbox" '+(this._musicEnabled?'checked':'')+' onchange="SherwoodUI._toggleMusic(this.checked)" style="display:none;"><span style="position:absolute;top:2px;left:'+(this._musicEnabled?'26px':'2px')+';width:22px;height:22px;background:#fff;border-radius:50%;transition:0.2s;"></span></label></div></div><button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">🚪 Выйти</button>'; this._openScreen('⚙️ Настройки','settings',h); },
     _changePlayerName: function() { var inp=document.getElementById('pni'),st=document.getElementById('name-status'); if(!inp||!st) return; var nm=inp.value.trim(); if(!nm) { st.textContent='❌ Пустое имя'; st.style.color='#f44336'; return; } var p=Sherwood.getPlayer(); if(p) { p.name=nm; Sherwood.saveGame(); if(Sherwood.Chat) Sherwood.Chat.setUsername(nm); st.textContent='✅ Сохранено!'; st.style.color='#4caf50'; } },
