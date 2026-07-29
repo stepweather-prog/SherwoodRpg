@@ -251,6 +251,9 @@ Sherwood.Dungeon = {
     }
     return { ok: true, type: 'move' };
 },
+    if (cell.lootBag && !cell.lootCollected) {
+    return { ok: true, type: 'lootBag' };
+}
     _moveSilent: function(tx, ty) {
     var d = this._dungeon;
     if (!d) return;
