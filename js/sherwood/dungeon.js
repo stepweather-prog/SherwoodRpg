@@ -114,6 +114,7 @@ Sherwood.Dungeon = {
     var monsterCells = [];
     for (var i = 0; i < empties.length && placedMonsters < monsterCount; i++) {
         var cell = empties[i];
+        if (!cell) continue;
         if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
         var tooClose = false;
         for (var m = 0; m < monsterCells.length; m++) {
@@ -127,13 +128,47 @@ Sherwood.Dungeon = {
             grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
             monsterCells.push(cell);
             placedMonsters++;
-            // Убираем эту клетку из empties чтобы не затереть объектами
-            empties.splice(i, 1);
-            i--;
         }
     }
 
-    // Алтари, котлы, зелья — ТОЛЬКО на оставшихся пустых
+    var isBossLevel = (level === 7);
+    if (isBossLevel) {
+        var bossCell = null;
+        var bossPlaced = false;
+        for (var y = 2; y < size-2 && !bossPlaced; y++) {
+            for (var x = 2; x < size-2 && !bossPlaced; x++) {
+                if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) {
+                    var tooCloseToSpawn = Math.abs(x - spawnX) + Math.abs(y - spawnY) < 5;
+                    var tooCloseToMonster = false;
+                    for (var m = 0; m < monsterCells.length; m++) {
+                        if (Math.abs(x - monsterCells[m].x) + Math.abs(y - monsterCells[m].y) < 3) {
+                            tooCloseToMonster = true; break;
+                        }
+                    }
+                    if (!tooCloseToSpawn && !tooCloseToMonster) {
+                        grid[y][x].type = this.TILE.BOSS;
+                        grid[y][x].monster = true;
+                        grid[y][x].monsterId = pool.boss;
+                        grid[y][x].isBoss = true;
+                        bossPlaced = true;
+                    }
+                }
+            }
+        }
+    }
+
+    // Пересобираем empties после размещения всех монстров и босса
+    empties = [];
+    for (var y = 1; y < size-1; y++) {
+        for (var x = 1; x < size-1; x++) {
+            if (grid[y][x].type === this.TILE.EMPTY && !(x === spawnX && y === spawnY)) {
+                empties.push({x: x, y: y});
+            }
+        }
+    }
+    empties.sort(function() { return Math.random() - 0.5; });
+
+    // Алтари, котлы, зелья
     var specials = [
         { type: this.TILE.ALTAR, count: 3, prop: 'altar' },
         { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
@@ -161,30 +196,18 @@ Sherwood.Dungeon = {
         grid[exitY][exitX].locked = true;
     }
 
-    var isBossLevel = (level === 7);
-    if (isBossLevel) {
-        var bossCell = null;
-        for (var y = -2; y <= 2; y++) {
-            for (var x = -2; x <= 2; x++) {
-                var nx = exitX + x, ny = exitY + y;
-                if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx].type === this.TILE.EMPTY) {
-                    bossCell = {x: nx, y: ny}; break;
-                }
-            }
-            if (bossCell) break;
-        }
-        if (bossCell) {
-            grid[bossCell.y][bossCell.x].type = this.TILE.BOSS;
-            grid[bossCell.y][bossCell.x].monster = true;
-            grid[bossCell.y][bossCell.x].monsterId = pool.boss;
-            grid[bossCell.y][bossCell.x].isBoss = true;
+    // Подсчёт общего числа монстров
+    var totalMonsters = 0;
+    for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+            if (grid[y][x].monster) totalMonsters++;
         }
     }
 
     this._dungeon = {
         id: dungeonId, level: level, size: size, grid: grid,
         px: spawnX, py: spawnY,
-        monstersKilled: 0, totalMonsters: placedMonsters + (isBossLevel ? 1 : 0),
+        monstersKilled: 0, totalMonsters: totalMonsters,
         chestsOpened: 0, isBossLevel: isBossLevel,
         heroDirection: 'down', isMoving: false,
         chestPlaced: false
@@ -249,24 +272,7 @@ Sherwood.Dungeon = {
     var d = this._dungeon;
     d.monstersKilled++;
     
-    // Ищем клетку с монстром вокруг игрока
-    var cell = null;
-    if (d.grid[d.py][d.px].monster) {
-        cell = d.grid[d.py][d.px];
-    } else {
-        // Ищем соседнюю клетку с монстром
-        var dirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
-        for (var i = 0; i < dirs.length; i++) {
-            var nx = d.px + dirs[i][0], ny = d.py + dirs[i][1];
-            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
-                if (d.grid[ny][nx].monster) {
-                    cell = d.grid[ny][nx];
-                    break;
-                }
-            }
-        }
-    }
-    
+    var cell = d.grid[d.py][d.px];
     if (cell && cell.monster) {
         cell.monster = false;
         cell.monsterId = null;
@@ -274,12 +280,12 @@ Sherwood.Dungeon = {
         cell.type = this.TILE.EMPTY;
     }
     
-    if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced && cell) {
+    if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced) {
         d.chestPlaced = true;
-        cell.chest = true;
-        cell.type = this.TILE.CHEST;
-        cell.looted = false;
-        cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
+        d.grid[d.py][d.px].chest = true;
+        d.grid[d.py][d.px].type = this.TILE.CHEST;
+        d.grid[d.py][d.px].looted = false;
+        d.grid[d.py][d.px].reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
     }
     if (d.monstersKilled >= d.totalMonsters) {
         for (var y = 0; y < d.size; y++) {
