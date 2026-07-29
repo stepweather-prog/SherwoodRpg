@@ -19,7 +19,7 @@ const SherwoodUI = {
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
         'chest_open': 'assets/sounds/chest_opens.wav', 'trap': 'assets/sounds/trap.wav',
         'loot_drop': 'assets/sounds/loot_bag_drop.flac',
-        'bag_collected': 'assets/sounds/collected_bag_of_loot.flac',
+        'bag_collected': 'assets/sounds/collected _bag_of_loot.flac',
         'dungeon_ambient': 'assets/sounds/atmosphere_ambient_1.mp3',
         'steps': 'assets/sounds/hero_steps.flac', 'altar': 'assets/sounds/altar_underground.mp3', 'bottle_health': 'assets/sounds/bottle_health.mp3'
     },
