@@ -243,6 +243,15 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var p = Sherwood.getPlayer();
     var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: "dungeon1", ext: ".jpeg" };
     this.container.style.background = "url(" + dd.bg + ") center/cover no-repeat";
+    
+    // ЖЕСТКИЙ ХАК: Принудительно прячем мешающие элементы интерфейса главной страницы
+    try {
+        var mainTopPanel = document.getElementById('top-panel');
+        if (mainTopPanel) mainTopPanel.style.display = 'none';
+        var mainTopButtons = document.getElementById('top-buttons-bar');
+        if (mainTopButtons) mainTopButtons.style.display = 'none';
+    } catch(e) {}
+
     try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = "none"; }); }); } catch(e) {}
     var dungId = d.id || 'forest';
     var altarImg = dungId === 'forest' ? 'assets/interface/altar_of_the_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/altar_of_the_second_dungeon.png' : 'assets/interface/the_third_altar_of_the_dungeon.png';
@@ -255,13 +264,16 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var gridW = cs * size, gridH = cs * size;
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
-    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:cover;overflow:hidden;'>";
+    
+    // ИСПРАВЛЕНО: background-size: 100% 100% заменяет cover, убирая микро-сдвиги пола под плитками
+    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;background-repeat:no-repeat;overflow:hidden;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;'>";
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;transform:scale(1.02);z-index:0;" + hide + "'></div>"; 
+            // ИСПРАВЛЕНО: scale(1.04) вместо 1.02 делает наложение плиток плотнее и убирает полосы
+            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;transform:scale(1.04);z-index:0;" + hide + "'></div>"; 
         } 
     }
     for (var y = 0; y < size; y++) {
@@ -319,9 +331,10 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     "</div>" +
     "</div>" +
     "<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
-    
-    if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
+
+    this.container.innerHTML = topBar + html;
 },
+
 _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     if (tx === d.px && ty === d.py) return;
