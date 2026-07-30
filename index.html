@@ -29,14 +29,22 @@
         .loading-screen .play-btn:active { transform: scale(0.95); }
         .main-interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; }
         .main-interface.active { display: block; pointer-events: all; }
-        .top-panel { position: absolute; top: 0; left: 2%; right: 2%; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 2px; }
-        .top-panel .resource { width: 24%; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .top-panel .resource img { width: 130%; max-width: 205px; height: auto; display: block; }
-        .top-panel .resource span { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); color: #ffd700; font-size: 0.9em; text-shadow: 0 0 10px rgba(0,0,0,0.9); font-weight: bold; white-space: nowrap; }
-        .top-panel .resource.silver span { color: #c0c0c0; left: 50%; }
-        .top-panel .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
-        .top-panel .exp-bar img { width: 100%; max-width: 240px; height: auto; display: block; object-fit: contain; }
-        .top-panel .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.75em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
+
+        #top-panel { position: absolute; top: 0; left: 0; right: 0; z-index: 10; background: rgba(0,0,0,0.7); }
+        .resources-row { display: flex; justify-content: space-between; align-items: center; gap: 2px; padding: 4px 4px; }
+        .resources-row .resource { width: 24%; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .resources-row .resource img { width: 100%; max-width: 180px; height: auto; display: block; }
+        .resources-row .resource span { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); color: #ffd700; font-size: 0.8em; text-shadow: 0 0 10px rgba(0,0,0,0.9); font-weight: bold; white-space: nowrap; }
+        .resources-row .resource.silver span { color: #c0c0c0; left: 50%; }
+        .resources-row .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
+        .resources-row .exp-bar img { width: 100%; max-width: 220px; height: auto; display: block; object-fit: contain; }
+        .resources-row .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.7em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
+
+        #top-buttons-bar { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; padding: 8px 4px; border-top: 1px solid rgba(201,168,76,0.3); }
+        #top-buttons-bar .btn { width: 80px; height: 80px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
+        #top-buttons-bar .btn img { width: 60px; height: 60px; object-fit: contain; }
+        #top-buttons-bar .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; line-height: 1; margin-top: 2px; max-width: 72px; overflow: hidden; white-space: nowrap; }
+
         .bottom-stats { position: absolute; bottom: -15px; left: -20px; right: -20px; z-index: 10; pointer-events: none; }
         .bottom-stats .stat-block { width: 100%; height: 160px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
         .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
@@ -44,12 +52,8 @@
         .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.9em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
         .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
 
-        #top-buttons-bar { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 3px; width: 460px; max-width: 98%; justify-content: center; background: rgba(0,0,0,0.75); border-radius: 14px; padding: 10px 6px; }
-        #top-buttons-bar .btn { width: 80px; height: 80px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
-        #top-buttons-bar .btn img { width: 60px; height: 60px; object-fit: contain; }
-        #top-buttons-bar .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; line-height: 1; margin-top: 2px; max-width: 72px; overflow: hidden; white-space: nowrap; }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
-        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .top-panel .resource span { font-size: 0.7em; } .top-panel .exp-bar img { height: 40px; max-width: 200px; } .top-panel .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
+        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .resources-row .resource span { font-size: 0.7em; } .resources-row .exp-bar img { height: 40px; max-width: 200px; } .resources-row .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
         .diablo-light-halo { display: none; }
         .hero-sprite { background-image: url('assets/hero_skins/archer_spritesheet.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; image-rendering: crisp-edges; position: relative; z-index: 4; }
     </style>
@@ -61,42 +65,44 @@
         <div class="hero-frame"><div class="video-bg"><video src="assets/animation/animation_frame_hero.webm" autoplay loop muted playsinline></video></div><img src="assets/hero_skins/skin_1_basic.png" alt="Герой"></div>
         <div class="loading-screen" id="loadingScreen"><div class="loading-bg"></div><button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');}catch(e){}"><img src="assets/all_buttons/play.png" alt="Играть"></button></div>
         <div class="main-interface" id="mainInterface">
-            <div class="top-panel">
-                <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
-                <div class="exp-bar" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 2px;">
-                    <img src="assets/interface/hero_experience_scale.png" alt="Опыт" style="width:100%;max-width:240px;height:auto;display:block;object-fit:contain;position:relative;z-index:1;">
-                    <div style="position:absolute;top:2px;left:12px;right:12px;bottom:2px;overflow:hidden;z-index:0;">
-                        <div id="exp-fill" style="background:url('assets/interface/filling_the_hero\'s_experience_bar.png') left center/100% 100% no-repeat;height:100%;width:0%;transition:width 0.5s ease-out;"></div>
+            <div id="top-panel">
+                <div class="resources-row">
+                    <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
+                    <div class="exp-bar" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 2px;">
+                        <img src="assets/interface/hero_experience_scale.png" alt="Опыт" style="width:100%;max-width:240px;height:auto;display:block;object-fit:contain;position:relative;z-index:1;">
+                        <div style="position:absolute;top:2px;left:12px;right:12px;bottom:2px;overflow:hidden;z-index:0;">
+                            <div id="exp-fill" style="background:url('assets/interface/filling_the_hero\'s_experience_bar.png') left center/100% 100% no-repeat;height:100%;width:0%;transition:width 0.5s ease-out;"></div>
+                        </div>
+                        <span class="exp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e0c080;font-size:0.75em;text-shadow:0 0 10px rgba(0,0,0,0.9);letter-spacing:1px;white-space:nowrap;width:100%;text-align:center;z-index:2;">
+                            <span id="exp-display">0</span> / <span id="exp-max-display">100</span> XP
+                        </span>
                     </div>
-                    <span class="exp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e0c080;font-size:0.75em;text-shadow:0 0 10px rgba(0,0,0,0.9);letter-spacing:1px;white-space:nowrap;width:100%;text-align:center;z-index:2;">
-                        <span id="exp-display">0</span> / <span id="exp-max-display">100</span> XP
-                    </span>
+                    <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
                 </div>
-                <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
+                <div id="top-buttons-bar">
+                    <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><span class="label">Квест</span></div>
+                    <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><span class="label">Подземка</span></div>
+                    <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><span class="label">Рейд</span></div>
+                    <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><span class="label">Портал</span></div>
+                    <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><span class="label">Арена</span></div>
+                    <div class="btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
+                    <div class="btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
+                    <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><span class="label">Таверна</span></div>
+                    <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><span class="label">Задания</span></div>
+                    <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><span class="label">Сумка</span></div>
+                    <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
+                    <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
+                    <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
+                    <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
+                </div>
             </div>
             <div class="bottom-stats">
-    <div class="stat-block">
-        <div class="stat-item"><img src="assets/interface/icon_power.png"><span class="stat-value attack">0</span></div>
-        <div class="stat-item"><img src="assets/interface/icon_defense.png"><span class="stat-value defense">0</span></div>
-        <div class="stat-item"><img src="assets/interface/icon_dexterity.png"><span class="stat-value agility">0</span></div>
-        <div class="stat-item"><img src="assets/interface/icon_health.png"><span class="stat-value hp">0</span></div>
-    </div>
-</div>
-            <div id="top-buttons-bar">
-                <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><span class="label">Квест</span></div>
-                <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><span class="label">Подземка</span></div>
-                <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><span class="label">Рейд</span></div>
-                <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><span class="label">Портал</span></div>
-                <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><span class="label">Арена</span></div>
-                <div class="btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
-                <div class="btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
-                <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><span class="label">Таверна</span></div>
-                <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><span class="label">Задания</span></div>
-                <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><span class="label">Сумка</span></div>
-                <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
-                <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
-                <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
-                <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
+                <div class="stat-block">
+                    <div class="stat-item"><img src="assets/interface/icon_power.png"><span class="stat-value attack">0</span></div>
+                    <div class="stat-item"><img src="assets/interface/icon_defense.png"><span class="stat-value defense">0</span></div>
+                    <div class="stat-item"><img src="assets/interface/icon_dexterity.png"><span class="stat-value agility">0</span></div>
+                    <div class="stat-item"><img src="assets/interface/icon_health.png"><span class="stat-value hp">0</span></div>
+                </div>
             </div>
         </div>
     </div>
