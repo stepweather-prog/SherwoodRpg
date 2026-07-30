@@ -16,33 +16,32 @@
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
 
-        .bottom-stats { position: absolute; top: 0px; bottom: auto; left: -20px; right: -20px; z-index: 12; pointer-events: none; }
-        .bottom-stats .stat-block { width: 100%; height: 160px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
-        .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
-        .bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
-        .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.9em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
-        .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
+        .top-resources-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-around; align-items: center; padding: 2px 4px; background: rgba(0,0,0,0.7); }
+        .res-item { position: relative; display: flex; align-items: center; justify-content: center; width: 24%; }
+        .res-item img { width: 100%; max-width: 120px; height: auto; display: block; }
+        .res-item span { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #ffd700; font-size: 0.75em; font-weight: bold; text-shadow: 0 0 6px #000; white-space: nowrap; }
+        .exp-block { width: 30%; }
+        .exp-fill-container { position: absolute; top: 20%; left: 15%; right: 15%; bottom: 20%; overflow: hidden; border-radius: 4px; }
+        #exp-fill-bar { height: 100%; width: 0%; background: rgba(201,168,76,0.5); transition: width 0.5s; }
+        .exp-text { z-index: 2; }
+        .level-block span { color: #e0c080; font-size: 0.7em; }
 
-        #top-panel { position: absolute; top: 50px; bottom: auto; left: 0; right: 0; z-index: 11; background: rgba(0, 0, 0, 0.4) !important; pointer-events: none; }
-        .resources-row { display: flex; justify-content: space-between; align-items: center; gap: 2px; padding: 4px 4px; background: none; }
-        .resources-row .resource, .resources-row .exp-bar { pointer-events: auto; }
-        .resources-row .resource { width: 26%; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .resources-row .resource img { width: 100%; max-width: 230px; height: auto; display: block; }
-        .resources-row .resource span { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); color: #ffd700; font-size: 1.05em; text-shadow: 0 0 10px rgba(0,0,0,0.9); font-weight: bold; white-space: nowrap; }
-        .resources-row .resource.silver span { color: #c0c0c0; left: 50%; font-size: 1.05em; }
-        .resources-row .exp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0 2px; position: relative; }
-        .resources-row .exp-bar img { width: 100%; max-width: 220px; height: auto; display: block; object-fit: contain; }
-        .resources-row .exp-bar .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.7em; text-shadow: 0 0 10px rgba(0,0,0,0.9); letter-spacing: 1px; white-space: nowrap; width: 100%; text-align: center; }
+        .bottom-stats { position: absolute; top: 38px; bottom: auto; left: -20px; right: -20px; z-index: 12; pointer-events: none; }
+        .bottom-stats .stat-block { width: 100%; height: 120px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
+        .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
+        .bottom-stats .stat-block .stat-item img { width: 24px; height: 24px; object-fit: contain; }
+        .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.8em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
+        .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
 
         .portal-video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: hidden; pointer-events: none; }
         .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
 
         .arch-layer { position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; height: 520px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
 
-        .hero-layer { position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%); width: 200px; height: 345px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+        .hero-layer { position: absolute; bottom: 105px; left: 50%; transform: translateX(-50%); width: 200px; height: 345px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
         .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
 
-        .top-buttons-row { position: absolute; top: 115px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
+        .top-buttons-row { position: absolute; top: 155px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
         .bottom-buttons-row { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
         .left-buttons-column { position: absolute; bottom: 95px; left: 12px; display: flex; flex-direction: column; gap: 12px; z-index: 20; pointer-events: auto; }
         .right-buttons-column { position: absolute; bottom: 95px; right: 12px; display: flex; flex-direction: column; gap: 12px; z-index: 20; pointer-events: auto; }
@@ -63,7 +62,7 @@
         .main-interface.active { display: block; pointer-events: all; }
 
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
-        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .resources-row .resource span { font-size: 0.7em; } .resources-row .exp-bar img { height: 40px; max-width: 200px; } .resources-row .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
+        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
         .diablo-light-halo { display: none; }
         .hero-sprite { background-image: url('assets/hero_skins/archer_spritesheet.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; image-rendering: crisp-edges; position: relative; z-index: 4; }
     </style>
@@ -108,19 +107,17 @@
 
         <div class="loading-screen" id="loadingScreen"><div class="loading-bg"></div><button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');}catch(e){}"><img src="assets/all_buttons/play.png" alt="Играть"></button></div>
         <div class="main-interface" id="mainInterface">
-            <div id="top-panel">
-                <div class="resources-row">
-                    <div class="resource"><img src="assets/interface/gold_plate.png" alt="Золото"><span id="gold-display">0</span></div>
-                    <div class="exp-bar" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:0 2px;">
-                        <img src="assets/interface/hero_experience_scale.png" alt="Опыт" style="width:100%;max-width:240px;height:auto;display:block;object-fit:contain;position:relative;z-index:1;">
-                        <div style="position:absolute;top:2px;left:12px;right:12px;bottom:2px;overflow:hidden;z-index:0;">
-                            <div id="exp-fill" style="background:url('assets/interface/filling_the_hero\'s_experience_bar.png') left center/100% 100% no-repeat;height:100%;width:0%;transition:width 0.5s ease-out;"></div>
-                        </div>
-                        <span class="exp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e0c080;font-size:0.75em;text-shadow:0 0 10px rgba(0,0,0,0.9);letter-spacing:1px;white-space:nowrap;width:100%;text-align:center;z-index:2;">
-                            <span id="exp-display">0</span> / <span id="exp-max-display">100</span> XP
-                        </span>
-                    </div>
-                    <div class="resource silver"><img src="assets/interface/silver_plaque.png" alt="Серебро"><span id="silver-display">0</span></div>
+            <div class="top-resources-bar">
+                <div class="res-item"><img src="assets/interface/resource_gold.png"><span id="gold-display">0</span></div>
+                <div class="res-item"><img src="assets/interface/resource_silver.png"><span id="silver-display">0</span></div>
+                <div class="res-item exp-block">
+                    <img src="assets/interface/stone_slab_empty_plate.png">
+                    <div class="exp-fill-container"><div id="exp-fill-bar"></div></div>
+                    <span class="exp-text"><span id="exp-display">0</span>/<span id="exp-max-display">100</span> XP</span>
+                </div>
+                <div class="res-item level-block">
+                    <img src="assets/interface/stone_slab_empty_plate.png">
+                    <span id="level-display">Ур. 1</span>
                 </div>
             </div>
             <div class="bottom-stats">
