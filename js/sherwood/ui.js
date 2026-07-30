@@ -810,13 +810,16 @@ _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) 
     if (!r) return;
     if (r.win) {
         if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1);
-        this._showDialog("Победа! +" + (r.rewards ? r.rewards.exp : 0) + "XP", "#ffd700");
-        this._stopMusic(); SherwoodUI.updateDisplay();
-        var self = this; setTimeout(function() { self._playMusic("main_theme"); self.arena(); }, 1500);
-    } else if (r.lose) {
-        this._showDialog("Поражение", "#f44336");
         this._stopMusic();
-        var self = this; setTimeout(function() { self._playMusic("main_theme"); self.arena(); }, 1500);
+        SherwoodUI.updateDisplay();
+        this._pendingRewards = { exp: r.rewards ? r.rewards.exp : 50, gold: r.rewards ? r.rewards.gold : 30 };
+        this._afterRewardAction = function() { SherwoodUI._playMusic("main_theme"); SherwoodUI.arena(); };
+        this._showVictoryScreen(this._pendingRewards);
+    } else if (r.lose) {
+        this._stopMusic();
+        this._pendingRewards = { exp: 10, silver: 50 };
+        this._afterRewardAction = function() { SherwoodUI._playMusic("main_theme"); SherwoodUI.arena(); };
+        this._showDefeatScreen(this._pendingRewards);
     } else {
         this._hitEnemyCard(); this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
         this._showDialog((r.crit ? "КРИТ " : "") + "Урон: " + r.playerDamage, r.crit ? "#ff6a00" : "#fff");
