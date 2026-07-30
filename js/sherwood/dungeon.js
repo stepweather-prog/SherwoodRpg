@@ -110,10 +110,8 @@ Sherwood.Dungeon = {
     var monsterCount = level <= 3 ? 6 : 8;
     if (level === 7) monsterCount = 10;
 
-    // Перемешиваем все empties — монстры, спецобъекты и выход будут из одного пула
     var allCells = empties.slice();
     
-    // Монстры
     var placedMonsters = 0;
     var monsterCells = [];
     for (var i = 0; i < allCells.length && placedMonsters < monsterCount; i++) {
@@ -158,7 +156,6 @@ Sherwood.Dungeon = {
         }
     }
 
-    // Спецобъекты — 5 зелий, 3 котла, 2 алтаря
     var specials = [
         { type: this.TILE.POTION, count: 5, prop: 'potion' },
         { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
@@ -178,7 +175,6 @@ Sherwood.Dungeon = {
         }
     }
 
-    // Выход
     var exitPlaced = false;
     for (var i = allCells.length - 1; i >= 0; i--) {
         var cell = allCells[i];
@@ -239,6 +235,9 @@ Sherwood.Dungeon = {
     if (cellType === this.TILE.POTION && cell.potion) {
         return { ok: true, type: 'potion' };
     }
+    if (cell.lootBag && !cell.lootCollected) {
+        return { ok: true, type: 'lootBag' };
+    }
     if (cell.exit) {
         if (cell.locked) {
             if (d.monstersKilled >= d.totalMonsters) {
@@ -251,9 +250,7 @@ Sherwood.Dungeon = {
     }
     return { ok: true, type: 'move' };
 },
-    if (cell.lootBag && !cell.lootCollected) {
-    return { ok: true, type: 'lootBag' };
-}
+
     _moveSilent: function(tx, ty) {
     var d = this._dungeon;
     if (!d) return;
@@ -261,12 +258,12 @@ Sherwood.Dungeon = {
     d.px = tx;
     d.py = ty;
 },
+
     killMonster: function() {
     if (!this._dungeon) return;
     var d = this._dungeon;
     d.monstersKilled++;
     
-    // Ищем клетку монстра вокруг игрока и ставим мешок
     var dirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
     for (var i = 0; i < dirs.length; i++) {
         var nx = d.px + dirs[i][0], ny = d.py + dirs[i][1];
