@@ -255,14 +255,14 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var gridW = cs * size, gridH = cs * size;
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
-    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-color:#000;overflow:hidden;'>";
+    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:cover;overflow:hidden;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;'>";
     for (var y = 0; y < size; y++) { for (var x = 0; x < size; x++) { html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:cover;background-position:center;z-index:0;'></div>"; } }
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
             var cell = d.grid[y][x], isPlayer = (x === px && y === py);
-            if (cell.open) { html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(" + floorBg + ");background-size:cover;background-position:center;z-index:1;'></div>"; }
+            if (cell.open) { html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0,0.3);z-index:1;'></div>"; }
             var onclick = "", glow = "";
             if (!isPlayer) {
                 var clickDist = Math.abs(px - x) + Math.abs(py - y);
