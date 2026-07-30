@@ -275,7 +275,7 @@ var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
             // ИСПРАВЛЕНО: scale(1.04) вместо 1.02 делает наложение плиток плотнее и убирает полосы
-            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;transform:scale(1.04);z-index:0;" + hide + "'></div>"; 
+            html += "<div style='position:absolute;left:" + (x*cs - 1) + "px;top:" + (y*cs - 1) + "px;width:" + (cs + 2) + "px;height:" + (cs + 2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:0;" + hide + "'></div>"; 
         } 
     }
     for (var y = 0; y < size; y++) {
@@ -1088,15 +1088,16 @@ _claimBestiaryReward: function(beastId) { if (!Sherwood.Bestiary) return; var r 
 
 (function() {
     var self = SherwoodUI;
-    var buttons = document.querySelectorAll('#mainInterface .btn[data-action]');
-    for (var i = 0; i < buttons.length; i++) {
+    
+    var allButtons = document.querySelectorAll('.btn[data-action]');
+    for (var i = 0; i < allButtons.length; i++) {
         (function(el) {
             el.addEventListener('click', function(e) {
                 e.stopPropagation();
                 var a = el.dataset.action;
                 if (a && typeof self[a] === 'function') { try { self._playSound('click'); } catch(e) {} self[a](); }
             });
-        })(buttons[i]);
+        })(allButtons[i]);
     }
 })();
 
