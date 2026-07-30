@@ -18,16 +18,16 @@
 
         .portal-video-bg { 
     position: absolute; 
-    /* Опустили ниже к ступеням и вытянули вверх, чтобы огонь заполнил весь внутренний проем */
-    bottom: 5.2%; 
+    /* Ещё выше */
+    bottom: 14%; 
     left: 50%; 
     transform: translateX(-50%); 
-    width: 236px; /* Расширили под внутренние границы каменных колонн */
-    height: 310px; /* Сильно увеличили высоту под свод арки */
+    width: 236px; 
+    height: 330px; 
     z-index: 2; 
     overflow: hidden; 
     pointer-events: none; 
-    border-radius: 90px 90px 0 0; /* Огромное скругление, чтобы идеально повторить круглую дугу камня */
+    border-radius: 110px 110px 0 0; 
 }
 .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.9); }
 
@@ -35,11 +35,12 @@
 
 .hero-layer { 
     position: absolute; 
-    bottom: 5.2%; /* Сажаем ноги персонажа строго на самую нижнюю ступеньку, как на картинке */
+    /* Ещё выше и увеличили размеры, чтобы он упёрся в верхний свод */
+    bottom: 16.5%; 
     left: 50%; 
     transform: translateX(-50%); 
-    width: 195px; /* Увеличили ширину героя, чтобы лук размахнулся вширь и заходил на колонны */
-    height: 310px; /* Растянули высоту во весь проем — от пола до макушки арки */
+    width: 220px; 
+    height: 335px; 
     z-index: 4; 
     display: flex; 
     align-items: flex-end; 
@@ -47,6 +48,7 @@
     pointer-events: none; 
 }
 .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
+
 
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
