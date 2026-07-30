@@ -266,7 +266,9 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     
     // ИСПРАВЛЕНО: background-size: 100% 100% заменяет cover, убирая микро-сдвиги пола под плитками
-    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;background-repeat:no-repeat;overflow:hidden;'>";
+    // Добавлены свойства image-rendering для отключения размытия границ текстур при масштабировании сетки
+var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;image-rendering:crisp-edges;-ms-interpolation-mode:nearest-neighbor;overflow:hidden;'>";
+
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;'>";
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
