@@ -13,12 +13,12 @@
         .statue-right { position: fixed; right: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat; z-index: 9999; pointer-events: none; }
         .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
         .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
-        #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow-y: auto; overflow-x: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
+        #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
         .arch-layer { position: absolute; bottom: 0%; left: 0; right: 0; width: 100%; height: 60%; background: url('assets/interface/staircase_with_an_arch.png') bottom/contain no-repeat; z-index: 3; pointer-events: none; }
         .hero-frame { position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); width: 200px; height: 300px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
         .hero-frame .video-bg { position: absolute; top: 0; left: 0; width: 200px; height: 300px; z-index: 0; pointer-events: none; border-radius: 12px; overflow: hidden; border: 2px solid rgba(201,168,76,0.2); box-shadow: 0 0 30px rgba(201,168,76,0.1); }
-        .hero-frame .video-bg video { width: 200px; height: 300px; object-fit: cover; opacity: 0.6; }
+        .hero-frame .video-bg video { width: 200px; height: 300px; object-fit: cover; }
         .hero-frame img { position: relative; z-index: 1; width: 200px; height: 300px; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 20px rgba(255,215,0,0.15)); }
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
@@ -29,7 +29,7 @@
         .loading-screen .play-btn:active { transform: scale(0.95); }
         .main-interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; }
         .main-interface.active { display: block; pointer-events: all; }
-        .top-panel { position: absolute; top: calc(1% - 10px); left: 2%; right: 2%; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 2px; }
+        .top-panel { position: absolute; top: 0; left: 2%; right: 2%; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 2px; }
         .top-panel .resource { width: 24%; display: flex; flex-direction: column; align-items: center; position: relative; }
         .top-panel .resource img { width: 130%; max-width: 205px; height: auto; display: block; }
         .top-panel .resource span { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); color: #ffd700; font-size: 0.9em; text-shadow: 0 0 10px rgba(0,0,0,0.9); font-weight: bold; white-space: nowrap; }
@@ -44,15 +44,13 @@
         .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.9em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
         .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
 
-        #top-buttons-bar { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 3px; width: 460px; max-width: 98%; justify-content: center; }
-#top-buttons-bar .btn { width: 80px; height: 80px; }
-#top-buttons-bar .btn img { width: 60px; height: 60px; }
-#top-buttons-bar .btn .label { font-size: 10px; }
-
-.arch-layer { opacity: 1; }
+        #top-buttons-bar { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); z-index: 15; display: flex; flex-wrap: wrap; gap: 3px; width: 460px; max-width: 98%; justify-content: center; background: rgba(0,0,0,0.75); border-radius: 14px; padding: 10px 6px; }
+        #top-buttons-bar .btn { width: 80px; height: 80px; cursor: pointer; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 2px 0 0 0; overflow: visible; }
+        #top-buttons-bar .btn img { width: 60px; height: 60px; object-fit: contain; }
+        #top-buttons-bar .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; line-height: 1; margin-top: 2px; max-width: 72px; overflow: hidden; white-space: nowrap; }
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
         @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .top-panel .resource span { font-size: 0.7em; } .top-panel .exp-bar img { height: 40px; max-width: 200px; } .top-panel .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
-        .diablo-light-halo { position: absolute; width: 300%; height: 300%; top: -100%; left: -100%; pointer-events: none; z-index: 2; background: radial-gradient(circle, rgba(255,235,180,0.45) 0%, rgba(255,200,100,0.15) 30%, rgba(0,0,0,0) 70%); mix-blend-mode: screen; }
+        .diablo-light-halo { display: none; }
         .hero-sprite { background-image: url('assets/hero_skins/archer_spritesheet.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; image-rendering: crisp-edges; position: relative; z-index: 4; }
     </style>
 </head>
