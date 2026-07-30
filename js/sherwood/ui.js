@@ -26,7 +26,7 @@ const SherwoodUI = {
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
 
     init: function() {
-    this._mainElements = ['.bg-layer', '.arch-layer', '.hero-frame', '.top-panel', '.bottom-stats', '#top-buttons-bar'];
+    this._mainElements = ['.bg-layer', '.arch-layer', '.hero-layer', '.portal-video-bg', '.top-buttons-row', '.left-buttons-column', '.right-buttons-column', '.bottom-buttons-row', '#top-panel', '.bottom-stats'];
     this.container = document.getElementById('game-container'); if (!this.container) return;
     this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
     this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
@@ -244,14 +244,6 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var dungeons = Sherwood.Dungeon.getAvailable(), dd = dungeons[d.id] || { bg: this._bg.dungeon_forest, tiles: "dungeon1", ext: ".jpeg" };
     this.container.style.background = "url(" + dd.bg + ") center/cover no-repeat";
     
-    // ЖЕСТКИЙ ХАК: Принудительно прячем мешающие элементы интерфейса главной страницы
-    try {
-        var mainTopPanel = document.getElementById('top-panel');
-        if (mainTopPanel) mainTopPanel.style.display = 'none';
-        var mainTopButtons = document.getElementById('top-buttons-bar');
-        if (mainTopButtons) mainTopButtons.style.display = 'none';
-    } catch(e) {}
-
     try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = "none"; }); }); } catch(e) {}
     var dungId = d.id || 'forest';
     var altarImg = dungId === 'forest' ? 'assets/interface/altar_of_the_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/altar_of_the_second_dungeon.png' : 'assets/interface/the_third_altar_of_the_dungeon.png';
@@ -265,18 +257,15 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     
-    // ИСПРАВЛЕНО: background-size: 100% 100% заменяет cover, убирая микро-сдвиги пола под плитками
-    // Добавлены свойства image-rendering для отключения размытия границ текстур при масштабировании сетки
-var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;image-rendering:crisp-edges;-ms-interpolation-mode:nearest-neighbor;overflow:hidden;'>";
-
+    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;background-repeat:no-repeat;overflow:hidden;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;'>";
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            // ИСПРАВЛЕНО: scale(1.04) вместо 1.02 делает наложение плиток плотнее и убирает полосы
-            html += "<div style='position:absolute;left:" + (x*cs - 1) + "px;top:" + (y*cs - 1) + "px;width:" + (cs + 2) + "px;height:" + (cs + 2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:0;" + hide + "'></div>"; 
-        } 
+            html += "<div style='float:left;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;" + hide + "'></div>"; 
+        }
+        html += "<div style='clear:both;'></div>";
     }
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
@@ -334,7 +323,7 @@ var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH
     "</div>" +
     "<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
 
-    this.container.innerHTML = topBar + html;
+    if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
 },
 
 _dungeonMove: function(tx, ty) {
