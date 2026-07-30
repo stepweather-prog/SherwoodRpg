@@ -1011,7 +1011,9 @@ training: function() { var gb=this._previousScreen==='profile'?'SherwoodUI.profi
 _doTraining: function(stat) { var p=Sherwood.getPlayer(); if(!p) return; if(!p.trainingLevels) p.trainingLevels={attack:0,defense:0,hp:0,agility:0}; var cur=p.trainingLevels[stat]||0; if(cur>=50) { var log=document.getElementById('training-log'); if(log) log.textContent='Макс. уровень!'; return; } var cost=Math.round(10*Math.pow(cur+1,1.15)); if((p.resources.silver||0)<cost) { var log=document.getElementById('training-log'); if(log) log.textContent='Нужно '+cost+' серебра!'; return; } p.resources.silver-=cost; p.trainingLevels[stat]=cur+1; if(Sherwood.Daily) Sherwood.Daily.updateProgress('stat_' + stat, p.stats[stat]); if(Sherwood._recalcStats) Sherwood._recalcStats(); if(Sherwood.saveGame) Sherwood.saveGame(); this.updateDisplay(); this.training(); var log=document.getElementById('training-log'); if(log) log.textContent=stat+' -> '+(cur+1)+' (-'+cost+' сер.)'; },
 
 forge: function() {
-    var gb = this._previousScreen === 'profile' ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome(); this._previousScreen = null; this._playSound('click');
+    var gb = this._previousScreen === 'profile' ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome()';
+this._previousScreen = null;
+this._playSound('click');
     if (!Sherwood.Forge) { this._showPlaceholder('Кузница', 'forge', gb); return; }
     var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
     var enhanceItems = items.filter(function(i) { return i.part || i.type === 'equipment'; });
