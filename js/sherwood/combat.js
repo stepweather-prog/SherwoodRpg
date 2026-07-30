@@ -20,10 +20,10 @@ Sherwood.Combat = {
             'image (49).png': 'Костяной ликантроп','image (50).png': 'Ликантроп (Замах)','image (37).png': 'Кристаллический ёж','image (34).png': 'Волк-оборотень (Босс)'
         };
         var name = monsterNames[monsterId] || 'Монстр';
-        var hp = isBoss ? 400 : 100 + Math.floor(Math.random() * 120);
-        var atk = isBoss ? 30 : 12 + Math.floor(Math.random() * 15);
-        var def = isBoss ? 15 : 3 + Math.floor(Math.random() * 10);
-        var armor = isBoss ? 40 : 10 + Math.floor(Math.random() * 20);
+        var hp = isBoss ? 250 : 50 + Math.floor(Math.random() * 60);
+        var atk = isBoss ? 22 : 8 + Math.floor(Math.random() * 10);
+        var def = isBoss ? 12 : 2 + Math.floor(Math.random() * 6);
+        var armor = isBoss ? 25 : 5 + Math.floor(Math.random() * 10);
         this._battle = {
             enemyImage: img,
             enemyName: name,
@@ -103,8 +103,8 @@ Sherwood.Combat = {
 
         if (b.enemyHp <= 0) {
             r.win = true;
-            r.exp = b.isBoss ? 150 : 35;
-            r.gold = b.isBoss ? 120 : 25;
+            r.exp = b.isBoss ? 200 : 50;
+            r.gold = b.isBoss ? 150 : 40;
             this._battle = null;
             return r;
         }
@@ -115,8 +115,8 @@ Sherwood.Combat = {
 
         if (b.playerHp <= 0) {
             r.lose = true;
-            r.exp = Math.floor((b.isBoss ? 150 : 35) * 0.3);
-            r.gold = Math.floor((b.isBoss ? 120 : 25) * 0.3);
+            r.exp = Math.floor((b.isBoss ? 200 : 50) * 0.3);
+            r.gold = Math.floor((b.isBoss ? 150 : 40) * 0.3);
             this._battle = null;
         }
 
@@ -189,14 +189,14 @@ Sherwood.Combat = {
             if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
                 var lootRoll = Math.random();
 
-                if (lootRoll < 0.20) {
+                if (lootRoll < 0.25) {
                     Sherwood.Bag.addItem({
                         id: 'skin_of_the_sherwood_creature',
                         name: 'Шкура шервудской твари',
                         icon: 'assets/interface/skin_of_the_sherwood_creature.png',
                         grade: 'common', type: 'resource', quantity: 1, maxStack: 50, sellPrice: 5
                     });
-                } else if (lootRoll < 0.35) {
+                } else if (lootRoll < 0.45) {
                     var arrowParts = [
                         { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', sellPrice: 3 },
                         { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', sellPrice: 3 },
@@ -207,9 +207,9 @@ Sherwood.Combat = {
                         id: part.id, name: part.name, icon: part.icon,
                         grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
                     });
-                } else if (lootRoll < 0.45) {
+                } else if (lootRoll < 0.55) {
                     Sherwood.addResource('scrolls', 1);
-                } else if (lootRoll < 0.52) {
+                } else if (lootRoll < 0.62) {
                     var chapter = Sherwood.getPlayer().questProgress.currentChapter || 1;
                     Sherwood.Bag.addItem({
                         id: 'ingot_chapter_' + chapter,
@@ -253,66 +253,52 @@ Sherwood.Combat = {
     },
 
     getSkills: function() {
-    var p = Sherwood.getPlayer();
-    var unlocked = p ? (p.unlockedSkills || []) : [];
-    return {
-        power_shot: {
-            id: 'power_shot',
-            name: 'Мощный выстрел',
-            damageMultiplier: 1.8,
-            cooldown: 3,
-            description: 'Наносит 180% урона',
-            icon: 'assets/skills/skill_critical_shot.png',
-            unlocked: unlocked.indexOf('power_shot') !== -1,
-            cost: 200
-        },
-        triple_shot: {
-            id: 'triple_shot',
-            name: 'Тройной выстрел',
-            damageMultiplier: 0.7,
-            cooldown: 4,
-            description: '3 выстрела по 70% урона',
-            icon: 'assets/skills/triple_shot_skill.png',
-            unlocked: unlocked.indexOf('triple_shot') !== -1,
-            cost: 300
-        },
-        poison_arrow: {
-            id: 'poison_arrow',
-            name: 'Отравленная стрела',
-            damageMultiplier: 1.0,
-            cooldown: 5,
-            description: 'Отравляет врага на 3 хода',
-            icon: 'assets/skills/poison_shot_skill.png',
-            unlocked: unlocked.indexOf('poison_arrow') !== -1,
-            cost: 250
-        },
-        stunning_shot: {
-            id: 'stunning_shot',
-            name: 'Оглушающий выстрел',
-            damageMultiplier: 0.5,
-            cooldown: 6,
-            description: 'Оглушает врага на 1 ход',
-            icon: 'assets/skills/control_skill.png',
-            unlocked: unlocked.indexOf('stunning_shot') !== -1,
-            cost: 350
-        }
-    };
-},
+        var p = Sherwood.getPlayer();
+        var unlocked = p ? (p.unlockedSkills || []) : [];
+        return {
+            power_shot: {
+                id: 'power_shot',
+                name: 'Мощный выстрел',
+                damageMultiplier: 1.8,
+                cooldown: 3,
+                description: 'Наносит 180% урона',
+                icon: 'assets/skills/skill_critical_shot.png',
+                unlocked: unlocked.indexOf('power_shot') !== -1,
+                cost: 80
+            },
+            triple_shot: {
+                id: 'triple_shot',
+                name: 'Тройной выстрел',
+                damageMultiplier: 0.7,
+                cooldown: 4,
+                description: '3 выстрела по 70% урона',
+                icon: 'assets/skills/triple_shot_skill.png',
+                unlocked: unlocked.indexOf('triple_shot') !== -1,
+                cost: 120
+            },
+            poison_arrow: {
+                id: 'poison_arrow',
+                name: 'Отравленная стрела',
+                damageMultiplier: 1.0,
+                cooldown: 5,
+                description: 'Отравляет врага на 3 хода',
+                icon: 'assets/skills/poison_shot_skill.png',
+                unlocked: unlocked.indexOf('poison_arrow') !== -1,
+                cost: 100
+            },
+            stunning_shot: {
+                id: 'stunning_shot',
+                name: 'Оглушающий выстрел',
+                damageMultiplier: 0.5,
+                cooldown: 6,
+                description: 'Оглушает врага на 1 ход',
+                icon: 'assets/skills/control_skill.png',
+                unlocked: unlocked.indexOf('stunning_shot') !== -1,
+                cost: 150
+            }
+        };
+    },
 
-unlockSkill: function(skillId) {
-    var skills = this.getSkills();
-    if (!skills[skillId]) return { success: false, reason: 'Навык не найден' };
-    if (skills[skillId].unlocked) return { success: false, reason: 'Уже открыт' };
-    var cost = skills[skillId].cost;
-    var p = Sherwood.getPlayer();
-    if (!p) return { success: false, reason: 'Нет игрока' };
-    if ((p.resources.gold || 0) < cost) return { success: false, reason: 'Не хватает золота' };
-    p.resources.gold -= cost;
-    if (!p.unlockedSkills) p.unlockedSkills = [];
-    p.unlockedSkills.push(skillId);
-    Sherwood.saveGame();
-    return { success: true, skill: skillId };
-},
     unlockSkill: function(skillId) {
         var skills = this.getSkills();
         if (!skills[skillId]) return { success: false, reason: 'Навык не найден' };
@@ -322,7 +308,8 @@ unlockSkill: function(skillId) {
         if (!p) return { success: false, reason: 'Нет игрока' };
         if ((p.resources.gold || 0) < cost) return { success: false, reason: 'Не хватает золота' };
         p.resources.gold -= cost;
-        skills[skillId].unlocked = true;
+        if (!p.unlockedSkills) p.unlockedSkills = [];
+        p.unlockedSkills.push(skillId);
         Sherwood.saveGame();
         return { success: true, skill: skillId };
     },
@@ -365,8 +352,8 @@ unlockSkill: function(skillId) {
 
         if (b.enemyHp <= 0) {
             r.win = true;
-            r.exp = b.isBoss ? 150 : 35;
-            r.gold = b.isBoss ? 120 : 25;
+            r.exp = b.isBoss ? 200 : 50;
+            r.gold = b.isBoss ? 150 : 40;
             this._battle = null;
             return r;
         }
@@ -375,8 +362,8 @@ unlockSkill: function(skillId) {
         r.enemy = er;
         if (b.playerHp <= 0) {
             r.lose = true;
-            r.exp = Math.floor((b.isBoss ? 150 : 35) * 0.3);
-            r.gold = Math.floor((b.isBoss ? 120 : 25) * 0.3);
+            r.exp = Math.floor((b.isBoss ? 200 : 50) * 0.3);
+            r.gold = Math.floor((b.isBoss ? 150 : 40) * 0.3);
             this._battle = null;
         }
 
