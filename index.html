@@ -16,7 +16,14 @@
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
 
-        #top-panel { position: absolute; top: 0; left: 0; right: 0; z-index: 10; background: none !important; }
+        .bottom-stats { position: absolute; top: -30px; bottom: auto; left: -20px; right: -20px; z-index: 12; pointer-events: none; }
+        .bottom-stats .stat-block { width: 100%; height: 160px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
+        .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
+        .bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
+        .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.9em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
+        .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; transform: scaleY(-1); }
+
+        #top-panel { position: absolute; top: 95px; bottom: auto; left: 0; right: 0; z-index: 11; background: none !important; }
         .resources-row { display: flex; justify-content: space-between; align-items: center; gap: 2px; padding: 4px 4px; background: none; }
         .resources-row .resource { width: 26%; display: flex; flex-direction: column; align-items: center; position: relative; }
         .resources-row .resource img { width: 100%; max-width: 230px; height: auto; display: block; }
@@ -30,15 +37,15 @@
         .btn img { width: 62px; height: 62px; object-fit: contain; }
         .btn .label { color: #ffa500; font-size: 12px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: 2px; }
 
-        .top-buttons-row { position: absolute; top: 75px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 10; }
-        .left-buttons-column { position: absolute; bottom: 185px; left: 4px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
-        .right-buttons-column { position: absolute; bottom: 185px; right: 4px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
-        .bottom-buttons-row { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 10; }
+        .top-buttons-row { position: absolute; top: 175px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 10; }
+        .left-buttons-column { position: absolute; bottom: 95px; left: 4px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+        .right-buttons-column { position: absolute; bottom: 95px; right: 4px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+        .bottom-buttons-row { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 5; }
 
-        .arch-layer { position: absolute; bottom: 19%; left: 50%; transform: translateX(-50%); width: 440px; height: 510px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% auto no-repeat; z-index: 3; pointer-events: none; }
-        .portal-video-bg { position: absolute; bottom: 27%; left: 50%; transform: translateX(-50%); width: 225px; height: 350px; z-index: 2; overflow: hidden; border-radius: 110px 110px 0 0; pointer-events: none; }
+        .arch-layer { position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 440px; height: 510px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% auto no-repeat; z-index: 3; pointer-events: none; }
+        .portal-video-bg { position: absolute; bottom: 115px; left: 50%; transform: translateX(-50%); width: 225px; height: 350px; z-index: 2; overflow: hidden; border-radius: 110px 110px 0 0; pointer-events: none; }
         .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.9); }
-        .hero-layer { position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%); width: 200px; height: 340px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+        .hero-layer { position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%); width: 200px; height: 340px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
         .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
 
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
@@ -50,13 +57,6 @@
         .loading-screen .play-btn:active { transform: scale(0.95); }
         .main-interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; }
         .main-interface.active { display: block; pointer-events: all; }
-
-        .bottom-stats { position: absolute; bottom: -15px; left: -20px; right: -20px; z-index: 10; pointer-events: none; }
-        .bottom-stats .stat-block { width: 100%; height: 160px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
-        .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
-        .bottom-stats .stat-block .stat-item img { width: 28px; height: 28px; object-fit: contain; }
-        .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.9em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
-        .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
 
         @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
         @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .resources-row .resource span { font-size: 0.7em; } .resources-row .exp-bar img { height: 40px; max-width: 200px; } .resources-row .exp-bar .exp-text { font-size: 0.55em; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
