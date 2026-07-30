@@ -261,7 +261,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:cover;background-position:center;z-index:0;" + hide + "'></div>"; 
+            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;transform:scale(1.02);z-index:0;" + hide + "'></div>"; 
         } 
     }
     for (var y = 0; y < size; y++) {
@@ -322,7 +322,6 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     
     if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
 },
-
 _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     if (tx === d.px && ty === d.py) return;
