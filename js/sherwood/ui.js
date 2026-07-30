@@ -26,7 +26,7 @@ const SherwoodUI = {
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
 
     init: function() {
-    this._mainElements = ['.bg-layer', '.arch-layer', '.hero-layer', '.portal-video-bg', '.top-buttons-row', '.left-buttons-column', '.right-buttons-column', '.bottom-buttons-row', '#top-panel', '.bottom-stats'];
+    this._mainElements = ['.bg-layer', '.arch-layer', '.hero-layer', '.portal-video-bg', '.top-resources-bar', '.top-buttons-row', '.left-buttons-column', '.right-buttons-column', '.bottom-buttons-row', '.bottom-stats'];
     this.container = document.getElementById('game-container'); if (!this.container) return;
     this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
     this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
