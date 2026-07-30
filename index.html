@@ -25,8 +25,7 @@
         .exp-fill-container { position: absolute; top: 3px; left: 10px; right: 10px; bottom: 3px; overflow: hidden; border-radius: 3px; }
         #exp-fill-bar { height: 100%; width: 0%; background: rgba(201,168,76,0.5); transition: width 0.5s; }
         .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.65em; z-index: 2; text-shadow: 0 0 4px #000; white-space: nowrap; }
-        .level-block { width: 28px; height: 28px; background: rgba(201,168,76,0.2); border: 2px solid #c9a040; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .level-block span { color: #e0c080; font-size: 0.7em; font-weight: bold; }
+        .level-on-exp { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #e0c080; font-size: 0.65em; font-weight: bold; z-index: 3; text-shadow: 0 0 4px #000; }
 
         .bottom-stats { position: absolute; top: 40px; bottom: auto; left: -20px; right: -20px; z-index: 12; pointer-events: none; }
         .bottom-stats .stat-block { width: 100%; height: 110px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
@@ -87,9 +86,9 @@
                 <img src="assets/interface/stone_slab_empty_plate.png">
                 <div class="exp-fill-container"><div id="exp-fill-bar"></div></div>
                 <span class="exp-text"><span id="exp-display">0</span>/<span id="exp-max-display">100</span></span>
+                <span id="level-display" class="level-on-exp">1</span>
             </div>
             <div class="res-item"><img src="assets/interface/resource_silver.png"><span id="silver-display">0</span></div>
-            <div class="res-item level-block"><span id="level-display">1</span></div>
         </div>
 
         <div class="top-buttons-row">
