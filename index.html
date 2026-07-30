@@ -16,56 +16,20 @@
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
 
-        .portal-video-bg { position: absolute; bottom: 14%; left: 50%; transform: translateX(-50%); width: 146px; height: 200px; z-index: 2; overflow: hidden; border-radius: 60px 60px 0 0; }
+        .arch-layer { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); width: 320px; aspect-ratio: 1 / 1; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
+        .portal-video-bg { position: absolute; bottom: 11.5%; left: 50%; transform: translateX(-50%); width: 154px; height: 215px; z-index: 2; overflow: hidden; border-radius: 60px 60px 0 0; pointer-events: none; }
         .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.9); }
-
-        .arch-layer { position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); width: 62%; aspect-ratio: 1 / 1; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; }
-
-        .hero-layer { position: absolute; bottom: 14.2%; left: 50%; transform: translateX(-50%); width: 136px; height: 200px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; }
+        .hero-layer { position: absolute; bottom: 11.5%; left: 50%; transform: translateX(-50%); width: 145px; height: 215px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
         .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
 
-        #navigation-grid {
-            position: absolute;
-            top: 55px;
-            bottom: 25px;
-            left: 8px;
-            right: 8px;
-            display: grid;
-            grid-template-columns: 76px 1fr 76px;
-            grid-template-rows: repeat(5, 1fr);
-            align-content: space-between;
-            z-index: 10;
-            pointer-events: none;
-        }
-        #navigation-grid .btn {
-            pointer-events: auto;
-            width: 76px;
-            height: 72px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: none;
-            border: none;
-        }
-        #navigation-grid .btn img { width: 52px; height: 52px; object-fit: contain; }
-        #navigation-grid .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: 2px; }
+        .left-buttons-column { position: absolute; bottom: 95px; left: 8px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+        .right-buttons-column { position: absolute; bottom: 95px; right: 8px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+        .top-buttons-row { position: absolute; top: 55px; left: 0; right: 0; width: 100%; display: flex; justify-content: space-evenly; z-index: 10; }
+        .bottom-buttons-row { position: absolute; bottom: 12px; left: 0; right: 0; width: 100%; display: flex; justify-content: space-evenly; z-index: 10; }
 
-        .grid-top-1 { grid-column: 1; grid-row: 1; }
-        .grid-top-2 { grid-column: 2; grid-row: 1; justify-self: center; }
-        .grid-top-3 { grid-column: 3; grid-row: 1; }
-        .grid-left-1 { grid-column: 1; grid-row: 2; }
-        .grid-left-2 { grid-column: 1; grid-row: 3; }
-        .grid-left-3 { grid-column: 1; grid-row: 4; }
-        .grid-left-4 { grid-column: 1; grid-row: 5; }
-        .grid-right-1 { grid-column: 3; grid-row: 2; }
-        .grid-right-2 { grid-column: 3; grid-row: 3; }
-        .grid-right-3 { grid-column: 3; grid-row: 4; }
-        .grid-right-4 { grid-column: 3; grid-row: 5; }
-        .grid-bottom-1 { grid-column: 2; grid-row: 5; justify-self: start; margin-left: 25px; align-self: end; }
-        .grid-bottom-2 { grid-column: 2; grid-row: 5; justify-self: center; align-self: end; }
-        .grid-bottom-3 { grid-column: 2; grid-row: 5; justify-self: end; margin-right: 25px; align-self: end; }
+        .btn { width: 76px; height: 68px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; }
+        .btn img { width: 48px; height: 48px; object-fit: contain; }
+        .btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: 1px; }
 
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
@@ -112,24 +76,30 @@
             <img src="assets/hero_skins/skin_1_basic.png" alt="Герой">
         </div>
 
-        <div id="navigation-grid">
-            <div class="btn grid-top-1" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><div class="label">Очаг</div></div>
-            <div class="btn grid-top-2" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><div class="label">Таланты</div></div>
-            <div class="btn grid-top-3" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><div class="label">Рынок</div></div>
+        <div class="top-buttons-row">
+            <div class="btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><div class="label">Очаг</div></div>
+            <div class="btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><div class="label">Таланты</div></div>
+            <div class="btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><div class="label">Рынок</div></div>
+        </div>
 
-            <div class="btn grid-left-1" data-action="quest"><img src="assets/all_buttons/home.png"><div class="label">Квест</div></div>
-            <div class="btn grid-left-2" data-action="subway"><img src="assets/all_buttons/subway.png"><div class="label">Подземка</div></div>
-            <div class="btn grid-left-3" data-action="raid"><img src="assets/all_buttons/raid.png"><div class="label">Рейд</div></div>
-            <div class="btn grid-left-4" data-action="portal"><img src="assets/all_buttons/portal.png"><div class="label">Портал</div></div>
+        <div class="left-buttons-column">
+            <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><div class="label">Квест</div></div>
+            <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><div class="label">Рейд</div></div>
+            <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><div class="label">Арена</div></div>
+            <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><div class="label">Порталы</div></div>
+        </div>
 
-            <div class="btn grid-right-1" data-action="tavern"><img src="assets/all_buttons/tavern.png"><div class="label">Таверна</div></div>
-            <div class="btn grid-right-2" data-action="arena"><img src="assets/all_buttons/arena.png"><div class="label">Арена</div></div>
-            <div class="btn grid-right-3" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><div class="label">Задания</div></div>
-            <div class="btn grid-right-4" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><div class="label">Сумка</div></div>
+        <div class="right-buttons-column">
+            <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><div class="label">Таверна</div></div>
+            <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><div class="label">Подземка</div></div>
+            <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><div class="label">Задания</div></div>
+            <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><div class="label">Сумка</div></div>
+        </div>
 
-            <div class="btn grid-bottom-1" data-action="profile"><img src="assets/all_buttons/player_profile.png"><div class="label">Профиль</div></div>
-            <div class="btn grid-bottom-2" data-action="chat"><img src="assets/all_buttons/chat_button.png"><div class="label">Чат</div></div>
-            <div class="btn grid-bottom-3" data-action="settings"><img src="assets/all_buttons/settings.png"><div class="label">Настройки</div></div>
+        <div class="bottom-buttons-row">
+            <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><div class="label">Профиль</div></div>
+            <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><div class="label">Чат</div></div>
+            <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><div class="label">Настройки</div></div>
         </div>
 
         <div class="loading-screen" id="loadingScreen"><div class="loading-bg"></div><button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');}catch(e){}"><img src="assets/all_buttons/play.png" alt="Играть"></button></div>
