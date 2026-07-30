@@ -57,36 +57,36 @@ Sherwood.Dungeon = {
         }
     }
 
-    var cx = Math.floor(size / 2);
-    var cy = Math.floor(size / 2);
-    grid[cy][cx].type = this.TILE.EMPTY;
-    var emptyCount = 1;
-    var target = Math.floor(size * size * 0.35);
-    var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-
-    while (emptyCount < target) {
-        var dir = dirs[Math.floor(Math.random() * 4)];
-        var nx = cx + dir[0], ny = cy + dir[1];
-        if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1) {
-            if (grid[ny][nx].type === this.TILE.WALL) {
-                grid[ny][nx].type = this.TILE.EMPTY;
-                emptyCount++;
+    // Генерация лабиринта DFS
+    var startX = 1, startY = 1;
+    grid[startY][startX].type = this.TILE.EMPTY;
+    
+    var stack = [{x: startX, y: startY}];
+    var dirs = [[0,-2],[0,2],[-2,0],[2,0]];
+    
+    while (stack.length > 0) {
+        var current = stack[stack.length - 1];
+        var neighbors = [];
+        
+        for (var d = 0; d < dirs.length; d++) {
+            var nx = current.x + dirs[d][0];
+            var ny = current.y + dirs[d][1];
+            if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && grid[ny][nx].type === this.TILE.WALL) {
+                neighbors.push({x: nx, y: ny, dx: dirs[d][0], dy: dirs[d][1]});
             }
-            cx = nx;
-            cy = ny;
+        }
+        
+        if (neighbors.length > 0) {
+            var next = neighbors[Math.floor(Math.random() * neighbors.length)];
+            grid[current.y + next.dy/2][current.x + next.dx/2].type = this.TILE.EMPTY;
+            grid[next.y][next.x].type = this.TILE.EMPTY;
+            stack.push({x: next.x, y: next.y});
+        } else {
+            stack.pop();
         }
     }
 
-    var spawnX = 1;
-    var spawnY = 1;
-    for (var y = 1; y < size-1; y++) {
-        for (var x = 1; x < size-1; x++) {
-            if (grid[y][x].type === this.TILE.EMPTY) {
-                spawnX = x; spawnY = y;
-                y = size; break;
-            }
-        }
-    }
+    var spawnX = startX, spawnY = startY;
     grid[spawnY][spawnX].type = this.TILE.SPAWN;
     grid[spawnY][spawnX].open = true;
 
