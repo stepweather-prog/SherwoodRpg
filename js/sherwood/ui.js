@@ -15,7 +15,7 @@ const SherwoodUI = {
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _audioFiles: {
         'main_theme': 'assets/sounds/sherwood_rpg.mp3',
-        'click': 'assets/sounds/button_click.ogg', 'shot': 'assets/sounds/arrow_hit_2.wav', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
+        'click': 'assets/sounds/button_click.wav', 'shot': 'assets/sounds/arrow_hit_2.wav', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
         'chest_open': 'assets/sounds/chest_opens.wav', 'trap': 'assets/sounds/trap.wav',
         'loot_drop': 'assets/sounds/loot_bag_drop.flac',
