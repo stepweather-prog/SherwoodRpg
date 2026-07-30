@@ -23,19 +23,21 @@
     left: 0; 
     right: 0; 
     width: 100%; 
-    height: 55%;
-    background: url('assets/interface/staircase_with_an_arch.png') bottom/cover no-repeat; 
+    height: 48%; /* Уменьшили высоту блока, чтобы он физически не мог достать до кнопок */
+    /* background-size: 100% 100% растянет арку ровно от левого до правого края БЕЗ зазоров и без обрезки */
+    background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; 
     z-index: 3; 
     pointer-events: none; 
 }
 
 .hero-frame { 
     position: absolute; 
-    bottom: 5%;
+    /* Возвращаем персонажа на его законное место внутри арки */
+    bottom: 11%; 
     left: 50%; 
     transform: translateX(-50%); 
     width: 200px; 
-    height: 300px; 
+    height: 280px; /* Слегка уменьшили высоту контейнера героя, чтобы макушка не лезла вверх */
     z-index: 4; 
     display: flex; 
     align-items: flex-end; 
