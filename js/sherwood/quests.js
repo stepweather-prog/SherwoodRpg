@@ -36,7 +36,6 @@ Sherwood.Quests = {
     },
 
     getChapter: function(id) {
-        if (id === 'secret') return this.SECRET_CHAPTER;
         for (var i = 0; i < this.CHAPTERS.length; i++) {
             if (this.CHAPTERS[i].id === id) return this.CHAPTERS[i];
         }
@@ -74,13 +73,24 @@ Sherwood.Quests = {
         var ch = this.getChapter(id);
         if (!ch) return { success: false, reason: 'Глава не найдена' };
         if (this.isOnCooldown()) return { success: false, reason: 'Перезарядка ' + this.getCooldownRemaining() + ' мин.', cooldown: true };
+        
+        var p = Sherwood.getPlayer();
+        p.stats.hp = p.stats.maxHp;
+        
+        if (this._currentChapter && this._currentChapter.id === id && this._currentEnemy) {
+            this._inBattle = true;
+            this._lastAttempt = Date.now();
+            p.questAttempts.lastAttempt = this._lastAttempt;
+            Sherwood.saveGame();
+            return { success: true, chapter: ch, enemy: this._currentEnemy, stage: this._currentStage + 1, total: ch.stages };
+        }
+        
         this._currentChapter = ch;
         this._currentStage = 0;
         var firstEnemy = ch.enemies[0];
         this._currentEnemy = { name: firstEnemy.name, image: firstEnemy.image, hp: firstEnemy.hp, maxHp: firstEnemy.hp, atk: firstEnemy.atk, def: firstEnemy.def, exp: firstEnemy.exp, gold: firstEnemy.gold, isBoss: false };
         this._inBattle = true;
         this._lastAttempt = Date.now();
-        var p = Sherwood.getPlayer();
         p.questAttempts.today = (p.questAttempts.today || 0) + 1;
         p.questAttempts.lastAttempt = this._lastAttempt;
         this._attemptsToday = p.questAttempts.today;
@@ -119,6 +129,10 @@ Sherwood.Quests = {
             var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
             p.stats.hp = Math.max(0, p.stats.hp - edmg);
             r.enemyDamage = edmg; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
+            if (p.stats.hp <= 0) {
+                this._inBattle = false;
+                r.lose = true;
+            }
         }
         Sherwood.saveGame();
         return r;
