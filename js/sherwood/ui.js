@@ -677,13 +677,13 @@ _handleCombat: function(r) {
     _questAccel: function() { var r=Sherwood.Quests.accelerate(); if(!r.success) { var info=document.getElementById('quest-info'); if(info) info.textContent=r.reason; return; } this.quest(); },
     _startQuest: function(id) { var r=Sherwood.Quests.startChapter(id),info=document.getElementById('quest-info'); if(!r.success) { if(info) info.textContent=(r.reason||'Ошибка'); if(r.cooldown) this.quest(); return; } this._stopMusic(); this._showQuestBattle(); },
     _showQuestBattle: function() { 
-        var e = Sherwood.Quests._currentEnemy;
-        if (!e) { this.quest(); return; }
-        var b = Sherwood.Quests.getBattle();
-        var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
-        var chapterName = b ? b.chapter.name : '';
-        this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp },'quest','Глава ' + chapterName + ' - ' + stageText,'','SherwoodUI._questAttack()','SherwoodUI._questFlee()); 
-    },
+    var e = Sherwood.Quests._currentEnemy;
+    if (!e) { this.quest(); return; }
+    var b = Sherwood.Quests.getBattle();
+    var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
+    var chapterName = b ? b.chapter.name : '';
+    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp },'quest','Глава ' + chapterName + ' - ' + stageText,'','SherwoodUI._questAttack()','SherwoodUI._questFlee()'); 
+},
     _questAttack: function() { this._playHitSounds(); this._handleQuestResult(Sherwood.Quests.attack()); },
     _questFlee: function() { this._stopMusic(); Sherwood.Quests.flee(); this.quest(); },
     _handleQuestResult: function(r) {
