@@ -572,7 +572,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
-    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="assets/interface/frame_of_beasts.png" style="width:280px;height:280px;position:absolute;top:-14px;left:-14px;z-index:0;pointer-events:none;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
+    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
     
     var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
     var unlockedSkills = [];
@@ -607,7 +607,8 @@ _useSkill: function(skillId) {
     if (!Sherwood.Combat) return;
     this._playHitSounds();
     var r = Sherwood.Combat.useSkill(skillId);
-    if (r && r.error) { this._showDialog(r.error, '#ff9800'); this._showCombatScreen(); return; }
+    if (!r) return;
+    if (r.error) { this._showDialog(r.error, '#ff9800'); return; }
     this._handleCombat(r);
 },
 
