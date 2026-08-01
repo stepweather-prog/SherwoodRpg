@@ -292,25 +292,23 @@ Sherwood.Quests = {
         return { chapter: this._currentChapter, stage: this._currentStage + 1, total: this._currentChapter.stages, enemy: this._currentEnemy };
     },
     startChapter: function(id) {
-        var ch = this.getChapter(id);
-        if (!ch) return { success: false, reason: 'Глава не найдена' };
-        if (!this.isUnlocked(id)) return { success: false, reason: 'Глава заблокирована' };
-        if (this.isOnCooldown()) return { success: false, reason: 'Перезарядка ' + this.getCooldownRemaining() + ' мин.', cooldown: true };
-        var p = Sherwood.getPlayer();
-        if ((p.questEnergy.current || 0) < ch.energyCost) return { success: false, reason: 'Недостаточно энергии' };
-        p.questEnergy.current -= ch.energyCost;
-        this._currentChapter = ch;
-        this._currentStage = 0;
-        var firstEnemy = ch.enemies[0];
-        this._currentEnemy = { name: firstEnemy.name, image: firstEnemy.image, hp: firstEnemy.hp, maxHp: firstEnemy.hp, atk: firstEnemy.atk, def: firstEnemy.def, exp: firstEnemy.exp, gold: firstEnemy.gold, isBoss: false };
-        this._inBattle = true;
-        this._lastAttempt = Date.now();
-        p.questAttempts.today = (p.questAttempts.today || 0) + 1;
-        p.questAttempts.lastAttempt = this._lastAttempt;
-        this._attemptsToday = p.questAttempts.today;
-        Sherwood.saveGame();
-        return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
-    },
+    var ch = this.getChapter(id);
+    if (!ch) return { success: false, reason: 'Глава не найдена' };
+    if (!this.isUnlocked(id)) return { success: false, reason: 'Глава заблокирована' };
+    if (this.isOnCooldown()) return { success: false, reason: 'Перезарядка ' + this.getCooldownRemaining() + ' мин.', cooldown: true };
+    this._currentChapter = ch;
+    this._currentStage = 0;
+    var firstEnemy = ch.enemies[0];
+    this._currentEnemy = { name: firstEnemy.name, image: firstEnemy.image, hp: firstEnemy.hp, maxHp: firstEnemy.hp, atk: firstEnemy.atk, def: firstEnemy.def, exp: firstEnemy.exp, gold: firstEnemy.gold, isBoss: false };
+    this._inBattle = true;
+    this._lastAttempt = Date.now();
+    var p = Sherwood.getPlayer();
+    p.questAttempts.today = (p.questAttempts.today || 0) + 1;
+    p.questAttempts.lastAttempt = this._lastAttempt;
+    this._attemptsToday = p.questAttempts.today;
+    Sherwood.saveGame();
+    return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
+},
     attack: function() {
         if (!this._inBattle) return null;
         var p = Sherwood.getPlayer();
