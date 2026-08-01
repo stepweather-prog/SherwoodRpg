@@ -283,66 +283,54 @@ Sherwood.Forge = {
     // ========== СКИНЫ ==========
 
     getCraftSkins: function() {
-        return [
-            { id: 'skin_1_basic', name: 'Охотник', chapter: 1, cost: { ingots: 0, scrolls: 0, silver: 0 }, icon: 'assets/hero_skins/skin_1_basic.png' },
-            { id: 'skin_2', name: 'Следопыт', chapter: 2, cost: { ingots: 10, scrolls: 5, silver: 5000 }, icon: 'assets/hero_skins/skin_2.png' },
-            { id: 'skin_3', name: 'Лесной страж', chapter: 3, cost: { ingots: 25, scrolls: 15, silver: 12000 }, icon: 'assets/hero_skins/skin_3.png' },
-            { id: 'skin_4', name: 'Болотный охотник', chapter: 4, cost: { ingots: 50, scrolls: 30, silver: 25000 }, icon: 'assets/hero_skins/skin_4.png' },
-            { id: 'skin_5', name: 'Пещерный воин', chapter: 5, cost: { ingots: 80, scrolls: 50, silver: 40000 }, icon: 'assets/hero_skins/skin_5.png' },
-            { id: 'skin_6', name: 'Рыцарь Шервуда', chapter: 6, cost: { ingots: 120, scrolls: 75, silver: 60000 }, icon: 'assets/hero_skins/skin_6.png' },
-            { id: 'skin_7', name: 'Теневой лучник', chapter: 7, cost: { ingots: 170, scrolls: 100, silver: 85000 }, icon: 'assets/hero_skins/skin_7.png' },
-            { id: 'skin_8', name: 'Изумрудный следопыт', chapter: 8, cost: { ingots: 230, scrolls: 140, silver: 115000 }, icon: 'assets/hero_skins/skin_8.png' },
-            { id: 'skin_9', name: 'Проклятый охотник', chapter: 9, cost: { ingots: 300, scrolls: 180, silver: 150000 }, icon: 'assets/hero_skins/skin_9.png' },
-            { id: 'skin_10', name: 'Владыка порталов', chapter: 10, cost: { ingots: 400, scrolls: 240, silver: 200000 }, icon: 'assets/hero_skins/skin_10.png' },
-            { id: 'skin_11', name: 'Страж бездны', chapter: 11, cost: { ingots: 550, scrolls: 330, silver: 280000 }, icon: 'assets/hero_skins/skin_11.png' },
-            { id: 'skin_12', name: 'Королевский егерь', chapter: 12, cost: { ingots: 750, scrolls: 450, silver: 380000 }, icon: 'assets/hero_skins/skin_12.png' },
-            { id: 'skin_13', name: 'Хранитель склепа', chapter: 13, cost: { ingots: 1000, scrolls: 600, silver: 500000 }, icon: 'assets/hero_skins/skin_13.png' },
-            { id: 'skin_14', name: 'Отродье Шервуда', chapter: 14, cost: { ingots: 1300, scrolls: 700, silver: 750000 }, icon: 'assets/hero_skins/skin_14.png' },
-            { id: 'skin_15', name: 'Вечный Хранитель', chapter: 15, cost: { ingots: 1500, scrolls: 800, silver: 1000000 }, icon: 'assets/hero_skins/skin_15.png' }
-        ];
-    },
-
-    getUnlockedSkins: function() {
-        var player = Sherwood.getPlayer();
-        return player.unlockedSkins || ['skin_1_basic'];
-    },
-
-    canCraftSkin: function(skinId) {
-        var skin = null;
-        var skins = this.getCraftSkins();
-        for (var i = 0; i < skins.length; i++) {
-            if (skins[i].id === skinId) {
-                skin = skins[i];
-                break;
-            }
+    var allSkins = [
+        'skin1_01','skin1_02','skin1_03',
+        'skin2_01','skin2_02','skin2_03','bonus_skin_2',
+        'skin3_01','skin3_02','skin3_03',
+        'skin4_01','skin4_02','skin4_03','bonus_skin_4',
+        'skin5_01','skin5_02','skin5_03',
+        'skin6_01','skin6_02','skin6_03','bonus_skin_6',
+        'skin7_01','skin7_02','skin7_03',
+        'skin8_01','skin8_02','skin8_03','bonus_skin_8',
+        'skin9_01','skin9_02','skin9_03',
+        'skin10_01','skin10_02','skin10_03','bonus_skin_10',
+        'skin11_01','skin11_02','skin11_03',
+        'skin12_01','skin12_02','skin12_03','bonus_skin_12',
+        'skin13_01','skin13_02','skin13_03',
+        'skin14_01','skin14_02','skin14_03','bonus_skin_14',
+        'skin15_01','skin15_02','skin15_03',
+        'skin16_01','skin16_02','skin16_03','bonus_skin_sec'
+    ];
+    var result = [];
+    for (var i = 0; i < allSkins.length; i++) {
+        var sid = allSkins[i];
+        var data = Sherwood.SKIN_BONUSES[sid];
+        if (data) {
+            result.push({
+                id: sid,
+                name: data.name,
+                chapter: data.chapter,
+                cost: { ingots: 0, scrolls: 0, silver: 0 },
+                icon: 'assets/hero_skins/' + sid + '.png'
+            });
         }
-        if (!skin) return { can: false, reason: 'Скин не найден' };
+    }
+    return result;
+},
 
-        var player = Sherwood.getPlayer();
-        if (!player) return { can: false, reason: 'Игрок не найден' };
+getUnlockedSkins: function() {
+    var player = Sherwood.getPlayer();
+    return player.unlockedSkins || ['skin1_01'];
+},
 
-        var progress = player.questProgress || { completed: [] };
-        if (skin.chapter > 1 && progress.completed.indexOf(skin.chapter - 1) === -1) {
-            return { can: false, reason: 'Нужно пройти главу ' + (skin.chapter - 1) };
-        }
-
-        if (player.unlockedSkins && player.unlockedSkins.indexOf(skinId) !== -1) {
-            return { can: false, reason: 'Уже разблокирован' };
-        }
-
-        var resources = player.resources || {};
-        if ((resources.ingots || 0) < skin.cost.ingots) {
-            return { can: false, reason: 'Недостаточно слитков (нужно ' + skin.cost.ingots + ')' };
-        }
-        if ((resources.scrolls || 0) < skin.cost.scrolls) {
-            return { can: false, reason: 'Недостаточно скрижалей (нужно ' + skin.cost.scrolls + ')' };
-        }
-        if ((resources.silver || 0) < skin.cost.silver) {
-            return { can: false, reason: 'Недостаточно серебра (нужно ' + skin.cost.silver + ')' };
-        }
-
-        return { can: true };
-    },
+canCraftSkin: function(skinId) {
+    var player = Sherwood.getPlayer();
+    if (!player) return { can: false, reason: 'Игрок не найден' };
+    if (player.unlockedSkins && player.unlockedSkins.indexOf(skinId) !== -1) {
+        return { can: false, reason: 'Уже разблокирован' };
+    }
+    return { can: true };
+},
 
     craftSkin: function(skinId) {
         var check = this.canCraftSkin(skinId);
