@@ -338,10 +338,7 @@ Sherwood.canCraftSkin = function(skinId) {
     var skinData = this.SKIN_BONUSES[skinId];
     if (!skinData) return { can: false, reason: 'Скин не найден' };
     
-    var progress = p.questProgress || { completed: [] };
-    if (skinData.chapter > 1 && progress.completed.indexOf(skinData.chapter - 1) === -1) {
-        return { can: false, reason: 'Нужно пройти главу ' + (skinData.chapter - 1) };
-    }
+    // Проверка главы отключена
     
     var cost = this.SKIN_CRAFT_COSTS[skinId];
     if (!cost) return { can: false, reason: 'Нет данных о стоимости' };
