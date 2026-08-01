@@ -81,8 +81,8 @@ Sherwood._ensureDefaults = function() {
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
         trainingLevels: { attack: 0, defense: 0, hp: 0, agility: 0 },
-        unlockedSkins: ['skin_1_basic'],
-        activeSkin: 'skin_1_basic',
+        unlockedSkins: ['skin1_01'],
+        activeSkin: 'skin1_01',
         questEnergy: { current: 50, max: 50 },
         portal: { completed: [] },
         arena: { wins: 0, losses: 0, rank: 'Новичок' },
@@ -112,10 +112,10 @@ Sherwood._ensureDefaults = function() {
     if (!p.daily) p.daily = defaults.daily;
 
     if (!p.unlockedSkins || p.unlockedSkins.length === 0) {
-        p.unlockedSkins = ['skin_1_basic'];
+        p.unlockedSkins = ['skin1_01'];
     }
     if (!p.activeSkin) {
-        p.activeSkin = 'skin_1_basic';
+        p.activeSkin = 'skin1_01';
     }
 
     if (p.questProgress && p.questProgress.currentChapter === undefined) {
@@ -143,8 +143,8 @@ Sherwood._createNewPlayer = function() {
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
         trainingLevels: { attack: 0, defense: 0, hp: 0, agility: 0 },
-        unlockedSkins: ['skin_1_basic'],
-        activeSkin: 'skin_1_basic',
+        unlockedSkins: ['skin1_01'],
+        activeSkin: 'skin1_01',
         questEnergy: { current: 50, max: 50 },
         portal: { completed: [] },
         arena: { wins: 0, losses: 0, rank: 'Новичок' },
@@ -367,7 +367,7 @@ Sherwood.getSkinBonus = function(skinId) {
 Sherwood.getActiveSkinBonus = function() {
     var p = this.getPlayer();
     if (!p) return 0;
-    var skinId = p.activeSkin || 'skin_1_basic';
+    var skinId = p.activeSkin || 'skin1_01';
     return this.getSkinBonus(skinId);
 };
 
@@ -599,8 +599,8 @@ Sherwood.Bag = {
         this._maxSlots = 10 + this._expansionLevel * 10;
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
-            player.unlockedSkins = ['skin_1_basic'];
-            player.activeSkin = 'skin_1_basic';
+            player.unlockedSkins = ['skin1_01'];
+            player.activeSkin = 'skin1_01';
             Sherwood.saveGame();
         }
     },
