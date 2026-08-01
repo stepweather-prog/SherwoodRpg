@@ -709,8 +709,12 @@ _handleCombat: function(r) {
             this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.quest(); };
             this._showVictoryScreen(this._pendingRewards);
         } else if (r.stageComplete) {
-            var self = this; setTimeout(function() { self._showQuestBattle(); }, 1200);
-        }
+    this._showDialog('Враг повержен!','#4caf50');
+    this.updateDisplay();
+    this._stopMusic();
+    var self = this;
+    setTimeout(function() { self._playMusic('main_theme'); self.quest(); }, 1200);
+}
     } else if (r.playerDead) {
         this._showDialog('Поражение...','#f44336');
         this._playSound('defeat');
@@ -848,6 +852,7 @@ _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) 
     var r = Sherwood.Arena.arenaAttack();
     if (!r) return;
     if (r.win) {
+        this._hitEnemyCard();
         if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1);
         this._stopMusic();
         SherwoodUI.updateDisplay();
@@ -855,6 +860,7 @@ _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) 
         this._afterRewardAction = function() { SherwoodUI._playMusic("main_theme"); SherwoodUI.arena(); };
         this._showVictoryScreen(this._pendingRewards);
     } else if (r.lose) {
+        this._hitEnemyCard();
         this._stopMusic();
         this._pendingRewards = { exp: 10, silver: 50 };
         this._afterRewardAction = function() { SherwoodUI._playMusic("main_theme"); SherwoodUI.arena(); };
@@ -866,7 +872,7 @@ _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) 
         SherwoodUI.updateDisplay(); this._showArenaMatch();
     }
 },
-    _arenaFlee: function() { this._stopMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('main_theme'); this.arena(); },
+_arenaFlee: function() { this._stopMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('main_theme'); this.arena(); },
 
     // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
     settings: function() { this._playSound('click'); var p=Sherwood.getPlayer(),nm=p?p.name:'Охотник',h='<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="'+nm+'" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;"><button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div><div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div><div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">Звуки</span><button onclick="SherwoodUI._toggleSound(' + !this._soundEnabled + ')" style="width:60px;height:30px;background:'+(this._soundEnabled?'#4caf50':'#555')+';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;'+(this._soundEnabled?'right:3px;':'left:3px;')+'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">Музыка</span><button onclick="SherwoodUI._toggleMusic(' + !this._musicEnabled + ')" style="width:60px;height:30px;background:'+(this._musicEnabled?'#4caf50':'#555')+';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;'+(this._musicEnabled?'right:3px;':'left:3px;')+'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div></div><button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">Выйти</button>'; this._openScreen('Настройки','settings',h); },
