@@ -908,10 +908,11 @@ _arenaAttack: function() {
         this._afterRewardAction = function() { SherwoodUI._playMusic("main_theme"); SherwoodUI.arena(); };
         this._showDefeatScreen(this._pendingRewards);
     } else {
-        this._hitEnemyCard(); this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
+        this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
+        this._hitEnemyCard();
         this._showDialog((r.crit ? "КРИТ " : "") + "Урон: " + r.playerDamage, r.crit ? "#ff6a00" : "#fff");
         if (r.opponentDamage) { var self = this; setTimeout(function() { self._showDialog("Противник: " + r.opponentDamage + " урона", "#f44336"); }, 700); }
-        SherwoodUI.updateDisplay(); this._showArenaMatch();
+        SherwoodUI.updateDisplay();
     }
 },
 _arenaFlee: function() { this._stopMusic(); Sherwood.Arena.fleeMatch(); this._playMusic('main_theme'); this.arena(); },
