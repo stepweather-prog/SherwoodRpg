@@ -593,7 +593,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span> <span style="color:#ff9800;">ЛВК ' + p.stats.agility + '</span><img src="assets/hero_skins/' + (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01') + '.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
     h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:4px 8%;min-height:90px;max-height:90px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;line-height:1.4;"></div>';
     h += '</div>';
-    this._openScreen('Бой', 'dungeon_fight', h);
+    this._openScreen('Бой', (mode === 'arena' ? 'arena' : 'dungeon_fight'), h);
 },
 
 _useSkill: function(skillId) {
