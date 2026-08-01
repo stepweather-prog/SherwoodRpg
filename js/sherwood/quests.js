@@ -261,14 +261,10 @@ Sherwood.Quests = {
     getAllChapters: function() { return this.CHAPTERS; },
     getSecretChapter: function() { return this.SECRET_CHAPTER; },
     getProgress: function() { return Sherwood.getPlayer().questProgress; },
+    
     isUnlocked: function(id) {
-        if (id === 'secret') {
-            var p = Sherwood.getPlayer();
-            return p.level >= this.SECRET_CHAPTER.requiredLevel && p.questProgress.completed.indexOf(this.SECRET_CHAPTER.requiredChapter) !== -1;
-        }
-        if (id === 1) return true;
-        return Sherwood.getPlayer().questProgress.completed.indexOf(id - 1) !== -1;
-    },
+    return true; // Все главы открыты
+},
     getEnergy: function() { return Sherwood.getPlayer().questEnergy || { current: 50, max: 50 }; },
     isOnCooldown: function() { return Date.now() - this._lastAttempt < 30 * 60 * 1000; },
     getCooldownRemaining: function() { var r = 30 * 60 * 1000 - (Date.now() - this._lastAttempt); return r <= 0 ? 0 : Math.ceil(r / 60000); },
