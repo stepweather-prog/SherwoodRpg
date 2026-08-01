@@ -13,7 +13,7 @@ Sherwood.Arena = {
 
     RANKS: ['Новичок', 'Боец', 'Ветеран', 'Мастер', 'Чемпион', 'Легенда'],
     RANK_THRESHOLDS: [0, 10, 30, 60, 100, 200],
-    SKIN_FILES: ['skin_1_basic', 'skin_2', 'skin_3', 'skin_4', 'skin_5', 'skin_6', 'skin_7', 'skin_8', 'skin_9', 'skin_10', 'skin_11', 'skin_12', 'skin_13', 'skin_14', 'skin_15'],
+    SKIN_FILES: ['skin1_01', 'skin1_02', 'skin1_03', 'skin2_01', 'skin2_02', 'skin2_03', 'skin3_01', 'skin3_02', 'skin3_03', 'skin4_01', 'skin4_02', 'skin4_03', 'skin5_01', 'skin5_02', 'skin5_03', 'skin6_01', 'skin6_02', 'skin6_03', 'skin7_01', 'skin7_02', 'skin7_03', 'skin8_01', 'skin8_02', 'skin8_03', 'skin9_01', 'skin9_02', 'skin9_03', 'skin10_01', 'skin10_02', 'skin10_03', 'skin11_01', 'skin11_02', 'skin11_03', 'skin12_01', 'skin12_02', 'skin12_03', 'skin13_01', 'skin13_02', 'skin13_03', 'skin14_01', 'skin14_02', 'skin14_03', 'skin15_01', 'skin15_02', 'skin15_03', 'skin16_01', 'skin16_02', 'skin16_03'],
 
     init: function() {
         var player = Sherwood.getPlayer();
@@ -278,7 +278,7 @@ Sherwood.Arena = {
         this._opponents.push({
             id: 'custom_' + Date.now(),
             name: name || 'Тестовый противник',
-            skin: 'assets/hero_skins/skin_1_basic.png',
+            skin: 'assets/hero_skins/skin1_01.png',
             stats: {
                 attack: attack || 20,
                 defense: defense || 10,
