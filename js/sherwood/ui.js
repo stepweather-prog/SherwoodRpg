@@ -26,7 +26,7 @@ const SherwoodUI = {
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
 
     init: function() {
-    this._mainElements = ['.bg-layer', '.arch-layer', '.hero-frame', '.top-panel', '.bottom-stats', '#top-buttons-bar'];
+    this._mainElements = ['.bg-layer', '.portal-video-bg', '.arch-layer', '.hero-layer', '.top-resources-bar', '.top-buttons-row', '.left-buttons-column', '.right-buttons-column', '.bottom-buttons-row', '.bottom-stats'];
     this.container = document.getElementById('game-container'); if (!this.container) return;
     this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
     this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
@@ -38,12 +38,7 @@ const SherwoodUI = {
         if (silverEl) {
             silverEl.parentElement.style.cursor = 'pointer';
             silverEl.parentElement.onclick = function() {
-                var amount = prompt('Обменять золото на серебро.\nКурс: 1 золото = 100 серебра.\nСколько золота обменять?', '1');
-                if (amount && parseInt(amount) > 0) {
-                    var r = Sherwood.convertGoldToSilver(parseInt(amount));
-                    if (r.success) SherwoodUI.updateDisplay();
-                    else alert(r.reason);
-                }
+                SherwoodUI._showExchangePanel();
             };
         }
     } catch(e) {}
@@ -55,11 +50,9 @@ const SherwoodUI = {
     }
     try { this._loadAudioSettings(); } catch(e) {}
     
-    // Авто-масштабирование
     this._scaleGame();
     window.addEventListener('resize', function() { SherwoodUI._scaleGame(); });
 },
-
 _scaleGame: function() {
     var container = document.getElementById('game-container');
     if (!container) return;
