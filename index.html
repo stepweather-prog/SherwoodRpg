@@ -84,11 +84,13 @@
 <body>
     <div class="statue-left"></div><div class="statue-right"></div><div class="divider-left"></div><div class="divider-right"></div>
     <div id="game-container">
-        <div class="bg-layer"></div>
+        <div class="bg-layer" style="background: none;"></div>
         <div class="portal-video-bg">
             <video src="assets/animation/animation_frame_hero.webm" autoplay muted playsinline loop></video>
         </div>
-        <div class="arch-layer"></div>
+        <div class="arch-layer" style="position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; height: 520px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none;">
+    <div style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 65%; height: 60%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; border-radius: 0 0 50% 50%; overflow: hidden; z-index: -1;"></div>
+</div></div>
         <div class="hero-layer">
             <img src="assets/hero_skins/skin1_01.png" alt="Герой">
         </div>
