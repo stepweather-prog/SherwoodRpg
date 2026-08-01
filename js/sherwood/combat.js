@@ -315,60 +315,44 @@ Sherwood.Combat = {
     },
 
     useSkill: function(skillId) {
-        var b = this._battle;
-        if (!b) return null;
-        var skills = this.getSkills();
-        if (!skills[skillId] || !skills[skillId].unlocked) return { error: 'Навык не открыт' };
-        if (this._cooldowns[skillId] && this._cooldowns[skillId] > 0) {
-            return { error: 'Перезарядка: ' + this._cooldowns[skillId] + ' ходов' };
-        }
+    var b = this._battle;
+    if (!b) return { error: 'Нет боя' };
+    var skills = this.getSkills();
+    if (!skills[skillId] || !skills[skillId].unlocked) return { error: 'Навык не открыт' };
+    if (this._cooldowns[skillId] && this._cooldowns[skillId] > 0) {
+        return { error: 'Перезарядка: ' + this._cooldowns[skillId] + ' ходов' };
+    }
+    var skill = skills[skillId];
+    var raw = this._calcDamage(b.playerAtk, b.enemyDef) * skill.damageMultiplier;
+    var crit = Math.random() * 100 < 20;
+    if (crit) raw = Math.floor(raw * 1.8);
+    var hpDmg = Math.max(1, Math.floor(raw));
+    b.enemyHp -= hpDmg;
+    if (b.enemyHp < 0) b.enemyHp = 0;
+    this._cooldowns[skillId] = skill.cooldown;
 
-        var skill = skills[skillId];
-        var raw = this._calcDamage(b.playerAtk, b.enemyDef) * skill.damageMultiplier;
-        var crit = Math.random() * 100 < 20;
-        if (crit) raw = Math.floor(raw * 1.8);
-        var hpDmg = Math.max(1, Math.floor(raw));
-        b.enemyHp -= hpDmg;
-        if (b.enemyHp < 0) b.enemyHp = 0;
+    var r = { damage: hpDmg, crit: crit, enemyHp: b.enemyHp, enemyMaxHp: b.enemyMaxHp, enemyImage: b.enemyImage, enemyName: b.enemyName };
 
-        if (skillId === 'poison_arrow') {
-            this._effects.push({ target: 'enemy', type: 'poison', dmg: Math.floor(hpDmg * 0.2) + 5, turns: 3 });
-        }
-        if (skillId === 'stunning_shot') {
-            this._effects.push({ target: 'enemy', type: 'stun', turns: 1 });
-        }
-
-        this._cooldowns[skillId] = skill.cooldown;
-
-        var r = {
-            type: 'skill',
-            skillId: skillId,
-            skillName: skill.name,
-            damage: hpDmg,
-            crit: crit,
-            enemyHp: b.enemyHp,
-            enemyMaxHp: b.enemyMaxHp
-        };
-
-        if (b.enemyHp <= 0) {
-            r.win = true;
-            r.exp = b.isBoss ? 200 : 50;
-            r.gold = b.isBoss ? 150 : 40;
-            this._battle = null;
-            return r;
-        }
-
-        var er = this._enemyTurn();
-        r.enemy = er;
-        if (b.playerHp <= 0) {
-            r.lose = true;
-            r.exp = Math.floor((b.isBoss ? 200 : 50) * 0.3);
-            r.gold = Math.floor((b.isBoss ? 150 : 40) * 0.3);
-            this._battle = null;
-        }
-
+    if (b.enemyHp <= 0) {
+        r.win = true;
+        r.exp = b.isBoss ? 150 : 35;
+        r.gold = b.isBoss ? 120 : 25;
+        this._giveReward(r);
+        this._battle = null;
         return r;
-    },
+    }
+
+    var er = this._enemyTurn();
+    r.enemy = er;
+    if (b.playerHp <= 0) {
+        r.lose = true;
+        r.exp = Math.floor((b.isBoss ? 150 : 35) * 0.3);
+        r.gold = Math.floor((b.isBoss ? 120 : 25) * 0.3);
+        this._giveReward(r);
+        this._battle = null;
+    }
+    return r;
+},
 
     getCooldowns: function() {
         var result = {};
