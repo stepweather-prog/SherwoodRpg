@@ -270,17 +270,42 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     
-    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;'>";
-    html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;'>";
+    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-color:#111;overflow:hidden;font-size:0;line-height:0;'>";
+    html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
+    // Плитки на всём поле (скрываются при открытии)
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + (cs+1) + "px;height:" + (cs+1) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:0;" + hide + "'></div>"; 
+            html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:1;" + hide + "'></div>"; 
         } 
     }
     
+    // Пол на открытых клетках
+    for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+            if (!d.grid[y] || !d.grid[y][x]) continue;
+            if (d.grid[y][x].open) {
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(" + floorBg + ");background-size:100% 100%;z-index:0;'></div>";
+            }
+        }
+    }
+    
+    // Затемнение неоткрытых клеток
+    for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+            if (!d.grid[y] || !d.grid[y][x]) continue;
+            var cell = d.grid[y][x];
+            if (!cell.open) {
+                var distToPlayer = Math.abs(px - x) + Math.abs(py - y);
+                var opacity = distToPlayer <= 1 ? '0.3' : '0.7';
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:2;'></div>";
+            }
+        }
+    }
+    
+    // Объекты и герой
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -290,7 +315,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                 var clickDist = Math.abs(px - x) + Math.abs(py - y);
                 if (!cell.open && clickDist === 1 && cell.type !== 0) {
                     onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
-                    glow = "box-shadow:inset 0 0 12px rgba(255,255,200,0.5);";
+                    glow = "box-shadow:inset 0 0 14px rgba(255,255,200,0.7);";
                 } else if (cell.open) {
                     onclick = "onclick='SherwoodUI._dungeonMove(" + x + "," + y + ")'";
                 }
@@ -299,8 +324,6 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             if (!isPlayer) {
                 if (cell.open && cell.monster) content = "<img src='assets/all_beasts/" + (cell.monsterId || "image (1).png") + "' style='width:90%;height:90%;object-fit:contain;'>";
                 else if (cell.open && cell.chest) content = "<img src='" + (cell.looted ? chestOpenImg : chestLockedImg) + "' style='width:80%;height:80%;object-fit:contain;'>";
-                else if (cell.open && cell.lootBag && !cell.lootCollected) content = "<img src='assets/interface/loot_bag_of_beasts.png' style='width:70%;height:70%;object-fit:contain;'>";
-                else if (cell.open && cell.lootCollected) content = "<img src='assets/interface/empty_bag_of_loot_beasts.png' style='width:70%;height:70%;object-fit:contain;'>";
                 else if (cell.open && cell.altar) content = "<img src='" + altarImg + "' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.cauldron) content = "<img src='" + cauldronImg + "' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.potion) content = "<img src='assets/interface/resource_life_potion.png' style='width:70%;height:70%;object-fit:contain;'>";
@@ -315,7 +338,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                     content = "<img src='" + hi + "' style='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;'>";
                 }
             }
-            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:2;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
+            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:3;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
         }
     }
     html += "</div></div>";
@@ -347,23 +370,32 @@ _dungeonMove: function(tx, ty) {
     if (!cell) return;
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
+    // Первое нажатие на соседнюю закрытую клетку — открываем
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
         this._playSound('steps');
         this._renderDungeon();
         SherwoodUI.updateDisplay();
+        // Если под клеткой враг — сразу бой
+        if (cell.type === Sherwood.Dungeon.TILE.MONSTER || cell.type === Sherwood.Dungeon.TILE.BOSS) {
+            d.px = tx; d.py = ty;
+            Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
+            var self = this;
+            setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
+        }
         return;
     }
+    // Открытая клетка — идём
     if (cell.open && dist === 1) {
         this._doStep(tx, ty);
         return;
     }
+    // Дальняя открытая клетка — автопуть
     if (cell.open && dist > 1) {
         this._walkPath(tx, ty);
         return;
     }
 },
-
 _walkPath: function(toX, toY) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var size = d.size;
@@ -429,22 +461,28 @@ _doStep: function(tx, ty) {
     
     if (res.type === 'battle') { d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
     if (res.type === 'altar') { this._playSound('altar'); this._showInteractButton('altar'); return; }
-    if (res.type === 'cauldron') { this._playSound('bottle_health'); this._showInteractButton('cauldron'); return; }
-    if (res.type === 'potion') { this._playSound('bottle_health'); this._showInteractButton('potion'); return; }
-    if (res.type === 'chest') { this._showInteractButton('chest'); return; }
-    if (res.type === 'lootBag') { this._showInteractButton('lootBag'); return; }
+if (res.type === 'cauldron') { this._playSound('bottle_health'); this._showInteractButton('cauldron'); return; }
+if (res.type === 'potion') { this._playSound('bottle_health'); this._showInteractButton('potion'); return; }
+if (res.type === 'chest') { this._playSound('chest_open'); this._showInteractButton('chest'); return; }
+if (res.type === 'lootBag') { this._playSound('chest_open'); this._showInteractButton('lootBag'); return; }
     if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
     if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); }
 },
 
 _showInteractButton: function(type) {
     var self = this;
+    var d = Sherwood.Dungeon.getDungeon();
+    var dungId = d ? d.id || 'forest' : 'forest';
     var icon = '';
     var action = '';
-    if (type === 'altar') { icon = 'assets/interface/altar_of_the_first_dungeon.png'; action = 'SherwoodUI._collectAltar()'; }
-    else if (type === 'cauldron') { icon = 'assets/interface/cauldron_first_dungeon.png'; action = 'SherwoodUI._collectCauldron()'; }
+    var altarImg = dungId === 'forest' ? 'assets/interface/altar_of_the_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/altar_of_the_second_dungeon.png' : 'assets/interface/the_third_altar_of_the_dungeon.png';
+    var cauldronImg = dungId === 'forest' ? 'assets/interface/cauldron_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/cauldron_of_the_second_dungeon.png' : 'assets/interface/the_third_cauldron_of_the_dungeon.png';
+    var chestImg = dungId === 'forest' ? 'assets/interface/locked_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/locked_chest_second_dungeon.png' : 'assets/interface/locked_chest_third_dungeon.png';
+    
+    if (type === 'altar') { icon = altarImg; action = 'SherwoodUI._collectAltar()'; }
+    else if (type === 'cauldron') { icon = cauldronImg; action = 'SherwoodUI._collectCauldron()'; }
     else if (type === 'potion') { icon = 'assets/interface/resource_life_potion.png'; action = 'SherwoodUI._collectPotion()'; }
-    else if (type === 'chest') { icon = 'assets/interface/locked_chest_first_dungeon.png'; action = 'SherwoodUI._collectChest()'; }
+    else if (type === 'chest') { icon = chestImg; action = 'SherwoodUI._collectChest()'; }
     else if (type === 'lootBag') { icon = 'assets/interface/loot_bag_of_beasts.png'; action = 'SherwoodUI._collectLootBag()'; }
     
     var oldBtn = document.getElementById('interact-btn');
@@ -456,8 +494,19 @@ _showInteractButton: function(type) {
     btn.innerHTML = '<img src="' + icon + '" style="width:48px;height:48px;object-fit:contain;">';
     btn.onclick = function() { eval(action); btn.remove(); };
     this._screenLayer.appendChild(btn);
+    
+    // Анимация подбора лута
+    if (type === 'chest' || type === 'lootBag') {
+        var cell = d.grid[d.py][d.px];
+        var reward = (cell && cell.reward) ? cell.reward : { gold: 5, silver: 200 };
+        var flyHtml = '<div style="position:fixed;top:10%;left:50%;transform:translateX(-50%);z-index:101;color:#ffd700;font-size:1.2em;font-weight:bold;text-shadow:0 0 10px #000;animation:lootFly 1.5s ease-out forwards;pointer-events:none;">';
+        if (reward.gold) flyHtml += '+' + reward.gold + ' <img src="assets/interface/resource_gold.png" style="width:20px;height:20px;vertical-align:middle;"> ';
+        if (reward.silver) flyHtml += '+' + reward.silver + ' <img src="assets/interface/resource_silver.png" style="width:20px;height:20px;vertical-align:middle;"> ';
+        flyHtml += '</div>';
+        this._screenLayer.innerHTML += flyHtml;
+        setTimeout(function() { var flyEl = document.querySelector('[style*="lootFly"]'); if (flyEl) flyEl.remove(); }, 1600);
+    }
 },
-
 _collectAltar: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var cell = d.grid[d.py][d.px]; if (!cell || !cell.altar) return;
