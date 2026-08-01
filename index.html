@@ -7,73 +7,101 @@
     <link rel="icon" type="image/png" href="assets/interface/logo.png">
     <link rel="manifest" href="manifest.json">
     <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-    body { background: #0a0a0f; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; font-family: 'Georgia', serif; overflow-y: auto; overflow-x: hidden; position: relative; margin: 0; padding: 0; }
-    .statue-left { position: fixed; left: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat; z-index: 9999; pointer-events: none; }
-    .statue-right { position: fixed; right: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat; z-index: 9999; pointer-events: none; }
-    .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
-    .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
-    #game-container { 
-        width: 100%; max-width: 480px; min-height: 100vh; position: relative; 
-        background: #0a0a0f; overflow-y: auto; overflow-x: hidden; 
-        border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); 
-        z-index: 10; margin: 0 auto; transform-origin: top center;
-    }
-    .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
-    .top-resources-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; background: rgba(0,0,0,0.7); }
-    .res-item { display: flex; align-items: center; gap: 4px; }
-    .res-item img { height: 30px; width: auto; }
-    .res-item span { color: #ffd700; font-size: 0.8em; font-weight: bold; text-shadow: 0 0 6px #000; }
-    .exp-block { flex: 1; margin: 0 8px; position: relative; }
-    .exp-block img { width: 100%; height: 28px; }
-    .exp-fill-container { position: absolute; top: 3px; left: 10px; right: 10px; bottom: 3px; overflow: hidden; border-radius: 3px; }
-    #exp-fill-bar { height: 100%; width: 0%; background: rgba(201,168,76,0.5); transition: width 0.5s; }
-    .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.65em; z-index: 2; text-shadow: 0 0 4px #000; white-space: nowrap; }
-    .level-on-exp { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #e0c080; font-size: 0.65em; font-weight: bold; z-index: 3; text-shadow: 0 0 4px #000; }
-    .bottom-stats { position: absolute; top: 40px; bottom: auto; left: -20px; right: -20px; z-index: 12; pointer-events: none; }
-    .bottom-stats .stat-block { width: 100%; height: 110px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
-    .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
-    .bottom-stats .stat-block .stat-item img { width: 24px; height: 24px; object-fit: contain; }
-    .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.75em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
-    .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
-    .portal-video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: hidden; pointer-events: none; }
-    .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
-    .arch-layer { position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; height: 520px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
-    .arch-inner-bg { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 55%; height: 55%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; border-radius: 0 0 60% 60%; z-index: -1; }
-    .hero-layer { position: absolute; bottom: 105px; left: 50%; transform: translateX(-50%); width: 200px; height: 345px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
-    .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
-    .top-buttons-row { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
-    .bottom-buttons-row { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
-    .left-buttons-column { position: absolute; bottom: 95px; left: 12px; display: flex; flex-direction: column; gap: 12px; z-index: 20; pointer-events: auto; }
-    .right-buttons-column { position: absolute; bottom: 95px; right: 12px; display: flex; flex-direction: column; gap: 12px; z-index: 20; pointer-events: auto; }
-    .btn { pointer-events: auto !important; width: 98px; height: 88px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
-    .btn img { width: 62px; height: 62px; object-fit: contain; pointer-events: auto; }
-    .btn .label { color: #ffa500; font-size: 12px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: 2px; pointer-events: none; }
-    .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
-    .loading-screen.hidden { opacity: 0; pointer-events: none; }
-    .loading-screen .loading-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/loading_screen_with_logo.png') center/cover no-repeat; z-index: 0; pointer-events: none; }
-    .loading-screen .play-btn { position: relative; z-index: 1; background: transparent; border: none; cursor: pointer; transition: 0.2s; width: 140px; height: 140px; margin-top: 120px; }
-    .loading-screen .play-btn img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 30px rgba(201,168,76,0.3)); }
-    .loading-screen .play-btn:hover { transform: scale(1.05); }
-    .loading-screen .play-btn:active { transform: scale(0.95); }
-    .main-interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; }
-    .main-interface.active { display: block; pointer-events: all; }
-    @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
-    @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
-    .diablo-light-halo { display: none; }
-    .hero-sprite { background-image: url('assets/hero_skins/archer_spritesheet.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; image-rendering: crisp-edges; position: relative; z-index: 4; }
-</style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background: #0a0a0f; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; font-family: 'Georgia', serif; overflow-y: auto; overflow-x: hidden; position: relative; margin: 0; padding: 0; }
+        .statue-left { position: fixed; left: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat; z-index: 9999; pointer-events: none; }
+        .statue-right { position: fixed; right: 0; top: 0; width: calc((100vw - 480px) / 2); height: 100%; background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat; z-index: 9999; pointer-events: none; }
+        .divider-left { position: fixed; left: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
+        .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
+        #game-container { 
+    width: 100%; 
+    max-width: 480px; 
+    min-height: 100vh; 
+    position: relative; 
+    background: #0a0a0f; 
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    border: 1px solid #2a2a3e; 
+    box-shadow: 0 0 60px rgba(0,0,0,0.9); 
+    z-index: 10; 
+    margin: 0 auto;
+    transform-origin: top center;
+}
+        .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
+
+        .top-resources-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; background: rgba(0,0,0,0.7); }
+        .res-item { display: flex; align-items: center; gap: 4px; }
+        .res-item img { height: 30px; width: auto; }
+        .res-item span { color: #ffd700; font-size: 0.8em; font-weight: bold; text-shadow: 0 0 6px #000; }
+        .exp-block { flex: 1; margin: 0 8px; position: relative; }
+        .exp-block img { width: 100%; height: 28px; }
+        .exp-fill-container { position: absolute; top: 3px; left: 10px; right: 10px; bottom: 3px; overflow: hidden; border-radius: 3px; }
+        #exp-fill-bar { height: 100%; width: 0%; background: rgba(201,168,76,0.5); transition: width 0.5s; }
+        .exp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e0c080; font-size: 0.65em; z-index: 2; text-shadow: 0 0 4px #000; white-space: nowrap; }
+        .level-on-exp { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #e0c080; font-size: 0.65em; font-weight: bold; z-index: 3; text-shadow: 0 0 4px #000; }
+
+        .bottom-stats { position: absolute; top: 40px; bottom: auto; left: -20px; right: -20px; z-index: 12; pointer-events: none; }
+        .bottom-stats .stat-block { width: 100%; height: 110px; position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; }
+        .bottom-stats .stat-block .stat-item { position: static; display: flex; align-items: center; gap: 2px; z-index: 1; }
+        .bottom-stats .stat-block .stat-item img { width: 24px; height: 24px; object-fit: contain; }
+        .bottom-stats .stat-block .stat-item .stat-value { font-size: 0.75em; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.9); color: #fff; }
+        .bottom-stats .stat-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/interface/long_stone_block_empty_sign.png') center/100% 100% no-repeat; z-index: 0; }
+
+        .portal-video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: hidden; pointer-events: none; }
+        .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
+
+        .arch-layer { position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; height: 520px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
+
+        .arch-layer::after {
+    content: '';
+    position: absolute;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 50%;
+    background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat;
+    border-radius: 0 0 50% 50%;
+    z-index: -1;
+}
+
+        .hero-layer { position: absolute; bottom: 105px; left: 50%; transform: translateX(-50%); width: 200px; height: 345px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+        .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
+
+        .top-buttons-row { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
+        .bottom-buttons-row { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 25px; z-index: 20; pointer-events: auto; }
+        .left-buttons-column { position: absolute; bottom: 95px; left: 12px; display: flex; flex-direction: column; gap: 12px; z-index: 20; pointer-events: auto; }
+        .right-buttons-column { position: absolute; bottom: 95px; right: 12px; display: flex; flex-direction: column; gap: 12px; z-index: 20; pointer-events: auto; }
+
+        .btn { pointer-events: auto !important; width: 98px; height: 88px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
+        .btn img { width: 62px; height: 62px; object-fit: contain; pointer-events: auto; }
+        .btn .label { color: #ffa500; font-size: 12px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: 2px; pointer-events: none; }
+
+        .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
+        .loading-screen.hidden { opacity: 0; pointer-events: none; }
+        .loading-screen .loading-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/loading_screen_with_logo.png') center/cover no-repeat; z-index: 0; pointer-events: none; }
+        .loading-screen .play-btn { position: relative; z-index: 1; background: transparent; border: none; cursor: pointer; transition: 0.2s; width: 140px; height: 140px; margin-top: 120px; }
+        .loading-screen .play-btn img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 30px rgba(201,168,76,0.3)); }
+        .loading-screen .play-btn:hover { transform: scale(1.05); }
+        .loading-screen .play-btn:active { transform: scale(0.95); }
+
+        .main-interface { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; pointer-events: none; }
+        .main-interface.active { display: block; pointer-events: all; }
+
+        @keyframes epicShockwave { 0%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} 15%{transform:rotate(-1.5deg);filter:brightness(1.6) saturate(1.8) blur(1px);} 45%{transform:rotate(0.8deg);filter:brightness(1) saturate(1) blur(3px);} 75%{transform:rotate(-0.3deg);filter:blur(1px);} 100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);} }
+        @media (max-width: 480px) { .statue-left, .statue-right, .divider-left, .divider-right { display: none; } .loading-screen .play-btn { width: 100px; height: 100px; margin-top: 80px; } }
+        .diablo-light-halo { display: none; }
+        .hero-sprite { background-image: url('assets/hero_skins/archer_spritesheet.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; image-rendering: crisp-edges; position: relative; z-index: 4; }
+    </style>
 </head>
 <body>
     <div class="statue-left"></div><div class="statue-right"></div><div class="divider-left"></div><div class="divider-right"></div>
     <div id="game-container">
-        <div class="bg-layer" style="background: none;"></div>
+        <div class="bg-layer"></div>
         <div class="portal-video-bg">
             <video src="assets/animation/animation_frame_hero.webm" autoplay muted playsinline loop></video>
         </div>
-        <div class="arch-layer" style="position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; height: 520px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none;">
-    
-</div></div>
+        <div class="arch-layer"></div>
         <div class="hero-layer">
             <img src="assets/hero_skins/skin1_01.png" alt="Герой">
         </div>
