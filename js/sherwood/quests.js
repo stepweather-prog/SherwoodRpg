@@ -12,7 +12,7 @@ Sherwood.Quests = {
             id: 1, name: 'Проклятие Зелёного Сердца',
             lore: 'Шервудский лес отравлен. Из расколотых недр хлынула сизая порча. Первыми жертвами стали рудокопы — их раздувшиеся тела намертво обвил неоновый мох.',
             boss: { name: 'Лесное Лихо', image: 'image (46).png', hp: 400, atk: 28, def: 15, exp: 150, gold: 100 },
-            stages: 5,
+            stages: 6,
             rewards: { exp: 200, gold: 50, silver: 500 },
             enemies: [
                 { name: 'Леший', image: 'image (1).png', hp: 100, atk: 15, def: 8, exp: 30, gold: 15 },
@@ -77,6 +77,12 @@ Sherwood.Quests = {
         var p = Sherwood.getPlayer();
         p.stats.hp = p.stats.maxHp;
         
+        // Если глава уже идёт и враг НЕ убит — продолжаем бой
+        if (this._currentChapter && this._currentChapter.id === id && this._inBattle) {
+            return { success: true, chapter: ch, enemy: this._currentEnemy, stage: this._currentStage + 1, total: ch.stages };
+        }
+        
+        // Если глава уже идёт и враг убит — берём следующего
         if (this._currentChapter && this._currentChapter.id === id && this._currentEnemy) {
             this._inBattle = true;
             this._lastAttempt = Date.now();
@@ -85,6 +91,7 @@ Sherwood.Quests = {
             return { success: true, chapter: ch, enemy: this._currentEnemy, stage: this._currentStage + 1, total: ch.stages };
         }
         
+        // Новая глава
         this._currentChapter = ch;
         this._currentStage = 0;
         var firstEnemy = ch.enemies[0];
