@@ -1110,7 +1110,7 @@ _showAllAmulets: function() {
 _equipSkinFromProfile: function(sid) {
     if (Sherwood.Forge && Sherwood.Forge.equipSkin) {
         Sherwood.Forge.equipSkin(sid);
-        var heroImg = document.querySelector('.hero-frame img');
+        var heroImg = document.querySelector('.hero-layer img');
         if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png';
         this.profile();
     }
@@ -1275,7 +1275,7 @@ _craftArrow: function(count) { var r = Sherwood.Forge.craftArrowBatch(count); va
 _craftRing: function() { var r = Sherwood.Forge.craftRing(); var log = document.getElementById('forge-log'); if (r.success) { if (log) log.textContent = 'Кольцо улучшено до ' + r.newLevel + '!'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
 _craftAmulet: function() { var r = Sherwood.Forge.craftAmulet(); var log = document.getElementById('forge-log'); if (r.success) { if (log) log.textContent = 'Амулет улучшен до ' + r.newLevel + '!'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
 _craftSkin: function(sid) { var r = Sherwood.Forge.craftSkin(sid); var log = document.getElementById('forge-log'); if (r.success) { if (log) log.textContent = 'Облик создан!'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
-_equipSkin: function(sid) { Sherwood.Forge.equipSkin(sid); var heroImg = document.querySelector('.hero-frame img'); if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png'; this.forge(); },
+_equipSkin: function(sid) { Sherwood.Forge.equipSkin(sid); var heroImg = document.querySelector('.hero-layer img'); if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png'; this.forge(); },
 
 bestiary: function() { 
     var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
