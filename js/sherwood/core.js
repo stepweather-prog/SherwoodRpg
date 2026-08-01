@@ -565,8 +565,8 @@ Sherwood._recalcStats = function() {
 
     var hearthBonus = 0;
     if (p.hearthBonus && p.hearthBonus.active && Date.now() < p.hearthBonus.endTime) hearthBonus = 0.2;
-    var skinBonus = this.getActiveSkinBonus();
-    var totalMultiplier = 1 + skinBonus / 100 + hearthBonus;
+    var totalSkinBonus = (p.unlockedSkins ? p.unlockedSkins.length : 0);
+    var totalMultiplier = 1 + totalSkinBonus / 100 + hearthBonus;
 
     p.stats.attack = Math.min(Math.floor(baseAttack * totalMultiplier), MAX);
     p.stats.defense = Math.min(Math.floor(baseDefense * totalMultiplier), MAX);
