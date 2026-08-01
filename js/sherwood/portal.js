@@ -1,3 +1,7 @@
+/**
+ * Sherwood Portal — Порталы (7 уровней)
+ */
+
 Sherwood.Portal = {
     _currentPortal: null,
     _currentLevel: 0,
@@ -5,10 +9,12 @@ Sherwood.Portal = {
     _deathCount: 0,
     _timerInterval: null,
     _timeRemaining: 0,
+    _respawnTimer: null,
 
     PORTALS: [
         {
             id: 1, name: 'Портал Нашествия', icon: '🌀', bg: 'assets/backgrounds/portal_1.jpeg',
+            tokenIcon: 'assets/interface/resource_token_on_entrance_portal_1.png',
             enemies: [
                 { name: 'Костяной стрелок', image: 'image (7).png', hp: 800, attack: 60, defense: 30, exp: 150, gold: 100 },
                 { name: 'Забытый гвардеец', image: 'image (6).png', hp: 1200, attack: 75, defense: 40, exp: 250, gold: 180, isBoss: true }
@@ -17,6 +23,7 @@ Sherwood.Portal = {
         },
         {
             id: 2, name: 'Портал Черепных Пауков', icon: '🕷️', bg: 'assets/backgrounds/portal_2.png',
+            tokenIcon: 'assets/interface/resource_token_on_entrance_portal_2.png',
             enemies: [
                 { name: 'Черепной паук', image: 'image (19).png', hp: 1100, attack: 70, defense: 35, exp: 180, gold: 130 },
                 { name: 'Хранитель Врат', image: 'image (11).png', hp: 1600, attack: 90, defense: 50, exp: 300, gold: 220, isBoss: true }
@@ -25,6 +32,7 @@ Sherwood.Portal = {
         },
         {
             id: 3, name: 'Портал Увядания', icon: '🥀', bg: 'assets/backgrounds/portal_3.png',
+            tokenIcon: 'assets/interface/resource_token_on_entrance_portal_3.png',
             enemies: [
                 { name: 'Проклятая нимфа', image: 'image (25).png', hp: 1500, attack: 85, defense: 40, exp: 220, gold: 160 },
                 { name: 'Рогатый дух увядания', image: 'image (10).png', hp: 2100, attack: 105, defense: 60, exp: 380, gold: 280, isBoss: true }
@@ -33,6 +41,7 @@ Sherwood.Portal = {
         },
         {
             id: 4, name: 'Портал Цепей', icon: '⛓️', bg: 'assets/backgrounds/portal_1.jpeg',
+            tokenIcon: 'assets/interface/portal_entrance_token.png',
             enemies: [
                 { name: 'Повелитель цепей', image: 'image (8).png', hp: 2000, attack: 100, defense: 50, exp: 280, gold: 200 },
                 { name: 'Тюремщик Разлома', image: 'image (23).png', hp: 2400, attack: 115, defense: 65, exp: 350, gold: 260 },
@@ -42,6 +51,7 @@ Sherwood.Portal = {
         },
         {
             id: 5, name: 'Портал Ликантропов', icon: '🐺', bg: 'assets/backgrounds/portal_2.png',
+            tokenIcon: 'assets/interface/portal_entrance_token.png',
             enemies: [
                 { name: 'Кровавый упырь', image: 'image (18).png', hp: 2700, attack: 120, defense: 60, exp: 350, gold: 250 },
                 { name: 'Изумрудный ликантроп', image: 'image (24).png', hp: 3200, attack: 140, defense: 75, exp: 450, gold: 320 },
@@ -51,6 +61,7 @@ Sherwood.Portal = {
         },
         {
             id: 6, name: 'Портал Скорпиона', icon: '🦂', bg: 'assets/backgrounds/portal_3.png',
+            tokenIcon: 'assets/interface/portal_entrance_token.png',
             enemies: [
                 { name: 'Страж портала', image: 'image (14).png', hp: 3500, attack: 140, defense: 70, exp: 420, gold: 300 },
                 { name: 'Элитный страж', image: 'image (17).png', hp: 4000, attack: 155, defense: 80, exp: 500, gold: 360 },
@@ -60,6 +71,7 @@ Sherwood.Portal = {
         },
         {
             id: 7, name: 'Портал Искажения', icon: '👁️', bg: 'assets/backgrounds/portal_1.jpeg',
+            tokenIcon: 'assets/interface/portal_entrance_token.png',
             enemies: [
                 { name: 'Страж искажения', image: 'image (16).png', hp: 4500, attack: 170, defense: 85, exp: 550, gold: 400 },
                 { name: 'Элита портала', image: 'image (21).png', hp: 5200, attack: 190, defense: 95, exp: 650, gold: 480 },
@@ -73,7 +85,7 @@ Sherwood.Portal = {
     init: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
-        if (!player.portal) player.portal = { completed: [] };
+        if (!player.portal) player.portal = { completed: [], deathCounts: {} };
     },
 
     getPortal: function(portalId) {
