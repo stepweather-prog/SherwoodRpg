@@ -617,9 +617,12 @@ _hitEnemyCard: function() {
     var card = document.getElementById('enemy-card');
     if (!card) return;
     card.style.transition = 'transform 0.1s, filter 0.15s';
-    card.style.transform = 'translateX(4px) rotate(2deg)';
-    card.style.filter = 'brightness(1.5) saturate(2.5) hue-rotate(-15deg)';
-    setTimeout(function() { card.style.transform = ''; card.style.filter = ''; }, 250);
+    card.style.transform = 'translateX(2px) rotate(0.5deg) scale(0.95)';
+    card.style.filter = 'brightness(1.3) saturate(2) hue-rotate(-10deg)';
+    setTimeout(function() {
+        card.style.transform = '';
+        card.style.filter = '';
+    }, 200);
 },
 
 _updateEnemyHP: function(hp, max) { 
