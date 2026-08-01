@@ -367,9 +367,8 @@ _dungeonMove: function(tx, ty) {
         this._playSound('steps');
         this._renderDungeon();
         SherwoodUI.updateDisplay();
-        // Если под клеткой враг — сразу бой
+        // Если под клеткой враг — бой без перемещения
         if (cell.type === Sherwood.Dungeon.TILE.MONSTER || cell.type === Sherwood.Dungeon.TILE.BOSS) {
-            d.px = tx; d.py = ty;
             Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
             var self = this;
             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
@@ -1229,7 +1228,7 @@ forge: function() {
     var unlocked = player.unlockedSkins || []; var active = player.activeSkin || 'skin1_01';
     var ringInfo = Sherwood.Forge.getRingCraftInfo(); var amuletInfo = Sherwood.Forge.getAmuletCraftInfo();
     var arrowInfo = Sherwood.Forge.getArrowCraftInfo(); var arrowCount = Sherwood.Forge.getArrowCount();
-    var currentChapter = player.questProgress ? player.questProgress.currentChapter || 1 : 1;
+    
     var h = '';
     h += '<div style="margin-bottom:12px;"><div style="color:#e0c080;margin-bottom:4px;">Заточка</div>';
     for (var i = 0; i < enhanceItems.length; i++) { var item = enhanceItems[i], idx = items.indexOf(item), lvl = item.enhancement || 0; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><div><div style="color:#e0c080;font-size:0.8em;">' + item.name + '</div><div style="color:#aaa;font-size:0.6em;">Заточка: +' + lvl + '</div></div><button onclick="SherwoodUI._enhanceItem(' + idx + ')" style="background:#c9a040;border:none;border-radius:4px;padding:4px 10px;color:#000;cursor:pointer;font-size:0.7em;">Точить</button></div>'; }
@@ -1255,7 +1254,7 @@ forge: function() {
     for (var i = 0; i < skins.length; i++) { 
         var skin = skins[i];
         var skinData = Sherwood.SKIN_BONUSES[skin.id];
-        if (!skinData || skinData.chapter > currentChapter) continue;
+        
         var owned = unlocked.indexOf(skin.id) !== -1, isActive = active === skin.id; 
         h += '<div style="background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#ffd700' : owned ? '#4caf50' : '#555') + ';border-radius:8px;padding:8px;text-align:center;">'; 
         h += '<img src="' + skin.icon + '" style="width:48px;height:48px;object-fit:contain;border-radius:4px;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">'; 
