@@ -334,55 +334,23 @@ Sherwood.getActiveSkinBonus = function() {
 Sherwood.canCraftSkin = function(skinId) {
     var p = this.getPlayer();
     if (!p) return { can: false, reason: 'Игрок не найден' };
-    
     var skinData = this.SKIN_BONUSES[skinId];
     if (!skinData) return { can: false, reason: 'Скин не найден' };
-    
-    // Проверка главы отключена
-    
-    var cost = this.SKIN_CRAFT_COSTS[skinId];
-    if (!cost) return { can: false, reason: 'Нет данных о стоимости' };
-    
-    var resources = p.resources || {};
-    if ((resources.scrolls || 0) < cost.tablets) {
-        return { can: false, reason: 'Нужно ' + cost.tablets + ' скрижалей (у вас ' + (resources.scrolls || 0) + ')' };
-    }
-    if ((resources.silver || 0) < cost.silver) {
-        return { can: false, reason: 'Нужно ' + cost.silver + ' серебра' };
-    }
-    if ((resources.ingots || 0) < cost.ingots) {
-        return { can: false, reason: 'Нужно ' + cost.ingots + ' слитков' };
-    }
-    
     if (p.unlockedSkins && p.unlockedSkins.indexOf(skinId) !== -1) {
         return { can: false, reason: 'Уже разблокирован' };
     }
-    
     return { can: true };
 };
 
 Sherwood.craftSkin = function(skinId) {
     var check = this.canCraftSkin(skinId);
     if (!check.can) return check;
-    
     var p = this.getPlayer();
-    var cost = this.SKIN_CRAFT_COSTS[skinId];
-    
-    p.resources.scrolls -= cost.tablets;
-    p.resources.silver -= cost.silver;
-    p.resources.ingots -= cost.ingots;
-    
     if (!p.unlockedSkins) p.unlockedSkins = [];
     p.unlockedSkins.push(skinId);
-    
-    if (p.unlockedSkins.length === 1) {
-        p.activeSkin = skinId;
-    }
-    
+    if (p.unlockedSkins.length === 1) p.activeSkin = skinId;
     this._recalcStats();
     this.saveGame();
-    this.dispatch({ type: 'SKIN_UNLOCKED', payload: { skinId: skinId } });
-    
     return { success: true, skinId: skinId };
 };
 
