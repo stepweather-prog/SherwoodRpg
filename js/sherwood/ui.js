@@ -270,7 +270,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     
-    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-color:#111;overflow:hidden;font-size:0;line-height:0;'>";
+    var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
     // Плитки на всём поле (скрываются при открытии)
@@ -282,15 +282,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         } 
     }
     
-    // Пол на открытых клетках
-    for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-            if (!d.grid[y] || !d.grid[y][x]) continue;
-            if (d.grid[y][x].open) {
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(" + floorBg + ");background-size:100% 100%;z-index:0;'></div>";
-            }
-        }
-    }
+    
     
     // Затемнение неоткрытых клеток
     for (var y = 0; y < size; y++) {
