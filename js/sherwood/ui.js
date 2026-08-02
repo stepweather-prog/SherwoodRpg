@@ -1162,7 +1162,7 @@ _craftSkin: function(sid) { var r = Sherwood.Forge.craftSkin(sid); var log = doc
 _equipSkin: function(sid) { Sherwood.Forge.equipSkin(sid); var heroImg = document.querySelector('.hero-layer img'); if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png'; this.forge(); },
 
 bestiary: function() { 
-    var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome(); this._previousScreen=null; this._playSound('click'); 
+    var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
     if(!Sherwood.Bestiary) { this._showPlaceholder('Бестиарий','bestiary',gb); return; } 
     var progress=Sherwood.Bestiary.getDiscoveryProgress();
     var tabs=['Проклятая чаща','Первородное болото','Базальтовые шахты','Квест','Рейд','Портал'];
