@@ -15,33 +15,33 @@
         .divider-right { position: fixed; right: calc((100vw - 480px) / 2 - 80px); top: 0; width: 160px; height: 100vh; background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat; background-size: 100% 100%; z-index: 9999; pointer-events: none; }
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow-y: auto; overflow-x: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; transform-origin: top center; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
-        .top-panel { position: absolute; top: 0; left: 0; right: 0; z-index: 20; background: transparent; padding: 4px 4px; }
-        .top-row-icons { display: flex; justify-content: center; gap: 6px; margin-bottom: 0; }
-        .top-icon-block { display: flex; flex-direction: column; align-items: center; position: relative; width: 72px; }
-        .top-icon-block img:first-child { width: 72px; height: 72px; object-fit: contain; }
-        .top-icon-block .banner { width: 100px; height: 24px; object-fit: fill; margin-top: -5px; }
-        .top-icon-block span { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 0.85em; font-weight: bold; text-shadow: 0 0 6px #000; pointer-events: none; z-index: 2; }
-        .top-row-stats { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
-        .stat-block { display: flex; align-items: center; gap: 8px; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; padding: 12px 20px; height: 50px; min-width: 115px; justify-content: center; }
-        .stat-block img { width: 32px; height: 32px; object-fit: contain; }
-        .stat-block .stat-value { color: #fff; font-size: 1.1em; font-weight: bold; text-shadow: 0 0 4px #000; }
-        .top-row-buttons { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
-        .top-row-buttons .top-btn { display: flex; flex-direction: column; align-items: center; width: 72px; cursor: pointer; background: none; border: none; }
-        .top-row-buttons .top-btn img { width: 72px; height: 72px; object-fit: contain; }
-        .top-row-buttons .top-btn .banner { width: 100px; height: 24px; object-fit: fill; margin-top: -5px; }
-        .top-row-buttons .top-btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
+        .top-panel { position: absolute; top: 0; left: 0; right: 0; z-index: 20; background: transparent; padding: 2px 0; }
+        .top-row-icons { display: flex; justify-content: center; gap: 4px; margin-bottom: 0; }
+        .top-icon-block { display: flex; flex-direction: column; align-items: center; position: relative; width: 70px; }
+        .top-icon-block img:first-child { width: 70px; height: 70px; object-fit: contain; }
+        .top-icon-block .banner { width: 95px; height: 22px; object-fit: fill; margin-top: -5px; }
+        .top-icon-block span { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 0.8em; font-weight: bold; text-shadow: 0 0 6px #000; pointer-events: none; z-index: 2; }
+        .top-row-stats { display: flex; justify-content: center; gap: 4px; margin-top: 2px; }
+        .stat-block { display: flex; align-items: center; gap: 6px; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; padding: 10px 16px; height: 44px; min-width: 105px; justify-content: center; }
+        .stat-block img { width: 28px; height: 28px; object-fit: contain; }
+        .stat-block .stat-value { color: #fff; font-size: 1em; font-weight: bold; text-shadow: 0 0 4px #000; }
+        .top-row-buttons { display: flex; justify-content: center; gap: 4px; margin-top: 2px; }
+        .top-btn { display: flex; flex-direction: column; align-items: center; width: 70px; cursor: pointer; background: none; border: none; }
+        .top-btn img { width: 70px; height: 70px; object-fit: contain; }
+        .top-btn .banner { width: 95px; height: 22px; object-fit: fill; margin-top: -5px; }
+        .top-btn .label { color: #ffa500; font-size: 9px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
         .portal-video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: hidden; pointer-events: none; }
         .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
-        .arch-layer { position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 650px; height: 570px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
+        .arch-layer { position: absolute; bottom: 0; left: 0; width: 100%; height: 580px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
         .arch-layer::after { content: ''; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 51%; height: 65%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; border-radius: 50% 50% 0 0; z-index: -1; }
         .hero-layer { position: absolute; bottom: 105px; left: 50%; transform: translateX(-50%); width: 200px; height: 345px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
         .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
-        .bottom-buttons-row { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; justify-content: center; gap: 20px; z-index: 20; pointer-events: auto; }
-        .left-buttons-column { position: absolute; bottom: 100px; left: 8px; display: flex; flex-direction: column; gap: 10px; z-index: 20; pointer-events: auto; }
-        .right-buttons-column { position: absolute; bottom: 100px; right: 8px; display: flex; flex-direction: column; gap: 10px; z-index: 20; pointer-events: auto; }
-        .btn { pointer-events: auto !important; width: 105px; height: 95px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
-        .btn img { width: 68px; height: 68px; object-fit: contain; pointer-events: auto; }
-        .btn .label { color: #ffa500; font-size: 13px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: 2px; pointer-events: none; }
+        .side-btn { width: 70px; height: 70px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
+        .side-btn img { width: 70px; height: 70px; object-fit: contain; }
+        .side-btn .label { color: #ffa500; font-size: 9px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
+        .left-buttons-column { position: absolute; bottom: 120px; left: 0; display: flex; flex-direction: column; gap: 4px; z-index: 20; pointer-events: auto; }
+        .right-buttons-column { position: absolute; bottom: 120px; right: 0; display: flex; flex-direction: column; gap: 4px; z-index: 20; pointer-events: auto; }
+        .bottom-btn-row { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: auto; }
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
         .loading-screen .loading-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/loading_screen_with_logo.png') center/cover no-repeat; z-index: 0; pointer-events: none; }
@@ -82,19 +82,19 @@
             </div>
         </div>
         <div class="left-buttons-column">
-            <div class="btn" data-action="quest"><img src="assets/all_buttons/home.png"><div class="label">Квест</div></div>
-            <div class="btn" data-action="raid"><img src="assets/all_buttons/raid.png"><div class="label">Рейд</div></div>
-            <div class="btn" data-action="arena"><img src="assets/all_buttons/arena.png"><div class="label">Арена</div></div>
-            <div class="btn" data-action="portal"><img src="assets/all_buttons/portal.png"><div class="label">Порталы</div></div>
+            <div class="side-btn" data-action="quest"><img src="assets/all_buttons/home.png"><span class="label">Квест</span></div>
+            <div class="side-btn" data-action="raid"><img src="assets/all_buttons/raid.png"><span class="label">Рейд</span></div>
+            <div class="side-btn" data-action="arena"><img src="assets/all_buttons/arena.png"><span class="label">Арена</span></div>
+            <div class="side-btn" data-action="portal"><img src="assets/all_buttons/portal.png"><span class="label">Порталы</span></div>
         </div>
         <div class="right-buttons-column">
-            <div class="btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><div class="label">Таверна</div></div>
-            <div class="btn" data-action="subway"><img src="assets/all_buttons/subway.png"><div class="label">Подземка</div></div>
-            <div class="btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><div class="label">Задания</div></div>
-            <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><div class="label">Сумка</div></div>
+            <div class="side-btn" data-action="tavern"><img src="assets/all_buttons/tavern.png"><span class="label">Таверна</span></div>
+            <div class="side-btn" data-action="subway"><img src="assets/all_buttons/subway.png"><span class="label">Подземка</span></div>
+            <div class="side-btn" data-action="daily"><img src="assets/all_buttons/daily_quests.png"><span class="label">Задания</span></div>
+            <div class="side-btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><span class="label">Сумка</span></div>
         </div>
-        <div class="bottom-buttons-row">
-            <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><div class="label">Чат</div></div>
+        <div class="bottom-btn-row">
+            <div class="side-btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
         </div>
         <div class="loading-screen" id="loadingScreen"><div class="loading-bg"></div><button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');}catch(e){}"><img src="assets/all_buttons/play.png" alt="Играть"></button></div>
         <div class="main-interface" id="mainInterface"></div>
