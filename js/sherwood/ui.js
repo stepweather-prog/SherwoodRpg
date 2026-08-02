@@ -363,13 +363,11 @@ _dungeonMove: function(tx, ty) {
     if (!cell) return;
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
-    // Первое нажатие на соседнюю закрытую клетку — открываем
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
         this._playSound('steps');
         this._renderDungeon();
         SherwoodUI.updateDisplay();
-        // Если под клеткой враг — бой без перемещения
         if (cell.type === Sherwood.Dungeon.TILE.MONSTER || cell.type === Sherwood.Dungeon.TILE.BOSS) {
             Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
             var self = this;
@@ -377,12 +375,10 @@ _dungeonMove: function(tx, ty) {
         }
         return;
     }
-    // Открытая клетка — идём
     if (cell.open && dist === 1) {
         this._doStep(tx, ty);
         return;
     }
-    // Дальняя открытая клетка — автопуть
     if (cell.open && dist > 1) {
         this._walkPath(tx, ty);
         return;
