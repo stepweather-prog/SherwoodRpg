@@ -19,16 +19,17 @@
         .top-row-icons { display: flex; justify-content: center; gap: 4px; }
         .top-icon-block { display: flex; flex-direction: column; align-items: center; position: relative; width: 56px; }
         .top-icon-block img:first-child { width: 56px; height: 56px; object-fit: contain; }
-        .top-icon-block .banner { width: 75px; height: 18px; object-fit: fill; margin-top: -4px; }
-        .top-icon-block span { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 0.7em; font-weight: bold; text-shadow: 0 0 6px #000; pointer-events: none; z-index: 2; }
-        .top-row-stats { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
-        .stat-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 56px; height: 56px; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; }
-        .stat-btn img { width: 24px; height: 24px; object-fit: contain; }
-        .stat-btn .stat-value { color: #fff; font-size: 0.7em; font-weight: bold; text-shadow: 0 0 4px #000; }
-        .top-row-buttons { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
+        .top-row-values { display: flex; justify-content: center; gap: 4px; margin-top: 2px; }
+        .top-row-values .val-block { width: 56px; height: 28px; display: flex; align-items: center; justify-content: center; background: url('assets/interface/horizontal_banner_panel_01.png') center/100% 100% no-repeat; }
+        .top-row-values .val-block span { color: #ffd700; font-size: 0.7em; font-weight: bold; text-shadow: 0 0 4px #000; }
+        .top-row-stats { display: flex; justify-content: center; gap: 6px; margin-top: 6px; }
+        .stat-btn { display: flex; flex-direction: column; align-items: center; width: 70px; }
+        .stat-btn img { width: 42px; height: 42px; object-fit: contain; }
+        .stat-btn .stat-panel { width: 90px; height: 32px; display: flex; align-items: center; justify-content: center; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; margin-top: -2px; }
+        .stat-btn .stat-value { color: #fff; font-size: 0.85em; font-weight: bold; text-shadow: 0 0 4px #000; }
+        .top-row-buttons { display: flex; justify-content: center; gap: 4px; margin-top: 6px; }
         .top-btn { display: flex; flex-direction: column; align-items: center; width: 56px; cursor: pointer; background: none; border: none; }
         .top-btn img { width: 56px; height: 56px; object-fit: contain; }
-        .top-btn .banner { width: 75px; height: 18px; object-fit: fill; margin-top: -4px; }
         .top-btn .label { color: #ffa500; font-size: 8px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
         .portal-video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: hidden; pointer-events: none; }
         .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
@@ -39,8 +40,8 @@
         .side-btn { width: 56px; height: 56px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
         .side-btn img { width: 56px; height: 56px; object-fit: contain; }
         .side-btn .label { color: #ffa500; font-size: 8px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
-        .left-buttons-column { position: absolute; bottom: 120px; left: 0; display: flex; flex-direction: column; gap: 4px; z-index: 20; pointer-events: auto; }
-        .right-buttons-column { position: absolute; bottom: 120px; right: 0; display: flex; flex-direction: column; gap: 4px; z-index: 20; pointer-events: auto; }
+        .left-buttons-column { position: absolute; bottom: 120px; left: 52px; display: flex; flex-direction: column; gap: 4px; z-index: 20; pointer-events: auto; }
+        .right-buttons-column { position: absolute; bottom: 120px; right: 52px; display: flex; flex-direction: column; gap: 4px; z-index: 20; pointer-events: auto; }
         .bottom-btn-row { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: auto; }
         .loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; pointer-events: all; }
         .loading-screen.hidden { opacity: 0; pointer-events: none; }
@@ -64,14 +65,19 @@
         <div class="hero-layer"><img src="assets/hero_skins/skin1_01.png" alt="Герой"></div>
         <div class="top-panel">
             <div class="top-row-icons">
-                <div class="top-icon-block"><img src="assets/interface/gold_plate.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span id="gold-display">0</span></div>
-                <div class="top-icon-block"><img src="assets/interface/level_hero.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span id="level-display">1</span></div>
-                <div class="top-icon-block"><img src="assets/interface/silver_plaque.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span id="silver-display">0</span></div>
+                <div class="top-icon-block"><img src="assets/interface/gold_plate.png"></div>
+                <div class="top-icon-block"><img src="assets/interface/level_hero.png"></div>
+                <div class="top-icon-block"><img src="assets/interface/silver_plaque.png"></div>
+            </div>
+            <div class="top-row-values">
+                <div class="val-block"><span id="gold-display">0</span></div>
+                <div class="val-block"><span id="level-display">1</span></div>
+                <div class="val-block"><span id="silver-display">0</span></div>
             </div>
             <div class="top-row-stats">
-                <div class="stat-btn"><img src="assets/interface/icon_power.png"><span class="stat-value attack">0</span></div>
-                <div class="stat-btn"><img src="assets/interface/icon_defense.png"><span class="stat-value defense">0</span></div>
-                <div class="stat-btn"><img src="assets/interface/icon_health.png"><span class="stat-value hp">0</span></div>
+                <div class="stat-btn"><img src="assets/interface/icon_power.png"><div class="stat-panel"><span class="stat-value attack">0</span></div></div>
+                <div class="stat-btn"><img src="assets/interface/icon_defense.png"><div class="stat-panel"><span class="stat-value defense">0</span></div></div>
+                <div class="stat-btn"><img src="assets/interface/icon_health.png"><div class="stat-panel"><span class="stat-value hp">0</span></div></div>
             </div>
             <div class="top-row-buttons">
                 <div class="top-btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
