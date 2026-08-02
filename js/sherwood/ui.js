@@ -410,15 +410,16 @@ _walkPath: function(toX, toY) {
                     self._renderDungeon();
                     return;
                 }
-                var step = cur.path[i];
-                if (step.x > d.px) d.heroDirection = 'right';
-                else if (step.x < d.px) d.heroDirection = 'left';
-                else if (step.y > d.py) d.heroDirection = 'down';
-                else if (step.y < d.py) d.heroDirection = 'up';
-                Sherwood.Dungeon._moveSilent(step.x, step.y);
-                self._playSound('steps');
+                self._doStep(cur.path[i].x, cur.path[i].y);
                 i++;
-                setTimeout(nextStep, 150);
+                if (i < cur.path.length) {
+                    setTimeout(nextStep, 1000);
+                } else {
+                    setTimeout(function() {
+                        d.isMoving = false;
+                        self._renderDungeon();
+                    }, 1000);
+                }
             }
             nextStep();
             return;
@@ -427,7 +428,7 @@ _walkPath: function(toX, toY) {
             var nx = cur.x + dirs[i][0], ny = cur.y + dirs[i][1];
             if (nx >= 0 && nx < size && ny >= 0 && ny < size && !visited[ny + ',' + nx]) {
                 var c = d.grid[ny][nx];
-                if (c && c.open) {
+                if (c && c.open && !c.monster) {
                     visited[ny + ',' + nx] = true;
                     queue.push({x: nx, y: ny, path: cur.path.concat([{x: nx, y: ny}])});
                 }
