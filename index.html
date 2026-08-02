@@ -16,20 +16,20 @@
         #game-container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; background: #0a0a0f; overflow-y: auto; overflow-x: hidden; border: 1px solid #2a2a3e; box-shadow: 0 0 60px rgba(0,0,0,0.9); z-index: 10; margin: 0 auto; transform-origin: top center; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; z-index: 0; }
         .top-panel { position: absolute; top: 0; left: 0; right: 0; z-index: 20; background: transparent; padding: 4px 4px; }
-        .top-row-icons { display: flex; justify-content: center; gap: 8px; margin-bottom: 0; }
-        .top-icon-block { display: flex; flex-direction: column; align-items: center; position: relative; width: 80px; }
-        .top-icon-block img:first-child { width: 80px; height: 80px; object-fit: contain; }
-        .top-icon-block .banner { width: 110px; height: 26px; object-fit: fill; margin-top: -6px; }
-        .top-icon-block span { position: absolute; top: 32px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 0.9em; font-weight: bold; text-shadow: 0 0 6px #000; pointer-events: none; z-index: 2; }
+        .top-row-icons { display: flex; justify-content: center; gap: 6px; margin-bottom: 0; }
+        .top-icon-block { display: flex; flex-direction: column; align-items: center; position: relative; width: 72px; }
+        .top-icon-block img:first-child { width: 72px; height: 72px; object-fit: contain; }
+        .top-icon-block .banner { width: 100px; height: 24px; object-fit: fill; margin-top: -5px; }
+        .top-icon-block span { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 0.85em; font-weight: bold; text-shadow: 0 0 6px #000; pointer-events: none; z-index: 2; }
         .top-row-stats { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
-        .stat-block { display: flex; align-items: center; gap: 8px; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; padding: 14px 24px; height: 56px; min-width: 130px; justify-content: center; }
-        .stat-block img { width: 36px; height: 36px; object-fit: contain; }
-        .stat-block .stat-value { color: #fff; font-size: 1.2em; font-weight: bold; text-shadow: 0 0 4px #000; }
-        .top-row-buttons { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
-        .top-row-buttons .top-btn { display: flex; flex-direction: column; align-items: center; width: 80px; cursor: pointer; background: none; border: none; }
-        .top-row-buttons .top-btn img { width: 80px; height: 80px; object-fit: contain; }
-        .top-row-buttons .top-btn .banner { width: 110px; height: 26px; object-fit: fill; margin-top: -6px; }
-        .top-row-buttons .top-btn .label { color: #ffa500; font-size: 11px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
+        .stat-block { display: flex; align-items: center; gap: 8px; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; padding: 12px 20px; height: 50px; min-width: 115px; justify-content: center; }
+        .stat-block img { width: 32px; height: 32px; object-fit: contain; }
+        .stat-block .stat-value { color: #fff; font-size: 1.1em; font-weight: bold; text-shadow: 0 0 4px #000; }
+        .top-row-buttons { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
+        .top-row-buttons .top-btn { display: flex; flex-direction: column; align-items: center; width: 72px; cursor: pointer; background: none; border: none; }
+        .top-row-buttons .top-btn img { width: 72px; height: 72px; object-fit: contain; }
+        .top-row-buttons .top-btn .banner { width: 100px; height: 24px; object-fit: fill; margin-top: -5px; }
+        .top-row-buttons .top-btn .label { color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 6px #000; text-align: center; margin-top: -2px; }
         .portal-video-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; overflow: hidden; pointer-events: none; }
         .portal-video-bg video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
         .arch-layer { position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 650px; height: 570px; background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat; z-index: 3; pointer-events: none; }
@@ -74,9 +74,11 @@
                 <div class="stat-block"><img src="assets/interface/icon_health.png"><span class="stat-value hp">0</span></div>
             </div>
             <div class="top-row-buttons">
+                <div class="top-btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Профиль</span></div>
                 <div class="top-btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Очаг</span></div>
                 <div class="top-btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Таланты</span></div>
                 <div class="top-btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Рынок</span></div>
+                <div class="top-btn" data-action="settings"><img src="assets/all_buttons/settings.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Настройки</span></div>
             </div>
         </div>
         <div class="left-buttons-column">
@@ -92,9 +94,7 @@
             <div class="btn" data-action="bag"><img src="assets/all_buttons/hero_bag.png"><div class="label">Сумка</div></div>
         </div>
         <div class="bottom-buttons-row">
-            <div class="btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><div class="label">Профиль</div></div>
             <div class="btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><div class="label">Чат</div></div>
-            <div class="btn" data-action="settings"><img src="assets/all_buttons/settings.png"><div class="label">Настройки</div></div>
         </div>
         <div class="loading-screen" id="loadingScreen"><div class="loading-bg"></div><button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');}catch(e){}"><img src="assets/all_buttons/play.png" alt="Играть"></button></div>
         <div class="main-interface" id="mainInterface"></div>
