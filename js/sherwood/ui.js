@@ -15,7 +15,7 @@ const SherwoodUI = {
     _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', agility: 'assets/interface/icon_dexterity.png', hp: 'assets/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _audioFiles: {
-        'main_theme': 'assets/sounds/sherwood_rpg.mp3',
+        'main_theme': 'assets/sounds/sherwood_rpg.ogg',
         'click': 'assets/sounds/button_click.wav', 'shot': 'assets/sounds/arrow_hit_2.wav', 'arrow_hit': 'assets/sounds/arrow_hit_2.wav',
         'victory': 'assets/sounds/level_completed.wav', 'defeat': 'assets/sounds/defeat.wav', 'levelup': 'assets/sounds/levelup.wav',
         'chest_open': 'assets/sounds/chest_opens.wav', 'trap': 'assets/sounds/trap.wav',
@@ -126,7 +126,7 @@ _showToast: function(msg) {
 
 _initSounds: function() {
     for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
-    try { var main = new Audio('assets/sounds/sherwood_rpg.mp3'); main.preload = 'auto'; main.loop = true; main.volume = 0.5; this._sounds['main_theme'] = main; } catch(e) {}
+    try { var main = new Audio('assets/sounds/sherwood_rpg.ogg'); main.preload = 'auto'; main.loop = true; main.volume = 0.5; this._sounds['main_theme'] = main; } catch(e) {}
     try { var ambient = new Audio('assets/sounds/atmosphere_ambient_1.mp3'); ambient.preload = 'auto'; ambient.loop = true; ambient.volume = 0.4; this._sounds['dungeon_ambient'] = ambient; } catch(e) {}
 },
 
