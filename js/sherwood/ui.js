@@ -1044,7 +1044,14 @@ _toggleMusic: function(en) {
     h += '<div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>';
     this._openScreen('Профиль', 'profile', h);
 },
-
+_equipSkinFromProfile: function(sid) {
+    var r = Sherwood.Forge.equipSkin(sid);
+    if (r.success) {
+        var heroImg = document.querySelector('.hero-layer img');
+        if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png';
+        this.profile();
+    }
+},
 _showAllTrophies: function() {
     var trophies = Sherwood.getPlayer().trophies || [];
     var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Трофеи (' + trophies.length + ')</div>';
@@ -1156,7 +1163,15 @@ _craftArrow: function(count) { var r = Sherwood.Forge.craftArrowBatch(count); va
 _craftRing: function() { var r = Sherwood.Forge.craftRing(); var log = document.getElementById('forge-log'); if (r.success) { if (log) log.textContent = 'Кольцо улучшено до ' + r.newLevel + '!'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
 _craftAmulet: function() { var r = Sherwood.Forge.craftAmulet(); var log = document.getElementById('forge-log'); if (r.success) { if (log) log.textContent = 'Амулет улучшен до ' + r.newLevel + '!'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
 _craftSkin: function(sid) { var r = Sherwood.Forge.craftSkin(sid); var log = document.getElementById('forge-log'); if (r.success) { if (log) log.textContent = 'Облик создан!'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
-_equipSkin: function(sid) { Sherwood.Forge.equipSkin(sid); var heroImg = document.querySelector('.hero-layer img'); if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png'; this.forge(); },
+_equipSkin: function(sid) { 
+    var r = Sherwood.Forge.equipSkin(sid); 
+    if (r.success) {
+        var heroImg = document.querySelector('.hero-layer img'); 
+        if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png'; 
+        this.updateDisplay();
+        this.forge(); 
+    }
+},
 
 bestiary: function() { 
     var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
