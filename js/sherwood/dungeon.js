@@ -253,39 +253,56 @@ Sherwood.Dungeon = {
     },
 
     killMonster: function() {
-        if (!this._dungeon) return;
-        var d = this._dungeon;
-        d.monstersKilled++;
-        var cell = d.grid[d.py][d.px];
-        if (cell && cell.monster) {
-            cell.monster = false;
-            cell.monsterId = null;
-            cell.isBoss = false;
-            cell.type = this.TILE.EMPTY;
-        }
-        // Мешок с каждой бестии
-        if (cell) {
-            cell.lootBag = true;
-            cell.lootCollected = false;
-            cell.reward = { gold: 1 + Math.floor(Math.random() * 3), silver: 50 + Math.floor(Math.random() * 100) };
-        }
-        // Последний монстр — сундук вместо мешка
-        if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced && cell) {
-            d.chestPlaced = true;
-            cell.lootBag = false;
-            cell.chest = true;
-            cell.type = this.TILE.CHEST;
-            cell.looted = false;
-            cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
-        }
-        if (d.monstersKilled >= d.totalMonsters) {
-            for (var y = 0; y < d.size; y++) {
-                for (var x = 0; x < d.size; x++) {
-                    if (d.grid[y][x].exit) d.grid[y][x].locked = false;
-                }
+    if (!this._dungeon) return;
+    var d = this._dungeon;
+    d.monstersKilled++;
+    
+    // Ищем клетку с монстром вокруг игрока
+    var cell = null;
+    var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
+    for (var i = 0; i < checkDirs.length; i++) {
+        var nx = d.px + checkDirs[i][0];
+        var ny = d.py + checkDirs[i][1];
+        if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+            if (d.grid[ny][nx].monster) {
+                cell = d.grid[ny][nx];
+                break;
             }
         }
-    },
+    }
+    
+    if (cell && cell.monster) {
+        cell.monster = false;
+        cell.monsterId = null;
+        cell.isBoss = false;
+        cell.type = this.TILE.EMPTY;
+    }
+    
+    // Мешок с каждой бестии
+    if (cell) {
+        cell.lootBag = true;
+        cell.lootCollected = false;
+        cell.reward = { gold: 1 + Math.floor(Math.random() * 3), silver: 50 + Math.floor(Math.random() * 100) };
+    }
+    
+    // Последний монстр — сундук вместо мешка
+    if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced && cell) {
+        d.chestPlaced = true;
+        cell.lootBag = false;
+        cell.chest = true;
+        cell.type = this.TILE.CHEST;
+        cell.looted = false;
+        cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
+    }
+    
+    if (d.monstersKilled >= d.totalMonsters) {
+        for (var y = 0; y < d.size; y++) {
+            for (var x = 0; x < d.size; x++) {
+                if (d.grid[y][x].exit) d.grid[y][x].locked = false;
+            }
+        }
+    }
+},
 
     complete: function() {
         var d = this._dungeon;
