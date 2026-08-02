@@ -138,6 +138,7 @@ Sherwood.Portal = {
         var result = { damage: damage, enemyName: enemy.name, enemyHp: Math.max(0, enemy.hp), enemyMaxHp: enemy.maxHp || (enemy.hp + damage), enemyDead: enemy.hp <= 0, isBoss: enemy.isBoss || false };
         if (!enemy.maxHp) enemy.maxHp = enemy.hp + damage;
         if (enemy.hp <= 0) {
+            if (Sherwood.Bestiary && enemy.image) Sherwood.Bestiary.registerKill(enemy.image);
             result.exp = enemy.exp; result.gold = enemy.gold;
             Sherwood.addExp(enemy.exp); Sherwood.addResource('gold', enemy.gold); Sherwood.addResource('silver', Math.floor(enemy.gold * 1.5));
             this._currentLevel++;
@@ -169,7 +170,13 @@ Sherwood.Portal = {
         Sherwood.addExp(Math.floor(portal.rewards.exp * mult));
         Sherwood.addResource('gold', Math.floor(portal.rewards.gold * mult));
         Sherwood.addResource('silver', Math.floor(portal.rewards.silver * mult));
-        if (mult === 1) { if (!player.portal.completed) player.portal.completed = []; player.portal.completed.push(portal.id); }
+        if (mult === 1) { 
+            if (!player.portal.completed) player.portal.completed = []; 
+            player.portal.completed.push(portal.id); 
+            if (typeof Sherwood.addTrophy === 'function') {
+                Sherwood.addTrophy('portal_' + portal.id, 'Портал: ' + portal.name, { attack: portal.id * 10, defense: portal.id * 5, hp: portal.id * 20, agility: portal.id * 3 }, portal.icon || '', 'portal');
+            }
+        }
         if (this._timerInterval) clearInterval(this._timerInterval);
         this._inPortal = false; var cp = this._currentPortal; this._currentPortal = null;
         return { portalComplete: true, portal: cp, rewards: { gold: Math.floor(portal.rewards.gold * mult), exp: Math.floor(portal.rewards.exp * mult), silver: Math.floor(portal.rewards.silver * mult) } };
