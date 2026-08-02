@@ -21,6 +21,10 @@
         .top-icon-block img:first-child { width: 56px; height: 56px; object-fit: contain; }
         .top-icon-block .banner { width: 75px; height: 18px; object-fit: fill; margin-top: -4px; }
         .top-icon-block span { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffd700; font-size: 0.7em; font-weight: bold; text-shadow: 0 0 6px #000; pointer-events: none; z-index: 2; }
+        .top-row-stats { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
+        .stat-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 56px; height: 56px; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; }
+        .stat-btn img { width: 24px; height: 24px; object-fit: contain; }
+        .stat-btn .stat-value { color: #fff; font-size: 0.7em; font-weight: bold; text-shadow: 0 0 4px #000; }
         .top-row-buttons { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
         .top-btn { display: flex; flex-direction: column; align-items: center; width: 56px; cursor: pointer; background: none; border: none; }
         .top-btn img { width: 56px; height: 56px; object-fit: contain; }
@@ -64,12 +68,17 @@
                 <div class="top-icon-block"><img src="assets/interface/level_hero.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span id="level-display">1</span></div>
                 <div class="top-icon-block"><img src="assets/interface/silver_plaque.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span id="silver-display">0</span></div>
             </div>
+            <div class="top-row-stats">
+                <div class="stat-btn"><img src="assets/interface/icon_power.png"><span class="stat-value attack">0</span></div>
+                <div class="stat-btn"><img src="assets/interface/icon_defense.png"><span class="stat-value defense">0</span></div>
+                <div class="stat-btn"><img src="assets/interface/icon_health.png"><span class="stat-value hp">0</span></div>
+            </div>
             <div class="top-row-buttons">
-                <div class="top-btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Профиль</span></div>
-                <div class="top-btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Очаг</span></div>
-                <div class="top-btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Таланты</span></div>
-                <div class="top-btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Рынок</span></div>
-                <div class="top-btn" data-action="settings"><img src="assets/all_buttons/settings.png"><img src="assets/interface/horizontal_banner_panel_01.png" class="banner"><span class="label">Настройки</span></div>
+                <div class="top-btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
+                <div class="top-btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
+                <div class="top-btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
+                <div class="top-btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
+                <div class="top-btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
             </div>
         </div>
         <div class="left-buttons-column">
