@@ -1052,10 +1052,11 @@ _showAllTrophies: function() {
     if (trophies.length === 0) h += '<div style="color:#aaa;">Нет трофеев</div>';
     for (var i = 0; i < trophies.length; i++) {
         var t = trophies[i];
-        h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#e0c080;">' + t.name + '</div>';
-        if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;">АТК +' + (t.bonus.attack||0) + ' ЗЩТ +' + (t.bonus.defense||0) + ' ЛВК +' + (t.bonus.agility||0) + ' HP +' + (t.bonus.hp||0) + '</div>';
-        h += '</div>';
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
+        h += '<img src="' + (t.icon || 'assets/all_trophies/trophies_chapters/chapter_1_broken_hunting_horn_of_the_league.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + t.name + '</div>';
+        if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (t.bonus.attack||0) + ' | ЗЩТ +' + (t.bonus.defense||0) + ' | ЛВК +' + (t.bonus.agility||0) + ' | HP +' + (t.bonus.hp||0) + '</div>';
+        h += '</div></div>';
     }
     h += '</div>';
     this._openScreen('Трофеи', 'profile', h, 'SherwoodUI.profile()');
@@ -1064,22 +1065,16 @@ _showAllTrophies: function() {
 _showAllRings: function() {
     var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
     var rings = items.filter(function(i) { return i.part === 'ring'; });
-    var equipped = Sherwood.Bag ? Sherwood.Bag.getEquipment().ring : null;
     var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца (' + rings.length + ')</div>';
-    if (equipped) {
-        h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #ffd700;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#ffd700;">' + equipped.name + ' (надето)</div>';
-        if (equipped.stats) h += '<div style="color:#aaa;font-size:0.7em;">АТК +' + (equipped.stats.attack||0) + ' ЗЩТ +' + (equipped.stats.defense||0) + '</div>';
-        h += '</div>';
-    }
+    if (rings.length === 0) h += '<div style="color:#aaa;">Нет колец</div>';
     for (var i = 0; i < rings.length; i++) {
         var r = rings[i];
-        h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#e0c080;">' + r.name + '</div>';
-        if (r.stats) h += '<div style="color:#aaa;font-size:0.7em;">АТК +' + (r.stats.attack||0) + ' ЗЩТ +' + (r.stats.defense||0) + '</div>';
-        h += '</div>';
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:10px;padding:10px;margin-bottom:8px;">';
+        h += '<img src="' + (r.icon || 'assets/interface/ring_first_level.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + r.name + '</div>';
+        if (r.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (r.stats.attack||0) + ' | ЗЩТ +' + (r.stats.defense||0) + '</div>';
+        h += '</div></div>';
     }
-    if (rings.length === 0 && !equipped) h += '<div style="color:#aaa;">Нет колец</div>';
     h += '</div>';
     this._openScreen('Кольца', 'profile', h, 'SherwoodUI.profile()');
 },
@@ -1087,129 +1082,16 @@ _showAllRings: function() {
 _showAllAmulets: function() {
     var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
     var amulets = items.filter(function(i) { return i.part === 'amulet'; });
-    var equipped = Sherwood.Bag ? Sherwood.Bag.getEquipment().amulet : null;
     var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты (' + amulets.length + ')</div>';
-    if (equipped) {
-        h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #ffd700;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#ffd700;">' + equipped.name + ' (надет)</div>';
-        if (equipped.stats) h += '<div style="color:#aaa;font-size:0.7em;">HP +' + (equipped.stats.hp||0) + ' ЛВК +' + (equipped.stats.agility||0) + '</div>';
-        h += '</div>';
-    }
+    if (amulets.length === 0) h += '<div style="color:#aaa;">Нет амулетов</div>';
     for (var i = 0; i < amulets.length; i++) {
         var a = amulets[i];
-        h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#e0c080;">' + a.name + '</div>';
-        if (a.stats) h += '<div style="color:#aaa;font-size:0.7em;">HP +' + (a.stats.hp||0) + ' ЛВК +' + (a.stats.agility||0) + '</div>';
-        h += '</div>';
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:10px;padding:10px;margin-bottom:8px;">';
+        h += '<img src="' + (a.icon || 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + a.name + '</div>';
+        if (a.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (a.stats.hp||0) + ' | ЛВК +' + (a.stats.agility||0) + '</div>';
+        h += '</div></div>';
     }
-    if (amulets.length === 0 && !equipped) h += '<div style="color:#aaa;">Нет амулетов</div>';
-    h += '</div>';
-    this._openScreen('Амулеты', 'profile', h, 'SherwoodUI.profile()');
-},
-
-_equipSkinFromProfile: function(sid) {
-    if (Sherwood.Forge && Sherwood.Forge.equipSkin) {
-        Sherwood.Forge.equipSkin(sid);
-        var heroImg = document.querySelector('.hero-layer img');
-        if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png';
-        this.profile();
-    }
-},
-
-_showProfileRing: function() {
-    var ring = Sherwood.Bag ? Sherwood.Bag.getEquipment().ring : null;
-    var info = document.getElementById('profile-info'); if (!info) return;
-    if (ring) {
-        info.innerHTML = '<div style="color:#ffd700;">' + ring.name + ' (Ур.' + (ring.level||1) + ')</div>';
-        if (ring.stats) {
-            info.innerHTML += '<div style="color:#aaa;font-size:0.7em;">';
-            if (ring.stats.attack) info.innerHTML += 'АТК +' + ring.stats.attack + ' ';
-            if (ring.stats.defense) info.innerHTML += 'ЗЩТ +' + ring.stats.defense + ' ';
-            if (ring.stats.hp) info.innerHTML += 'HP +' + ring.stats.hp + ' ';
-            if (ring.stats.agility) info.innerHTML += 'ЛВК +' + ring.stats.agility;
-            info.innerHTML += '</div>';
-        }
-        info.innerHTML += '<button onclick="Sherwood.Bag.unequipItem(\'ring\');SherwoodUI.profile();" style="margin-top:4px;background:#f44336;border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:0.6em;">Снять</button>';
-    } else {
-        info.innerHTML = 'Кольцо не надето';
-    }
-},
-
-_showProfileAmulet: function() {
-    var amulet = Sherwood.Bag ? Sherwood.Bag.getEquipment().amulet : null;
-    var info = document.getElementById('profile-info'); if (!info) return;
-    if (amulet) {
-        info.innerHTML = '<div style="color:#9c27b0;">' + amulet.name + ' (Ур.' + (amulet.level||1) + ')</div>';
-        if (amulet.stats) {
-            info.innerHTML += '<div style="color:#aaa;font-size:0.7em;">';
-            if (amulet.stats.attack) info.innerHTML += 'АТК +' + amulet.stats.attack + ' ';
-            if (amulet.stats.defense) info.innerHTML += 'ЗЩТ +' + amulet.stats.defense + ' ';
-            if (amulet.stats.hp) info.innerHTML += 'HP +' + amulet.stats.hp + ' ';
-            if (amulet.stats.agility) info.innerHTML += 'ЛВК +' + amulet.stats.agility;
-            info.innerHTML += '</div>';
-        }
-        info.innerHTML += '<button onclick="Sherwood.Bag.unequipItem(\'amulet\');SherwoodUI.profile();" style="margin-top:4px;background:#f44336;border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:0.6em;">Снять</button>';
-    } else {
-        info.innerHTML = 'Амулет не надет';
-    }
-},
-_showAllTrophies: function() {
-    var trophies = Sherwood.getPlayer().trophies || [];
-    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Трофеи (' + trophies.length + ')</div>';
-    if (trophies.length === 0) h += '<div style="color:#aaa;">Нет трофеев</div>';
-    for (var i = 0; i < trophies.length; i++) {
-        var t = trophies[i];
-        h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#e0c080;">' + t.name + '</div>';
-        if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;">АТК +' + (t.bonus.attack||0) + ' ЗЩТ +' + (t.bonus.defense||0) + ' ЛВК +' + (t.bonus.agility||0) + ' HP +' + (t.bonus.hp||0) + '</div>';
-        h += '</div>';
-    }
-    h += '</div>';
-    this._openScreen('Трофеи', 'profile', h, 'SherwoodUI.profile()');
-},
-
-_showAllRings: function() {
-    var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
-    var rings = items.filter(function(i) { return i.part === 'ring'; });
-    var equipped = Sherwood.Bag ? Sherwood.Bag.getEquipment().ring : null;
-    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца (' + rings.length + ')</div>';
-    if (equipped) {
-        h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #ffd700;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#ffd700;">' + equipped.name + ' (надето)</div>';
-        if (equipped.stats) h += '<div style="color:#aaa;font-size:0.7em;">АТК +' + (equipped.stats.attack||0) + ' ЗЩТ +' + (equipped.stats.defense||0) + '</div>';
-        h += '</div>';
-    }
-    for (var i = 0; i < rings.length; i++) {
-        var r = rings[i];
-        h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#e0c080;">' + r.name + '</div>';
-        if (r.stats) h += '<div style="color:#aaa;font-size:0.7em;">АТК +' + (r.stats.attack||0) + ' ЗЩТ +' + (r.stats.defense||0) + '</div>';
-        h += '</div>';
-    }
-    if (rings.length === 0 && !equipped) h += '<div style="color:#aaa;">Нет колец</div>';
-    h += '</div>';
-    this._openScreen('Кольца', 'profile', h, 'SherwoodUI.profile()');
-},
-
-_showAllAmulets: function() {
-    var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
-    var amulets = items.filter(function(i) { return i.part === 'amulet'; });
-    var equipped = Sherwood.Bag ? Sherwood.Bag.getEquipment().amulet : null;
-    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты (' + amulets.length + ')</div>';
-    if (equipped) {
-        h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #ffd700;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#ffd700;">' + equipped.name + ' (надет)</div>';
-        if (equipped.stats) h += '<div style="color:#aaa;font-size:0.7em;">HP +' + (equipped.stats.hp||0) + ' ЛВК +' + (equipped.stats.agility||0) + '</div>';
-        h += '</div>';
-    }
-    for (var i = 0; i < amulets.length; i++) {
-        var a = amulets[i];
-        h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;">';
-        h += '<div style="color:#e0c080;">' + a.name + '</div>';
-        if (a.stats) h += '<div style="color:#aaa;font-size:0.7em;">HP +' + (a.stats.hp||0) + ' ЛВК +' + (a.stats.agility||0) + '</div>';
-        h += '</div>';
-    }
-    if (amulets.length === 0 && !equipped) h += '<div style="color:#aaa;">Нет амулетов</div>';
     h += '</div>';
     this._openScreen('Амулеты', 'profile', h, 'SherwoodUI.profile()');
 },
