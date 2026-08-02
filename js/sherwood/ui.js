@@ -263,6 +263,8 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var cauldronImg = dungId === 'forest' ? 'assets/interface/cauldron_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/cauldron_of_the_second_dungeon.png' : 'assets/interface/the_third_cauldron_of_the_dungeon.png';
     var chestLockedImg = dungId === 'forest' ? 'assets/interface/locked_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/locked_chest_second_dungeon.png' : 'assets/interface/locked_chest_third_dungeon.png';
     var chestOpenImg = dungId === 'forest' ? 'assets/interface/open_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/open_chest_of_the_second_dungeon.png' : 'assets/interface/open_chest_third_dungeon.png';
+    var exitImg = dungId === 'forest' ? 'assets/interface/exit_completion_dungeon.png' : dungId === 'swamp' ? 'assets/interface/exit_completion_second_dungeon.png' : 'assets/interface/exit_completion_third_dungeon.png';
+    var exitLockedImg = 'assets/interface/closed_level_lock_icon.png';
     var size = d.size, cs = Math.floor(Math.min(this.container.clientWidth, this.container.clientHeight - 80) / 5);
     var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === "forest" ? "1" : d.id === "swamp" ? "2" : "3") + ".png";
     var px = d.px, py = d.py;
@@ -273,7 +275,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // Плитки (перекрывают зазоры)
+    // Плитки
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
@@ -319,7 +321,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                 else if (cell.open && cell.altar) content = "<img src='" + altarImg + "' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.cauldron) content = "<img src='" + cauldronImg + "' style='width:80%;height:80%;object-fit:contain;'>";
                 else if (cell.open && cell.potion) content = "<img src='assets/interface/resource_life_potion.png' style='width:70%;height:70%;object-fit:contain;'>";
-                else if (cell.open && cell.exit) content = cell.locked ? "<img src='assets/interface/closed_level_lock_icon.png' style='width:80%;height:80%;object-fit:contain;'>" : "<img src='assets/interface/exit_completion_dungeon.png' style='width:80%;height:80%;object-fit:contain;'>";
+                else if (cell.open && cell.exit) content = cell.locked ? "<img src='" + exitLockedImg + "' style='width:80%;height:80%;object-fit:contain;'>" : "<img src='" + exitImg + "' style='width:80%;height:80%;object-fit:contain;'>";
             }
             if (isPlayer) {
                 if (d.isMoving) {
