@@ -1278,20 +1278,76 @@ _craftSkin: function(sid) { var r = Sherwood.Forge.craftSkin(sid); var log = doc
 _equipSkin: function(sid) { Sherwood.Forge.equipSkin(sid); var heroImg = document.querySelector('.hero-layer img'); if (heroImg) heroImg.src = 'assets/hero_skins/' + sid + '.png'; this.forge(); },
 
 bestiary: function() { 
-    var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
+    var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome(); this._previousScreen=null; this._playSound('click'); 
     if(!Sherwood.Bestiary) { this._showPlaceholder('Бестиарий','bestiary',gb); return; } 
-    var progress=Sherwood.Bestiary.getDiscoveryProgress(), zones=['Проклятая чаща','Первородное болото','Базальтовые шахты','Квест','Рейд'], h='<div style="text-align:center;margin-bottom:8px;color:#aaa;">Открыто: '+progress.discovered+'/'+progress.total+' ('+progress.percent+'%)</div><div style="background:rgba(0,0,0,0.3);border-radius:6px;height:10px;margin-bottom:12px;overflow:hidden;"><div style="background:#c9a040;height:100%;width:'+progress.percent+'%;"></div></div>'; 
-    for (var z=0;z<zones.length;z++) { var beasts=Sherwood.Bestiary.getBeastsByZone(zones[z]); if(beasts.length===0) continue; h+='<div style="color:#e0c080;font-weight:bold;margin:10px 0 6px;">'+zones[z]+'</div>'; for (var i=0;i<beasts.length;i++) { var b=beasts[i], disc=b.kills>0; h+='<div onclick="SherwoodUI._showBeastInfo(\''+b.id+'\')" style="background:rgba(0,0,0,0.5);border:1px solid '+(disc?'#4caf50':'#555')+';border-radius:8px;padding:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px;cursor:pointer;">'; h+='<img src="assets/all_beasts/'+b.id+'" style="width:40px;height:40px;object-fit:contain;border-radius:4px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">'; h+='<div style="flex:1;"><div style="color:'+(disc?'#fff':'#888')+';">'+(disc?b.name:'???')+'</div><div style="color:#aaa;font-size:0.6em;">'+b.floor+' | '+b.type+'</div></div>'; h+='<div style="color:#aaa;font-size:0.7em;">Убито: '+b.kills+'</div>'; if(disc && !b.rewardClaimed) h+='<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="background:#ff9800;border:none;border-radius:4px;padding:2px 6px;color:#fff;cursor:pointer;font-size:0.55em;">+'+b.reward+' Сер.</button>'; if(disc && b.rewardClaimed) h+='<span style="color:#4caf50;font-size:0.55em;">Получено</span>'; h+='</div>'; } }
-    this._openScreen('Бестиарий','bestiary',h||'<div style="color:#aaa;text-align:center;">Бестиарий пуст</div>',gb); 
+    var progress=Sherwood.Bestiary.getDiscoveryProgress();
+    var tabs=['Проклятая чаща','Первородное болото','Базальтовые шахты','Квест','Рейд','Портал'];
+    if (!this._bestiaryTab) this._bestiaryTab = 0;
+    
+    var h = '<div style="text-align:center;margin-bottom:8px;color:#aaa;">Открыто: '+progress.discovered+'/'+progress.total+' ('+progress.percent+'%)</div>';
+    h += '<div style="background:rgba(0,0,0,0.3);border-radius:6px;height:10px;margin-bottom:8px;overflow:hidden;"><div style="background:#c9a040;height:100%;width:'+progress.percent+'%;"></div></div>';
+    
+    // Вкладки
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
+    for (var t=0; t<tabs.length; t++) {
+        var active = (this._bestiaryTab === t) ? '#c9a040' : 'rgba(255,255,255,0.1)';
+        var color = (this._bestiaryTab === t) ? '#000' : '#fff';
+        h += '<button onclick="SherwoodUI._bestiaryTab='+t+';SherwoodUI.bestiary();" style="background:'+active+';border:1px solid #555;border-radius:6px;padding:4px 10px;color:'+color+';cursor:pointer;font-size:0.7em;">'+tabs[t]+'</button>';
+    }
+    h += '</div>';
+    
+    var beasts = Sherwood.Bestiary.getBeastsByZone(tabs[this._bestiaryTab]);
+    if (beasts.length === 0) {
+        h += '<div style="color:#aaa;text-align:center;">Нет бестий</div>';
+    }
+    
+    for (var i=0; i<beasts.length; i++) {
+        var b = beasts[i], disc = b.kills > 0;
+        h += '<div onclick="SherwoodUI._showBeastInfo(\''+b.id+'\')" style="background:rgba(0,0,0,0.5);border:1px solid '+(disc?'#4caf50':'#555')+';border-radius:10px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">';
+        h += '<img src="assets/all_beasts/'+b.id+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        h += '<div style="flex:1;"><div style="color:'+(disc?'#fff':'#888')+';">'+(disc?b.name:'???')+'</div><div style="color:#aaa;font-size:0.6em;">'+b.floor+' | '+b.type+'</div><div style="color:#aaa;font-size:0.6em;">Убито: '+b.kills+'</div></div>';
+        if (disc && !b.rewardClaimed) h += '<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="background:#ff9800;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-size:0.6em;">+'+b.reward+' Сер.</button>';
+        if (disc && b.rewardClaimed) h += '<span style="color:#4caf50;font-size:0.6em;">Получено</span>';
+        h += '</div>';
+    }
+    
+    this._openScreen('Бестиарий','bestiary',h,gb); 
 },
-_showBeastInfo: function(beastId) { var b = Sherwood.Bestiary.getBeast(beastId); if (!b) return; var h = '<div style="text-align:center;padding:16px;">'; h += '<img src="assets/all_beasts/' + b.id + '" style="width:120px;height:120px;object-fit:contain;border:2px solid #c9a040;border-radius:8px;">'; h += '<div style="color:#e0c080;font-size:1.1em;margin:8px 0;">' + b.name + '</div>'; h += '<div style="color:#aaa;font-size:0.8em;">' + b.floor + ' | ' + b.type + '</div>'; h += '<div style="color:#ccc;font-size:0.8em;margin:12px 0;">' + b.lore + '</div>'; h += '<div style="color:#aaa;font-size:0.75em;">Убито: ' + b.kills + ' | Награда: ' + (b.reward || 50) + ' Сер.</div>'; if (!b.rewardClaimed && b.kills > 0) h += '<button onclick="SherwoodUI._claimBestiaryReward(\'' + b.id + '\')" style="margin-top:8px;background:#ff9800;border:none;border-radius:6px;padding:6px 16px;color:#fff;cursor:pointer;">Забрать ' + (b.reward || 50) + ' Сер.</button>'; if (b.rewardClaimed) h += '<div style="color:#4caf50;margin-top:8px;">Награда получена</div>'; h += '</div>'; this._openScreen(b.name, 'bestiary', h, 'SherwoodUI.bestiary()'); },
-_claimBestiaryReward: function(beastId) { if (!Sherwood.Bestiary) return; var r = Sherwood.Bestiary.claimReward(beastId); if (r.success) { this.updateDisplay(); this.bestiary(); } },
+
+_showBeastInfo: function(beastId) { 
+    var b = Sherwood.Bestiary.getBeast(beastId); 
+    if (!b) return; 
+    var disc = b.kills > 0;
+    var h = '<div style="display:flex;gap:12px;padding:12px;">';
+    // Карточка слева
+    h += '<div style="width:140px;flex-shrink:0;">';
+    h += '<img src="assets/all_beasts/'+b.id+'" style="width:140px;height:140px;object-fit:contain;border:2px solid #c9a040;border-radius:10px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+    h += '<div style="text-align:center;color:#e0c080;font-weight:bold;margin-top:4px;">'+b.name+'</div>';
+    h += '<div style="text-align:center;color:#aaa;font-size:0.7em;">'+b.floor+' | '+b.type+'</div>';
+    h += '</div>';
+    // Лор справа
+    h += '<div style="flex:1;">';
+    h += '<div style="color:#ccc;font-size:0.8em;line-height:1.4;">'+(disc?b.lore:'Убейте эту бестию чтобы открыть лор.')+'</div>';
+    h += '<div style="color:#aaa;font-size:0.7em;margin-top:8px;">Убито: '+b.kills+' | Награда: '+(b.reward||50)+' Сер.</div>';
+    if (disc && !b.rewardClaimed) h += '<button onclick="SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="margin-top:8px;background:#ff9800;border:none;border-radius:6px;padding:6px 16px;color:#fff;cursor:pointer;">Забрать '+(b.reward||50)+' Сер.</button>';
+    if (disc && b.rewardClaimed) h += '<div style="color:#4caf50;margin-top:8px;">Награда получена</div>';
+    h += '</div>';
+    h += '</div>';
+    this._openScreen(b.name, 'bestiary', h, 'SherwoodUI.bestiary()'); 
+},
+
+_claimBestiaryReward: function(beastId) { 
+    if (!Sherwood.Bestiary) return; 
+    var r = Sherwood.Bestiary.claimReward(beastId); 
+    if (r.success) { this.updateDisplay(); this.bestiary(); } 
+},
+
+_bestiaryTab: 0,
 
 };
 
 (function() {
     var self = SherwoodUI;
-    
     var allButtons = document.querySelectorAll('.btn[data-action]');
     for (var i = 0; i < allButtons.length; i++) {
         (function(el) {
