@@ -77,12 +77,10 @@ Sherwood.Quests = {
         var p = Sherwood.getPlayer();
         p.stats.hp = p.stats.maxHp;
         
-        // Если глава уже идёт и враг НЕ убит — продолжаем бой
         if (this._currentChapter && this._currentChapter.id === id && this._inBattle) {
             return { success: true, chapter: ch, enemy: this._currentEnemy, stage: this._currentStage + 1, total: ch.stages };
         }
         
-        // Если глава уже идёт и враг убит — берём следующего
         if (this._currentChapter && this._currentChapter.id === id && this._currentEnemy) {
             this._inBattle = true;
             this._lastAttempt = Date.now();
@@ -91,7 +89,6 @@ Sherwood.Quests = {
             return { success: true, chapter: ch, enemy: this._currentEnemy, stage: this._currentStage + 1, total: ch.stages };
         }
         
-        // Новая глава
         this._currentChapter = ch;
         this._currentStage = 0;
         var firstEnemy = ch.enemies[0];
@@ -121,11 +118,20 @@ Sherwood.Quests = {
             this._currentStage++;
             var ch = this._currentChapter;
             if (this._currentStage >= ch.stages) {
-                var boss = ch.boss;
-                this._currentEnemy = { name: boss.name, image: boss.image, hp: boss.hp, maxHp: boss.hp, atk: boss.atk, def: boss.def, exp: boss.exp, gold: boss.gold, isBoss: true };
                 this._inBattle = false;
                 r.chapterComplete = true;
                 r.rewards = ch.rewards;
+                var p2 = Sherwood.getPlayer();
+                if (p2.questProgress.completed.indexOf(ch.id) === -1) {
+                    p2.questProgress.completed.push(ch.id);
+                    if (ch.id < 15) p2.questProgress.currentChapter = ch.id + 1;
+                }
+                if (typeof Sherwood.addTrophy === 'function') {
+                    Sherwood.addTrophy('chapter_' + ch.id, 'Глава ' + ch.id + ': ' + ch.name, { attack: ch.id * 5, defense: ch.id * 3, hp: ch.id * 10, agility: ch.id * 2 }, '', 'chapter');
+                }
+                this._currentChapter = null;
+                this._currentEnemy = null;
+                this._currentStage = 0;
             } else {
                 var nextEnemy = ch.enemies[this._currentStage];
                 this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
