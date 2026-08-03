@@ -23,7 +23,6 @@ Sherwood.Combat = {
         var hp = isBoss ? 250 : 50 + Math.floor(Math.random() * 60);
         var atk = isBoss ? 22 : 8 + Math.floor(Math.random() * 10);
         var def = isBoss ? 12 : 2 + Math.floor(Math.random() * 6);
-        var armor = isBoss ? 25 : 5 + Math.floor(Math.random() * 10);
         this._battle = {
             enemyImage: img,
             enemyName: name,
@@ -31,17 +30,12 @@ Sherwood.Combat = {
             enemyMaxHp: hp,
             enemyAtk: atk,
             enemyDef: def,
-            enemyArmor: armor,
-            enemyMaxArmor: armor,
             isBoss: !!isBoss,
             mode: mode || 'dungeon',
             playerHp: p.stats.hp,
             playerMaxHp: p.stats.maxHp,
             playerAtk: p.stats.attack,
-            playerDef: p.stats.defense,
-            playerAgi: p.stats.agility,
-            playerArmor: Math.floor(p.stats.defense * 0.3),
-            playerMaxArmor: Math.floor(p.stats.defense * 0.3)
+            playerDef: p.stats.defense
         };
         this._effects = [];
         this._turn = 1;
@@ -58,8 +52,6 @@ Sherwood.Combat = {
             enemyName: b.enemyName,
             enemyHp: b.enemyHp,
             enemyMaxHp: b.enemyMaxHp,
-            enemyArmor: b.enemyArmor,
-            enemyMaxArmor: b.enemyMaxArmor,
             playerHp: b.playerHp,
             playerMaxHp: b.playerMaxHp,
             isBoss: b.isBoss,
@@ -81,24 +73,17 @@ Sherwood.Combat = {
         var raw = this._calcDamage(b.playerAtk, b.enemyDef);
         var crit = Math.random() * 100 < 15;
         if (crit) raw = Math.floor(raw * 1.8);
-        var armDmg = Math.min(Math.floor(raw * 0.3), b.enemyArmor);
-        var hpDmg = raw - armDmg;
-        if (b.enemyArmor > 0) hpDmg = Math.floor(hpDmg * 0.5);
-        hpDmg = Math.max(1, hpDmg);
-        b.enemyArmor -= armDmg;
-        if (b.enemyArmor < 0) b.enemyArmor = 0;
-        b.enemyHp -= hpDmg;
+        b.enemyHp -= raw;
         if (b.enemyHp < 0) b.enemyHp = 0;
-
-        this._hitCount++;
 
         var r = {
             type: 'attack',
-            damage: hpDmg,
-            armorDmg: armDmg,
+            damage: raw,
             crit: crit,
             enemyHp: b.enemyHp,
-            enemyMaxHp: b.enemyMaxHp
+            enemyMaxHp: b.enemyMaxHp,
+            enemyImage: b.enemyImage,
+            enemyName: b.enemyName
         };
 
         if (b.enemyHp <= 0) {
@@ -111,8 +96,6 @@ Sherwood.Combat = {
 
         var er = this._enemyTurn();
         r.enemy = er;
-        r.enemyName = b.enemyName;
-
         if (b.playerHp <= 0) {
             r.lose = true;
             r.exp = Math.floor((b.isBoss ? 200 : 50) * 0.3);
@@ -151,72 +134,48 @@ Sherwood.Combat = {
         }
 
         var raw = this._calcDamage(b.enemyAtk, b.playerDef);
-        var armDmg = Math.min(Math.floor(raw * 0.3), b.playerArmor);
-        var hpDmg = raw - armDmg;
-        if (b.playerArmor > 0) hpDmg = Math.floor(hpDmg * 0.5);
-        hpDmg = Math.max(1, hpDmg);
-        b.playerArmor -= armDmg;
-        if (b.playerArmor < 0) b.playerArmor = 0;
-        b.playerHp -= hpDmg;
+        b.playerHp -= raw;
         if (b.playerHp < 0) b.playerHp = 0;
 
-        if (Math.random() < 0.2 && b.isBoss) {
-            return {
-                damage: hpDmg,
-                armorDmg: armDmg,
-                playerHp: b.playerHp,
-                isSkill: true,
-                skillName: 'Мощный удар',
-                playerArmor: b.playerArmor
-            };
-        }
-
         return {
-            damage: hpDmg,
-            armorDmg: armDmg,
-            playerHp: b.playerHp,
-            playerArmor: b.playerArmor
+            damage: raw,
+            playerHp: b.playerHp
         };
     },
 
     _giveReward: function(r) {
         if (!r) return;
         if (r.exp) Sherwood.addExp(r.exp);
-        if (r.gold) Sherwood.addResource('gold', r.gold);
-        if (r.gold) Sherwood.addResource('silver', Math.floor(r.gold * 2));
+        if (r.gold) {
+            Sherwood.addResource('gold', r.gold);
+            Sherwood.addResource('silver', Math.floor(r.gold * 2));
+        }
 
         try {
             if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addItem) {
+                // Шкура всегда
+                Sherwood.Bag.addItem({
+                    id: 'skin_of_the_sherwood_creature',
+                    name: 'Шкура шервудской твари',
+                    icon: 'assets/interface/skin_of_the_sherwood_creature.png',
+                    grade: 'common', type: 'resource', quantity: 1, maxStack: 50, sellPrice: 5
+                });
+                
+                // Рандомный дополнительный лут
                 var lootRoll = Math.random();
-
-                if (lootRoll < 0.25) {
-                    Sherwood.Bag.addItem({
-                        id: 'skin_of_the_sherwood_creature',
-                        name: 'Шкура шервудской твари',
-                        icon: 'assets/interface/skin_of_the_sherwood_creature.png',
-                        grade: 'common', type: 'resource', quantity: 1, maxStack: 50, sellPrice: 5
-                    });
-                } else if (lootRoll < 0.45) {
+                if (lootRoll < 0.30) {
                     var arrowParts = [
                         { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', sellPrice: 3 },
                         { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', sellPrice: 3 },
                         { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', sellPrice: 3 }
                     ];
                     var part = arrowParts[Math.floor(Math.random() * arrowParts.length)];
-                    Sherwood.Bag.addItem({
-                        id: part.id, name: part.name, icon: part.icon,
-                        grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice
-                    });
-                } else if (lootRoll < 0.55) {
+                    Sherwood.Bag.addItem({ id: part.id, name: part.name, icon: part.icon, grade: 'common', type: 'resource', quantity: 1, maxStack: 99, sellPrice: part.sellPrice });
+                } else if (lootRoll < 0.45) {
                     Sherwood.addResource('scrolls', 1);
-                } else if (lootRoll < 0.62) {
+                } else if (lootRoll < 0.52) {
                     var chapter = Sherwood.getPlayer().questProgress.currentChapter || 1;
-                    Sherwood.Bag.addItem({
-                        id: 'ingot_chapter_' + chapter,
-                        name: 'Слиток обликов (Глава ' + chapter + ')',
-                        icon: 'assets/ingots resource crafting skin/ingot_chapter_' + chapter + '.png',
-                        grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20
-                    });
+                    Sherwood.Bag.addItem({ id: 'ingot_chapter_' + chapter, name: 'Слиток обликов (Глава ' + chapter + ')', icon: 'assets/ingots resource crafting skin/ingot_chapter_' + chapter + '.png', grade: 'rare', type: 'resource', quantity: 1, maxStack: 99, sellPrice: 20 });
                 }
             }
         } catch(e) {}
@@ -228,28 +187,22 @@ Sherwood.Combat = {
         var b = this._battle;
         if (!b) return { success: false, reason: 'Нет боя' };
 
-        var chance = 40 + (b.playerAgi || 0) * 0.5;
+        var chance = 40;
         if (Math.random() * 100 < chance) {
             this._battle = null;
             return { success: true };
         }
 
         var raw = this._calcDamage(b.enemyAtk, b.playerDef);
-        var armDmg = Math.min(Math.floor(raw * 0.3), b.playerArmor);
-        var hpDmg = raw - armDmg;
-        if (b.playerArmor > 0) hpDmg = Math.floor(hpDmg * 0.5);
-        hpDmg = Math.max(1, hpDmg);
-        b.playerArmor -= armDmg;
-        if (b.playerArmor < 0) b.playerArmor = 0;
-        b.playerHp -= hpDmg;
+        b.playerHp -= raw;
         if (b.playerHp < 0) b.playerHp = 0;
 
         if (b.playerHp <= 0) {
             this._battle = null;
-            return { success: false, lose: true, damage: hpDmg };
+            return { success: false, lose: true, damage: raw };
         }
 
-        return { success: false, damage: hpDmg };
+        return { success: false, damage: raw };
     },
 
     getSkills: function() {
@@ -264,7 +217,7 @@ Sherwood.Combat = {
                 description: 'Наносит 180% урона',
                 icon: 'assets/skills/skill_critical_shot.png',
                 unlocked: unlocked.indexOf('power_shot') !== -1,
-                cost: 80
+                cost: 50
             },
             triple_shot: {
                 id: 'triple_shot',
@@ -274,7 +227,7 @@ Sherwood.Combat = {
                 description: '3 выстрела по 70% урона',
                 icon: 'assets/skills/triple_shot_skill.png',
                 unlocked: unlocked.indexOf('triple_shot') !== -1,
-                cost: 120
+                cost: 50
             },
             poison_arrow: {
                 id: 'poison_arrow',
@@ -284,7 +237,7 @@ Sherwood.Combat = {
                 description: 'Отравляет врага на 3 хода',
                 icon: 'assets/skills/poison_shot_skill.png',
                 unlocked: unlocked.indexOf('poison_arrow') !== -1,
-                cost: 100
+                cost: 50
             },
             stunning_shot: {
                 id: 'stunning_shot',
@@ -294,7 +247,7 @@ Sherwood.Combat = {
                 description: 'Оглушает врага на 1 ход',
                 icon: 'assets/skills/control_skill.png',
                 unlocked: unlocked.indexOf('stunning_shot') !== -1,
-                cost: 150
+                cost: 50
             }
         };
     },
@@ -303,9 +256,10 @@ Sherwood.Combat = {
         var skills = this.getSkills();
         if (!skills[skillId]) return { success: false, reason: 'Навык не найден' };
         if (skills[skillId].unlocked) return { success: false, reason: 'Уже открыт' };
-        var cost = skills[skillId].cost;
         var p = Sherwood.getPlayer();
         if (!p) return { success: false, reason: 'Нет игрока' };
+        if (p.level < 15) return { success: false, reason: 'Нужен 15 уровень' };
+        var cost = skills[skillId].cost;
         if ((p.resources.gold || 0) < cost) return { success: false, reason: 'Не хватает золота' };
         p.resources.gold -= cost;
         if (!p.unlockedSkills) p.unlockedSkills = [];
@@ -315,44 +269,41 @@ Sherwood.Combat = {
     },
 
     useSkill: function(skillId) {
-    var b = this._battle;
-    if (!b) return { error: 'Нет боя' };
-    var skills = this.getSkills();
-    if (!skills[skillId] || !skills[skillId].unlocked) return { error: 'Навык не открыт' };
-    if (this._cooldowns[skillId] && this._cooldowns[skillId] > 0) {
-        return { error: 'Перезарядка: ' + this._cooldowns[skillId] + ' ходов' };
-    }
-    var skill = skills[skillId];
-    var raw = this._calcDamage(b.playerAtk, b.enemyDef) * skill.damageMultiplier;
-    var crit = Math.random() * 100 < 20;
-    if (crit) raw = Math.floor(raw * 1.8);
-    var hpDmg = Math.max(1, Math.floor(raw));
-    b.enemyHp -= hpDmg;
-    if (b.enemyHp < 0) b.enemyHp = 0;
-    this._cooldowns[skillId] = skill.cooldown;
+        var b = this._battle;
+        if (!b) return { error: 'Нет боя' };
+        var skills = this.getSkills();
+        if (!skills[skillId] || !skills[skillId].unlocked) return { error: 'Навык не открыт' };
+        if (this._cooldowns[skillId] && this._cooldowns[skillId] > 0) {
+            return { error: 'Перезарядка: ' + this._cooldowns[skillId] + ' ходов' };
+        }
+        var skill = skills[skillId];
+        var raw = this._calcDamage(b.playerAtk, b.enemyDef) * skill.damageMultiplier;
+        var crit = Math.random() * 100 < 20;
+        if (crit) raw = Math.floor(raw * 1.8);
+        b.enemyHp -= raw;
+        if (b.enemyHp < 0) b.enemyHp = 0;
+        this._cooldowns[skillId] = skill.cooldown;
 
-    var r = { damage: hpDmg, crit: crit, enemyHp: b.enemyHp, enemyMaxHp: b.enemyMaxHp, enemyImage: b.enemyImage, enemyName: b.enemyName };
+        var r = { damage: raw, crit: crit, enemyHp: b.enemyHp, enemyMaxHp: b.enemyMaxHp, enemyImage: b.enemyImage, enemyName: b.enemyName };
 
-    if (b.enemyHp <= 0) {
-        r.win = true;
-        r.exp = b.isBoss ? 150 : 35;
-        r.gold = b.isBoss ? 120 : 25;
-        this._giveReward(r);
-        this._battle = null;
+        if (b.enemyHp <= 0) {
+            r.win = true;
+            r.exp = b.isBoss ? 200 : 50;
+            r.gold = b.isBoss ? 150 : 40;
+            this._battle = null;
+            return r;
+        }
+
+        var er = this._enemyTurn();
+        r.enemy = er;
+        if (b.playerHp <= 0) {
+            r.lose = true;
+            r.exp = Math.floor((b.isBoss ? 200 : 50) * 0.3);
+            r.gold = Math.floor((b.isBoss ? 150 : 40) * 0.3);
+            this._battle = null;
+        }
         return r;
-    }
-
-    var er = this._enemyTurn();
-    r.enemy = er;
-    if (b.playerHp <= 0) {
-        r.lose = true;
-        r.exp = Math.floor((b.isBoss ? 150 : 35) * 0.3);
-        r.gold = Math.floor((b.isBoss ? 120 : 25) * 0.3);
-        this._giveReward(r);
-        this._battle = null;
-    }
-    return r;
-},
+    },
 
     getCooldowns: function() {
         var result = {};
