@@ -21,7 +21,7 @@ Sherwood.Dungeon = {
                     Sherwood.saveGame();
                 }
             }
-        }, 40 * 60 * 1000);
+        }, 90 * 60 * 1000);
     },
 
     getAvailable: function() {
@@ -48,7 +48,7 @@ Sherwood.Dungeon = {
         p.dungeon.tickets--;
         Sherwood.saveGame();
 
-        var size = 12;
+        var size = 14;
         var grid = [];
         for (var y = 0; y < size; y++) {
             grid[y] = [];
@@ -106,8 +106,8 @@ Sherwood.Dungeon = {
         };
         var pool = monsters[dungeonId] || monsters['forest'];
         var monList = level <= 3 ? pool.easy : pool.medium;
-        var monsterCount = level <= 3 ? 6 : 8;
-        if (level === 7) monsterCount = 8;
+        var monsterCount = 10;
+        var minToKill = 10;
 
         var placedMonsters = 0;
         var monsterCells = [];
@@ -116,7 +116,7 @@ Sherwood.Dungeon = {
             if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 3) continue;
             var tooClose = false;
             for (var m = 0; m < monsterCells.length; m++) {
-                if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 3) {
+                if (Math.abs(cell.x - monsterCells[m].x) + Math.abs(cell.y - monsterCells[m].y) < 2) {
                     tooClose = true; break;
                 }
             }
@@ -125,69 +125,60 @@ Sherwood.Dungeon = {
                 grid[cell.y][cell.x].monster = true;
                 grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
                 monsterCells.push(cell);
+                cell.used = true;
                 placedMonsters++;
             }
         }
 
         var specials = [
-            { type: this.TILE.ALTAR, count: 2, prop: 'altar' },
-            { type: this.TILE.CAULDRON, count: 3, prop: 'cauldron' },
-            { type: this.TILE.POTION, count: 5, prop: 'potion' }
+            { type: this.TILE.POTION, count: 5, prop: 'potion' },
+            { type: this.TILE.CAULDRON, count: 4, prop: 'cauldron' },
+            { type: this.TILE.ALTAR, count: 4, prop: 'altar' }
         ];
+        var trapMonsters = 0;
         for (var t = 0; t < specials.length; t++) {
             var st = specials[t];
-            for (var i = 0; i < st.count && empties.length > 0; i++) {
-                var idx = Math.floor(Math.random() * empties.length);
-                var cell = empties.splice(idx, 1)[0];
-                if (cell.x === spawnX && cell.y === spawnY) continue;
-                grid[cell.y][cell.x].type = st.type;
-                grid[cell.y][cell.x][st.prop] = true;
-            }
-        }
-
-        var bestDist = -1, exitX = spawnX, exitY = spawnY;
-        for (var i = 0; i < empties.length; i++) {
-            var dist = Math.abs(empties[i].x - spawnX) + Math.abs(empties[i].y - spawnY);
-            if (dist > bestDist) { bestDist = dist; exitX = empties[i].x; exitY = empties[i].y; }
-        }
-        if (bestDist >= 0) {
-            grid[exitY][exitX].type = this.TILE.EXIT;
-            grid[exitY][exitX].exit = true;
-            grid[exitY][exitX].locked = true;
-        }
-
-        var isBossLevel = (level === 7);
-        if (isBossLevel) {
-            var bossCell = null;
-            for (var y = -2; y <= 2; y++) {
-                for (var x = -2; x <= 2; x++) {
-                    var nx = exitX + x, ny = exitY + y;
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && grid[ny][nx].type === this.TILE.EMPTY) {
-                        bossCell = {x: nx, y: ny}; break;
-                    }
+            var placed = 0;
+            for (var i = 0; i < empties.length && placed < st.count; i++) {
+                var cell = empties[i];
+                if (cell.used) continue;
+                if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 2) continue;
+                
+                if ((st.type === this.TILE.ALTAR || st.type === this.TILE.CAULDRON) && Math.random() < 0.25) {
+                    grid[cell.y][cell.x].type = this.TILE.MONSTER;
+                    grid[cell.y][cell.x].monster = true;
+                    grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
+                    grid[cell.y][cell.x].isTrap = true;
+                    trapMonsters++;
+                    cell.used = true;
+                    placed++;
+                } else {
+                    grid[cell.y][cell.x].type = st.type;
+                    grid[cell.y][cell.x][st.prop] = true;
+                    cell.used = true;
+                    placed++;
                 }
-                if (bossCell) break;
-            }
-            if (bossCell) {
-                grid[bossCell.y][bossCell.x].type = this.TILE.BOSS;
-                grid[bossCell.y][bossCell.x].monster = true;
-                grid[bossCell.y][bossCell.x].monsterId = pool.boss;
-                grid[bossCell.y][bossCell.x].isBoss = true;
             }
         }
 
-        var totalMonsters = 0;
-        for (var y = 0; y < size; y++) {
-            for (var x = 0; x < size; x++) {
-                if (grid[y][x].monster) totalMonsters++;
-            }
+        var exitPlaced = false;
+        for (var i = empties.length - 1; i >= 0; i--) {
+            var cell = empties[i];
+            if (cell.used) continue;
+            if (Math.abs(cell.x - spawnX) + Math.abs(cell.y - spawnY) < 4) continue;
+            grid[cell.y][cell.x].type = this.TILE.EXIT;
+            grid[cell.y][cell.x].exit = true;
+            grid[cell.y][cell.x].locked = true;
+            exitPlaced = true;
+            break;
         }
 
         this._dungeon = {
             id: dungeonId, level: level, size: size, grid: grid,
             px: spawnX, py: spawnY,
-            monstersKilled: 0, totalMonsters: totalMonsters,
-            chestsOpened: 0, isBossLevel: isBossLevel,
+            monstersKilled: 0, totalMonsters: monsterCount,
+            minToKill: minToKill, trapMonsters: trapMonsters,
+            chestsOpened: 0, isBossLevel: (level === 7),
             heroDirection: 'down', isMoving: false,
             chestPlaced: false
         };
@@ -198,10 +189,10 @@ Sherwood.Dungeon = {
 
     move: function(tx, ty) {
         var d = this._dungeon;
-        if (!d) return { ok: false, reason: 'No dungeon' };
+        if (!d) return { ok: false };
         var cell = d.grid[ty][tx];
-        if (!cell) return { ok: false, reason: 'No cell' };
-        if (cell.type === this.TILE.WALL) return { ok: false, reason: 'Wall' };
+        if (!cell) return { ok: false };
+        if (cell.type === this.TILE.WALL) return { ok: false };
 
         cell.open = true;
         d.px = tx;
@@ -210,38 +201,14 @@ Sherwood.Dungeon = {
         if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
             return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
         }
-        if (cell.type === this.TILE.CHEST && !cell.looted) {
-            cell.looted = true;
-            d.chestsOpened++;
-            var g = cell.reward ? cell.reward.gold : 2;
-            var s = cell.reward ? cell.reward.silver : 300;
-            Sherwood.addResource('gold', g);
-            Sherwood.addResource('silver', s);
-            return { ok: true, type: 'chest', gold: g, silver: s };
-        }
-        if (cell.altar) {
-            cell.altar = false; cell.type = this.TILE.EMPTY;
-            return { ok: true, type: 'altar' };
-        }
-        if (cell.cauldron) {
-            cell.cauldron = false; cell.type = this.TILE.EMPTY;
-            return { ok: true, type: 'cauldron' };
-        }
-        if (cell.potion) {
-            cell.potion = false; cell.type = this.TILE.EMPTY;
-            return { ok: true, type: 'potion' };
-        }
-        if (cell.lootBag && !cell.lootCollected) {
-            cell.lootCollected = true;
-            var g = cell.reward ? cell.reward.gold : 1;
-            var s = cell.reward ? cell.reward.silver : 100;
-            Sherwood.addResource('gold', g);
-            Sherwood.addResource('silver', s);
-            return { ok: true, type: 'chest', gold: g, silver: s };
-        }
+        if (cell.chest && !cell.looted) return { ok: true, type: 'chest' };
+        if (cell.altar) return { ok: true, type: 'altar' };
+        if (cell.cauldron) return { ok: true, type: 'cauldron' };
+        if (cell.potion) return { ok: true, type: 'potion' };
+        if (cell.lootBag && !cell.lootCollected) return { ok: true, type: 'lootBag' };
         if (cell.exit) {
             if (cell.locked) {
-                if (d.monstersKilled >= d.totalMonsters) {
+                if (d.monstersKilled >= d.minToKill) {
                     cell.locked = false;
                     return { ok: true, type: 'exit' };
                 }
@@ -252,72 +219,98 @@ Sherwood.Dungeon = {
         return { ok: true, type: 'move' };
     },
 
+    _moveSilent: function(tx, ty) {
+        var d = this._dungeon;
+        if (!d) return;
+        d.grid[ty][tx].open = true;
+        d.px = tx;
+        d.py = ty;
+    },
+
     killMonster: function() {
-    if (!this._dungeon) return;
-    var d = this._dungeon;
-    d.monstersKilled++;
-    
-    // Ищем клетку с монстром вокруг игрока
-    var cell = null;
-    var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
-    for (var i = 0; i < checkDirs.length; i++) {
-        var nx = d.px + checkDirs[i][0];
-        var ny = d.py + checkDirs[i][1];
-        if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
-            if (d.grid[ny][nx].monster) {
+        if (!this._dungeon) return;
+        var d = this._dungeon;
+        d.monstersKilled++;
+        
+        var cell = null;
+        var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
+        for (var i = 0; i < checkDirs.length; i++) {
+            var nx = d.px + checkDirs[i][0], ny = d.py + checkDirs[i][1];
+            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size && d.grid[ny][nx].monster) {
                 cell = d.grid[ny][nx];
                 break;
             }
         }
-    }
-    
-    if (cell && cell.monster) {
-        cell.monster = false;
-        cell.monsterId = null;
-        cell.isBoss = false;
-        cell.type = this.TILE.EMPTY;
-    }
-    
-    // Мешок с каждой бестии
-    if (cell) {
-        cell.lootBag = true;
-        cell.lootCollected = false;
-        cell.reward = { gold: 1 + Math.floor(Math.random() * 3), silver: 50 + Math.floor(Math.random() * 100) };
-    }
-    
-    // Последний монстр — сундук вместо мешка
-    if (d.monstersKilled >= d.totalMonsters && !d.chestPlaced && cell) {
-        d.chestPlaced = true;
-        cell.lootBag = false;
-        cell.chest = true;
-        cell.type = this.TILE.CHEST;
-        cell.looted = false;
-        cell.reward = { gold: 2 + Math.floor(Math.random() * 5), silver: 300 + Math.floor(Math.random() * 500) };
-    }
-    
-    if (d.monstersKilled >= d.totalMonsters) {
-        for (var y = 0; y < d.size; y++) {
-            for (var x = 0; x < d.size; x++) {
-                if (d.grid[y][x].exit) d.grid[y][x].locked = false;
+        
+        if (cell && cell.monster) {
+            cell.monster = false;
+            cell.monsterId = null;
+            cell.isBoss = false;
+            cell.type = this.TILE.EMPTY;
+            cell.lootBag = true;
+            cell.lootCollected = false;
+        }
+        
+        if (d.monstersKilled >= d.minToKill) {
+            for (var y = 0; y < d.size; y++) {
+                for (var x = 0; x < d.size; x++) {
+                    if (d.grid[y][x].exit) d.grid[y][x].locked = false;
+                }
             }
         }
-    }
-},
+    },
 
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
-        var gold = (d.isBossLevel ? 10 : 3) + d.chestsOpened * 2;
+        
+        var prog = this._progress[d.id] || { level: 1 };
+        var firstTime = d.level >= prog.level;
+        
+        var gold = firstTime ? ((d.isBossLevel ? 10 : 3) + d.chestsOpened * 2) : 0;
         var silver = d.monstersKilled * 50 + d.chestsOpened * 50 + 100;
+        if (!firstTime) silver += 200;
+        
         var exp = d.monstersKilled * 30 + d.chestsOpened * 20 + 20;
+        
         Sherwood.addResource('gold', gold);
         Sherwood.addResource('silver', silver);
         Sherwood.addExp(exp);
+        
+        if (!firstTime) {
+            var p = Sherwood.getPlayer();
+            if (!p.keset) p.keset = { silver: 0, maxSilver: 2500000, minWithdraw: 10000 };
+            var multiplier = d.id === 'cave' ? 1.5 : d.id === 'swamp' ? 1.2 : 1;
+            var kesetSilver = Math.floor((d.monstersKilled * 20 + d.chestsOpened * 30) * d.level * multiplier);
+            p.keset.silver = Math.min(p.keset.maxSilver, (p.keset.silver || 0) + kesetSilver);
+        }
+        
         if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
-        var prog = this._progress[d.id] || { level: 1 };
+        
         if (d.level >= prog.level) prog.level = Math.min(8, d.level + 1);
         this._progress[d.id] = prog;
         localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
+        
+        if (firstTime && d.level >= 1) {
+            var trophyBonuses = {
+                forest: { base: { attack: 7, defense: 7, hp: 70 }, name: 'Древний Тотем Владыки Чащи' },
+                swamp: { base: { attack: 14, defense: 14, hp: 140 }, name: 'Идол Болотного Левиафана' },
+                cave: { base: { attack: 28, defense: 28, hp: 280 }, name: 'Сердце Пещерного Исполина' }
+            };
+            var tb = trophyBonuses[d.id];
+            if (tb && typeof Sherwood.addTrophy === 'function') {
+                var newLevel = prog.level - 1;
+                if (newLevel >= 1 && newLevel <= 7) {
+                    var bonus = {
+                        attack: tb.base.attack * newLevel,
+                        defense: tb.base.defense * newLevel,
+                        hp: tb.base.hp * newLevel
+                    };
+                    Sherwood.addTrophy('dungeon_' + d.id + '_' + newLevel, tb.name + ' (Череп ' + newLevel + ')', bonus, 'assets/interface/trophy_stand.png', 'dungeon');
+                }
+            }
+        }
+        
         this._dungeon = null;
         return { gold: gold, silver: silver, exp: exp };
     },
