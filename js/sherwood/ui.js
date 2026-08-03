@@ -12,7 +12,7 @@ const SherwoodUI = {
         hearth: 'assets/backgrounds/background_hearth.jpeg', talents: 'assets/backgrounds/background_talents.png'
     },
     
-    _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', agility: 'assets/interface/icon_dexterity.png', hp: 'assets/interface/icon_health.png' },
+    _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', hp: 'assets/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _audioFiles: {
         'main_theme': 'assets/sounds/sherwood_rpg.ogg',
@@ -70,17 +70,18 @@ updateDisplay: function() {
     var p = Sherwood.getPlayer(); if (!p) return;
     try { var el = document.getElementById('gold-display'); if (el) el.textContent = p.resources.gold || 0; } catch(e) {}
     try { var el = document.getElementById('silver-display'); if (el) el.textContent = p.resources.silver || 0; } catch(e) {}
+    try { var el = document.getElementById('level-display'); if (el) el.textContent = p.level || 1; } catch(e) {}
     try {
         var expEl = document.getElementById('exp-display');
         var expMaxEl = document.getElementById('exp-max-display');
-        var expFill = document.getElementById('exp-fill');
+        var expFill = document.getElementById('exp-fill-bar');
         if (expEl) expEl.textContent = p.exp || 0;
-        if (expMaxEl) expMaxEl.textContent = p.expToLevel || 100;
+        if (expMaxEl) expMaxEl.textContent = p.expToLevel || 500;
         if (expFill) { var pct = p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) : 0; expFill.style.width = pct + '%'; }
     } catch(e) {}
     try {
         var stats = document.querySelectorAll('.stat-value');
-        if (stats.length >= 4) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.agility; stats[3].textContent = p.stats.hp + '/' + p.stats.maxHp; }
+        if (stats.length >= 3) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.hp + '/' + p.stats.maxHp; }
     } catch(e) {}
 },
 
@@ -173,6 +174,20 @@ loadHome: function() {
     try { this.container.style.background = ''; } catch(e) {}
     try { this._stopMusic(); this._playMusic('main_theme'); } catch(e) {}
     this._previousScreen = null;
+    try {
+        var self = this;
+        if (!this._regenInterval) {
+            this._regenInterval = setInterval(function() {
+                var pl = Sherwood.getPlayer();
+                if (pl && !Sherwood.Combat._battle && !Sherwood.Dungeon.getDungeon()) {
+                    var regen = Math.floor(pl.stats.maxHp * 0.25);
+                    pl.stats.hp = Math.min(pl.stats.maxHp, pl.stats.hp + regen);
+                    self.updateDisplay();
+                    Sherwood.saveGame();
+                }
+            }, 15000);
+        }
+    } catch(e) {}
     try { this.updateDisplay(); } catch(e) {}
 },
 
@@ -193,15 +208,22 @@ _showPlaceholder: function(title, bgKey, backAction) { this._playSound('click');
     var bonusActive = p.hearthBonus && p.hearthBonus.active;
     var bonusEnd = p.hearthBonus ? p.hearthBonus.endTime || 0 : 0;
     var now = Date.now();
-    var cooldown = p.hearthCooldown || 0;
+    var cooldownEnd = p.hearthCooldown || 0;
     var wood = 0;
     try { var bag = Sherwood.Bag.getItems(); for (var i=0;i<bag.length;i++) { if (bag[i].id === 'wood' || bag[i].name === 'Дерево') wood += bag[i].quantity || 0; } } catch(e) {}
-    var canActivate = wood >= 100 && now > cooldown;
+    var canActivate = wood >= 100 && now > cooldownEnd;
     var h = '<div style="text-align:center;padding:20px;"><div style="font-size:3em;">&#128293;</div><div style="color:#e0c080;font-size:1.2em;margin:12px 0;">Очаг Шервуда</div><div style="color:#aaa;font-size:0.85em;">Дерева в сумке: ' + wood + ' / 100</div>';
-    if (bonusActive && now < bonusEnd) { var rem = Math.ceil((bonusEnd - now)/3600000); h += '<div style="color:#4caf50;margin:12px 0;">&#9989; Бонус +20% активен! Осталось: ' + rem + ' ч.</div>'; }
-    else if (canActivate) { h += '<button onclick="SherwoodUI._activateHearth()" style="margin-top:12px;background:#c9a040;border:none;border-radius:8px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;">Подкинуть дров (100)</button>'; }
-    else if (now <= cooldown) { var cd = Math.ceil((cooldown - now)/3600000); h += '<div style="color:#ff9800;margin:12px 0;">&#9203; Перезарядка: ' + cd + ' ч.</div>'; }
-    else { h += '<div style="color:#f44336;margin:12px 0;">Недостаточно дерева (нужно 100)</div>'; }
+    if (bonusActive && now < bonusEnd) {
+        var rem = Math.ceil((bonusEnd - now)/3600000);
+        h += '<div style="color:#4caf50;margin:12px 0;">&#9989; Бонус +50% к трофеям активен! Осталось: ' + rem + ' ч.</div>';
+    } else if (now <= cooldownEnd) {
+        var cd = Math.ceil((cooldownEnd - now)/3600000);
+        h += '<div style="color:#ff9800;margin:12px 0;">&#9203; Перезарядка: ' + cd + ' ч.</div>';
+    } else if (canActivate) {
+        h += '<button onclick="SherwoodUI._activateHearth()" style="margin-top:12px;background:#c9a040;border:none;border-radius:8px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;">Подкинуть дров (100)</button>';
+    } else {
+        h += '<div style="color:#f44336;margin:12px 0;">Недостаточно дерева (нужно 100)</div>';
+    }
     h += '</div>';
     this._openScreen('Очаг', 'hearth', h);
 },
@@ -211,7 +233,7 @@ _activateHearth: function() {
     var spent = 0;
     try { var bag = Sherwood.Bag.getItems(); for (var i=bag.length-1;i>=0&&spent<100;i--) { if (bag[i].id==='wood'||bag[i].name==='Дерево') { var q=bag[i].quantity||1; var t=Math.min(q,100-spent); spent+=t; if(q<=t) bag.splice(i,1); else bag[i].quantity-=t; } } Sherwood.Bag._save(); } catch(e) {}
     p.hearthBonus = { active: true, endTime: Date.now() + 86400000 };
-    p.hearthCooldown = Date.now() + 604800000;
+    p.hearthCooldown = Date.now() + 86400000 + 86400000;
     Sherwood._recalcStats();
     Sherwood.saveGame();
     this.hearth();
@@ -588,6 +610,20 @@ _showFlyingLoot: function(items) {
 
 _leaveDungeon: function() { if (Sherwood.Dungeon) Sherwood.Dungeon.leave(); this._stopMusic(); this._playMusic('main_theme'); this.showDungeon(); },
 
+_withdrawKeset: function() {
+    var p = Sherwood.getPlayer();
+    if (!p.keset || p.keset.silver < (p.keset.minWithdraw || 10000)) {
+        this._showToast('Недостаточно серебра в кесете. Минимум: ' + (p.keset ? p.keset.minWithdraw : 10000));
+        return;
+    }
+    var amount = p.keset.silver;
+    p.keset.silver = 0;
+    p.resources.silver = (p.resources.silver || 0) + amount;
+    Sherwood.saveGame();
+    this.updateDisplay();
+    this._showToast('Снято: ' + amount + ' серебра из кесета');
+},
+
 // ========== БОЙ ==========
 _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
     var e = enemyData, p = Sherwood.getPlayer();
@@ -629,7 +665,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '</div>';
     h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span> <span style="color:#ff9800;">ЛВК ' + p.stats.agility + '</span><img src="assets/hero_skins/' + (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01') + '.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span><img src="assets/hero_skins/' + (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01') + '.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
     h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:4px 8%;min-height:90px;max-height:90px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;line-height:1.4;"></div>';
     h += '</div>';
     var bgKey = 'dungeon_fight';
@@ -1034,7 +1070,6 @@ _toggleMusic: function(en) {
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">';
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.attack + '" style="width:22px;height:22px;"><span style="color:#f44336;">' + p.stats.attack + '</span></div>';
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.defense + '" style="width:22px;height:22px;"><span style="color:#2196f3;">' + p.stats.defense + '</span></div>';
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.agility + '" style="width:22px;height:22px;"><span style="color:#ff9800;">' + p.stats.agility + '</span></div>';
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.hp + '" style="width:22px;height:22px;"><span style="color:#4caf50;">' + p.stats.hp + '</span></div>';
     h += '</div>';
 
@@ -1127,8 +1162,38 @@ _showAllAmulets: function() {
     this._openScreen('Амулеты', 'profile', h, 'SherwoodUI.profile()');
 },
 _showProfileInfo: function(type) { var info=document.getElementById('profile-info'); if(!info) return; if(type==='trophies') { var t=Sherwood.getPlayer().trophies||[]; info.innerHTML=t.length?t.map(function(x){return x.name;}).join(' | '):'Нет трофеев'; } },
-training: function() { var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); var p=Sherwood.getPlayer(),tl=p.trainingLevels||{},stats=['attack','defense','hp','agility'],names={attack:'Атака',defense:'Защита',hp:'Здоровье',agility:'Ловкость'},colors={attack:'#f44336',defense:'#2196f3',hp:'#4caf50',agility:'#ff9800'},h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'; for (var i=0;i<stats.length;i++) { var s=stats[i],lvl=tl[s]||0; h+='<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;"><img src="'+this._statIcons[s]+'" style="width:28px;height:28px;"><span style="color:#e0c080;">'+names[s]+'</span></div><div style="color:#aaa;font-size:0.8em;">Ур. '+lvl+'/50</div><div style="color:'+colors[s]+';font-size:0.7em;">+'+(s==='hp'?10:s==='agility'?1:2)+' за ур.</div><button onclick="SherwoodUI._doTraining(\''+s+'\')" style="margin-top:8px;background:#c9a040;border:none;border-radius:4px;padding:6px 16px;color:#000;cursor:pointer;font-size:0.8em;">Тренировать</button></div>'; } h+='</div><div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>'; this._openScreen('Тренировка','training',h,gb); },
-_doTraining: function(stat) { var p=Sherwood.getPlayer(); if(!p) return; if(!p.trainingLevels) p.trainingLevels={attack:0,defense:0,hp:0,agility:0}; var cur=p.trainingLevels[stat]||0; if(cur>=50) { var log=document.getElementById('training-log'); if(log) log.textContent='Макс. уровень!'; return; } var cost=Math.round(10*Math.pow(cur+1,1.15)); if((p.resources.silver||0)<cost) { var log=document.getElementById('training-log'); if(log) log.textContent='Нужно '+cost+' серебра!'; return; } p.resources.silver-=cost; p.trainingLevels[stat]=cur+1; if(Sherwood.Daily) Sherwood.Daily.updateProgress('stat_' + stat, p.stats[stat]); if(Sherwood._recalcStats) Sherwood._recalcStats(); if(Sherwood.saveGame) Sherwood.saveGame(); this.updateDisplay(); this.training(); var log=document.getElementById('training-log'); if(log) log.textContent=stat+' -> '+(cur+1)+' (-'+cost+' сер.)'; },
+training: function() { var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); var p=Sherwood.getPlayer(),tl=p.trainingLevels||{},stats=['attack','defense','hp'],names={attack:'Атака',defense:'Защита',hp:'Здоровье'},colors={attack:'#f44336',defense:'#2196f3',hp:'#4caf50'},h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'; for (var i=0;i<stats.length;i++) { var s=stats[i],lvl=tl[s]||0; h+='<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;"><img src="'+this._statIcons[s]+'" style="width:28px;height:28px;"><span style="color:#e0c080;">'+names[s]+'</span></div><div style="color:#aaa;font-size:0.8em;">Ур. '+lvl+'/200</div><div style="color:'+colors[s]+';font-size:0.7em;">+'+(s==='hp'?10:2)+' за ур.</div><button onclick="SherwoodUI._doTraining(\''+s+'\')" style="margin-top:8px;background:#c9a040;border:none;border-radius:4px;padding:6px 16px;color:#000;cursor:pointer;font-size:0.8em;">Тренировать</button></div>'; } h+='</div><div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>'; this._openScreen('Тренировка','training',h,gb); },
+_doTraining: function(stat) {
+    var p = Sherwood.getPlayer(); if (!p) return;
+    if (!p.trainingLevels) p.trainingLevels = { attack: 0, defense: 0, hp: 0 };
+    var cur = p.trainingLevels[stat] || 0;
+    if (cur >= 200) { var log = document.getElementById('training-log'); if (log) log.textContent = 'Макс. уровень!'; return; }
+    
+    var nextLevel = cur + 1;
+    var isGoldLevel = nextLevel % 5 === 0;
+    var cost;
+    if (isGoldLevel) {
+        cost = Math.round(5 * Math.pow(1.15, Math.floor(nextLevel / 5)));
+    } else {
+        cost = Math.round(10 * Math.pow(nextLevel, 1.15));
+    }
+    var currency = isGoldLevel ? 'gold' : 'silver';
+    
+    if ((p.resources[currency] || 0) < cost) {
+        var log = document.getElementById('training-log');
+        if (log) log.textContent = 'Нужно ' + cost + ' ' + (isGoldLevel ? 'золота' : 'серебра') + '!';
+        return;
+    }
+    p.resources[currency] -= cost;
+    p.trainingLevels[stat] = nextLevel;
+    if (Sherwood.Daily) Sherwood.Daily.updateProgress('stat_' + stat, p.stats[stat]);
+    if (Sherwood._recalcStats) Sherwood._recalcStats();
+    if (Sherwood.saveGame) Sherwood.saveGame();
+    this.updateDisplay();
+    this.training();
+    var log = document.getElementById('training-log');
+    if (log) log.textContent = stat + ' → ' + nextLevel + ' (-' + cost + ' ' + (isGoldLevel ? 'золота' : 'серебра') + ')';
+},
 
 forge: function() {
     var gb = this._previousScreen === 'profile' ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome()';
