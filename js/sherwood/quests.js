@@ -75,24 +75,24 @@ Sherwood.Quests = {
         },
         {
             id: 6, name: 'Твари Искажённой Эволюции',
-            lore: 'В кромешной тьме затопленных гротов зародились новые формы жизни. Ненасытный тритон — слепая саламандра-мутант.',
+            lore: 'В кромешной тьме затопленных гротов зародились новые формы жизни.',
             boss: { name: 'Химера корней', image: 'image (20).png', hp: 1200, atk: 62, def: 32, exp: 400, gold: 300 },
             stages: 6, rewards: { exp: 1500, gold: 350, silver: 3500 },
             enemies: [
-                { name: 'Утопленник (Мертвец недр)', image: 'image (62).png', hp: 350, atk: 42, def: 22, exp: 80, gold: 40 },
-                { name: 'Рогатый владыка Леший', image: 'image (18).png', hp: 380, atk: 45, def: 24, exp: 85, gold: 42 },
-                { name: 'Проклятый титан Леший', image: 'image (15).png', hp: 410, atk: 48, def: 26, exp: 90, gold: 45 },
-                { name: 'Кикимора багровой ярости', image: 'image (54).png', hp: 440, atk: 50, def: 28, exp: 95, gold: 48 },
+                { name: 'Утопленник', image: 'image (62).png', hp: 350, atk: 42, def: 22, exp: 80, gold: 40 },
+                { name: 'Рогатый владыка', image: 'image (18).png', hp: 380, atk: 45, def: 24, exp: 85, gold: 42 },
+                { name: 'Проклятый титан', image: 'image (15).png', hp: 410, atk: 48, def: 26, exp: 90, gold: 45 },
+                { name: 'Кикимора ярости', image: 'image (54).png', hp: 440, atk: 50, def: 28, exp: 95, gold: 48 },
                 { name: 'Кристаллический ёж', image: 'image (37).png', hp: 470, atk: 55, def: 30, exp: 100, gold: 50 }
             ]
         },
         {
             id: 7, name: 'Эхо Прошлых Сражений',
-            lore: 'Подземка поглощала не только плоть, но и души. Погибшие карательные отряды Шерифа воплотились в Одичалых духов.',
+            lore: 'Подземка поглощала не только плоть, но и души.',
             boss: { name: 'Кислотный Кошмар', image: 'image (27).png', hp: 1400, atk: 70, def: 35, exp: 450, gold: 350 },
             stages: 6, rewards: { exp: 2000, gold: 500, silver: 5000 },
             enemies: [
-                { name: 'Волк-оборотень (Босс)', image: 'image (34).png', hp: 420, atk: 48, def: 26, exp: 90, gold: 45 },
+                { name: 'Волк-оборотень', image: 'image (34).png', hp: 420, atk: 48, def: 26, exp: 90, gold: 45 },
                 { name: 'Лесное Лихо', image: 'image (46).png', hp: 450, atk: 52, def: 28, exp: 100, gold: 50 },
                 { name: 'Разъярённое Лихо', image: 'image (47).png', hp: 480, atk: 55, def: 30, exp: 110, gold: 55 },
                 { name: 'Лихо (Атака)', image: 'image (48).png', hp: 510, atk: 58, def: 32, exp: 120, gold: 60 },
@@ -101,38 +101,38 @@ Sherwood.Quests = {
         },
         {
             id: 8, name: 'Ужас Болотных Недр',
-            lore: 'В покрытых слизью пещерах зародилась Кикимора болотная. Шервудский падальщик стал вершиной мерзости.',
+            lore: 'В покрытых слизью пещерах зародилась Кикимора болотная.',
             boss: { name: 'Очи Алтаря', image: 'image (5).png', hp: 1600, atk: 78, def: 38, exp: 500, gold: 400 },
             stages: 6, rewards: { exp: 2500, gold: 650, silver: 6500 },
             enemies: [
-                { name: 'Призрак Чёрного Ордена', image: 'image (41).png', hp: 500, atk: 55, def: 30, exp: 110, gold: 55 },
+                { name: 'Призрак Ордена', image: 'image (41).png', hp: 500, atk: 55, def: 30, exp: 110, gold: 55 },
                 { name: 'Фантомный дух', image: 'image (42).png', hp: 530, atk: 58, def: 32, exp: 120, gold: 60 },
                 { name: 'Химера корней', image: 'image (20).png', hp: 560, atk: 62, def: 34, exp: 130, gold: 65 },
                 { name: 'Кислотный Кошмар', image: 'image (27).png', hp: 590, atk: 65, def: 36, exp: 140, gold: 70 },
-                { name: 'Очи Алтаря Безумия', image: 'image (5).png', hp: 620, atk: 70, def: 38, exp: 150, gold: 75 }
+                { name: 'Очи Алтаря', image: 'image (5).png', hp: 620, atk: 70, def: 38, exp: 150, gold: 75 }
             ]
         },
         {
             id: 9, name: 'Первые Трофеи',
-            lore: 'Охотник научился использовать остатки тварей. Из прочной кожи болотных бестий он создал комплект Следопыта.',
+            lore: 'Охотник научился использовать остатки тварей.',
             boss: { name: 'Пожиратель душ', image: 'image (38).png', hp: 1800, atk: 86, def: 42, exp: 550, gold: 450 },
             stages: 6, rewards: { exp: 3000, gold: 800, silver: 8000 },
             enemies: [
                 { name: 'Пожиратель душ', image: 'image (38).png', hp: 580, atk: 62, def: 34, exp: 130, gold: 65 },
-                { name: 'Извергатель ярости', image: 'image (39).png', hp: 610, atk: 65, def: 36, exp: 140, gold: 70 },
+                { name: 'Извергатель', image: 'image (39).png', hp: 610, atk: 65, def: 36, exp: 140, gold: 70 },
                 { name: 'Топор Палача', image: 'image (31).png', hp: 640, atk: 68, def: 38, exp: 150, gold: 75 },
                 { name: 'Проклятый Король', image: 'image (44).png', hp: 670, atk: 72, def: 40, exp: 160, gold: 80 },
-                { name: 'Безумие Мёртвой Короны', image: 'image (45).png', hp: 700, atk: 75, def: 42, exp: 170, gold: 85 }
+                { name: 'Безумие Короны', image: 'image (45).png', hp: 700, atk: 75, def: 42, exp: 170, gold: 85 }
             ]
         },
         {
             id: 10, name: 'Открытие Порталов',
-            lore: 'Скверна достигла критической точки и прожгла ткань реальности. Открылись три гигантских магических разлома.',
+            lore: 'Скверна прожгла ткань реальности.',
             boss: { name: 'Извергатель ярости', image: 'image (39).png', hp: 2000, atk: 95, def: 46, exp: 600, gold: 500 },
             stages: 6, rewards: { exp: 4000, gold: 1000, silver: 10000 },
             enemies: [
-                { name: 'Мясной инсектоид', image: 'image (55).png', hp: 650, atk: 68, def: 36, exp: 150, gold: 75 },
-                { name: 'Рунический Джаггернаут', image: 'image (79).png', hp: 680, atk: 72, def: 38, exp: 160, gold: 80 },
+                { name: 'Инсектоид', image: 'image (55).png', hp: 650, atk: 68, def: 36, exp: 150, gold: 75 },
+                { name: 'Джаггернаут', image: 'image (79).png', hp: 680, atk: 72, def: 38, exp: 160, gold: 80 },
                 { name: 'Изумрудный призрак', image: 'image (77).png', hp: 710, atk: 75, def: 40, exp: 170, gold: 85 },
                 { name: 'Шервудское Отродье', image: 'image (2).png', hp: 740, atk: 78, def: 42, exp: 180, gold: 90 },
                 { name: 'Лесное Лихо', image: 'image (46).png', hp: 770, atk: 82, def: 44, exp: 190, gold: 95 }
@@ -140,7 +140,7 @@ Sherwood.Quests = {
         },
         {
             id: 11, name: 'Королева Короедов',
-            lore: 'Из Портала Нашествия вышла Матка Лесных Короедов — колоссальная инсектоидная королева.',
+            lore: 'Из Портала Нашествия вышла Матка Лесных Короедов.',
             boss: { name: 'Топор Палача', image: 'image (31).png', hp: 2300, atk: 105, def: 50, exp: 700, gold: 600 },
             stages: 6, rewards: { exp: 5000, gold: 1500, silver: 15000 },
             enemies: [
@@ -153,33 +153,33 @@ Sherwood.Quests = {
         },
         {
             id: 12, name: 'Призрачный Король',
-            lore: 'Второй портал перенёс Охотника в проклятый склеп. В центре зала восседал Проклятый Король Разбойников.',
+            lore: 'В центре зала восседал Проклятый Король Разбойников.',
             boss: { name: 'Проклятый Король', image: 'image (44).png', hp: 2600, atk: 115, def: 55, exp: 800, gold: 700 },
             stages: 6, rewards: { exp: 6000, gold: 2000, silver: 20000 },
             enemies: [
                 { name: 'Кислотный Кошмар', image: 'image (27).png', hp: 800, atk: 82, def: 44, exp: 190, gold: 95 },
                 { name: 'Очи Алтаря', image: 'image (5).png', hp: 830, atk: 85, def: 46, exp: 200, gold: 100 },
                 { name: 'Пожиратель душ', image: 'image (38).png', hp: 860, atk: 88, def: 48, exp: 210, gold: 105 },
-                { name: 'Извергатель ярости', image: 'image (39).png', hp: 890, atk: 92, def: 50, exp: 220, gold: 110 },
+                { name: 'Извергатель', image: 'image (39).png', hp: 890, atk: 92, def: 50, exp: 220, gold: 110 },
                 { name: 'Топор Палача', image: 'image (31).png', hp: 920, atk: 95, def: 52, exp: 230, gold: 115 }
             ]
         },
         {
             id: 13, name: 'Хранитель Склепа',
-            lore: 'Третий портал вёл в хтоническое капище. Деревья кровоточили, из коры росли человеческие глаза.',
+            lore: 'Третий портал вёл в хтоническое капище.',
             boss: { name: 'Безумие Короны', image: 'image (45).png', hp: 3000, atk: 130, def: 60, exp: 900, gold: 800 },
             stages: 6, rewards: { exp: 7500, gold: 2500, silver: 25000 },
             enemies: [
                 { name: 'Проклятый Король', image: 'image (44).png', hp: 880, atk: 90, def: 48, exp: 210, gold: 105 },
-                { name: 'Безумие Мёртвой Короны', image: 'image (45).png', hp: 910, atk: 95, def: 50, exp: 220, gold: 110 },
-                { name: 'Мясной инсектоид', image: 'image (55).png', hp: 940, atk: 98, def: 52, exp: 230, gold: 115 },
-                { name: 'Рунический Джаггернаут', image: 'image (79).png', hp: 970, atk: 102, def: 54, exp: 240, gold: 120 },
+                { name: 'Безумие Короны', image: 'image (45).png', hp: 910, atk: 95, def: 50, exp: 220, gold: 110 },
+                { name: 'Инсектоид', image: 'image (55).png', hp: 940, atk: 98, def: 52, exp: 230, gold: 115 },
+                { name: 'Джаггернаут', image: 'image (79).png', hp: 970, atk: 102, def: 54, exp: 240, gold: 120 },
                 { name: 'Изумрудный призрак', image: 'image (77).png', hp: 1000, atk: 105, def: 56, exp: 250, gold: 125 }
             ]
         },
         {
             id: 14, name: 'Пробуждение Отродья',
-            lore: 'Три портала слились воедино. Из разлома поднялся ультимативный бог хаоса — Шервудское Отродье.',
+            lore: 'Из разлома поднялся ультимативный бог хаоса.',
             boss: { name: 'Мясной инсектоид', image: 'image (55).png', hp: 3500, atk: 145, def: 68, exp: 1000, gold: 900 },
             stages: 6, rewards: { exp: 9000, gold: 3000, silver: 30000 },
             enemies: [
@@ -187,38 +187,58 @@ Sherwood.Quests = {
                 { name: 'Лесное Лихо', image: 'image (46).png', hp: 980, atk: 98, def: 52, exp: 240, gold: 120 },
                 { name: 'Разъярённое Лихо', image: 'image (47).png', hp: 1010, atk: 102, def: 54, exp: 250, gold: 125 },
                 { name: 'Пожиратель душ', image: 'image (38).png', hp: 1040, atk: 105, def: 56, exp: 260, gold: 130 },
-                { name: 'Безумие Мёртвой Короны', image: 'image (45).png', hp: 1070, atk: 110, def: 58, exp: 270, gold: 135 }
+                { name: 'Безумие Короны', image: 'image (45).png', hp: 1070, atk: 110, def: 58, exp: 270, gold: 135 }
             ]
         },
         {
             id: 15, name: 'Доспех Вечности',
-            lore: 'Финальная битва за Шервуд. Только объединившись, игроки смогут сокрушить Отродье.',
+            lore: 'Финальная битва за Шервуд.',
             boss: { name: 'Джаггернаут', image: 'image (79).png', hp: 4500, atk: 170, def: 80, exp: 1500, gold: 1200 },
             stages: 6, rewards: { exp: 12000, gold: 5000, silver: 50000 },
             enemies: [
-                { name: 'Рунический Джаггернаут', image: 'image (79).png', hp: 1050, atk: 105, def: 55, exp: 260, gold: 130 },
+                { name: 'Джаггернаут', image: 'image (79).png', hp: 1050, atk: 105, def: 55, exp: 260, gold: 130 },
                 { name: 'Изумрудный призрак', image: 'image (77).png', hp: 1080, atk: 108, def: 57, exp: 270, gold: 135 },
-                { name: 'Шервудское Отродье', image: 'image (2).png', hp: 1110, atk: 112, def: 59, exp: 280, gold: 140 },
-                { name: 'Мясной инсектоид', image: 'image (55).png', hp: 1140, atk: 115, def: 61, exp: 290, gold: 145 },
+                { name: 'Отродье', image: 'image (2).png', hp: 1110, atk: 112, def: 59, exp: 280, gold: 140 },
+                { name: 'Инсектоид', image: 'image (55).png', hp: 1140, atk: 115, def: 61, exp: 290, gold: 145 },
                 { name: 'Топор Палача', image: 'image (31).png', hp: 1170, atk: 118, def: 63, exp: 300, gold: 150 }
             ]
         }
     ],
-     SECRET_CHAPTER: {
-    id: 'secret',
-    name: 'Глубины Изумрудного Склепа',
-    lore: 'Победа над Палачом открыла проход в древний Изумрудный Склеп. Здесь эволюция хоррора пошла по иному пути.',
-    boss: { name: 'Чернильный Истязатель', image: 'abyssal_ooze.png', hp: 2500, atk: 100, def: 50, exp: 1000, gold: 300 },
-    stages: 6,
-    rewards: { exp: 2000, gold: 500, silver: 1500 },
-    enemies: [
-        { name: 'Костяной Собиратель', image: 'bone_collector.png', hp: 800, atk: 60, def: 30, exp: 200, gold: 50 },
-        { name: 'Чрево Леса', image: 'hollow_abomination.png', hp: 1000, atk: 70, def: 35, exp: 250, gold: 60 },
-        { name: 'Снайпер Гробниц', image: 'crypt_stalker.png', hp: 900, atk: 75, def: 28, exp: 200, gold: 50 },
-        { name: 'Егерь Ловчих Сетей', image: 'thorny_trapper.png', hp: 950, atk: 65, def: 32, exp: 220, gold: 55 },
-        { name: 'Безликий Палач', image: 'the_faceless_executioner.png', hp: 2200, atk: 90, def: 45, exp: 800, gold: 250 }
-    ]
-},
+
+    SECRET_CHAPTER: {
+        id: 'secret',
+        name: 'Глубины Изумрудного Склепа',
+        lore: 'Победа над Палачом открыла проход в древний Изумрудный Склеп.',
+        boss: { name: 'Чернильный Истязатель', image: 'abyssal_ooze.png', hp: 2500, atk: 100, def: 50, exp: 1000, gold: 300 },
+        stages: 6,
+        rewards: { exp: 2000, gold: 500, silver: 1500 },
+        enemies: [
+            { name: 'Костяной Собиратель', image: 'bone_collector.png', hp: 800, atk: 60, def: 30, exp: 200, gold: 50 },
+            { name: 'Чрево Леса', image: 'hollow_abomination.png', hp: 1000, atk: 70, def: 35, exp: 250, gold: 60 },
+            { name: 'Снайпер Гробниц', image: 'crypt_stalker.png', hp: 900, atk: 75, def: 28, exp: 200, gold: 50 },
+            { name: 'Егерь Ловчих Сетей', image: 'thorny_trapper.png', hp: 950, atk: 65, def: 32, exp: 220, gold: 55 },
+            { name: 'Безликий Палач', image: 'the_faceless_executioner.png', hp: 2200, atk: 90, def: 45, exp: 800, gold: 250 }
+        ]
+    },
+
+    TROPHY_DATA: {
+        1: { attack: 7, defense: 7, hp: 70, name: 'Сломанный Охотничий Рог', icon: 'assets/all_trophies/trophies_chapters/tr_ch1.png' },
+        2: { attack: 12, defense: 12, hp: 120, name: 'Песочные Часы Разбойников', icon: 'assets/all_trophies/trophies_chapters/tr_ch2.png' },
+        3: { attack: 18, defense: 18, hp: 180, name: 'Наконечник Стрелы Шерифа', icon: 'assets/all_trophies/trophies_chapters/tr_ch3.png' },
+        4: { attack: 22, defense: 22, hp: 220, name: 'Коготь Чумной Гарпии', icon: 'assets/all_trophies/trophies_chapters/tr_ch4.png' },
+        5: { attack: 30, defense: 30, hp: 300, name: 'Шлем-Клетка Палача', icon: 'assets/all_trophies/trophies_chapters/tr_ch5.png' },
+        6: { attack: 37, defense: 37, hp: 370, name: 'Слиток Подземного Железа', icon: 'assets/all_trophies/trophies_chapters/tr_ch6.png' },
+        7: { attack: 45, defense: 45, hp: 450, name: 'Костяной Диск Наемников', icon: 'assets/all_trophies/trophies_chapters/tr_ch7.png' },
+        8: { attack: 52, defense: 52, hp: 520, name: 'Изумрудная Друза Пещер', icon: 'assets/all_trophies/trophies_chapters/tr_ch8.png' },
+        9: { attack: 60, defense: 60, hp: 600, name: 'Проклятый Ключ Стража', icon: 'assets/all_trophies/trophies_chapters/tr_ch9.png' },
+        10: { attack: 75, defense: 75, hp: 750, name: 'Зеркало Слепого Провидца', icon: 'assets/all_trophies/trophies_chapters/tr_ch10.png' },
+        11: { attack: 90, defense: 90, hp: 900, name: 'Забрало Королевского Шлема', icon: 'assets/all_trophies/trophies_chapters/tr_ch11.png' },
+        12: { attack: 112, defense: 112, hp: 1120, name: 'Наконечник Скипетра Власти', icon: 'assets/all_trophies/trophies_chapters/tr_ch12.png' },
+        13: { attack: 135, defense: 135, hp: 1350, name: 'Кубок Оскверненного Грааля', icon: 'assets/all_trophies/trophies_chapters/tr_ch13.png' },
+        14: { attack: 165, defense: 165, hp: 1650, name: 'Наконечник Знамени Командора', icon: 'assets/all_trophies/trophies_chapters/tr_ch14.png' },
+        15: { attack: 225, defense: 225, hp: 2250, name: 'Живое Око Бездны', icon: 'assets/all_trophies/trophies_chapters/tr_ch15.png' }
+    },
+
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p.questProgress) p.questProgress = { completed: [], currentChapter: 1, secretCompleted: false };
@@ -231,6 +251,7 @@ Sherwood.Quests = {
     },
 
     getChapter: function(id) {
+        if (id === 'secret') return this.SECRET_CHAPTER;
         for (var i = 0; i < this.CHAPTERS.length; i++) {
             if (this.CHAPTERS[i].id === id) return this.CHAPTERS[i];
         }
@@ -272,10 +293,6 @@ Sherwood.Quests = {
         var p = Sherwood.getPlayer();
         p.stats.hp = p.stats.maxHp;
         
-        if (this._currentChapter && this._currentChapter.id === id && this._inBattle) {
-            return { success: true, chapter: ch, enemy: this._currentEnemy, stage: this._currentStage + 1, total: ch.stages };
-        }
-        
         if (this._currentChapter && this._currentChapter.id === id && this._currentEnemy) {
             this._inBattle = true;
             this._lastAttempt = Date.now();
@@ -310,6 +327,7 @@ Sherwood.Quests = {
             if (Sherwood.Bestiary && e.image) Sherwood.Bestiary.registerKill(e.image);
             Sherwood.addExp(e.exp);
             if (this._attemptsToday <= 4) Sherwood.addResource('gold', e.gold);
+            if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1);
             this._currentStage++;
             var ch = this._currentChapter;
             if (this._currentStage >= ch.stages) {
@@ -320,9 +338,11 @@ Sherwood.Quests = {
                 if (p2.questProgress.completed.indexOf(ch.id) === -1) {
                     p2.questProgress.completed.push(ch.id);
                     if (ch.id < 15) p2.questProgress.currentChapter = ch.id + 1;
-                }
-                if (typeof Sherwood.addTrophy === 'function') {
-                    Sherwood.addTrophy('chapter_' + ch.id, 'Глава ' + ch.id + ': ' + ch.name, { attack: ch.id * 5, defense: ch.id * 3, hp: ch.id * 10, agility: ch.id * 2 }, '', 'chapter');
+                    
+                    var td = this.TROPHY_DATA[ch.id];
+                    if (td && typeof Sherwood.addTrophy === 'function') {
+                        Sherwood.addTrophy('chapter_' + ch.id, td.name, { attack: td.attack, defense: td.defense, hp: td.hp }, td.icon, 'chapter');
+                    }
                 }
                 this._currentChapter = null;
                 this._currentEnemy = null;
@@ -337,10 +357,7 @@ Sherwood.Quests = {
             var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
             p.stats.hp = Math.max(0, p.stats.hp - edmg);
             r.enemyDamage = edmg; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
-            if (p.stats.hp <= 0) {
-                this._inBattle = false;
-                r.lose = true;
-            }
+            if (p.stats.hp <= 0) { this._inBattle = false; r.lose = true; }
         }
         Sherwood.saveGame();
         return r;
