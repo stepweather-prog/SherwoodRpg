@@ -861,12 +861,28 @@ _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) 
     _claimChapter: function(ch,i) { var r=Sherwood.Daily.claimChapterReward(ch,i),log=document.getElementById('daily-log'); if(r.success) { if(log) log.textContent='Награда получена!'; this.updateDisplay(); } else { if(log) log.textContent=r.reason; } var self=this; setTimeout(function(){self.daily();},800); },
 
     // ===== ПОРТАЛЫ =====
-portal: function() { this._playSound('click'); if(!Sherwood.Portal) { this._showPlaceholder('Порталы','portal'); return; } if(Sherwood.Portal.isInPortal()) { this._showPortalBattle(); return; } var portals=Sherwood.Portal.getAllPortals(),player=Sherwood.getPlayer(),h=''; for (var i=0;i<portals.length;i++) { var p=portals[i],check=Sherwood.Portal.canEnter(p.id),completed=player.portal&&player.portal.completed&&player.portal.completed.indexOf(p.id)!==-1,badge='',bo='0.4',bc='#555',ca=''; if(completed) { badge='<span style="color:#4caf50;">Пройдено</span>'; bo='0.3'; bc='#4caf50'; } else { badge='<span style="color:#ffd700;">Доступен</span>'; bo='0.6'; bc='#c9a040'; ca='onclick="SherwoodUI._enterPortal('+p.id+')" style="cursor:pointer;"'; } h+='<div '+ca+' style="background:url(\''+p.bg+'\') center/cover no-repeat;border:2px solid '+bc+';border-radius:10px;padding:12px;margin-bottom:8px;position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,'+bo+');z-index:0;"></div><div style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;"><div style="font-size:2em;">'+p.icon+'</div><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">'+p.name+'</div><div style="color:#aaa;font-size:0.7em;">'+p.enemies.length+' врагов | 3 часа</div>'+badge+'</div></div></div>'; } this._openScreen('Порталы','portal',h||'<div style="color:#aaa;text-align:center;">Нет порталов</div>'); },
-_enterPortal: function(id) { var r=Sherwood.Portal.enterPortal(id); if(!r.success) return; this._stopMusic(); this._playSound('dungeon_enter'); this._showPortalBattle(); },
-_showPortalBattle: function() { var b=Sherwood.Portal.getCurrentBattle(); if(!b) { this.portal(); return; } var e=b.enemy; this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp||e.maxHp, maxHp:e.maxHp||e.hp },'portal',b.portal.name+' - '+b.level+'/'+b.totalLevels+' | Время: '+Math.floor(b.timeRemaining/60)+':'+(b.timeRemaining%60<10?'0':'')+b.timeRemaining%60+' | Смертей: '+b.deathCount,'','SherwoodUI._portalAttack()','SherwoodUI._portalFlee()'); },
-_portalAttack: function() { this._handlePortalResult(Sherwood.Portal.portalAttack()); },
-_handlePortalResult: function(r) { if(!r) return; var log=document.getElementById('portal-log'); if(r.portalComplete) { if(log) log.textContent='Портал пройден!'; this._stopMusic(); this.updateDisplay(); var self=this; setTimeout(function(){self._playMusic('main_theme');self.portal();},2000); } else if(r.portalFailed) { if(log) log.textContent='Провал!'; this._stopMusic(); var self=this; setTimeout(function(){self._playMusic('main_theme');self.portal();},2000); } else if(r.dead&&r.resurrected) { if(log) log.textContent='Смерть #'+r.deathCount+'! Выкуп: '+r.cost.cost+' '+r.cost.currency; this.updateDisplay(); this._showPortalBattle(); } else if(r.enemyDead) { if(log) log.textContent='Враг повержен!'; this.updateDisplay(); if(r.nextEnemy) { var self=this; setTimeout(function(){self._showPortalBattle();},1000); } } else { this._hitEnemyCard(); this._updateEnemyHP(r.enemyHp, r.enemyMaxHp); if(log) log.textContent='-'+r.damage+' | Враг: -'+(r.enemyDamage||0); this.updateDisplay(); this._showPortalBattle(); } },
-_portalFlee: function() { this._stopMusic(); Sherwood.Portal.fleePortal(); this._playMusic('main_theme'); this.portal(); },
+portal: function() {
+    this._playSound('click');
+    if (!Sherwood.Portal) { this._showPlaceholder('Порталы', 'portal'); return; }
+    if (Sherwood.Portal.isInPortal()) { this._showPortalBattle(); return; }
+    var portals = Sherwood.Portal.getAllPortals();
+    var h = '';
+    if (portals && Object.keys(portals).length > 0) {
+        var player = Sherwood.getPlayer();
+        for (var id in portals) {
+            var p = portals[id];
+            var completed = player.portal && player.portal.completed && player.portal.completed.indexOf(p.id) !== -1;
+            var badge = completed ? '<span style="color:#4caf50;">Пройдено</span>' : '<span style="color:#ffd700;">Доступен</span>';
+            var bo = completed ? '0.3' : '0.6';
+            var bc = completed ? '#4caf50' : '#c9a040';
+            var ca = completed ? '' : 'onclick="SherwoodUI._enterPortal(' + p.id + ')" style="cursor:pointer;"';
+            h += '<div ' + ca + ' style="background:url(\'' + p.bg + '\') center/cover no-repeat;border:2px solid ' + bc + ';border-radius:10px;padding:12px;margin-bottom:8px;position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,' + bo + ');z-index:0;"></div><div style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;"><div style="font-size:2em;">' + p.icon + '</div><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + p.name + '</div><div style="color:#aaa;font-size:0.7em;">' + p.enemies.length + ' врагов | 3 часа</div>' + badge + '</div></div></div>';
+        }
+    } else {
+        h = '<div style="color:#aaa;text-align:center;padding:40px;">Нет доступных порталов</div>';
+    }
+    this._openScreen('Порталы', 'portal', h);
+},
     // ===== РЕЙД =====
     raid: function() { this._playSound('click'); if(!Sherwood.Raid) { this._showPlaceholder('Рейд','raid'); return; } if(Sherwood.Raid.isRaidActive()) { this._showRaidBattle(); return; } var raids=Sherwood.Raid.getAvailableRaids(),check=Sherwood.Raid.canJoinRaid(),h=''; for (var i=0;i<raids.length;i++) { var r=raids[i]; h+='<div style="background:rgba(0,0,0,0.5);border:2px solid '+(check.can?'#c9a040':'#f44336')+';border-radius:10px;padding:14px;margin-bottom:8px;text-align:center;"><div style="color:#e0c080;font-weight:bold;">'+r.name+'</div><div style="color:#aaa;">HP '+r.maxHp+' | АТК '+r.attack+' | 3 этапа</div>'+(check.can?'<button onclick="SherwoodUI._startRaid('+i+')" style="margin-top:8px;background:#c9a040;border:none;border-radius:6px;padding:8px 20px;color:#000;font-weight:bold;cursor:pointer;">В бой!</button>':'<div style="color:#f44336;">'+check.reason+'</div>')+'</div>'; } this._openScreen('Рейд','raid',h||'<div style="color:#aaa;text-align:center;">Нет рейдов</div>'); },
     _startRaid: function(i) { this._stopMusic(); Sherwood.Raid.startRaid(i); this._playSound('dungeon_enter'); this._showRaidBattle(); },
