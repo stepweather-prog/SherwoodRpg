@@ -31,9 +31,9 @@
         .arch-layer::after { content: ''; position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 51%; height: 65%; background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat; border-radius: 50% 50% 0 0; z-index: -1; }
         .hero-layer { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); width: 280px; height: 480px; z-index: 4; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
         .hero-layer img { width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7)); }
-        .side-btn { width: 90px; height: 90px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
-        .side-btn img { width: 90px; height: 90px; object-fit: contain; }
-        .side-btn .label { width: 100px; height: 52px; display: flex; align-items: center; justify-content: center; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; color: #ffa500; font-size: 12px; font-weight: bold; text-shadow: 0 0 4px #000; margin-top: -4px; }
+        .side-btn { width: 72px; height: 72px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; position: relative; z-index: 21; }
+        .side-btn img { width: 72px; height: 72px; object-fit: contain; }
+        .side-btn .label { width: 90px; height: 40px; display: flex; align-items: center; justify-content: center; background: url('assets/interface/all_stat.png') center/100% 100% no-repeat; color: #ffa500; font-size: 10px; font-weight: bold; text-shadow: 0 0 4px #000; margin-top: -4px; }
         .left-buttons-column { position: absolute; bottom: 140px; left: 30px; display: flex; flex-direction: column; gap: 10px; z-index: 20; pointer-events: auto; }
         .right-buttons-column { position: absolute; bottom: 140px; right: 30px; display: flex; flex-direction: column; gap: 10px; z-index: 20; pointer-events: auto; }
         .top-buttons-row, .bottom-buttons-row, .left-buttons-column, .right-buttons-column { z-index: 25 !important; pointer-events: auto !important; }
@@ -63,32 +63,14 @@
         <div class="hero-layer"><img src="assets/hero_skins/skin1_01.png" alt="Герой"></div>
         <div class="top-panel">
             <div class="top-resources-row">
-                <div class="res-group">
-                    <img src="assets/interface/gold_plate.png">
-                    <div class="val-block"><span id="gold-display">0</span></div>
-                </div>
-                <div class="res-group">
-                    <img src="assets/interface/level_hero.png">
-                    <div class="val-block"><span id="level-display">1</span></div>
-                </div>
-                <div class="res-group">
-                    <img src="assets/interface/silver_plaque.png">
-                    <div class="val-block"><span id="silver-display">0</span></div>
-                </div>
+                <div class="res-group"><img src="assets/interface/gold_plate.png"><div class="val-block"><span id="gold-display">0</span></div></div>
+                <div class="res-group"><img src="assets/interface/level_hero.png"><div class="val-block"><span id="level-display">1</span></div></div>
+                <div class="res-group"><img src="assets/interface/silver_plaque.png"><div class="val-block"><span id="silver-display">0</span></div></div>
             </div>
             <div class="top-stats-row">
-                <div class="res-group">
-                    <img src="assets/interface/icon_power.png">
-                    <div class="val-block"><span class="stat-value attack">0</span></div>
-                </div>
-                <div class="res-group">
-                    <img src="assets/interface/icon_defense.png">
-                    <div class="val-block"><span class="stat-value defense">0</span></div>
-                </div>
-                <div class="res-group">
-                    <img src="assets/interface/icon_health.png">
-                    <div class="val-block"><span class="stat-value hp">0</span></div>
-                </div>
+                <div class="res-group"><img src="assets/interface/icon_power.png"><div class="val-block"><span class="stat-value attack">0</span></div></div>
+                <div class="res-group"><img src="assets/interface/icon_defense.png"><div class="val-block"><span class="stat-value defense">0</span></div></div>
+                <div class="res-group"><img src="assets/interface/icon_health.png"><div class="val-block"><span class="stat-value hp">0</span></div></div>
             </div>
             <div class="top-row-buttons">
                 <div class="top-btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
