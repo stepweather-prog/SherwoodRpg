@@ -1244,7 +1244,7 @@ _bestiaryTab: 0,
 
 (function() {
     var self = SherwoodUI;
-    var allButtons = document.querySelectorAll('.btn[data-action]');
+    var allButtons = document.querySelectorAll('.btn[data-action], .side-btn[data-action], .top-btn[data-action]');
     for (var i = 0; i < allButtons.length; i++) {
         (function(el) {
             el.addEventListener('click', function(e) {
