@@ -202,9 +202,9 @@ Sherwood.Dungeon = {
             return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
         }
         if (cell.chest && !cell.looted) return { ok: true, type: 'chest' };
-        if (cell.altar) return { ok: true, type: 'altar' };
-        if (cell.cauldron) return { ok: true, type: 'cauldron' };
-        if (cell.potion) return { ok: true, type: 'potion' };
+        if (cell.altar && !cell.altarCollected) return { ok: true, type: 'altar' };
+        if (cell.cauldron && !cell.cauldronCollected) return { ok: true, type: 'cauldron' };
+        if (cell.potion && !cell.potionCollected) return { ok: true, type: 'potion' };
         if (cell.lootBag && !cell.lootCollected) return { ok: true, type: 'lootBag' };
         if (cell.exit) {
             if (cell.locked) {
@@ -293,9 +293,9 @@ Sherwood.Dungeon = {
         
         if (firstTime && d.level >= 1) {
             var trophyBonuses = {
-                forest: { base: { attack: 7, defense: 7, hp: 70 }, name: 'Древний Тотем Владыки Чащи' },
-                swamp: { base: { attack: 14, defense: 14, hp: 140 }, name: 'Идол Болотного Левиафана' },
-                cave: { base: { attack: 28, defense: 28, hp: 280 }, name: 'Сердце Пещерного Исполина' }
+                forest: { base: { attack: 7, defense: 7, hp: 70 }, name: 'Древний Тотем Владыки Чащи', icon: 'assets/all_trophies/subway_trophies/totem_of_the_forest_core.png' },
+                swamp: { base: { attack: 14, defense: 14, hp: 140 }, name: 'Идол Болотного Левиафана', icon: 'assets/all_trophies/subway_trophies/Idol_of_the_sunken_mire.png' },
+                cave: { base: { attack: 28, defense: 28, hp: 280 }, name: 'Сердце Пещерного Исполина', icon: 'assets/all_trophies/subway_trophies/heart_of_the_crystal_abyss.png' }
             };
             var tb = trophyBonuses[d.id];
             if (tb && typeof Sherwood.addTrophy === 'function') {
@@ -306,7 +306,7 @@ Sherwood.Dungeon = {
                         defense: tb.base.defense * newLevel,
                         hp: tb.base.hp * newLevel
                     };
-                    Sherwood.addTrophy('dungeon_' + d.id + '_' + newLevel, tb.name + ' (Череп ' + newLevel + ')', bonus, 'assets/interface/trophy_stand.png', 'dungeon');
+                    Sherwood.addTrophy('dungeon_' + d.id + '_' + newLevel, tb.name + ' (Череп ' + newLevel + ')', bonus, tb.icon, 'dungeon');
                 }
             }
         }
