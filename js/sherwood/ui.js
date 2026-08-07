@@ -640,7 +640,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
-    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=\'none\'"></div>';
+    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;"></div>';
     
     var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
     var unlockedSkills = [];
