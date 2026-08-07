@@ -14,6 +14,7 @@ const SherwoodUI = {
     
     _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', hp: 'assets/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
+    _mainThemeWasPlaying: false, _mainThemeKey: null, _mainThemeTime: 0,
     _audioFiles: {
         'main_theme': 'assets/sounds/main_theme.ogg',
         'main_theme_2': 'assets/sounds/main_theme_2.ogg',
@@ -139,7 +140,6 @@ _showToast: function(msg) {
 
 _initSounds: function() {
     for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
-    try { this._sounds['main_theme'].loop = true; this._sounds['main_theme'].volume = 0.5; } catch(e) {}
     try { this._sounds['main_theme_2'].loop = true; this._sounds['main_theme_2'].volume = 0.5; } catch(e) {}
     try { this._sounds['dungeon_1'].loop = true; this._sounds['dungeon_1'].volume = 0.4; } catch(e) {}
     try { this._sounds['dungeon_2'].loop = true; this._sounds['dungeon_2'].volume = 0.4; } catch(e) {}
@@ -156,7 +156,24 @@ _playMusic: function(k) {
         if (this._currentMusicKey === k && this._currentMusic && !this._currentMusic.paused) return;
         this._stopMusic();
         var m = this._sounds[k]; 
-        if (m) { m.loop = true; m.volume = (k.indexOf('dungeon_') === 0) ? 0.4 : 0.5; m.currentTime = 0; m.play().catch(function() {}); this._currentMusic = m; this._currentMusicKey = k; }
+        if (m) {
+            m.volume = (k.indexOf('dungeon_') === 0) ? 0.4 : 0.5;
+            m.currentTime = 0;
+            m.play().catch(function() {});
+            this._currentMusic = m;
+            this._currentMusicKey = k;
+            if (k === 'main_theme') {
+                m.loop = false;
+                var self = this;
+                m.onended = function() { self._playMusic('main_theme_2'); };
+            }
+            if (k === 'main_theme_2') {
+                m.loop = true;
+            }
+            if (k.indexOf('dungeon_') === 0) {
+                m.loop = true;
+            }
+        }
     } catch(e) {}
 },
 
@@ -187,7 +204,6 @@ loadHome: function() {
     try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
     try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
     try { this.container.style.background = ''; } catch(e) {}
-    try { this._stopMusic(); this._playMusic('main_theme'); } catch(e) {}
     this._previousScreen = null;
     try {
         var self = this;
@@ -645,18 +661,18 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01');
     var h = '<div style="text-align:center;">';
-    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:2px;">' + modeTitle + '</div>';
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span></div>';
     
     // Название бестии
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:2px;">' + e.name + '</div>';
     
     // HP-бар бестии
-    h += '<div style="position:relative;width:280px;height:24px;margin:2px auto;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
-    h += '<div style="position:absolute;top:3px;left:3px;right:3px;bottom:3px;overflow:hidden;z-index:1;">';
+    h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
     
     // Карточка бестии + анимации поверх
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
@@ -689,13 +705,12 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1;">';
     h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
     h += '</div>';
-    h += '<div style="position:relative;width:200px;height:22px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
-    h += '<div style="position:absolute;top:2px;left:2px;right:2px;bottom:2px;overflow:hidden;z-index:1;">';
+    h += '<div style="position:relative;width:300px;height:150px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.55em;z-index:2;text-shadow:0 0 4px #000;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
-    h += '<div style="color:#aaa;font-size:0.6em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span></div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     h += '</div>';
     
     // Лог боя
@@ -709,7 +724,6 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     else if (mode === 'quest') bgKey = 'quests';
     this._openScreen('Бой', bgKey, h);
 },
-
 _useSkill: function(skillId) {
     if (!Sherwood.Combat) return;
     this._playHitSounds();
