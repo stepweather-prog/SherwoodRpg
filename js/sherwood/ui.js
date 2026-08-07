@@ -628,20 +628,30 @@ _withdrawKeset: function() {
 _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
     var e = enemyData, p = Sherwood.getPlayer();
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
+    var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01');
     var h = '<div style="text-align:center;">';
-    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:6px;">' + modeTitle + '</div>';
+    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:2px;">' + modeTitle + '</div>';
     
-    h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    // Название бестии
+    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:2px;">' + e.name + '</div>';
+    
+    // HP-бар бестии
+    h += '<div style="position:relative;width:280px;height:24px;margin:2px auto;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
+    h += '<div style="position:absolute;top:3px;left:3px;right:3px;bottom:3px;overflow:hidden;z-index:1;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
     
-    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;">' + e.name + '</div>';
+    // Карточка бестии + анимации поверх
     var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
-    h += '<div style="margin:8px 0;position:relative;display:inline-block;"><img src="' + imgPath + '" id="enemy-card" style="width:250px;height:250px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;"></div>';
+    h += '<div style="margin:4px 0;position:relative;display:inline-block;" id="enemy-card-area">';
+    h += '<img src="' + imgPath + '" id="enemy-card" style="width:220px;height:220px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
+    h += '<div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div>';
+    h += '<div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div>';
+    h += '</div>';
     
+    // Кнопка удара + скилы
     var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
     var unlockedSkills = [];
     for (var id in skills) { if (skills[id].unlocked) unlockedSkills.push(skills[id]); }
@@ -649,31 +659,40 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:4px 0;">';
     for (var i = 0; i < Math.min(2, unlockedSkills.length); i++) {
         var sk = unlockedSkills[i];
-        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:6px;width:50px;height:50px;cursor:pointer;padding:2px;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;"><div style="color:#fff;font-size:0.4em;">' + sk.name + '</div></button>';
+        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:50%;width:46px;height:46px;cursor:pointer;padding:2px;position:relative;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;"></button>';
     }
-    h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:72px;height:72px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
+    h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:64px;height:64px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
     for (var i = 2; i < unlockedSkills.length; i++) {
         var sk = unlockedSkills[i];
-        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:6px;width:50px;height:50px;cursor:pointer;padding:2px;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;"><div style="color:#fff;font-size:0.4em;">' + sk.name + '</div></button>';
+        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:50%;width:46px;height:46px;cursor:pointer;padding:2px;position:relative;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;"></button>';
     }
     h += '</div>';
     
-    h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    // HP-бар героя + аватар
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0;">';
+    h += '<div id="player-avatar" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
+    h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1;">';
+    h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
+    h += '</div>';
+    h += '<div style="position:relative;width:200px;height:22px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
+    h += '<div style="position:absolute;top:2px;left:2px;right:2px;bottom:2px;overflow:hidden;z-index:1;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
-    
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span><img src="assets/hero_skins/' + (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01') + '.png" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;"></div>';
-    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:8px;margin:4px 8%;min-height:90px;max-height:90px;overflow-y:auto;color:#aaa;font-size:0.7em;text-align:left;line-height:1.4;"></div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.55em;z-index:2;text-shadow:0 0 4px #000;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '<div style="color:#aaa;font-size:0.6em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span></div>';
     h += '</div>';
+    
+    // Лог боя
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:4px 4%;min-height:60px;max-height:60px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
+    h += '</div>';
+    
     var bgKey = 'dungeon_fight';
-if (mode === 'portal') bgKey = 'portal_3';
-else if (mode === 'arena') bgKey = 'arena';
-else if (mode === 'tavern') bgKey = 'tavern';
-else if (mode === 'quest') bgKey = 'quests';
-this._openScreen('Бой', bgKey, h);
+    if (mode === 'portal') bgKey = 'portal_3';
+    else if (mode === 'arena') bgKey = 'arena';
+    else if (mode === 'tavern') bgKey = 'tavern';
+    else if (mode === 'quest') bgKey = 'quests';
+    this._openScreen('Бой', bgKey, h);
 },
 
 _useSkill: function(skillId) {
@@ -686,6 +705,32 @@ _useSkill: function(skillId) {
 },
 
 _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
+
+_showDamageNumber: function(dmg, isCrit) {
+    var container = document.getElementById('damage-numbers');
+    if (!container) return;
+    var el = document.createElement('div');
+    el.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);color:' + (isCrit ? '#ff6a00' : '#ffd700') + ';font-size:' + (isCrit ? '1.8em' : '1.2em') + ';font-weight:bold;text-shadow:0 0 8px #000;z-index:10;pointer-events:none;animation:dmgFloat 1s ease-out forwards;';
+    el.textContent = (isCrit ? '💥 ' : '') + dmg;
+    container.appendChild(el);
+    setTimeout(function() { el.remove(); }, 1000);
+},
+
+_showPlayerHitAnim: function() {
+    var container = document.getElementById('player-hit-anim');
+    if (!container) return;
+    container.style.display = 'block';
+    container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>';
+    setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
+},
+
+_showCriticalHitAnim: function() {
+    var overlay = document.getElementById('enemy-hit-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'block';
+    overlay.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>';
+    setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800);
+},
 
 _hitEnemyCard: function() {
     var card = document.getElementById('enemy-card');
@@ -739,6 +784,9 @@ _handleCombat: function(r) {
         this._showDefeatScreen(this._pendingRewards);
     } else {
         this._hitEnemyCard();
+        this._showPlayerHitAnim();
+        this._showDamageNumber(r.damage, r.crit);
+        if (r.crit) this._showCriticalHitAnim();
         this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
         this._showDialog((r.crit ? 'КРИТ! ' : '') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
         if (r.armorDmg) this._showDialog('Снято брони: ' + r.armorDmg, '#2196f3');
@@ -747,7 +795,7 @@ _handleCombat: function(r) {
     }
 },
 
-   // ===== КВЕСТЫ =====
+// ===== КВЕСТЫ =====
     quest: function() { this._playSound('click'); if (!Sherwood.Quests) { this._showPlaceholder('Квесты','quests'); return; } var prog = Sherwood.Quests.getProgress(), chapters = Sherwood.Quests.getAllChapters(), energy = { current: 0, max: 0 }; var cooldown = Sherwood.Quests.isOnCooldown(), cdRemain = Sherwood.Quests.getCooldownRemaining(), accel = Sherwood.Quests.getAccelCost(); var currentChapter = prog.currentChapter || 1, ch = Sherwood.Quests.getChapter(currentChapter); if (!ch) { this._showPlaceholder('Квесты','quests'); return; } var completed = prog.completed && prog.completed.indexOf(ch.id) !== -1, unlocked = Sherwood.Quests.isUnlocked(ch.id); var html = '<div style="text-align:center;margin-bottom:8px;"><span style="color:#ff9800;">Энергия: '+energy.current+'/'+energy.max+'</span>'; if (cooldown) html += ' <span style="color:#f44336;">КД: '+cdRemain+' мин.</span>'; html += '</div>'; if (cooldown) html += '<div style="text-align:center;margin-bottom:8px;"><button onclick="SherwoodUI._questAccel()" style="background:#ff9800;border:none;border-radius:6px;padding:6px 14px;color:#fff;cursor:pointer;font-size:0.7em;">Ускорить ('+(accel.currency==='free'?'Бесплатно':accel.cost+' Золота')+')</button></div>';
     var isActive = Sherwood.Quests._currentChapter && Sherwood.Quests._currentChapter.id === ch.id && Sherwood.Quests._currentEnemy;
     var displayEnemy;
