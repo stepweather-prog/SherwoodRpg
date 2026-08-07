@@ -418,7 +418,7 @@ _dungeonMove: function(tx, ty) {
     
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
-        this._playSound('steps');
+        this._playSound('tile_open');
         this._renderDungeon();
         SherwoodUI.updateDisplay();
         if (cell.type === Sherwood.Dungeon.TILE.MONSTER || cell.type === Sherwood.Dungeon.TILE.BOSS) {
@@ -495,20 +495,72 @@ _doStep: function(tx, ty) {
     else if (ty < d.py) d.heroDirection = 'up';
     
     var res = Sherwood.Dungeon.move(tx, ty);
-    if (!res || !res.ok) { this._renderDungeon(); return; }
+    if (!res || !res.ok) { this._stopSound('steps'); this._renderDungeon(); return; }
     
     this._playSound('steps');
     this._renderDungeon();
     SherwoodUI.updateDisplay();
     
-    if (res.type === 'battle') { d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
-    if (res.type === 'altar') { this._playSound('altar'); this._showInteractButton('altar'); return; }
-if (res.type === 'cauldron') { this._playSound('potion'); this._showInteractButton('cauldron'); return; }
-if (res.type === 'potion') { this._playSound('potion'); this._showInteractButton('potion'); return; }
-if (res.type === 'chest') { this._playSound('chest_open'); this._showInteractButton('chest'); return; }
-if (res.type === 'lootBag') { this._playSound('chest_open'); this._showInteractButton('lootBag'); return; }
-    if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
-    if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); }
+    if (res.type === 'battle') { this._stopSound('steps'); d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
+    if (res.type === 'altar') { this._stopSound('steps'); this._playSound('altar'); this._showInteractButton('altar'); return; }
+    if (res.type === 'cauldron') { this._stopSound('steps'); this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
+    if (res.type === 'potion') { this._stopSound('steps'); this._playSound('potion'); this._showInteractButton('potion'); return; }
+    if (res.type === 'chest') { this._stopSound('steps'); this._playSound('chest_open'); this._showInteractButton('chest'); return; }
+    if (res.type === 'lootBag') { this._stopSound('steps'); this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
+    if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); }
+    if (res.type === 'exit_locked') { this._stopSound('steps'); this._showToast('Закрыто! Убейте всех монстров!'); }
+    if (res.type === 'move') { this._stopSound('steps'); }
+},
+
+_walkPath: function(toX, toY) {
+    var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
+    var size = d.size;
+    var visited = {};
+    var queue = [{x: d.px, y: d.py, path: []}];
+    visited[d.py + ',' + d.px] = true;
+    var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+    
+    while (queue.length > 0) {
+        var cur = queue.shift();
+        if (cur.x === toX && cur.y === toY) {
+            if (cur.path.length === 0) return;
+            d.isMoving = true;
+            this._renderDungeon();
+            var self = this;
+            var i = 0;
+            function nextStep() {
+                if (i >= cur.path.length) {
+                    d.isMoving = false;
+                    self._stopSound('steps');
+                    self._renderDungeon();
+                    return;
+                }
+                self._doStep(cur.path[i].x, cur.path[i].y);
+                i++;
+                if (i < cur.path.length) {
+                    setTimeout(nextStep, 1000);
+                } else {
+                    setTimeout(function() {
+                        d.isMoving = false;
+                        self._stopSound('steps');
+                        self._renderDungeon();
+                    }, 1000);
+                }
+            }
+            nextStep();
+            return;
+        }
+        for (var i = 0; i < dirs.length; i++) {
+            var nx = cur.x + dirs[i][0], ny = cur.y + dirs[i][1];
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size && !visited[ny + ',' + nx]) {
+                var c = d.grid[ny][nx];
+                if (c && c.open && !c.monster) {
+                    visited[ny + ',' + nx] = true;
+                    queue.push({x: nx, y: ny, path: cur.path.concat([{x: nx, y: ny}])});
+                }
+            }
+        }
+    }
 },
 
 _showInteractButton: function(type) {
@@ -556,7 +608,7 @@ _collectAltar: function() {
     var silver = 100 + Math.floor(Math.random() * 200);
     Sherwood.addResource('scrolls', scrolls);
     Sherwood.addResource('silver', silver);
-    cell.altar = false;
+    cell.altarCollected = true;
     this._playSound('altar');
     this._showFlyingLoot([{ icon: 'assets/interface/resource_appearance_crafting_tablet.png', text: '+' + scrolls }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
     SherwoodUI.updateDisplay();
@@ -569,7 +621,7 @@ _collectCauldron: function() {
     var silver = 50 + Math.floor(Math.random() * 150);
     Sherwood.addResource('gold', gold);
     Sherwood.addResource('silver', silver);
-    cell.cauldron = false;
+    cell.cauldronCollected = true;
     this._playSound('cauldron');
     this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + gold }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
     SherwoodUI.updateDisplay();
@@ -579,10 +631,10 @@ _collectPotion: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var cell = d.grid[d.py][d.px]; if (!cell || !cell.potion) return;
     var p = Sherwood.getPlayer();
+    if (p.stats.hp >= p.stats.maxHp) { this._showToast('HP уже полное!'); return; }
     var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2);
     p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-    cell.type = Sherwood.Dungeon.TILE.EMPTY;
-    cell.potion = false;
+    cell.potionCollected = true;
     this._playSound('potion');
     this._showFlyingLoot([{ icon: 'assets/interface/icon_health.png', text: '+' + heal + ' HP' }]);
     Sherwood.saveGame();
@@ -617,6 +669,7 @@ _collectLootBag: function() {
 },
 
 _showFlyingLoot: function(items) {
+    this._playSound('loot_fly');
     var self = this;
     var bagIcon = document.querySelector('.btn[data-action="bag"]');
     var containerRect = this.container.getBoundingClientRect();
