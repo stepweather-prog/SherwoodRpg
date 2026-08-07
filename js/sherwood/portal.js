@@ -33,7 +33,8 @@ Sherwood.Portal = {
                 { name: 'Проклятая нимфа', image: 'image (25).png', hp: 1500, attack: 85, defense: 40, exp: 220, gold: 160 },
                 { name: 'Рогатый дух увядания', image: 'image (10).png', hp: 2100, attack: 105, defense: 60, exp: 380, gold: 280, isBoss: true }
             ],
-            rewards: { gold: 550, exp: 850, silver: 1300 }
+            rewards: { gold: 550, exp: 850, silver: 1300 },
+            trophy: { id: 'portal_3', name: 'Окровавленный Клык Волка', bonus: { attack: 15, defense: 15, hp: 15 }, icon: 'assets/all_trophies/portal_trophies/1_wolf_fang.png' }
         },
         {
             id: 4, name: 'Портал Цепей', icon: '⛓️', bg: 'assets/backgrounds/portal_1.jpeg',
@@ -42,7 +43,8 @@ Sherwood.Portal = {
                 { name: 'Тюремщик Разлома', image: 'image (23).png', hp: 2400, attack: 115, defense: 65, exp: 350, gold: 260 },
                 { name: 'Кислотный голем', image: 'image (9).png', hp: 3200, attack: 135, defense: 80, exp: 500, gold: 380, isBoss: true }
             ],
-            rewards: { gold: 700, exp: 1100, silver: 1700 }
+            rewards: { gold: 700, exp: 1100, silver: 1700 },
+            trophy: { id: 'portal_4', name: 'Сердце Ненасытного Тритона', bonus: { attack: 30, defense: 30, hp: 30 }, icon: 'assets/all_trophies/portal_trophies/2_heart_of_the_Insatiable_triton.png' }
         },
         {
             id: 5, name: 'Портал Ликантропов', icon: '🐺', bg: 'assets/backgrounds/portal_2.png',
@@ -51,7 +53,8 @@ Sherwood.Portal = {
                 { name: 'Изумрудный ликантроп', image: 'image (24).png', hp: 3200, attack: 140, defense: 75, exp: 450, gold: 320 },
                 { name: 'Двойной ликантроп', image: 'image (29).png', hp: 4000, attack: 160, defense: 90, exp: 600, gold: 450, isBoss: true }
             ],
-            rewards: { gold: 900, exp: 1400, silver: 2200 }
+            rewards: { gold: 900, exp: 1400, silver: 2200 },
+            trophy: { id: 'portal_5', name: 'Изумрудный Осколок Исполина', bonus: { attack: 50, defense: 50, hp: 50 }, icon: 'assets/all_trophies/portal_trophies/3_emerald_shard_of_the_giant.png' }
         },
         {
             id: 6, name: 'Портал Скорпиона', icon: '🦂', bg: 'assets/backgrounds/portal_3.png',
@@ -60,7 +63,8 @@ Sherwood.Portal = {
                 { name: 'Элитный страж', image: 'image (17).png', hp: 4000, attack: 155, defense: 80, exp: 500, gold: 360 },
                 { name: 'Механический скорпион', image: 'image (15).png', hp: 5000, attack: 185, defense: 100, exp: 750, gold: 550, isBoss: true }
             ],
-            rewards: { gold: 1150, exp: 1800, silver: 2800 }
+            rewards: { gold: 1150, exp: 1800, silver: 2800 },
+            trophy: { id: 'portal_6', name: 'Проклятая Эмблема Склепа', bonus: { attack: 80, defense: 80, hp: 80 }, icon: 'assets/all_trophies/portal_trophies/4_cursed_emblem_of_the_crypt.png' }
         },
         {
             id: 7, name: 'Портал Искажения', icon: '👁️', bg: 'assets/backgrounds/portal_1.jpeg',
@@ -70,7 +74,8 @@ Sherwood.Portal = {
                 { name: 'Владыка Искажения', image: 'image (12).png', hp: 6000, attack: 210, defense: 110, exp: 850, gold: 650 },
                 { name: 'Кристаллический змей', image: 'image (20).png', hp: 7500, attack: 240, defense: 130, exp: 1100, gold: 850, isBoss: true }
             ],
-            rewards: { gold: 1500, exp: 2500, silver: 4000 }
+            rewards: { gold: 1500, exp: 2500, silver: 4000 },
+            trophy: { id: 'portal_7', name: 'Корона Лесного Владыки', bonus: { attack: 150, defense: 150, hp: 150 }, icon: 'assets/all_trophies/portal_trophies/5_crown_of_the_forest_lord.png' }
         }
     ],
 
@@ -205,15 +210,8 @@ Sherwood.Portal = {
             if (!player.portal.completed) player.portal.completed = [];
             player.portal.completed.push(portal.id);
             
-            var trophyData = null;
-            if (portal.id === 3) trophyData = { id: 'portal_3', name: 'Окровавленный Клык Волка', bonus: { attack: 15, defense: 15, hp: 15 } };
-            else if (portal.id === 4) trophyData = { id: 'portal_4', name: 'Сердце Ненасытного Тритона', bonus: { attack: 30, defense: 30, hp: 30 } };
-            else if (portal.id === 5) trophyData = { id: 'portal_5', name: 'Изумрудный Осколок Исполина', bonus: { attack: 50, defense: 50, hp: 50 } };
-            else if (portal.id === 6) trophyData = { id: 'portal_6', name: 'Проклятая Эмблема Склепа', bonus: { attack: 80, defense: 80, hp: 80 } };
-            else if (portal.id === 7) trophyData = { id: 'portal_7', name: 'Корона Лесного Владыки', bonus: { attack: 150, defense: 150, hp: 150 } };
-            
-            if (trophyData && typeof Sherwood.addTrophy === 'function') {
-                Sherwood.addTrophy(trophyData.id, trophyData.name, trophyData.bonus, 'assets/interface/portal_entrance_token.png', 'portal');
+            if (portal.trophy && typeof Sherwood.addTrophy === 'function') {
+                Sherwood.addTrophy(portal.trophy.id, portal.trophy.name, portal.trophy.bonus, portal.trophy.icon, 'portal');
             }
         }
         
