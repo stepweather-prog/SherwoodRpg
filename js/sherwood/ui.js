@@ -88,7 +88,7 @@ updateDisplay: function() {
         var expEl = document.getElementById('exp-display');
         var expMaxEl = document.getElementById('exp-max-display');
         var expFill = document.getElementById('exp-fill-bar');
-        if (expEl) expEl.textContent = p.exp || 0;
+        if (expEl) { var pct = p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) : 0; expEl.textContent = pct + '%'; }
         if (expMaxEl) expMaxEl.textContent = p.expToLevel || 500;
         if (expFill) { var pct = p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) : 0; expFill.style.width = pct + '%'; }
     } catch(e) {}
@@ -97,7 +97,6 @@ updateDisplay: function() {
         if (stats.length >= 3) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.hp + '/' + p.stats.maxHp; }
     } catch(e) {}
 },
-
 _showExchangePanel: function() {
     var p = Sherwood.getPlayer();
     var maxGold = p.resources.gold || 0;
