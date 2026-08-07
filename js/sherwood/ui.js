@@ -660,24 +660,31 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     var e = enemyData, p = Sherwood.getPlayer();
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01');
+    var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
     var h = '<div style="text-align:center;">';
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;color:#aaa;font-size:0.7em;"><span style="color:#f44336;">АТК ' + p.stats.attack + '</span> <span style="color:#2196f3;">ЗЩТ ' + p.stats.defense + '</span></div>';
     
-    // Название бестии
-    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:2px;">' + e.name + '</div>';
+    // Статы героя (как на главной)
+    h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:2px;">';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_power.png" style="width:24px;height:24px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">' + p.stats.attack + '</span></div>';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_defense.png" style="width:24px;height:24px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">' + p.stats.defense + '</span></div>';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_health.png" style="width:24px;height:24px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '</div>';
     
-    // HP-бар бестии
-    h += '<div style="position:relative;width:300px;height:150px;margin:6px auto;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    // Враг: аватар + название + HP
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:2px;">';
+    h += '<div style="width:40px;height:40px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=&quot;none&quot;"></div>';
+    h += '<span style="color:#f44336;font-weight:bold;font-size:0.85em;">' + e.name + '</span>';
+    h += '<div style="position:relative;width:150px;height:20px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
+    h += '<div style="position:absolute;top:2px;left:2px;right:2px;bottom:2px;overflow:hidden;z-index:1;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.5em;z-index:2;text-shadow:0 0 4px #000;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '</div>';
     
-    // Карточка бестии + анимации поверх
-    var imgPath = (mode === 'arena') ? e.image : 'assets/all_beasts/' + e.image;
-    h += '<div style="margin:4px 0;position:relative;display:inline-block;" id="enemy-card-area">';
-    h += '<img src="' + imgPath + '" id="enemy-card" style="width:220px;height:220px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
+    // Карточка бестии
+    h += '<div style="margin:2px 0;position:relative;display:inline-block;" id="enemy-card-area">';
+    h += '<img src="' + imgPath + '" id="enemy-card" style="width:180px;height:180px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
     h += '<div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div>';
     h += '<div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div>';
     h += '</div>';
@@ -687,42 +694,37 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     var unlockedSkills = [];
     for (var id in skills) { if (skills[id].unlocked) unlockedSkills.push(skills[id]); }
     
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:4px 0;">';
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:2px 0;">';
     for (var i = 0; i < Math.min(2, unlockedSkills.length); i++) {
         var sk = unlockedSkills[i];
-        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:50%;width:46px;height:46px;cursor:pointer;padding:2px;position:relative;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;"></button>';
+        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:50%;width:40px;height:40px;cursor:pointer;padding:2px;position:relative;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;"></button>';
     }
-    h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:64px;height:64px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
+    h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:52px;height:52px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;"></button>';
     for (var i = 2; i < unlockedSkills.length; i++) {
         var sk = unlockedSkills[i];
-        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:50%;width:46px;height:46px;cursor:pointer;padding:2px;position:relative;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;"></button>';
+        h += '<button onclick="SherwoodUI._useSkill(\'' + sk.id + '\')" style="background:rgba(201,168,76,0.2);border:1px solid #c9a040;border-radius:50%;width:40px;height:40px;cursor:pointer;padding:2px;position:relative;"><img src="' + sk.icon + '" style="width:100%;height:100%;object-fit:contain;border-radius:50%;"></button>';
     }
     h += '</div>';
     
-    // HP-бар героя + аватар
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0;">';
-    h += '<div id="player-avatar" style="width:56px;height:56px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
+    // Герой: аватар + HP
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:2px 0;">';
+    h += '<div id="player-avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1;">';
     h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
     h += '</div>';
-    h += '<div style="position:relative;width:300px;height:150px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:relative;width:190px;height:20px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
+    h += '<div style="position:absolute;top:2px;left:2px;right:2px;bottom:2px;overflow:hidden;z-index:1;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.5em;z-index:2;text-shadow:0 0 4px #000;">' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     h += '</div>';
     
     // Лог боя
-    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:4px 4%;min-height:60px;max-height:60px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:4px;margin:2px 4%;min-height:45px;max-height:45px;overflow-y:auto;color:#aaa;font-size:0.6em;text-align:left;line-height:1.3;"></div>';
     h += '</div>';
     
-    var bgKey = 'dungeon_fight';
-    if (mode === 'portal') bgKey = 'portal_3';
-    else if (mode === 'arena') bgKey = 'arena';
-    else if (mode === 'tavern') bgKey = 'tavern';
-    else if (mode === 'quest') bgKey = 'quests';
-    this._openScreen('Бой', bgKey, h);
+    this._openScreen('', 'dungeon_fight', h);
 },
 _useSkill: function(skillId) {
     if (!Sherwood.Combat) return;
