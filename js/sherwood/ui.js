@@ -543,7 +543,7 @@ _doStep: function(tx, ty) {
     if (res.type === 'chest') { this._playSound('chest_open'); this._showInteractButton('chest'); return; }
     if (res.type === 'lootBag') { this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
     if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
-    if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); return; }
+       if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); return; }
 },
     if (res.type === 'move') { this._stopSound('steps'); }
 },
