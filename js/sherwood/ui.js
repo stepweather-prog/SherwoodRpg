@@ -280,8 +280,7 @@ talents: function() {
 },
 
 _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill) return; var r=Sherwood.Combat.unlockSkill(id); if(r.success){this.updateDisplay();this.talents();} else this._showToast(r.reason||'Ошибка'); },
-
-    // ========== ПОДЗЕМКА ==========
+// ========== ПОДЗЕМКА ==========
     subway: function() { this.showDungeon(); },
     showDungeon: function() {
         this._playSound('click');
@@ -320,16 +319,24 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var chestOpenImg = dungId === 'forest' ? 'assets/interface/open_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/open_chest_of_the_second_dungeon.png' : 'assets/interface/open_chest_third_dungeon.png';
     var exitImg = dungId === 'forest' ? 'assets/interface/exit_completion_dungeon.png' : dungId === 'swamp' ? 'assets/interface/exit_completion_second_dungeon.png' : 'assets/interface/exit_completion_third_dungeon.png';
     var exitLockedImg = 'assets/interface/closed_level_lock_icon.png';
-    var size = d.size, cs = Math.floor(Math.min(this.container.clientWidth, this.container.clientHeight - 80) / 5);
+    var size = d.size, cs = Math.floor(Math.min(this.container.clientWidth, this.container.clientHeight - 80) / 4);
     var floorBg = "assets/dungeon_tiles/" + dd.tiles + "/floorBg_" + (d.id === "forest" ? "1" : d.id === "swamp" ? "2" : "3") + ".png";
     var px = d.px, py = d.py;
     var gridW = cs * size, gridH = cs * size;
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     
+    var borderSets = {
+        forest: ['border_forest_1.png', 'border_forest_2.png', 'border_forest_3.png', 'border_forest_4.png'],
+        swamp: ['border_swamp_1.png', 'border_swamp_2.png', 'border_swamp_3.png', 'border_swamp_4.png'],
+        cave: ['border_cave_1.png', 'border_cave_2.png', 'border_cave_3.png', 'border_cave_4.png']
+    };
+    var borders = borderSets[dungId] || borderSets['forest'];
+    
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
+    // Плитки
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
@@ -338,6 +345,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         } 
     }
     
+    // Затемнение
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -350,6 +358,38 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         }
     }
     
+    // Бордюры
+    for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+            if (!d.grid[y] || !d.grid[y][x]) continue;
+            var cell = d.grid[y][x];
+            if (!cell.open) {
+                var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
+                var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
+                var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open);
+                var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open);
+                
+                if (topOpen) {
+                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;z-index:3;'></div>";
+                }
+                if (bottomOpen) {
+                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(180deg);z-index:3;'></div>";
+                }
+                if (leftOpen) {
+                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(270deg);z-index:3;'></div>";
+                }
+                if (rightOpen) {
+                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(90deg);z-index:3;'></div>";
+                }
+            }
+        }
+    }
+    
+    // Объекты и герой
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -418,13 +458,7 @@ _dungeonMove: function(tx, ty) {
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
         this._playSound('tile_open');
-        this._renderDungeon();
-        SherwoodUI.updateDisplay();
-        if (cell.type === Sherwood.Dungeon.TILE.MONSTER || cell.type === Sherwood.Dungeon.TILE.BOSS) {
-            Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
-            var self = this;
-            setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
-        }
+        this._doStep(tx, ty);
         return;
     }
     if (cell.open && dist === 1) {
@@ -655,7 +689,7 @@ _leaveDungeon: function() {
     }
     this.showDungeon();
 },
-
+    
 _withdrawKeset: function() {
     var p = Sherwood.getPlayer();
     if (!p.keset || p.keset.silver < (p.keset.minWithdraw || 10000)) {
