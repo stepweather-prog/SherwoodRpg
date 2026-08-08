@@ -336,37 +336,38 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-   // 1. Бордюры — контур открытой области
-for (var y = 0; y < size; y++) {
-    for (var x = 0; x < size; x++) {
-        if (!d.grid[y] || !d.grid[y][x]) continue;
-        var cell = d.grid[y][x];
-        if (cell.open) continue;
-        if (cell.type !== 0) continue;
-        
-        var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0);
-        var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0);
-        var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0);
-        var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0);
-        
-        if (topOpen || bottomOpen || leftOpen || rightOpen) {
-            var borderImg = borders[Math.floor(Math.random() * borders.length)];
-            if (topOpen) {
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;'></div></div>";
-            }
-            if (bottomOpen) {
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center bottom;background-repeat:no-repeat;'></div></div>";
-            }
-            if (leftOpen) {
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:left center;background-repeat:no-repeat;'></div></div>";
-            }
-            if (rightOpen) {
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:right center;background-repeat:no-repeat;'></div></div>";
+    // 1. Бордюры — контур открытой области
+    for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+            if (!d.grid[y] || !d.grid[y][x]) continue;
+            var cell = d.grid[y][x];
+            if (cell.open) continue;
+            if (cell.type !== 0) continue;
+            
+            var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0);
+            var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0);
+            var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0);
+            var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0);
+            
+            if (topOpen || bottomOpen || leftOpen || rightOpen) {
+                var borderImg = borders[Math.floor(Math.random() * borders.length)];
+                if (topOpen) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;'></div></div>";
+                }
+                if (bottomOpen) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center bottom;background-repeat:no-repeat;'></div></div>";
+                }
+                if (leftOpen) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:left center;background-repeat:no-repeat;'></div></div>";
+                }
+                if (rightOpen) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:right center;background-repeat:no-repeat;'></div></div>";
+                }
             }
         }
     }
-}
-// 2. Плитки — поверх бордюров
+    
+    // 2. Плитки — поверх бордюров
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
@@ -433,26 +434,31 @@ for (var y = 0; y < size; y++) {
     var hpPct = maxHp > 0 ? Math.round((hp / maxHp) * 100) : 0;
     
     var topBar = "<div style='padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;'>" +
-"<button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button>" +
-"<div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div>" +
-"<div style='position:relative;width:300px;height:150px;'>" +
-"<img src='assets/interface/life_scale.png' style='width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;'>" +
-"<div style='position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;'>" +
-"<div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;transition:width 0.5s;'></div>" +
-"</div>" +
-"<span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;'>" + hp + "/" + maxHp + "</span>" +
-"</div>" +
-"</div>" +
-"<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
+        "<button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button>" +
+        "<div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div>" +
+        "<div style='position:relative;width:300px;height:150px;'>" +
+        "<img src='assets/interface/life_scale.png' style='width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;'>" +
+        "<div style='position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;'>" +
+        "<div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;transition:width 0.5s;'></div>" +
+        "</div>" +
+        "<span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;'>" + hp + "/" + maxHp + "</span>" +
+        "</div>" +
+        "</div>" +
+        "<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
 
-    if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
+    if (this._screenLayer) { 
+        this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; 
+        this._screenLayer.style.display = "block"; 
+    }
 },
+
 _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var cell = d.grid[ty][tx];
     if (!cell) return;
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
+    // Клик по своей клетке — показать кнопку взаимодействия
     if (tx === d.px && ty === d.py) {
         if (cell.lootBag && !cell.lootCollected) { this._showInteractButton('lootBag'); return; }
         if (cell.chest && !cell.looted) { this._showInteractButton('chest'); return; }
@@ -463,6 +469,7 @@ _dungeonMove: function(tx, ty) {
         return;
     }
     
+    // Открытие новой клетки (соседней)
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
         // Открываем соседние стены для отображения бордюров
@@ -474,63 +481,17 @@ _dungeonMove: function(tx, ty) {
         this._doStep(tx, ty);
         return;
     }
+    
+    // Перемещение на соседнюю открытую клетку
     if (cell.open && dist === 1) {
         this._doStep(tx, ty);
         return;
     }
+    
+    // Путь по открытым клеткам
     if (cell.open && dist > 1) {
         this._walkPath(tx, ty);
         return;
-    }
-},
-_walkPath: function(toX, toY) {
-    var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
-    var size = d.size;
-    var visited = {};
-    var queue = [{x: d.px, y: d.py, path: []}];
-    visited[d.py + ',' + d.px] = true;
-    var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-    
-    while (queue.length > 0) {
-        var cur = queue.shift();
-        if (cur.x === toX && cur.y === toY) {
-            if (cur.path.length === 0) return;
-            d.isMoving = true;
-            this._renderDungeon();
-            var self = this;
-            var i = 0;
-            function nextStep() {
-                if (i >= cur.path.length) {
-                    d.isMoving = false;
-                    self._stopSound('steps');
-                    self._renderDungeon();
-                    return;
-                }
-                self._doStep(cur.path[i].x, cur.path[i].y);
-                i++;
-                if (i < cur.path.length) {
-                    setTimeout(nextStep, 1000);
-                } else {
-                    setTimeout(function() {
-                        d.isMoving = false;
-                        self._stopSound('steps');
-                        self._renderDungeon();
-                    }, 1000);
-                }
-            }
-            nextStep();
-            return;
-        }
-        for (var i = 0; i < dirs.length; i++) {
-            var nx = cur.x + dirs[i][0], ny = cur.y + dirs[i][1];
-            if (nx >= 0 && nx < size && ny >= 0 && ny < size && !visited[ny + ',' + nx]) {
-                var c = d.grid[ny][nx];
-                if (c && c.open && !c.monster) {
-                    visited[ny + ',' + nx] = true;
-                    queue.push({x: nx, y: ny, path: cur.path.concat([{x: nx, y: ny}])});
-                }
-            }
-        }
     }
 },
 
@@ -549,14 +510,62 @@ _doStep: function(tx, ty) {
     this._renderDungeon();
     SherwoodUI.updateDisplay();
     
-    if (res.type === 'battle') { this._stopSound('steps'); d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
-    if (res.type === 'altar') { this._stopSound('steps'); this._playSound('altar'); this._showInteractButton('altar'); return; }
-    if (res.type === 'cauldron') { this._stopSound('steps'); this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
-    if (res.type === 'potion') { this._stopSound('steps'); this._playSound('potion'); this._showInteractButton('potion'); return; }
-    if (res.type === 'chest') { this._stopSound('steps'); this._playSound('chest_open'); this._showInteractButton('chest'); return; }
-    if (res.type === 'lootBag') { this._stopSound('steps'); this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
-    if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
-    if (res.type === 'exit_locked') { this._stopSound('steps'); this._showToast('Закрыто! Убейте всех монстров!'); return; }
+    if (res.type === 'battle') { 
+        this._stopSound('steps'); 
+        d.isMoving = false; 
+        this._pauseMusic(); 
+        this._playSound('trap'); 
+        Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); 
+        setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); 
+        return; 
+    }
+    if (res.type === 'altar') { 
+        this._stopSound('steps'); 
+        this._playSound('altar'); 
+        this._showInteractButton('altar'); 
+        return; 
+    }
+    if (res.type === 'cauldron') { 
+        this._stopSound('steps'); 
+        this._playSound('cauldron'); 
+        this._showInteractButton('cauldron'); 
+        return; 
+    }
+    if (res.type === 'potion') { 
+        this._stopSound('steps'); 
+        this._playSound('potion'); 
+        this._showInteractButton('potion'); 
+        return; 
+    }
+    if (res.type === 'chest') { 
+        this._stopSound('steps'); 
+        this._playSound('chest_open'); 
+        this._showInteractButton('chest'); 
+        return; 
+    }
+    if (res.type === 'lootBag') { 
+        this._stopSound('steps'); 
+        this._playSound('bag_drop'); 
+        this._showInteractButton('lootBag'); 
+        return; 
+    }
+    if (res.type === 'exit') { 
+        this._stopSound('steps'); 
+        this._stopMusic(); 
+        var reward = Sherwood.Dungeon.complete(); 
+        SherwoodUI.updateDisplay(); 
+        this._afterRewardAction = function() { 
+            SherwoodUI._playMusic('main_theme'); 
+            SherwoodUI.showDungeon(); 
+        }; 
+        this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); 
+        return; 
+    }
+    if (res.type === 'exit_locked') { 
+        this._stopSound('steps'); 
+        this._showToast('Закрыто! Убейте всех монстров!'); 
+        return; 
+    }
     
     this._stopSound('steps');
 },
