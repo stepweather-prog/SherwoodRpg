@@ -336,47 +336,58 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // 1. Бордюры — контур открытой области
+    // 1. Отрисовка пола для открытых клеток
+    for (var y = 0; y < size; y++) {
+        for (var x = 0; x < size; x++) {
+            var cellData = d.grid[y] && d.grid[y][x];
+            if (cellData && cellData.open) {
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:0;'></div>";
+            }
+        }
+    }
+    
+    // 2. Бордюры — рисуем стены между открытыми и закрытыми клетками
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
             var cell = d.grid[y][x];
-            if (cell.open) continue;
-            if (cell.type !== 0) continue;
             
-            var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0);
-            var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0);
-            var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0);
-            var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0);
+            // Рисуем только для открытых клеток — проверяем соседей
+            if (!cell.open) continue;
             
-            if (topOpen || bottomOpen || leftOpen || rightOpen) {
+            var topClosed = (y > 0 && d.grid[y-1][x] && !d.grid[y-1][x].open);
+            var bottomClosed = (y < size-1 && d.grid[y+1][x] && !d.grid[y+1][x].open);
+            var leftClosed = (x > 0 && d.grid[y][x-1] && !d.grid[y][x-1].open);
+            var rightClosed = (x < size-1 && d.grid[y][x+1] && !d.grid[y][x+1].open);
+            
+            if (topClosed || bottomClosed || leftClosed || rightClosed) {
                 var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                if (topOpen) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;'></div></div>";
+                if (topClosed) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + (cs*0.5) + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:100%;height:200%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;'></div></div>";
                 }
-                if (bottomOpen) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center bottom;background-repeat:no-repeat;'></div></div>";
+                if (bottomClosed) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs*0.5) + "px;width:" + cs + "px;height:" + (cs*0.5) + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:100%;height:200%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center bottom;background-repeat:no-repeat;margin-top:-100%;'></div></div>";
                 }
-                if (leftOpen) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:left center;background-repeat:no-repeat;'></div></div>";
+                if (leftClosed) {
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + (cs*0.5) + "px;height:" + cs + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:200%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:left center;background-repeat:no-repeat;'></div></div>";
                 }
-                if (rightOpen) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:right center;background-repeat:no-repeat;'></div></div>";
+                if (rightClosed) {
+                    html += "<div style='position:absolute;left:" + (x*cs*0.5) + "px;top:" + (y*cs) + "px;width:" + (cs*0.5) + "px;height:" + cs + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:200%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:right center;background-repeat:no-repeat;margin-left:-100%;'></div></div>";
                 }
             }
         }
     }
     
-    // 2. Плитки — поверх бордюров
+    // 3. Плитки для закрытых клеток
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:2;" + hide + "'></div>"; 
+            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:5;" + hide + "'></div>"; 
         } 
     }
     
-    // Затемнение
+    // 4. Затемнение для неоткрытых клеток
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -384,12 +395,12 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             if (!cell.open) {
                 var distToPlayer = Math.abs(px - x) + Math.abs(py - y);
                 var opacity = distToPlayer <= 1 ? '0.3' : '0.7';
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:3;'></div>";
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:6;'></div>";
             }
         }
     }
     
-    // Объекты и герой
+    // 5. Объекты и герой
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -424,7 +435,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                     content = "<img src='" + hi + "' style='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;'>";
                 }
             }
-            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:3;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
+            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:7;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
         }
     }
     html += "</div></div>";
@@ -452,49 +463,6 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     }
 },
 
-_dungeonMove: function(tx, ty) {
-    var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
-    var cell = d.grid[ty][tx];
-    if (!cell) return;
-    var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
-    
-    // Клик по своей клетке — показать кнопку взаимодействия
-    if (tx === d.px && ty === d.py) {
-        if (cell.lootBag && !cell.lootCollected) { this._showInteractButton('lootBag'); return; }
-        if (cell.chest && !cell.looted) { this._showInteractButton('chest'); return; }
-        if (cell.altar && !cell.altarCollected) { this._showInteractButton('altar'); return; }
-        if (cell.cauldron && !cell.cauldronCollected) { this._showInteractButton('cauldron'); return; }
-        if (cell.potion && !cell.potionCollected) { this._showInteractButton('potion'); return; }
-        if (cell.exit && !cell.locked) { this._doStep(tx, ty); return; }
-        return;
-    }
-    
-    // Открытие новой клетки (соседней)
-    if (!cell.open && dist === 1 && cell.type !== 0) {
-        cell.open = true;
-        // Открываем соседние стены для отображения бордюров
-        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === 0) d.grid[ty-1][tx].open = true;
-        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === 0) d.grid[ty+1][tx].open = true;
-        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === 0) d.grid[ty][tx-1].open = true;
-        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === 0) d.grid[ty][tx+1].open = true;
-        this._playSound('tile_open');
-        this._doStep(tx, ty);
-        return;
-    }
-    
-    // Перемещение на соседнюю открытую клетку
-    if (cell.open && dist === 1) {
-        this._doStep(tx, ty);
-        return;
-    }
-    
-    // Путь по открытым клеткам
-    if (cell.open && dist > 1) {
-        this._walkPath(tx, ty);
-        return;
-    }
-},
-
 _doStep: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     
@@ -510,6 +478,7 @@ _doStep: function(tx, ty) {
     this._renderDungeon();
     SherwoodUI.updateDisplay();
     
+    // Обработка типов клеток — НЕ собираем автоматически, только показываем кнопку
     if (res.type === 'battle') { 
         this._stopSound('steps'); 
         d.isMoving = false; 
@@ -522,31 +491,47 @@ _doStep: function(tx, ty) {
     if (res.type === 'altar') { 
         this._stopSound('steps'); 
         this._playSound('altar'); 
-        this._showInteractButton('altar'); 
+        // Проверяем, не собрано ли уже
+        var altarCell = d.grid[d.py][d.px];
+        if (altarCell && !altarCell.altarCollected) {
+            this._showInteractButton('altar'); 
+        }
         return; 
     }
     if (res.type === 'cauldron') { 
         this._stopSound('steps'); 
         this._playSound('cauldron'); 
-        this._showInteractButton('cauldron'); 
+        var cauldronCell = d.grid[d.py][d.px];
+        if (cauldronCell && !cauldronCell.cauldronCollected) {
+            this._showInteractButton('cauldron'); 
+        }
         return; 
     }
     if (res.type === 'potion') { 
         this._stopSound('steps'); 
         this._playSound('potion'); 
-        this._showInteractButton('potion'); 
+        var potionCell = d.grid[d.py][d.px];
+        if (potionCell && !potionCell.potionCollected) {
+            this._showInteractButton('potion'); 
+        }
         return; 
     }
     if (res.type === 'chest') { 
         this._stopSound('steps'); 
         this._playSound('chest_open'); 
-        this._showInteractButton('chest'); 
+        var chestCell = d.grid[d.py][d.px];
+        if (chestCell && !chestCell.looted) {
+            this._showInteractButton('chest'); 
+        }
         return; 
     }
     if (res.type === 'lootBag') { 
         this._stopSound('steps'); 
         this._playSound('bag_drop'); 
-        this._showInteractButton('lootBag'); 
+        var bagCell = d.grid[d.py][d.px];
+        if (bagCell && !bagCell.lootCollected) {
+            this._showInteractButton('lootBag'); 
+        }
         return; 
     }
     if (res.type === 'exit') { 
@@ -569,7 +554,6 @@ _doStep: function(tx, ty) {
     
     this._stopSound('steps');
 },
-
 _showInteractButton: function(type) {
     var self = this;
     var d = Sherwood.Dungeon.getDungeon();
