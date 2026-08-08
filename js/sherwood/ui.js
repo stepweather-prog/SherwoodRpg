@@ -336,12 +336,26 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // Плитки
+    // Плитки + Бордюры (в одном слое)
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:1;" + hide + "'></div>"; 
+            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:1;" + hide + "'></div>";
+            
+            // Бордюр только если клетка закрыта и рядом есть открытая
+            if (cellData && !cellData.open) {
+                var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
+                var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
+                var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open);
+                var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open);
+                
+                if (topOpen || bottomOpen || leftOpen || rightOpen) {
+                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
+                    var rot = topOpen ? '0' : bottomOpen ? '180' : leftOpen ? '270' : '90';
+                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(" + rot + "deg);z-index:0.5;'></div>";
+                }
+            }
         } 
     }
     
@@ -354,37 +368,6 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                 var distToPlayer = Math.abs(px - x) + Math.abs(py - y);
                 var opacity = distToPlayer <= 1 ? '0.3' : '0.7';
                 html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:2;'></div>";
-            }
-        }
-    }
-    
-    // Бордюры
-    for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-            if (!d.grid[y] || !d.grid[y][x]) continue;
-            var cell = d.grid[y][x];
-            if (!cell.open) {
-                var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
-                var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
-                var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open);
-                var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open);
-                
-                if (topOpen) {
-                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;z-index:3;'></div>";
-                }
-                if (bottomOpen) {
-                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(180deg);z-index:3;'></div>";
-                }
-                if (leftOpen) {
-                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(270deg);z-index:3;'></div>";
-                }
-                if (rightOpen) {
-                    var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(90deg);z-index:3;'></div>";
-                }
             }
         }
     }
@@ -458,6 +441,11 @@ _dungeonMove: function(tx, ty) {
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
         this._playSound('tile_open');
+        // Открываем соседние стены чтобы бордюры обновились
+        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === Sherwood.Dungeon.TILE.WALL) d.grid[ty-1][tx].open = true;
+        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === Sherwood.Dungeon.TILE.WALL) d.grid[ty+1][tx].open = true;
+        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === Sherwood.Dungeon.TILE.WALL) d.grid[ty][tx-1].open = true;
+        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === Sherwood.Dungeon.TILE.WALL) d.grid[ty][tx+1].open = true;
         this._doStep(tx, ty);
         return;
     }
