@@ -336,28 +336,36 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // 1. Бордюры — контур открытой области
+   // 1. Бордюры — контур открытой области
 for (var y = 0; y < size; y++) {
     for (var x = 0; x < size; x++) {
         if (!d.grid[y] || !d.grid[y][x]) continue;
         var cell = d.grid[y][x];
-        if (cell.open) continue; // только закрытые клетки
+        if (cell.open) continue;
+        if (cell.type !== 0) continue;
         
-        var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
-        var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
-        var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open);
-        var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open);
+        var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0);
+        var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0);
+        var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0);
+        var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0);
         
         if (topOpen || bottomOpen || leftOpen || rightOpen) {
             var borderImg = borders[Math.floor(Math.random() * borders.length)];
-            if (topOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:center top;background-repeat:no-repeat;z-index:1;'></div>";
-            if (bottomOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:center bottom;background-repeat:no-repeat;z-index:1;'></div>";
-            if (leftOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:left center;background-repeat:no-repeat;z-index:1;'></div>";
-            if (rightOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:right center;background-repeat:no-repeat;z-index:1;'></div>";
+            if (topOpen) {
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;'></div></div>";
+            }
+            if (bottomOpen) {
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center bottom;background-repeat:no-repeat;'></div></div>";
+            }
+            if (leftOpen) {
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:left center;background-repeat:no-repeat;'></div></div>";
+            }
+            if (rightOpen) {
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;overflow:hidden;z-index:1;'><div style='width:100%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:right center;background-repeat:no-repeat;'></div></div>";
+            }
         }
     }
 }
-
 // 2. Плитки — поверх бордюров
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
@@ -657,7 +665,7 @@ _collectLootBag: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var cell = d.grid[d.py][d.px]; if (!cell || !cell.lootBag || cell.lootCollected) return;
     cell.lootCollected = true;
-    cell.lootBag = false; // убираем мешок
+    cell.lootBag = false;
     Sherwood.Combat._giveReward({ exp: 0, gold: 0 });
     this._playSound('bag_drop');
     this._renderDungeon();
