@@ -304,7 +304,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         this.container.style.background = "url('" + this._bg.dungeon_select + "') center/cover no-repeat";
         if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;background:rgba(0,0,0,0.7);padding:16px;display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">&#127984; Подземелья</span></div><div style="flex:1;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; }
     },
-    _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showToast('Нет билетов!'); return; } this._playSound('trap'); this._renderDungeon(); },
+    _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showToast('Нет билетов!'); return; } this._renderDungeon(); },
 
     _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
@@ -530,20 +530,21 @@ _doStep: function(tx, ty) {
     else if (ty < d.py) d.heroDirection = 'up';
     
     var res = Sherwood.Dungeon.move(tx, ty);
-    if (!res || !res.ok) { this._stopSound('steps'); this._renderDungeon(); return; }
+    if (!res || !res.ok) { this._renderDungeon(); return; }
     
     this._playSound('steps');
     this._renderDungeon();
     SherwoodUI.updateDisplay();
     
-    if (res.type === 'battle') { this._stopSound('steps'); d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
-    if (res.type === 'altar') { this._stopSound('steps'); this._playSound('altar'); this._showInteractButton('altar'); return; }
-    if (res.type === 'cauldron') { this._stopSound('steps'); this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
-    if (res.type === 'potion') { this._stopSound('steps'); this._playSound('potion'); this._showInteractButton('potion'); return; }
-    if (res.type === 'chest') { this._stopSound('steps'); this._playSound('chest_open'); this._showInteractButton('chest'); return; }
-    if (res.type === 'lootBag') { this._stopSound('steps'); this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
-    if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
-    if (res.type === 'exit_locked') { this._stopSound('steps'); this._showToast('Закрыто! Убейте всех монстров!'); return; }
+    if (res.type === 'battle') { d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
+    if (res.type === 'altar') { this._playSound('altar'); this._showInteractButton('altar'); return; }
+    if (res.type === 'cauldron') { this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
+    if (res.type === 'potion') { this._playSound('potion'); this._showInteractButton('potion'); return; }
+    if (res.type === 'chest') { this._playSound('chest_open'); this._showInteractButton('chest'); return; }
+    if (res.type === 'lootBag') { this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
+    if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
+    if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); return; }
+},
     if (res.type === 'move') { this._stopSound('steps'); }
 },
 
@@ -568,9 +569,17 @@ _showInteractButton: function(type) {
     
     var btn = document.createElement('div');
     btn.id = 'interact-btn';
-    btn.style.cssText = 'position:absolute;bottom:20%;left:50%;transform:translateX(-50%);z-index:100;width:64px;height:64px;background:rgba(0,0,0,0.7);border:2px solid #c9a040;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    btn.style.cssText = 'position:absolute;bottom:20%;left:50%;transform:translateX(-50%);z-index:100;width:64px;height:64px;background:rgba(0,0,0,0.7);border:2px solid #c9a040;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;';
     btn.innerHTML = '<img src="' + icon + '" style="width:48px;height:48px;object-fit:contain;">';
-    btn.onclick = function() { eval(action); btn.remove(); };
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        btn.remove();
+        if (type === 'altar') SherwoodUI._collectAltar();
+        else if (type === 'cauldron') SherwoodUI._collectCauldron();
+        else if (type === 'potion') SherwoodUI._collectPotion();
+        else if (type === 'chest') SherwoodUI._collectChest();
+        else if (type === 'lootBag') SherwoodUI._collectLootBag();
+    });
     this._screenLayer.appendChild(btn);
     
     if (type === 'chest' || type === 'lootBag') {
