@@ -335,89 +335,111 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // 1. Стены — рисуем на ЗАКРЫТЫХ клетках, которые граничат с ОТКРЫТЫМИ
-    for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-            if (!d.grid[y] || !d.grid[y][x]) continue;
-            var cell = d.grid[y][x];
-            
-            // Рисуем стены только на ЗАКРЫТЫХ клетках-стенах (type === 0)
-            if (cell.type !== 0) continue;
-            if (cell.open) continue;
-            
-            // Проверяем соседей — есть ли рядом открытая клетка
-            var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0);
-            var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0);
-            var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0);
-            var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0);
-            
-            // Если ни одна соседняя клетка не открыта — пропускаем (это дальняя стена)
-            if (!topOpen && !bottomOpen && !leftOpen && !rightOpen) continue;
-            
-            // Определяем тип стены по соседям
-            var wallType = '';
-            
-            // Проверяем диагонали
-            var topLeftOpen = (y > 0 && x > 0 && d.grid[y-1][x-1] && d.grid[y-1][x-1].open && d.grid[y-1][x-1].type !== 0);
-            var topRightOpen = (y > 0 && x < size-1 && d.grid[y-1][x+1] && d.grid[y-1][x+1].open && d.grid[y-1][x+1].type !== 0);
-            var bottomLeftOpen = (y < size-1 && x > 0 && d.grid[y+1][x-1] && d.grid[y+1][x-1].open && d.grid[y+1][x-1].type !== 0);
-            var bottomRightOpen = (y < size-1 && x < size-1 && d.grid[y+1][x+1] && d.grid[y+1][x+1].open && d.grid[y+1][x+1].type !== 0);
-            
-            // Углы
-            if (topOpen && leftOpen && topLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (topOpen && rightOpen && topRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (bottomOpen && leftOpen && bottomLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (bottomOpen && rightOpen && bottomRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            
-            // Горизонтальные стены
-            if (topOpen && !leftOpen && !rightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (bottomOpen && !leftOpen && !rightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            
-            // Вертикальные стены
-            if (leftOpen && !topOpen && !bottomOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (rightOpen && !topOpen && !bottomOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            
-            // Комбинации (угол + стены)
-            if (topOpen && leftOpen && !topLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-                html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (topOpen && rightOpen && !topRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-                html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (bottomOpen && leftOpen && !bottomLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-                html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (bottomOpen && rightOpen && !bottomRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-                html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
+    // 1. Стены — рисуем на закрытых клетках, которые граничат с открытыми
+for (var y = 0; y < size; y++) {
+    for (var x = 0; x < size; x++) {
+        if (!d.grid[y] || !d.grid[y][x]) continue;
+        var cell = d.grid[y][x];
+        
+        // Пропускаем всё кроме закрытых стен
+        if (cell.type !== 0) continue;
+        if (cell.open) continue;
+        
+        // Проверяем ВСЕ 4 стороны на наличие открытых клеток
+        var hasTop = false, hasBottom = false, hasLeft = false, hasRight = false;
+        
+        if (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0) hasTop = true;
+        if (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0) hasBottom = true;
+        if (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0) hasLeft = true;
+        if (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0) hasRight = true;
+        
+        // Если нет открытых соседей — пропускаем
+        if (!hasTop && !hasBottom && !hasLeft && !hasRight) continue;
+        
+        // Определяем ОТКРЫТЫЕ клетки по диагоналям
+        var topLeftOpen = (y > 0 && x > 0 && d.grid[y-1][x-1] && d.grid[y-1][x-1].open && d.grid[y-1][x-1].type !== 0);
+        var topRightOpen = (y > 0 && x < size-1 && d.grid[y-1][x+1] && d.grid[y-1][x+1].open && d.grid[y-1][x+1].type !== 0);
+        var bottomLeftOpen = (y < size-1 && x > 0 && d.grid[y+1][x-1] && d.grid[y+1][x-1].open && d.grid[y+1][x-1].type !== 0);
+        var bottomRightOpen = (y < size-1 && x < size-1 && d.grid[y+1][x+1] && d.grid[y+1][x+1].open && d.grid[y+1][x+1].type !== 0);
+        
+        // Рисуем стены на основе того, какие стороны открыты
+        
+        // 1. УГЛЫ (две смежные стороны открыты И диагональ открыта)
+        if (hasTop && hasRight && topRightOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_top_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasTop && hasLeft && topLeftOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_top_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasBottom && hasRight && bottomRightOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasBottom && hasLeft && bottomLeftOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        
+        // 2. ВЕРТИКАЛЬНЫЕ СТЕНЫ (левая/правая сторона открыта, верх/низ закрыты)
+        if (hasRight && !hasTop && !hasBottom) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasLeft && !hasTop && !hasBottom) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        
+        // 3. ГОРИЗОНТАЛЬНЫЕ СТЕНЫ (верх/низ открыты, лево/право закрыты)
+        if (hasTop && !hasLeft && !hasRight) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasBottom && !hasLeft && !hasRight) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        
+        // 4. Т-ОБРАЗНЫЕ ПЕРЕКРЁСТКИ (три стороны открыты)
+        if (hasTop && hasLeft && hasRight && !hasBottom) {
+            // Т-образный верх
+            html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasBottom && hasLeft && hasRight && !hasTop) {
+            // Т-образный низ
+            html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasLeft && hasTop && hasBottom && !hasRight) {
+            // Т-образный лево
+            html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasRight && hasTop && hasBottom && !hasLeft) {
+            // Т-образный право
+            html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        
+        // 5. Комбинации углов без диагоналей
+        if (hasTop && hasRight && !topRightOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasTop && hasLeft && !topLeftOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasBottom && hasRight && !bottomRightOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+        }
+        if (hasBottom && hasLeft && !bottomLeftOpen) {
+            html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
         }
     }
-    
-    // 2. Плитки для неоткрытых клеток (кроме стен с бордюрами)
-    for (var y = 0; y < size; y++) { 
-        for (var x = 0; x < size; x++) { 
-            var cellData = d.grid[y] && d.grid[y][x];
-            if (!cellData || cellData.open) continue;
+}
+
+// 2. Плитки для ВСЕХ закрытых клеток (скрываем стены)
+for (var y = 0; y < size; y++) { 
+    for (var x = 0; x < size; x++) { 
+        var cellData = d.grid[y] && d.grid[y][x];
+        if (!cellData || cellData.open) continue;
+        html += "<img src='assets/interface/labyrinth_asset.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:2;'>"; 
+    } 
+}
             // Не рисуем плитку если это стена на границе с открытой клеткой
             var nearOpen = false;
             if (cellData.type === 0) {
