@@ -336,14 +336,13 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // Плитки + Бордюры (в одном слое)
+    // Плитки + Бордюры
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
             var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:1;" + hide + "'></div>";
             
-            // Бордюр только если клетка закрыта и рядом есть открытая
+            // Бордюр под плиткой
             if (cellData && !cellData.open) {
                 var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
                 var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
@@ -352,10 +351,15 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                 
                 if (topOpen || bottomOpen || leftOpen || rightOpen) {
                     var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                    var rot = topOpen ? '0' : bottomOpen ? '180' : leftOpen ? '270' : '90';
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(" + rot + "deg);z-index:0.5;'></div>";
+                    if (topOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;z-index:1;'></div>";
+                    if (bottomOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(180deg);z-index:1;'></div>";
+                    if (leftOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(270deg);z-index:1;'></div>";
+                    if (rightOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(90deg);z-index:1;'></div>";
                 }
             }
+            
+            // Плитка поверх бордюра
+            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:2;" + hide + "'></div>";
         } 
     }
     
@@ -367,7 +371,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             if (!cell.open) {
                 var distToPlayer = Math.abs(px - x) + Math.abs(py - y);
                 var opacity = distToPlayer <= 1 ? '0.3' : '0.7';
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:2;'></div>";
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:3;'></div>";
             }
         }
     }
