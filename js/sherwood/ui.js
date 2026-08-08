@@ -334,7 +334,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // Стены
+    // Стены из файлов — рисуем на ВСЕХ закрытых клетках типа 0
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -342,82 +342,74 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             if (cell.type !== 0) continue;
             if (cell.open) continue;
             
-            var hasTop = false, hasBottom = false, hasLeft = false, hasRight = false;
-            if (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open && d.grid[y-1][x].type !== 0) hasTop = true;
-            if (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open && d.grid[y+1][x].type !== 0) hasBottom = true;
-            if (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open && d.grid[y][x-1].type !== 0) hasLeft = true;
-            if (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open && d.grid[y][x+1].type !== 0) hasRight = true;
+            // Определяем соседей
+            var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
+            var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
+            var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open);
+            var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open);
             
-            if (!hasTop && !hasBottom && !hasLeft && !hasRight) continue;
+            var topLeftOpen = (y > 0 && x > 0 && d.grid[y-1][x-1] && d.grid[y-1][x-1].open);
+            var topRightOpen = (y > 0 && x < size-1 && d.grid[y-1][x+1] && d.grid[y-1][x+1].open);
+            var bottomLeftOpen = (y < size-1 && x > 0 && d.grid[y+1][x-1] && d.grid[y+1][x-1].open);
+            var bottomRightOpen = (y < size-1 && x < size-1 && d.grid[y+1][x+1] && d.grid[y+1][x+1].open);
             
-            var topLeftOpen = (y > 0 && x > 0 && d.grid[y-1][x-1] && d.grid[y-1][x-1].open && d.grid[y-1][x-1].type !== 0);
-            var topRightOpen = (y > 0 && x < size-1 && d.grid[y-1][x+1] && d.grid[y-1][x+1].open && d.grid[y-1][x+1].type !== 0);
-            var bottomLeftOpen = (y < size-1 && x > 0 && d.grid[y+1][x-1] && d.grid[y+1][x-1].open && d.grid[y+1][x-1].type !== 0);
-            var bottomRightOpen = (y < size-1 && x < size-1 && d.grid[y+1][x+1] && d.grid[y+1][x+1].open && d.grid[y+1][x+1].type !== 0);
+            var hasAnyOpen = topOpen || bottomOpen || leftOpen || rightOpen;
             
-            if (hasTop && hasRight && topRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            // Если вокруг всё закрыто — рисуем заглушку
+            if (!hasAnyOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+                continue;
             }
-            if (hasTop && hasLeft && topLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (hasBottom && hasRight && bottomRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (hasBottom && hasLeft && bottomLeftOpen) {
+            
+            // Углы
+            if (topOpen && rightOpen && topRightOpen) {
                 html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
+            if (topOpen && leftOpen && topLeftOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            if (bottomOpen && rightOpen && bottomRightOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_top_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            if (bottomOpen && leftOpen && bottomLeftOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_top_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
             
-            if (hasRight && !hasTop && !hasBottom) {
+            // Одиночные стены
+            if (topOpen && !leftOpen && !rightOpen && !bottomOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            if (bottomOpen && !leftOpen && !rightOpen && !topOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            if (leftOpen && !topOpen && !bottomOpen && !rightOpen) {
                 html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
-            if (hasLeft && !hasTop && !hasBottom) {
+            if (rightOpen && !topOpen && !bottomOpen && !leftOpen) {
                 html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
             
-            if (hasTop && !hasLeft && !hasRight) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (hasBottom && !hasLeft && !hasRight) {
+            // Комбинации без диагоналей
+            if (topOpen && leftOpen && !topLeftOpen) {
                 html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            
-            if (hasTop && hasLeft && hasRight && !hasBottom) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            if (hasBottom && hasLeft && hasRight && !hasTop) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
-            }
-            
-            if (hasTop && hasRight && !topRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
-            if (hasTop && hasLeft && !topLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            if (topOpen && rightOpen && !topRightOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
-            if (hasBottom && hasRight && !bottomRightOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            if (bottomOpen && leftOpen && !bottomLeftOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 html += "<img src='" + wallFolder + wallPrefix + "wall_right.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
-            if (hasBottom && hasLeft && !bottomLeftOpen) {
-                html += "<img src='" + wallFolder + wallPrefix + "wall_bottom.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            if (bottomOpen && rightOpen && !bottomRightOpen) {
+                html += "<img src='" + wallFolder + wallPrefix + "wall_top.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 html += "<img src='" + wallFolder + wallPrefix + "wall_left.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
             }
         }
     }
     
-    // Плитки для ВСЕХ закрытых клеток
-    for (var y = 0; y < size; y++) { 
-        for (var x = 0; x < size; x++) { 
-            var cellData = d.grid[y] && d.grid[y][x];
-            if (!cellData || cellData.open) continue;
-            html += "<img src='assets/interface/labyrinth_asset.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:2;'>"; 
-        } 
-    }
-    
-    // Затемнение
+    // Затемнение для неоткрытых клеток
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
