@@ -228,37 +228,44 @@ Sherwood.Dungeon = {
     },
 
     killMonster: function() {
-        if (!this._dungeon) return;
-        var d = this._dungeon;
-        d.monstersKilled++;
-        
-        var cell = null;
-        var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
-        for (var i = 0; i < checkDirs.length; i++) {
-            var nx = d.px + checkDirs[i][0], ny = d.py + checkDirs[i][1];
-            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size && d.grid[ny][nx].monster) {
-                cell = d.grid[ny][nx];
-                break;
-            }
+    if (!this._dungeon) return;
+    var d = this._dungeon;
+    d.monstersKilled++;
+    
+    var cell = null;
+    var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
+    for (var i = 0; i < checkDirs.length; i++) {
+        var nx = d.px + checkDirs[i][0], ny = d.py + checkDirs[i][1];
+        if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size && d.grid[ny][nx].monster) {
+            cell = d.grid[ny][nx];
+            break;
         }
+    }
+    
+    if (cell && cell.monster) {
+        cell.monster = false;
+        cell.monsterId = null;
+        cell.isBoss = false;
+        cell.type = this.TILE.EMPTY;
         
-        if (cell && cell.monster) {
-            cell.monster = false;
-            cell.monsterId = null;
-            cell.isBoss = false;
-            cell.type = this.TILE.EMPTY;
+        // Последний убитый — сундук, остальные — мешок
+        if (d.monstersKilled >= d.totalMonsters) {
+            cell.chest = true;
+            cell.looted = false;
+        } else {
             cell.lootBag = true;
             cell.lootCollected = false;
         }
-        
-        if (d.monstersKilled >= d.minToKill) {
-            for (var y = 0; y < d.size; y++) {
-                for (var x = 0; x < d.size; x++) {
-                    if (d.grid[y][x].exit) d.grid[y][x].locked = false;
-                }
+    }
+    
+    if (d.monstersKilled >= d.minToKill) {
+        for (var y = 0; y < d.size; y++) {
+            for (var x = 0; x < d.size; x++) {
+                if (d.grid[y][x].exit) d.grid[y][x].locked = false;
             }
         }
-    },
+    }
+},
 
     complete: function() {
         var d = this._dungeon;
