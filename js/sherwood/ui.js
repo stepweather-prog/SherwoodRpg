@@ -523,7 +523,217 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         this._screenLayer.style.display = "block"; 
     }
 },
+_dungeonMove: function(tx, ty) {
+    var d = Sherwood.Dungeon.getDungeon(); 
+    if (!d) return;
+    
+    var cell = d.grid[ty] && d.grid[ty][tx];
+    if (!cell) return;
+    
+    var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
+    
+    // Клик по своей клетке — показать кнопку взаимодействия
+    if (tx === d.px && ty === d.py) {
+        if (cell.lootBag && !cell.lootCollected) { 
+            this._showInteractButton('lootBag'); 
+            return; 
+        }
+        if (cell.chest && !cell.looted) { 
+            this._showInteractButton('chest'); 
+            return; 
+        }
+        if (cell.altar && !cell.altarCollected) { 
+            this._showInteractButton('altar'); 
+            return; 
+        }
+        if (cell.cauldron && !cell.cauldronCollected) { 
+            this._showInteractButton('cauldron'); 
+            return; 
+        }
+        if (cell.potion && !cell.potionCollected) { 
+            this._showInteractButton('potion'); 
+            return; 
+        }
+        if (cell.exit && !cell.locked) { 
+            this._doStep(tx, ty); 
+            return; 
+        }
+        return;
+    }
+    
+    // Открытие новой клетки (соседней)
+    if (!cell.open && dist === 1 && cell.type !== 0) {
+        cell.open = true;
+        // Открываем соседние стены для отображения бордюров
+        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === 0) 
+            d.grid[ty-1][tx].open = true;
+        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === 0) 
+            d.grid[ty+1][tx].open = true;
+        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === 0) 
+            d.grid[ty][tx-1].open = true;
+        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === 0) 
+            d.grid[ty][tx+1].open = true;
+        this._playSound('tile_open');
+        this._doStep(tx, ty);
+        return;
+    }
+    
+    // Перемещение на соседнюю открытую клетку
+    if (cell.open && dist === 1) {
+        this._doStep(tx, ty);
+        return;
+    }
+    
+    // Путь по открытым клеткам (дальняя клетка)
+    if (cell.open && dist > 1) {
+        this._walkPath(tx, ty);
+        return;
+    }
+},
 
+_walkPath: function(toX, toY) {
+    var d = Sherwood.Dungeon.getDungeon(); 
+    if (!d) return;
+    
+    var size = d.size;
+    var visited = {};
+    var queue = [{x: d.px, y: d.py, path: []}];
+    visited[d.py + ',' + d.px] = true;
+    var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+    
+    while (queue.length > 0) {
+        var cur = queue.shift();
+        if (cur.x === toX && cur.y === toY) {
+            if (cur.path.length === 0) return;
+            d.isMoving = true;
+            this._renderDungeon();
+            var self = this;
+            var i = 0;
+            
+            function nextStep() {
+                if (i >= cur.path.length) {
+                    d.isMoving = false;
+                    self._stopSound('steps');
+                    self._renderDungeon();
+                    return;
+                }
+                self._doStep(cur.path[i].x, cur.path[i].y);
+                i++;
+                if (i < cur.path.length) {
+                    setTimeout(nextStep, 1000);
+                } else {
+                    setTimeout(function() {
+                        d.isMoving = false;
+                        self._stopSound('steps');
+                        self._renderDungeon();
+                    }, 1000);
+                }
+            }
+            nextStep();
+            return;
+        }
+        for (var j = 0; j < dirs.length; j++) {
+            var nx = cur.x + dirs[j][0], ny = cur.y + dirs[j][1];
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size && !visited[ny + ',' + nx]) {
+                var c = d.grid[ny][nx];
+                if (c && c.open && !c.monster) {
+                    visited[ny + ',' + nx] = true;
+                    queue.push({x: nx, y: ny, path: cur.path.concat([{x: nx, y: ny}])});
+                }
+            }
+        }
+    }
+},
+
+_doStep: function(tx, ty) {
+    var d = Sherwood.Dungeon.getDungeon(); 
+    if (!d) return;
+    
+    if (tx > d.px) d.heroDirection = 'right';
+    else if (tx < d.px) d.heroDirection = 'left';
+    else if (ty > d.py) d.heroDirection = 'down';
+    else if (ty < d.py) d.heroDirection = 'up';
+    
+    var res = Sherwood.Dungeon.move(tx, ty);
+    if (!res || !res.ok) { 
+        this._stopSound('steps'); 
+        this._renderDungeon(); 
+        return; 
+    }
+    
+    this._playSound('steps');
+    this._renderDungeon();
+    SherwoodUI.updateDisplay();
+    
+    // Показываем кнопки для объектов
+    var currentCell = d.grid[d.py][d.px];
+    
+    if (res.type === 'battle') { 
+        this._stopSound('steps'); 
+        d.isMoving = false; 
+        this._pauseMusic(); 
+        this._playSound('trap'); 
+        Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); 
+        setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); 
+        return; 
+    }
+    
+    if (res.type === 'lootBag' && currentCell && !currentCell.lootCollected) { 
+        this._stopSound('steps'); 
+        this._playSound('bag_drop'); 
+        this._showInteractButton('lootBag'); 
+        return; 
+    }
+    
+    if (res.type === 'chest' && currentCell && !currentCell.looted) { 
+        this._stopSound('steps'); 
+        this._playSound('chest_open'); 
+        this._showInteractButton('chest'); 
+        return; 
+    }
+    
+    if (res.type === 'altar' && currentCell && !currentCell.altarCollected) { 
+        this._stopSound('steps'); 
+        this._playSound('altar'); 
+        this._showInteractButton('altar'); 
+        return; 
+    }
+    
+    if (res.type === 'cauldron' && currentCell && !currentCell.cauldronCollected) { 
+        this._stopSound('steps'); 
+        this._playSound('cauldron'); 
+        this._showInteractButton('cauldron'); 
+        return; 
+    }
+    
+    if (res.type === 'potion' && currentCell && !currentCell.potionCollected) { 
+        this._stopSound('steps'); 
+        this._playSound('potion'); 
+        this._showInteractButton('potion'); 
+        return; 
+    }
+    
+    if (res.type === 'exit') { 
+        this._stopSound('steps'); 
+        this._stopMusic(); 
+        var reward = Sherwood.Dungeon.complete(); 
+        SherwoodUI.updateDisplay(); 
+        this._afterRewardAction = function() { 
+            SherwoodUI._playMusic('main_theme'); 
+            SherwoodUI.showDungeon(); 
+        }; 
+        this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); 
+        return; 
+    }
+    
+    if (res.type === 'exit_locked') { 
+        this._stopSound('steps'); 
+        this._showToast('Закрыто! Убейте всех монстров!'); 
+        return; 
+    }
+    
+    this._stopSound('steps');
+}
 _doStep: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     
