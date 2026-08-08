@@ -457,6 +457,11 @@ _dungeonMove: function(tx, ty) {
     
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
+        // Открываем соседние стены для отображения бордюров
+        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === 0) d.grid[ty-1][tx].open = true;
+        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === 0) d.grid[ty+1][tx].open = true;
+        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === 0) d.grid[ty][tx-1].open = true;
+        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === 0) d.grid[ty][tx+1].open = true;
         this._playSound('tile_open');
         this._doStep(tx, ty);
         return;
@@ -530,20 +535,22 @@ _doStep: function(tx, ty) {
     else if (ty < d.py) d.heroDirection = 'up';
     
     var res = Sherwood.Dungeon.move(tx, ty);
-    if (!res || !res.ok) { this._renderDungeon(); return; }
+    if (!res || !res.ok) { this._stopSound('steps'); this._renderDungeon(); return; }
     
     this._playSound('steps');
     this._renderDungeon();
     SherwoodUI.updateDisplay();
     
-    if (res.type === 'battle') { d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
-    if (res.type === 'altar') { this._playSound('altar'); this._showInteractButton('altar'); return; }
-    if (res.type === 'cauldron') { this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
-    if (res.type === 'potion') { this._playSound('potion'); this._showInteractButton('potion'); return; }
-    if (res.type === 'chest') { this._playSound('chest_open'); this._showInteractButton('chest'); return; }
-    if (res.type === 'lootBag') { this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
-    if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
-    if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); return; }
+    if (res.type === 'battle') { this._stopSound('steps'); d.isMoving = false; this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
+    if (res.type === 'altar') { this._stopSound('steps'); this._playSound('altar'); this._showInteractButton('altar'); return; }
+    if (res.type === 'cauldron') { this._stopSound('steps'); this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
+    if (res.type === 'potion') { this._stopSound('steps'); this._playSound('potion'); this._showInteractButton('potion'); return; }
+    if (res.type === 'chest') { this._stopSound('steps'); this._playSound('chest_open'); this._showInteractButton('chest'); return; }
+    if (res.type === 'lootBag') { this._stopSound('steps'); this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
+    if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
+    if (res.type === 'exit_locked') { this._stopSound('steps'); this._showToast('Закрыто! Убейте всех монстров!'); return; }
+    
+    this._stopSound('steps');
 },
 
 _showInteractButton: function(type) {
@@ -650,6 +657,7 @@ _collectLootBag: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var cell = d.grid[d.py][d.px]; if (!cell || !cell.lootBag || cell.lootCollected) return;
     cell.lootCollected = true;
+    cell.lootBag = false; // убираем мешок
     Sherwood.Combat._giveReward({ exp: 0, gold: 0 });
     this._playSound('bag_drop');
     this._renderDungeon();
