@@ -543,9 +543,7 @@ _doStep: function(tx, ty) {
     if (res.type === 'chest') { this._playSound('chest_open'); this._showInteractButton('chest'); return; }
     if (res.type === 'lootBag') { this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
     if (res.type === 'exit') { this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); return; }
-       if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); return; }
-},
-    if (res.type === 'move') { this._stopSound('steps'); }
+    if (res.type === 'exit_locked') { this._showToast('Закрыто! Убейте всех монстров!'); return; }
 },
 
 _showInteractButton: function(type) {
@@ -553,7 +551,6 @@ _showInteractButton: function(type) {
     var d = Sherwood.Dungeon.getDungeon();
     var dungId = d ? d.id || 'forest' : 'forest';
     var icon = '';
-    var action = '';
     var altarImg = dungId === 'forest' ? 'assets/interface/altar_of_the_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/altar_of_the_second_dungeon.png' : 'assets/interface/the_third_altar_of_the_dungeon.png';
     var cauldronImg = dungId === 'forest' ? 'assets/interface/cauldron_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/cauldron_of_the_second_dungeon.png' : 'assets/interface/the_third_cauldron_of_the_dungeon.png';
     var chestImg = dungId === 'forest' ? 'assets/interface/locked_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/locked_chest_second_dungeon.png' : 'assets/interface/locked_chest_third_dungeon.png';
@@ -618,7 +615,6 @@ _collectCauldron: function() {
     this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + gold }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
     SherwoodUI.updateDisplay();
 },
-
 _collectPotion: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
     var cell = d.grid[d.py][d.px]; if (!cell || !cell.potion) return;
