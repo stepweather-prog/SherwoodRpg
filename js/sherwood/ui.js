@@ -336,24 +336,24 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // 1. Бордюры — сетка лабиринта поверх пола
+    // 1. Бордюры — контур открытой области
 for (var y = 0; y < size; y++) {
     for (var x = 0; x < size; x++) {
         if (!d.grid[y] || !d.grid[y][x]) continue;
         var cell = d.grid[y][x];
-        if (cell.type !== 0) continue;
+        if (cell.open) continue; // только закрытые клетки
         
-        var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].type !== 0);
-        var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].type !== 0);
-        var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].type !== 0);
-        var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].type !== 0);
+        var topOpen = (y > 0 && d.grid[y-1][x] && d.grid[y-1][x].open);
+        var bottomOpen = (y < size-1 && d.grid[y+1][x] && d.grid[y+1][x].open);
+        var leftOpen = (x > 0 && d.grid[y][x-1] && d.grid[y][x-1].open);
+        var rightOpen = (x < size-1 && d.grid[y][x+1] && d.grid[y][x+1].open);
         
         if (topOpen || bottomOpen || leftOpen || rightOpen) {
             var borderImg = borders[Math.floor(Math.random() * borders.length)];
-            if (topOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;z-index:1;'></div>";
-            if (bottomOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(180deg);z-index:1;'></div>";
-            if (leftOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(270deg);z-index:1;'></div>";
-            if (rightOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;transform:rotate(90deg);z-index:1;'></div>";
+            if (topOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:center top;background-repeat:no-repeat;z-index:1;'></div>";
+            if (bottomOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:center bottom;background-repeat:no-repeat;z-index:1;'></div>";
+            if (leftOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:left center;background-repeat:no-repeat;z-index:1;'></div>";
+            if (rightOpen) html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:100% 100%;background-position:right center;background-repeat:no-repeat;z-index:1;'></div>";
         }
     }
 }
