@@ -558,11 +558,11 @@ _showInteractButton: function(type) {
     var cauldronImg = dungId === 'forest' ? 'assets/interface/cauldron_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/cauldron_of_the_second_dungeon.png' : 'assets/interface/the_third_cauldron_of_the_dungeon.png';
     var chestImg = dungId === 'forest' ? 'assets/interface/locked_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/locked_chest_second_dungeon.png' : 'assets/interface/locked_chest_third_dungeon.png';
     
-    if (type === 'altar') { icon = altarImg; action = 'SherwoodUI._collectAltar()'; }
-    else if (type === 'cauldron') { icon = cauldronImg; action = 'SherwoodUI._collectCauldron()'; }
-    else if (type === 'potion') { icon = 'assets/interface/resource_life_potion.png'; action = 'SherwoodUI._collectPotion()'; }
-    else if (type === 'chest') { icon = chestImg; action = 'SherwoodUI._collectChest()'; }
-    else if (type === 'lootBag') { icon = 'assets/interface/loot_bag_of_beasts.png'; action = 'SherwoodUI._collectLootBag()'; }
+    if (type === 'altar') { icon = altarImg; }
+    else if (type === 'cauldron') { icon = cauldronImg; }
+    else if (type === 'potion') { icon = 'assets/interface/resource_life_potion.png'; }
+    else if (type === 'chest') { icon = chestImg; }
+    else if (type === 'lootBag') { icon = 'assets/interface/loot_bag_of_beasts.png'; }
     
     var oldBtn = document.getElementById('interact-btn');
     if (oldBtn) oldBtn.remove();
