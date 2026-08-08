@@ -433,17 +433,17 @@ for (var y = 0; y < size; y++) {
     var hpPct = maxHp > 0 ? Math.round((hp / maxHp) * 100) : 0;
     
     var topBar = "<div style='padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;'>" +
-    "<button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button>" +
-    "<div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div>" +
-    "<div style='position:relative;width:180px;height:28px;'>" +
-    "<img src='assets/interface/life_scale.png' style='width:100%;height:100%;position:absolute;top:0;left:0;z-index:1;object-fit:fill;'>" +
-    "<div style='position:absolute;top:3px;left:20px;right:20px;bottom:3px;overflow:hidden;z-index:0;'>" +
-    "<div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;transition:width 0.5s;'></div>" +
-    "</div>" +
-    "<span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 4px #000;'>" + hp + "/" + maxHp + "</span>" +
-    "</div>" +
-    "</div>" +
-    "<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
+"<button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button>" +
+"<div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div>" +
+"<div style='position:relative;width:300px;height:150px;'>" +
+"<img src='assets/interface/life_scale.png' style='width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;'>" +
+"<div style='position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;'>" +
+"<div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;transition:width 0.5s;'></div>" +
+"</div>" +
+"<span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;'>" + hp + "/" + maxHp + "</span>" +
+"</div>" +
+"</div>" +
+"<div style='background:rgba(0,0,0,0.5);padding:3px;text-align:center;flex-shrink:0;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "ВЫХОД ОТКРЫТ" : "УБЕЙ ВСЕХ") + "</span></div>";
 
     if (this._screenLayer) { this._screenLayer.innerHTML = "<div style='min-height:100%;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;'>" + topBar + "<div style='flex:1;overflow:auto;'>" + html + "</div></div>"; this._screenLayer.style.display = "block"; }
 },
@@ -743,12 +743,12 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">';
     h += '<div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=&quot;none&quot;"></div>';
-    h += '<div style="position:relative;width:180px;height:26px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
-    h += '<div style="position:absolute;top:3px;left:3px;right:3px;bottom:3px;overflow:hidden;z-index:1;">';
+    h += '<div style="position:relative;width:300px;height:150px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6em;z-index:2;text-shadow:0 0 4px #000;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
     h += '</div>';
     
     h += '<div style="margin:4px 0;position:relative;display:inline-block;" id="enemy-card-area">';
@@ -778,12 +778,12 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1;">';
     h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
     h += '</div>';
-    h += '<div style="position:relative;width:180px;height:26px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">';
-    h += '<div style="position:absolute;top:3px;left:3px;right:3px;bottom:3px;overflow:hidden;z-index:1;">';
+    h += '<div style="position:relative;width:300px;height:150px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6em;z-index:2;text-shadow:0 0 4px #000;">' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
     h += '</div>';
     
     h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:4px 4%;min-height:55px;max-height:55px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
@@ -791,7 +791,6 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     this._openScreen('', 'dungeon_fight', h);
 },
-
 _useSkill: function(skillId) {
     if (!Sherwood.Combat) return;
     this._playHitSounds();
