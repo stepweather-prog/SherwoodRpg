@@ -326,68 +326,129 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     var scrollX = Math.max(0, Math.min(px * cs - this.container.clientWidth / 2 + cs / 2, gridW - this.container.clientWidth));
     var scrollY = Math.max(0, Math.min(py * cs - (this.container.clientHeight - 80) / 2 + cs / 2, gridH - (this.container.clientHeight - 80)));
     
-    var borderSets = {
-        forest: ['border_forest_1.png', 'border_forest_2.png', 'border_forest_3.png', 'border_forest_4.png'],
-        swamp: ['border_swamp_1.png', 'border_swamp_2.png', 'border_swamp_3.png', 'border_swamp_4.png'],
-        cave: ['border_cave_1.png', 'border_cave_2.png', 'border_cave_3.png', 'border_cave_4.png']
+    // Определяем префикс для стен в зависимости от подземки
+    var wallPrefix = '';
+    if (dungId === 'swamp') {
+        wallPrefix = 'd2_';
+    } else if (dungId === 'cave') {
+        wallPrefix = 'd3_';
+    }
+    // для forest префикс пустой
+    
+    // Определяем папку со стенами
+    var wallFolder = 'assets/dungeon_tiles/' + dd.tiles + '/';
+    
+    // Пути к 8 файлам стен
+    var wallImages = {
+        'top_left': wallFolder + wallPrefix + 'wall_top_left.png',
+        'top_right': wallFolder + wallPrefix + 'wall_top_right.png',
+        'bottom_left': wallFolder + wallPrefix + 'wall_bottom_left.png',
+        'bottom_right': wallFolder + wallPrefix + 'wall_bottom_right.png',
+        'left': wallFolder + wallPrefix + 'wall_left.png',
+        'right': wallFolder + wallPrefix + 'wall_right.png',
+        'top': wallFolder + wallPrefix + 'wall_top.png',
+        'bottom': wallFolder + wallPrefix + 'wall_bottom.png'
     };
-    var borders = borderSets[dungId] || borderSets['forest'];
     
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
     
-    // 1. Отрисовка пола для открытых клеток
-    for (var y = 0; y < size; y++) {
-        for (var x = 0; x < size; x++) {
-            var cellData = d.grid[y] && d.grid[y][x];
-            if (cellData && cellData.open) {
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:0;'></div>";
-            }
-        }
-    }
-    
-    // 2. Бордюры — рисуем стены между открытыми и закрытыми клетками
+    // 1. Стены — рисуем на границе между открытыми и закрытыми клетками
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
             var cell = d.grid[y][x];
             
-            // Рисуем только для открытых клеток — проверяем соседей
+            // Рисуем стены только на открытых клетках
             if (!cell.open) continue;
             
+            // Проверяем 4 соседей
             var topClosed = (y > 0 && d.grid[y-1][x] && !d.grid[y-1][x].open);
             var bottomClosed = (y < size-1 && d.grid[y+1][x] && !d.grid[y+1][x].open);
             var leftClosed = (x > 0 && d.grid[y][x-1] && !d.grid[y][x-1].open);
             var rightClosed = (x < size-1 && d.grid[y][x+1] && !d.grid[y][x+1].open);
             
-            if (topClosed || bottomClosed || leftClosed || rightClosed) {
-                var borderImg = borders[Math.floor(Math.random() * borders.length)];
-                if (topClosed) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + (cs*0.5) + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:100%;height:200%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center top;background-repeat:no-repeat;'></div></div>";
+            // Диагонали для углов
+            var topLeftOpen = !(y > 0 && x > 0 && d.grid[y-1][x-1] && !d.grid[y-1][x-1].open);
+            var topRightOpen = !(y > 0 && x < size-1 && d.grid[y-1][x+1] && !d.grid[y-1][x+1].open);
+            var bottomLeftOpen = !(y < size-1 && x > 0 && d.grid[y+1][x-1] && !d.grid[y+1][x-1].open);
+            var bottomRightOpen = !(y < size-1 && x < size-1 && d.grid[y+1][x+1] && !d.grid[y+1][x+1].open);
+            
+            // Верхний левый угол: сверху стена, слева стена, диагональ открыта
+            if (topClosed && leftClosed && topLeftOpen) {
+                html += "<img src='" + wallImages['top_left'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            // Верхний правый угол
+            if (topClosed && rightClosed && topRightOpen) {
+                html += "<img src='" + wallImages['top_right'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            // Нижний левый угол
+            if (bottomClosed && leftClosed && bottomLeftOpen) {
+                html += "<img src='" + wallImages['bottom_left'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            // Нижний правый угол
+            if (bottomClosed && rightClosed && bottomRightOpen) {
+                html += "<img src='" + wallImages['bottom_right'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            
+            // Вертикальные стены (без прилегающих горизонтальных)
+            if (leftClosed && !topClosed && !bottomClosed) {
+                html += "<img src='" + wallImages['left'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            if (rightClosed && !topClosed && !bottomClosed) {
+                html += "<img src='" + wallImages['right'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            
+            // Горизонтальные стены (без прилегающих вертикальных)
+            if (topClosed && !leftClosed && !rightClosed) {
+                html += "<img src='" + wallImages['top'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            if (bottomClosed && !leftClosed && !rightClosed) {
+                html += "<img src='" + wallImages['bottom'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+            }
+            
+            // Комбинации стен с уже нарисованными углами
+            if (topClosed && leftClosed) {
+                // Угол уже нарисован, добавляем продолжение стен если нужно
+                if (topLeftOpen) {
+                    // Угол уже есть
+                } else {
+                    // Диагональ закрыта - рисуем стены без угла
+                    html += "<img src='" + wallImages['left'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+                    html += "<img src='" + wallImages['top'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 }
-                if (bottomClosed) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs*0.5) + "px;width:" + cs + "px;height:" + (cs*0.5) + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:100%;height:200%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:64px 98px;background-position:center bottom;background-repeat:no-repeat;margin-top:-100%;'></div></div>";
+            }
+            if (topClosed && rightClosed) {
+                if (!topRightOpen) {
+                    html += "<img src='" + wallImages['right'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+                    html += "<img src='" + wallImages['top'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 }
-                if (leftClosed) {
-                    html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + (cs*0.5) + "px;height:" + cs + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:200%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:left center;background-repeat:no-repeat;'></div></div>";
+            }
+            if (bottomClosed && leftClosed) {
+                if (!bottomLeftOpen) {
+                    html += "<img src='" + wallImages['left'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+                    html += "<img src='" + wallImages['bottom'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 }
-                if (rightClosed) {
-                    html += "<div style='position:absolute;left:" + (x*cs*0.5) + "px;top:" + (y*cs) + "px;width:" + (cs*0.5) + "px;height:" + cs + "px;overflow:hidden;z-index:1;pointer-events:none;'><div style='width:200%;height:100%;background-image:url(assets/dungeon_tiles/" + borderImg + ");background-size:98px 64px;background-position:right center;background-repeat:no-repeat;margin-left:-100%;'></div></div>";
+            }
+            if (bottomClosed && rightClosed) {
+                if (!bottomRightOpen) {
+                    html += "<img src='" + wallImages['right'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
+                    html += "<img src='" + wallImages['bottom'] + "' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:1;pointer-events:none;'>";
                 }
             }
         }
     }
     
-    // 3. Плитки для закрытых клеток
+    // 2. Плитки для закрытых клеток
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
-            var hide = cellData && cellData.open ? 'display:none;' : '';
-            html += "<div style='position:absolute;left:" + (x*cs-1) + "px;top:" + (y*cs-1) + "px;width:" + (cs+2) + "px;height:" + (cs+2) + "px;background-image:url(assets/interface/labyrinth_asset.png);background-size:100% 100%;z-index:5;" + hide + "'></div>"; 
+            if (!cellData || cellData.open) continue;
+            html += "<img src='assets/interface/labyrinth_asset.png' style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;z-index:2;'>"; 
         } 
     }
     
-    // 4. Затемнение для неоткрытых клеток
+    // 3. Затемнение для неоткрытых клеток
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -395,12 +456,12 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
             if (!cell.open) {
                 var distToPlayer = Math.abs(px - x) + Math.abs(py - y);
                 var opacity = distToPlayer <= 1 ? '0.3' : '0.7';
-                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:6;'></div>";
+                html += "<div style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;background:rgba(0,0,0," + opacity + ");z-index:3;'></div>";
             }
         }
     }
     
-    // 5. Объекты и герой
+    // 4. Объекты и герой
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -435,7 +496,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
                     content = "<img src='" + hi + "' style='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:4;'>";
                 }
             }
-            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:7;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
+            html += "<div " + onclick + " style='position:absolute;left:" + (x*cs) + "px;top:" + (y*cs) + "px;width:" + cs + "px;height:" + cs + "px;display:flex;align-items:center;justify-content:center;font-size:" + (cs*0.35) + "px;z-index:4;cursor:" + (onclick ? "pointer" : "default") + ";" + glow + "'>" + (content||"") + "</div>";
         }
     }
     html += "</div></div>";
