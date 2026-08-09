@@ -1175,54 +1175,48 @@ _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) 
     // ===== ПОРТАЛЫ =====
 portal: function() {
     this._playSound('click');
-    if (!Sherwood.Portal) { this._showPlaceholder('Portals', 'portal'); return; }
+    if (!Sherwood.Portal) { this._showPlaceholder('Порталы', 'portal'); return; }
     if (Sherwood.Portal.isInPortal()) { this._showPortalBattle(); return; }
     
-    var portals = Sherwood.Portal.getAllPortals();
+    var allPortals = Sherwood.Portal.getAllPortals();
+    var player = Sherwood.getPlayer();
+    var arrowCount = (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) ? Sherwood.Forge.getArrowCount() : 0;
     var h = '';
     
-    if (portals && Object.keys(portals).length > 0) {
-        var player = Sherwood.getPlayer();
-        var portalList = [
-            { id: 'invasion', name: 'Portal of Invasion', icon: 'invasion_portal.png' },
-            { id: 'skull_spider', name: 'Portal of Skull Spiders', icon: 'skull_spider_portal.png' },
-            { id: 'withering', name: 'Portal of Withering', icon: 'portal_of_withering.png' },
-            { id: 'chains', name: 'Portal of Chains', icon: 'portal_of_chains.png' },
-            { id: 'lycanthrope', name: 'Portal of Lycanthropes', icon: 'lycanthrope_portal.png' },
-            { id: 'scorpio', name: 'Portal of Scorpio', icon: 'scorpio_portal.png' },
-            { id: 'distortion', name: 'Portal of Distortion', icon: 'portal_of_distortion.png' }
-        ];
+    var iconMap = {
+        1: 'invasion_portal.png',
+        2: 'skull_spider_portal.png',
+        3: 'portal_of_withering.png',
+        4: 'portal_of_chains.png',
+        5: 'lycanthrope_portal.png',
+        6: 'scorpio_portal.png',
+        7: 'portal_of_distortion.png'
+    };
+    
+    for (var i = 0; i < allPortals.length; i++) {
+        var portal = allPortals[i];
+        var iconFile = iconMap[portal.id] || 'invasion_portal.png';
+        var requiredArrows = portal.id * 150;
+        var canEnter = arrowCount >= requiredArrows;
         
-        for (var i = 0; i < portalList.length; i++) {
-            var p = portalList[i];
-            var portalData = portals[p.id];
-            var completed = player.portal && player.portal.completed && player.portal.completed.indexOf(p.id) !== -1;
-            
-            h += '<div style="text-align:center;margin-bottom:24px;">';
-            h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:8px;">' + p.name + '</div>';
-            
-            if (portalData) {
-                h += '<img src="assets/portal_beasts/visual_portals/' + p.icon + '" style="width:120px;height:120px;object-fit:contain;display:block;margin:0 auto 8px;">';
-                if (completed) {
-                    h += '<div style="color:#4caf50;font-size:0.9em;">Completed</div>';
-                } else {
-                    h += '<button onclick="SherwoodUI._enterPortal(\'' + p.id + '\')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Battle</button>';
-                }
-            } else {
-                h += '<img src="assets/portal_beasts/visual_portals/' + p.icon + '" style="width:120px;height:120px;object-fit:contain;display:block;margin:0 auto 8px;opacity:0.4;filter:grayscale(1);">';
-                h += '<div style="color:#666;font-size:0.8em;">Locked</div>';
-            }
-            
-            h += '</div>';
+        h += '<div style="text-align:center;margin-bottom:28px;">';
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:8px;">' + portal.name + '</div>';
+        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:120px;height:120px;object-fit:contain;display:block;margin:0 auto 8px;">';
+        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:6px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
+        
+        if (canEnter) {
+            h += '<button onclick="SherwoodUI._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
+        } else {
+            h += '<button disabled style="background:#555;border:none;border-radius:8px;padding:10px 30px;color:#999;font-weight:bold;font-size:0.9em;cursor:default;">В бой</button>';
         }
-    } else {
-        h = '<div style="color:#aaa;text-align:center;padding:40px;">No portals available</div>';
+        
+        h += '</div>';
     }
     
     var bgImage = 'assets/portal_beasts/visual_portals/ancient_parchment_of_portals.png';
     
     if (this._screenLayer) { 
-        this._screenLayer.innerHTML = '<div style="min-height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:12px;padding:12px;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Portals</span></div><div style="flex:1;overflow-y:auto;padding:16px;">' + h + '</div></div>'; 
+        this._screenLayer.innerHTML = '<div style="min-height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Порталы</span></div><div style="flex:1;overflow-y:auto;padding:20px;padding-top:40px;">' + h + '</div></div>'; 
         this._screenLayer.style.display = 'block'; 
     }
 },
