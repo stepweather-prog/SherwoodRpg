@@ -432,38 +432,16 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         return;
     }
     
-    if (!cell.open && dist === 1 && cell.type !== 0) {
+    if (!cell.open && dist === 1) {
+        // Нельзя открыть клетку выхода пока locked
+        if (cell.exit && cell.locked) {
+            this._showToast('Закрыто! Убейте всех монстров!');
+            return;
+        }
+        // Нельзя открыть клетку-стену
+        if (cell.type === 0) return;
+        
         cell.open = true;
-        // Открываем только те соседние стены, которые ведут к другим НЕ-стенам
-        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === 0) {
-            // Проверяем, не тупик ли это
-            var hasPath = false;
-            if (ty > 1 && d.grid[ty-2][tx] && d.grid[ty-2][tx].type !== 0) hasPath = true;
-            if (tx > 0 && d.grid[ty-1][tx-1] && d.grid[ty-1][tx-1].type !== 0) hasPath = true;
-            if (tx < d.size-1 && d.grid[ty-1][tx+1] && d.grid[ty-1][tx+1].type !== 0) hasPath = true;
-            if (hasPath) d.grid[ty-1][tx].open = true;
-        }
-        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === 0) {
-            var hasPath = false;
-            if (ty < d.size-2 && d.grid[ty+2][tx] && d.grid[ty+2][tx].type !== 0) hasPath = true;
-            if (tx > 0 && d.grid[ty+1][tx-1] && d.grid[ty+1][tx-1].type !== 0) hasPath = true;
-            if (tx < d.size-1 && d.grid[ty+1][tx+1] && d.grid[ty+1][tx+1].type !== 0) hasPath = true;
-            if (hasPath) d.grid[ty+1][tx].open = true;
-        }
-        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === 0) {
-            var hasPath = false;
-            if (tx > 1 && d.grid[ty][tx-2] && d.grid[ty][tx-2].type !== 0) hasPath = true;
-            if (ty > 0 && d.grid[ty-1][tx-1] && d.grid[ty-1][tx-1].type !== 0) hasPath = true;
-            if (ty < d.size-1 && d.grid[ty+1][tx-1] && d.grid[ty+1][tx-1].type !== 0) hasPath = true;
-            if (hasPath) d.grid[ty][tx-1].open = true;
-        }
-        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === 0) {
-            var hasPath = false;
-            if (tx < d.size-2 && d.grid[ty][tx+2] && d.grid[ty][tx+2].type !== 0) hasPath = true;
-            if (ty > 0 && d.grid[ty-1][tx+1] && d.grid[ty-1][tx+1].type !== 0) hasPath = true;
-            if (ty < d.size-1 && d.grid[ty+1][tx+1] && d.grid[ty+1][tx+1].type !== 0) hasPath = true;
-            if (hasPath) d.grid[ty][tx+1].open = true;
-        }
         this._playSound('tile_open');
         this._doStep(tx, ty);
         return;
