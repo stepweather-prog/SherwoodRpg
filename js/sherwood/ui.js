@@ -67,18 +67,32 @@ const SherwoodUI = {
     
     this._scaleGame();
     window.addEventListener('resize', function() { SherwoodUI._scaleGame(); });
+    window.addEventListener('orientationchange', function() { 
+        setTimeout(function() { SherwoodUI._scaleGame(); }, 300); 
+    });
 },
 _scaleGame: function() {
     var container = document.getElementById('game-container');
     if (!container) return;
-    var scale = Math.min(window.innerWidth / 480, window.innerHeight / 800);
-    if (scale < 1) {
-        container.style.transform = 'scale(' + scale + ')';
-        container.style.transformOrigin = 'top center';
-    } else {
-        container.style.transform = '';
-    }
+    
+    var windowWidth = window.innerWidth;
+    var windowHeight = window.innerHeight;
+    var gameWidth = 480;
+    var gameHeight = 800;
+    
+    var scaleX = windowWidth / gameWidth;
+    var scaleY = windowHeight / gameHeight;
+    var scale = Math.min(scaleX, scaleY);
+    
+    container.style.transform = 'scale(' + scale + ')';
+    container.style.transformOrigin = 'center center';
+    container.style.position = 'absolute';
+    container.style.left = '50%';
+    container.style.top = '50%';
+    container.style.marginLeft = -(gameWidth / 2) + 'px';
+    container.style.marginTop = -(gameHeight / 2) + 'px';
 },
+
 
 updateDisplay: function() {
     var p = Sherwood.getPlayer(); if (!p) return;
