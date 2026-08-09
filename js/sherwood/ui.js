@@ -422,6 +422,7 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
+    // Клик по своей клетке — показать кнопку взаимодействия
     if (tx === d.px && ty === d.py) {
         if (cell.lootBag && !cell.lootCollected) { this._showInteractButton('lootBag'); return; }
         if (cell.chest && !cell.looted) { this._showInteractButton('chest'); return; }
@@ -432,26 +433,28 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         return;
     }
     
+    // Клетка не открыта — просто открываем, не перемещаемся
     if (!cell.open && dist === 1) {
-        // Нельзя открыть клетку выхода пока locked
+        // Нельзя открыть стену
+        if (cell.type === 0) return;
+        // Нельзя открыть залоченный выход (но показываем что там замок)
         if (cell.exit && cell.locked) {
-            this._showToast('Закрыто! Убейте всех монстров!');
+            this._showToast('All monsters must be killed!');
             return;
         }
-        // Нельзя открыть клетку-стену
-        if (cell.type === 0) return;
-        
         cell.open = true;
         this._playSound('tile_open');
-        this._doStep(tx, ty);
+        this._renderDungeon();
         return;
     }
     
+    // Клетка открыта — перемещаемся
     if (cell.open && dist === 1) {
         this._doStep(tx, ty);
         return;
     }
     
+    // Дальняя открытая клетка — идём по пути
     if (cell.open && dist > 1) {
         this._walkPath(tx, ty);
         return;
