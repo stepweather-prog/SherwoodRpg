@@ -416,10 +416,8 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); 
     if (!d) return;
-    
     var cell = d.grid[ty] && d.grid[ty][tx];
     if (!cell) return;
-    
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
     if (tx === d.px && ty === d.py) {
@@ -512,6 +510,10 @@ _doStep: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); 
     if (!d) return;
     
+    // Сохраняем предыдущую позицию до перемещения
+    var prevX = d.px;
+    var prevY = d.py;
+    
     if (tx > d.px) d.heroDirection = 'right';
     else if (tx < d.px) d.heroDirection = 'left';
     else if (ty > d.py) d.heroDirection = 'down';
@@ -532,7 +534,11 @@ _doStep: function(tx, ty) {
     
     if (res.type === 'battle') { 
         this._stopSound('steps'); 
-        d.isMoving = false; 
+        d.isMoving = false;
+        // Возвращаем персонажа на предыдущую клетку
+        d.px = prevX;
+        d.py = prevY;
+        this._renderDungeon();
         this._pauseMusic(); 
         this._playSound('trap'); 
         Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); 
