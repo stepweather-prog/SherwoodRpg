@@ -431,7 +431,6 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
-    // Клик по своей клетке — показать кнопку взаимодействия
     if (tx === d.px && ty === d.py) {
         if (cell.lootBag && !cell.lootCollected) { this._showInteractButton('lootBag'); return; }
         if (cell.chest && !cell.looted) { this._showInteractButton('chest'); return; }
@@ -439,31 +438,29 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
         if (cell.cauldron && !cell.cauldronCollected) { this._showInteractButton('cauldron'); return; }
         if (cell.potion && !cell.potionCollected) { this._showInteractButton('potion'); return; }
         if (cell.exit && !cell.locked) { this._doStep(tx, ty); return; }
+        if (cell.exit && cell.locked) { this._showToast('Kill all monsters first!'); return; }
         return;
     }
     
-    // Клетка не открыта — просто открываем, не перемещаемся
     if (!cell.open && dist === 1) {
-        // Нельзя открыть стену
         if (cell.type === 0) return;
-        // Нельзя открыть залоченный выход (но показываем что там замок)
-        if (cell.exit && cell.locked) {
-            this._showToast('All monsters must be killed!');
-            return;
-        }
+        // Выход открываем всегда, даже если залочен — показываем замок
         cell.open = true;
         this._playSound('tile_open');
         this._renderDungeon();
         return;
     }
     
-    // Клетка открыта — перемещаемся
     if (cell.open && dist === 1) {
+        // Если выход залочен — не заходим
+        if (cell.exit && cell.locked) {
+            this._showToast('Kill all monsters first!');
+            return;
+        }
         this._doStep(tx, ty);
         return;
     }
     
-    // Дальняя открытая клетка — идём по пути
     if (cell.open && dist > 1) {
         this._walkPath(tx, ty);
         return;
