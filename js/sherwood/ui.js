@@ -1312,12 +1312,9 @@ arena: function() {
     var stats = Sherwood.Arena.getStats();
     var h = '';
     
-    h += '<div style="text-align:center;margin-bottom:12px;">';
-    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;">' + stats.rank + '</div>';
-    h += '<div style="color:#aaa;font-size:0.8em;">Побед: ' + stats.wins + ' | Поражений: ' + stats.losses + '</div>';
-    h += '</div>';
-    
     h += '<div style="text-align:center;">';
+    h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:4px;">' + stats.rank + '</div>';
+    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:30px;">Побед: ' + stats.wins + ' | Поражений: ' + stats.losses + '</div>';
     h += '<img src="assets/interface/blades_arena.png" style="width:240px;height:240px;object-fit:contain;display:block;margin:0 auto 30px;">';
     h += '<button onclick="SherwoodUI._startArenaBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:14px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:1em;">В бой</button>';
     h += '</div>';
@@ -1329,7 +1326,6 @@ arena: function() {
         this._screenLayer.style.display = 'block'; 
     }
 },
-
 _startArenaBattle: function() {
     this._stopMusic();
     Sherwood.Arena.refreshOpponents();
