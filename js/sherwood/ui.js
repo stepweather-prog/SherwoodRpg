@@ -349,7 +349,18 @@ _showDungeonLevels: function(dungeonId) {
     var progress = (Sherwood.Dungeon._progress && Sherwood.Dungeon._progress[dungeonId]) ? Sherwood.Dungeon._progress[dungeonId] : { level: 1 };
     var dungeonNames = { forest: 'Проклятая чаща', swamp: 'Первородное болото', cave: 'Базальтовый грот' };
     var dungeonIcons = { forest: 'the_cursed_thicket.png', swamp: 'primordial_swamp.png', cave: 'basalt_grotto.png' };
-    var tp = 'assets/dungeon_tiles/' + d.tiles + '/tiles';
+    
+    var tp, te;
+    if (dungeonId === 'forest') {
+        tp = 'assets/dungeon_tiles/dungeon1/tiles';
+        te = '.jpeg';
+    } else if (dungeonId === 'swamp') {
+        tp = 'assets/dungeon_tiles/dungeon2/tiles2.';
+        te = '.png';
+    } else {
+        tp = 'assets/dungeon_tiles/dungeon3/tiles3.';
+        te = '.png';
+    }
     
     var h = '';
     h += '<div style="text-align:center;margin-bottom:16px;">';
@@ -360,7 +371,7 @@ _showDungeonLevels: function(dungeonId) {
     h += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
     for (var lvl = 1; lvl <= 7; lvl++) {
         var unlocked = lvl <= (progress.level || 1);
-        var img = unlocked ? (tp + lvl + d.ext) : 'assets/interface/closed_level_lock_icon.png';
+        var img = unlocked ? (tp + lvl + te) : 'assets/interface/closed_level_lock_icon.png';
         h += '<div onclick="' + (unlocked ? 'SherwoodUI._startDungeon(\'' + dungeonId + '\',' + lvl + ')' : '') + '" style="width:56px;height:56px;background-image:url(\'' + img + '\');background-size:cover;background-position:center;border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;"><span style="position:absolute;bottom:2px;right:4px;font-size:0.6em;color:' + (unlocked ? '#000' : '#888') + ';font-weight:bold;">' + lvl + '</span></div>';
     }
     h += '</div>';
