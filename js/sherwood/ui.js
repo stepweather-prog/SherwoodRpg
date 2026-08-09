@@ -510,7 +510,6 @@ _doStep: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); 
     if (!d) return;
     
-    // Сохраняем предыдущую позицию до перемещения
     var prevX = d.px;
     var prevY = d.py;
     
@@ -527,15 +526,21 @@ _doStep: function(tx, ty) {
     }
     
     this._playSound('steps');
+    
+    // Если это клетка с лутом - не даём Dungeon.move собрать его автоматически
+    var currentCell = d.grid[d.py][d.px];
+    if (currentCell && currentCell.lootBag && !currentCell.lootCollected) {
+        // Отменяем автосбор если он произошёл
+        currentCell.lootCollected = false;
+        currentCell.lootBag = true;
+    }
+    
     this._renderDungeon();
     SherwoodUI.updateDisplay();
-    
-    var currentCell = d.grid[d.py][d.px];
     
     if (res.type === 'battle') { 
         this._stopSound('steps'); 
         d.isMoving = false;
-        // Возвращаем персонажа на предыдущую клетку
         d.px = prevX;
         d.py = prevY;
         this._renderDungeon();
@@ -605,35 +610,51 @@ _doStep: function(tx, ty) {
 _showInteractButton: function(type) {
     var self = this;
     var d = Sherwood.Dungeon.getDungeon();
-    var dungId = d ? d.id || 'forest' : 'forest';
+    if (!d) return;
+    var dungId = d.id || 'forest';
     var icon = '';
+    
     var altarImg = dungId === 'forest' ? 'assets/interface/altar_of_the_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/altar_of_the_second_dungeon.png' : 'assets/interface/the_third_altar_of_the_dungeon.png';
     var cauldronImg = dungId === 'forest' ? 'assets/interface/cauldron_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/cauldron_of_the_second_dungeon.png' : 'assets/interface/the_third_cauldron_of_the_dungeon.png';
     var chestImg = dungId === 'forest' ? 'assets/interface/locked_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/locked_chest_second_dungeon.png' : 'assets/interface/locked_chest_third_dungeon.png';
     
-    if (type === 'altar') { icon = altarImg; }
-    else if (type === 'cauldron') { icon = cauldronImg; }
-    else if (type === 'potion') { icon = 'assets/interface/resource_life_potion.png'; }
-    else if (type === 'chest') { icon = chestImg; }
-    else if (type === 'lootBag') { icon = 'assets/interface/loot_bag_of_beasts.png'; }
+    if (type === 'altar') icon = altarImg;
+    else if (type === 'cauldron') icon = cauldronImg;
+    else if (type === 'potion') icon = 'assets/interface/resource_life_potion.png';
+    else if (type === 'chest') icon = chestImg;
+    else if (type === 'lootBag') icon = 'assets/interface/loot_bag_of_beasts.png';
     
     var oldBtn = document.getElementById('interact-btn');
     if (oldBtn) oldBtn.remove();
     
+    var cell = d.grid[d.py][d.px];
+    
+    // Проверяем, не собрано ли уже
+    if (type === 'lootBag' && cell && cell.lootCollected) return;
+    if (type === 'chest' && cell && cell.looted) return;
+    if (type === 'altar' && cell && cell.altarCollected) return;
+    if (type === 'cauldron' && cell && cell.cauldronCollected) return;
+    if (type === 'potion' && cell && cell.potionCollected) return;
+    
     var btn = document.createElement('div');
     btn.id = 'interact-btn';
-    btn.style.cssText = 'position:absolute;bottom:20%;left:50%;transform:translateX(-50%);z-index:100;width:64px;height:64px;background:rgba(0,0,0,0.7);border:2px solid #c9a040;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;';
-    btn.innerHTML = '<img src="' + icon + '" style="width:48px;height:48px;object-fit:contain;">';
+    btn.style.cssText = 'position:absolute;bottom:20%;left:50%;transform:translateX(-50%);z-index:100;width:80px;height:80px;background:rgba(0,0,0,0.8);border:3px solid #c9a040;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;';
+    btn.innerHTML = '<img src="' + icon + '" style="width:56px;height:56px;object-fit:contain;">';
+    
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
+        e.preventDefault();
         btn.remove();
-        if (type === 'altar') SherwoodUI._collectAltar();
-        else if (type === 'cauldron') SherwoodUI._collectCauldron();
-        else if (type === 'potion') SherwoodUI._collectPotion();
-        else if (type === 'chest') SherwoodUI._collectChest();
-        else if (type === 'lootBag') SherwoodUI._collectLootBag();
+        
+        if (type === 'altar') self._collectAltar();
+        else if (type === 'cauldron') self._collectCauldron();
+        else if (type === 'potion') self._collectPotion();
+        else if (type === 'chest') self._collectChest();
+        else if (type === 'lootBag') self._collectLootBag();
     });
+    
     this._screenLayer.appendChild(btn);
+},
     
     if (type === 'chest' || type === 'lootBag') {
         var cell = d.grid[d.py][d.px];
@@ -687,30 +708,55 @@ _collectPotion: function() {
 },
 
 _collectChest: function() {
-    var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
-    var cell = d.grid[d.py][d.px]; if (!cell || !cell.chest || cell.looted) return;
+    var d = Sherwood.Dungeon.getDungeon(); 
+    if (!d) return;
+    var cell = d.grid[d.py][d.px]; 
+    if (!cell || !cell.chest || cell.looted) return;
+    
     cell.looted = true;
-    d.chestsOpened++;
+    d.chestsOpened = (d.chestsOpened || 0) + 1;
+    
     var g = cell.reward ? (cell.reward.gold || 1) : 1;
     var s = cell.reward ? (cell.reward.silver || 200) : 200;
+    
     Sherwood.addResource('gold', g);
     Sherwood.addResource('silver', s);
     if (Sherwood.Daily) Sherwood.Daily.updateProgress('open_chests', 1);
+    
     this._playSound('chest_open');
-    this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + g }, { icon: 'assets/interface/silver_plaque.png', text: '+' + s }]);
+    this._showFlyingLoot([
+        { icon: 'assets/interface/gold_plate.png', text: '+' + g },
+        { icon: 'assets/interface/silver_plaque.png', text: '+' + s }
+    ]);
+    
+    Sherwood.saveGame();
     SherwoodUI.updateDisplay();
     this._renderDungeon();
 },
 
 _collectLootBag: function() {
-    var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
-    var cell = d.grid[d.py][d.px]; if (!cell || !cell.lootBag || cell.lootCollected) return;
+    var d = Sherwood.Dungeon.getDungeon(); 
+    if (!d) return;
+    var cell = d.grid[d.py][d.px]; 
+    if (!cell || !cell.lootBag || cell.lootCollected) return;
+    
     cell.lootCollected = true;
     cell.lootBag = false;
-    Sherwood.Combat._giveReward({ exp: 0, gold: 0 });
+    
+    var reward = cell.reward || { gold: 1, silver: 100, exp: 10 };
+    if (reward.exp) Sherwood.addExp(reward.exp);
+    if (reward.gold) Sherwood.addResource('gold', reward.gold);
+    if (reward.silver) Sherwood.addResource('silver', reward.silver);
+    
     this._playSound('bag_drop');
-    this._renderDungeon();
+    this._showFlyingLoot([
+        { icon: 'assets/interface/gold_plate.png', text: '+' + (reward.gold || 0) },
+        { icon: 'assets/interface/silver_plaque.png', text: '+' + (reward.silver || 0) }
+    ]);
+    
+    Sherwood.saveGame();
     SherwoodUI.updateDisplay();
+    this._renderDungeon();
 },
 
 _showFlyingLoot: function(items) {
