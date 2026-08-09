@@ -961,8 +961,12 @@ _handleCombat: function(r) {
         if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster();
         if (Sherwood.Bestiary && r.enemyImage) Sherwood.Bestiary.registerKill(r.enemyImage);
         this._resumeMusic();
-        this._playSound('bag_drop');
         this.updateDisplay();
+        var d = Sherwood.Dungeon.getDungeon();
+        if (d) {
+            d.px = d.prevPx || d.px;
+            d.py = d.prevPy || d.py;
+        }
         this._renderDungeon();
     } else if (r.lose) {
         this._resumeMusic(); this.updateDisplay();
@@ -977,9 +981,9 @@ _handleCombat: function(r) {
         this._showDamageNumber(r.damage, r.crit);
         if (r.crit) this._showCriticalHitAnim();
         this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-        this._showDialog((r.crit ? 'КРИТ! ' : '') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
-        if (r.armorDmg) this._showDialog('Снято брони: ' + r.armorDmg, '#2196f3');
-        if (r.enemy && r.enemy.damage) { var self = this; setTimeout(function() { self._showDialog((r.enemyName || 'Враг') + ' нанёс ' + r.enemy.damage + ' урона', '#f44336'); }, 700); }
+        this._showDialog((r.crit ? 'CRIT ' : '') + 'Damage: ' + r.damage, r.crit ? '#ff6a00' : '#fff');
+        if (r.armorDmg) this._showDialog('Armor broken: ' + r.armorDmg, '#2196f3');
+        if (r.enemy && r.enemy.damage) { var self = this; setTimeout(function() { self._showDialog((r.enemyName || 'Enemy') + ' hit: ' + r.enemy.damage, '#f44336'); }, 700); }
         this.updateDisplay(); var self = this; setTimeout(function() { self._showCombatScreen(); }, 1000);
     }
 },
