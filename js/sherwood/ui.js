@@ -629,7 +629,6 @@ _showInteractButton: function(type) {
     
     var cell = d.grid[d.py][d.px];
     
-    // Проверяем, не собрано ли уже
     if (type === 'lootBag' && cell && cell.lootCollected) return;
     if (type === 'chest' && cell && cell.looted) return;
     if (type === 'altar' && cell && cell.altarCollected) return;
@@ -654,17 +653,18 @@ _showInteractButton: function(type) {
     });
     
     this._screenLayer.appendChild(btn);
-},
     
+    // Летящий лут через appendChild вместо innerHTML
     if (type === 'chest' || type === 'lootBag') {
-        var cell = d.grid[d.py][d.px];
         var reward = (cell && cell.reward) ? cell.reward : { gold: 5, silver: 200 };
-        var flyHtml = '<div style="position:fixed;top:10%;left:50%;transform:translateX(-50%);z-index:101;color:#ffd700;font-size:1.2em;font-weight:bold;text-shadow:0 0 10px #000;animation:lootFly 1.5s ease-out forwards;pointer-events:none;">';
+        var flyEl = document.createElement('div');
+        flyEl.style.cssText = 'position:fixed;top:10%;left:50%;transform:translateX(-50%);z-index:101;color:#ffd700;font-size:1.2em;font-weight:bold;text-shadow:0 0 10px #000;animation:lootFly 1.5s ease-out forwards;pointer-events:none;';
+        var flyHtml = '';
         if (reward.gold) flyHtml += '+' + reward.gold + ' <img src="assets/interface/resource_gold.png" style="width:20px;height:20px;vertical-align:middle;"> ';
         if (reward.silver) flyHtml += '+' + reward.silver + ' <img src="assets/interface/resource_silver.png" style="width:20px;height:20px;vertical-align:middle;"> ';
-        flyHtml += '</div>';
-        this._screenLayer.innerHTML += flyHtml;
-        setTimeout(function() { var flyEl = document.querySelector('[style*="lootFly"]'); if (flyEl) flyEl.remove(); }, 1600);
+        flyEl.innerHTML = flyHtml;
+        this._screenLayer.appendChild(flyEl);
+        setTimeout(function() { if (flyEl.parentNode) flyEl.parentNode.removeChild(flyEl); }, 1600);
     }
 },
 _collectAltar: function() {
