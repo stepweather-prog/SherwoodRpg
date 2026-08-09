@@ -416,8 +416,10 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     _dungeonMove: function(tx, ty) {
     var d = Sherwood.Dungeon.getDungeon(); 
     if (!d) return;
+    
     var cell = d.grid[ty] && d.grid[ty][tx];
     if (!cell) return;
+    
     var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
     
     if (tx === d.px && ty === d.py) {
@@ -432,10 +434,36 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     
     if (!cell.open && dist === 1 && cell.type !== 0) {
         cell.open = true;
-        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === 0) d.grid[ty-1][tx].open = true;
-        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === 0) d.grid[ty+1][tx].open = true;
-        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === 0) d.grid[ty][tx-1].open = true;
-        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === 0) d.grid[ty][tx+1].open = true;
+        // Открываем только те соседние стены, которые ведут к другим НЕ-стенам
+        if (ty > 0 && d.grid[ty-1][tx] && d.grid[ty-1][tx].type === 0) {
+            // Проверяем, не тупик ли это
+            var hasPath = false;
+            if (ty > 1 && d.grid[ty-2][tx] && d.grid[ty-2][tx].type !== 0) hasPath = true;
+            if (tx > 0 && d.grid[ty-1][tx-1] && d.grid[ty-1][tx-1].type !== 0) hasPath = true;
+            if (tx < d.size-1 && d.grid[ty-1][tx+1] && d.grid[ty-1][tx+1].type !== 0) hasPath = true;
+            if (hasPath) d.grid[ty-1][tx].open = true;
+        }
+        if (ty < d.size-1 && d.grid[ty+1][tx] && d.grid[ty+1][tx].type === 0) {
+            var hasPath = false;
+            if (ty < d.size-2 && d.grid[ty+2][tx] && d.grid[ty+2][tx].type !== 0) hasPath = true;
+            if (tx > 0 && d.grid[ty+1][tx-1] && d.grid[ty+1][tx-1].type !== 0) hasPath = true;
+            if (tx < d.size-1 && d.grid[ty+1][tx+1] && d.grid[ty+1][tx+1].type !== 0) hasPath = true;
+            if (hasPath) d.grid[ty+1][tx].open = true;
+        }
+        if (tx > 0 && d.grid[ty][tx-1] && d.grid[ty][tx-1].type === 0) {
+            var hasPath = false;
+            if (tx > 1 && d.grid[ty][tx-2] && d.grid[ty][tx-2].type !== 0) hasPath = true;
+            if (ty > 0 && d.grid[ty-1][tx-1] && d.grid[ty-1][tx-1].type !== 0) hasPath = true;
+            if (ty < d.size-1 && d.grid[ty+1][tx-1] && d.grid[ty+1][tx-1].type !== 0) hasPath = true;
+            if (hasPath) d.grid[ty][tx-1].open = true;
+        }
+        if (tx < d.size-1 && d.grid[ty][tx+1] && d.grid[ty][tx+1].type === 0) {
+            var hasPath = false;
+            if (tx < d.size-2 && d.grid[ty][tx+2] && d.grid[ty][tx+2].type !== 0) hasPath = true;
+            if (ty > 0 && d.grid[ty-1][tx+1] && d.grid[ty-1][tx+1].type !== 0) hasPath = true;
+            if (ty < d.size-1 && d.grid[ty+1][tx+1] && d.grid[ty+1][tx+1].type !== 0) hasPath = true;
+            if (hasPath) d.grid[ty][tx+1].open = true;
+        }
         this._playSound('tile_open');
         this._doStep(tx, ty);
         return;
