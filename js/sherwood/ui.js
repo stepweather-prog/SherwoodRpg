@@ -1199,15 +1199,15 @@ portal: function() {
         var requiredArrows = portal.id * 150;
         var canEnter = arrowCount >= requiredArrows;
         
-        h += '<div style="text-align:center;margin-bottom:28px;">';
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:8px;">' + portal.name + '</div>';
-        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:120px;height:120px;object-fit:contain;display:block;margin:0 auto 8px;">';
-        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:6px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
+        h += '<div style="text-align:center;margin-bottom:32px;">';
+        h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + portal.name + '</div>';
+        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:160px;height:160px;object-fit:contain;display:block;margin:0 auto 10px;">';
+        h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:8px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
         
         if (canEnter) {
-            h += '<button onclick="SherwoodUI._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
+            h += '<button onclick="SherwoodUI._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">В бой</button>';
         } else {
-            h += '<button disabled style="background:#555;border:none;border-radius:8px;padding:10px 30px;color:#999;font-weight:bold;font-size:0.9em;cursor:default;">В бой</button>';
+            h += '<button disabled style="background:#555;border:none;border-radius:8px;padding:12px 36px;color:#999;font-weight:bold;font-size:0.95em;cursor:default;">В бой</button>';
         }
         
         h += '</div>';
@@ -1216,7 +1216,7 @@ portal: function() {
     var bgImage = 'assets/portal_beasts/visual_portals/ancient_parchment_of_portals.png';
     
     if (this._screenLayer) { 
-        this._screenLayer.innerHTML = '<div style="min-height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Порталы</span></div><div style="flex:1;overflow-y:auto;padding:20px;padding-top:40px;">' + h + '</div></div>'; 
+        this._screenLayer.innerHTML = '<div style="height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Порталы</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;padding-top:30px;padding-bottom:40px;-webkit-overflow-scrolling:touch;">' + h + '</div></div>'; 
         this._screenLayer.style.display = 'block'; 
     }
 },
