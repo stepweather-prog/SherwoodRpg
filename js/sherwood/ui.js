@@ -67,10 +67,8 @@ const SherwoodUI = {
     
     this._scaleGame();
     window.addEventListener('resize', function() { SherwoodUI._scaleGame(); });
-    window.addEventListener('orientationchange', function() { 
-        setTimeout(function() { SherwoodUI._scaleGame(); }, 300); 
-    });
 },
+        
 _scaleGame: function() {
     var container = document.getElementById('game-container');
     if (!container) return;
@@ -85,12 +83,11 @@ _scaleGame: function() {
     var scale = Math.min(scaleX, scaleY);
     
     container.style.transform = 'scale(' + scale + ')';
-    container.style.transformOrigin = 'center center';
-    container.style.position = 'absolute';
-    container.style.left = '50%';
-    container.style.top = '50%';
-    container.style.marginLeft = -(gameWidth / 2) + 'px';
-    container.style.marginTop = -(gameHeight / 2) + 'px';
+    container.style.transformOrigin = 'center top';
+    container.style.marginLeft = ((windowWidth - gameWidth * scale) / 2) + 'px';
+    container.style.marginRight = '0';
+    container.style.marginTop = '0';
+    container.style.marginBottom = '0';
 },
 
 
