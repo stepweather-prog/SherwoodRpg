@@ -78,16 +78,15 @@ _scaleGame: function() {
     var gameWidth = 480;
     var gameHeight = 800;
     
-    var scaleX = windowWidth / gameWidth;
-    var scaleY = windowHeight / gameHeight;
-    var scale = Math.min(scaleX, scaleY);
+    var scale = Math.min(windowWidth / gameWidth, windowHeight / gameHeight);
     
-    container.style.transform = 'scale(' + scale + ')';
-    container.style.transformOrigin = 'center top';
-    container.style.marginLeft = ((windowWidth - gameWidth * scale) / 2) + 'px';
-    container.style.marginRight = '0';
-    container.style.marginTop = '0';
-    container.style.marginBottom = '0';
+    if (scale < 1) {
+        container.style.transform = 'scale(' + scale + ')';
+        container.style.transformOrigin = 'top center';
+    } else {
+        container.style.transform = '';
+        container.style.transformOrigin = '';
+    }
 },
 
 
