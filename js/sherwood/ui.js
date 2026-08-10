@@ -1707,6 +1707,116 @@ _bagAction: function(i) {
     a += '<button onclick="Sherwood.Bag.discardItem(' + i + ');SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Выкинуть</button>';
     info.innerHTML = '<div style="color:#e0c080;font-size:0.95em;font-weight:bold;">' + (item.name || 'Предмет') + '</div><div style="color:#aaa;font-size:0.75em;">' + (item.grade || 'обычный') + ' x' + (item.quantity || 1) + '</div><div style="margin-top:8px;">' + a + '</div>';
 },
+    // ===== КОШЕЛь =====
+wallet: function() {
+    this._playSound('click');
+    var p = Sherwood.getPlayer();
+    if (!p.wallet) p.wallet = { cells: [], totalSilver: 0 };
+    if (!p.wallet.cells || p.wallet.cells.length === 0) {
+        p.wallet.cells = [];
+        for (var i = 0; i < 30; i++) p.wallet.cells.push(0);
+        p.wallet.totalSilver = 0;
+    }
+    
+    var cells = p.wallet.cells;
+    var totalSilver = p.wallet.totalSilver || 0;
+    var maxPerCell = 20000;
+    var maxTotal = 30 * maxPerCell;
+    var filledCells = 0;
+    var totalFilled = 0;
+    for (var i = 0; i < cells.length; i++) {
+        totalFilled += cells[i];
+        if (cells[i] >= maxPerCell) filledCells++;
+    }
+    var allFull = filledCells >= 30;
+    var canWithdraw = totalFilled >= maxPerCell * 0.5;
+    
+    var h = '';
+    h += '<div style="text-align:center;padding:10px;">';
+    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Кошелёк</div>';
+    h += '<div style="color:#c0c0c0;font-size:0.85em;margin-bottom:8px;">Накоплено: ' + totalFilled + ' / ' + maxTotal + ' серебра</div>';
+    h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:12px;">Ячеек заполнено: ' + filledCells + ' / 30</div>';
+    
+    h += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:380px;margin:0 auto 16px;">';
+    for (var i = 0; i < cells.length; i++) {
+        var cellSilver = cells[i];
+        var pct = Math.min(100, Math.round((cellSilver / maxPerCell) * 100));
+        var glow = allFull ? 'box-shadow:0 0 12px 4px rgba(255,215,0,0.7);' : '';
+        h += '<div style="position:relative;width:56px;height:56px;background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid ' + (cellSilver >= maxPerCell ? '#ffd700' : '#555') + ';border-radius:8px;display:flex;align-items:center;justify-content:center;' + glow + '">';
+        if (cellSilver > 0) {
+            h += '<img src="assets/interface/resource_silver.png" style="width:28px;height:28px;object-fit:contain;opacity:' + (pct / 100) + ';">';
+        }
+        if (cellSilver > 0) {
+            h += '<span style="position:absolute;bottom:1px;right:3px;color:#fff;font-size:0.45em;font-weight:bold;text-shadow:0 0 3px #000;">' + pct + '%</span>';
+        }
+        h += '</div>';
+    }
+    h += '</div>';
+    
+    if (canWithdraw) {
+        h += '<button onclick="SherwoodUI._withdrawWallet()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">Забрать ' + totalFilled + ' серебра</button>';
+        if (allFull) {
+            h += '<button onclick="SherwoodUI._withdrawWalletDouble()" style="background:#ffd700;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">Забрать x2 (' + (totalFilled * 2) + ') за 100 золота</button>';
+        }
+    } else {
+        h += '<div style="color:#888;font-size:0.8em;margin-bottom:8px;">Нужно накопить минимум 50% в одной ячейке</div>';
+    }
+    
+    h += '</div>';
+    
+    this._openScreen('Кошель', 'wallet', h, 'SherwoodUI.profile()');
+},
+
+_withdrawWallet: function() {
+    var p = Sherwood.getPlayer();
+    if (!p.wallet) return;
+    var totalFilled = 0;
+    for (var i = 0; i < p.wallet.cells.length; i++) totalFilled += p.wallet.cells[i];
+    if (totalFilled < 100000) { this._showToast('Минимум 100,000 серебра для снятия'); return; }
+    Sherwood.addResource('silver', totalFilled);
+    for (var i = 0; i < p.wallet.cells.length; i++) p.wallet.cells[i] = 0;
+    p.wallet.totalSilver = 0;
+    Sherwood.saveGame();
+    this.updateDisplay();
+    this.wallet();
+},
+
+_withdrawWalletDouble: function() {
+    var p = Sherwood.getPlayer();
+    if (!p.wallet) return;
+    if ((p.resources.gold || 0) < 100) { this._showToast('Нужно 100 золота'); return; }
+    var totalFilled = 0;
+    for (var i = 0; i < p.wallet.cells.length; i++) totalFilled += p.wallet.cells[i];
+    p.resources.gold -= 100;
+    Sherwood.addResource('silver', totalFilled * 2);
+    for (var i = 0; i < p.wallet.cells.length; i++) p.wallet.cells[i] = 0;
+    p.wallet.totalSilver = 0;
+    Sherwood.saveGame();
+    this.updateDisplay();
+    this.wallet();
+},
+
+_addWalletSilver: function(amount) {
+    var p = Sherwood.getPlayer();
+    if (!p.wallet) p.wallet = { cells: [], totalSilver: 0 };
+    if (!p.wallet.cells || p.wallet.cells.length === 0) {
+        p.wallet.cells = [];
+        for (var i = 0; i < 30; i++) p.wallet.cells.push(0);
+    }
+    var maxPerCell = 20000;
+    var remaining = amount;
+    for (var i = 0; i < p.wallet.cells.length && remaining > 0; i++) {
+        var space = maxPerCell - p.wallet.cells[i];
+        if (space > 0) {
+            var add = Math.min(remaining, space);
+            p.wallet.cells[i] += add;
+            remaining -= add;
+        }
+    }
+    p.wallet.totalSilver = 0;
+    for (var i = 0; i < p.wallet.cells.length; i++) p.wallet.totalSilver += p.wallet.cells[i];
+    Sherwood.saveGame();
+},
     profile: function() {
     this._playSound('click');
     var p = Sherwood.getPlayer();
