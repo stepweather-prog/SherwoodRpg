@@ -95,6 +95,7 @@ updateDisplay: function() {
     try { var el = document.getElementById('gold-display'); if (el) el.textContent = p.resources.gold || 0; } catch(e) {}
     try { var el = document.getElementById('level-display'); if (el) el.textContent = p.level || 1; } catch(e) {}
     try { var el = document.getElementById('silver-display'); if (el) el.textContent = p.resources.silver || 0; } catch(e) {}
+    try { var el = document.getElementById('level-display'); if (el) el.textContent = p.level || 1; } catch(e) {}
     try {
         var expEl = document.getElementById('exp-display');
         var expMaxEl = document.getElementById('exp-max-display');
