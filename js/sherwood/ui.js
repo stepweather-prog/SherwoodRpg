@@ -1599,21 +1599,114 @@ _toggleMusic: function(en) {
     this._openScreen('Рынок', 'market', (h || '<div style="color:#aaa;text-align:center;">Товаров нет</div>') + '<div id="market-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div>');
 },
     _buyItem: function(i) { var r=Sherwood.BlackMarket.buyItem(i),log=document.getElementById('market-log'); if(r.success) { if(log) log.textContent='Куплено!'; this.updateDisplay(); } else { if(log) log.textContent=(r.reason||'Ошибка'); } var self=this; setTimeout(function(){self.market();},800); },
-    bag: function() { this._playSound('click'); var bag=Sherwood.Bag,items=bag?bag.getItems():[],max=bag?bag.getMaxSlots():10,h=''; for (var i=0;i<max;i++) { var item=items[i]; if(item) { var gc=Sherwood.GradeColors?Sherwood.GradeColors[item.grade]:'#9d9d9d'; h+='<div onclick="SherwoodUI._bagAction('+i+')" style="background:url(\'assets/interface/bag_cell.jpeg\') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid '+gc+';border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;"><img src="'+(item.icon||'assets/interface/labyrinth_of_icons.png')+'" style="width:32px;height:32px;object-fit:contain;">'+(item.quantity>1?'<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;background:rgba(0,0,0,0.7);padding:0 4px;border-radius:4px;">'+item.quantity+'</span>':'')+'</div>'; } else { h+='<div style="background:url(\'assets/interface/bag_cell.jpeg\') center/contain no-repeat;background-size:cover;width:60px;height:60px;border:2px solid #333;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.4;"><span style="color:#555;font-size:0.6em;">пусто</span></div>'; } } var expInfo=Sherwood.Bag.getExpansionInfo(),expBtn=expInfo.canExpand?'<button onclick="SherwoodUI._expandBag()" style="margin-top:8px;background:#c9a040;border:none;border-radius:6px;padding:6px 14px;color:#000;cursor:pointer;font-size:0.7em;">Расширить +5 ('+expInfo.cost+' Золота)</button>':'<span style="color:#666;font-size:0.6em;">Максимум для вашего уровня</span>'; var c='<div style="color:#aaa;font-size:0.8em;margin-bottom:4px;">'+items.length+'/'+max+'</div>'+expBtn+'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:340px;margin:12px auto 0;">'+h+'</div><div id="bag-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;min-height:20px;">Нажми на предмет</div>'; this._openScreen('Сумка','bag',c); },
-    _expandBag: function() { var r=Sherwood.Bag.expandBag(),info=document.getElementById('bag-info'); if(r.success) { if(info) info.textContent='Сумка расширена до '+r.newSlots+' ячеек!'; this.updateDisplay(); } else { if(info) info.textContent=(r.reason||'Ошибка'); } var self=this; setTimeout(function(){self.bag();},800); },
-    _bagAction: function(i) {
-        var bag = Sherwood.Bag; if (!bag) return; var items = bag.getItems(); if (i >= items.length) return;
-        var item = items[i]; if (!item) return; var info = document.getElementById('bag-info'); if (!info) return;
-        var a = '';
-        if (item.part === 'ring' || item.part === 'amulet') {
-            a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');SherwoodUI.bag();" style="background:#9c27b0;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Надеть</button>';
-        } else if (item.part) {
-            a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');SherwoodUI.bag();" style="background:#4caf50;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Надеть</button>';
+        bag: function() {
+    this._playSound('click');
+    var bag = Sherwood.Bag;
+    var items = bag ? bag.getItems() : [];
+    var max = bag ? bag.getMaxSlots() : 10;
+    var h = '';
+    
+    var expInfo = bag.getExpansionInfo();
+    var expBtn = expInfo.canExpand ? '<button onclick="SherwoodUI._expandBag()" style="margin-top:10px;background:#c9a040;border:none;border-radius:8px;padding:8px 18px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;">Расширить +10 (' + expInfo.costSilver + ' серебра + ' + expInfo.costSkin + ' шкур)</button>' : '<span style="color:#666;font-size:0.7em;">Максимум для вашего уровня</span>';
+    
+    h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-bottom:6px;">' + items.length + '/' + max + ' ячеек</div>';
+    h += expBtn;
+    
+    h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:400px;margin:16px auto 0;">';
+    
+    for (var i = 0; i < max; i++) {
+        var item = items[i];
+        if (item) {
+            var gc = Sherwood.GradeColors ? Sherwood.GradeColors[item.grade] : '#9d9d9d';
+            h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="SherwoodUI._bagDragStart(event,' + i + ')" ondragover="SherwoodUI._bagDragOver(event)" ondrop="SherwoodUI._bagDrop(event,' + i + ')" onclick="SherwoodUI._bagAction(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;">';
+            h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:40px;height:40px;object-fit:contain;">';
+            if (item.quantity > 1) {
+                h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.65em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + item.quantity + '</span>';
+            }
+            h += '</div>';
+        } else {
+            h += '<div data-bag-index="' + i + '" ondragover="SherwoodUI._bagDragOver(event)" ondrop="SherwoodUI._bagDrop(event,' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;border:2px solid #555;border-radius:8px;display:flex;align-items:center;justify-content:center;"></div>';
         }
-        a += '<button onclick="Sherwood.Bag.sellItem(' + i + ');SherwoodUI.bag();" style="background:#ff9800;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Продать</button>';
-        a += '<button onclick="Sherwood.Bag.discardItem(' + i + ');SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:4px;padding:4px 12px;color:#fff;cursor:pointer;margin:0 4px;">Выкинуть</button>';
-        info.innerHTML = '<div style="color:#fff;font-size:0.9em;">' + (item.name || 'Предмет') + '</div><div style="color:#aaa;font-size:0.7em;">' + (item.grade || 'обычный') + ' x' + (item.quantity || 1) + '</div><div style="margin-top:6px;">' + a + '</div>';
-    },
+    }
+    
+    h += '</div>';
+    h += '<div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:14px;min-height:24px;">Нажми на предмет</div>';
+    
+    this._openScreen('Сумка', 'bag', h);
+},
+
+_bagDragStart: function(e, index) {
+    e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.effectAllowed = 'move';
+},
+
+_bagDragOver: function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+},
+
+_bagDrop: function(e, targetIndex) {
+    e.preventDefault();
+    var sourceIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+    
+    var items = Sherwood.Bag.getItems();
+    if (sourceIndex >= items.length) return;
+    
+    var sourceItem = items[sourceIndex];
+    var targetItem = items[targetIndex];
+    
+    if (targetItem && sourceItem.id === targetItem.id && sourceItem.name === targetItem.name) {
+        var maxStack = sourceItem.maxStack || 100;
+        var totalQty = (sourceItem.quantity || 1) + (targetItem.quantity || 1);
+        if (totalQty <= maxStack) {
+            targetItem.quantity = totalQty;
+            items.splice(sourceIndex, 1);
+        } else {
+            targetItem.quantity = maxStack;
+            sourceItem.quantity = totalQty - maxStack;
+        }
+    } else {
+        items[sourceIndex] = targetItem;
+        items[targetIndex] = sourceItem;
+    }
+    
+    Sherwood.Bag._save();
+    this.bag();
+},
+
+_expandBag: function() { 
+    var r = Sherwood.Bag.expandBag();
+    var info = document.getElementById('bag-info'); 
+    if (r.success) { 
+        if (info) info.textContent = 'Сумка расширена до ' + r.newSlots + ' ячеек!'; 
+        this.updateDisplay(); 
+    } else { 
+        if (info) info.textContent = (r.reason || 'Ошибка'); 
+    } 
+    var self = this; 
+    setTimeout(function() { self.bag(); }, 800); 
+},
+
+_bagAction: function(i) {
+    var bag = Sherwood.Bag; 
+    if (!bag) return; 
+    var items = bag.getItems(); 
+    if (i >= items.length) return;
+    var item = items[i]; 
+    if (!item) return; 
+    var info = document.getElementById('bag-info'); 
+    if (!info) return;
+    var a = '';
+    if (item.part === 'ring' || item.part === 'amulet') {
+        a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');SherwoodUI.bag();" style="background:#9c27b0;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Надеть</button>';
+    } else if (item.part) {
+        a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');SherwoodUI.bag();" style="background:#4caf50;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Надеть</button>';
+    }
+    a += '<button onclick="Sherwood.Bag.sellItem(' + i + ');SherwoodUI.bag();" style="background:#ff9800;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Продать</button>';
+    a += '<button onclick="Sherwood.Bag.discardItem(' + i + ');SherwoodUI.bag();" style="background:#f44336;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Выкинуть</button>';
+    info.innerHTML = '<div style="color:#e0c080;font-size:0.95em;font-weight:bold;">' + (item.name || 'Предмет') + '</div><div style="color:#aaa;font-size:0.75em;">' + (item.grade || 'обычный') + ' x' + (item.quantity || 1) + '</div><div style="margin-top:8px;">' + a + '</div>';
+},
     profile: function() {
     this._playSound('click');
     var p = Sherwood.getPlayer();
