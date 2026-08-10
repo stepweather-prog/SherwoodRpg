@@ -1089,24 +1089,33 @@ quest: function() {
     var completed = prog.completed && prog.completed.indexOf(ch.id) !== -1;
     var cooldown = Sherwood.Quests.isOnCooldown();
     var cdRemain = Sherwood.Quests.getCooldownRemaining();
-    var isActive = Sherwood.Quests._currentChapter && Sherwood.Quests._currentChapter.id === ch.id && Sherwood.Quests._currentEnemy && Sherwood.Quests._inBattle;
+    var inBattle = Sherwood.Quests._inBattle && Sherwood.Quests._currentEnemy;
     
     var displayEnemy;
+    var isBoss = false;
+    var stageInfo = '';
+    
     if (completed) {
         displayEnemy = ch.boss;
-    } else if (isActive) {
+        isBoss = true;
+    } else if (inBattle) {
         displayEnemy = Sherwood.Quests._currentEnemy;
+        var b = Sherwood.Quests.getBattle();
+        if (b) {
+            stageInfo = 'Этап ' + b.stage + '/' + b.total;
+            isBoss = b.stage >= b.total;
+        }
     } else {
         displayEnemy = ch.enemies[0];
     }
     
-    var isBoss = completed || (isActive && Sherwood.Quests._currentStage >= ch.stages - 1);
     var cardImg = isBoss ? 'assets/interface/quest_boss.png' : 'assets/interface/quest_regular.png';
     
     var h = '';
     h += '<div style="text-align:center;">';
     h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
     h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
+    if (stageInfo) h += '<div style="color:#ffd700;font-size:0.8em;margin-bottom:4px;">' + stageInfo + '</div>';
     h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
     
     h += '<div style="position:relative;display:block;width:360px;height:360px;margin:0 auto 24px;">';
@@ -1116,10 +1125,10 @@ quest: function() {
     
     if (completed) {
         h += '<div style="color:#4caf50;font-size:1em;font-weight:bold;">Пройдено</div>';
-    } else if (cooldown) {
+    } else if (cooldown && !inBattle) {
         h += '<div style="color:#ff9800;font-size:1em;margin-bottom:8px;">Перезарядка: ' + cdRemain + ' мин.</div>';
         h += '<button onclick="SherwoodUI._questAccel()" style="background:#ff9800;border:none;border-radius:8px;padding:12px 30px;color:#fff;cursor:pointer;font-size:0.9em;">Ускорить (50 золота)</button>';
-    } else if (isActive) {
+    } else if (inBattle) {
         h += '<button onclick="SherwoodUI._questAttack()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
     } else {
         h += '<button onclick="SherwoodUI._startQuest(' + ch.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
@@ -1138,16 +1147,30 @@ quest: function() {
 _prevChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur>1) p.questProgress.currentChapter=cur-1; Sherwood.saveGame(); this.quest(); },
 _nextChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur<15&&p.questProgress.completed.indexOf(cur)!==-1) p.questProgress.currentChapter=cur+1; Sherwood.saveGame(); this.quest(); },
 _questAccel: function() { var r=Sherwood.Quests.accelerate(); if(!r.success) this._showToast(r.reason); this.quest(); },
-_startQuest: function(id) { var r=Sherwood.Quests.startChapter(id); if(!r.success) { if(r.cooldown) this.quest(); else this._showToast(r.reason||'Ошибка'); return; } this._stopMusic(); this._showQuestBattle(); },
+_startQuest: function(id) { 
+    var r = Sherwood.Quests.startChapter(id); 
+    if(!r.success) { 
+        if(r.cooldown) this.quest(); 
+        else this._showToast(r.reason||'Ошибка'); 
+        return; 
+    } 
+    this._stopMusic(); 
+    this._showQuestBattle(); 
+},
 _showQuestBattle: function() { 
     var e = Sherwood.Quests._currentEnemy;
     if (!e) { this.quest(); return; }
     var b = Sherwood.Quests.getBattle();
     var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
     var chapterName = b ? b.chapter.name : '';
-    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp },'quest','Глава ' + chapterName + ' - ' + stageText,'','SherwoodUI._questAttack()','SherwoodUI._questFlee()'); 
+    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp }, 'quest', chapterName + ' - ' + stageText, '', 'SherwoodUI._questAttack()', 'SherwoodUI._questFlee()); 
 },
-_questAttack: function() { this._playHitSounds(); this._handleQuestResult(Sherwood.Quests.attack()); },
+_questAttack: function() { 
+    this._playHitSounds(); 
+    var r = Sherwood.Quests.attack();
+    if (!r) { this.quest(); return; }
+    this._handleQuestResult(r); 
+},
 _questFlee: function() { this._stopMusic(); Sherwood.Quests.flee(); this.quest(); },
 _handleQuestResult: function(r) {
     if (!r) return;
@@ -1170,9 +1193,8 @@ _handleQuestResult: function(r) {
         } else if (r.stageComplete) {
             this._playSound('victory');
             this._stopMusic();
-            var e = Sherwood.Quests._currentEnemy;
-            this._pendingRewards = { exp: e ? e.exp : 30, gold: e ? e.gold : 15, silver: (e ? e.gold : 15) * 10 };
-            this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.loadHome(); };
+            this._pendingRewards = { exp: r.exp || 30, gold: r.gold || 15, silver: (r.gold || 15) * 10 };
+            this._afterRewardAction = function() { SherwoodUI.quest(); };
             this._showVictoryScreen(this._pendingRewards);
         }
     } else if (r.playerDead) {
