@@ -1371,7 +1371,7 @@ _tavernCancel: function() {
     var t2b = (SherwoodUI._dailyTab === 2) ? '#c9a040' : 'rgba(255,255,255,0.1)';
     var t2c = (SherwoodUI._dailyTab === 2) ? '#000' : '#fff';
     
-    html += '<div style="display:flex;gap:4px;margin-bottom:12px;">';
+    html += '<div style="display:flex;gap:4px;margin-bottom:8px;flex-shrink:0;">';
     html += '<button onclick="SherwoodUI._dailyTab=1;SherwoodUI.daily();" style="flex:1;background:' + t1b + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + t1c + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Ежедневные</button>';
     html += '<button onclick="SherwoodUI._dailyTab=2;SherwoodUI.daily();" style="flex:1;background:' + t2b + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + t2c + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Глава ' + currentChapter + '</button>';
     html += '</div>';
@@ -1389,8 +1389,8 @@ _tavernCancel: function() {
     var quests = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? dailyQuests : chapterQuests;
     var completed = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? dailyCompleted : chapterCompleted;
     
-    // Контейнер списка заданий (столбик по центру)
-    html += '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">';
+    // Контейнер списка заданий (столбик по центру, рамки вплотную)
+    html += '<div style="display:flex;flex-direction:column;align-items:center;">';
     
     if (quests.length === 0) {
         html += '<div style="color:#e0c080;font-weight:bold;font-size:1em;padding:20px;">Нет заданий</div>';
@@ -1401,28 +1401,30 @@ _tavernCancel: function() {
         var claimed = completed.indexOf(q.id) !== -1;
         var progressPct = Math.round((q.progress || 0) / q.target * 100);
         
-        // Каждое задание в своей рамке
-        html += '<div style="position:relative;width:90%;max-width:400px;">';
+        // Каждое задание: обрезаем прозрачные края через overflow:hidden
+        // Высота контейнера = высота самой рамки (без прозрачных полей)
+        html += '<div style="position:relative;width:90%;max-width:400px;height:110px;overflow:hidden;margin-bottom:4px;">';
         
-        // Рамка задания
-        html += '<img src="' + frameImage + '" style="width:100%;height:auto;display:block;">';
+        // Картинка сдвигается вверх, чтобы обрезать прозрачное поле сверху и снизу
+        // Подгони margin-top под свою картинку
+        html += '<img src="' + frameImage + '" style="position:absolute;left:0;width:100%;height:auto;top:50%;transform:translateY(-50%);">';
         
         // Текст поверх рамки
-        html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 20px;box-sizing:border-box;">';
+        html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 24px;box-sizing:border-box;z-index:1;">';
         
         // Название задания (жирный шрифт)
-        html += '<div style="color:' + textColor + ';font-weight:900;font-size:0.85em;text-shadow:' + textShadow + ';margin-bottom:2px;text-align:center;">' + q.name + '</div>';
+        html += '<div style="color:' + textColor + ';font-weight:900;font-size:0.8em;text-shadow:' + textShadow + ';margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div>';
         
         // Описание (жирный)
-        html += '<div style="color:' + textColor + ';font-weight:700;font-size:0.65em;text-shadow:' + textShadow + ';margin-bottom:4px;text-align:center;">' + q.desc + '</div>';
+        html += '<div style="color:' + textColor + ';font-weight:700;font-size:0.6em;text-shadow:' + textShadow + ';margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>';
         
         // Прогресс-бар
-        html += '<div style="width:80%;background:rgba(0,0,0,0.4);border-radius:5px;height:8px;margin:4px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.2);">';
+        html += '<div style="width:75%;background:rgba(0,0,0,0.4);border-radius:4px;height:6px;margin:2px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.2);">';
         html += '<div style="background:' + (q.completed ? '#4caf50' : '#c9a040') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;"></div>';
         html += '</div>';
         
         // Прогресс и награда (жирный)
-        html += '<div style="color:' + textColor + ';font-weight:700;font-size:0.6em;text-shadow:' + textShadow + ';margin-bottom:4px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | +' + q.reward.gold + ' зол. +' + q.reward.exp + ' XP</div>';
+        html += '<div style="color:' + textColor + ';font-weight:700;font-size:0.55em;text-shadow:' + textShadow + ';margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | +' + q.reward.gold + ' зол. +' + q.reward.exp + ' XP</div>';
         
         // Кнопка "ГОТОВО" или статус
         if (q.completed && !claimed) {
@@ -1432,9 +1434,9 @@ _tavernCancel: function() {
             } else {
                 html += 'SherwoodUI._claimChapter(' + currentChapter + ',' + i + ')';
             }
-            html += '" style="background:#4caf50;border:none;border-radius:20px;padding:5px 22px;color:#fff;font-weight:900;cursor:pointer;font-size:0.7em;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,0.4);">ГОТОВО</button>';
+            html += '" style="background:#4caf50;border:none;border-radius:20px;padding:4px 20px;color:#fff;font-weight:900;cursor:pointer;font-size:0.65em;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,0.4);">ГОТОВО</button>';
         } else if (claimed) {
-            html += '<div style="color:#4caf50;font-weight:900;font-size:0.65em;text-shadow:0 0 4px rgba(0,0,0,0.5);">✓ ПОЛУЧЕНО</div>';
+            html += '<div style="color:#4caf50;font-weight:900;font-size:0.6em;text-shadow:0 0 4px rgba(0,0,0,0.5);">✓ ПОЛУЧЕНО</div>';
         }
         
         html += '</div>'; // конец текста
@@ -1444,9 +1446,26 @@ _tavernCancel: function() {
     html += '</div>'; // конец контейнера списка
     
     // Лог
-    html += '<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div>';
+    html += '<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
     
-    this._openScreen('Задания', 'daily', html);
+    // Используем новый метод с прокруткой
+    this._openScreenScrollable('Задания', 'daily', html);
+},
+
+_openScreenScrollable: function(title, bgKey, html, backFn) {
+    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
+    try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {}
+    var goBack = backFn || 'SherwoodUI.loadHome()';
+    try { 
+        if (this._screenLayer) { 
+            this._screenLayer.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;">' +
+                '<div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;">' +
+                '<button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button>' +
+                '<span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">' + title + '</span></div>' +
+                '<div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px 20px 12px;-webkit-overflow-scrolling:touch;">' + html + '</div></div>'; 
+            this._screenLayer.style.display = 'block'; 
+        } 
+    } catch(e) {}
 },
 
 _claimDaily: function(i) { 
