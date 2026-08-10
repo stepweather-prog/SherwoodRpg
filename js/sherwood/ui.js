@@ -681,17 +681,18 @@ _doStep: function(tx, ty) {
     }
     
     if (res.type === 'exit') { 
-        this._stopSound('steps'); 
-        this._stopMusic(); 
-        var reward = Sherwood.Dungeon.complete(); 
-        SherwoodUI.updateDisplay(); 
-        this._afterRewardAction = function() { 
-            SherwoodUI._playMusic('main_theme'); 
-            SherwoodUI.showDungeon(); 
-        }; 
-        this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); 
-        return; 
-    }
+    this._stopSound('steps'); 
+    this._stopMusic(); 
+    var reward = Sherwood.Dungeon.complete(); 
+    SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1));
+    SherwoodUI.updateDisplay(); 
+    this._afterRewardAction = function() { 
+        SherwoodUI._playMusic('main_theme'); 
+        SherwoodUI.showDungeon(); 
+    }; 
+    this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); 
+    return; 
+}
     
     if (res.type === 'exit_locked') { 
         this._stopSound('steps'); 
@@ -1729,42 +1730,42 @@ wallet: function() {
         if (cells[i] >= maxPerCell) filledCells++;
     }
     var allFull = filledCells >= 30;
-    var canWithdraw = totalFilled >= maxPerCell * 0.5;
+    var canWithdraw = totalFilled >= 10000;
     
     var h = '';
     h += '<div style="text-align:center;padding:10px;">';
-    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Кошелёк</div>';
-    h += '<div style="color:#c0c0c0;font-size:0.85em;margin-bottom:8px;">Накоплено: ' + totalFilled + ' / ' + maxTotal + ' серебра</div>';
-    h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:12px;">Ячеек заполнено: ' + filledCells + ' / 30</div>';
+    h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:4px;">Кошелёк</div>';
+    h += '<div style="color:#c0c0c0;font-size:0.9em;margin-bottom:8px;">Накоплено: ' + totalFilled + ' / ' + maxTotal + ' серебра</div>';
+    h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:16px;">Ячеек заполнено: ' + filledCells + ' / 30</div>';
     
-    h += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:380px;margin:0 auto 16px;">';
+    h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:380px;margin:0 auto 20px;">';
     for (var i = 0; i < cells.length; i++) {
         var cellSilver = cells[i];
         var pct = Math.min(100, Math.round((cellSilver / maxPerCell) * 100));
-        var glow = allFull ? 'box-shadow:0 0 12px 4px rgba(255,215,0,0.7);' : '';
-        h += '<div style="position:relative;width:56px;height:56px;background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid ' + (cellSilver >= maxPerCell ? '#ffd700' : '#555') + ';border-radius:8px;display:flex;align-items:center;justify-content:center;' + glow + '">';
+        var glow = allFull ? 'box-shadow:0 0 14px 5px rgba(255,215,0,0.8);' : '';
+        h += '<div style="position:relative;width:68px;height:68px;background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid ' + (cellSilver >= maxPerCell ? '#ffd700' : '#555') + ';border-radius:8px;display:flex;align-items:center;justify-content:center;' + glow + '">';
         if (cellSilver > 0) {
-            h += '<img src="assets/interface/resource_silver.png" style="width:28px;height:28px;object-fit:contain;opacity:' + (pct / 100) + ';">';
+            h += '<img src="assets/interface/resource_silver.png" style="width:36px;height:36px;object-fit:contain;opacity:' + (0.3 + (pct / 100) * 0.7) + ';">';
         }
         if (cellSilver > 0) {
-            h += '<span style="position:absolute;bottom:1px;right:3px;color:#fff;font-size:0.45em;font-weight:bold;text-shadow:0 0 3px #000;">' + pct + '%</span>';
+            h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.5em;font-weight:bold;text-shadow:0 0 4px #000;">' + pct + '%</span>';
         }
         h += '</div>';
     }
     h += '</div>';
     
     if (canWithdraw) {
-        h += '<button onclick="SherwoodUI._withdrawWallet()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">Забрать ' + totalFilled + ' серебра</button>';
+        h += '<button onclick="SherwoodUI._withdrawWallet()" style="background:#c9a040;border:none;border-radius:8px;padding:14px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;margin-bottom:8px;">Забрать ' + totalFilled + ' серебра</button>';
         if (allFull) {
-            h += '<button onclick="SherwoodUI._withdrawWalletDouble()" style="background:#ffd700;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">Забрать x2 (' + (totalFilled * 2) + ') за 100 золота</button>';
+            h += '<button onclick="SherwoodUI._withdrawWalletDouble()" style="background:#ffd700;border:none;border-radius:8px;padding:14px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;margin-bottom:8px;">Забрать x2 (' + (totalFilled * 2) + ') за 100 золота</button>';
         }
     } else {
-        h += '<div style="color:#888;font-size:0.8em;margin-bottom:8px;">Нужно накопить минимум 50% в одной ячейке</div>';
+        h += '<div style="color:#888;font-size:0.85em;margin-bottom:8px;">Нужно минимум 10,000 серебра для снятия</div>';
     }
     
     h += '</div>';
     
-    this._openScreen('Кошель', 'wallet', h, 'SherwoodUI.profile()');
+    this._openScreen('Кошелёк', 'wallet', h, 'SherwoodUI.profile()');
 },
 
 _withdrawWallet: function() {
