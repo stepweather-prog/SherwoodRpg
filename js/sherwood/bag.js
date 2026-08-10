@@ -5,19 +5,27 @@ Sherwood.Bag = {
     _expansionLevel: 0,
 
     init: function() {
-        var player = Sherwood.getPlayer();
-        if (!player) return;
-        this._inventory = player.inventory || [];
-        this._equipment = player.equipment || this._equipment;
-        this._expansionLevel = player.bagExpansion || 0;
-        this._maxSlots = 10 + this._expansionLevel * 10;
-        if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
-        if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
-            player.unlockedSkins = ['skin_1_basic'];
-            player.activeSkin = 'skin_1_basic';
-            Sherwood.saveGame();
+    var player = Sherwood.getPlayer();
+    if (!player) return;
+    this._inventory = player.inventory || [];
+    this._equipment = player.equipment || this._equipment;
+    this._expansionLevel = player.bagExpansion || 0;
+    this._maxSlots = 10 + this._expansionLevel * 10;
+    if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
+    if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
+        player.unlockedSkins = ['skin_1_basic'];
+        player.activeSkin = 'skin_1_basic';
+        Sherwood.saveGame();
+    }
+    
+    for (var i = 0; i < this._inventory.length; i++) {
+        if (!this._inventory[i].maxStack || this._inventory[i].maxStack < 100) {
+            this._inventory[i].maxStack = 100;
         }
-    },
+    }
+    
+    this._save();
+},
 
     getItems: function() { return this._inventory; },
     getEquipment: function() { return this._equipment; },
