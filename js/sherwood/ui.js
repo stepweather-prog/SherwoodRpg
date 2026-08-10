@@ -2304,8 +2304,6 @@ forge: function() {
     h += '<div><div style="color:#e0c080;margin-bottom:4px;">Облики</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
     for (var i = 0; i < skins.length; i++) { 
         var skin = skins[i];
-        var skinData = Sherwood.SKIN_BONUSES[skin.id];
-        
         var owned = unlocked.indexOf(skin.id) !== -1, isActive = active === skin.id; 
         h += '<div style="background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#ffd700' : owned ? '#4caf50' : '#555') + ';border-radius:8px;padding:8px;text-align:center;">'; 
         h += '<img src="' + skin.icon + '" style="width:48px;height:48px;object-fit:contain;border-radius:4px;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">'; 
@@ -2318,7 +2316,7 @@ forge: function() {
         h += '</div>'; 
     }
     h += '</div></div><div id="forge-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div>';
-    this._openScreen('Кузница', 'forge', h, gb);
+    this._openScreenScrollable('Кузница', 'forge', h, gb);
 },
 
 _enhanceItem: function(idx) { var r = Sherwood.Forge.enhanceItem(idx); var log = document.getElementById('forge-log'); if (r.enhanced) { if (log) log.textContent = 'Улучшено! +' + r.newLevel; } else if (r.broken) { if (log) log.textContent = 'Сломано!'; } else if (r.failed) { if (log) log.textContent = 'Неудача'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
