@@ -909,7 +909,7 @@ _withdrawKeset: function() {
 },
 
 // ========== БОЙ ==========
-_showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee) {
+_showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
     var e = enemyData, p = Sherwood.getPlayer();
     var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01');
@@ -972,7 +972,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:4px 4%;min-height:55px;max-height:55px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
     h += '</div>';
     
-    this._openScreen('', 'dungeon_fight', h);
+    this._openScreen('', customBg || 'dungeon_fight', h);
 },
 _useSkill: function(skillId) {
     if (!Sherwood.Combat) return;
