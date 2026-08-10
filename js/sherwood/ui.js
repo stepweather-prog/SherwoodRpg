@@ -1109,8 +1109,8 @@ _handleCombat: function(r) {
     h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
     h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
     
-    h += '<div style="position:relative;display:inline-block;margin-bottom:24px;">';
-    h += '<img src="' + cardImg + '" style="width:280px;height:280px;object-fit:contain;">';
+    h += '<div style="position:relative;display:block;width:280px;height:280px;margin:0 auto 24px;">';
+    h += '<img src="' + cardImg + '" style="width:280px;height:280px;object-fit:contain;position:absolute;top:0;left:0;">';
     h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:170px;height:170px;object-fit:contain;">';
     h += '</div>';
     
@@ -1125,14 +1125,6 @@ _handleCombat: function(r) {
         h += '<button onclick="SherwoodUI._startQuest(' + ch.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
     }
     
-    h += '<div style="display:flex;gap:8px;justify-content:center;margin-top:20px;">';
-    if (currentChapter > 1) {
-        h += '<button onclick="SherwoodUI._prevChapter()" style="background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 16px;color:#fff;cursor:pointer;font-size:0.8em;">Пред.</button>';
-    }
-    if (currentChapter < 15 && prog.completed.indexOf(currentChapter) !== -1) {
-        h += '<button onclick="SherwoodUI._nextChapter()" style="background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 16px;color:#fff;cursor:pointer;font-size:0.8em;">След.</button>';
-    }
-    h += '</div>';
     h += '</div>';
     
     var bgImage = 'assets/interface/quest_section.png';
