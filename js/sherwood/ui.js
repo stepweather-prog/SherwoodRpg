@@ -9,7 +9,7 @@ const SherwoodUI = {
         dungeon_swamp: 'assets/backgrounds/underground_2_floor_1.jpeg', dungeon_cave: 'assets/backgrounds/underground_3_floor_1.jpeg',
         dungeon_fight: 'assets/backgrounds/underground_1_floor_1.jpg',
         portal_3: 'assets/backgrounds/portal_3.png',
-        hearth: 'assets/backgrounds/background_hearth.jpeg', talents: 'assets/backgrounds/background_talents.png'
+        hearth: 'assets/backgrounds/background_hearth.jpeg', talents: 'assets/backgrounds/background_talents.png', wallet: 'assets/interface/wallet_visual.png'
     },
     
     _statIcons: { attack: 'assets/interface/icon_power.png', defense: 'assets/interface/icon_defense.png', hp: 'assets/interface/icon_health.png' },
