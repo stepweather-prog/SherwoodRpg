@@ -1105,13 +1105,13 @@ _handleCombat: function(r) {
     
     var h = '';
     h += '<div style="text-align:center;">';
-    h += '<div style="color:#e0c080;font-size:1em;margin-bottom:2px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
-    h += '<div style="color:#fff;font-size:0.9em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
-    h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:16px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
+    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
+    h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
+    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
     
-    h += '<div style="position:relative;display:inline-block;margin-bottom:20px;">';
-    h += '<img src="' + cardImg + '" style="width:220px;height:220px;object-fit:contain;">';
-    h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:130px;height:130px;object-fit:contain;">';
+    h += '<div style="position:relative;display:inline-block;margin-bottom:24px;">';
+    h += '<img src="' + cardImg + '" style="width:280px;height:280px;object-fit:contain;">';
+    h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:170px;height:170px;object-fit:contain;">';
     h += '</div>';
     
     if (completed) {
