@@ -88,7 +88,7 @@ Sherwood.Bag = {
     addItem: function(item) {
         if (!item) return false;
 
-        var maxStack = item.maxStack || 25;
+        var maxStack = item.maxStack || 150;
         var quantity = item.quantity || 1;
 
         // Ищем такой же предмет для стакинга
@@ -242,7 +242,7 @@ Sherwood.Bag = {
     grade: 'common',
     type: 'resource',
     quantity: 1,
-    maxStack: 50,
+    maxStack: 150,
     sellPrice: 5
 });
             }
