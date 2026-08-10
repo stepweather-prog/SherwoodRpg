@@ -1109,9 +1109,9 @@ quest: function() {
     h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
     h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
     
-    h += '<div style="position:relative;display:block;width:320px;height:320px;margin:0 auto 24px;">';
-    h += '<img src="' + cardImg + '" style="width:320px;height:320px;object-fit:contain;position:absolute;top:0;left:0;">';
-    h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:190px;height:190px;object-fit:contain;">';
+    h += '<div style="position:relative;display:block;width:360px;height:360px;margin:0 auto 24px;">';
+    h += '<img src="' + cardImg + '" style="width:360px;height:360px;object-fit:contain;position:absolute;top:0;left:0;">';
+    h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:210px;height:210px;object-fit:contain;">';
     h += '</div>';
     
     if (completed) {
@@ -1139,6 +1139,14 @@ _prevChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.curren
 _nextChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur<15&&p.questProgress.completed.indexOf(cur)!==-1) p.questProgress.currentChapter=cur+1; Sherwood.saveGame(); this.quest(); },
 _questAccel: function() { var r=Sherwood.Quests.accelerate(); if(!r.success) this._showToast(r.reason); this.quest(); },
 _startQuest: function(id) { var r=Sherwood.Quests.startChapter(id); if(!r.success) { if(r.cooldown) this.quest(); else this._showToast(r.reason||'Ошибка'); return; } this._stopMusic(); this._showQuestBattle(); },
+_showQuestBattle: function() { 
+    var e = Sherwood.Quests._currentEnemy;
+    if (!e) { this.quest(); return; }
+    var b = Sherwood.Quests.getBattle();
+    var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
+    var chapterName = b ? b.chapter.name : '';
+    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp },'quest','Глава ' + chapterName + ' - ' + stageText,'','SherwoodUI._questAttack()','SherwoodUI._questFlee()); 
+},
 _questAttack: function() { this._playHitSounds(); this._handleQuestResult(Sherwood.Quests.attack()); },
 _questFlee: function() { this._stopMusic(); Sherwood.Quests.flee(); this.quest(); },
 _handleQuestResult: function(r) {
