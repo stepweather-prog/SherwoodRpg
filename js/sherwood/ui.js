@@ -1117,8 +1117,10 @@ quest: function() {
     if (completed) {
         h += '<div style="color:#4caf50;font-size:1em;font-weight:bold;">Пройдено</div>';
     } else if (cooldown) {
+        var accelInfo = Sherwood.Quests.getAccelCost();
+        var accelCostText = (accelInfo.currency === 'free') ? 'Бесплатно' : accelInfo.cost + ' золота';
         h += '<div style="color:#ff9800;font-size:1em;margin-bottom:8px;">Перезарядка: ' + cdRemain + ' мин.</div>';
-        h += '<button onclick="SherwoodUI._questAccel()" style="background:#ff9800;border:none;border-radius:8px;padding:12px 30px;color:#fff;cursor:pointer;font-size:0.9em;">Ускорить (50 золота)</button>';
+        h += '<button onclick="SherwoodUI._questAccel()" style="background:#ff9800;border:none;border-radius:8px;padding:12px 30px;color:#fff;cursor:pointer;font-size:0.9em;">Ускорить (' + accelCostText + ')</button>';
     } else if (isActive) {
         h += '<button onclick="SherwoodUI._showQuestBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
     } else {
@@ -1138,7 +1140,16 @@ quest: function() {
 _prevChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur>1) p.questProgress.currentChapter=cur-1; Sherwood.saveGame(); this.quest(); },
 _nextChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur<15&&p.questProgress.completed.indexOf(cur)!==-1) p.questProgress.currentChapter=cur+1; Sherwood.saveGame(); this.quest(); },
 _questAccel: function() { var r=Sherwood.Quests.accelerate(); if(!r.success) this._showToast(r.reason); this.quest(); },
-_startQuest: function(id) { var r=Sherwood.Quests.startChapter(id); if(!r.success) { if(r.cooldown) this.quest(); else this._showToast(r.reason||'Ошибка'); return; } this._stopMusic(); this._showQuestBattle(); },
+_startQuest: function(id) { 
+    var r=Sherwood.Quests.startChapter(id); 
+    if(!r.success) { 
+        if(r.cooldown) this.quest(); 
+        else this._showToast(r.reason||'Ошибка'); 
+        return; 
+    } 
+    this._stopMusic(); 
+    this._showQuestBattle(); 
+},
 _showQuestBattle: function() { 
     var e = Sherwood.Quests._currentEnemy;
     if (!e) { this.quest(); return; }
@@ -1147,7 +1158,15 @@ _showQuestBattle: function() {
     var chapterName = b ? b.chapter.name : '';
     this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp }, 'quest', 'Глава ' + chapterName + ' - ' + stageText, '', 'SherwoodUI._questAttack()', 'SherwoodUI._questFlee()); 
 },
-_questAttack: function() { this._playHitSounds(); this._handleQuestResult(Sherwood.Quests.attack()); },
+_questAttack: function() { 
+    this._playHitSounds(); 
+    var r = Sherwood.Quests.attack();
+    if (r) {
+        this._handleQuestResult(r);
+    } else {
+        this.quest();
+    }
+},
 _questFlee: function() { this._stopMusic(); Sherwood.Quests.flee(); this.quest(); },
 _handleQuestResult: function(r) {
     if (!r) return;
@@ -1162,11 +1181,14 @@ _handleQuestResult: function(r) {
             this._playSound('victory');
             this._stopMusic();
             var ch = b ? b.chapter : null;
-            var scrolls = Math.random() < 0.25 ? 1 + Math.floor(Math.random() * 3) : 0;
-            if (scrolls) Sherwood.addResource('scrolls', scrolls);
-            this._pendingRewards = { exp: ch ? ch.rewards.exp : 200, gold: ch ? ch.rewards.gold : 100, silver: ch ? ch.rewards.silver : 500, scrolls: scrolls };
+            var rewards = {
+                exp: ch ? ch.rewards.exp : 200,
+                gold: ch ? ch.rewards.gold : 100,
+                silver: ch ? ch.rewards.silver : 500
+            };
+            this._pendingRewards = null;
             this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.quest(); };
-            this._showVictoryScreen(this._pendingRewards);
+            this._showVictoryScreen(rewards);
         } else if (r.stageComplete) {
             this._playSound('victory');
             this._stopMusic();
@@ -1179,11 +1201,9 @@ _handleQuestResult: function(r) {
         this._showDialog('Поражение...','#f44336');
         this._playSound('defeat');
         this._stopMusic();
-        var scrolls = Math.random() < 0.08 ? 1 : 0;
-        if (scrolls) Sherwood.addResource('scrolls', scrolls);
-        this._pendingRewards = { exp: Math.floor(r.rewards ? r.rewards.exp * 0.3 : 10), silver: Math.floor(r.rewards ? r.rewards.silver * 0.5 : 50), scrolls: scrolls };
+        this._pendingRewards = null;
         this._afterRewardAction = function() { SherwoodUI.quest(); };
-        this._showDefeatScreen(this._pendingRewards);
+        this._showDefeatScreen({ exp: 0, silver: 0 });
     } else {
         this._hitEnemyCard();
         this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
@@ -1192,7 +1212,7 @@ _handleQuestResult: function(r) {
         var self = this; setTimeout(function() { self._showQuestBattle(); }, 1000);
     }
 },
-    // ===== ТАВЕРНА =====
+// ===== ТАВЕРНА =====
     tavern: function() {
         this._playSound('click');
         if (!Sherwood.Tavern) { this._showPlaceholder('Таверна','tavern'); return; }
