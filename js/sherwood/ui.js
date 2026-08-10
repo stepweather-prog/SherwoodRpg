@@ -1572,7 +1572,6 @@ raid: function() {
     
     Sherwood.Raid.init();
     
-    // Если рейд уже активен - показываем бой
     if (Sherwood.Raid.isRaidActive()) { 
         this._showRaidBattle(); 
         return; 
@@ -1586,310 +1585,128 @@ raid: function() {
     
     var html = '';
     
-    // Заголовок
-    html += '<div style="text-align:center;margin-bottom:16px;">';
-    html += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Рейд</div>';
-    html += '<div style="color:#aaa;font-size:0.75em;">Доступно: ' + (maxRaids - raidsToday) + ' / ' + maxRaids + '</div>';
-    html += '</div>';
+    html += '<div style="text-align:center;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Рейд</div>';
+    html += '<div style="text-align:center;color:#aaa;font-size:0.75em;margin-bottom:16px;">Доступно: ' + (maxRaids - raidsToday) + ' / ' + maxRaids + '</div>';
     
-    // Карточки рейдов
     for (var i = 0; i < raids.length; i++) {
         var raid = raids[i];
         
-        // Круглая рамка для каждого рейда
-        html += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">';
+        html += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:24px;">';
         
         // Название рейда
-        html += '<div style="color:#e0c080;font-weight:bold;font-size:0.9em;margin-bottom:8px;text-align:center;">' + raid.name + '</div>';
+        html += '<div style="color:#e0c080;font-weight:bold;font-size:0.9em;margin-bottom:8px;">' + raid.name + '</div>';
         
-        // Круглая рамка с боссом
-        html += '<div style="position:relative;width:280px;height:280px;margin-bottom:8px;">';
+        // Круглая рамка raid_visual.png (увеличена в 2 раза)
+        html += '<div style="position:relative;width:400px;height:400px;">';
         
-        // Рамка raid_visual.png
-        html += '<img src="assets/interface/raid_visual.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:1;">';
+        // Сама рамка
+        html += '<img src="assets/interface/raid_visual.png" style="width:100%;height:100%;object-fit:contain;">';
         
-        // Карта босса внутри рамки
-        html += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;z-index:0;">';
-        html += '<img src="assets/all_beasts/' + raid.image + '" style="width:100%;height:100%;object-fit:contain;border-radius:12px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-        html += '</div>';
+        // Карта босса по центру
+        html += '<img src="assets/all_beasts/' + raid.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         
-        // Кнопка "РЕЙД" поверх всего
+        // Кнопка "РЕЙД" поверх всего по центру
         if (check.can) {
-            html += '<button onclick="SherwoodUI._startRaid(' + i + ')" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:2;background:#c9a040;border:2px solid #ffd700;border-radius:20px;padding:8px 28px;color:#000;font-weight:900;cursor:pointer;font-size:0.85em;letter-spacing:1px;box-shadow:0 2px 8px rgba(0,0,0,0.5), 0 0 12px rgba(201,160,64,0.4);">РЕЙД</button>';
+            html += '<button onclick="SherwoodUI._startRaid(' + i + ')" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">РЕЙД</button>';
         } else {
-            html += '<div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:2;background:#555;border:2px solid #888;border-radius:20px;padding:8px 28px;color:#999;font-weight:900;font-size:0.85em;letter-spacing:1px;">РЕЙД</div>';
+            html += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;background:#555;border:none;border-radius:8px;padding:10px 30px;color:#999;font-weight:bold;font-size:0.9em;">РЕЙД</div>';
         }
         
-        html += '</div>'; // конец круглой рамки
+        html += '</div>'; // конец рамки
         
-        // Информация о рейде
-        html += '<div style="text-align:center;color:#aaa;font-size:0.7em;">';
-        html += 'HP ' + raid.hp.toLocaleString() + ' | АТК ' + raid.attack + ' | ' + raid.stages.length + ' этапа';
-        html += '</div>';
+        // Инфа о рейде
+        html += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP ' + raid.hp.toLocaleString() + ' | АТК ' + raid.attack + ' | ' + raid.stages.length + ' этапа</div>';
+        html += '<div style="color:#ffd700;font-size:0.65em;">Награда: +' + raid.exp + ' XP +' + raid.gold + ' золота</div>';
         
-        // Награды
-        html += '<div style="text-align:center;color:#ffd700;font-size:0.65em;margin-top:2px;">';
-        html += 'Награда: +' + raid.exp + ' XP +' + raid.gold + ' золота';
-        html += '</div>';
-        
-        // Причина недоступности
         if (!check.can) {
-            html += '<div style="color:#f44336;font-size:0.65em;text-align:center;margin-top:4px;">' + check.reason + '</div>';
+            html += '<div style="color:#f44336;font-size:0.65em;margin-top:4px;">' + check.reason + '</div>';
         }
         
-        html += '</div>'; // конец карточки рейда
+        html += '</div>';
     }
     
     if (raids.length === 0) {
         html += '<div style="color:#aaa;text-align:center;padding:20px;">Нет доступных рейдов</div>';
     }
     
-    // Используем новый метод с прокруткой
     this._openScreenScrollable('Рейд', 'raid', html);
 },
 
 _startRaid: function(i) { 
-    this._playSound('trap');
     this._stopMusic(); 
-    var result = Sherwood.Raid.startRaid(i);
-    if (!result.success) {
-        this._showToast(result.reason || 'Не удалось начать рейд');
-        this.raid();
-        return;
-    }
+    var r = Sherwood.Raid.startRaid(i); 
+    if (!r.success) { this._showToast(r.reason); this.raid(); return; } 
+    this._playSound('trap'); 
     this._showRaidBattle(); 
 },
 
 _showRaidBattle: function() { 
-    var status = Sherwood.Raid.getRaidStatus(); 
-    if (!status) { 
-        this._stopMusic();
-        this.raid(); 
-        return; 
-    }
+    var s = Sherwood.Raid.getRaidStatus(); 
+    if (!s) { this.raid(); return; } 
     
-    if (status.isComplete) {
-        this._completeRaid();
-        return;
-    }
+    var enemy = null; 
+    for (var i = 0; i < s.enemies.length; i++) { 
+        if (s.enemies[i].hp > 0) { enemy = s.enemies[i]; break; } 
+    } 
+    if (!enemy) { this._raidAttack(); return; } 
     
-    if (!status.playerAlive) {
-        this._raidDefeat();
-        return;
-    }
-    
-    // Получаем текущего врага
-    var enemy = null;
-    if (status.aliveEnemies && status.aliveEnemies.length > 0) {
-        enemy = status.aliveEnemies[0];
-    } else {
-        // Нет врагов - завершаем этап
-        var attackResult = Sherwood.Raid.raidAttack();
-        this._handleRaidResult(attackResult);
-        return;
-    }
-    
-    // Создаём HTML для боя с фоном fight_raid.png
-    var html = '';
-    
-    // Фон боя
-    html += '<div style="position:relative;width:100%;height:100%;">';
-    html += '<img src="assets/interface/fight_raid.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;">';
-    
-    // Контент поверх фона
-    html += '<div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px;">';
-    
-    // Информация о рейде
-    html += '<div style="background:rgba(0,0,0,0.7);border-radius:10px;padding:8px 16px;margin-bottom:12px;text-align:center;">';
-    html += '<div style="color:#ffd700;font-weight:bold;font-size:0.9em;">' + status.boss.name + '</div>';
-    html += '<div style="color:#aaa;font-size:0.7em;">Этап ' + status.stageIndex + '/' + status.totalStages + ' — ' + status.stageName + '</div>';
-    html += '<div style="color:#aaa;font-size:0.65em;">Участников: ' + (status.participants ? status.participants.length : 1) + '</div>';
-    html += '</div>';
-    
-    // Враг
-    html += '<div style="background:rgba(0,0,0,0.6);border:2px solid #c9a040;border-radius:12px;padding:12px;margin-bottom:12px;text-align:center;width:90%;max-width:350px;">';
-    html += '<img src="assets/all_beasts/' + enemy.image + '" style="width:120px;height:120px;object-fit:contain;border-radius:8px;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-    html += '<div style="color:#fff;font-weight:bold;font-size:0.9em;">' + enemy.name + '</div>';
-    
-    // HP врага
-    html += '<div style="background:rgba(0,0,0,0.5);border-radius:6px;height:10px;margin:6px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.3);">';
-    var ehpPct = enemy.maxHp > 0 ? Math.round((enemy.hp / enemy.maxHp) * 100) : 0;
-    html += '<div style="background:#f44336;height:100%;width:' + ehpPct + '%;transition:width 0.5s;"></div>';
-    html += '</div>';
-    html += '<div style="color:#aaa;font-size:0.65em;">HP ' + enemy.hp.toLocaleString() + ' / ' + enemy.maxHp.toLocaleString() + '</div>';
-    html += '</div>';
-    
-    // HP игрока
-    var p = Sherwood.getPlayer();
-    if (p) {
-        var phpPct = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0;
-        html += '<div style="width:90%;max-width:350px;margin-bottom:12px;">';
-        html += '<div style="color:#aaa;font-size:0.65em;text-align:center;margin-bottom:2px;">Ваше HP: ' + p.stats.hp + ' / ' + p.stats.maxHp + '</div>';
-        html += '<div style="background:rgba(0,0,0,0.5);border-radius:6px;height:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.3);">';
-        html += '<div style="background:#4caf50;height:100%;width:' + phpPct + '%;transition:width 0.5s;"></div>';
-        html += '</div>';
-        html += '</div>';
-    }
-    
-    // Кнопки
-    html += '<div style="display:flex;gap:16px;">';
-    html += '<button onclick="SherwoodUI._raidAttack()" style="background:#c9a040;border:2px solid #ffd700;border-radius:20px;padding:10px 32px;color:#000;font-weight:900;cursor:pointer;font-size:0.85em;letter-spacing:1px;box-shadow:0 2px 8px rgba(0,0,0,0.5);">АТАКОВАТЬ</button>';
-    html += '<button onclick="SherwoodUI._raidFlee()" style="background:#f44336;border:2px solid #ff5252;border-radius:20px;padding:10px 32px;color:#fff;font-weight:900;cursor:pointer;font-size:0.85em;letter-spacing:1px;">СБЕЖАТЬ</button>';
-    html += '</div>';
-    
-    // Лог боя
-    html += '<div id="raid-battle-log" style="margin-top:12px;color:#fff;font-size:0.7em;text-align:center;min-height:20px;text-shadow:0 1px 3px #000;"></div>';
-    
-    html += '</div>'; // конец контента
-    html += '</div>'; // конец фона
-    
-    // Открываем экран боя
-    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
-    try { this.container.style.background = "url('assets/interface/fight_raid.png') center/cover no-repeat"; } catch(e) {}
-    
-    if (this._screenLayer) { 
-        this._screenLayer.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;">' +
-            '<div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;position:relative;z-index:2;">' +
-            '<button onclick="SherwoodUI._raidFlee()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button>' +
-            '<span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Рейд</span></div>' +
-            '<div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;">' + html + '</div></div>'; 
-        this._screenLayer.style.display = 'block'; 
-    }
+    // Фон боя fight_raid.png
+    this._showBattleScreen(
+        { name: enemy.name, image: enemy.image, hp: enemy.hp, maxHp: enemy.maxHp },
+        'raid',
+        s.boss.name + ' - Этап ' + s.stageIndex + '/' + s.totalStages,
+        '',
+        'SherwoodUI._raidAttack()',
+        'SherwoodUI._raidFlee()',
+        'assets/interface/fight_raid.png'  // передаём фон боя
+    ); 
 },
 
 _raidAttack: function() { 
     this._playHitSounds(); 
-    var result = Sherwood.Raid.raidAttack(); 
-    this._handleRaidResult(result); 
-},
-
-_handleRaidResult: function(result) {
-    if (!result) return;
+    var r = Sherwood.Raid.raidAttack(); 
+    if (!r) return; 
     
-    var log = document.getElementById('raid-battle-log');
-    
-    if (result.raidComplete) {
-        // Рейд завершён
-        this._stopMusic();
-        this._playSound('victory');
-        this.updateDisplay();
-        
-        var rewards = result.rewards;
-        var scrolls = Math.random() < 0.3 ? 1 + Math.floor(Math.random() * 3) : 0;
-        if (scrolls) Sherwood.addResource('scrolls', scrolls);
-        
-        this._pendingRewards = { 
-            exp: rewards.exp, 
-            gold: rewards.gold, 
-            silver: rewards.silver, 
-            scrolls: scrolls 
-        };
-        
-        if (result.won) {
-            this._afterRewardAction = function() { 
-                SherwoodUI._playMusic('main_theme'); 
-                SherwoodUI.raid(); 
-            };
-            this._showVictoryScreen(this._pendingRewards);
-        } else {
-            this._afterRewardAction = function() { 
-                SherwoodUI._playMusic('main_theme'); 
-                SherwoodUI.raid(); 
-            };
-            this._showDefeatScreen(this._pendingRewards);
-        }
-        return;
-    }
-    
-    if (result.playerDead) {
-        this._raidDefeat();
-        return;
-    }
-    
-    if (result.stageComplete) {
-        if (log) {
-            log.textContent = 'Этап пройден!';
-            log.style.color = '#4caf50';
-        }
-        this.updateDisplay();
-        var self = this;
-        setTimeout(function() { self._showRaidBattle(); }, 1500);
-        return;
-    }
-    
-    if (result.enemyDead) {
-        if (log) {
-            log.textContent = result.enemyName + ' повержен!';
-            log.style.color = '#ffd700';
-        }
-        this.updateDisplay();
-        var self = this;
-        setTimeout(function() { self._showRaidBattle(); }, 1200);
-        return;
-    }
-    
-    // Обычная атака
-    if (log) {
-        var msg = (result.crit ? '💥 КРИТ! ' : '') + 'Вы нанесли ' + result.damage + ' урона';
-        if (result.extra) msg += ' (+' + result.extra + ' доп.)';
-        log.textContent = msg;
-        log.style.color = '#fff';
-    }
-    
-    if (result.enemyDamage) {
-        var self = this;
-        setTimeout(function() {
-            if (log) {
-                log.textContent = result.enemyName + ' нанёс ' + result.enemyDamage + ' урона';
-                log.style.color = '#f44336';
-            }
-            self.updateDisplay();
-        }, 700);
-    }
-    
-    this.updateDisplay();
-    var self = this;
-    setTimeout(function() { self._showRaidBattle(); }, 1200);
-},
-
-_raidDefeat: function() {
-    this._stopMusic();
-    this._playSound('defeat');
-    var player = Sherwood.getPlayer();
-    player.stats.hp = Math.max(1, Math.floor(player.stats.maxHp * 0.2));
-    Sherwood.saveGame();
-    this.updateDisplay();
-    
-    this._pendingRewards = { exp: 20, silver: 50 };
-    this._afterRewardAction = function() { 
-        SherwoodUI._playMusic('main_theme'); 
-        SherwoodUI.raid(); 
-    };
-    this._showDefeatScreen(this._pendingRewards);
+    if (r.raidComplete) { 
+        this._showDialog('Рейд пройден! +' + r.rewards.exp + 'XP +' + r.rewards.gold + 'G', '#ffd700'); 
+        this._stopMusic(); 
+        this.updateDisplay(); 
+        var scrolls = Math.random() < 0.3 ? 1 + Math.floor(Math.random() * 3) : 0; 
+        if (scrolls) Sherwood.addResource('scrolls', scrolls); 
+        this._pendingRewards = { exp: r.rewards.exp, gold: r.rewards.gold, silver: r.rewards.silver, scrolls: scrolls }; 
+        this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.raid(); }; 
+        this._showVictoryScreen(this._pendingRewards); 
+    } else if (r.stageComplete) { 
+        this._showDialog('Этап пройден!', '#4caf50'); 
+        var self = this; 
+        setTimeout(function() { self._showRaidBattle(); }, 1200); 
+    } else if (r.playerDead) { 
+        this._showDialog('Вы погибли!', '#f44336'); 
+        this._stopMusic(); 
+        var scrolls = Math.random() < 0.08 ? 1 : 0; 
+        if (scrolls) Sherwood.addResource('scrolls', scrolls); 
+        this._pendingRewards = { exp: Math.floor(50), silver: Math.floor(100), scrolls: scrolls }; 
+        this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.raid(); }; 
+        this._showDefeatScreen(this._pendingRewards); 
+    } else { 
+        this._hitEnemyCard(); 
+        this._updateEnemyHP(r.enemyHp, r.enemyMaxHp); 
+        this._showDialog((r.crit ? 'КРИТ! ' : '') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff'); 
+        if (r.enemyDamage) { 
+            var self = this; 
+            setTimeout(function() { self._showDialog('Враг нанёс ' + r.enemyDamage + ' урона', '#f44336'); }, 700); 
+        } 
+        this.updateDisplay(); 
+        var self = this; 
+        setTimeout(function() { self._showRaidBattle(); }, 1000); 
+    } 
 },
 
 _raidFlee: function() { 
     this._stopMusic(); 
-    var result = Sherwood.Raid.fleeRaid();
+    Sherwood.Raid.fleeRaid(); 
     this._playMusic('main_theme'); 
     this.raid(); 
-},
-
-// Вспомогательный метод для экранов с прокруткой
-_openScreenScrollable: function(title, bgKey, html, backFn) {
-    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
-    try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {}
-    var goBack = backFn || 'SherwoodUI.loadHome()';
-    try { 
-        if (this._screenLayer) { 
-            this._screenLayer.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;">' +
-                '<div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;">' +
-                '<button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button>' +
-                '<span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">' + title + '</span></div>' +
-                '<div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px 20px 12px;-webkit-overflow-scrolling:touch;">' + html + '</div></div>'; 
-            this._screenLayer.style.display = 'block'; 
-        } 
-    } catch(e) {}
 },
 
     // ===== АРЕНА =====
