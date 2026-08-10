@@ -1076,142 +1076,6 @@ _handleCombat: function(r) {
     }
 },
 
-// ===== КВЕСТЫ =====
-quest: function() {
-    this._playSound('click');
-    if (!Sherwood.Quests) { this._showPlaceholder('Квесты', 'quests'); return; }
-    
-    var prog = Sherwood.Quests.getProgress();
-    var currentChapter = prog.currentChapter || 1;
-    var ch = Sherwood.Quests.getChapter(currentChapter);
-    if (!ch) { this._showPlaceholder('Квесты', 'quests'); return; }
-    
-    var completed = prog.completed && prog.completed.indexOf(ch.id) !== -1;
-    var cooldown = Sherwood.Quests.isOnCooldown();
-    var cdRemain = Sherwood.Quests.getCooldownRemaining();
-    var isActive = Sherwood.Quests._currentChapter && Sherwood.Quests._currentChapter.id === ch.id && Sherwood.Quests._currentEnemy;
-    
-    var displayEnemy;
-    if (completed) {
-        displayEnemy = ch.boss;
-    } else if (isActive) {
-        displayEnemy = Sherwood.Quests._currentEnemy;
-    } else {
-        displayEnemy = ch.enemies[0];
-    }
-    
-    var isBoss = completed || (isActive && Sherwood.Quests._currentStage >= ch.stages - 1);
-    var cardImg = isBoss ? 'assets/interface/quest_boss.png' : 'assets/interface/quest_regular.png';
-    
-    var h = '';
-    h += '<div style="text-align:center;">';
-    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' ' + ch.name + '</div>';
-    h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
-    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
-    
-    h += '<div style="position:relative;display:block;width:360px;height:360px;margin:0 auto 24px;">';
-    h += '<img src="' + cardImg + '" style="width:360px;height:360px;object-fit:contain;position:absolute;top:0;left:0;">';
-    h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:210px;height:210px;object-fit:contain;">';
-    h += '</div>';
-    
-    if (completed) {
-        h += '<div style="color:#4caf50;font-size:1em;font-weight:bold;">Пройдено</div>';
-    } else if (cooldown) {
-        var accelInfo = Sherwood.Quests.getAccelCost();
-        var accelCostText = (accelInfo.currency === 'free') ? 'Бесплатно' : accelInfo.cost + ' золота';
-        h += '<div style="color:#ff9800;font-size:1em;margin-bottom:8px;">Перезарядка: ' + cdRemain + ' мин.</div>';
-        h += '<button onclick="SherwoodUI._questAccel()" style="background:#ff9800;border:none;border-radius:8px;padding:12px 30px;color:#fff;cursor:pointer;font-size:0.9em;">Ускорить (' + accelCostText + ')</button>';
-    } else if (isActive) {
-        h += '<button onclick="SherwoodUI._showQuestBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
-    } else {
-        h += '<button onclick="SherwoodUI._startQuest(' + ch.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">В бой</button>';
-    }
-    
-    h += '</div>';
-    
-    var bgImage = 'assets/interface/quest_section.png';
-    
-    if (this._screenLayer) { 
-        this._screenLayer.innerHTML = '<div style="height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Квесты</span></div><div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;">' + h + '</div></div>'; 
-        this._screenLayer.style.display = 'block'; 
-    }
-},
-
-_prevChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur>1) p.questProgress.currentChapter=cur-1; Sherwood.saveGame(); this.quest(); },
-_nextChapter: function() { var p=Sherwood.getPlayer(),cur=p.questProgress.currentChapter||1; if(cur<15&&p.questProgress.completed.indexOf(cur)!==-1) p.questProgress.currentChapter=cur+1; Sherwood.saveGame(); this.quest(); },
-_questAccel: function() { var r=Sherwood.Quests.accelerate(); if(!r.success) this._showToast(r.reason); this.quest(); },
-_startQuest: function(id) { 
-    var r=Sherwood.Quests.startChapter(id); 
-    if(!r.success) { 
-        if(r.cooldown) this.quest(); 
-        else this._showToast(r.reason||'Ошибка'); 
-        return; 
-    } 
-    this._stopMusic(); 
-    this._showQuestBattle(); 
-},
-_showQuestBattle: function() { 
-    var e = Sherwood.Quests._currentEnemy;
-    if (!e) { this.quest(); return; }
-    var b = Sherwood.Quests.getBattle();
-    var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
-    var chapterName = b ? b.chapter.name : '';
-    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp }, 'quest', 'Глава ' + chapterName + ' - ' + stageText, '', "SherwoodUI._questAttack()", "SherwoodUI._questFlee()"); 
-},
-_questAttack: function() { 
-    this._playHitSounds(); 
-    var r = Sherwood.Quests.attack();
-    if (r) {
-        this._handleQuestResult(r);
-    } else {
-        this.quest();
-    }
-},
-_questFlee: function() { this._stopMusic(); Sherwood.Quests.flee(); this.quest(); },
-_handleQuestResult: function(r) {
-    if (!r) return;
-    if (r.enemyDead) {
-        var b = Sherwood.Quests.getBattle();
-        if (b && b.enemy && b.enemy.image) { if (Sherwood.Bestiary) Sherwood.Bestiary.registerKill(b.enemy.image); }
-        if (Sherwood.Daily) Sherwood.Daily.updateProgress('quest_fights', 1);
-        this._showDialog('Враг повержен!','#4caf50');
-        this.updateDisplay();
-        if (r.chapterComplete) {
-            this._showDialog('Глава пройдена!','#ffd700');
-            this._playSound('victory');
-            this._stopMusic();
-            var ch = b ? b.chapter : null;
-            var rewards = {
-                exp: ch ? ch.rewards.exp : 200,
-                gold: ch ? ch.rewards.gold : 100,
-                silver: ch ? ch.rewards.silver : 500
-            };
-            this._pendingRewards = null;
-            this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.quest(); };
-            this._showVictoryScreen(rewards);
-        } else if (r.stageComplete) {
-            this._playSound('victory');
-            this._stopMusic();
-            var e = Sherwood.Quests._currentEnemy;
-            this._pendingRewards = { exp: e ? e.exp : 30, gold: e ? e.gold : 15, silver: (e ? e.gold : 15) * 10 };
-            this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.loadHome(); };
-            this._showVictoryScreen(this._pendingRewards);
-        }
-    } else if (r.playerDead) {
-        this._showDialog('Поражение...','#f44336');
-        this._playSound('defeat');
-        this._stopMusic();
-        this._pendingRewards = null;
-        this._afterRewardAction = function() { SherwoodUI.quest(); };
-        this._showDefeatScreen({ exp: 0, silver: 0 });
-    } else {
-        this._hitEnemyCard();
-        this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-        this._showDialog((r.crit ? 'КРИТ! ' : '') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
-        if (r.enemyDamage) { var self = this; setTimeout(function() { self._showDialog('Враг нанёс ' + r.enemyDamage + ' урона', '#f44336'); }, 700); }
-        var self = this; setTimeout(function() { self._showQuestBattle(); }, 1000);
-    }
-},
 // ===== ТАВЕРНА =====
 tavern: function() {
     this._playSound('click');
@@ -1227,57 +1091,53 @@ tavern: function() {
     
     var h = '';
     
-    h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px;">';
+    h += '<div style="display:flex;flex-direction:column;align-items:center;gap:28px;padding:20px;">';
     
-    h += '<div style="position:relative;width:200px;height:200px;flex-shrink:0;">';
+    h += '<div style="position:relative;width:240px;height:240px;flex-shrink:0;">';
     h += '<img src="assets/interface/old_huntsman_bertram.png" style="width:100%;height:100%;object-fit:contain;">';
     h += '</div>';
     
     if (isActive) {
         var q = active.quest;
-        h += '<div style="position:relative;width:320px;min-height:180px;display:flex;align-items:center;justify-content:center;">';
+        h += '<div style="position:relative;width:420px;min-height:260px;display:flex;align-items:center;justify-content:center;">';
         h += '<img src="assets/interface/contracts.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;">';
-        h += '<div style="position:relative;z-index:1;text-align:center;padding:20px;width:100%;">';
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:8px;">' + q.name + '</div>';
-        h += '<div style="color:#fff;font-size:0.85em;margin-bottom:4px;">' + q.desc + '</div>';
-        h += '<div style="color:#f44336;font-size:0.75em;margin-bottom:4px;">Противник: ' + q.enemy.name + ' (HP ' + q.enemy.hp + ')</div>';
-        h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:6px;">Режим: Бой</div>';
+        h += '<div style="position:relative;z-index:1;text-align:center;padding:30px 24px;width:100%;">';
+        h += '<div style="color:#000;font-size:1.3em;font-weight:bold;margin-bottom:14px;">' + q.name + '</div>';
+        h += '<div style="color:#000;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + q.desc + '</div>';
+        h += '<div style="color:#8b0000;font-size:1em;font-weight:bold;margin-bottom:10px;">Противник: ' + q.enemy.name + ' (HP ' + q.enemy.hp + ')</div>';
+        h += '<div style="color:#000;font-size:0.9em;font-weight:bold;">Режим: Бой</div>';
         h += '</div>';
         h += '</div>';
         
-        h += '<button onclick="SherwoodUI._tavernBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:14px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">В бой</button>';
+        h += '<button onclick="SherwoodUI._tavernBattle()" style="background:#c9a040;border:none;border-radius:10px;padding:16px 50px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;">В бой</button>';
     } else if (cooldown) {
-        h += '<div style="position:relative;width:320px;min-height:180px;display:flex;align-items:center;justify-content:center;">';
+        h += '<div style="position:relative;width:420px;min-height:260px;display:flex;align-items:center;justify-content:center;">';
         h += '<img src="assets/interface/contracts.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;">';
-        h += '<div style="position:relative;z-index:1;text-align:center;padding:20px;width:100%;">';
-        h += '<div style="color:#ff9800;font-size:1em;margin-bottom:8px;">Перезарядка: ' + cdRemain + ' мин.</div>';
-        h += '<div style="color:#aaa;font-size:0.8em;">Контрактов сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
+        h += '<div style="position:relative;z-index:1;text-align:center;padding:30px 24px;width:100%;">';
+        h += '<div style="color:#000;font-size:1.3em;font-weight:bold;margin-bottom:14px;">Перезарядка: ' + cdRemain + ' мин.</div>';
+        h += '<div style="color:#000;font-size:1em;font-weight:bold;">Контрактов сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
         h += '</div>';
         h += '</div>';
     } else {
         var nextQuestId = completedCount + 1;
         var nextQuest = Sherwood.Tavern._getQuestById('tavern_' + nextQuestId);
         
-        h += '<div style="position:relative;width:320px;min-height:180px;display:flex;align-items:center;justify-content:center;">';
+        h += '<div style="position:relative;width:420px;min-height:260px;display:flex;align-items:center;justify-content:center;">';
         h += '<img src="assets/interface/contracts.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;">';
-        h += '<div style="position:relative;z-index:1;text-align:center;padding:20px;width:100%;">';
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:8px;">' + nextQuest.name + '</div>';
-        h += '<div style="color:#fff;font-size:0.85em;margin-bottom:4px;">' + nextQuest.desc + '</div>';
-        h += '<div style="color:#f44336;font-size:0.75em;margin-bottom:4px;">Противник: ' + nextQuest.enemy.name + ' (HP ' + nextQuest.enemy.hp + ')</div>';
-        h += '<div style="color:#ffd700;font-size:0.75em;">+' + nextQuest.reward.exp + 'XP +' + nextQuest.reward.gold + 'G</div>';
+        h += '<div style="position:relative;z-index:1;text-align:center;padding:30px 24px;width:100%;">';
+        h += '<div style="color:#000;font-size:1.3em;font-weight:bold;margin-bottom:14px;">' + nextQuest.name + '</div>';
+        h += '<div style="color:#000;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + nextQuest.desc + '</div>';
+        h += '<div style="color:#8b0000;font-size:1em;font-weight:bold;margin-bottom:10px;">Противник: ' + nextQuest.enemy.name + ' (HP ' + nextQuest.enemy.hp + ')</div>';
+        h += '<div style="color:#000;font-size:1em;font-weight:bold;">+' + nextQuest.reward.exp + 'XP +' + nextQuest.reward.gold + 'G</div>';
         h += '</div>';
         h += '</div>';
         
         if (dailyDone < dailyMax && completedCount < 100) {
-            if (completedCount > 0) {
-                h += '<button onclick="SherwoodUI._tavernStart(0,0)" style="background:#c9a040;border:none;border-radius:8px;padding:14px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">В бой</button>';
-            } else {
-                h += '<button onclick="SherwoodUI._tavernStart(0,0)" style="background:#c9a040;border:none;border-radius:8px;padding:14px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">В бой</button>';
-            }
+            h += '<button onclick="SherwoodUI._tavernStart(0,0)" style="background:#c9a040;border:none;border-radius:10px;padding:16px 50px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;">В бой</button>';
         }
     }
     
-    h += '<div style="color:#aaa;font-size:0.75em;">Выполнено: ' + completedCount + '/100 | Сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
+    h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-shadow:0 0 8px rgba(0,0,0,0.9);">Выполнено: ' + completedCount + '/100 | Сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
     h += '</div>';
     
     var bgImage = 'assets/backgrounds/section_tavern.png';
