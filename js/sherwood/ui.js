@@ -1105,7 +1105,7 @@ quest: function() {
     
     var h = '';
     h += '<div style="text-align:center;">';
-    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
+    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' ' + ch.name + '</div>';
     h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
     h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
     
@@ -1156,14 +1156,7 @@ _showQuestBattle: function() {
     var b = Sherwood.Quests.getBattle();
     var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
     var chapterName = b ? b.chapter.name : '';
-    this._showBattleScreen(
-        { name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp }, 
-        'quest', 
-        'Глава ' + chapterName + ' - ' + stageText, 
-        '', 
-        'SherwoodUI._questAttack()', 
-        'SherwoodUI._questFlee()'
-    ); 
+    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp }, 'quest', 'Глава ' + chapterName + ' - ' + stageText, '', 'SherwoodUI._questAttack()', 'SherwoodUI._questFlee()); 
 },
 _questAttack: function() { 
     this._playHitSounds(); 
