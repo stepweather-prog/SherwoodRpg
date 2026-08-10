@@ -1592,29 +1592,24 @@ raid: function() {
         var raid = raids[i];
         
         html += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:24px;">';
-        
-        // Название рейда
         html += '<div style="color:#e0c080;font-weight:bold;font-size:0.9em;margin-bottom:8px;">' + raid.name + '</div>';
         
-        // Круглая рамка raid_visual.png (увеличена в 2 раза)
+        // Круглая рамка raid_visual.png 400x400
         html += '<div style="position:relative;width:400px;height:400px;">';
-        
-        // Сама рамка
         html += '<img src="assets/interface/raid_visual.png" style="width:100%;height:100%;object-fit:contain;">';
         
-        // Карта босса по центру
-        html += '<img src="assets/all_beasts/' + raid.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        // Карта босса по центру (image (55).png)
+        html += '<img src="assets/all_beasts/image (55).png" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         
-        // Кнопка "РЕЙД" поверх всего по центру
+        // Кнопка РЕЙД внизу
         if (check.can) {
-            html += '<button onclick="SherwoodUI._startRaid(' + i + ')" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">РЕЙД</button>';
+            html += '<button onclick="SherwoodUI._startRaid(' + i + ')" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:2;background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">РЕЙД</button>';
         } else {
-            html += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;background:#555;border:none;border-radius:8px;padding:10px 30px;color:#999;font-weight:bold;font-size:0.9em;">РЕЙД</div>';
+            html += '<div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:2;background:#555;border:none;border-radius:8px;padding:10px 30px;color:#999;font-weight:bold;font-size:0.9em;">РЕЙД</div>';
         }
         
-        html += '</div>'; // конец рамки
+        html += '</div>';
         
-        // Инфа о рейде
         html += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP ' + raid.hp.toLocaleString() + ' | АТК ' + raid.attack + ' | ' + raid.stages.length + ' этапа</div>';
         html += '<div style="color:#ffd700;font-size:0.65em;">Награда: +' + raid.exp + ' XP +' + raid.gold + ' золота</div>';
         
