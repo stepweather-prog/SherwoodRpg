@@ -1145,7 +1145,7 @@ _showQuestBattle: function() {
     var b = Sherwood.Quests.getBattle();
     var stageText = b ? 'Этап ' + b.stage + '/' + b.total : '';
     var chapterName = b ? b.chapter.name : '';
-    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp },'quest','Глава ' + chapterName + ' - ' + stageText,'','SherwoodUI._questAttack()','SherwoodUI._questFlee()); 
+    this._showBattleScreen({ name:e.name, image:e.image, hp:e.hp, maxHp:e.maxHp },'quest','Глава ' + chapterName + ' - ' + stageText,'','SherwoodUI._questAttack()','SherwoodUI._questFlee()'); 
 },
 _questAttack: function() { this._playHitSounds(); this._handleQuestResult(Sherwood.Quests.attack()); },
 _questFlee: function() { this._stopMusic(); Sherwood.Quests.flee(); this.quest(); },
