@@ -1376,18 +1376,17 @@ _tavernCancel: function() {
     html += '<button onclick="SherwoodUI._dailyTab=2;SherwoodUI.daily();" style="flex:1;background:' + t2b + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + t2c + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Глава ' + currentChapter + '</button>';
     html += '</div>';
     
-    // Выбираем рамку и цвет текста в зависимости от вкладки
+    // Выбираем рамку в зависимости от вкладки
     var frameImage = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) 
         ? 'assets/interface/tasks_visual.png' 
         : 'assets/interface/tasks_chapters_visual.png';
     
-    var textColor = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? '#000' : '#fff';
-    var textShadow = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) 
-        ? 'none' 
-        : '0 0 4px rgba(0,0,0,0.9)';
+    // Для ежедневных (неоновая рамка) — тёмная подложка под текст
+    // Для главы — белый текст с тенью
+    var isDaily = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1);
     
-    var quests = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? dailyQuests : chapterQuests;
-    var completed = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? dailyCompleted : chapterCompleted;
+    var quests = isDaily ? dailyQuests : chapterQuests;
+    var completed = isDaily ? dailyCompleted : chapterCompleted;
     
     // Контейнер списка заданий (столбик по центру, рамки вплотную)
     html += '<div style="display:flex;flex-direction:column;align-items:center;">';
@@ -1402,41 +1401,56 @@ _tavernCancel: function() {
         var progressPct = Math.round((q.progress || 0) / q.target * 100);
         
         // Каждое задание: обрезаем прозрачные края через overflow:hidden
-        // Высота контейнера = высота самой рамки (без прозрачных полей)
         html += '<div style="position:relative;width:90%;max-width:400px;height:110px;overflow:hidden;margin-bottom:4px;">';
         
-        // Картинка сдвигается вверх, чтобы обрезать прозрачное поле сверху и снизу
-        // Подгони margin-top под свою картинку
+        // Картинка рамки
         html += '<img src="' + frameImage + '" style="position:absolute;left:0;width:100%;height:auto;top:50%;transform:translateY(-50%);">';
         
+        // Тёмная подложка для текста (только для ежедневных)
+        if (isDaily) {
+            html += '<div style="position:absolute;top:8px;left:20px;right:20px;bottom:8px;background:rgba(0,0,0,0.75);border-radius:8px;z-index:0;"></div>';
+        }
+        
         // Текст поверх рамки
-        html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 24px;box-sizing:border-box;z-index:1;">';
+        html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 28px;box-sizing:border-box;z-index:1;">';
         
-        // Название задания (жирный шрифт)
-        html += '<div style="color:' + textColor + ';font-weight:900;font-size:0.8em;text-shadow:' + textShadow + ';margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div>';
+        // Название задания
+        if (isDaily) {
+            // Для неоновой рамки — белый текст с чёрной тенью
+            html += '<div style="color:#fff;font-weight:900;font-size:0.8em;text-shadow:0 1px 3px #000, 0 0 8px rgba(0,0,0,0.8);margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div>';
+            
+            // Описание
+            html += '<div style="color:#ddd;font-weight:700;font-size:0.6em;text-shadow:0 1px 2px #000;margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>';
+        } else {
+            // Для главы — белый жирный шрифт с тенью
+            html += '<div style="color:#fff;font-weight:900;font-size:0.8em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div>';
+            html += '<div style="color:#fff;font-weight:700;font-size:0.6em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>';
+        }
         
-        // Описание (жирный)
-        html += '<div style="color:' + textColor + ';font-weight:700;font-size:0.6em;text-shadow:' + textShadow + ';margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>';
-        
-        // Прогресс-бар
-        html += '<div style="width:75%;background:rgba(0,0,0,0.4);border-radius:4px;height:6px;margin:2px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.2);">';
-        html += '<div style="background:' + (q.completed ? '#4caf50' : '#c9a040') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;"></div>';
+        // Прогресс-бар (яркий, контрастный)
+        html += '<div style="width:75%;background:rgba(0,0,0,0.7);border-radius:4px;height:8px;margin:2px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.4);">';
+        html += '<div style="background:' + (q.completed ? '#00ff00' : '#ffaa00') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;box-shadow:0 0 6px ' + (q.completed ? 'rgba(0,255,0,0.6)' : 'rgba(255,170,0,0.6)') + ';"></div>';
         html += '</div>';
         
-        // Прогресс и награда (жирный)
-        html += '<div style="color:' + textColor + ';font-weight:700;font-size:0.55em;text-shadow:' + textShadow + ';margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | +' + q.reward.gold + ' зол. +' + q.reward.exp + ' XP</div>';
+        // Прогресс и награда
+        if (isDaily) {
+            html += '<div style="color:#fff;font-weight:700;font-size:0.55em;text-shadow:0 1px 2px #000;margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | <span style="color:#ffd700;">+' + q.reward.gold + ' зол.</span> <span style="color:#ffaa00;">+' + q.reward.exp + ' XP</span></div>';
+        } else {
+            html += '<div style="color:#fff;font-weight:700;font-size:0.55em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | +' + q.reward.gold + ' зол. +' + q.reward.exp + ' XP</div>';
+        }
         
         // Кнопка "ГОТОВО" или статус
         if (q.completed && !claimed) {
             html += '<button onclick="';
-            if (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) {
+            if (isDaily) {
                 html += 'SherwoodUI._claimDaily(' + i + ')';
             } else {
                 html += 'SherwoodUI._claimChapter(' + currentChapter + ',' + i + ')';
             }
-            html += '" style="background:#4caf50;border:none;border-radius:20px;padding:4px 20px;color:#fff;font-weight:900;cursor:pointer;font-size:0.65em;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,0.4);">ГОТОВО</button>';
+            // Кнопка яркая с тенью и обводкой
+            html += '" style="background:#00c853;border:2px solid #fff;border-radius:20px;padding:4px 22px;color:#fff;font-weight:900;cursor:pointer;font-size:0.65em;letter-spacing:1px;text-shadow:0 1px 2px rgba(0,0,0,0.5);box-shadow:0 2px 8px rgba(0,0,0,0.5), 0 0 10px rgba(0,200,83,0.4);">ГОТОВО</button>';
         } else if (claimed) {
-            html += '<div style="color:#4caf50;font-weight:900;font-size:0.6em;text-shadow:0 0 4px rgba(0,0,0,0.5);">✓ ПОЛУЧЕНО</div>';
+            html += '<div style="color:#00ff00;font-weight:900;font-size:0.6em;text-shadow:0 0 6px rgba(0,255,0,0.5), 0 1px 2px #000;">✓ ПОЛУЧЕНО</div>';
         }
         
         html += '</div>'; // конец текста
@@ -1448,7 +1462,7 @@ _tavernCancel: function() {
     // Лог
     html += '<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
     
-    // Используем новый метод с прокруткой
+    // Открываем с прокруткой
     this._openScreenScrollable('Задания', 'daily', html);
 },
 
