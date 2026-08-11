@@ -4,17 +4,20 @@ Sherwood.Bag = {
     _maxSlots: 10,
     _expansionLevel: 0,
     
-    // Новое хранилище ресурсов (без лимита)
     _resources: {
+        gold: 0,
+        silver: 0,
         skins: 0,
         entranceTickets: 0,
         autoFightTickets: 0,
         amuletTablets: 0,
         ringTablets: 0,
-        skinTablets: 0
+        skinTablets: 0,
+        portalToken1: 0,
+        portalToken2: 0,
+        portalToken3: 0
     },
 
-    // ID ресурсов которые не должны попадать в ячейки
     _resourceIds: {
         'skin_of_the_sherwood_creature': 'skins',
         'entrance_ticket': 'entranceTickets',
@@ -26,7 +29,10 @@ Sherwood.Bag = {
         'ring_tablet': 'ringTablets',
         'ring_scroll': 'ringTablets',
         'skin_tablet': 'skinTablets',
-        'appearance_tablet': 'skinTablets'
+        'appearance_tablet': 'skinTablets',
+        'portal_token_1': 'portalToken1',
+        'portal_token_2': 'portalToken2',
+        'portal_token_3': 'portalToken3'
     },
 
     init: function() {
@@ -43,12 +49,18 @@ Sherwood.Bag = {
             Sherwood.saveGame();
         }
         
-        // Загружаем ресурсы
         if (player.bagResources) {
             this._resources = player.bagResources;
+            if (this._resources.gold === undefined) this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
+            if (this._resources.silver === undefined) this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
+            if (this._resources.portalToken1 === undefined) this._resources.portalToken1 = 0;
+            if (this._resources.portalToken2 === undefined) this._resources.portalToken2 = 0;
+            if (this._resources.portalToken3 === undefined) this._resources.portalToken3 = 0;
+        } else {
+            this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
+            this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
         }
         
-        // Переносим старые ресурсы из инвентаря в новое хранилище
         for (var i = this._inventory.length - 1; i >= 0; i--) {
             var item = this._inventory[i];
             var resKey = this._resourceIds[item.id];
@@ -73,20 +85,17 @@ Sherwood.Bag = {
     getFreeSlots: function() { return this._maxSlots - this._inventory.length; },
     isFull: function() { return this._inventory.length >= this._maxSlots; },
     
-    // Получить все ресурсы
     getResources: function() { return this._resources; },
     
-    // Получить конкретный ресурс
     getResource: function(type) { return this._resources[type] || 0; },
     
-    // Добавить ресурс
     addResource: function(type, amount) {
         if (!amount || amount <= 0) return;
-        this._resources[type] = (this._resources[type] || 0) + amount;
+        if (this._resources[type] === undefined) this._resources[type] = 0;
+        this._resources[type] += amount;
         this._save();
     },
     
-    // Проверить и потратить ресурс
     spendResource: function(type, amount) {
         if ((this._resources[type] || 0) < amount) return false;
         this._resources[type] -= amount;
@@ -115,16 +124,16 @@ Sherwood.Bag = {
             return { success: false, reason: 'Нужно ' + info.costSkin + ' шкур (у вас ' + this._resources.skins + ')' };
         }
 
-        var player = Sherwood.getPlayer();
-        if ((player.resources.silver || 0) < info.costSilver) {
+        if (this._resources.silver < info.costSilver) {
             return { success: false, reason: 'Нужно ' + info.costSilver + ' серебра' };
         }
 
-        player.resources.silver -= info.costSilver;
+        this._resources.silver -= info.costSilver;
         this._resources.skins -= info.costSkin;
 
         this._expansionLevel++;
         this._maxSlots = 10 + this._expansionLevel * 10;
+        var player = Sherwood.getPlayer();
         player.bagSize = this._maxSlots;
         player.bagExpansion = this._expansionLevel;
 
@@ -136,7 +145,6 @@ Sherwood.Bag = {
     addItem: function(item) {
         if (!item) return false;
         
-        // Если это ресурс — кладём в хранилище ресурсов
         var resKey = this._resourceIds[item.id];
         if (resKey) {
             this._resources[resKey] += item.quantity || 1;
@@ -272,7 +280,7 @@ Sherwood.Bag = {
         var qty = item.quantity || 1;
         var totalPrice = price * qty;
 
-        Sherwood.addResource('silver', totalPrice);
+        this._resources.silver += totalPrice;
         this._inventory.splice(index, 1);
         this._save();
         return { success: true, price: totalPrice };
@@ -280,23 +288,23 @@ Sherwood.Bag = {
 
     addLoot: function(loot) {
         if (!loot) return;
-        if (loot.gold) Sherwood.addResource('gold', loot.gold);
-        if (loot.silver) Sherwood.addResource('silver', loot.silver);
+        if (loot.gold) this._resources.gold += loot.gold;
+        if (loot.silver) this._resources.silver += loot.silver;
         if (loot.exp) Sherwood.addExp(loot.exp);
         if (loot.items && loot.items.length > 0) {
             for (var i = 0; i < loot.items.length; i++) {
                 this.addItem(loot.items[i]);
             }
         }
-        if (loot.skins) {
-            this._resources.skins += loot.skins;
-        }
-        // Новые типы ресурсов из лута
+        if (loot.skins) this._resources.skins += loot.skins;
         if (loot.entranceTickets) this._resources.entranceTickets += loot.entranceTickets;
         if (loot.autoFightTickets) this._resources.autoFightTickets += loot.autoFightTickets;
         if (loot.amuletTablets) this._resources.amuletTablets += loot.amuletTablets;
         if (loot.ringTablets) this._resources.ringTablets += loot.ringTablets;
         if (loot.skinTablets) this._resources.skinTablets += loot.skinTablets;
+        if (loot.portalToken1) this._resources.portalToken1 += loot.portalToken1;
+        if (loot.portalToken2) this._resources.portalToken2 += loot.portalToken2;
+        if (loot.portalToken3) this._resources.portalToken3 += loot.portalToken3;
         this._save();
     },
 
@@ -312,6 +320,10 @@ Sherwood.Bag = {
         player.bagSize = this._maxSlots;
         player.bagExpansion = this._expansionLevel;
         player.bagResources = this._resources;
+        if (player.resources) {
+            player.resources.gold = this._resources.gold;
+            player.resources.silver = this._resources.silver;
+        }
         Sherwood.saveGame();
     }
 };
