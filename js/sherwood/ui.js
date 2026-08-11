@@ -310,21 +310,34 @@ _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill)
     ];
     
     var h = '';
-    var tickets = Sherwood.getPlayer() ? Sherwood.getPlayer().dungeon.tickets : 0;
+    var p = Sherwood.getPlayer();
+    var tickets = p ? (p.dungeon ? p.dungeon.tickets : 0) : 0;
+    
+    var afActive = Sherwood.Dungeon.isAutoFightActive();
+    if (afActive) {
+        var afRemain = Sherwood.Dungeon.getAutoFightRemaining();
+        h += '<div style="text-align:center;background:rgba(201,160,64,0.3);border:1px solid #c9a040;border-radius:8px;padding:8px;margin-bottom:12px;">';
+        h += '<div style="color:#ffd700;font-size:0.85em;">⚔️ Автобой активен</div>';
+        h += '<div style="color:#aaa;font-size:0.7em;">Осталось: ' + afRemain + ' мин.</div>';
+        h += '</div>';
+    }
     
     for (var i = 0; i < dungeonList.length; i++) {
         var dl = dungeonList[i];
         var d = dungeons[dl.id];
         
         if (d) {
-            var progress = (Sherwood.Dungeon._progress && Sherwood.Dungeon._progress[dl.id]) ? Sherwood.Dungeon._progress[dl.id] : { level: 1 };
-            var maxLevel = d.level || 7;
-            
             h += '<div style="text-align:center;margin-bottom:24px;">';
             h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + dl.name + '</div>';
-            h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:8px;">Уровень ' + (progress.level || 1) + '/' + maxLevel + '</div>';
             h += '<img src="assets/dungeon_tiles/visual_dungeon/' + dl.icon + '" style="width:160px;height:160px;object-fit:contain;display:block;margin:0 auto 10px;">';
-            h += '<button onclick="SherwoodUI._showDungeonLevels(\'' + dl.id + '\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">Войти</button>';
+            
+            if (d.unlocked) {
+                h += '<button onclick="SherwoodUI._showDungeonLevels(\'' + dl.id + '\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">Войти</button>';
+            } else {
+                h += '<div style="color:#f44336;font-size:0.8em;">Заблокировано</div>';
+                h += '<div style="color:#aaa;font-size:0.65em;">Нужно пройти последний этаж предыдущей подземки на 3 кубка</div>';
+            }
+            
             h += '</div>';
         }
     }
@@ -347,7 +360,8 @@ _showDungeonLevels: function(dungeonId) {
     var d = dungeons[dungeonId];
     if (!d) return;
     
-    var progress = (Sherwood.Dungeon._progress && Sherwood.Dungeon._progress[dungeonId]) ? Sherwood.Dungeon._progress[dungeonId] : { level: 1 };
+    var progress = Sherwood.Dungeon._progress[dungeonId] || { level: 1, cups: {} };
+    var cups = progress.cups || {};
     var dungeonNames = { forest: 'Проклятая чаща', swamp: 'Первородное болото', cave: 'Базальтовый грот' };
     var dungeonIcons = { forest: 'the_cursed_thicket.png', swamp: 'primordial_swamp.png', cave: 'basalt_grotto.png' };
     
@@ -369,12 +383,35 @@ _showDungeonLevels: function(dungeonId) {
     h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-top:8px;">' + (dungeonNames[dungeonId] || dungeonId) + '</div>';
     h += '</div>';
     
-    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
+    // Квадратная сетка этажей (4 колонки)
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px;margin:0 auto;">';
+    
     for (var lvl = 1; lvl <= 7; lvl++) {
-        var unlocked = lvl <= (progress.level || 1);
+        var unlocked = lvl <= progress.level;
+        var cupCount = cups[lvl] || 0;
         var img = unlocked ? (tp + lvl + te) : 'assets/interface/closed_level_lock_icon.png';
-        h += '<div onclick="' + (unlocked ? 'SherwoodUI._startDungeon(\'' + dungeonId + '\',' + lvl + ')' : '') + '" style="width:56px;height:56px;background-image:url(\'' + img + '\');background-size:cover;background-position:center;border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;"><span style="position:absolute;bottom:2px;right:4px;font-size:0.6em;color:' + (unlocked ? '#000' : '#888') + ';font-weight:bold;">' + lvl + '</span></div>';
+        
+        h += '<div style="text-align:center;">';
+        
+        // Кубки над ячейкой
+        h += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;min-height:20px;">';
+        for (var c = 0; c < 3; c++) {
+            if (c < cupCount) {
+                h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:16px;height:16px;object-fit:contain;">';
+            } else {
+                h += '<div style="width:16px;height:16px;"></div>';
+            }
+        }
+        h += '</div>';
+        
+        // Ячейка этажа
+        h += '<div onclick="' + (unlocked ? 'SherwoodUI._showDungeonActions(\'' + dungeonId + '\',' + lvl + ')' : '') + '" style="width:56px;height:56px;background-image:url(\'' + img + '\');background-size:cover;background-position:center;border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto;">';
+        h += '<span style="position:absolute;bottom:2px;right:4px;font-size:0.6em;color:' + (unlocked ? '#000' : '#888') + ';font-weight:bold;">' + lvl + '</span>';
+        h += '</div>';
+        
+        h += '</div>';
     }
+    
     h += '</div>';
     
     var bgImage = 'assets/dungeon_tiles/visual_dungeon/sherwood_thicket.png';
@@ -384,7 +421,75 @@ _showDungeonLevels: function(dungeonId) {
         this._screenLayer.style.display = 'block'; 
     }
 },
-    _startDungeon: function(id, level) { if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; var d = Sherwood.Dungeon.generate(id, level); if (!d) { this._showToast('Нет билетов!'); return; } this._renderDungeon(); },
+
+_showDungeonActions: function(dungeonId, level) {
+    var progress = Sherwood.Dungeon._progress[dungeonId] || { level: 1, cups: {} };
+    var cups = progress.cups || {};
+    var cupCount = cups[level] || 0;
+    var maxCups = 3;
+    var autoFightCups = 5;
+    var p = Sherwood.getPlayer();
+    var autoTickets = Sherwood.Bag.getResource('autoFightTickets');
+    
+    var h = '<div style="text-align:center;padding:20px;">';
+    h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:12px;">Этаж ' + level + '</div>';
+    
+    // Кубки
+    h += '<div style="margin-bottom:16px;">';
+    for (var c = 0; c < maxCups; c++) {
+        h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:24px;height:24px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">';
+    }
+    h += '<div style="color:#aaa;font-size:0.7em;">' + cupCount + '/' + maxCups + ' кубков</div>';
+    h += '</div>';
+    
+    // Кнопка Войти
+    h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти (1 билет)</button>';
+    
+    // Автобой только при 5 кубках
+    if (cupCount >= autoFightCups) {
+        if (Sherwood.Dungeon.isAutoFightActive()) {
+            h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Автобой уже активен</div>';
+        } else {
+            h += '<button onclick="SherwoodUI._startAutoFight(\'' + dungeonId + '\',' + level + ',false)" style="display:block;width:80%;margin:0 auto 8px;background:#ff9800;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Автобой (15 мин) — 50 золота</button>';
+        }
+        
+        if (autoTickets > 0) {
+            h += '<button onclick="SherwoodUI._startAutoFight(\'' + dungeonId + '\',' + level + ',true)" style="display:block;width:80%;margin:0 auto 8px;background:#4caf50;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Мгновенный автобой — 1 тикет (' + autoTickets + ' шт.)</button>';
+        } else {
+            h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Мгновенный автобой — нет тикетов</div>';
+        }
+    }
+    
+    h += '<div style="color:#aaa;font-size:0.65em;margin-top:8px;">3 кубка — следующий этаж. 5 кубков — автобой.</div>';
+    h += '</div>';
+    
+    if (this._screenLayer) { 
+        this._screenLayer.innerHTML = '<div style="height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI._showDungeonLevels(\'' + dungeonId + '\')" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Действия</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:flex;align-items:center;justify-content:center;">' + h + '</div></div>'; 
+        this._screenLayer.style.display = 'block'; 
+    }
+},
+
+_startAutoFight: function(dungeonId, level, instant) {
+    var result = Sherwood.Dungeon.startAutoFight(dungeonId, level, instant);
+    if (result.success) {
+        if (result.instant) {
+            this._showToast('Автобой завершён! Кубок получен.');
+            this._showDungeonLevels(dungeonId);
+        } else {
+            this._showToast('Автобой запущен на 15 минут!');
+            this.showDungeon();
+        }
+    } else {
+        this._showToast(result.reason);
+    }
+},
+
+_startDungeon: function(id, level) { 
+    if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
+    var d = Sherwood.Dungeon.generate(id, level); 
+    if (!d) { this._showToast('Нет билетов!'); return; } 
+    this._renderDungeon(); 
+},
 
     _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
