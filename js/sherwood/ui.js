@@ -2069,19 +2069,15 @@ _toggleMusic: function(en) {
     for (var r = 0; r < resDefs.length; r++) {
         var rd = resDefs[r];
         var count = resources[rd.key] || 0;
-        // Золото и серебро показываем всегда, остальные только если > 0
-        if (count > 0 || rd.key === 'gold' || rd.key === 'silver') {
-            h += '<div style="position:relative;width:70px;height:70px;">';
-            h += '<img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;">';
-            h += '<img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-            h += '<span style="position:absolute;top:2px;right:6px;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span>';
-            h += '</div>';
-        }
+        h += '<div style="position:relative;width:70px;height:70px;">';
+        h += '<img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;">';
+        h += '<img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        h += '<span style="position:absolute;top:2px;right:6px;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span>';
+        h += '</div>';
     }
     
     h += '</div>';
     
-    // Остальное без изменений...
     h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-bottom:6px;">' + items.length + '/' + max + ' ячеек</div>';
     
     var expInfo = bag.getExpansionInfo();
