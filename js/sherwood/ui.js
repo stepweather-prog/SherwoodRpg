@@ -2050,31 +2050,38 @@ _toggleMusic: function(en) {
     
     var h = '';
     
-    // Ресурсы над ячейками
     h += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px;">';
     
     var resDefs = [
-        { key: 'skins', icon: 'assets/interface/skin_of_the_sherwood_creature.png', label: 'Шкуры' },
-        { key: 'entranceTickets', icon: 'assets/interface/resource_key_to_locked_levels.png', label: 'Тикеты входа' },
-        { key: 'autoFightTickets', icon: 'assets/interface/ticket_autofight.png', label: 'Тикеты автобоя' },
-        { key: 'amuletTablets', icon: 'assets/interface/amulet_crafting_tablet_resource.png', label: 'Скрижали амулета' },
-        { key: 'ringTablets', icon: 'assets/interface/ring_crafting_tablet_resource.png', label: 'Скрижали колец' },
-        { key: 'skinTablets', icon: 'assets/interface/resource_appearance_crafting_tablet.png', label: 'Скрижали облика' }
+        { key: 'gold', icon: 'assets/interface/resource_gold.png' },
+        { key: 'silver', icon: 'assets/interface/resource_silver.png' },
+        { key: 'skins', icon: 'assets/interface/skin_of_the_sherwood_creature.png' },
+        { key: 'entranceTickets', icon: 'assets/interface/resource_key_to_locked_levels.png' },
+        { key: 'autoFightTickets', icon: 'assets/interface/ticket_autofight.png' },
+        { key: 'amuletTablets', icon: 'assets/interface/amulet_crafting_tablet_resource.png' },
+        { key: 'ringTablets', icon: 'assets/interface/ring_crafting_tablet_resource.png' },
+        { key: 'skinTablets', icon: 'assets/interface/resource_appearance_crafting_tablet.png' },
+        { key: 'portalToken1', icon: 'assets/interface/resource_token_on_entrance_portal_1.png' },
+        { key: 'portalToken2', icon: 'assets/interface/resource_token_on_entrance_portal_2.png' },
+        { key: 'portalToken3', icon: 'assets/interface/resource_token_on_entrance_portal_3.png' }
     ];
     
     for (var r = 0; r < resDefs.length; r++) {
         var rd = resDefs[r];
         var count = resources[rd.key] || 0;
-        h += '<div style="position:relative;width:70px;height:70px;">';
-        h += '<img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;">';
-        h += '<img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-        h += '<span style="position:absolute;top:2px;right:6px;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span>';
-        h += '</div>';
+        // Золото и серебро показываем всегда, остальные только если > 0
+        if (count > 0 || rd.key === 'gold' || rd.key === 'silver') {
+            h += '<div style="position:relative;width:70px;height:70px;">';
+            h += '<img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;">';
+            h += '<img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<span style="position:absolute;top:2px;right:6px;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span>';
+            h += '</div>';
+        }
     }
     
     h += '</div>';
     
-    // Ячейки сумки
+    // Остальное без изменений...
     h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-bottom:6px;">' + items.length + '/' + max + ' ячеек</div>';
     
     var expInfo = bag.getExpansionInfo();
