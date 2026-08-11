@@ -2120,6 +2120,93 @@ _toggleMusic: function(en) {
     this._openScreenScrollable('Рынок', 'market', h);
 },
 
+market: function() {
+    this._playSound('click');
+    if (!Sherwood.BlackMarket) { this._showPlaceholder('Рынок', 'market'); return; }
+    
+    var items = Sherwood.BlackMarket.getShopItems();
+    var tab1 = Sherwood.BlackMarket._shopTab || 1;
+    var canRefresh = Sherwood.BlackMarket.canRefresh();
+    
+    var h = '';
+    
+    h += '<div style="display:flex;gap:4px;margin-bottom:12px;">';
+    h += '<button onclick="Sherwood.BlackMarket._shopTab=1;SherwoodUI.market();" style="flex:1;background:' + (tab1 === 1 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (tab1 === 1 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Товары</button>';
+    h += '<button onclick="Sherwood.BlackMarket._shopTab=2;SherwoodUI.market();" style="flex:1;background:' + (tab1 === 2 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (tab1 === 2 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Ювелирка</button>';
+    h += '</div>';
+    
+    if (tab1 === 1) {
+        h += '<div style="text-align:center;margin-bottom:12px;">';
+        if (canRefresh) {
+            h += '<button onclick="SherwoodUI._refreshMarket()" style="background:#ff9800;border:none;border-radius:8px;padding:10px 24px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.85em;">Обновить за 150 золота</button>';
+        } else {
+            h += '<div style="color:#888;font-size:0.75em;">Обновлений сегодня больше нет</div>';
+        }
+        h += '</div>';
+        
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:400px;margin:0 auto;">';
+        
+        for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            if (item.tab && item.tab !== 1) continue;
+            var purchased = Sherwood.BlackMarket.isPurchased(i);
+            
+            h += '<div onclick="' + (purchased ? '' : 'SherwoodUI._buyItem(' + i + ')') + '" style="position:relative;cursor:' + (purchased ? 'default' : 'pointer') + ';">';
+            h += '<img src="assets/interface/product_slot.png" style="width:100%;height:auto;display:block;">';
+            h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;box-sizing:border-box;">';
+            h += '<img src="' + item.icon + '" style="width:44px;height:44px;object-fit:contain;margin-bottom:4px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="color:#e0c080;font-size:0.65em;font-weight:bold;text-align:center;line-height:1.1;">' + item.name + '</div>';
+            h += '<div style="color:#aaa;font-size:0.55em;text-align:center;">x' + (item.quantity || 1) + '</div>';
+            
+            if (purchased) {
+                h += '<div style="color:#4caf50;font-size:0.6em;font-weight:bold;">Куплено</div>';
+            } else {
+                h += '<div style="color:' + (item.currency === 'gold' ? '#ffd700' : '#c0c0c0') + ';font-size:0.65em;font-weight:bold;">' + item.price + ' ' + (item.currency === 'gold' ? 'зол.' : 'сер.') + '</div>';
+            }
+            
+            h += '</div>';
+            h += '</div>';
+        }
+        
+        h += '</div>';
+    } else {
+        // Вкладка Ювелирка
+        var rings = Sherwood.BlackMarket.getAvailableRings();
+        var amulets = Sherwood.BlackMarket.getAvailableAmulets();
+        var player = Sherwood.getPlayer();
+        
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:8px;">Кольца</div>';
+        for (var i = 0; i < rings.length; i++) {
+            var ring = rings[i];
+            h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
+            h += '<img src="' + ring.icon + '" style="width:48px;height:48px;object-fit:contain;">';
+            h += '<div style="flex:1;">';
+            h += '<div style="color:#e0c080;font-size:0.8em;font-weight:bold;">' + ring.name + '</div>';
+            h += '<div style="color:#aaa;font-size:0.6em;">АТК +' + ring.stats.attack + ' | ЗЩТ +' + ring.stats.defense + '</div>';
+            h += '</div>';
+            h += '<button onclick="SherwoodUI._buyRing(\'' + ring.id + '\')" style="background:#4caf50;border:none;border-radius:4px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.7em;">' + ring.price + ' сер.</button>';
+            h += '</div>';
+        }
+        
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin:12px 0 8px;">Амулеты</div>';
+        for (var i = 0; i < amulets.length; i++) {
+            var amulet = amulets[i];
+            h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
+            h += '<img src="' + amulet.icon + '" style="width:48px;height:48px;object-fit:contain;">';
+            h += '<div style="flex:1;">';
+            h += '<div style="color:#e0c080;font-size:0.8em;font-weight:bold;">' + amulet.name + '</div>';
+            h += '<div style="color:#aaa;font-size:0.6em;">HP +' + amulet.stats.hp + ' | ЗЩТ +' + amulet.stats.defense + '</div>';
+            h += '</div>';
+            h += '<button onclick="SherwoodUI._buyAmulet(\'' + amulet.id + '\')" style="background:#4caf50;border:none;border-radius:4px;padding:6px 12px;color:#fff;cursor:pointer;font-size:0.7em;">' + amulet.price + ' сер.</button>';
+            h += '</div>';
+        }
+    }
+    
+    h += '<div id="market-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div>';
+    
+    this._openScreenScrollable('Рынок', 'market', h);
+},
+
 _refreshMarket: function() {
     var r = Sherwood.BlackMarket.refresh();
     if (r.success) {
@@ -2129,7 +2216,32 @@ _refreshMarket: function() {
         this._showToast(r.reason);
     }
 },
-    _buyItem: function(i) { var r=Sherwood.BlackMarket.buyItem(i),log=document.getElementById('market-log'); if(r.success) { if(log) log.textContent='Куплено!'; this.updateDisplay(); } else { if(log) log.textContent=(r.reason||'Ошибка'); } var self=this; setTimeout(function(){self.market();},800); },
+
+_buyRing: function(ringId) {
+    var r = Sherwood.BlackMarket.buyRing(ringId);
+    var log = document.getElementById('market-log');
+    if (r.success) {
+        if (log) log.textContent = 'Кольцо куплено!';
+        this.updateDisplay();
+    } else {
+        if (log) log.textContent = (r.reason || 'Ошибка');
+    }
+    var self = this;
+    setTimeout(function() { self.market(); }, 800);
+},
+
+_buyAmulet: function(amuletId) {
+    var r = Sherwood.BlackMarket.buyAmulet(amuletId);
+    var log = document.getElementById('market-log');
+    if (r.success) {
+        if (log) log.textContent = 'Амулет куплен!';
+        this.updateDisplay();
+    } else {
+        if (log) log.textContent = (r.reason || 'Ошибка');
+    }
+    var self = this;
+    setTimeout(function() { self.market(); }, 800);
+},
         bag: function() {
     this._playSound('click');
     var bag = Sherwood.Bag;
