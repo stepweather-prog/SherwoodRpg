@@ -1893,12 +1893,39 @@ _toggleMusic: function(en) {
     var bag = Sherwood.Bag;
     var items = bag ? bag.getItems() : [];
     var max = bag ? bag.getMaxSlots() : 10;
+    var resources = bag ? bag.getResources() : {};
+    
     var h = '';
+    
+    // Ресурсы над ячейками
+    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px;">';
+    
+    var resDefs = [
+        { key: 'skins', icon: 'assets/interface/skin_of_the_sherwood_creature.png', label: 'Шкуры' },
+        { key: 'entranceTickets', icon: 'assets/interface/resource_key_to_locked_levels.png', label: 'Тикеты входа' },
+        { key: 'autoFightTickets', icon: 'assets/interface/ticket_autofight.png', label: 'Тикеты автобоя' },
+        { key: 'amuletTablets', icon: 'assets/interface/amulet_crafting_tablet_resource.png', label: 'Скрижали амулета' },
+        { key: 'ringTablets', icon: 'assets/interface/ring_crafting_tablet_resource.png', label: 'Скрижали колец' },
+        { key: 'skinTablets', icon: 'assets/interface/resource_appearance_crafting_tablet.png', label: 'Скрижали облика' }
+    ];
+    
+    for (var r = 0; r < resDefs.length; r++) {
+        var rd = resDefs[r];
+        var count = resources[rd.key] || 0;
+        h += '<div style="position:relative;width:70px;height:70px;">';
+        h += '<img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;">';
+        h += '<img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        h += '<span style="position:absolute;top:2px;right:6px;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span>';
+        h += '</div>';
+    }
+    
+    h += '</div>';
+    
+    // Ячейки сумки
+    h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-bottom:6px;">' + items.length + '/' + max + ' ячеек</div>';
     
     var expInfo = bag.getExpansionInfo();
     var expBtn = expInfo.canExpand ? '<button onclick="SherwoodUI._expandBag()" style="margin-top:10px;background:#c9a040;border:none;border-radius:8px;padding:8px 18px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;">Расширить +10 (' + expInfo.costSilver + ' серебра + ' + expInfo.costSkin + ' шкур)</button>' : '<span style="color:#666;font-size:0.7em;">Максимум для вашего уровня</span>';
-    
-    h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-bottom:6px;">' + items.length + '/' + max + ' ячеек</div>';
     h += expBtn;
     
     h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:400px;margin:16px auto 0;">';
@@ -1921,7 +1948,7 @@ _toggleMusic: function(en) {
     h += '</div>';
     h += '<div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:14px;min-height:24px;">Нажми на предмет</div>';
     
-    this._openScreen('Сумка', 'bag', h);
+    this._openScreenScrollable('Сумка', 'bag', h);
 },
 
 _bagDragStart: function(e, index) {
