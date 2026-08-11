@@ -20,13 +20,11 @@ Sherwood.Dungeon = {
                 cave: { level: 1, cups: {} }
             };
         }
-        // Инициализируем cups если нет
         for (var id in this._progress) {
             if (!this._progress[id].cups) this._progress[id].cups = {};
         }
         this._startTicketRegeneration();
         
-        // Восстановление автобоя
         var p = Sherwood.getPlayer();
         if (p && p.dungeon && p.dungeon.autoFight) {
             var af = p.dungeon.autoFight;
@@ -77,7 +75,6 @@ Sherwood.Dungeon = {
             Sherwood.saveGame();
         }
         
-        // Награды за автобой
         var gold = 5 + Math.floor(Math.random() * 10);
         var silver = 200 + Math.floor(Math.random() * 300);
         var exp = 100 + Math.floor(Math.random() * 100);
@@ -85,7 +82,6 @@ Sherwood.Dungeon = {
         Sherwood.addResource('silver', silver);
         Sherwood.addExp(exp);
         
-        // Добавляем кубок
         this._addCup(dungeonId, level);
         
         Sherwood.dispatch({ type: 'AUTO_FIGHT_COMPLETE', payload: { dungeonId: dungeonId, level: level, rewards: { gold: gold, silver: silver, exp: exp } } });
@@ -95,7 +91,7 @@ Sherwood.Dungeon = {
         if (!this._progress[dungeonId]) this._progress[dungeonId] = { level: 1, cups: {} };
         if (!this._progress[dungeonId].cups) this._progress[dungeonId].cups = {};
         var currentCups = this._progress[dungeonId].cups[level] || 0;
-        if (currentCups < 3) {
+        if (currentCups < 5) {
             this._progress[dungeonId].cups[level] = currentCups + 1;
             localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
         }
@@ -116,7 +112,7 @@ Sherwood.Dungeon = {
                 var reqProg = this._progress[dd.requiredDungeon] || { level: 1, cups: {} };
                 var lastLevel = reqProg.level > 1 ? reqProg.level - 1 : 1;
                 var lastCups = reqProg.cups[lastLevel] || 0;
-                if (lastLevel < 7 || lastCups < dd.requiredCups) {
+                if (lastLevel < 8 || lastCups < dd.requiredCups) {
                     isUnlocked = false;
                 }
             }
@@ -214,7 +210,7 @@ Sherwood.Dungeon = {
             cave: { easy: ['image (32).png','image (35).png','image (10).png'], medium: ['image (33).png','image (36).png','image (49).png'], boss: 'image (34).png' }
         };
         var pool = monsters[dungeonId] || monsters['forest'];
-        var monList = level <= 3 ? pool.easy : pool.medium;
+        var monList = level <= 4 ? pool.easy : pool.medium;
         var monsterCount = 10;
         var minToKill = 10;
 
@@ -280,9 +276,10 @@ Sherwood.Dungeon = {
             px: spawnX, py: spawnY,
             monstersKilled: 0, totalMonsters: monsterCount,
             minToKill: minToKill,
-            chestsOpened: 0, isBossLevel: (level === 7),
+            chestsOpened: 0, isBossLevel: (level === 8),
             heroDirection: 'down', isMoving: false,
-            chestPlaced: false
+            chestPlaced: false,
+            collectedLoot: []
         };
         return this._dungeon;
     },
@@ -371,14 +368,14 @@ Sherwood.Dungeon = {
         Sherwood.addResource('silver', silver);
         Sherwood.addExp(exp);
 
-        // Добавляем кубок
         this._addCup(d.id, d.level);
         
-        // Открываем следующий уровень если 3 кубка
+        var items = d.collectedLoot ? d.collectedLoot.slice() : [];
+        
         var prog = this._progress[d.id];
         var cups = prog.cups[d.level] || 0;
         if (cups >= 3 && d.level >= prog.level) {
-            prog.level = Math.min(8, d.level + 1);
+            prog.level = Math.min(9, d.level + 1);
             localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
         }
 
@@ -393,7 +390,7 @@ Sherwood.Dungeon = {
             var tb = trophyBonuses[d.id];
             if (tb && typeof Sherwood.addTrophy === 'function') {
                 var newLevel = prog.level - 1;
-                if (newLevel >= 1 && newLevel <= 7) {
+                if (newLevel >= 1 && newLevel <= 8) {
                     var bonus = {
                         attack: tb.base.attack * newLevel,
                         defense: tb.base.defense * newLevel,
@@ -404,13 +401,14 @@ Sherwood.Dungeon = {
             }
         }
 
+        var dungeonId = d.id;
+        var dungeonLevel = d.level;
+        
         this._dungeon = null;
-        return { gold: gold, silver: silver, exp: exp };
+        return { gold: gold, silver: silver, exp: exp, items: items, dungeonId: dungeonId, dungeonLevel: dungeonLevel };
     },
 
     leave: function() { this._dungeon = null; },
-    
-    // Новые методы для автобоя
     
     isAutoFightActive: function() {
         return this._autoFightActive;
@@ -426,14 +424,12 @@ Sherwood.Dungeon = {
         if (!p) return { success: false, reason: 'Игрок не найден' };
         
         if (instant) {
-            // Мгновенный автобой за тикет
             var tickets = Sherwood.Bag.getResource('autoFightTickets');
             if (tickets <= 0) return { success: false, reason: 'Нет тикетов автобоя' };
             Sherwood.Bag.spendResource('autoFightTickets', 1);
             this._completeAutoFight(dungeonId, level);
             return { success: true, instant: true };
         } else {
-            // Автобой за золото на 15 минут
             if ((p.resources.gold || 0) < 50) return { success: false, reason: 'Нужно 50 золота' };
             p.resources.gold -= 50;
             
