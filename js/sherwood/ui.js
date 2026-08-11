@@ -237,7 +237,71 @@ loadHome: function() {
     try { if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">' + title + '</span></div><div style="flex:1;overflow-y:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; } } catch(e) {} },
 _showPlaceholder: function(title, bgKey, backAction) { this._playSound('click'); this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">&#128679;</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">'+title+'</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction); },
 
-    _showVictoryScreen: function(rewards) { var h = '<div style="text-align:center;padding:10px;"><div style="position:relative;display:inline-block;"><img src="assets/interface/vertical_slab_victory.png" style="width:400px;height:auto;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;"><div style="color:#ffd700;font-size:1.3em;font-weight:bold;">&#127942; ПОБЕДА!</div>'; if (rewards.exp) h += '<div style="color:#fff;font-size:1em;">+ ' + rewards.exp + ' XP</div>'; if (rewards.gold) h += '<div style="color:#ffd700;font-size:1em;">+ ' + rewards.gold + ' Золота</div>'; if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1em;">+ ' + rewards.silver + ' Серебра</div>'; if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1em;">+ ' + rewards.scrolls + ' Свитков</div>'; if (rewards.ingots) h += '<div style="color:#ff9800;font-size:1em;">+ ' + rewards.ingots + ' Слитков</div>'; h += '</div><button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;z-index:2;">Забрать</button></div></div>'; this._openScreen('Победа', 'dungeon_fight', h); },
+    _showVictoryScreen: function(rewards) {
+    var d = Sherwood.Dungeon ? Sherwood.Dungeon.getDungeon() : null;
+    var dungeonId = d ? d.id : null;
+    var dungeonLevel = d ? d.level : null;
+    
+    // Собираем лут
+    var lootItems = {};
+    if (rewards.items) {
+        for (var i = 0; i < rewards.items.length; i++) {
+            var item = rewards.items[i];
+            var key = item.icon + '|' + item.name;
+            if (!lootItems[key]) {
+                lootItems[key] = { icon: item.icon, name: item.name, count: 0 };
+            }
+            lootItems[key].count += item.quantity || 1;
+        }
+    }
+    
+    var h = '<div style="text-align:center;padding:10px;">';
+    h += '<div style="position:relative;display:inline-block;">';
+    h += '<img src="assets/interface/vertical_slab_victory.png" style="width:800px;height:auto;display:block;">';
+    h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
+    
+    // Заголовок
+    h += '<div style="color:#ffd700;font-size:2.6em;font-weight:bold;">&#127942; ПОБЕДА!</div>';
+    
+    // Кубок
+    if (dungeonId && dungeonLevel) {
+        h += '<div style="margin:12px 0;">';
+        h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:64px;height:64px;object-fit:contain;">';
+        h += '<div style="color:#ffd700;font-size:1.4em;font-weight:bold;">+1 Кубок</div>';
+        h += '<div style="color:#aaa;font-size:1em;">Этаж ' + dungeonLevel + '</div>';
+        h += '</div>';
+    }
+    
+    // Награды
+    if (rewards.exp) h += '<div style="color:#fff;font-size:2em;">+ ' + rewards.exp + ' XP</div>';
+    if (rewards.gold) h += '<div style="color:#ffd700;font-size:2em;">+ ' + rewards.gold + ' Золота</div>';
+    if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:2em;">+ ' + rewards.silver + ' Серебра</div>';
+    if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:2em;">+ ' + rewards.scrolls + ' Свитков</div>';
+    if (rewards.ingots) h += '<div style="color:#ff9800;font-size:2em;">+ ' + rewards.ingots + ' Слитков</div>';
+    
+    // Лут предметы
+    var lootKeys = Object.keys(lootItems);
+    if (lootKeys.length > 0) {
+        h += '<div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;">';
+        for (var k = 0; k < lootKeys.length; k++) {
+            var li = lootItems[lootKeys[k]];
+            h += '<div style="text-align:center;">';
+            h += '<img src="' + li.icon + '" style="width:56px;height:56px;object-fit:contain;">';
+            h += '<div style="color:#fff;font-size:1.2em;">' + li.name + '</div>';
+            if (li.count > 1) {
+                h += '<div style="color:#aaa;font-size:1em;">x' + li.count + '</div>';
+            }
+            h += '</div>';
+        }
+        h += '</div>';
+    }
+    
+    h += '</div>';
+    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:16px;padding:20px 60px;color:#000;font-weight:bold;cursor:pointer;font-size:1.8em;z-index:2;">Забрать</button>';
+    h += '</div></div>';
+    
+    this._openScreen('Победа', 'dungeon_fight', h);
+},
     _showDefeatScreen: function(rewards) { var h = '<div style="text-align:center;padding:10px;"><div style="position:relative;display:inline-block;"><img src="assets/interface/vertical_slab_defeat.png" style="width:400px;height:auto;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;"><div style="color:#f44336;font-size:1.3em;font-weight:bold;">&#128128; ПОРАЖЕНИЕ</div>'; if (rewards.exp) h += '<div style="color:#fff;font-size:1em;">+ ' + rewards.exp + ' XP</div>'; if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1em;">+ ' + rewards.silver + ' Серебра</div>'; if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1em;">+ ' + rewards.scrolls + ' Свитков</div>'; h += '</div><button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;z-index:2;">Забрать</button></div></div>'; this._openScreen('Поражение', 'dungeon_fight', h); },
     _claimReward: function() { this._pendingRewards = null; if (this._afterRewardAction) { var cb = this._afterRewardAction; this._afterRewardAction = null; cb(); } },
 
