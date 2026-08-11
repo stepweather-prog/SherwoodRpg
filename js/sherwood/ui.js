@@ -356,7 +356,7 @@ talents: function() {
 
 _unlockTalent: function(id) { if(!Sherwood.Combat||!Sherwood.Combat.unlockSkill) return; var r=Sherwood.Combat.unlockSkill(id); if(r.success){this.updateDisplay();this.talents();} else this._showToast(r.reason||'Ошибка'); },
 // ========== ПОДЗЕМКА ==========
-    subway: function() { this.showDungeon(); },
+     subway: function() { this.showDungeon(); },
     showDungeon: function() {
     this._playSound('click');
     if (this._currentMusicKey === 'main_theme' || this._currentMusicKey === 'main_theme_2') {
@@ -447,17 +447,15 @@ _showDungeonLevels: function(dungeonId) {
     h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-top:8px;">' + (dungeonNames[dungeonId] || dungeonId) + '</div>';
     h += '</div>';
     
-    // Квадратная сетка этажей (4 колонки)
     h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px;margin:0 auto;">';
     
-    for (var lvl = 1; lvl <= 7; lvl++) {
+    for (var lvl = 1; lvl <= 8; lvl++) {
         var unlocked = lvl <= progress.level;
         var cupCount = cups[lvl] || 0;
         var img = unlocked ? (tp + lvl + te) : 'assets/interface/closed_level_lock_icon.png';
         
         h += '<div style="text-align:center;">';
         
-        // Кубки над ячейкой
         h += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;min-height:20px;">';
         for (var c = 0; c < 3; c++) {
             if (c < cupCount) {
@@ -468,7 +466,6 @@ _showDungeonLevels: function(dungeonId) {
         }
         h += '</div>';
         
-        // Ячейка этажа
         h += '<div onclick="' + (unlocked ? 'SherwoodUI._showDungeonActions(\'' + dungeonId + '\',' + lvl + ')' : '') + '" style="width:56px;height:56px;background-image:url(\'' + img + '\');background-size:cover;background-position:center;border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto;">';
         h += '<span style="position:absolute;bottom:2px;right:4px;font-size:0.6em;color:' + (unlocked ? '#000' : '#888') + ';font-weight:bold;">' + lvl + '</span>';
         h += '</div>';
@@ -498,7 +495,6 @@ _showDungeonActions: function(dungeonId, level) {
     var h = '<div style="text-align:center;padding:20px;">';
     h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:12px;">Этаж ' + level + '</div>';
     
-    // Кубки
     h += '<div style="margin-bottom:16px;">';
     for (var c = 0; c < maxCups; c++) {
         h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:24px;height:24px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">';
@@ -506,10 +502,8 @@ _showDungeonActions: function(dungeonId, level) {
     h += '<div style="color:#aaa;font-size:0.7em;">' + cupCount + '/' + maxCups + ' кубков</div>';
     h += '</div>';
     
-    // Кнопка Войти
     h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти (1 билет)</button>';
     
-    // Автобой только при 5 кубках
     if (cupCount >= autoFightCups) {
         if (Sherwood.Dungeon.isAutoFightActive()) {
             h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Автобой уже активен</div>';
@@ -567,7 +561,6 @@ _startDungeon: function(id, level) {
     var chestLockedImg = dungId === 'forest' ? 'assets/interface/locked_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/locked_chest_second_dungeon.png' : 'assets/interface/locked_chest_third_dungeon.png';
     var chestOpenImg = dungId === 'forest' ? 'assets/interface/open_chest_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/open_chest_of_the_second_dungeon.png' : 'assets/interface/open_chest_third_dungeon.png';
     
-    // Правильные пути к иконкам выхода
     var exitImg, exitLockedImg = 'assets/interface/closed_level_lock_icon.png';
     if (dungId === 'forest') {
         exitImg = 'assets/interface/exit_completion_dungeon.png';
@@ -587,7 +580,6 @@ _startDungeon: function(id, level) {
     var html = "<div style='position:relative;width:" + gridW + "px;height:" + gridH + "px;background-image:url(" + floorBg + ");background-size:100% 100%;overflow:hidden;font-size:0;line-height:0;'>";
     html += "<div style='position:absolute;left:" + (-scrollX) + "px;top:" + (-scrollY) + "px;width:" + gridW + "px;height:" + gridH + "px;font-size:0;line-height:0;'>";
 
-    // Плитки на все закрытые клетки
     for (var y = 0; y < size; y++) { 
         for (var x = 0; x < size; x++) { 
             var cellData = d.grid[y] && d.grid[y][x];
@@ -596,7 +588,6 @@ _startDungeon: function(id, level) {
         } 
     }
 
-    // Затемнение для неоткрытых клеток
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -609,7 +600,6 @@ _startDungeon: function(id, level) {
         }
     }
 
-    // Объекты и герой
     for (var y = 0; y < size; y++) {
         for (var x = 0; x < size; x++) {
             if (!d.grid[y] || !d.grid[y][x]) continue;
@@ -693,7 +683,6 @@ _startDungeon: function(id, level) {
     
     if (!cell.open && dist === 1) {
         if (cell.type === 0) return;
-        // Выход открываем всегда, даже если залочен — показываем замок
         cell.open = true;
         this._playSound('tile_open');
         this._renderDungeon();
@@ -701,7 +690,6 @@ _startDungeon: function(id, level) {
     }
     
     if (cell.open && dist === 1) {
-        // Если выход залочен — не заходим
         if (cell.exit && cell.locked) {
             this._showToast('Kill all monsters first!');
             return;
@@ -791,10 +779,8 @@ _doStep: function(tx, ty) {
     
     this._playSound('steps');
     
-    // Если это клетка с лутом - не даём Dungeon.move собрать его автоматически
     var currentCell = d.grid[d.py][d.px];
     if (currentCell && currentCell.lootBag && !currentCell.lootCollected) {
-        // Отменяем автосбор если он произошёл
         currentCell.lootCollected = false;
         currentCell.lootBag = true;
     }
@@ -860,7 +846,7 @@ _doStep: function(tx, ty) {
         SherwoodUI._playMusic('main_theme'); 
         SherwoodUI.showDungeon(); 
     }; 
-    this._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver }); 
+    this._showVictoryScreen(reward); 
     return; 
 }
     
@@ -919,7 +905,6 @@ _showInteractButton: function(type) {
     
     this._screenLayer.appendChild(btn);
     
-    // Летящий лут через appendChild вместо innerHTML
     if (type === 'chest' || type === 'lootBag') {
         var reward = (cell && cell.reward) ? cell.reward : { gold: 5, silver: 200 };
         var flyEl = document.createElement('div');
@@ -940,6 +925,9 @@ _collectAltar: function() {
     Sherwood.addResource('scrolls', scrolls);
     Sherwood.addResource('silver', silver);
     cell.altarCollected = true;
+    if (!d.collectedLoot) d.collectedLoot = [];
+    d.collectedLoot.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Свитки', quantity: scrolls });
+    d.collectedLoot.push({ icon: 'assets/interface/silver_plaque.png', name: 'Серебро', quantity: silver });
     this._playSound('altar');
     this._showFlyingLoot([{ icon: 'assets/interface/resource_appearance_crafting_tablet.png', text: '+' + scrolls }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
     SherwoodUI.updateDisplay();
@@ -953,6 +941,9 @@ _collectCauldron: function() {
     Sherwood.addResource('gold', gold);
     Sherwood.addResource('silver', silver);
     cell.cauldronCollected = true;
+    if (!d.collectedLoot) d.collectedLoot = [];
+    d.collectedLoot.push({ icon: 'assets/interface/gold_plate.png', name: 'Золото', quantity: gold });
+    d.collectedLoot.push({ icon: 'assets/interface/silver_plaque.png', name: 'Серебро', quantity: silver });
     this._playSound('cauldron');
     this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + gold }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
     SherwoodUI.updateDisplay();
@@ -965,6 +956,8 @@ _collectPotion: function() {
     var heal = d.id === 'cave' ? Math.floor(p.stats.maxHp * 0.4) : Math.floor(p.stats.maxHp * 0.2);
     p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
     cell.potionCollected = true;
+    if (!d.collectedLoot) d.collectedLoot = [];
+    d.collectedLoot.push({ icon: 'assets/interface/icon_health.png', name: 'Здоровье', quantity: heal });
     this._playSound('potion');
     this._showFlyingLoot([{ icon: 'assets/interface/icon_health.png', text: '+' + heal + ' HP' }]);
     Sherwood.saveGame();
@@ -987,6 +980,10 @@ _collectChest: function() {
     Sherwood.addResource('gold', g);
     Sherwood.addResource('silver', s);
     if (Sherwood.Daily) Sherwood.Daily.updateProgress('open_chests', 1);
+    
+    if (!d.collectedLoot) d.collectedLoot = [];
+    d.collectedLoot.push({ icon: 'assets/interface/gold_plate.png', name: 'Золото', quantity: g });
+    d.collectedLoot.push({ icon: 'assets/interface/silver_plaque.png', name: 'Серебро', quantity: s });
     
     this._playSound('chest_open');
     this._showFlyingLoot([
@@ -1012,6 +1009,11 @@ _collectLootBag: function() {
     if (reward.exp) Sherwood.addExp(reward.exp);
     if (reward.gold) Sherwood.addResource('gold', reward.gold);
     if (reward.silver) Sherwood.addResource('silver', reward.silver);
+    
+    if (!d.collectedLoot) d.collectedLoot = [];
+    if (reward.exp) d.collectedLoot.push({ icon: 'assets/interface/icon_health.png', name: 'Опыт', quantity: reward.exp });
+    if (reward.gold) d.collectedLoot.push({ icon: 'assets/interface/gold_plate.png', name: 'Золото', quantity: reward.gold });
+    if (reward.silver) d.collectedLoot.push({ icon: 'assets/interface/silver_plaque.png', name: 'Серебро', quantity: reward.silver });
     
     this._playSound('bag_drop');
     this._showFlyingLoot([
