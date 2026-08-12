@@ -315,55 +315,61 @@ Sherwood.Quests = {
         return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
     },
     attack: function() {
-        if (!this._inBattle) return null;
-        var p = Sherwood.getPlayer();
-        var e = this._currentEnemy;
-        var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + e.def)));
-        var crit = Math.random() * 100 < 15;
-        if (crit) dmg = Math.floor(dmg * 1.8);
-        e.hp -= dmg;
-        if (e.hp < 0) e.hp = 0;
-        var r = { damage: dmg, crit: crit, enemyHp: e.hp, enemyMaxHp: e.maxHp, enemyDead: e.hp <= 0 };
-        if (e.hp <= 0) {
-            if (Sherwood.Bestiary && e.image) Sherwood.Bestiary.registerKill(e.image);
-            Sherwood.addExp(e.exp);
-            if (this._attemptsToday <= 4) Sherwood.addResource('gold', e.gold);
-            if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1);
-            this._currentStage++;
-            var ch = this._currentChapter;
-            if (this._currentStage >= ch.stages) {
-                this._inBattle = false;
-                r.chapterComplete = true;
-                r.rewards = ch.rewards;
-                var p2 = Sherwood.getPlayer();
-                if (p2.questProgress.completed.indexOf(ch.id) === -1) {
-                    p2.questProgress.completed.push(ch.id);
-                    if (ch.id < 15) p2.questProgress.currentChapter = ch.id + 1;
-                    
-                    var td = this.TROPHY_DATA[ch.id];
-                    if (td && typeof Sherwood.addTrophy === 'function') {
-                        Sherwood.addTrophy('chapter_' + ch.id, td.name, { attack: td.attack, defense: td.defense, hp: td.hp }, td.icon, 'chapter');
-                    }
-                    if (ch.id === 15 && !p2.questProgress.secretCompleted) {
-                        p2.questProgress.secretCompleted = false;
-                    }
+    if (!this._inBattle) return null;
+    var p = Sherwood.getPlayer();
+    var e = this._currentEnemy;
+    if (!e) return null;
+    
+    var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + e.def)));
+    var crit = Math.random() * 100 < 15;
+    if (crit) dmg = Math.floor(dmg * 1.8);
+    e.hp -= dmg;
+    if (e.hp < 0) e.hp = 0;
+    var r = { damage: dmg, crit: crit, enemyHp: e.hp, enemyMaxHp: e.maxHp, enemyDead: e.hp <= 0 };
+    
+    if (e.hp <= 0) {
+        if (Sherwood.Bestiary && e.image) Sherwood.Bestiary.registerKill(e.image);
+        Sherwood.addExp(e.exp);
+        if (this._attemptsToday <= 4) Sherwood.addResource('gold', e.gold);
+        if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1);
+        
+        this._currentStage++;
+        var ch = this._currentChapter;
+        
+        if (this._currentStage >= ch.stages) {
+            // Глава завершена
+            this._inBattle = false;
+            r.chapterComplete = true;
+            r.rewards = ch.rewards;
+            var p2 = Sherwood.getPlayer();
+            if (p2.questProgress.completed.indexOf(ch.id) === -1) {
+                p2.questProgress.completed.push(ch.id);
+                if (ch.id < 15) p2.questProgress.currentChapter = ch.id + 1;
+                
+                var td = this.TROPHY_DATA[ch.id];
+                if (td && typeof Sherwood.addTrophy === 'function') {
+                    Sherwood.addTrophy('chapter_' + ch.id, td.name, { attack: td.attack, defense: td.defense, hp: td.hp }, td.icon, 'chapter');
                 }
-                this._currentChapter = null;
-                this._currentEnemy = null;
-                this._currentStage = 0;
-                        } else {
-                var nextEnemy = ch.enemies[this._currentStage];
-                this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
-                r.stageComplete = true;
+                if (ch.id === 15 && !p2.questProgress.secretCompleted) {
+                    p2.questProgress.secretCompleted = false;
+                }
             }
-        } else {
-            var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
-            p.stats.hp = Math.max(0, p.stats.hp - edmg);
-            r.enemyDamage = edmg; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
-            if (p.stats.hp <= 0) { this._inBattle = false; r.lose = true; }
+            this._currentChapter = null;
+            this._currentEnemy = null;
+            this._currentStage = 0;
+        } else if (this._currentStage < ch.enemies.length) {
+            var nextEnemy = ch.enemies[this._currentStage];
+            this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
+            r.stageComplete = true;
         }
-        Sherwood.saveGame();
-        return r;
-    },
+    } else {
+        var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
+        p.stats.hp = Math.max(0, p.stats.hp - edmg);
+        r.enemyDamage = edmg; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
+        if (p.stats.hp <= 0) { this._inBattle = false; r.lose = true; }
+    }
+    Sherwood.saveGame();
+    return r;
+},
     flee: function() { this._inBattle = false; this._currentEnemy = null; return { success: true }; }
 };
