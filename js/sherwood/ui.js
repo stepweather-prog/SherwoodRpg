@@ -2216,7 +2216,20 @@ _refreshMarket: function() {
         this._showToast(r.reason);
     }
 },
-
+_buyItem: function(i) {
+    var r = Sherwood.BlackMarket.buyItem(i);
+    var log = document.getElementById('market-log');
+    if (r.success) {
+        if (log) log.textContent = 'Куплено!';
+        this.updateDisplay();
+        this._playSound('loot_fly');
+    } else {
+        if (log) log.textContent = (r.reason || 'Ошибка');
+        this._showToast(r.reason || 'Ошибка');
+    }
+    var self = this;
+    setTimeout(function() { self.market(); }, 800);
+},
 _buyRing: function(ringId) {
     var r = Sherwood.BlackMarket.buyRing(ringId);
     var log = document.getElementById('market-log');
