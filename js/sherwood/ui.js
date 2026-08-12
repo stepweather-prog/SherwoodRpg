@@ -2038,13 +2038,17 @@ _arenaFlee: function() {
 },
     _changePlayerName: function() { var inp=document.getElementById('pni'),st=document.getElementById('name-status'); if(!inp||!st) return; var nm=inp.value.trim(); if(!nm) { st.textContent='Пустое имя'; st.style.color='#f44336'; return; } var p=Sherwood.getPlayer(); if(p) { p.name=nm; Sherwood.saveGame(); if(Sherwood.Chat) Sherwood.Chat.setUsername(nm); st.textContent='Сохранено!'; st.style.color='#4caf50'; } },
     _saveProgress: function() {
+    // Сохраняем игру
     if (Sherwood.saveGameNow) {
         Sherwood.saveGameNow();
-        this._showToast('Прогресс сохранён!');
     } else if (Sherwood.saveGame) {
         Sherwood.saveGame();
-        this._showToast('Прогресс сохранён!');
     }
+    
+    // Сохраняем настройки звука и музыки
+    this._saveAudioSettings();
+    
+    this._showToast('Прогресс сохранён!');
 },
 
 _resetCharacter: function() {
