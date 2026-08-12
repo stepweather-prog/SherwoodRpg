@@ -2231,81 +2231,32 @@ _buyItem: function(i) {
     setTimeout(function() { self.market(); }, 800);
 },
 _buyRing: function(ringId) {
-    var ring = null;
-    for (var i = 0; i < this._RINGS.length; i++) {
-        if (this._RINGS[i].id === ringId) { ring = this._RINGS[i]; break; }
+    var r = Sherwood.BlackMarket.buyRing(ringId);
+    var log = document.getElementById('market-log');
+    if (r.success) {
+        if (log) log.textContent = 'Кольцо куплено!';
+        this.updateDisplay();
+        this._playSound('loot_fly');
+    } else {
+        if (log) log.textContent = (r.reason || 'Ошибка');
+        this._showToast(r.reason || 'Ошибка');
     }
-    if (!ring) return { success: false, reason: 'Кольцо не найдено' };
-    
-    var player = Sherwood.getPlayer();
-    
-    // Проверка: уже куплено
-    if (!player.jewelry) player.jewelry = { rings: [], amulets: [] };
-    if (player.jewelry.rings.indexOf(ringId) !== -1) {
-        return { success: false, reason: 'Уже куплено' };
-    }
-    
-    if ((player.resources.silver || 0) < ring.price) return { success: false, reason: 'Недостаточно серебра' };
-    Sherwood.spendResource('silver', ring.price);
-    
-    var item = {
-        id: ring.id,
-        name: ring.name,
-        icon: ring.icon,
-        part: 'ring',
-        stats: ring.stats,
-        grade: 'rare',
-        type: 'equipment',
-        quantity: 1,
-        sellPrice: 0
-    };
-    
-    Sherwood.Bag._equipment.ring = item;
-    player.jewelry.rings.push(ringId);
-    
-    if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
-    Sherwood.Bag._save();
-    Sherwood.saveGame();
-    return { success: true };
+    var self = this;
+    setTimeout(function() { self.market(); }, 800);
 },
-
 _buyAmulet: function(amuletId) {
-    var amulet = null;
-    for (var i = 0; i < this._AMULETS.length; i++) {
-        if (this._AMULETS[i].id === amuletId) { amulet = this._AMULETS[i]; break; }
+    var r = Sherwood.BlackMarket.buyAmulet(amuletId);
+    var log = document.getElementById('market-log');
+    if (r.success) {
+        if (log) log.textContent = 'Амулет куплен!';
+        this.updateDisplay();
+        this._playSound('loot_fly');
+    } else {
+        if (log) log.textContent = (r.reason || 'Ошибка');
+        this._showToast(r.reason || 'Ошибка');
     }
-    if (!amulet) return { success: false, reason: 'Амулет не найден' };
-    
-    var player = Sherwood.getPlayer();
-    
-    // Проверка: уже куплено
-    if (!player.jewelry) player.jewelry = { rings: [], amulets: [] };
-    if (player.jewelry.amulets.indexOf(amuletId) !== -1) {
-        return { success: false, reason: 'Уже куплено' };
-    }
-    
-    if ((player.resources.silver || 0) < amulet.price) return { success: false, reason: 'Недостаточно серебра' };
-    Sherwood.spendResource('silver', amulet.price);
-    
-    var item = {
-        id: amulet.id,
-        name: amulet.name,
-        icon: amulet.icon,
-        part: 'amulet',
-        stats: amulet.stats,
-        grade: 'rare',
-        type: 'equipment',
-        quantity: 1,
-        sellPrice: 0
-    };
-    
-    Sherwood.Bag._equipment.amulet = item;
-    player.jewelry.amulets.push(amuletId);
-    
-    if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
-    Sherwood.Bag._save();
-    Sherwood.saveGame();
-    return { success: true };
+    var self = this;
+    setTimeout(function() { self.market(); }, 800);
 },
         bag: function() {
     this._playSound('click');
