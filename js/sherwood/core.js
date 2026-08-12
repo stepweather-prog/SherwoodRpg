@@ -79,7 +79,9 @@ Sherwood._ensureDefaults = function() {
         keset: { silver: 0, maxSilver: 2500000, minWithdraw: 10000 },
         eternityBonds: { count: 0, bonus: 0 },
         hearthBonus: null, hearthCooldown: 0,
-        bagResources: null
+        bagResources: null,
+        nameChanges: 0,
+        jewelry: { rings: [], amulets: [] }
     };
 
     for (var key in defaults) {
@@ -106,6 +108,8 @@ Sherwood._ensureDefaults = function() {
     if (!p.eternityBonds) p.eternityBonds = defaults.eternityBonds;
     if (!p.unlockedSkins || p.unlockedSkins.length === 0) p.unlockedSkins = ['skin1_01'];
     if (!p.activeSkin) p.activeSkin = 'skin1_01';
+    if (!p.nameChanges && p.nameChanges !== 0) p.nameChanges = 0;
+    if (!p.jewelry) p.jewelry = { rings: [], amulets: [] };
 };
 
 Sherwood._createNewPlayer = function() {
@@ -130,7 +134,9 @@ Sherwood._createNewPlayer = function() {
         keset: { silver: 0, maxSilver: 2500000, minWithdraw: 10000 },
         eternityBonds: { count: 0, bonus: 0 },
         hearthBonus: null, hearthCooldown: 0,
-        bagResources: null
+        bagResources: null,
+        nameChanges: 0,
+        jewelry: { rings: [], amulets: [] }
     };
 };
 
@@ -144,7 +150,6 @@ Sherwood.addResource = function(type, amount) {
     if (!p) return;
     if (!p.resources) p.resources = {};
     
-    // Золото и серебро дублируем в Bag._resources
     if (type === 'gold' || type === 'silver') {
         if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag._resources) {
             Sherwood.Bag._resources[type] = (Sherwood.Bag._resources[type] || 0) + amount;
