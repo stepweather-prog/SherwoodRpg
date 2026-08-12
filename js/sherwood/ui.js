@@ -1995,7 +1995,47 @@ _arenaFlee: function() {
     this.arena(); 
 },
 // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
-    settings: function() { this._playSound('click'); var p=Sherwood.getPlayer(),nm=p?p.name:'Охотник',h='<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="'+nm+'" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;"><button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div><div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div><div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">Звуки</span><button onclick="SherwoodUI._toggleSound(' + !this._soundEnabled + ')" style="width:60px;height:30px;background:'+(this._soundEnabled?'#4caf50':'#555')+';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;'+(this._soundEnabled?'right:3px;':'left:3px;')+'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">Музыка</span><button onclick="SherwoodUI._toggleMusic(' + !this._musicEnabled + ')" style="width:60px;height:30px;background:'+(this._musicEnabled?'#4caf50':'#555')+';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;'+(this._musicEnabled?'right:3px;':'left:3px;')+'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div></div><button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">Выйти</button>'; this._openScreen('Настройки','settings',h); },
+    settings: function() { 
+    this._playSound('click'); 
+    var p = Sherwood.getPlayer();
+    var nm = p ? p.name : 'Охотник';
+    var nameChanges = p ? (p.nameChanges || 0) : 0;
+    
+    var h = '';
+    
+    h += '<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">';
+    h += '<div style="color:#fff;margin-bottom:8px;">Имя</div>';
+    h += '<div style="display:flex;gap:8px;">';
+    h += '<input id="pni" value="' + nm + '" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;">';
+    h += '<button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button>';
+    h += '</div>';
+    if (nameChanges === 0) {
+        h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">Первая смена имени — бесплатно</div>';
+    } else {
+        h += '<div style="color:#ffd700;font-size:0.7em;margin-top:4px;">Смена имени: 500 золота</div>';
+    }
+    h += '<div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
+    h += '</div>';
+    
+    h += '<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+    h += '<span style="color:#fff;">Звуки</span>';
+    h += '<button onclick="SherwoodUI._toggleSound(' + !this._soundEnabled + ')" style="width:60px;height:30px;background:' + (this._soundEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;' + (this._soundEnabled ? 'right:3px;' : 'left:3px;') + 'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button>';
+    h += '</div>';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h += '<span style="color:#fff;">Музыка</span>';
+    h += '<button onclick="SherwoodUI._toggleMusic(' + !this._musicEnabled + ')" style="width:60px;height:30px;background:' + (this._musicEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;' + (this._musicEnabled ? 'right:3px;' : 'left:3px;') + 'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button>';
+    h += '</div>';
+    h += '</div>';
+    
+    h += '<button onclick="SherwoodUI._saveProgress()" style="width:100%;background:#4caf50;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Сохранить прогресс</button>';
+    
+    h += '<button onclick="SherwoodUI._resetCharacter()" style="width:100%;background:#ff9800;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Сбросить персонажа (5000 золота)</button>';
+    
+    h += '<button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">Выйти</button>';
+    
+    this._openScreen('Настройки','settings',h);
+},
     _changePlayerName: function() { var inp=document.getElementById('pni'),st=document.getElementById('name-status'); if(!inp||!st) return; var nm=inp.value.trim(); if(!nm) { st.textContent='Пустое имя'; st.style.color='#f44336'; return; } var p=Sherwood.getPlayer(); if(p) { p.name=nm; Sherwood.saveGame(); if(Sherwood.Chat) Sherwood.Chat.setUsername(nm); st.textContent='Сохранено!'; st.style.color='#4caf50'; } },
     
     _toggleSound: function(en) { 
