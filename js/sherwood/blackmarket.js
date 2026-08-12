@@ -35,7 +35,6 @@ Sherwood.BlackMarket = {
         { id: 'ingot_chapter_14', name: 'Слиток главы 14', icon: 'assets/ingots resource crafting skin/ingot_chapter_14.png', chapter: 14 }
     ],
 
-    // Кольца по главам (для вкладки Ювелирка)
     _RINGS: [
         { id: 'ring_1', name: 'Кольцо главы 1', icon: 'assets/interface/ring_first_level.png', chapter: 1, price: 500, stats: { attack: 5, defense: 3 } },
         { id: 'ring_2', name: 'Кольцо главы 2', icon: 'assets/interface/ring_second_level.png', chapter: 2, price: 1000, stats: { attack: 10, defense: 6 } },
@@ -49,7 +48,6 @@ Sherwood.BlackMarket = {
         { id: 'ring_14', name: 'Кольцо главы 14', icon: 'assets/interface/the_ring_chapter_fourteen.png', chapter: 14, price: 60000, stats: { attack: 200, defense: 130 } }
     ],
 
-    // Амулеты по главам
     _AMULETS: [
         { id: 'amulet_1', name: 'Амулет главы 1', icon: 'assets/interface/sherwood_amulet_level_one.png', chapter: 1, price: 500, stats: { hp: 50, defense: 3 } },
         { id: 'amulet_2', name: 'Амулет главы 2', icon: 'assets/interface/sherwood_amulet_level_two.png', chapter: 2, price: 1000, stats: { hp: 100, defense: 6 } },
@@ -131,7 +129,6 @@ Sherwood.BlackMarket = {
         return { success: true };
     },
 
-    // Получить доступные кольца для текущей главы
     getAvailableRings: function() {
         var player = Sherwood.getPlayer();
         var chapter = player.questProgress ? (player.questProgress.currentChapter || 1) : 1;
@@ -142,7 +139,6 @@ Sherwood.BlackMarket = {
         return available;
     },
 
-    // Получить доступные амулеты для текущей главы
     getAvailableAmulets: function() {
         var player = Sherwood.getPlayer();
         var chapter = player.questProgress ? (player.questProgress.currentChapter || 1) : 1;
@@ -153,7 +149,6 @@ Sherwood.BlackMarket = {
         return available;
     },
 
-        // Купить кольцо
     buyRing: function(ringId) {
         var ring = null;
         for (var i = 0; i < this._RINGS.length; i++) {
@@ -162,8 +157,13 @@ Sherwood.BlackMarket = {
         if (!ring) return { success: false, reason: 'Кольцо не найдено' };
         
         var player = Sherwood.getPlayer();
-        if ((player.resources.silver || 0) < ring.price) return { success: false, reason: 'Недостаточно серебра' };
         
+        if (!player.jewelry) player.jewelry = { rings: [], amulets: [] };
+        if (player.jewelry.rings.indexOf(ringId) !== -1) {
+            return { success: false, reason: 'Уже куплено' };
+        }
+        
+        if ((player.resources.silver || 0) < ring.price) return { success: false, reason: 'Недостаточно серебра' };
         Sherwood.spendResource('silver', ring.price);
         
         var item = {
@@ -175,21 +175,18 @@ Sherwood.BlackMarket = {
             grade: 'rare',
             type: 'equipment',
             quantity: 1,
-            sellPrice: Math.floor(ring.price * 0.3)
+            sellPrice: 0
         };
         
-        var oldRing = Sherwood.Bag._equipment.ring;
-        if (oldRing) {
-            Sherwood.Bag._inventory.push(oldRing);
-        }
         Sherwood.Bag._equipment.ring = item;
+        player.jewelry.rings.push(ringId);
+        
         if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
         Sherwood.Bag._save();
         Sherwood.saveGame();
         return { success: true };
     },
 
-    // Купить амулет
     buyAmulet: function(amuletId) {
         var amulet = null;
         for (var i = 0; i < this._AMULETS.length; i++) {
@@ -198,8 +195,13 @@ Sherwood.BlackMarket = {
         if (!amulet) return { success: false, reason: 'Амулет не найден' };
         
         var player = Sherwood.getPlayer();
-        if ((player.resources.silver || 0) < amulet.price) return { success: false, reason: 'Недостаточно серебра' };
         
+        if (!player.jewelry) player.jewelry = { rings: [], amulets: [] };
+        if (player.jewelry.amulets.indexOf(amuletId) !== -1) {
+            return { success: false, reason: 'Уже куплено' };
+        }
+        
+        if ((player.resources.silver || 0) < amulet.price) return { success: false, reason: 'Недостаточно серебра' };
         Sherwood.spendResource('silver', amulet.price);
         
         var item = {
@@ -211,14 +213,12 @@ Sherwood.BlackMarket = {
             grade: 'rare',
             type: 'equipment',
             quantity: 1,
-            sellPrice: Math.floor(amulet.price * 0.3)
+            sellPrice: 0
         };
         
-        var oldAmulet = Sherwood.Bag._equipment.amulet;
-        if (oldAmulet) {
-            Sherwood.Bag._inventory.push(oldAmulet);
-        }
         Sherwood.Bag._equipment.amulet = item;
+        player.jewelry.amulets.push(amuletId);
+        
         if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
         Sherwood.Bag._save();
         Sherwood.saveGame();
