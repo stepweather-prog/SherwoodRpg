@@ -2230,34 +2230,7 @@ _buyItem: function(i) {
     var self = this;
     setTimeout(function() { self.market(); }, 800);
 },
-_buyRing: function(ringId) {
-    var r = Sherwood.BlackMarket.buyRing(ringId);
-    var log = document.getElementById('market-log');
-    if (r.success) {
-        if (log) log.textContent = 'Кольцо куплено!';
-        this.updateDisplay();
-        this._playSound('loot_fly');
-    } else {
-        if (log) log.textContent = (r.reason || 'Ошибка');
-        this._showToast(r.reason || 'Ошибка');
-    }
-    var self = this;
-    setTimeout(function() { self.market(); }, 800);
-},
-_buyAmulet: function(amuletId) {
-    var r = Sherwood.BlackMarket.buyAmulet(amuletId);
-    var log = document.getElementById('market-log');
-    if (r.success) {
-        if (log) log.textContent = 'Амулет куплен!';
-        this.updateDisplay();
-        this._playSound('loot_fly');
-    } else {
-        if (log) log.textContent = (r.reason || 'Ошибка');
-        this._showToast(r.reason || 'Ошибка');
-    }
-    var self = this;
-    setTimeout(function() { self.market(); }, 800);
-},
+
         bag: function() {
     this._playSound('click');
     var bag = Sherwood.Bag;
