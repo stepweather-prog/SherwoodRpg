@@ -1322,12 +1322,12 @@ _handleQuestResult: function(r) {
             this._pendingRewards = { exp: ch ? ch.rewards.exp : 200, gold: ch ? ch.rewards.gold : 100, silver: ch ? ch.rewards.silver : 500, scrolls: scrolls };
             this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.quest(); };
             this._showVictoryScreen(this._pendingRewards);
-        } else if (r.stageComplete) {
+                } else if (r.stageComplete) {
             this._playSound('victory');
             this._stopMusic();
             var e = Sherwood.Quests._currentEnemy;
             this._pendingRewards = { exp: e ? e.exp : 30, gold: e ? e.gold : 15, silver: (e ? e.gold : 15) * 10 };
-            this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.loadHome(); };
+            this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.quest(); };
             this._showVictoryScreen(this._pendingRewards);
         }
     } else if (r.playerDead) {
