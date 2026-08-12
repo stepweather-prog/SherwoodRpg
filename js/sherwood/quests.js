@@ -351,10 +351,9 @@ Sherwood.Quests = {
                 this._currentChapter = null;
                 this._currentEnemy = null;
                 this._currentStage = 0;
-            } else {
+                        } else {
                 var nextEnemy = ch.enemies[this._currentStage];
                 this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
-                this._inBattle = false;
                 r.stageComplete = true;
             }
         } else {
