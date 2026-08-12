@@ -2037,7 +2037,43 @@ _arenaFlee: function() {
     this._openScreen('Настройки','settings',h);
 },
     _changePlayerName: function() { var inp=document.getElementById('pni'),st=document.getElementById('name-status'); if(!inp||!st) return; var nm=inp.value.trim(); if(!nm) { st.textContent='Пустое имя'; st.style.color='#f44336'; return; } var p=Sherwood.getPlayer(); if(p) { p.name=nm; Sherwood.saveGame(); if(Sherwood.Chat) Sherwood.Chat.setUsername(nm); st.textContent='Сохранено!'; st.style.color='#4caf50'; } },
+    _saveProgress: function() {
+    if (Sherwood.saveGameNow) {
+        Sherwood.saveGameNow();
+        this._showToast('Прогресс сохранён!');
+    } else if (Sherwood.saveGame) {
+        Sherwood.saveGame();
+        this._showToast('Прогресс сохранён!');
+    }
+},
+
+_resetCharacter: function() {
+    var p = Sherwood.getPlayer();
+    if (!p) return;
     
+    if ((p.resources.gold || 0) < 5000) {
+        this._showToast('Нужно 5000 золота для сброса');
+        return;
+    }
+    
+    if (!confirm('Сбросить персонажа за 5000 золота? Весь прогресс будет удалён!')) return;
+    
+    var remainingGold = (p.resources.gold || 0) - 5000;
+    var remainingSilver = p.resources.silver || 0;
+    
+    Sherwood._createNewPlayer();
+    p = Sherwood.getPlayer();
+    
+    p.resources.gold = remainingGold;
+    p.resources.silver = remainingSilver;
+    p.nameChanges = 0;
+    
+    Sherwood._recalcStats();
+    Sherwood.saveGameNow();
+    
+    this._showToast('Персонаж сброшен!');
+    this.loadHome();
+},
     _toggleSound: function(en) { 
     this._soundEnabled = en; this._saveAudioSettings(); 
     if (!en) { for (var k in this._sounds) { try { this._sounds[k].pause(); this._sounds[k].currentTime = 0; } catch(e) {} } }
