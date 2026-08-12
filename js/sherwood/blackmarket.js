@@ -178,11 +178,18 @@ Sherwood.BlackMarket = {
             sellPrice: Math.floor(ring.price * 0.3)
         };
         
-        Sherwood.Bag.addItem(item);
+                // Надеваем сразу в слот кольца
+        var oldRing = Sherwood.Bag._equipment.ring;
+        if (oldRing) {
+            // Возвращаем старое кольцо в инвентарь
+            Sherwood.Bag._inventory.push(oldRing);
+        }
+        Sherwood.Bag._equipment.ring = item;
+        if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
+        Sherwood.Bag._save();
         Sherwood.saveGame();
         return { success: true };
-    },
-
+},
     // Купить амулет
     buyAmulet: function(amuletId) {
         var amulet = null;
@@ -208,10 +215,17 @@ Sherwood.BlackMarket = {
             sellPrice: Math.floor(amulet.price * 0.3)
         };
         
-        Sherwood.Bag.addItem(item);
+                // Надеваем сразу в слот амулета
+        var oldAmulet = Sherwood.Bag._equipment.amulet;
+        if (oldAmulet) {
+            // Возвращаем старый амулет в инвентарь
+            Sherwood.Bag._inventory.push(oldAmulet);
+        }
+        Sherwood.Bag._equipment.amulet = item;
+        if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
+        Sherwood.Bag._save();
         Sherwood.saveGame();
         return { success: true };
-    },
 
     buyItem: function(shopIndex) {
         if (shopIndex < 0 || shopIndex >= this._shopItems.length) {
