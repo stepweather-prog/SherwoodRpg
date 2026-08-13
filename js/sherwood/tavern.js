@@ -29,6 +29,9 @@ Sherwood.Tavern = {
             this._dailyQuestsDone = 0;
             Sherwood.saveGame();
         }
+        
+        // Восстановление текущего квеста
+        this._restoreCurrentQuest();
     },
 
     _generateQuestIds: function(count) {
@@ -92,6 +95,7 @@ Sherwood.Tavern = {
         }
         
         this._currentQuest = quest;
+        this._saveCurrentQuest();
         return { success: true, quest: quest, mode: 'battle', enemy: quest.enemy };
     },
 
@@ -130,6 +134,7 @@ Sherwood.Tavern = {
         
         if (Math.random() < 0.10) Sherwood.addResource('scrolls', 1);
         
+        this._saveCurrentQuest();
         Sherwood.saveGame();
         this._checkSecretQuest();
         
@@ -141,8 +146,15 @@ Sherwood.Tavern = {
         return this._completeQuest();
     },
 
-    failQuest: function() { this._currentQuest = null; },
-    cancelQuest: function() { this._currentQuest = null; },
+    failQuest: function() { 
+        this._currentQuest = null; 
+        this._saveCurrentQuest();
+    },
+    
+    cancelQuest: function() { 
+        this._currentQuest = null; 
+        this._saveCurrentQuest();
+    },
 
     getCompletedCount: function() { return this._completedQuests.length; },
     isOnCooldown: function() { return Date.now() < this._cooldownEnd; },
@@ -163,5 +175,19 @@ Sherwood.Tavern = {
 
     checkSecretQuest: function() { return this._secretQuestUnlocked; },
     getDailyQuestsDone: function() { return this._dailyQuestsDone; },
-    getMaxDailyQuests: function() { return this._maxDailyQuests; }
+    getMaxDailyQuests: function() { return this._maxDailyQuests; },
+
+    _saveCurrentQuest: function() {
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+        if (!p.tavern) p.tavern = {};
+        p.tavern.currentQuest = this._currentQuest ? JSON.parse(JSON.stringify(this._currentQuest)) : null;
+        Sherwood.saveGame();
+    },
+
+    _restoreCurrentQuest: function() {
+        var p = Sherwood.getPlayer();
+        if (!p || !p.tavern || !p.tavern.currentQuest) return;
+        this._currentQuest = p.tavern.currentQuest;
+    }
 };
