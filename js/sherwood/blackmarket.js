@@ -61,17 +61,22 @@ Sherwood.BlackMarket = {
         var today = new Date().toDateString();
         
         if (!player.marketData) player.marketData = {};
-        if (player.marketData.lastRefreshDate !== today) {
+        
+        var isNewDay = player.marketData.lastRefreshDate !== today;
+        
+        if (isNewDay) {
             player.marketData.lastRefreshDate = today;
             player.marketData.purchasedToday = {};
             player.marketData.refreshCountToday = 0;
+            this._purchasedToday = {};
+            this._refreshCountToday = 0;
             Sherwood.saveGame();
+        } else {
+            this._purchasedToday = player.marketData.purchasedToday || {};
+            this._refreshCountToday = player.marketData.refreshCountToday || 0;
         }
         
-        this._purchasedToday = player.marketData.purchasedToday || {};
-        this._refreshCountToday = player.marketData.refreshCountToday || 0;
-        
-        if (!player.marketData.shopItems || player.marketData.lastRefreshDate !== today) {
+        if (!player.marketData.shopItems || player.marketData.shopItems.length === 0 || isNewDay) {
             this._refreshShop();
         } else {
             this._shopItems = player.marketData.shopItems;
