@@ -81,7 +81,12 @@ Sherwood._ensureDefaults = function() {
         hearthBonus: null, hearthCooldown: 0,
         bagResources: null,
         nameChanges: 0,
-        jewelry: { rings: [], amulets: [] }
+        jewelry: { rings: [], amulets: [] },
+        dungeonProgress: null,
+        activeDungeon: null,
+        marketData: null,
+        questAttempts: null,
+        wallet: null
     };
 
     for (var key in defaults) {
@@ -110,6 +115,27 @@ Sherwood._ensureDefaults = function() {
     if (!p.activeSkin) p.activeSkin = 'skin1_01';
     if (!p.nameChanges && p.nameChanges !== 0) p.nameChanges = 0;
     if (!p.jewelry) p.jewelry = { rings: [], amulets: [] };
+
+    // Новые поля
+    if (!p.dungeonProgress) {
+        p.dungeonProgress = { 
+            forest: { level: 1, cups: {} },
+            swamp: { level: 1, cups: {} },
+            cave: { level: 1, cups: {} }
+        };
+    }
+    if (!p.marketData) p.marketData = {};
+    if (p.activeDungeon === undefined) p.activeDungeon = null;
+    if (!p.questAttempts) p.questAttempts = { today: 0, lastDate: '', freeAccel: false, accelUsed: 0, lastAttempt: 0 };
+    if (!p.wallet) p.wallet = { cells: [], totalSilver: 0 };
+    
+    // Проверка таймеров
+    if (p.hearthBonus && p.hearthBonus.endTime && Date.now() > p.hearthBonus.endTime) {
+        p.hearthBonus = null;
+    }
+    if (p.hearthCooldown && Date.now() > p.hearthCooldown) {
+        p.hearthCooldown = 0;
+    }
 };
 
 Sherwood._createNewPlayer = function() {
@@ -136,8 +162,22 @@ Sherwood._createNewPlayer = function() {
         hearthBonus: null, hearthCooldown: 0,
         bagResources: null,
         nameChanges: 0,
-        jewelry: { rings: [], amulets: [] }
+        jewelry: { rings: [], amulets: [] },
+        dungeonProgress: {
+            forest: { level: 1, cups: {} },
+            swamp: { level: 1, cups: {} },
+            cave: { level: 1, cups: {} }
+        },
+        activeDungeon: null,
+        marketData: {},
+        questAttempts: { today: 0, lastDate: '', freeAccel: false, accelUsed: 0, lastAttempt: 0 },
+        wallet: { cells: [], totalSilver: 0 }
     };
+    
+    // Инициализация кошелька
+    this._player.wallet.cells = [];
+    for (var i = 0; i < 30; i++) this._player.wallet.cells.push(0);
+    this._player.wallet.totalSilver = 0;
 };
 
 // ============================================================
@@ -469,7 +509,9 @@ Sherwood.Bag = {
         this._maxSlots = 10 + this._expansionLevel * 10;
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
-            player.unlockedSkins = ['skin1_01']; player.activeSkin = 'skin1_01'; Sherwood.saveGame();
+            player.unlockedSkins = ['skin1_01'];
+            player.activeSkin = 'skin1_01';
+            Sherwood.saveGame();
         }
         
         if (player.bagResources) {
@@ -488,7 +530,7 @@ Sherwood.Bag = {
             var item = this._inventory[i];
             var resKey = this._resourceIds[item.id];
             if (resKey) {
-                this._resources[resKey] += item.quantity || 1;
+                this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
                 this._inventory.splice(i, 1);
             }
         }
@@ -570,7 +612,7 @@ Sherwood.Bag = {
         
         var resKey = this._resourceIds[item.id];
         if (resKey) {
-            this._resources[resKey] += item.quantity || 1;
+            this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
             this._save();
             Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
             return true;
@@ -756,7 +798,9 @@ Sherwood.Bag = {
 // ============================================================
 
 Sherwood.init = function() {
-    this.getPlayer(); this._recalcStats();
+    this.getPlayer(); 
+    this._recalcStats();
+    
     var subsystems = ['Dungeon', 'Bag', 'Quests', 'Tavern', 'Daily', 'Portal', 'Forge', 'Raid', 'Arena', 'BlackMarket', 'Chat', 'Bestiary', 'Combat'];
     for (var i = 0; i < subsystems.length; i++) {
         var name = subsystems[i];
@@ -764,8 +808,18 @@ Sherwood.init = function() {
             try { Sherwood[name].init(); } catch(e) { console.warn('Ошибка ' + name + ':', e); }
         }
     }
+    
     this.dispatch({ type: 'GAME_INITIALIZED' });
     console.log('🏹 Sherwood RPG готов!');
 };
 
-document.addEventListener('DOMContentLoaded', function() { if (typeof Sherwood !== 'undefined' && Sherwood.init) Sherwood.init(); });
+// Сохранение при закрытии вкладки
+window.addEventListener('beforeunload', function() {
+    if (Sherwood._player) {
+        try { localStorage.setItem(Sherwood._saveKey, JSON.stringify(Sherwood._player)); } catch(e) {}
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() { 
+    if (typeof Sherwood !== 'undefined' && Sherwood.init) Sherwood.init(); 
+});
