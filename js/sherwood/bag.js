@@ -43,12 +43,15 @@ Sherwood.Bag = {
         this._expansionLevel = player.bagExpansion || 0;
         this._maxSlots = 10 + this._expansionLevel * 10;
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
+        
+        // ИСПРАВЛЕНО: используем правильный ID скина
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
-            player.unlockedSkins = ['skin_1_basic'];
-            player.activeSkin = 'skin_1_basic';
+            player.unlockedSkins = ['skin1_01'];
+            player.activeSkin = 'skin1_01';
             Sherwood.saveGame();
         }
         
+        // Восстановление ресурсов
         if (player.bagResources) {
             this._resources = player.bagResources;
             if (this._resources.gold === undefined) this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
@@ -61,15 +64,17 @@ Sherwood.Bag = {
             this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
         }
         
+        // Конвертация ресурсных предметов из инвентаря
         for (var i = this._inventory.length - 1; i >= 0; i--) {
             var item = this._inventory[i];
             var resKey = this._resourceIds[item.id];
             if (resKey) {
-                this._resources[resKey] += item.quantity || 1;
+                this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
                 this._inventory.splice(i, 1);
             }
         }
         
+        // Установка maxStack
         for (var i = 0; i < this._inventory.length; i++) {
             if (!this._inventory[i].maxStack || this._inventory[i].maxStack < 100) {
                 this._inventory[i].maxStack = 100;
@@ -147,7 +152,7 @@ Sherwood.Bag = {
         
         var resKey = this._resourceIds[item.id];
         if (resKey) {
-            this._resources[resKey] += item.quantity || 1;
+            this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
             this._save();
             Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
             return true;
