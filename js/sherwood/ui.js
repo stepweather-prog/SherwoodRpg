@@ -42,28 +42,49 @@ const SherwoodUI = {
 
     init: function() {
     this._mainElements = ['.bg-layer', '.portal-video-bg', '.arch-layer', '.hero-layer', '.top-panel', '.left-buttons-column', '.right-buttons-column', '.bottom-stats'];
-    this.container = document.getElementById('game-container'); if (!this.container) return;
-    this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
+    this.container = document.getElementById('game-container'); 
+    if (!this.container) return;
+    
+    this._screenLayer = document.createElement('div'); 
+    this._screenLayer.id = 'screen-layer';
     this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
     this.container.appendChild(this._screenLayer);
+    
     try { this._initSounds(); } catch(e) {}
     this.bindPlayButton();
+    
+    // ЗАГРУЗКА НАСТРОЕК ДО МУЗЫКИ
+    try { this._loadAudioSettings(); } catch(e) {}
+    
+    // ОБНОВЛЕНИЕ СКИНА
+    this._updateHeroSkin();
+    
     try {
         var silverEl = document.getElementById('silver-display');
         if (silverEl) {
             silverEl.parentElement.style.cursor = 'pointer';
-            silverEl.parentElement.onclick = function() {
-                SherwoodUI._showExchangePanel();
-            };
+            silverEl.parentElement.onclick = function() { SherwoodUI._showExchangePanel(); };
         }
     } catch(e) {}
-    try { this._playMusic('main_theme'); } catch(e) {}
+    
+    // МУЗЫКА ТОЛЬКО ЕСЛИ ВКЛЮЧЕНА
+    if (this._musicEnabled) {
+        try { this._playMusic('main_theme'); } catch(e) {}
+    }
+    
     try { this.updateDisplay(); } catch(e) {}
+    
     if (typeof Sherwood !== 'undefined') {
         try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {}
         try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {}
     }
-    try { this._loadAudioSettings(); } catch(e) {}
+    
+    // СОХРАНЕНИЕ ПРИ ЗАКРЫТИИ
+    window.addEventListener('beforeunload', function() {
+        if (typeof Sherwood !== 'undefined' && Sherwood.saveGameNow) {
+            Sherwood.saveGameNow();
+        }
+    });
     
     this._scaleGame();
     window.addEventListener('resize', function() { SherwoodUI._scaleGame(); });
@@ -89,7 +110,15 @@ _scaleGame: function() {
     }
 },
 
-
+_updateHeroSkin: function() {
+    try {
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+        var skin = p.activeSkin || 'skin1_01';
+        var heroImg = document.querySelector('.hero-layer img');
+        if (heroImg) heroImg.src = 'assets/hero_skins/' + skin + '.png';
+    } catch(e) {}
+},
 updateDisplay: function() {
     var p = Sherwood.getPlayer(); if (!p) return;
     try { var el = document.getElementById('gold-display'); if (el) el.textContent = p.resources.gold || 0; } catch(e) {}
@@ -227,6 +256,15 @@ loadHome: function() {
             }, 15000);
         }
     } catch(e) {}
+    
+    // Обновление скина при возврате на главную
+    this._updateHeroSkin();
+    
+    // Музыка если включена и не играет
+    if (this._musicEnabled && !this._currentMusic) {
+        try { this._playMusic('main_theme'); } catch(e) {}
+    }
+    
     try { this.updateDisplay(); } catch(e) {}
 },
 
