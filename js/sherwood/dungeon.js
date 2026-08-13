@@ -10,22 +10,29 @@ Sherwood.Dungeon = {
     _autoFightLevel: 0,
 
     init: function() {
-        var saved = localStorage.getItem('sherwood_dungeon_progress');
-        if (saved) {
-            this._progress = JSON.parse(saved);
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+        
+        // Загрузка прогресса из игрока (не из отдельного localStorage)
+        if (p.dungeonProgress) {
+            this._progress = p.dungeonProgress;
         } else {
             this._progress = { 
                 forest: { level: 1, cups: {} },
                 swamp: { level: 1, cups: {} },
                 cave: { level: 1, cups: {} }
             };
+            p.dungeonProgress = this._progress;
+            Sherwood.saveGame();
         }
+        
         for (var id in this._progress) {
             if (!this._progress[id].cups) this._progress[id].cups = {};
         }
+        
         this._startTicketRegeneration();
         
-        var p = Sherwood.getPlayer();
+        // Восстановление автобоя
         if (p && p.dungeon && p.dungeon.autoFight) {
             var af = p.dungeon.autoFight;
             if (af.active && af.endTime > Date.now()) {
@@ -38,6 +45,9 @@ Sherwood.Dungeon = {
                 this._completeAutoFight(af.dungeonId, af.level);
             }
         }
+        
+        // Восстановление текущего подземелья
+        this._restoreDungeon();
     },
 
     _startTicketRegeneration: function() {
@@ -93,7 +103,29 @@ Sherwood.Dungeon = {
         var currentCups = this._progress[dungeonId].cups[level] || 0;
         if (currentCups < 5) {
             this._progress[dungeonId].cups[level] = currentCups + 1;
-            localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
+            this._saveProgress();
+        }
+    },
+
+    _saveProgress: function() {
+        var p = Sherwood.getPlayer();
+        if (p) {
+            p.dungeonProgress = this._progress;
+            Sherwood.saveGame();
+        }
+    },
+
+    _restoreDungeon: function() {
+        var p = Sherwood.getPlayer();
+        if (!p || !p.activeDungeon) return;
+        this._dungeon = p.activeDungeon;
+    },
+
+    _saveDungeon: function() {
+        var p = Sherwood.getPlayer();
+        if (p) {
+            p.activeDungeon = this._dungeon;
+            Sherwood.saveGame();
         }
     },
 
@@ -281,6 +313,8 @@ Sherwood.Dungeon = {
             chestPlaced: false,
             collectedLoot: []
         };
+        
+        this._saveDungeon();
         return this._dungeon;
     },
 
@@ -296,23 +330,27 @@ Sherwood.Dungeon = {
         d.py = ty;
 
         if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
+            this._saveDungeon();
             return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
         }
-        if (cell.chest && !cell.looted) return { ok: true, type: 'chest' };
-        if (cell.altar && !cell.altarCollected) return { ok: true, type: 'altar' };
-        if (cell.cauldron && !cell.cauldronCollected) return { ok: true, type: 'cauldron' };
-        if (cell.potion && !cell.potionCollected) return { ok: true, type: 'potion' };
-        if (cell.lootBag && !cell.lootCollected) return { ok: true, type: 'lootBag' };
+        if (cell.chest && !cell.looted) { this._saveDungeon(); return { ok: true, type: 'chest' }; }
+        if (cell.altar && !cell.altarCollected) { this._saveDungeon(); return { ok: true, type: 'altar' }; }
+        if (cell.cauldron && !cell.cauldronCollected) { this._saveDungeon(); return { ok: true, type: 'cauldron' }; }
+        if (cell.potion && !cell.potionCollected) { this._saveDungeon(); return { ok: true, type: 'potion' }; }
+        if (cell.lootBag && !cell.lootCollected) { this._saveDungeon(); return { ok: true, type: 'lootBag' }; }
         if (cell.exit) {
             if (cell.locked) {
                 if (d.monstersKilled >= d.minToKill) {
                     cell.locked = false;
+                    this._saveDungeon();
                     return { ok: true, type: 'exit' };
                 }
                 return { ok: true, type: 'exit_locked' };
             }
             return { ok: true, type: 'exit' };
         }
+        
+        this._saveDungeon();
         return { ok: true, type: 'move' };
     },
 
@@ -354,6 +392,8 @@ Sherwood.Dungeon = {
                 }
             }
         }
+        
+        this._saveDungeon();
     },
 
     complete: function() {
@@ -376,7 +416,7 @@ Sherwood.Dungeon = {
         var cups = prog.cups[d.level] || 0;
         if (cups >= 3 && d.level >= prog.level) {
             prog.level = Math.min(9, d.level + 1);
-            localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
+            this._saveProgress();
         }
 
         if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
@@ -405,10 +445,25 @@ Sherwood.Dungeon = {
         var dungeonLevel = d.level;
         
         this._dungeon = null;
+        
+        // Очистка сохранённого подземелья
+        var p = Sherwood.getPlayer();
+        if (p) {
+            p.activeDungeon = null;
+            Sherwood.saveGame();
+        }
+        
         return { gold: gold, silver: silver, exp: exp, items: items, dungeonId: dungeonId, dungeonLevel: dungeonLevel };
     },
 
-    leave: function() { this._dungeon = null; },
+    leave: function() { 
+        this._dungeon = null; 
+        var p = Sherwood.getPlayer();
+        if (p) {
+            p.activeDungeon = null;
+            Sherwood.saveGame();
+        }
+    },
     
     isAutoFightActive: function() {
         return this._autoFightActive;
