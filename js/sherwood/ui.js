@@ -2915,39 +2915,90 @@ _equipSkin: function(sid) {
 },
 
 bestiary: function() { 
-    var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
-    if(!Sherwood.Bestiary) { this._showPlaceholder('Бестиарий','bestiary',gb); return; } 
-    var progress=Sherwood.Bestiary.getDiscoveryProgress();
-    var tabs=['Проклятая чаща','Первородное болото','Базальтовые шахты','Квест','Рейд','Портал'];
+    var gb = this._previousScreen === 'profile' ? 'SherwoodUI.profile()' : 'SherwoodUI.loadHome();'; 
+    this._previousScreen = null; 
+    this._playSound('click'); 
+    if (!Sherwood.Bestiary) { this._showPlaceholder('Бестиарий', 'bestiary', gb); return; } 
+    
+    var progress = Sherwood.Bestiary.getDiscoveryProgress();
+    var tabs = ['Проклятая чаща', 'Первородное болото', 'Базальтовые шахты', 'Квест', 'Рейд', 'Портал'];
     if (!this._bestiaryTab) this._bestiaryTab = 0;
     
-    var h = '<div style="text-align:center;margin-bottom:8px;color:#aaa;">Открыто: '+progress.discovered+'/'+progress.total+' ('+progress.percent+'%)</div>';
-    h += '<div style="background:rgba(0,0,0,0.3);border-radius:6px;height:10px;margin-bottom:8px;overflow:hidden;"><div style="background:#c9a040;height:100%;width:'+progress.percent+'%;"></div></div>';
+    var h = '';
     
-    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
-    for (var t=0; t<tabs.length; t++) {
+    h += '<div style="text-align:center;margin-bottom:8px;color:#aaa;">Открыто: ' + progress.discovered + '/' + progress.total + ' (' + progress.percent + '%)</div>';
+    h += '<div style="background:rgba(0,0,0,0.3);border-radius:6px;height:10px;margin-bottom:8px;overflow:hidden;"><div style="background:#c9a040;height:100%;width:' + progress.percent + '%;"></div></div>';
+    
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px;justify-content:center;">';
+    for (var t = 0; t < tabs.length; t++) {
         var active = (this._bestiaryTab === t) ? '#c9a040' : 'rgba(255,255,255,0.1)';
         var color = (this._bestiaryTab === t) ? '#000' : '#fff';
-        h += '<button onclick="SherwoodUI._bestiaryTab='+t+';SherwoodUI.bestiary();" style="background:'+active+';border:1px solid #555;border-radius:6px;padding:4px 10px;color:'+color+';cursor:pointer;font-size:0.7em;">'+tabs[t]+'</button>';
+        h += '<button onclick="SherwoodUI._bestiaryTab=' + t + ';SherwoodUI.bestiary();" style="background:' + active + ';border:1px solid #555;border-radius:6px;padding:4px 10px;color:' + color + ';cursor:pointer;font-size:0.7em;">' + tabs[t] + '</button>';
     }
     h += '</div>';
     
     var beasts = Sherwood.Bestiary.getBeastsByZone(tabs[this._bestiaryTab]);
-    if (beasts.length === 0) {
-        h += '<div style="color:#aaa;text-align:center;">Нет бестий</div>';
-    }
     
-    for (var i=0; i<beasts.length; i++) {
-        var b = beasts[i], disc = b.kills > 0;
-        h += '<div onclick="SherwoodUI._showBeastInfo(\''+b.id+'\')" style="background:rgba(0,0,0,0.5);border:1px solid '+(disc?'#4caf50':'#555')+';border-radius:10px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">';
-        h += '<img src="assets/all_beasts/'+b.id+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-        h += '<div style="flex:1;"><div style="color:'+(disc?'#fff':'#888')+';">'+(disc?b.name:'???')+'</div><div style="color:#aaa;font-size:0.6em;">'+b.floor+' | '+b.type+'</div><div style="color:#aaa;font-size:0.6em;">Убито: '+b.kills+'</div></div>';
-        if (disc && !b.rewardClaimed) h += '<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="background:#ff9800;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-size:0.6em;">+'+b.reward+' Сер.</button>';
-        if (disc && b.rewardClaimed) h += '<span style="color:#4caf50;font-size:0.6em;">Получено</span>';
+    if (beasts.length === 0) {
+        h += '<div style="color:#aaa;text-align:center;padding:40px 0;">Нет бестий в этом разделе</div>';
+    } else {
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:24px;">';
+        
+        for (var i = 0; i < beasts.length; i++) {
+            var b = beasts[i];
+            var disc = b.kills > 0;
+            
+            h += '<div onclick="SherwoodUI._showBeastInfo(\'' + b.id + '\')" style="cursor:pointer;text-align:center;width:100%;max-width:320px;">';
+            
+            // КРУПНАЯ КАРТА БЕСТИИ
+            h += '<div style="position:relative;width:240px;height:240px;margin:0 auto;border-radius:16px;overflow:hidden;border:2px solid ' + (disc ? '#c9a040' : '#555') + ';background:rgba(0,0,0,0.5);' + (disc ? 'box-shadow:0 0 20px rgba(201,160,64,0.4);' : '') + '">';
+            
+            // Картинка
+            h += '<img src="assets/all_beasts/' + b.id + '" style="width:100%;height:100%;object-fit:contain;' + (disc ? '' : 'filter:grayscale(1);opacity:0.4;') + '" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            
+            // Затемнение если не открыт
+            if (!disc) {
+                h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">';
+                h += '<span style="color:#fff;font-size:2.5em;text-shadow:0 0 10px #000;">?</span>';
+                h += '</div>';
+            }
+            
+            // Количество убийств
+            if (disc && b.kills > 0) {
+                h += '<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.8);border-radius:10px;padding:2px 8px;color:#fff;font-size:0.6em;">x' + b.kills + '</div>';
+            }
+            
+            h += '</div>';
+            
+            // КРУПНОЕ НАЗВАНИЕ
+            h += '<div style="color:' + (disc ? '#e0c080' : '#666') + ';font-size:1.2em;font-weight:bold;margin-top:10px;text-shadow:' + (disc ? '0 0 10px rgba(201,160,64,0.6)' : 'none') + ';">';
+            h += (disc ? b.name : '???');
+            h += '</div>';
+            
+            // Инфо
+            h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">';
+            h += b.floor + ' | ' + b.type;
+            h += '</div>';
+            
+            // Кнопка награды
+            if (disc && !b.rewardClaimed) {
+                h += '<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\'' + b.id + '\')" style="margin-top:6px;background:#ff9800;border:none;border-radius:6px;padding:6px 16px;color:#fff;cursor:pointer;font-size:0.65em;">Забрать +' + b.reward + ' Сер.</button>';
+            } else if (disc && b.rewardClaimed) {
+                h += '<div style="color:#4caf50;font-size:0.65em;margin-top:6px;">✓ Награда получена</div>';
+            }
+            
+            h += '</div>';
+        }
+        
         h += '</div>';
     }
     
-    this._openScreen('Бестиарий','bestiary',h,gb); 
+    var bgImage = 'assets/backgrounds/character_page.jpeg';
+    
+    if (this._screenLayer) { 
+        this._screenLayer.innerHTML = '<div style="height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="' + gb + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Бестиарий</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;-webkit-overflow-scrolling:touch;">' + h + '</div></div>'; 
+        this._screenLayer.style.display = 'block'; 
+    }
 },
 
 _showBeastInfo: function(beastId) { 
