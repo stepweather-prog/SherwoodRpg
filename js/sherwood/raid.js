@@ -334,21 +334,20 @@ Sherwood.Raid = {
             existingTrophy.bonus.hp += bonusHpPerKill;
             existingTrophy.acquiredAt = Date.now();
         } else {
-            // Создаём новый трофей
-            player.trophies.push({
-                id: trophyId,
-                name: 'Узы Вечности',
-                icon: 'assets/all_trophies/bonds_of_eternity.png',
-                category: 'raid',
-                kills: 1,
-                bonus: {
-                    attack: baseBonus,
-                    defense: baseBonus,
-                    hp: 500
-                },
-                acquiredAt: Date.now()
-            });
-        }
+    player.trophies.push({
+        id: trophyId,
+        name: 'Узы Вечности',
+        icon: 'assets/all_trophies/bonds_of_eternity.png',
+        category: 'raid',
+        kills: 1,
+        bonus: {
+            attack: 10,
+            defense: 10,
+            hp: 10
+        },
+        acquiredAt: Date.now()
+    });
+}
         
         // Пересчитываем статы
         if (typeof Sherwood._recalcStats === 'function') {
