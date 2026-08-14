@@ -17,6 +17,7 @@ Sherwood.BlackMarket = {
         { id: 'portal_token_2', name: 'Токен портала II', icon: 'assets/interface/resource_token_on_entrance_portal_2.png', price: 750, currency: 'silver', gives: { portalToken2: 1 }, quantity: 1, desc: '+1 токен' },
         { id: 'portal_token_3', name: 'Токен портала III', icon: 'assets/interface/resource_token_on_entrance_portal_3.png', price: 1000, currency: 'silver', gives: { portalToken3: 1 }, quantity: 1, desc: '+1 токен' },
         { id: 'wood', name: 'Древесина', icon: 'assets/interface/resource_wood.png', price: 100, currency: 'silver', gives: { wood: 20 }, quantity: 20, desc: '+20 древесины' },
+       { id: 'arena_ticket', name: 'Тикет арены', icon: 'assets/interface/ticket_arena.png', price: 200, currency: 'gold', gives: { arenaTickets: 5 }, quantity: 5, desc: '+5 тикетов арены' },
     ],
 
     _INGOT_TYPES: [
@@ -251,34 +252,39 @@ Sherwood.BlackMarket = {
         Sherwood.spendResource(currency, item.price);
 
         if (item.gives) {
-            for (var res in item.gives) {
-                if (item.gives.hasOwnProperty(res)) {
-                    var amount = item.gives[res];
-                    
-                    if (res === 'wood' || res === 'branches' || res === 'bones' || res === 'feathers') {
-                        var itemDefs = {
-                            wood: { id: 'wood', name: 'Дерево', icon: 'assets/interface/resource_wood.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 2 },
-                            branches: { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 },
-                            bones: { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 },
-                            feathers: { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 }
-                        };
-                        var def = itemDefs[res];
-                        if (def) Sherwood.Bag.addItem(Object.assign({}, def, { quantity: amount }));
-                    } else if (res === 'skins' || res === 'entranceTickets' || res === 'autoFightTickets' || res === 'portalToken1' || res === 'portalToken2' || res === 'portalToken3') {
-                        Sherwood.Bag.addResource(res, amount);
-                    } else if (res === 'ingots') {
-                        player.resources.ingots = (player.resources.ingots || 0) + amount;
-                    }
-                }
+    for (var res in item.gives) {
+        if (item.gives.hasOwnProperty(res)) {
+            var amount = item.gives[res];
+            
+            if (res === 'wood' || res === 'branches' || res === 'bones' || res === 'feathers') {
+                var itemDefs = {
+                    wood: { id: 'wood', name: 'Дерево', icon: 'assets/interface/resource_wood.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 2 },
+                    branches: { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 },
+                    bones: { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 },
+                    feathers: { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 }
+                };
+                var def = itemDefs[res];
+                if (def) Sherwood.Bag.addItem(Object.assign({}, def, { quantity: amount }));
+            } else if (res === 'skins' || res === 'entranceTickets' || res === 'autoFightTickets' || res === 'portalToken1' || res === 'portalToken2' || res === 'portalToken3') {
+                Sherwood.Bag.addResource(res, amount);
+            } else if (res === 'ingots') {
+                player.resources.ingots = (player.resources.ingots || 0) + amount;
+            } else if (res === 'arenaTickets') {
+                Sherwood.Arena._tickets += amount;
+                if (!player.arena) player.arena = {};
+                player.arena.tickets = Sherwood.Arena._tickets;
+                player.arena.boughtExtraToday = true;
+                Sherwood.saveGame();
             }
         }
+    }
+}
 
-        this._purchasedToday[item.id] = true;
-        player.marketData.purchasedToday = this._purchasedToday;
-        Sherwood.saveGame();
-        return { success: true, item: item };
-    },
-
+this._purchasedToday[item.id] = true;
+player.marketData.purchasedToday = this._purchasedToday;
+Sherwood.saveGame();
+return { success: true, item: item };
+},
     isPurchased: function(shopIndex) {
         if (shopIndex < 0 || shopIndex >= this._shopItems.length) return true;
         return !!this._purchasedToday[this._shopItems[shopIndex].id];
