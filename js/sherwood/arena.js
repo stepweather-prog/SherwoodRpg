@@ -1,5 +1,6 @@
 /**
  * Sherwood Arena — PvP Арена
+ * С тикетами на вход
  */
 
 Sherwood.Arena = {
@@ -9,6 +10,8 @@ Sherwood.Arena = {
     _wins: 0,
     _losses: 0,
     _rank: 'Новичок',
+    _tickets: 15,
+    _maxTickets: 15,
 
     RANKS: ['Новичок', 'Боец', 'Ветеран', 'Мастер', 'Чемпион', 'Легенда'],
     RANK_THRESHOLDS: [0, 10, 30, 60, 100, 200],
@@ -18,8 +21,21 @@ Sherwood.Arena = {
         var player = Sherwood.getPlayer();
         if (!player) return;
         if (!player.arena) {
-            player.arena = { wins: 0, losses: 0, rank: 'Новичок' };
+            player.arena = { wins: 0, losses: 0, rank: 'Новичок', tickets: 15, maxTickets: 15, lastTicketDate: '', boughtExtraToday: false };
         }
+        
+        var today = new Date().toDateString();
+        
+        // Проверка даты для ежедневных тикетов
+        if (player.arena.lastTicketDate !== today) {
+            player.arena.tickets = player.arena.maxTickets || 15;
+            player.arena.lastTicketDate = today;
+            player.arena.boughtExtraToday = false;
+            Sherwood.saveGame();
+        }
+        
+        this._tickets = player.arena.tickets || 15;
+        this._maxTickets = player.arena.maxTickets || 15;
         this._wins = player.arena.wins || 0;
         this._losses = player.arena.losses || 0;
         this._rank = player.arena.rank || 'Новичок';
@@ -76,8 +92,25 @@ Sherwood.Arena = {
             nextRank: nextRank,
             nextThreshold: nextThreshold,
             progress: progress,
-            totalMatches: this._wins + this._losses
+            totalMatches: this._wins + this._losses,
+            tickets: this._tickets,
+            maxTickets: this._maxTickets
         };
+    },
+
+    getTickets: function() {
+        return this._tickets;
+    },
+
+    spendTicket: function() {
+        if (this._tickets <= 0) return false;
+        this._tickets--;
+        var player = Sherwood.getPlayer();
+        if (player && player.arena) {
+            player.arena.tickets = this._tickets;
+            Sherwood.saveGame();
+        }
+        return true;
     },
 
     refreshOpponents: function() {
@@ -87,5 +120,34 @@ Sherwood.Arena = {
 
     isInMatch: function() {
         return this._inMatch;
+    },
+
+    canBuyExtraTickets: function() {
+        var player = Sherwood.getPlayer();
+        if (!player || !player.arena) return false;
+        return !player.arena.boughtExtraToday;
+    },
+
+    buyExtraTickets: function() {
+        var player = Sherwood.getPlayer();
+        if (!player || !player.arena) return { success: false, reason: 'Игрок не найден' };
+        
+        if (player.arena.boughtExtraToday) {
+            return { success: false, reason: 'Доп. тикеты уже куплены сегодня' };
+        }
+        
+        if ((player.resources.gold || 0) < 200) {
+            return { success: false, reason: 'Нужно 200 золота' };
+        }
+        
+        player.resources.gold -= 200;
+        this._tickets += 5;
+        this._maxTickets += 5;
+        player.arena.tickets = this._tickets;
+        player.arena.maxTickets = this._maxTickets;
+        player.arena.boughtExtraToday = true;
+        Sherwood.saveGame();
+        
+        return { success: true, ticketsAdded: 5, newTotal: this._tickets };
     }
 };
