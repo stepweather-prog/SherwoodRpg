@@ -2616,26 +2616,17 @@ _addWalletSilver: function(amount) {
     var activeSkin = p.activeSkin || 'skin1_01';
     var unlockedSkins = p.unlockedSkins || ['skin1_01'];
 
-    var tabContent = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;">';
-    for (var i = 0; i < unlockedSkins.length; i++) {
-        var sid = unlockedSkins[i];
-        var isActive = activeSkin === sid;
-        tabContent += '<div style="background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#ffd700' : '#4caf50') + ';border-radius:8px;padding:8px;text-align:center;">';
-        tabContent += '<img src="assets/hero_skins/' + sid + '.png" style="width:56px;height:56px;object-fit:contain;border-radius:4px;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">';
-        tabContent += '<div style="color:#e0c080;font-size:0.6em;margin-top:4px;">' + (Sherwood.SKIN_BONUSES[sid] ? Sherwood.SKIN_BONUSES[sid].name : sid) + '</div>';
-        if (isActive) {
-            tabContent += '<div style="color:#ffd700;font-size:0.55em;">Активен</div>';
-        } else {
-            tabContent += '<button onclick="SherwoodUI._equipSkinFromProfile(\'' + sid + '\')" style="margin-top:4px;background:#4caf50;border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:0.55em;">Надеть</button>';
-        }
-        tabContent += '</div>';
-    }
-    tabContent += '</div>';
-
     var h = '<div style="text-align:center;margin-bottom:12px;">';
+    h += '<div onclick="SherwoodUI._showSkinSelection()" style="cursor:pointer;display:inline-block;position:relative;">';
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:90px;height:90px;border-radius:12px;border:2px solid #c9a040;object-fit:contain;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">';
+    h += '<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.7);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid #c9a040;">';
+    h += '<span style="color:#ffd700;font-size:0.7em;">⚙</span>';
+    h += '</div>';
+    h += '</div>';
     h += '<div style="color:#e0c080;font-weight:bold;margin-top:4px;">' + p.name + '</div>';
-    h += '<div style="color:#aaa;">Уровень ' + p.level + '</div></div>';
+    h += '<div style="color:#aaa;">Уровень ' + p.level + '</div>';
+    h += '<div style="color:#888;font-size:0.6em;margin-top:2px;">Нажми на героя для смены облика</div>';
+    h += '</div>';
 
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">';
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.attack + '" style="width:22px;height:22px;"><span style="color:#f44336;">' + p.stats.attack + '</span></div>';
@@ -2657,23 +2648,85 @@ _addWalletSilver: function(amount) {
         h += '</div></div>';
     }
 
-   h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:12px;">';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllTrophies()"><img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/interface/trophy_stand.png') + '"><span class="action-label">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</span></div>';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllRings()"><img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '"><span class="action-label">' + (ring ? ring.name : 'Кольца') + '</span></div>';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllAmulets()"><img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '"><span class="action-label">' + (amulet ? amulet.name : 'Амулеты') + '</span></div>';
-h += '</div>';
+    h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:12px;">';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllTrophies()"><img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/interface/trophy_stand.png') + '"><span class="action-label">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</span></div>';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllRings()"><img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '"><span class="action-label">' + (ring ? ring.name : 'Кольца') + '</span></div>';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllAmulets()"><img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '"><span class="action-label">' + (amulet ? amulet.name : 'Амулеты') + '</span></div>';
+    h += '</div>';
 
-h += '<div class="profile-actions">';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.training();"><img src="assets/all_buttons/training.png"><span class="action-label">Тренировка</span></div>';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.forge();"><img src="assets/all_buttons/forge.png"><span class="action-label">Кузница</span></div>';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.wallet();"><img src="assets/interface/wallet.png"><span class="action-label">Кошелёк</span></div>';
-h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.bestiary();"><img src="assets/all_buttons/bestiary.png"><span class="action-label">Бестиарий</span></div>';
-h += '</div>';
+    h += '<div class="profile-actions">';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.training();"><img src="assets/all_buttons/training.png"><span class="action-label">Тренировка</span></div>';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.forge();"><img src="assets/all_buttons/forge.png"><span class="action-label">Кузница</span></div>';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.wallet();"><img src="assets/interface/wallet.png"><span class="action-label">Кошелёк</span></div>';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._previousScreen=\'profile\';SherwoodUI.bestiary();"><img src="assets/all_buttons/bestiary.png"><span class="action-label">Бестиарий</span></div>';
+    h += '</div>';
 
-h += '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">';
-h += '<div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Скины</div>' + tabContent + '</div>';
-h += '<div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>';
-this._openScreen('Профиль', 'profile', h);
+    h += '<div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>';
+    this._openScreen('Профиль', 'profile', h);
+},
+    _showSkinSelection: function() {
+    this._playSound('click');
+    var p = Sherwood.getPlayer();
+    var unlockedSkins = p.unlockedSkins || ['skin1_01'];
+    var activeSkin = p.activeSkin || 'skin1_01';
+    
+    var h = '<div style="text-align:center;padding:10px;">';
+    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:16px;">Выбор облика</div>';
+    h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:16px;">Открыто: ' + unlockedSkins.length + '</div>';
+    
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:400px;margin:0 auto;">';
+    
+    for (var i = 0; i < unlockedSkins.length; i++) {
+        var sid = unlockedSkins[i];
+        var isActive = activeSkin === sid;
+        var skinName = Sherwood.SKIN_BONUSES[sid] ? Sherwood.SKIN_BONUSES[sid].name : sid;
+        var skinBonus = Sherwood.SKIN_BONUSES[sid] ? Sherwood.SKIN_BONUSES[sid].bonus : 0;
+        
+        h += '<div onclick="' + (isActive ? '' : 'SherwoodUI._selectSkin(\'' + sid + '\')') + '" style="background:rgba(0,0,0,0.6);border:2px solid ' + (isActive ? '#ffd700' : '#4caf50') + ';border-radius:10px;padding:10px;text-align:center;cursor:' + (isActive ? 'default' : 'pointer') + ';position:relative;">';
+        
+        if (isActive) {
+            h += '<div style="position:absolute;top:4px;right:4px;background:#ffd700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;">';
+            h += '<span style="color:#000;font-size:0.7em;font-weight:bold;">✓</span>';
+            h += '</div>';
+        }
+        
+        h += '<img src="assets/hero_skins/' + sid + '.png" style="width:64px;height:64px;object-fit:contain;border-radius:8px;margin:0 auto;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">';
+        h += '<div style="color:#e0c080;font-size:0.6em;margin-top:4px;">' + skinName + '</div>';
+        h += '<div style="color:#ffd700;font-size:0.55em;margin-top:2px;">Бонус: +' + skinBonus + '</div>';
+        
+        if (isActive) {
+            h += '<div style="color:#ffd700;font-size:0.6em;font-weight:bold;margin-top:4px;">Активен</div>';
+        } else {
+            h += '<div style="color:#4caf50;font-size:0.6em;margin-top:4px;">Надеть</div>';
+        }
+        
+        h += '</div>';
+    }
+    
+    h += '</div>';
+    h += '</div>';
+    
+    var bgImage = 'assets/interface/wallet_visual.png';
+    
+    if (this._screenLayer) { 
+        this._screenLayer.innerHTML = '<div style="height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.profile()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Облики</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;-webkit-overflow-scrolling:touch;">' + h + '</div></div>'; 
+        this._screenLayer.style.display = 'block'; 
+    }
+},
+
+_selectSkin: function(skinId) {
+    var p = Sherwood.getPlayer();
+    if (!p || !p.unlockedSkins || p.unlockedSkins.indexOf(skinId) === -1) return;
+    
+    p.activeSkin = skinId;
+    
+    if (Sherwood._recalcStats) Sherwood._recalcStats();
+    Sherwood.saveGame();
+    
+    this._updateHeroSkin();
+    this.updateDisplay();
+    
+    this._showSkinSelection();
 },
 _equipSkinFromProfile: function(sid) {
     var r = Sherwood.Forge.equipSkin(sid);
