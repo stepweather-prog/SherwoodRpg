@@ -2049,15 +2049,73 @@ _showArenaBattle: function() {
     this._arenaChargeMax = 5000;
     this._arenaChargeStart = null;
     
-    this._showBattleScreen(
-        { name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp },
-        'arena',
-        'Арена - ' + opp.name,
-        '',
-        'SherwoodUI._arenaStartCharge()',
-        'SherwoodUI._arenaFlee()'
+   this._showArenaBattleScreen(
+    { name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp },
+    'SherwoodUI._arenaAttack()',
+    'SherwoodUI._arenaFlee()'
     );
+},
+
+    _showArenaBattleScreen: function(enemyData, onAttack, onFlee) {
+    var e = enemyData, p = Sherwood.getPlayer();
+    var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100;
+    var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
+    var activeSkin = p.activeSkin || 'skin1_01';
+    var imgPath = e.image;
     
+    var h = '<div style="text-align:center;display:flex;flex-direction:column;height:100%;overflow:hidden;">';
+    
+    // 1. СТАТЫ — САМЫЙ ВЕРХ
+    h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:2px;flex-shrink:0;">';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_power.png" style="width:24px;height:24px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">' + p.stats.attack + '</span></div>';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_defense.png" style="width:24px;height:24px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">' + p.stats.defense + '</span></div>';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_health.png" style="width:24px;height:24px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '</div>';
+    
+    // 2. ВРАГ И ЕГО ШКАЛА
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:2px;flex-shrink:0;">';
+    h += '<div style="width:40px;height:40px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=&quot;none&quot;"></div>';
+    h += '<div style="position:relative;width:250px;height:120px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:80px;left:23px;right:23px;bottom:12px;overflow:hidden;z-index:0;">';
+    h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
+    h += '</div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '</div>';
+    
+    // 3. КАРТА ВРАГА
+    h += '<div style="position:relative;display:inline-block;margin:0 auto;flex-shrink:0;">';
+    h += '<img src="' + imgPath + '" id="enemy-card" style="width:150px;height:150px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
+    h += '<div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div>';
+    h += '<div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div>';
+    h += '</div>';
+    
+    // 4. КНОПКА АТАКИ — НАД HP ГЕРОЯ
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:2px 0;flex-shrink:0;">';
+    h += '<button id="attack-btn" onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:60px;height:60px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;transition:filter 0.3s, box-shadow 0.3s;"></button>';
+    h += '</div>';
+    
+    // 5. ШКАЛА ЖИЗНИ ИГРОКА
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:2px 0;flex-shrink:0;">';
+    h += '<div id="player-avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
+    h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1;">';
+    h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
+    h += '</div>';
+    h += '<div style="position:relative;width:250px;height:120px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:80px;left:23px;right:23px;bottom:12px;overflow:hidden;z-index:0;">';
+    h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
+    h += '</div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.65em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '</div>';
+    
+    // 6. ЛОГ БОЯ — ПОД ШКАЛОЙ ИГРОКА
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:5px;margin:2px 4%;min-height:40px;max-height:40px;overflow-y:auto;color:#aaa;font-size:0.6em;text-align:left;line-height:1.3;flex-shrink:0;"></div>';
+    
+    h += '</div>';
+    
+    this._openScreen('', 'arena', h);
+},
     // Добавляем кнопку смены цели
     setTimeout(function() {
         SherwoodUI._addArenaSwitchButton();
