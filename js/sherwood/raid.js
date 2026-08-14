@@ -1,6 +1,6 @@
 /**
  * Sherwood Raid — Мировой рейд
- * Исправлен: участники, этапы, награды
+ * Исправлен: участники, этапы, награды, обработка смерти
  */
 
 Sherwood.Raid = {
@@ -51,12 +51,23 @@ Sherwood.Raid = {
         }
         this._raidsToday = p.raid.raidsToday || 0;
         this._participants = p.raid.participants || [];
+        
         // Восстанавливаем активный рейд
         if (p.raid.activeRaid) {
             this._raidBoss = p.raid.activeRaid;
             this._raidActive = true;
             this._currentStage = p.raid.currentStage || 0;
             this._playerAlive = p.raid.playerAlive !== false;
+            
+            // Если игрок был мёртв — рейд завершён
+            if (!this._playerAlive) {
+                this._raidActive = false;
+                this._raidBoss = null;
+                p.raid.activeRaid = null;
+                p.raid.currentStage = 0;
+                p.raid.playerAlive = true;
+                Sherwood.saveGame();
+            }
         }
     },
 
@@ -68,7 +79,6 @@ Sherwood.Raid = {
         var p = Sherwood.getPlayer();
         if (!p) return { can: false, reason: 'Игрок не найден' };
 
-        // Проверяем дату
         var today = new Date().toDateString();
         if (p.raid.lastRaidDate !== today) {
             p.raid.raidsToday = 0;
@@ -98,7 +108,6 @@ Sherwood.Raid = {
         if (!check.can) return check;
 
         var bossTemplate = this.RAID_BOSSES[bossIndex || 0];
-        // Глубокое копирование
         this._raidBoss = JSON.parse(JSON.stringify(bossTemplate));
         this._raidActive = true;
         this._currentStage = 0;
@@ -159,19 +168,15 @@ Sherwood.Raid = {
     },
 
     _getNextEnemy: function() {
-        // Проверяем, есть ли живые враги в текущем этапе
         var enemy = this.getCurrentEnemy();
         if (enemy) return enemy;
 
-        // Переход на следующий этап
         this._currentStage++;
 
         if (this._currentStage >= this._totalStages) {
-            // Рейд завершён
             return null;
         }
 
-        // Возвращаем первого врага из следующего этапа
         var stage = this._raidBoss.stages[this._currentStage];
         if (stage && stage.enemies.length > 0) {
             return stage.enemies[0];
@@ -193,32 +198,28 @@ Sherwood.Raid = {
             return { playerDead: true, message: 'Вы погибли в рейде' };
         }
 
-        // Получаем текущего врага
         var enemy = this.getCurrentEnemy();
 
         if (!enemy) {
-            // Переход на следующий этап
             this._currentStage++;
             if (this._currentStage >= this._totalStages) {
                 return this._completeRaid();
             }
             var newEnemy = this.getCurrentEnemy();
             if (newEnemy) {
+                this._saveProgress();
                 return { stageComplete: true, nextEnemy: newEnemy, stageIndex: this._currentStage + 1 };
             }
             return { error: 'Нет врагов' };
         }
 
-        // Атака
         var p = Sherwood.getPlayer();
         if (!p) return { error: 'Игрок не найден' };
 
-        // Расчёт урона игрока
         var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + (enemy.defense || 10))));
         var crit = Math.random() * 100 < 15;
         if (crit) dmg = Math.floor(dmg * 1.8);
 
-        // Шанс на дополнительный урон
         var extra = Math.random() * 100 < 20 ? Math.floor(dmg * 0.3) : 0;
         dmg += extra;
 
@@ -236,33 +237,28 @@ Sherwood.Raid = {
             enemyDead: enemy.hp <= 0
         };
 
-        // Проверка, что враг убит
         if (enemy.hp <= 0) {
-            // Проверяем, все ли враги в этапе убиты
             var stage = this._raidBoss.stages[this._currentStage];
             var allDead = stage.enemies.every(function(e) { return e.hp <= 0; });
 
             if (allDead) {
                 this._currentStage++;
                 if (this._currentStage >= this._totalStages) {
+                    this._saveProgress();
                     return this._completeRaid();
                 }
                 result.stageComplete = true;
                 result.nextStage = this._raidBoss.stages[this._currentStage];
                 result.stageIndex = this._currentStage + 1;
             } else {
-                // Следующий враг в том же этапе
                 result.nextEnemy = this.getCurrentEnemy();
             }
 
-            // Сохраняем прогресс
             this._saveProgress();
             return result;
         }
 
-        // Ответ врага
         var edmg = Math.max(1, Math.floor((enemy.attack * enemy.attack) / (enemy.attack + p.stats.defense)));
-        // Броня поглощает часть урона
         var armorReduction = Math.min(p.stats.defense * 0.2, edmg * 0.3);
         edmg = Math.max(1, edmg - armorReduction);
 
@@ -274,7 +270,21 @@ Sherwood.Raid = {
             p.stats.hp = 1;
             this._playerAlive = false;
             result.playerDead = true;
-            Sherwood.saveGame();
+            
+            // СБРОС РЕЙДА ПРИ СМЕРТИ
+            this._raidActive = false;
+            this._raidBoss = null;
+            this._currentStage = 0;
+            
+            var player = Sherwood.getPlayer();
+            if (player && player.raid) {
+                player.raid.activeRaid = null;
+                player.raid.currentStage = 0;
+                player.raid.playerAlive = true;
+                Sherwood.saveGame();
+            }
+            
+            return result;
         }
 
         this._saveProgress();
@@ -288,7 +298,6 @@ Sherwood.Raid = {
         var totalGold = boss.gold + Math.floor(Math.random() * 300);
         var totalSilver = totalGold * 3 + Math.floor(Math.random() * 500);
 
-        // Награда только выжившим
         var aliveCount = this._playerAlive ? 1 : 0;
 
         if (this._playerAlive) {
@@ -297,7 +306,6 @@ Sherwood.Raid = {
             Sherwood.addResource('silver', totalSilver);
         }
 
-        // Трофеи для выживших
         var trophy = {
             id: 'raid_victory_' + Date.now(),
             name: 'Победа над Шервудским Отродьем',
@@ -311,11 +319,9 @@ Sherwood.Raid = {
             player.trophies.push(trophy);
         }
 
-        // Сбрасываем рейд
         this._raidActive = false;
         this._raidBoss = null;
 
-        // Очищаем сохранённый рейд
         if (player && player.raid) {
             player.raid.activeRaid = null;
             player.raid.currentStage = 0;
@@ -350,10 +356,13 @@ Sherwood.Raid = {
     fleeRaid: function() {
         this._raidActive = false;
         this._raidBoss = null;
+        this._currentStage = 0;
+        this._playerAlive = true;
         var player = Sherwood.getPlayer();
         if (player && player.raid) {
             player.raid.activeRaid = null;
             player.raid.currentStage = 0;
+            player.raid.playerAlive = true;
             Sherwood.saveGame();
         }
         return { success: true };
@@ -363,17 +372,14 @@ Sherwood.Raid = {
         return this._raidActive;
     },
 
-    // Проверка, жив ли игрок в рейде
     isPlayerAlive: function() {
         return this._playerAlive;
     },
 
-    // Получить количество участников
     getParticipantCount: function() {
         return this._participants ? this._participants.length : 0;
     },
 
-    // Присоединиться к рейду (для мультиплеера)
     joinRaid: function(playerName) {
         if (!this._raidActive) return { success: false, reason: 'Рейд не активен' };
         if (this._participants.indexOf(playerName) !== -1) {
