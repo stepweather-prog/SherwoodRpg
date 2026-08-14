@@ -2703,35 +2703,61 @@ _showAllTrophies: function() {
 },
 
 _showAllRings: function() {
-    var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
-    var rings = items.filter(function(i) { return i.part === 'ring'; });
-    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца (' + rings.length + ')</div>';
-    if (rings.length === 0) h += '<div style="color:#aaa;">Нет колец</div>';
-    for (var i = 0; i < rings.length; i++) {
-        var r = rings[i];
-        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:10px;padding:10px;margin-bottom:8px;">';
-        h += '<img src="' + (r.icon || 'assets/interface/ring_first_level.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
-        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + r.name + '</div>';
-        if (r.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (r.stats.attack||0) + ' | ЗЩТ +' + (r.stats.defense||0) + '</div>';
+    var player = Sherwood.getPlayer();
+    var jewelry = player.jewelry || { rings: [], amulets: [] };
+    var purchasedRingIds = jewelry.rings || [];
+    
+    var allRings = Sherwood.BlackMarket ? Sherwood.BlackMarket._RINGS : [];
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца (' + purchasedRingIds.length + ' куплено)</div>';
+    
+    if (purchasedRingIds.length === 0) {
+        h += '<div style="color:#aaa;">Нет купленных колец</div>';
+    }
+    
+    for (var i = 0; i < allRings.length; i++) {
+        var ring = allRings[i];
+        var isPurchased = purchasedRingIds.indexOf(ring.id) !== -1;
+        
+        if (!isPurchased) continue;
+        
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
+        h += '<img src="' + ring.icon + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + ring.name + '</div>';
+        h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (ring.stats.attack || 0) + ' | ЗЩТ +' + (ring.stats.defense || 0) + '</div>';
+        h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">✓ Куплено</div>';
         h += '</div></div>';
     }
+    
     h += '</div>';
     this._openScreen('Кольца', 'profile', h, 'SherwoodUI.profile()');
 },
 
 _showAllAmulets: function() {
-    var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
-    var amulets = items.filter(function(i) { return i.part === 'amulet'; });
-    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты (' + amulets.length + ')</div>';
-    if (amulets.length === 0) h += '<div style="color:#aaa;">Нет амулетов</div>';
-    for (var i = 0; i < amulets.length; i++) {
-        var a = amulets[i];
-        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:10px;padding:10px;margin-bottom:8px;">';
-        h += '<img src="' + (a.icon || 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
-        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + a.name + '</div>';
-        if (a.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (a.stats.hp||0) + ' | ЗЩТ +' + (a.stats.defense||0) + '</div>';
+    var player = Sherwood.getPlayer();
+    var jewelry = player.jewelry || { rings: [], amulets: [] };
+    var purchasedAmuletIds = jewelry.amulets || [];
+    
+    var allAmulets = Sherwood.BlackMarket ? Sherwood.BlackMarket._AMULETS : [];
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты (' + purchasedAmuletIds.length + ' куплено)</div>';
+    
+    if (purchasedAmuletIds.length === 0) {
+        h += '<div style="color:#aaa;">Нет купленных амулетов</div>';
+    }
+    
+    for (var i = 0; i < allAmulets.length; i++) {
+        var amulet = allAmulets[i];
+        var isPurchased = purchasedAmuletIds.indexOf(amulet.id) !== -1;
+        
+        if (!isPurchased) continue;
+        
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
+        h += '<img src="' + amulet.icon + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + amulet.name + '</div>';
+        h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (amulet.stats.hp || 0) + ' | ЗЩТ +' + (amulet.stats.defense || 0) + '</div>';
+        h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">✓ Куплено</div>';
         h += '</div></div>';
     }
+    
     h += '</div>';
     this._openScreen('Амулеты', 'profile', h, 'SherwoodUI.profile()');
 },
