@@ -2031,17 +2031,103 @@ _showArenaBattle: function() {
         return;
     }
     
+    // Проверяем, есть ли живые противники
+    var aliveOpponents = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
+    if (aliveOpponents.length === 0) {
+        this._arenaVictory();
+        return;
+    }
+    
+    // Если текущий противник мёртв — переключаемся на живого
+    if (this._currentArenaOpponents[this._currentArenaOpponentIndex].stats.hp <= 0) {
+        this._currentArenaOpponentIndex = this._currentArenaOpponents.indexOf(aliveOpponents[0]);
+    }
+    
     var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex];
     var skinFile = opp.skin || 'assets/hero_skins/skin1_01.png';
+    
+    // Сбрасываем заряд
+    this._arenaCharge = 0;
+    this._arenaChargeMax = 5000; // 5 секунд в мс
+    this._arenaChargeStart = null;
+    this._arenaSkillsUsed = 0;
     
     this._showBattleScreen(
         { name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp },
         'arena',
         'Арена - ' + opp.name,
         '',
-        'SherwoodUI._arenaAttack()',
+        'SherwoodUI._arenaStartCharge()',
         'SherwoodUI._arenaFlee()'
     );
+    
+    // Добавляем элементы арены
+    setTimeout(function() {
+        SherwoodUI._addArenaUI();
+    }, 100);
+},
+
+_addArenaUI: function() {
+    // Удаляем старые элементы
+    var oldCharge = document.getElementById('arena-charge-bar');
+    if (oldCharge) oldCharge.remove();
+    var oldSwitch = document.getElementById('arena-switch-btn');
+    if (oldSwitch) oldSwitch.remove();
+    
+    // Шкала заряда
+    var chargeBar = document.createElement('div');
+    chargeBar.id = 'arena-charge-bar';
+    chargeBar.style.cssText = 'position:absolute;top:40%;left:50%;transform:translateX(-50%);z-index:100;width:120px;height:16px;background:rgba(0,0,0,0.8);border:2px solid #c9a040;border-radius:10px;overflow:hidden;';
+    chargeBar.innerHTML = '<div id="arena-charge-fill" style="background:linear-gradient(90deg,#ff9800,#ffd700);height:100%;width:0%;transition:width 0.1s;"></div>';
+    this._screenLayer.appendChild(chargeBar);
+    
+    // Кнопка переключения
+    var switchBtn = document.createElement('button');
+    switchBtn.id = 'arena-switch-btn';
+    switchBtn.style.cssText = 'position:absolute;bottom:120px;right:10px;z-index:100;background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;';
+    switchBtn.innerHTML = '<img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;transform:scaleX(-1);">';
+    switchBtn.onclick = function() { SherwoodUI._arenaSwitchTarget(); };
+    this._screenLayer.appendChild(switchBtn);
+    
+    // Подпись под стрелкой
+    var label = document.createElement('div');
+    label.style.cssText = 'position:absolute;bottom:90px;right:10px;z-index:100;color:#aaa;font-size:0.5em;text-align:center;';
+    label.textContent = 'Сменить';
+    this._screenLayer.appendChild(label);
+},
+
+_arenaStartCharge: function() {
+    if (this._arenaChargeStart) return;
+    this._arenaChargeStart = Date.now();
+    this._arenaChargeInterval = setInterval(function() {
+        SherwoodUI._updateArenaCharge();
+    }, 50);
+    
+    this._showDialog('Заряжайте удар...', '#ff9800');
+},
+
+_updateArenaCharge: function() {
+    if (!this._arenaChargeStart) return;
+    
+    this._arenaCharge = Date.now() - this._arenaChargeStart;
+    
+    var fill = document.getElementById('arena-charge-fill');
+    if (fill) {
+        var pct = Math.min(100, (this._arenaCharge / this._arenaChargeMax) * 100);
+        fill.style.width = pct + '%';
+    }
+    
+    if (this._arenaCharge >= this._arenaChargeMax) {
+        clearInterval(this._arenaChargeInterval);
+        this._arenaChargeInterval = null;
+        this._arenaCharge = this._arenaChargeMax;
+        
+        var fill = document.getElementById('arena-charge-fill');
+        if (fill) fill.style.width = '100%';
+        
+        this._showDialog('Полный заряд! Жмите атаку!', '#ffd700');
+        this._playSound('levelup');
+    }
 },
 
 _arenaAttack: function() {
@@ -2053,47 +2139,179 @@ _arenaAttack: function() {
     }
     
     var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex];
+    if (!opp || opp.stats.hp <= 0) {
+        this._arenaSwitchTarget();
+        return;
+    }
+    
     var player = Sherwood.getPlayer();
     
-    var damage = Math.max(1, player.stats.attack - opp.stats.defense + Math.floor(Math.random() * 15));
+    // Расчёт силы удара в зависимости от заряда
+    var chargePercent = this._arenaCharge / this._arenaChargeMax;
+    var minDamage = Math.max(1, Math.floor((player.stats.attack - opp.stats.defense) * 0.3));
+    var maxDamage = Math.max(minDamage + 1, Math.floor((player.stats.attack - opp.stats.defense) * 1.2 + Math.random() * 15));
+    var damage = minDamage + Math.floor((maxDamage - minDamage) * chargePercent);
+    
+    var crit = chargePercent >= 1 && Math.random() * 100 < 20;
+    if (crit) damage = Math.floor(damage * 1.8);
+    
     opp.stats.hp -= damage;
+    if (opp.stats.hp < 0) opp.stats.hp = 0;
     
     this._hitEnemyCard();
+    this._showDamageNumber(damage, crit);
+    if (crit) this._showCriticalHitAnim();
     this._updateEnemyHP(Math.max(0, opp.stats.hp), opp.stats.maxHp);
-    this._showDialog('Урон: ' + damage, '#fff');
+    
+    this._showDialog(
+        (crit ? 'CRIT! ' : '') + 'Урон: ' + damage + ' (заряд ' + Math.floor(chargePercent * 100) + '%)',
+        crit ? '#ff6a00' : '#fff'
+    );
+    
+    // Сброс заряда
+    this._resetArenaCharge();
+    
+    // Увеличение счётчика использования скиллов
+    this._arenaSkillsUsed = (this._arenaSkillsUsed || 0) + 1;
     
     if (opp.stats.hp <= 0) {
         this._showDialog(opp.name + ' повержен!', '#4caf50');
         if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1);
-        this._currentArenaOpponentIndex++;
+        
+        // Проверяем, остались ли живые противники
+        var aliveOpponents = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
+        
+        if (aliveOpponents.length === 0) {
+            // Все противники мертвы
+            var self = this;
+            setTimeout(function() { self._arenaVictory(); }, 1500);
+            return;
+        }
+        
+        // Переключаемся на живого
+        this._currentArenaOpponentIndex = this._currentArenaOpponents.indexOf(aliveOpponents[0]);
         
         var self = this;
-        setTimeout(function() {
-            if (self._currentArenaOpponentIndex >= self._currentArenaOpponents.length) {
-                self._arenaVictory();
-            } else {
-                self._showArenaBattle();
-            }
-        }, 1000);
+        setTimeout(function() { self._showArenaBattle(); }, 1500);
         return;
     }
     
-    var oppDamage = Math.max(1, opp.stats.attack - player.stats.defense + Math.floor(Math.random() * 15));
+    // Боты атакуют друг друга и игрока
+    this._arenaBotsFight();
+    
+    // Ответ текущего противника
+    var oppDamage = Math.max(1, Math.floor((opp.stats.attack - player.stats.defense) * 0.5 + Math.random() * 10));
     player.stats.hp = Math.max(0, player.stats.hp - oppDamage);
+    
+    this._showPlayerHitAnim();
     
     var self = this;
     setTimeout(function() {
-        self._showDialog(opp.name + ': ' + oppDamage + ' урона', '#f44336');
+        self._showDialog(opp.name + ' бьёт: ' + oppDamage + ' урона', '#f44336');
         SherwoodUI.updateDisplay();
         
         if (player.stats.hp <= 0) {
             self._arenaDefeat();
+            return;
         }
     }, 700);
+    
+    this.updateDisplay();
+},
+
+_resetArenaCharge: function() {
+    this._arenaChargeStart = null;
+    this._arenaCharge = 0;
+    if (this._arenaChargeInterval) {
+        clearInterval(this._arenaChargeInterval);
+        this._arenaChargeInterval = null;
+    }
+    
+    var fill = document.getElementById('arena-charge-fill');
+    if (fill) fill.style.width = '0%';
+},
+
+_arenaSwitchTarget: function() {
+    if (!this._currentArenaOpponents) return;
+    
+    var aliveOpponents = [];
+    for (var i = 0; i < this._currentArenaOpponents.length; i++) {
+        if (this._currentArenaOpponents[i].stats.hp > 0 && i !== this._currentArenaOpponentIndex) {
+            aliveOpponents.push(i);
+        }
+    }
+    
+    if (aliveOpponents.length === 0) {
+        this._showDialog('Нет других живых противников!', '#ff9800');
+        return;
+    }
+    
+    this._currentArenaOpponentIndex = aliveOpponents[0];
+    this._resetArenaCharge();
+    this._showDialog('Цель сменена!', '#4caf50');
+    
+    var self = this;
+    setTimeout(function() { self._showArenaBattle(); }, 500);
+},
+
+_arenaBotsFight: function() {
+    if (!this._currentArenaOpponents) return;
+    
+    var player = Sherwood.getPlayer();
+    var playerAlive = player.stats.hp > 0;
+    
+    // Каждый бот атакует случайную цель (другого бота или игрока)
+    for (var i = 0; i < this._currentArenaOpponents.length; i++) {
+        var attacker = this._currentArenaOpponents[i];
+        if (!attacker || attacker.stats.hp <= 0) continue;
+        
+        // Выбираем случайную цель
+        var targets = [];
+        
+        // Другие живые боты
+        for (var j = 0; j < this._currentArenaOpponents.length; j++) {
+            if (i !== j && this._currentArenaOpponents[j].stats.hp > 0) {
+                targets.push({ type: 'bot', index: j });
+            }
+        }
+        
+        // Игрок
+        if (playerAlive) {
+            targets.push({ type: 'player' });
+        }
+        
+        if (targets.length === 0) continue;
+        
+        var target = targets[Math.floor(Math.random() * targets.length)];
+        var botDamage = Math.max(1, Math.floor(attacker.stats.attack * 0.3 + Math.random() * 20));
+        
+        if (target.type === 'bot') {
+            var targetBot = this._currentArenaOpponents[target.index];
+            targetBot.stats.hp = Math.max(0, targetBot.stats.hp - botDamage);
+        } else if (target.type === 'player') {
+            player.stats.hp = Math.max(0, player.stats.hp - botDamage);
+        }
+    }
+    
+    this.updateDisplay();
+    
+    // Проверяем, не умер ли кто-то
+    var aliveBots = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
+    
+    if (player.stats.hp <= 0) {
+        this._arenaDefeat();
+        return;
+    }
+    
+    if (aliveBots.length === 0) {
+        var self = this;
+        setTimeout(function() { self._arenaVictory(); }, 1000);
+    }
 },
 
 _arenaVictory: function() {
     this._stopMusic();
+    this._resetArenaCharge();
     Sherwood.Arena._wins++;
     var exp = 150, gold = 80, silver = 200;
     Sherwood.addExp(exp);
@@ -2109,6 +2327,7 @@ _arenaVictory: function() {
 
 _arenaDefeat: function() {
     this._stopMusic();
+    this._resetArenaCharge();
     Sherwood.Arena._losses++;
     var player = Sherwood.getPlayer();
     player.stats.hp = Math.max(1, Math.floor(player.stats.maxHp * 0.2));
@@ -2121,6 +2340,7 @@ _arenaDefeat: function() {
 
 _arenaFlee: function() { 
     this._stopMusic(); 
+    this._resetArenaCharge();
     this._currentArenaOpponents = null; 
     Sherwood.Arena._losses++;
     this._playMusic('main_theme'); 
