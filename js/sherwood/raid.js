@@ -293,54 +293,91 @@ Sherwood.Raid = {
     },
 
     _completeRaid: function() {
-        var boss = this._raidBoss;
-        var totalExp = boss.exp + Math.floor(Math.random() * 500);
-        var totalGold = boss.gold + Math.floor(Math.random() * 300);
-        var totalSilver = totalGold * 3 + Math.floor(Math.random() * 500);
+    var boss = this._raidBoss;
+    var totalExp = boss.exp + Math.floor(Math.random() * 500);
+    var totalGold = boss.gold + Math.floor(Math.random() * 300);
+    var totalSilver = totalGold * 3 + Math.floor(Math.random() * 500);
 
-        var aliveCount = this._playerAlive ? 1 : 0;
+    var aliveCount = this._playerAlive ? 1 : 0;
 
-        if (this._playerAlive) {
-            Sherwood.addExp(totalExp);
-            Sherwood.addResource('gold', totalGold);
-            Sherwood.addResource('silver', totalSilver);
+    if (this._playerAlive) {
+        Sherwood.addExp(totalExp);
+        Sherwood.addResource('gold', totalGold);
+        Sherwood.addResource('silver', totalSilver);
+    }
+
+    var player = Sherwood.getPlayer();
+    
+    // Трофей «Узы Вечности» — растёт с каждым убийством босса
+    if (player && this._playerAlive) {
+        var trophyId = 'raid_bonds_of_eternity';
+        var existingTrophy = null;
+        
+        // Ищем существующий трофей
+        if (!player.trophies) player.trophies = [];
+        for (var i = 0; i < player.trophies.length; i++) {
+            if (player.trophies[i].id === trophyId) {
+                existingTrophy = player.trophies[i];
+                break;
+            }
         }
-
-        var trophy = {
-            id: 'raid_victory_' + Date.now(),
-            name: 'Победа над Шервудским Отродьем',
-            icon: '👑',
-            description: 'Рейд пройден! Выжило: ' + aliveCount + ' участников'
-        };
-
-        var player = Sherwood.getPlayer();
-        if (player && this._playerAlive) {
-            if (!player.trophies) player.trophies = [];
-            player.trophies.push(trophy);
+        
+        var baseBonus = 10;
+        var bonusPerKill = 10;
+        var bonusHpPerKill = 10;
+        
+        if (existingTrophy) {
+            // Увеличиваем бонус
+            existingTrophy.kills = (existingTrophy.kills || 1) + 1;
+            existingTrophy.bonus.attack += bonusPerKill;
+            existingTrophy.bonus.defense += bonusPerKill;
+            existingTrophy.bonus.hp += bonusHpPerKill;
+            existingTrophy.acquiredAt = Date.now();
+        } else {
+            // Создаём новый трофей
+            player.trophies.push({
+                id: trophyId,
+                name: 'Узы Вечности',
+                icon: 'assets/all_trophies/bonds_of_eternity.png',
+                category: 'raid',
+                kills: 1,
+                bonus: {
+                    attack: baseBonus,
+                    defense: baseBonus,
+                    hp: 500
+                },
+                acquiredAt: Date.now()
+            });
         }
-
-        this._raidActive = false;
-        this._raidBoss = null;
-
-        if (player && player.raid) {
-            player.raid.activeRaid = null;
-            player.raid.currentStage = 0;
-            player.raid.playerAlive = true;
-            Sherwood.saveGame();
+        
+        // Пересчитываем статы
+        if (typeof Sherwood._recalcStats === 'function') {
+            Sherwood._recalcStats();
         }
+    }
 
-        return {
-            raidComplete: true,
-            rewards: {
-                exp: this._playerAlive ? totalExp : Math.floor(totalExp * 0.1),
-                gold: this._playerAlive ? totalGold : 0,
-                silver: this._playerAlive ? totalSilver : Math.floor(totalSilver * 0.2)
-            },
-            aliveCount: aliveCount,
-            trophy: trophy,
-            won: this._playerAlive
-        };
-    },
+    // Сбрасываем рейд
+    this._raidActive = false;
+    this._raidBoss = null;
+
+    if (player && player.raid) {
+        player.raid.activeRaid = null;
+        player.raid.currentStage = 0;
+        player.raid.playerAlive = true;
+        Sherwood.saveGame();
+    }
+
+    return {
+        raidComplete: true,
+        rewards: {
+            exp: this._playerAlive ? totalExp : Math.floor(totalExp * 0.1),
+            gold: this._playerAlive ? totalGold : 0,
+            silver: this._playerAlive ? totalSilver : Math.floor(totalSilver * 0.2)
+        },
+        aliveCount: aliveCount,
+        won: this._playerAlive
+    };
+},
 
     _saveProgress: function() {
         var player = Sherwood.getPlayer();
