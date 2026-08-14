@@ -2000,9 +2000,30 @@ arena: function() {
     
     h += '<div style="text-align:center;">';
     h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:4px;">' + stats.rank + '</div>';
-    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:30px;">Побед: ' + stats.wins + ' | Поражений: ' + stats.losses + '</div>';
-    h += '<img src="assets/interface/blades_arena.png" style="width:240px;height:240px;object-fit:contain;display:block;margin:0 auto 30px;">';
-    h += '<button onclick="SherwoodUI._startArenaBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:14px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:1em;">В бой</button>';
+    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:8px;">Побед: ' + stats.wins + ' | Поражений: ' + stats.losses + '</div>';
+    
+    // ТИКЕТЫ
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;">';
+    h += '<img src="assets/interface/ticket_arena.png" style="width:24px;height:24px;object-fit:contain;">';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">' + stats.tickets + ' / ' + stats.maxTickets + '</span>';
+    h += '</div>';
+    
+    // Кнопка покупки тикетов
+    if (Sherwood.Arena.canBuyExtraTickets()) {
+        h += '<button onclick="SherwoodUI._buyArenaTickets()" style="margin-bottom:16px;background:#ff9800;border:none;border-radius:6px;padding:8px 16px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.7em;">+5 тикетов (200 золота)</button>';
+    } else {
+        h += '<div style="color:#888;font-size:0.65em;margin-bottom:16px;">Доп. тикеты куплены сегодня</div>';
+    }
+    
+    h += '<img src="assets/interface/blades_arena.png" style="width:200px;height:200px;object-fit:contain;display:block;margin:0 auto 20px;">';
+    
+    if (stats.tickets > 0) {
+        h += '<button onclick="SherwoodUI._startArenaBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:14px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:1em;">В бой</button>';
+    } else {
+        h += '<div style="color:#f44336;font-size:0.9em;font-weight:bold;">Нет тикетов</div>';
+        h += '<div style="color:#888;font-size:0.7em;">Тикеты обновятся завтра</div>';
+    }
+    
     h += '</div>';
     
     var bgImage = 'assets/interface/section_arena.png';
@@ -2013,7 +2034,23 @@ arena: function() {
     }
 },
 
+_buyArenaTickets: function() {
+    var r = Sherwood.Arena.buyExtraTickets();
+    if (r.success) {
+        this._showToast('+5 тикетов куплено!');
+        this.arena();
+    } else {
+        this._showToast(r.reason || 'Ошибка');
+    }
+},
+
 _startArenaBattle: function() {
+    if (!Sherwood.Arena.spendTicket()) {
+        this._showToast('Нет тикетов!');
+        this.arena();
+        return;
+    }
+    
     this._stopMusic();
     Sherwood.Arena.refreshOpponents();
     var opps = Sherwood.Arena.getOpponents();
