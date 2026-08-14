@@ -1763,34 +1763,28 @@ portal: function() {
     var enemy = battle.enemy;
     if (!enemy.maxHp) enemy.maxHp = enemy.hp;
     
-    var h = '<div style="text-align:center;padding:10px;">';
-    h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:4px;">' + battle.portal.name + '</div>';
-    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:8px;">Волна ' + battle.level + '/' + battle.totalLevels + ' | Время: ' + Math.floor(battle.timeRemaining / 60) + ':' + (battle.timeRemaining % 60).toString().padStart(2, '0') + '</div>';
-    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:8px;">' + enemy.name + (enemy.isBoss ? ' (БОСС)' : '') + '</div>';
-    h += '<div style="position:relative;width:300px;height:150px;margin:0 auto 8px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
-    var ehpPct = enemy.maxHp > 0 ? Math.round((enemy.hp / enemy.maxHp) * 100) : 0;
-    h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehpPct + '%;transition:width 0.5s;"></div>';
-    h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + enemy.hp + '/' + enemy.maxHp + '</span></div>';
-    h += '<img src="assets/all_beasts/' + enemy.image + '" style="width:160px;height:160px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-    h += '<div style="display:flex;gap:12px;justify-content:center;">';
-    h += '<button onclick="SherwoodUI._portalAttack()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Атаковать</button>';
-    h += '<button onclick="SherwoodUI._portalFlee()" style="background:#f44336;border:none;border-radius:8px;padding:12px 30px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Сбежать</button>';
-    h += '</div>';
-    h += '<div id="portal-battle-log" style="color:#aaa;font-size:0.7em;margin-top:8px;min-height:20px;"></div>';
-    h += '</div>';
+    var extraInfo = 'Волна ' + battle.level + '/' + battle.totalLevels + ' | Время: ' + Math.floor(battle.timeRemaining / 60) + ':' + (battle.timeRemaining % 60).toString().padStart(2, '0');
     
-    this._openScreen('Портал', battle.portal.bg || 'portal', h);
+    this._showBattleScreen(
+        { 
+            name: enemy.name + (enemy.isBoss ? ' (БОСС)' : ''), 
+            image: enemy.image, 
+            hp: enemy.hp, 
+            maxHp: enemy.maxHp 
+        },
+        'portal',
+        battle.portal.name,
+        extraInfo,
+        'SherwoodUI._portalAttack()',
+        'SherwoodUI._portalFlee()',
+        battle.portal.bg || 'portal'
+    );
 },
 
 _portalAttack: function() {
     this._playHitSounds();
     var r = Sherwood.Portal.portalAttack();
     if (!r) return;
-    
-    var log = document.getElementById('portal-battle-log');
     
     if (r.portalComplete) {
         this._playSound('victory');
@@ -1813,7 +1807,7 @@ _portalAttack: function() {
     }
     
     if (r.dead && r.resurrected) {
-        if (log) log.textContent = 'Вы погибли! Воскрешение за ' + r.cost.cost + ' ' + (r.cost.currency === 'gold' ? 'золота' : 'серебра');
+        this._showDialog('Вы погибли! Воскрешение за ' + r.cost.cost + ' ' + (r.cost.currency === 'gold' ? 'золота' : 'серебра'), '#ff9800');
         this.updateDisplay();
         var self = this;
         setTimeout(function() { self._showPortalBattle(); }, 1500);
@@ -1821,23 +1815,35 @@ _portalAttack: function() {
     }
     
     if (r.enemyDead) {
-        if (log) log.textContent = r.enemyName + ' повержен!';
+        this._hitEnemyCard();
+        this._updateEnemyHP(0, r.enemyMaxHp);
+        this._showDialog(r.enemyName + ' повержен!', '#4caf50');
         this.updateDisplay();
         var self = this;
         setTimeout(function() { self._showPortalBattle(); }, 1200);
         return;
     }
     
-    if (log) log.textContent = 'Вы нанесли ' + r.damage + ' урона';
+    // Обычный удар
+    this._hitEnemyCard();
+    this._showPlayerHitAnim();
+    this._showDamageNumber(r.damage, r.crit);
+    if (r.crit) this._showCriticalHitAnim();
     this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
+    this._showDialog((r.crit ? 'CRIT ' : '') + 'Damage: ' + r.damage, r.crit ? '#ff6a00' : '#fff');
+    
     if (r.enemyDamage) {
         var self = this;
-        setTimeout(function() { if (log) log.textContent = r.enemyName + ' нанёс ' + r.enemyDamage + ' урона'; self.updateDisplay(); }, 700);
+        setTimeout(function() { 
+            self._showDialog(r.enemyName + ' hit: ' + r.enemyDamage, '#f44336'); 
+            self.updateDisplay(); 
+        }, 700);
     }
+    
+    this.updateDisplay();
     var self = this;
-    setTimeout(function() { self._showPortalBattle(); }, 1200);
+    setTimeout(function() { self._showPortalBattle(); }, 1000);
 },
-
 _portalFlee: function() {
     this._stopMusic();
     Sherwood.Portal.fleePortal();
