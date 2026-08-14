@@ -2099,7 +2099,7 @@ _showArenaBattleScreen: function(enemyData, onAttack, onFlee) {
     
     // 4. КНОПКА АТАКИ — НАД HP ГЕРОЯ
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin:2px 0;flex-shrink:0;">';
-    h += '<button id="attack-btn" onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:60px;height:60px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;transition:filter 0.3s, box-shadow 0.3s;"></button>';
+    h += '<button id="attack-btn" onmousedown="SherwoodUI._arenaAttack(); return false;" ontouchstart="SherwoodUI._arenaAttack(); return false;" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:60px;height:60px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;transition:filter 0.3s, box-shadow 0.3s;z-index:999;position:relative;"></button>';
     h += '</div>';
     
     // 5. ШКАЛА ЖИЗНИ ИГРОКА
