@@ -2031,14 +2031,12 @@ _showArenaBattle: function() {
         return;
     }
     
-    // Проверяем, есть ли живые противники
     var aliveOpponents = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
     if (aliveOpponents.length === 0) {
         this._arenaVictory();
         return;
     }
     
-    // Если текущий противник мёртв — переключаемся на живого
     if (this._currentArenaOpponents[this._currentArenaOpponentIndex].stats.hp <= 0) {
         this._currentArenaOpponentIndex = this._currentArenaOpponents.indexOf(aliveOpponents[0]);
     }
@@ -2048,9 +2046,8 @@ _showArenaBattle: function() {
     
     // Сбрасываем заряд
     this._arenaCharge = 0;
-    this._arenaChargeMax = 5000; // 5 секунд в мс
+    this._arenaChargeMax = 5000;
     this._arenaChargeStart = null;
-    this._arenaSkillsUsed = 0;
     
     this._showBattleScreen(
         { name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp },
@@ -2061,72 +2058,79 @@ _showArenaBattle: function() {
         'SherwoodUI._arenaFlee()'
     );
     
-    // Добавляем элементы арены
+    // Добавляем кнопку смены цели
     setTimeout(function() {
-        SherwoodUI._addArenaUI();
+        SherwoodUI._addArenaSwitchButton();
     }, 100);
 },
 
-_addArenaUI: function() {
-    // Удаляем старые элементы
-    var oldCharge = document.getElementById('arena-charge-bar');
-    if (oldCharge) oldCharge.remove();
-    var oldSwitch = document.getElementById('arena-switch-btn');
-    if (oldSwitch) oldSwitch.remove();
+_addArenaSwitchButton: function() {
+    var oldBtn = document.getElementById('arena-switch-btn');
+    if (oldBtn) oldBtn.remove();
     
-    // Шкала заряда
-    var chargeBar = document.createElement('div');
-    chargeBar.id = 'arena-charge-bar';
-    chargeBar.style.cssText = 'position:absolute;top:40%;left:50%;transform:translateX(-50%);z-index:100;width:120px;height:16px;background:rgba(0,0,0,0.8);border:2px solid #c9a040;border-radius:10px;overflow:hidden;';
-    chargeBar.innerHTML = '<div id="arena-charge-fill" style="background:linear-gradient(90deg,#ff9800,#ffd700);height:100%;width:0%;transition:width 0.1s;"></div>';
-    this._screenLayer.appendChild(chargeBar);
-    
-    // Кнопка переключения
-    var switchBtn = document.createElement('button');
-    switchBtn.id = 'arena-switch-btn';
-    switchBtn.style.cssText = 'position:absolute;bottom:120px;right:10px;z-index:100;background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;';
-    switchBtn.innerHTML = '<img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;transform:scaleX(-1);">';
-    switchBtn.onclick = function() { SherwoodUI._arenaSwitchTarget(); };
-    this._screenLayer.appendChild(switchBtn);
-    
-    // Подпись под стрелкой
-    var label = document.createElement('div');
-    label.style.cssText = 'position:absolute;bottom:90px;right:10px;z-index:100;color:#aaa;font-size:0.5em;text-align:center;';
-    label.textContent = 'Сменить';
-    this._screenLayer.appendChild(label);
+    var btn = document.createElement('button');
+    btn.id = 'arena-switch-btn';
+    btn.style.cssText = 'position:absolute;bottom:140px;left:10px;z-index:100;background:rgba(0,0,0,0.7);border:2px solid #c9a040;border-radius:50%;cursor:pointer;padding:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;';
+    btn.innerHTML = '<span style="color:#ffd700;font-size:1.2em;">⇄</span>';
+    btn.onclick = function(e) { 
+        e.stopPropagation(); 
+        SherwoodUI._arenaSwitchTarget(); 
+    };
+    this._screenLayer.appendChild(btn);
 },
 
 _arenaStartCharge: function() {
     if (this._arenaChargeStart) return;
     this._arenaChargeStart = Date.now();
+    
+    // Запускаем обновление кнопки атаки
     this._arenaChargeInterval = setInterval(function() {
         SherwoodUI._updateArenaCharge();
-    }, 50);
-    
-    this._showDialog('Заряжайте удар...', '#ff9800');
+    }, 100);
 },
 
 _updateArenaCharge: function() {
     if (!this._arenaChargeStart) return;
     
     this._arenaCharge = Date.now() - this._arenaChargeStart;
+    if (this._arenaCharge > this._arenaChargeMax) this._arenaCharge = this._arenaChargeMax;
     
-    var fill = document.getElementById('arena-charge-fill');
-    if (fill) {
-        var pct = Math.min(100, (this._arenaCharge / this._arenaChargeMax) * 100);
-        fill.style.width = pct + '%';
+    var chargePercent = this._arenaCharge / this._arenaChargeMax;
+    
+    // Ищем кнопку атаки
+    var attackBtn = document.querySelector('button[onclick*="_arenaAttack"]');
+    if (attackBtn) {
+        // Затемнение в зависимости от заряда
+        attackBtn.style.filter = 'brightness(' + (0.4 + chargePercent * 0.6) + ')';
     }
     
     if (this._arenaCharge >= this._arenaChargeMax) {
         clearInterval(this._arenaChargeInterval);
         this._arenaChargeInterval = null;
-        this._arenaCharge = this._arenaChargeMax;
         
-        var fill = document.getElementById('arena-charge-fill');
-        if (fill) fill.style.width = '100%';
+        var attackBtn = document.querySelector('button[onclick*="_arenaAttack"]');
+        if (attackBtn) {
+            attackBtn.style.filter = 'brightness(1.3)';
+            attackBtn.style.boxShadow = '0 0 20px rgba(255,215,0,0.8)';
+        }
         
-        this._showDialog('Полный заряд! Жмите атаку!', '#ffd700');
+        this._showDialog('Полный заряд!', '#ffd700');
         this._playSound('levelup');
+    }
+},
+
+_resetArenaCharge: function() {
+    this._arenaChargeStart = null;
+    this._arenaCharge = 0;
+    if (this._arenaChargeInterval) {
+        clearInterval(this._arenaChargeInterval);
+        this._arenaChargeInterval = null;
+    }
+    
+    var attackBtn = document.querySelector('button[onclick*="_arenaAttack"]');
+    if (attackBtn) {
+        attackBtn.style.filter = '';
+        attackBtn.style.boxShadow = '';
     }
 },
 
@@ -2146,11 +2150,13 @@ _arenaAttack: function() {
     
     var player = Sherwood.getPlayer();
     
-    // Расчёт силы удара в зависимости от заряда
+    // Расчёт урона в зависимости от заряда
     var chargePercent = this._arenaCharge / this._arenaChargeMax;
     var minDamage = Math.max(1, Math.floor((player.stats.attack - opp.stats.defense) * 0.3));
-    var maxDamage = Math.max(minDamage + 1, Math.floor((player.stats.attack - opp.stats.defense) * 1.2 + Math.random() * 15));
-    var damage = minDamage + Math.floor((maxDamage - minDamage) * chargePercent);
+    var maxDamage = Math.max(minDamage + 1, Math.floor((player.stats.attack - opp.stats.defense) * 1.2));
+    var damage = Math.floor(minDamage + (maxDamage - minDamage) * chargePercent);
+    
+    if (damage < 1) damage = 1;
     
     var crit = chargePercent >= 1 && Math.random() * 100 < 20;
     if (crit) damage = Math.floor(damage * 1.8);
@@ -2171,24 +2177,18 @@ _arenaAttack: function() {
     // Сброс заряда
     this._resetArenaCharge();
     
-    // Увеличение счётчика использования скиллов
-    this._arenaSkillsUsed = (this._arenaSkillsUsed || 0) + 1;
-    
     if (opp.stats.hp <= 0) {
         this._showDialog(opp.name + ' повержен!', '#4caf50');
         if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1);
         
-        // Проверяем, остались ли живые противники
         var aliveOpponents = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
         
         if (aliveOpponents.length === 0) {
-            // Все противники мертвы
             var self = this;
             setTimeout(function() { self._arenaVictory(); }, 1500);
             return;
         }
         
-        // Переключаемся на живого
         this._currentArenaOpponentIndex = this._currentArenaOpponents.indexOf(aliveOpponents[0]);
         
         var self = this;
@@ -2214,44 +2214,35 @@ _arenaAttack: function() {
             self._arenaDefeat();
             return;
         }
+        
+        // После ответа врага можно снова заряжать
+        self._arenaStartCharge();
     }, 700);
     
     this.updateDisplay();
 },
 
-_resetArenaCharge: function() {
-    this._arenaChargeStart = null;
-    this._arenaCharge = 0;
-    if (this._arenaChargeInterval) {
-        clearInterval(this._arenaChargeInterval);
-        this._arenaChargeInterval = null;
-    }
-    
-    var fill = document.getElementById('arena-charge-fill');
-    if (fill) fill.style.width = '0%';
-},
-
 _arenaSwitchTarget: function() {
     if (!this._currentArenaOpponents) return;
     
-    var aliveOpponents = [];
+    var aliveIndices = [];
     for (var i = 0; i < this._currentArenaOpponents.length; i++) {
         if (this._currentArenaOpponents[i].stats.hp > 0 && i !== this._currentArenaOpponentIndex) {
-            aliveOpponents.push(i);
+            aliveIndices.push(i);
         }
     }
     
-    if (aliveOpponents.length === 0) {
+    if (aliveIndices.length === 0) {
         this._showDialog('Нет других живых противников!', '#ff9800');
         return;
     }
     
-    this._currentArenaOpponentIndex = aliveOpponents[0];
+    this._currentArenaOpponentIndex = aliveIndices[0];
     this._resetArenaCharge();
     this._showDialog('Цель сменена!', '#4caf50');
     
     var self = this;
-    setTimeout(function() { self._showArenaBattle(); }, 500);
+    setTimeout(function() { self._showArenaBattle(); }, 300);
 },
 
 _arenaBotsFight: function() {
@@ -2260,22 +2251,18 @@ _arenaBotsFight: function() {
     var player = Sherwood.getPlayer();
     var playerAlive = player.stats.hp > 0;
     
-    // Каждый бот атакует случайную цель (другого бота или игрока)
     for (var i = 0; i < this._currentArenaOpponents.length; i++) {
         var attacker = this._currentArenaOpponents[i];
         if (!attacker || attacker.stats.hp <= 0) continue;
         
-        // Выбираем случайную цель
         var targets = [];
         
-        // Другие живые боты
         for (var j = 0; j < this._currentArenaOpponents.length; j++) {
             if (i !== j && this._currentArenaOpponents[j].stats.hp > 0) {
                 targets.push({ type: 'bot', index: j });
             }
         }
         
-        // Игрок
         if (playerAlive) {
             targets.push({ type: 'player' });
         }
@@ -2295,7 +2282,6 @@ _arenaBotsFight: function() {
     
     this.updateDisplay();
     
-    // Проверяем, не умер ли кто-то
     var aliveBots = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
     
     if (player.stats.hp <= 0) {
