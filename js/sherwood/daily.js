@@ -30,7 +30,6 @@ Sherwood.Daily = (function() {
 
     var CHAPTER_TEMPLATES = [];
 
-    // Генерация шаблонов для 15 глав
     var chapterNames = [
         '', 'Проклятие Зелёного Сердца', 'Чёрный орден', 'Рождение Охотника',
         'Бестии Смертной Чащи', 'Шепот Тёмного Лешего', 'Твари Искажённой Эволюции',
@@ -259,6 +258,15 @@ Sherwood.Daily = (function() {
 
         getDailyQuests: function() {
             return _dailyQuests.slice();
+        },
+
+        // Совместимость со старым UI
+        getDailyCompleted: function() {
+            return _dailyClaimed.slice();
+        },
+
+        getChapterCompleted: function() {
+            return _chapterClaimed.slice();
         },
 
         getChapterInfo: function(chapterId) {
