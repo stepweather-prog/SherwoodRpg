@@ -12,6 +12,7 @@ Sherwood.Arena = {
     _rank: 'Новичок',
     _tickets: 15,
     _maxTickets: 15,
+    _boughtExtraToday: false,
 
     RANKS: ['Новичок', 'Боец', 'Ветеран', 'Мастер', 'Чемпион', 'Легенда'],
     RANK_THRESHOLDS: [0, 10, 30, 60, 100, 200],
@@ -20,15 +21,25 @@ Sherwood.Arena = {
     init: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
+        
         if (!player.arena) {
-            player.arena = { wins: 0, losses: 0, rank: 'Новичок', tickets: 15, maxTickets: 15, lastTicketDate: '', boughtExtraToday: false };
+            player.arena = { 
+                wins: 0, 
+                losses: 0, 
+                rank: 'Новичок', 
+                tickets: 15, 
+                maxTickets: 15, 
+                lastTicketDate: '', 
+                boughtExtraToday: false 
+            };
         }
         
         var today = new Date().toDateString();
         
-        // Проверка даты для ежедневных тикетов
+        // Ежедневное обновление тикетов
         if (player.arena.lastTicketDate !== today) {
-            player.arena.tickets = player.arena.maxTickets || 15;
+            player.arena.tickets = 15;
+            player.arena.maxTickets = 15;
             player.arena.lastTicketDate = today;
             player.arena.boughtExtraToday = false;
             Sherwood.saveGame();
@@ -39,6 +50,8 @@ Sherwood.Arena = {
         this._wins = player.arena.wins || 0;
         this._losses = player.arena.losses || 0;
         this._rank = player.arena.rank || 'Новичок';
+        this._boughtExtraToday = player.arena.boughtExtraToday || false;
+        
         this._generateOpponents();
     },
 
@@ -47,13 +60,22 @@ Sherwood.Arena = {
         var player = Sherwood.getPlayer();
         if (!player) return;
 
+        var usedSkins = {};
+        
         for (var i = 0; i < 5; i++) {
             var diff = Math.floor(Math.random() * 20) - 10;
             var attack = Math.max(10, player.stats.attack + diff);
             var defense = Math.max(5, player.stats.defense + Math.floor(diff / 2));
             var hp = Math.max(50, player.stats.maxHp + diff * 5);
 
-            var skinIndex = Math.floor(Math.random() * this.SKIN_FILES.length);
+            var skinIndex;
+            var attempts = 0;
+            do {
+                skinIndex = Math.floor(Math.random() * this.SKIN_FILES.length);
+                attempts++;
+            } while (usedSkins[skinIndex] && attempts < 50);
+            usedSkins[skinIndex] = true;
+            
             var skinFile = this.SKIN_FILES[skinIndex] + '.png';
 
             this._opponents.push({
@@ -123,16 +145,14 @@ Sherwood.Arena = {
     },
 
     canBuyExtraTickets: function() {
-        var player = Sherwood.getPlayer();
-        if (!player || !player.arena) return false;
-        return !player.arena.boughtExtraToday;
+        return !this._boughtExtraToday;
     },
 
     buyExtraTickets: function() {
         var player = Sherwood.getPlayer();
-        if (!player || !player.arena) return { success: false, reason: 'Игрок не найден' };
+        if (!player) return { success: false, reason: 'Игрок не найден' };
         
-        if (player.arena.boughtExtraToday) {
+        if (this._boughtExtraToday) {
             return { success: false, reason: 'Доп. тикеты уже куплены сегодня' };
         }
         
@@ -142,10 +162,11 @@ Sherwood.Arena = {
         
         player.resources.gold -= 200;
         this._tickets += 5;
-        this._maxTickets += 5;
+        this._boughtExtraToday = true;
+        
+        if (!player.arena) player.arena = {};
         player.arena.tickets = this._tickets;
-        player.arena.maxTickets = this._maxTickets;
-        player.arena.boughtExtraToday = true;
+        player.arena.boughtExtraToday = this._boughtExtraToday;
         Sherwood.saveGame();
         
         return { success: true, ticketsAdded: 5, newTotal: this._tickets };
