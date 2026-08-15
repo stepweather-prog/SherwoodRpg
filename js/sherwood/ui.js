@@ -1677,20 +1677,6 @@ _claimChapter: function(ch, questId) {
     setTimeout(function() { self.daily(); }, 600); 
 },
 
-_claimChapter: function(ch, i) { 
-    var r = Sherwood.Daily.claimChapterReward(ch, i);
-    var log = document.getElementById('daily-log'); 
-    if (r.success) { 
-        if (log) log.textContent = 'Награда получена!'; 
-        this.updateDisplay(); 
-        this._playSound('loot_fly');
-    } else { 
-        if (log) log.textContent = r.reason; 
-    } 
-    var self = this; 
-    setTimeout(function() { self.daily(); }, 600); 
-},
-
     // ===== ПОРТАЛЫ =====
 portal: function() {
     this._playSound('click');
@@ -2615,7 +2601,7 @@ _toggleMusic: function(en) {
 
 _refreshMarket: function() {
     if (!confirm('Обновить товары за 150 золота?')) return;
-    var r = Sherwood.BlackMarket.refresh
+    var r = Sherwood.BlackMarket.refresh();
     if (r.success) {
         this._showToast('Товары обновлены!');
         this.market();
