@@ -2497,7 +2497,7 @@ h += '<input id="pni" value="' + safeName + '" style="flex:1;background:rgba(255
         this._openScreen(b.name, 'bestiary', h, 'SherwoodUI.bestiary()'); 
     },
 
-        _claimBestiaryReward: function(beastId) { 
+           _claimBestiaryReward: function(beastId) { 
         if (!Sherwood.Bestiary) return; 
         var r = Sherwood.Bestiary.claimReward(beastId); 
         if (r.success) { this.updateDisplay(); this.bestiary(); } 
@@ -2514,7 +2514,7 @@ h += '<input id="pni" value="' + safeName + '" style="flex:1;background:rgba(255
         } 
     },
 
-};  
+};  // ← КОНЕЦ ОБЪЕКТА
 
 (function() {
     var self = SherwoodUI;
