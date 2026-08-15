@@ -1,6 +1,6 @@
 /**
  * Sherwood Tavern — Таверна «Весёлый Разбойник»
- * 100 квестов, 20 в день, автобой, откат 20 минут
+ * Полная боевая логика
  */
 
 Sherwood.Tavern = {
@@ -16,7 +16,8 @@ Sherwood.Tavern = {
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
-        if (!p.tavern) p.tavern = { questsCompleted: 0, dailyQuestsDone: 0, cooldownEnd: 0, secretUnlocked: false };
+        if (!p.tavern) p.tavern = { questsCompleted: 0, dailyQuestsDone: 0, cooldownEnd: 0, secretUnlocked: false, currentQuest: null };
+        
         this._completedQuests = p.tavern.questsCompleted ? this._generateQuestIds(p.tavern.questsCompleted) : [];
         this._dailyQuestsDone = p.tavern.dailyQuestsDone || 0;
         this._cooldownEnd = p.tavern.cooldownEnd || 0;
@@ -31,7 +32,9 @@ Sherwood.Tavern = {
         }
         
         // Восстановление текущего квеста
-        this._restoreCurrentQuest();
+        if (p.tavern.currentQuest) {
+            this._currentQuest = p.tavern.currentQuest;
+        }
     },
 
     _generateQuestIds: function(count) {
@@ -75,7 +78,8 @@ Sherwood.Tavern = {
         return { quest: this._currentQuest, row: { npc: 'Егерь' } };
     },
 
-    startQuest: function(rowIndex, questIndex) {
+    // НОВЫЙ МЕТОД: Начать квест
+    startQuest: function() {
         if (this._dailyQuestsDone >= this._maxDailyQuests) {
             return { success: false, reason: 'Лимит на сегодня (' + this._maxDailyQuests + ')' };
         }
@@ -90,23 +94,89 @@ Sherwood.Tavern = {
         var nextQuestId = 'tavern_' + (this._completedQuests.length + 1);
         var quest = this._getQuestById(nextQuestId);
         
-        if (this._completedQuests.indexOf(nextQuestId) !== -1) {
-            return { success: true, quest: quest, mode: 'auto' };
-        }
-        
         this._currentQuest = quest;
         this._saveCurrentQuest();
+        
         return { success: true, quest: quest, mode: 'battle', enemy: quest.enemy };
     },
 
-    autoBattle: function() {
-        if (!this._currentQuest) return { completed: false, failed: true };
+    // НОВЫЙ МЕТОД: Атака в бою таверны
+    attackQuest: function() {
+        if (!this._currentQuest) return { error: 'Нет квеста' };
+        
         var p = Sherwood.getPlayer();
         var quest = this._currentQuest;
         var enemy = quest.enemy;
+        
+        if (!enemy.maxHp) enemy.maxHp = enemy.hp;
+        
+        // Урон игрока
+        var dmg = Sherwood.calculateDamage(p.stats.attack, enemy.def || 5);
+        var crit = Math.random() * 100 < 15;
+        if (crit) dmg = Math.floor(dmg * 1.8);
+        
+        enemy.hp -= dmg;
+        if (enemy.hp < 0) enemy.hp = 0;
+        
+        var result = {
+            damage: dmg,
+            crit: crit,
+            enemyHp: enemy.hp,
+            enemyMaxHp: enemy.maxHp,
+            enemyName: enemy.name,
+            enemyDead: enemy.hp <= 0
+        };
+        
+        // Победа
+        if (enemy.hp <= 0) {
+            var r = this._completeQuest();
+            result.win = true;
+            result.rewards = r.reward;
+            
+            // Восстановление HP
+            p.stats.hp = p.stats.maxHp;
+            Sherwood.saveGame();
+            
+            return result;
+        }
+        
+        // Контрудар врага
+        var edmg = Sherwood.calculateDamage(enemy.atk || 20, p.stats.defense);
+        p.stats.hp = Math.max(0, p.stats.hp - edmg);
+        result.enemyDamage = edmg;
+        result.playerHp = p.stats.hp;
+        
+        // Поражение
+        if (p.stats.hp <= 0) {
+            result.playerDead = true;
+            this._currentQuest = null;
+            this._saveCurrentQuest();
+            p.stats.hp = 1;
+            Sherwood.saveGame();
+            return result;
+        }
+        
+        this._saveCurrentQuest();
+        Sherwood.saveGame();
+        return result;
+    },
+
+    // НОВЫЙ МЕТОД: Автобой
+    autoBattle: function() {
+        if (!this._currentQuest) return { completed: false, failed: true };
+        
+        var p = Sherwood.getPlayer();
+        var quest = this._currentQuest;
+        var enemy = quest.enemy;
+        
         var win = this._completedQuests.indexOf(quest.id) !== -1 ? true : Math.random() < 0.7 + (p.stats.attack / 200);
         
-        if (win) return this._completeQuest();
+        if (win) {
+            var r = this._completeQuest();
+            p.stats.hp = p.stats.maxHp;
+            Sherwood.saveGame();
+            return { completed: true, reward: r.reward };
+        }
         
         var damage = Math.floor((enemy.atk || 20) * (1 + Math.random() * 0.5));
         p.stats.hp = Math.max(1, p.stats.hp - damage);
@@ -114,6 +184,7 @@ Sherwood.Tavern = {
         return { completed: false, failed: true, damage: damage };
     },
 
+    // НОВЫЙ МЕТОД: Завершение квеста
     _completeQuest: function() {
         var quest = this._currentQuest;
         var p = Sherwood.getPlayer();
@@ -121,10 +192,12 @@ Sherwood.Tavern = {
         if (this._completedQuests.indexOf(quest.id) === -1) {
             this._completedQuests.push(quest.id);
         }
+        
         this._currentQuest = null;
         this._dailyQuestsDone++;
         p.tavern.questsCompleted = this._completedQuests.length;
         p.tavern.dailyQuestsDone = this._dailyQuestsDone;
+        
         this._cooldownEnd = Date.now() + this._cooldownMinutes * 60 * 1000;
         p.tavern.cooldownEnd = this._cooldownEnd;
         
@@ -138,7 +211,7 @@ Sherwood.Tavern = {
         Sherwood.saveGame();
         this._checkSecretQuest();
         
-        return { completed: true, reward: quest.reward, secretUnlocked: this._secretQuestUnlocked };
+        return { success: true, reward: quest.reward };
     },
 
     completeQuest: function() {
@@ -158,10 +231,12 @@ Sherwood.Tavern = {
 
     getCompletedCount: function() { return this._completedQuests.length; },
     isOnCooldown: function() { return Date.now() < this._cooldownEnd; },
+    
     getCooldownRemaining: function() {
         var r = this._cooldownEnd - Date.now();
         return r <= 0 ? 0 : Math.ceil(r / 60000);
     },
+    
     getBattleMode: function() { return this._currentQuest ? true : false; },
     
     _checkSecretQuest: function() {
@@ -183,11 +258,5 @@ Sherwood.Tavern = {
         if (!p.tavern) p.tavern = {};
         p.tavern.currentQuest = this._currentQuest ? JSON.parse(JSON.stringify(this._currentQuest)) : null;
         Sherwood.saveGame();
-    },
-
-    _restoreCurrentQuest: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.tavern || !p.tavern.currentQuest) return;
-        this._currentQuest = p.tavern.currentQuest;
     }
 };
