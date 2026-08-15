@@ -484,7 +484,7 @@ const SherwoodUI = {
         h += '</div>';
         h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти (1 билет)</button>';
         
-        if (cupCount >= 5) {
+        if (cupCount >= 3) {
             if (Sherwood.Dungeon.isAutoFightActive()) {
                 h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Автобой уже активен</div>';
             } else {
@@ -642,12 +642,12 @@ const SherwoodUI = {
         
         this._playSound('steps');
         this._renderDungeon();
-        this._stopSound('steps');
+        setTimeout(function() { SherwoodUI._stopSound('steps'); }, 300);
         this.updateDisplay();
         
         if (res.type === 'battle') { 
             this._pauseMusic(); 
-            this._playSound('trap'); 
+            this._playSound('hit'); 
             Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); 
             var self = this;
             setTimeout(function() { self._showCombatScreen(); }, 400); 
@@ -958,9 +958,9 @@ const SherwoodUI = {
         this._showDamageNumber(r.damage, r.crit);
         if (r.crit) this._showCriticalHitAnim();
         this._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-        this._showDialog((r.crit ? 'CRIT ' : '') + 'Damage: ' + r.damage, r.crit ? '#ff6a00' : '#fff');
+        this._showDialog((r.crit ? 'КРИТ! ' : '') + 'Урон: ' + r.damage, r.crit ? '#ff6a00' : '#fff');
         if (r.heal > 0) this._showDialog('+ ' + r.heal + ' HP', '#4caf50');
-        if (r.enemyDamage) { var self = this; setTimeout(function() { self._showDialog('Enemy hit: ' + r.enemyDamage, '#f44336'); self.updateDisplay(); }, 700); }
+        if (r.enemyDamage) { var self = this; setTimeout(function() { self._showDialog('Враг бьёт: ' + r.enemyDamage, '#f44336'); self.updateDisplay(); }, 700); }
         this.updateDisplay();
         var self = this;
         setTimeout(function() { self._showCombatScreen(); }, 1000);
@@ -1107,6 +1107,7 @@ const SherwoodUI = {
             h += '<div style="text-align:center;color:#ff9800;">Перезарядка: ' + cdRemain + ' мин.</div>';
         } else {
             var nextQuest = Sherwood.Tavern._getQuestById('tavern_' + (completedCount + 1));
+           if (!nextQuest) { this._showToast('Нет доступных квестов'); return; }
             h += '<div style="text-align:center;">';
             h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;">' + nextQuest.name + '</div>';
             h += '<div style="color:#aaa;font-size:0.9em;">' + nextQuest.desc + '</div>';
@@ -1811,7 +1812,8 @@ const SherwoodUI = {
         var h = '';
         h += '<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;">';
         h += '<div style="color:#fff;margin-bottom:8px;">Имя</div>';
-        h += '<input id="pni" value="' + nm + '" style="width:100%;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-size:0.9em;margin-bottom:8px;">';
+        var safeName = nm.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+h += '<input id="pni" value="' + safeName + '" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;font-family:\'Georgia\',serif;font-size:0.9em;">';
         h += '<button onclick="SherwoodUI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button>';
         h += '</div>';
         
@@ -2503,7 +2505,16 @@ const SherwoodUI = {
 
     _bestiaryTab: 0,
 
-};
+    _claimReward: function() { 
+        this._pendingRewards = null; 
+        if (this._afterRewardAction) { 
+            var cb = this._afterRewardAction; 
+            this._afterRewardAction = null; 
+            cb(); 
+        } 
+    },
+
+}; 
 
 (function() {
     var self = SherwoodUI;
