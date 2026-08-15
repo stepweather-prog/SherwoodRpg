@@ -143,18 +143,29 @@ Sherwood.Daily = (function() {
         if ((p.level || 1) < req.minLevel) return false;
 
         if (req.requiredChapter !== null) {
-            var prevBossType = 'kill_boss_ch' + req.requiredChapter;
             var prevQuests = p.daily.chapterQuests[req.requiredChapter];
-            if (!prevQuests) return false;
-
-            var bossKilled = false;
+            if (!prevQuests || prevQuests.length === 0) return false;
+            
+            // Глава считается пройденной, если ВСЕ задания выполнены
+            var allCompleted = true;
             for (var i = 0; i < prevQuests.length; i++) {
-                if (prevQuests[i].type === prevBossType && prevQuests[i].completed) {
-                    bossKilled = true;
+                if (!prevQuests[i].completed) {
+                    allCompleted = false;
                     break;
                 }
             }
-            if (!bossKilled) return false;
+            if (!allCompleted) return false;
+            
+            // Дополнительно: босс предыдущей главы должен быть убит в квестах
+            var prevChapterId = req.requiredChapter;
+            var questProgress = p.questProgress;
+            if (questProgress && questProgress.completed) {
+                if (questProgress.completed.indexOf(prevChapterId) === -1) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
 
         return true;
@@ -260,7 +271,6 @@ Sherwood.Daily = (function() {
             return _dailyQuests.slice();
         },
 
-        // Совместимость со старым UI
         getDailyCompleted: function() {
             return _dailyClaimed.slice();
         },
