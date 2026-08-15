@@ -1552,11 +1552,10 @@ _tavernCancel: function() {
     var p = Sherwood.getPlayer();
     var currentChapter = p.questProgress ? (p.questProgress.currentChapter || 1) : 1;
     var chapterQuests = Sherwood.Daily.getChapterQuests(currentChapter);
-    var chapterCompleted = p.daily ? (p.daily.chapterCompleted || []) : [];
+    var chapterCompleted = Sherwood.Daily.getChapterCompleted();
     
     var html = '';
     
-    // Табы переключения
     var t1b = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? '#c9a040' : 'rgba(255,255,255,0.1)';
     var t1c = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) ? '#000' : '#fff';
     var t2b = (SherwoodUI._dailyTab === 2) ? '#c9a040' : 'rgba(255,255,255,0.1)';
@@ -1567,19 +1566,15 @@ _tavernCancel: function() {
     html += '<button onclick="SherwoodUI._dailyTab=2;SherwoodUI.daily();" style="flex:1;background:' + t2b + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + t2c + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Глава ' + currentChapter + '</button>';
     html += '</div>';
     
-    // Выбираем рамку в зависимости от вкладки
     var frameImage = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1) 
         ? 'assets/interface/tasks_visual.png' 
         : 'assets/interface/tasks_chapters_visual.png';
     
-    // Для ежедневных (неоновая рамка) — тёмная подложка под текст
-    // Для главы — белый текст с тенью
     var isDaily = (!SherwoodUI._dailyTab || SherwoodUI._dailyTab === 1);
     
     var quests = isDaily ? dailyQuests : chapterQuests;
     var completed = isDaily ? dailyCompleted : chapterCompleted;
     
-    // Контейнер списка заданий (столбик по центру, рамки вплотную)
     html += '<div style="display:flex;flex-direction:column;align-items:center;">';
     
     if (quests.length === 0) {
@@ -1591,90 +1586,73 @@ _tavernCancel: function() {
         var claimed = completed.indexOf(q.id) !== -1;
         var progressPct = Math.round((q.progress || 0) / q.target * 100);
         
-        // Каждое задание: обрезаем прозрачные края через overflow:hidden
         html += '<div style="position:relative;width:90%;max-width:400px;height:110px;overflow:hidden;margin-bottom:4px;">';
         
-        // Картинка рамки
         html += '<img src="' + frameImage + '" style="position:absolute;left:0;width:100%;height:auto;top:50%;transform:translateY(-50%);">';
         
-        // Тёмная подложка для текста (только для ежедневных)
         if (isDaily) {
             html += '<div style="position:absolute;top:8px;left:20px;right:20px;bottom:8px;background:rgba(0,0,0,0.75);border-radius:8px;z-index:0;"></div>';
         }
         
-        // Текст поверх рамки
         html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 28px;box-sizing:border-box;z-index:1;">';
         
-        // Название задания
         if (isDaily) {
-            // Для неоновой рамки — белый текст с чёрной тенью
             html += '<div style="color:#fff;font-weight:900;font-size:0.8em;text-shadow:0 1px 3px #000, 0 0 8px rgba(0,0,0,0.8);margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div>';
-            
-            // Описание
             html += '<div style="color:#ddd;font-weight:700;font-size:0.6em;text-shadow:0 1px 2px #000;margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>';
         } else {
-            // Для главы — белый жирный шрифт с тенью
             html += '<div style="color:#fff;font-weight:900;font-size:0.8em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div>';
             html += '<div style="color:#fff;font-weight:700;font-size:0.6em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>';
         }
         
-        // Прогресс-бар (яркий, контрастный)
         html += '<div style="width:75%;background:rgba(0,0,0,0.7);border-radius:4px;height:8px;margin:2px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.4);">';
-        html += '<div style="background:' + (q.completed ? '#00ff00' : '#ffaa00') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;box-shadow:0 0 6px ' + (q.completed ? 'rgba(0,255,0,0.6)' : 'rgba(255,170,0,0.6)') + ';"></div>';
+        html += '<div style="background:' + (q.completed ? '#00ff00' : '#ffaa00') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;"></div>';
         html += '</div>';
         
-        // Прогресс и награда
         if (isDaily) {
             html += '<div style="color:#fff;font-weight:700;font-size:0.55em;text-shadow:0 1px 2px #000;margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | <span style="color:#ffd700;">+' + q.reward.gold + ' зол.</span> <span style="color:#ffaa00;">+' + q.reward.exp + ' XP</span></div>';
         } else {
             html += '<div style="color:#fff;font-weight:700;font-size:0.55em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | +' + q.reward.gold + ' зол. +' + q.reward.exp + ' XP</div>';
         }
         
-        // Кнопка "ГОТОВО" или статус
         if (q.completed && !claimed) {
             html += '<button onclick="';
             if (isDaily) {
-                html += 'SherwoodUI._claimDaily(' + i + ')';
+                html += 'SherwoodUI._claimDaily(\'' + q.id + '\')';
             } else {
-                html += 'SherwoodUI._claimChapter(' + currentChapter + ',' + i + ')';
+                html += 'SherwoodUI._claimChapter(' + currentChapter + ',\'' + q.id + '\')';
             }
-            // Кнопка яркая с тенью и обводкой
             html += '" style="background:#00c853;border:2px solid #fff;border-radius:20px;padding:4px 22px;color:#fff;font-weight:900;cursor:pointer;font-size:0.65em;letter-spacing:1px;text-shadow:0 1px 2px rgba(0,0,0,0.5);box-shadow:0 2px 8px rgba(0,0,0,0.5), 0 0 10px rgba(0,200,83,0.4);">ГОТОВО</button>';
         } else if (claimed) {
             html += '<div style="color:#00ff00;font-weight:900;font-size:0.6em;text-shadow:0 0 6px rgba(0,255,0,0.5), 0 1px 2px #000;">✓ ПОЛУЧЕНО</div>';
         }
         
-        html += '</div>'; // конец текста
-        html += '</div>'; // конец рамки задания
+        html += '</div>';
+        html += '</div>';
     }
     
-    html += '</div>'; // конец контейнера списка
+    html += '</div>';
     
-    // Лог
     html += '<div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
     
-    // Открываем с прокруткой
     this._openScreenScrollable('Задания', 'daily', html);
 },
 
-_openScreenScrollable: function(title, bgKey, html, backFn) {
-    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
-    try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {}
-    var goBack = backFn || 'SherwoodUI.loadHome()';
-    try { 
-        if (this._screenLayer) { 
-            this._screenLayer.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;">' +
-                '<div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;">' +
-                '<button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button>' +
-                '<span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">' + title + '</span></div>' +
-                '<div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px 20px 12px;-webkit-overflow-scrolling:touch;">' + html + '</div></div>'; 
-            this._screenLayer.style.display = 'block'; 
-        } 
-    } catch(e) {}
+_claimDaily: function(questId) { 
+    var r = Sherwood.Daily.claimDailyReward(questId);
+    var log = document.getElementById('daily-log'); 
+    if (r.success) { 
+        if (log) log.textContent = 'Награда получена!'; 
+        this.updateDisplay(); 
+        this._playSound('loot_fly');
+    } else { 
+        if (log) log.textContent = r.reason; 
+    } 
+    var self = this; 
+    setTimeout(function() { self.daily(); }, 600); 
 },
 
-_claimDaily: function(i) { 
-    var r = Sherwood.Daily.claimDailyReward(i);
+_claimChapter: function(ch, questId) { 
+    var r = Sherwood.Daily.claimChapterReward(ch, questId);
     var log = document.getElementById('daily-log'); 
     if (r.success) { 
         if (log) log.textContent = 'Награда получена!'; 
@@ -3058,10 +3036,10 @@ _showAllTrophies: function() {
 
 _showAllRings: function() {
     var player = Sherwood.getPlayer();
-    var jewelry = player.jewelry || { rings: [], amulets: [] };
+    var jewelry = (player.marketData && player.marketData.ownedJewelry) ? player.marketData.ownedJewelry : (player.jewelry || { rings: [], amulets: [] });
     var purchasedRingIds = jewelry.rings || [];
     
-    var allRings = Sherwood.BlackMarket ? Sherwood.BlackMarket._RINGS : [];
+    var allRings = Sherwood.BlackMarket ? (Sherwood.BlackMarket.RINGS || []) : [];
     var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца (' + purchasedRingIds.length + ' куплено)</div>';
     
     if (purchasedRingIds.length === 0) {
@@ -3069,15 +3047,18 @@ _showAllRings: function() {
     }
     
     for (var i = 0; i < allRings.length; i++) {
-        var ring = allRings[i];
-        var isPurchased = purchasedRingIds.indexOf(ring.id) !== -1;
+        var ringData = allRings[i];
+        var ringId = 'ring_' + ringData.chapter;
+        var isPurchased = purchasedRingIds.indexOf(ringId) !== -1;
         
         if (!isPurchased) continue;
         
+        var iconSuffix = ringData.chapter === 1 ? 'first_level' : ringData.chapter === 2 ? 'second_level' : ringData.chapter === 3 ? 'third_level' : ringData.chapter === 4 ? 'fourth_level' : ringData.chapter === 5 ? 'fifth_level' : 'chapter_' + ringData.chapter;
+        
         h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
-        h += '<img src="' + ring.icon + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
-        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + ring.name + '</div>';
-        h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (ring.stats.attack || 0) + ' | ЗЩТ +' + (ring.stats.defense || 0) + '</div>';
+        h += '<img src="assets/interface/ring_' + iconSuffix + '.png" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;" onerror="this.src=\'assets/interface/ring_first_level.png\'">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">Кольцо главы ' + ringData.chapter + '</div>';
+        h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (ringData.stats.attack || 0) + ' | ЗЩТ +' + (ringData.stats.defense || 0) + '</div>';
         h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">✓ Куплено</div>';
         h += '</div></div>';
     }
@@ -3088,10 +3069,10 @@ _showAllRings: function() {
 
 _showAllAmulets: function() {
     var player = Sherwood.getPlayer();
-    var jewelry = player.jewelry || { rings: [], amulets: [] };
+    var jewelry = (player.marketData && player.marketData.ownedJewelry) ? player.marketData.ownedJewelry : (player.jewelry || { rings: [], amulets: [] });
     var purchasedAmuletIds = jewelry.amulets || [];
     
-    var allAmulets = Sherwood.BlackMarket ? Sherwood.BlackMarket._AMULETS : [];
+    var allAmulets = Sherwood.BlackMarket ? (Sherwood.BlackMarket.AMULETS || []) : [];
     var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты (' + purchasedAmuletIds.length + ' куплено)</div>';
     
     if (purchasedAmuletIds.length === 0) {
@@ -3099,15 +3080,18 @@ _showAllAmulets: function() {
     }
     
     for (var i = 0; i < allAmulets.length; i++) {
-        var amulet = allAmulets[i];
-        var isPurchased = purchasedAmuletIds.indexOf(amulet.id) !== -1;
+        var amuletData = allAmulets[i];
+        var amuletId = 'amulet_' + amuletData.chapter;
+        var isPurchased = purchasedAmuletIds.indexOf(amuletId) !== -1;
         
         if (!isPurchased) continue;
         
+        var iconSuffix = amuletData.chapter === 1 ? 'one' : amuletData.chapter === 2 ? 'two' : amuletData.chapter === 3 ? 'three' : amuletData.chapter === 4 ? 'four' : amuletData.chapter === 5 ? 'five' : String(amuletData.chapter);
+        
         h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
-        h += '<img src="' + amulet.icon + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;">';
-        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + amulet.name + '</div>';
-        h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (amulet.stats.hp || 0) + ' | ЗЩТ +' + (amulet.stats.defense || 0) + '</div>';
+        h += '<img src="assets/interface/sherwood_amulet_level_' + iconSuffix + '.png" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;" onerror="this.src=\'assets/interface/sherwood_amulet_level_one.png\'">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">Амулет главы ' + amuletData.chapter + '</div>';
+        h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (amuletData.stats.hp || 0) + ' | ЗЩТ +' + (amuletData.stats.defense || 0) + '</div>';
         h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">✓ Куплено</div>';
         h += '</div></div>';
     }
