@@ -836,6 +836,59 @@ _handleCombatResult: function(r) {
     var self = this;
     setTimeout(function() { self._showCombatScreen(); }, 1000);
 },
+    _showDialog: function(msg, color) { 
+    var dlg = document.getElementById('battle-dialog'); 
+    if (dlg) { 
+        dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; 
+        dlg.scrollTop = dlg.scrollHeight; 
+    } 
+},
+
+_showDamageNumber: function(dmg, isCrit) {
+    var container = document.getElementById('damage-numbers');
+    if (!container) return;
+    var el = document.createElement('div');
+    el.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);color:' + (isCrit ? '#ff6a00' : '#ffd700') + ';font-size:' + (isCrit ? '1.8em' : '1.2em') + ';font-weight:bold;text-shadow:0 0 8px #000;z-index:10;pointer-events:none;';
+    el.textContent = (isCrit ? '💥 ' : '') + dmg;
+    container.appendChild(el);
+    setTimeout(function() { el.remove(); }, 1000);
+},
+
+_showPlayerHitAnim: function() {
+    var container = document.getElementById('player-hit-anim');
+    if (!container) return;
+    container.style.display = 'block';
+    setTimeout(function() { container.style.display = 'none'; }, 600);
+},
+
+_showCriticalHitAnim: function() {
+    var overlay = document.getElementById('enemy-hit-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'block';
+    setTimeout(function() { overlay.style.display = 'none'; }, 800);
+},
+
+_hitEnemyCard: function() {
+    var card = document.getElementById('enemy-card');
+    if (!card) return;
+    card.style.transition = 'transform 0.1s, filter 0.15s';
+    card.style.transform = 'translateX(2px) rotate(0.5deg) scale(0.95)';
+    card.style.filter = 'brightness(1.3) saturate(2) hue-rotate(-10deg)';
+    setTimeout(function() {
+        card.style.transform = '';
+        card.style.filter = '';
+    }, 200);
+},
+
+_updateEnemyHP: function(hp, max) { 
+    var bar = document.getElementById('enemy-hp-bar');
+    var txt = document.getElementById('enemy-hp-text'); 
+    if (bar) { 
+        var pct = max > 0 ? Math.round((hp / max) * 100) : 0; 
+        bar.style.width = pct + '%'; 
+    } 
+    if (txt) txt.textContent = hp + '/' + max; 
+},
 
 // ===== КВЕСТЫ =====
 quest: function() {
