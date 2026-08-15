@@ -1,131 +1,251 @@
-Sherwood.Daily = {
-    _dailyQuests: [],
-    _chapterQuests: {},
-    _dailyCompleted: [],
-    _chapterCompleted: [],
-    _lastRefresh: '',
+/**
+ * Sherwood Daily — Ежедневные квесты и квесты глав (15 глав)
+ */
 
-    DAILY_TEMPLATES: [
-        { id: 'kill_beasts', name: 'Истребитель', desc: 'Убить 50 бестий', target: 50, type: 'kill_beasts', reward: { gold: 10, silver: 500, exp: 100 } },
-        { id: 'dungeon_floors', name: 'Подземный герой', desc: 'Пройти 3 этажа подземок', target: 3, type: 'dungeon_floors', reward: { gold: 15, silver: 400, exp: 120 } },
-        { id: 'quest_fights', name: 'Квестовый боец', desc: 'Сразиться 5 раз в квестах', target: 5, type: 'quest_fights', reward: { gold: 15, silver: 300, exp: 120 } },
-        { id: 'open_chests', name: 'Кладоискатель', desc: 'Открыть 5 сундуков', target: 5, type: 'open_chests', reward: { gold: 10, silver: 350, exp: 90 } },
-        { id: 'collect_loot', name: 'Собиратель', desc: 'Собрать 20 предметов лута', target: 20, type: 'collect_loot', reward: { gold: 20, silver: 600, exp: 150 } },
-        { id: 'tavern_daily', name: 'Завсегдатай', desc: 'Выполнить задание таверны', target: 1, type: 'tavern_complete', reward: { gold: 20, silver: 500, exp: 150 } },
-        { id: 'arena_wins', name: 'Гладиатор', desc: 'Победить на арене 3 раза', target: 3, type: 'arena_wins', reward: { gold: 25, silver: 700, exp: 200 } }
-    ],
+Sherwood.Daily = (function() {
+    'use strict';
 
-    CHAPTER_TEMPLATES: [
-        { chapter: 1, quests: [
-            { id: 'ch1_kill', name: 'Лесной патруль', desc: 'Убить 20 врагов', target: 20, type: 'kill_beasts', reward: { gold: 20, silver: 400, exp: 150 } },
-            { id: 'ch1_dungeon', name: 'Глубины чащи', desc: 'Пройти 2 этажа подземки', target: 2, type: 'dungeon_floors', reward: { gold: 25, silver: 500, exp: 180 } },
-            { id: 'ch1_train', name: 'Сила охотника', desc: 'Поднять Атаку до 20', target: 20, type: 'stat_attack', reward: { gold: 15, silver: 300, exp: 100 } },
-            { id: 'ch1_chest', name: 'Лесной клад', desc: 'Открыть 3 сундука', target: 3, type: 'open_chests', reward: { gold: 20, silver: 350, exp: 130 } },
-            { id: 'ch1_boss', name: 'Победить Лесное Лихо', desc: 'Убить босса 1 главы', target: 1, type: 'kill_boss_ch1', reward: { gold: 50, silver: 1000, exp: 300 } },
-            { id: 'ch1_collect', name: 'Сбор ресурсов', desc: 'Собрать 10 предметов', target: 10, type: 'collect_loot', reward: { gold: 15, silver: 250, exp: 100 } },
-            { id: 'ch1_arena', name: 'Новичок арены', desc: 'Победить на арене 1 раз', target: 1, type: 'arena_wins', reward: { gold: 30, silver: 500, exp: 200 } }
-        ]},
-        { chapter: 2, quests: [
-            { id: 'ch2_kill', name: 'Болотный охотник', desc: 'Убить 30 врагов', target: 30, type: 'kill_beasts', reward: { gold: 30, silver: 600, exp: 200 } },
-            { id: 'ch2_dungeon', name: 'Топи болот', desc: 'Пройти 3 этажа подземки', target: 3, type: 'dungeon_floors', reward: { gold: 35, silver: 700, exp: 250 } },
-            { id: 'ch2_train', name: 'Непробиваемый', desc: 'Поднять Защиту до 30', target: 30, type: 'stat_defense', reward: { gold: 25, silver: 400, exp: 150 } },
-            { id: 'ch2_chest', name: 'Болотные дары', desc: 'Открыть 5 сундуков', target: 5, type: 'open_chests', reward: { gold: 30, silver: 500, exp: 180 } },
-            { id: 'ch2_boss', name: 'Победить Лихо', desc: 'Убить босса 2 главы', target: 1, type: 'kill_boss_ch2', reward: { gold: 80, silver: 1500, exp: 500 } },
-            { id: 'ch2_collect', name: 'Собиратель болот', desc: 'Собрать 15 предметов', target: 15, type: 'collect_loot', reward: { gold: 20, silver: 400, exp: 150 } },
-            { id: 'ch2_quest', name: 'Квестовый воин', desc: 'Сразиться 3 раза в квестах', target: 3, type: 'quest_fights', reward: { gold: 30, silver: 600, exp: 200 } },
-            { id: 'ch2_ring', name: 'Кольцо силы', desc: 'Добыть кольцо', target: 1, type: 'get_ring', reward: { gold: 50, silver: 800, exp: 300 } }
-        ]},
-        { chapter: 3, quests: [
-            { id: 'ch3_kill', name: 'Пещерный охотник', desc: 'Убить 40 врагов', target: 40, type: 'kill_beasts', reward: { gold: 40, silver: 800, exp: 300 } },
-            { id: 'ch3_dungeon', name: 'Глубины шахт', desc: 'Пройти 4 этажа', target: 4, type: 'dungeon_floors', reward: { gold: 50, silver: 900, exp: 350 } },
-            { id: 'ch3_train', name: 'Живучий', desc: 'Поднять Здоровье до 300', target: 300, type: 'stat_hp', reward: { gold: 35, silver: 500, exp: 200 } },
-            { id: 'ch3_chest', name: 'Сокровища шахт', desc: 'Открыть 7 сундуков', target: 7, type: 'open_chests', reward: { gold: 40, silver: 700, exp: 250 } },
-            { id: 'ch3_boss', name: 'Победить Хозяина', desc: 'Убить босса 3 главы', target: 1, type: 'kill_boss_ch3', reward: { gold: 120, silver: 2000, exp: 700 } },
-            { id: 'ch3_collect', name: 'Шахтёр', desc: 'Собрать 20 предметов', target: 20, type: 'collect_loot', reward: { gold: 30, silver: 500, exp: 200 } },
-            { id: 'ch3_amulet', name: 'Амулет защиты', desc: 'Добыть амулет', target: 1, type: 'get_amulet', reward: { gold: 80, silver: 1200, exp: 400 } },
-            { id: 'ch3_tavern', name: 'Посетитель таверны', desc: 'Выполнить 2 задания таверны', target: 2, type: 'tavern_complete', reward: { gold: 50, silver: 800, exp: 300 } },
-            { id: 'ch3_train_agi', name: 'Быстрый как ветер', desc: 'Поднять Ловкость до 25', target: 25, type: 'stat_agility', reward: { gold: 30, silver: 500, exp: 200 } },
-            { id: 'ch3_arena', name: 'Боец арены', desc: 'Победить на арене 5 раз', target: 5, type: 'arena_wins', reward: { gold: 60, silver: 1000, exp: 400 } }
-        ]}
-    ],
+    var DAILY_QUESTS_PER_DAY = 4;
 
-    init: function() {
-        var p = Sherwood.getPlayer();
-        if (!p) return;
-        if (!p.daily) p.daily = { completed: [], chapterCompleted: [], lastRefresh: '', dailyQuests: [], chapterQuests: {}, progress: {} };
+    var CHAPTER_REQUIREMENTS = {};
+    for (var i = 1; i <= 15; i++) {
+        CHAPTER_REQUIREMENTS[i] = { 
+            minLevel: 1 + (i - 1) * 3, 
+            requiredChapter: i > 1 ? i - 1 : null 
+        };
+    }
+
+    var DAILY_TEMPLATES = [
+        { id: 'dq_kill_beasts',    name: 'Истребитель',         desc: 'Убить {t} бестий',          target: 50, type: 'kill_beasts',      reward: { gold: 10, silver: 500, exp: 100 } },
+        { id: 'dq_dungeon_floors', name: 'Подземный герой',     desc: 'Пройти {t} этажей подземок', target: 3,  type: 'dungeon_floors',   reward: { gold: 15, silver: 400, exp: 120 } },
+        { id: 'dq_quest_fights',   name: 'Квестовый боец',      desc: 'Сразиться {t} раз в квестах', target: 5, type: 'quest_fights',    reward: { gold: 15, silver: 300, exp: 120 } },
+        { id: 'dq_open_chests',    name: 'Кладоискатель',        desc: 'Открыть {t} сундуков',       target: 5,  type: 'open_chests',     reward: { gold: 10, silver: 350, exp: 90 } },
+        { id: 'dq_collect_loot',   name: 'Собиратель',           desc: 'Собрать {t} предметов лута', target: 20, type: 'collect_loot',    reward: { gold: 20, silver: 600, exp: 150 } },
+        { id: 'dq_tavern',         name: 'Завсегдатай',          desc: 'Выполнить задание таверны',  target: 1,  type: 'tavern_complete',  reward: { gold: 20, silver: 500, exp: 150 } },
+        { id: 'dq_arena_wins',     name: 'Гладиатор',            desc: 'Победить на арене {t} раз',  target: 3,  type: 'arena_wins',      reward: { gold: 25, silver: 700, exp: 200 } },
+        { id: 'dq_craft_items',    name: 'Кузнец',               desc: 'Скрафтить {t} предметов',    target: 3,  type: 'craft_items',     reward: { gold: 15, silver: 450, exp: 130 } },
+        { id: 'dq_sell_items',     name: 'Торговец',             desc: 'Продать {t} предметов',      target: 10, type: 'sell_items',      reward: { gold: 25, silver: 300, exp: 110 } },
+        { id: 'dq_use_potions',    name: 'Травник',              desc: 'Использовать {t} зелий',     target: 5,  type: 'use_potions',     reward: { gold: 10, silver: 400, exp: 100 } }
+    ];
+
+    var CHAPTER_TEMPLATES = [];
+
+    // Генерация шаблонов для 15 глав
+    var chapterNames = [
+        '', 'Проклятие Зелёного Сердца', 'Чёрный орден', 'Рождение Охотника',
+        'Бестии Смертной Чащи', 'Шепот Тёмного Лешего', 'Твари Искажённой Эволюции',
+        'Эхо Прошлых Сражений', 'Ужас Болотных Недр', 'Первые Трофеи',
+        'Открытие Порталов', 'Королева Короедов', 'Призрачный Король',
+        'Хранитель Склепа', 'Пробуждение Отродья', 'Доспех Вечности'
+    ];
+
+    for (var ch = 1; ch <= 15; ch++) {
+        var targetBase = ch * 20;
+        var rewardMult = ch;
         
-        var today = new Date().toDateString();
-        
-        // Восстановление ежедневных квестов
-        if (p.daily.dailyQuests && p.daily.dailyQuests.length > 0 && p.daily.lastRefresh === today) {
-            this._dailyQuests = p.daily.dailyQuests;
-        } else {
-            this._dailyQuests = this._generateDailyQuests();
-            p.daily.dailyQuests = this._dailyQuests;
+        CHAPTER_TEMPLATES.push({
+            chapter: ch,
+            name: chapterNames[ch] || ('Глава ' + ch),
+            quests: [
+                { id: 'ch' + ch + '_kill',     name: 'Охотник главы ' + ch,      desc: 'Убить {t} врагов',                 target: targetBase,          type: 'kill_beasts',     reward: { gold: 20 * rewardMult, silver: 400 * rewardMult, exp: 150 * rewardMult } },
+                { id: 'ch' + ch + '_dungeon',  name: 'Подземелья главы ' + ch,  desc: 'Пройти {t} этажей подземки',      target: Math.min(2 + ch, 10), type: 'dungeon_floors',  reward: { gold: 25 * rewardMult, silver: 500 * rewardMult, exp: 180 * rewardMult } },
+                { id: 'ch' + ch + '_train',    name: 'Сила главы ' + ch,        desc: 'Поднять Атаку до {t}',            target: 20 + ch * 10,       type: 'stat_attack',    reward: { gold: 15 * rewardMult, silver: 300 * rewardMult, exp: 100 * rewardMult } },
+                { id: 'ch' + ch + '_chest',    name: 'Клады главы ' + ch,       desc: 'Открыть {t} сундуков',             target: 3 + ch,             type: 'open_chests',    reward: { gold: 20 * rewardMult, silver: 350 * rewardMult, exp: 130 * rewardMult } },
+                { id: 'ch' + ch + '_boss',     name: 'Босс главы ' + ch,        desc: 'Убить босса ' + ch + ' главы',   target: 1,                    type: 'kill_boss_ch' + ch, reward: { gold: 50 * rewardMult, silver: 1000 * rewardMult, exp: 300 * rewardMult } },
+                { id: 'ch' + ch + '_collect',  name: 'Сбор главы ' + ch,        desc: 'Собрать {t} предметов',            target: 10 + ch * 2,        type: 'collect_loot',   reward: { gold: 15 * rewardMult, silver: 250 * rewardMult, exp: 100 * rewardMult } },
+                { id: 'ch' + ch + '_arena',    name: 'Арена главы ' + ch,       desc: 'Победить на арене {t} раз',        target: Math.min(1 + ch, 20), type: 'arena_wins',   reward: { gold: 30 * rewardMult, silver: 500 * rewardMult, exp: 200 * rewardMult } }
+            ]
+        });
+    }
+
+    var _dailyQuests = [];
+    var _dailyClaimed = [];
+    var _chapterClaimed = [];
+    var _lastRefresh = '';
+    var _listeners = {};
+
+    function _randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function _getTodayString() {
+        return new Date().toDateString();
+    }
+
+    function _getPlayer() {
+        return Sherwood.getPlayer();
+    }
+
+    function _emit(event, data) {
+        var callbacks = _listeners[event];
+        if (!callbacks) return;
+        for (var i = 0; i < callbacks.length; i++) {
+            callbacks[i](data);
         }
-        
-        this._dailyCompleted = p.daily.completed || [];
-        this._chapterCompleted = p.daily.chapterCompleted || [];
-        this._chapterQuests = p.daily.chapterQuests || {};
-        this._lastRefresh = p.daily.lastRefresh || today;
-        
-        // Если новый день — сброс
-        if (p.daily.lastRefresh !== today) {
-            p.daily.completed = [];
-            p.daily.dailyQuests = this._generateDailyQuests();
-            p.daily.lastRefresh = today;
-            if (p.daily.progress) { 
-                for (var key in p.daily.progress) { delete p.daily.progress[key]; }
-            }
-            this._dailyQuests = p.daily.dailyQuests;
-            this._dailyCompleted = [];
-            Sherwood.saveGame();
-        }
-        
-        // Восстановление прогресса из сохранения
-        this._restoreProgress();
-    },
+    }
 
-    _generateDailyQuests: function() {
-        var pool = this.DAILY_TEMPLATES.slice();
-        var quests = [];
-        for (var i = 0; i < 7; i++) {
-            if (pool.length === 0) break;
-            var idx = Math.floor(Math.random() * pool.length);
-            var quest = Object.assign({}, pool[idx], { progress: 0, completed: false });
-            quests.push(quest);
+    function _ensureDailyData(p) {
+        if (!p.daily) {
+            p.daily = {
+                dailyQuests: [],
+                dailyProgress: {},
+                dailyClaimed: [],
+                chapterProgress: {},
+                chapterClaimed: [],
+                chapterQuests: {},
+                lastRefresh: ''
+            };
+        }
+        if (!p.daily.dailyClaimed) p.daily.dailyClaimed = [];
+        if (!p.daily.chapterClaimed) p.daily.chapterClaimed = [];
+        if (!p.daily.chapterProgress) p.daily.chapterProgress = {};
+        if (!p.daily.chapterQuests) p.daily.chapterQuests = {};
+        if (!p.daily.dailyProgress) p.daily.dailyProgress = {};
+    }
+
+    function _formatDesc(template, target) {
+        return (template || '').replace('{t}', target);
+    }
+
+    function _instantiateQuest(template) {
+        return {
+            id: template.id,
+            name: template.name,
+            desc: _formatDesc(template.desc, template.target),
+            target: template.target,
+            type: template.type,
+            reward: JSON.parse(JSON.stringify(template.reward)),
+            progress: 0,
+            completed: false
+        };
+    }
+
+    function _generateDailyQuests() {
+        var pool = DAILY_TEMPLATES.slice();
+        var selected = [];
+        var count = Math.min(DAILY_QUESTS_PER_DAY, pool.length);
+
+        for (var i = 0; i < count && pool.length > 0; i++) {
+            var idx = _randomInt(0, pool.length - 1);
+            selected.push(_instantiateQuest(pool[idx]));
             pool.splice(idx, 1);
         }
-        return quests;
-    },
 
-    _restoreProgress: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.daily) return;
+        return selected;
+    }
+
+    function _isChapterUnlocked(chapterId) {
+        var req = CHAPTER_REQUIREMENTS[chapterId];
+        if (!req) return false;
+
+        var p = _getPlayer();
+        if (!p) return false;
+
+        if ((p.level || 1) < req.minLevel) return false;
+
+        if (req.requiredChapter !== null) {
+            var prevBossType = 'kill_boss_ch' + req.requiredChapter;
+            var prevQuests = p.daily.chapterQuests[req.requiredChapter];
+            if (!prevQuests) return false;
+
+            var bossKilled = false;
+            for (var i = 0; i < prevQuests.length; i++) {
+                if (prevQuests[i].type === prevBossType && prevQuests[i].completed) {
+                    bossKilled = true;
+                    break;
+                }
+            }
+            if (!bossKilled) return false;
+        }
+
+        return true;
+    }
+
+    function _saveDaily() {
+        var p = _getPlayer();
+        if (!p) return;
+        p.daily.dailyQuests = _dailyQuests;
+        p.daily.dailyProgress = {};
+        for (var i = 0; i < _dailyQuests.length; i++) {
+            var q = _dailyQuests[i];
+            if (q.progress > 0) {
+                p.daily.dailyProgress[q.id] = q.progress;
+            }
+        }
+        p.daily.dailyClaimed = _dailyClaimed;
+        p.daily.chapterClaimed = _chapterClaimed;
+        p.daily.lastRefresh = _lastRefresh;
         
-        // Восстановление прогресса ежедневных
-        if (p.daily.progress) {
-            for (var i = 0; i < this._dailyQuests.length; i++) {
-                var q = this._dailyQuests[i];
-                if (p.daily.progress[q.id]) {
-                    q.progress = p.daily.progress[q.id];
-                    if (q.progress >= q.target) {
-                        q.progress = q.target;
-                        q.completed = true;
-                    }
+        var chapterQuests = p.daily.chapterQuests || {};
+        var chapterProgress = p.daily.chapterProgress || {};
+        for (var chId in chapterQuests) {
+            if (!chapterQuests.hasOwnProperty(chId)) continue;
+            for (var j = 0; j < chapterQuests[chId].length; j++) {
+                var cq = chapterQuests[chId][j];
+                if (cq.progress > 0) {
+                    chapterProgress[cq.id] = cq.progress;
+                }
+                if (cq.completed) {
+                    chapterProgress[cq.id] = cq.target;
                 }
             }
         }
+        p.daily.chapterProgress = chapterProgress;
+        p.daily.chapterQuests = chapterQuests;
         
-        // Восстановление прогресса глав
-        if (p.daily.chapterQuests) {
-            for (var chId in p.daily.chapterQuests) {
-                if (!p.daily.chapterQuests.hasOwnProperty(chId)) continue;
-                var quests = p.daily.chapterQuests[chId];
+        Sherwood.saveGame();
+    }
+
+    return {
+        CHAPTER_TEMPLATES: CHAPTER_TEMPLATES,
+        CHAPTER_REQUIREMENTS: CHAPTER_REQUIREMENTS,
+
+        init: function() {
+            var p = _getPlayer();
+            if (!p) return;
+
+            _ensureDailyData(p);
+
+            var today = _getTodayString();
+
+            if (p.daily.lastRefresh === today && p.daily.dailyQuests && p.daily.dailyQuests.length > 0) {
+                _dailyQuests = p.daily.dailyQuests;
+                _dailyClaimed = p.daily.dailyClaimed || [];
+                _chapterClaimed = p.daily.chapterClaimed || [];
+
+                var progress = p.daily.dailyProgress || {};
+                for (var i = 0; i < _dailyQuests.length; i++) {
+                    var q = _dailyQuests[i];
+                    if (progress[q.id] !== undefined) {
+                        q.progress = progress[q.id];
+                        if (q.progress >= q.target) {
+                            q.progress = q.target;
+                            q.completed = true;
+                        }
+                    }
+                }
+            } else {
+                _dailyQuests = _generateDailyQuests();
+                _dailyClaimed = [];
+                p.daily.dailyProgress = {};
+                p.daily.dailyClaimed = [];
+                p.daily.lastRefresh = today;
+                p.daily.dailyQuests = _dailyQuests;
+                Sherwood.saveGame();
+            }
+
+            _lastRefresh = today;
+            _chapterClaimed = p.daily.chapterClaimed || [];
+
+            var chapterProgress = p.daily.chapterProgress || {};
+            var chapterQuests = p.daily.chapterQuests || {};
+            for (var chId in chapterQuests) {
+                if (!chapterQuests.hasOwnProperty(chId)) continue;
+                var quests = chapterQuests[chId];
                 for (var j = 0; j < quests.length; j++) {
                     var cq = quests[j];
-                    if (p.daily.progress && p.daily.progress[cq.id]) {
-                        cq.progress = p.daily.progress[cq.id];
+                    if (chapterProgress[cq.id] !== undefined) {
+                        cq.progress = chapterProgress[cq.id];
                         if (cq.progress >= cq.target) {
                             cq.progress = cq.target;
                             cq.completed = true;
@@ -133,106 +253,222 @@ Sherwood.Daily = {
                     }
                 }
             }
-            this._chapterQuests = p.daily.chapterQuests;
-        }
-    },
 
-    getChapterQuests: function(chapterId) {
-        var p = Sherwood.getPlayer();
-        if (!p.daily.chapterQuests) p.daily.chapterQuests = {};
-        if (!p.daily.chapterQuests[chapterId]) {
+            _emit('init', { dailyQuests: _dailyQuests });
+        },
+
+        getDailyQuests: function() {
+            return _dailyQuests.slice();
+        },
+
+        getChapterInfo: function(chapterId) {
             var template = null;
-            for (var i = 0; i < this.CHAPTER_TEMPLATES.length; i++) {
-                if (this.CHAPTER_TEMPLATES[i].chapter === chapterId) { template = this.CHAPTER_TEMPLATES[i]; break; }
+            for (var i = 0; i < CHAPTER_TEMPLATES.length; i++) {
+                if (CHAPTER_TEMPLATES[i].chapter === chapterId) {
+                    template = CHAPTER_TEMPLATES[i];
+                    break;
+                }
             }
-            if (template) {
+            if (!template) return null;
+
+            var unlocked = _isChapterUnlocked(chapterId);
+            var req = CHAPTER_REQUIREMENTS[chapterId] || {};
+
+            return {
+                chapter: chapterId,
+                name: template.name,
+                unlocked: unlocked,
+                requirement: req,
+                questCount: template.quests.length
+            };
+        },
+
+        getChapterQuests: function(chapterId) {
+            var p = _getPlayer();
+            _ensureDailyData(p);
+
+            if (!p.daily.chapterQuests[chapterId]) {
+                var template = null;
+                for (var i = 0; i < CHAPTER_TEMPLATES.length; i++) {
+                    if (CHAPTER_TEMPLATES[i].chapter === chapterId) {
+                        template = CHAPTER_TEMPLATES[i];
+                        break;
+                    }
+                }
+
+                if (!template) {
+                    p.daily.chapterQuests[chapterId] = [];
+                    return [];
+                }
+
                 p.daily.chapterQuests[chapterId] = template.quests.map(function(q) {
-                    return Object.assign({}, q, { progress: 0, completed: false });
+                    return _instantiateQuest(q);
                 });
                 Sherwood.saveGame();
-            } else {
-                p.daily.chapterQuests[chapterId] = [];
             }
-        }
-        this._chapterQuests = p.daily.chapterQuests;
-        return p.daily.chapterQuests[chapterId] || [];
-    },
 
-    getDailyQuests: function() { return this._dailyQuests; },
-    getDailyCompleted: function() { return this._dailyCompleted; },
+            return p.daily.chapterQuests[chapterId];
+        },
 
-    updateProgress: function(type, amount) {
-        var p = Sherwood.getPlayer();
-        if (!p.daily.progress) p.daily.progress = {};
-        var updated = false;
-        
-        // Ежедневные
-        for (var i = 0; i < this._dailyQuests.length; i++) {
-            var q = this._dailyQuests[i];
-            if (q.type === type && !q.completed) {
-                q.progress = (q.progress || 0) + (amount || 1);
-                p.daily.progress[q.id] = q.progress;
-                if (q.progress >= q.target) { 
-                    q.progress = q.target; 
-                    q.completed = true; 
-                }
+        updateProgress: function(type, amount) {
+            var p = _getPlayer();
+            if (!p || !p.daily) return { updated: false, completedQuests: [] };
+
+            amount = amount || 1;
+            var updated = false;
+            var completedQuests = [];
+
+            for (var i = 0; i < _dailyQuests.length; i++) {
+                var q = _dailyQuests[i];
+                if (q.type !== type || q.completed) continue;
+
+                q.progress = Math.min(q.target, (q.progress || 0) + amount);
                 updated = true;
-            }
-        }
-        
-        // Квесты глав
-        var chQuests = p.daily.chapterQuests || {};
-        for (var chId in chQuests) {
-            if (!chQuests.hasOwnProperty(chId)) continue;
-            for (var j = 0; j < chQuests[chId].length; j++) {
-                var cq = chQuests[chId][j];
-                if (cq.type === type && !cq.completed) {
-                    cq.progress = (cq.progress || 0) + (amount || 1);
-                    p.daily.progress[cq.id] = cq.progress;
-                    if (cq.progress >= cq.target) { 
-                        cq.progress = cq.target; 
-                        cq.completed = true; 
-                    }
-                    updated = true;
+
+                if (q.progress >= q.target) {
+                    q.completed = true;
+                    completedQuests.push({ source: 'daily', quest: q });
+                    _emit('questCompleted', { source: 'daily', quest: q });
                 }
             }
-        }
-        
-        if (updated) { 
-            p.daily.dailyQuests = this._dailyQuests; 
-            p.daily.chapterQuests = chQuests; 
-            Sherwood.saveGame(); 
-        }
-    },
 
-    claimDailyReward: function(questIndex) {
-        if (questIndex < 0 || questIndex >= this._dailyQuests.length) return { success: false, reason: 'Not found' };
-        var q = this._dailyQuests[questIndex];
-        if (!q.completed) return { success: false, reason: 'Not done' };
-        if (this._dailyCompleted.indexOf(q.id) !== -1) return { success: false, reason: 'Claimed' };
-        this._dailyCompleted.push(q.id);
-        Sherwood.addExp(q.reward.exp);
-        Sherwood.addResource('gold', q.reward.gold);
-        Sherwood.addResource('silver', q.reward.silver || 0);
-        var p = Sherwood.getPlayer(); 
-        p.daily.completed = this._dailyCompleted; 
-        Sherwood.saveGame();
-        return { success: true, reward: q.reward };
-    },
+            var chapterQuests = p.daily.chapterQuests || {};
+            for (var chId in chapterQuests) {
+                if (!chapterQuests.hasOwnProperty(chId)) continue;
+                var quests = chapterQuests[chId];
+                for (var j = 0; j < quests.length; j++) {
+                    var cq = quests[j];
+                    if (cq.type !== type || cq.completed) continue;
 
-    claimChapterReward: function(chapterId, questIndex) {
-        var quests = this.getChapterQuests(chapterId);
-        if (questIndex < 0 || questIndex >= quests.length) return { success: false, reason: 'Not found' };
-        var q = quests[questIndex];
-        if (!q.completed) return { success: false, reason: 'Not done' };
-        if (this._chapterCompleted.indexOf(q.id) !== -1) return { success: false, reason: 'Claimed' };
-        this._chapterCompleted.push(q.id);
-        Sherwood.addExp(q.reward.exp);
-        Sherwood.addResource('gold', q.reward.gold);
-        if (q.reward.silver) Sherwood.addResource('silver', q.reward.silver);
-        var p = Sherwood.getPlayer(); 
-        p.daily.chapterCompleted = this._chapterCompleted; 
-        Sherwood.saveGame();
-        return { success: true, reward: q.reward };
-    }
-};
+                    cq.progress = Math.min(cq.target, (cq.progress || 0) + amount);
+                    updated = true;
+
+                    if (!p.daily.chapterProgress) p.daily.chapterProgress = {};
+                    p.daily.chapterProgress[cq.id] = cq.progress;
+
+                    if (cq.progress >= cq.target) {
+                        cq.completed = true;
+                        completedQuests.push({ source: 'chapter', chapterId: chId, quest: cq });
+                        _emit('questCompleted', { source: 'chapter', chapterId: chId, quest: cq });
+                    }
+                }
+            }
+
+            if (updated) {
+                _saveDaily();
+            }
+
+            return { updated: updated, completedQuests: completedQuests };
+        },
+
+        claimDailyReward: function(questId) {
+            var quest = null;
+            for (var i = 0; i < _dailyQuests.length; i++) {
+                if (_dailyQuests[i].id === questId) { quest = _dailyQuests[i]; break; }
+            }
+
+            if (!quest) return { success: false, reason: 'Квест не найден' };
+            if (!quest.completed) return { success: false, reason: 'Квест не выполнен' };
+            if (_dailyClaimed.indexOf(questId) !== -1) return { success: false, reason: 'Награда уже получена' };
+
+            _dailyClaimed.push(questId);
+
+            if (Sherwood.addExp) Sherwood.addExp(quest.reward.exp);
+            if (Sherwood.addResource) {
+                Sherwood.addResource('gold', quest.reward.gold);
+                if (quest.reward.silver) Sherwood.addResource('silver', quest.reward.silver);
+            }
+
+            _saveDaily();
+
+            var result = { success: true, reward: quest.reward, quest: quest };
+            _emit('rewardClaimed', { source: 'daily', questId: questId, reward: quest.reward });
+
+            return result;
+        },
+
+        claimChapterReward: function(chapterId, questId) {
+            var p = _getPlayer();
+            if (!p || !p.daily) return { success: false, reason: 'Ошибка данных' };
+
+            var quests = this.getChapterQuests(chapterId);
+            var quest = null;
+            for (var i = 0; i < quests.length; i++) {
+                if (quests[i].id === questId) { quest = quests[i]; break; }
+            }
+
+            if (!quest) return { success: false, reason: 'Квест не найден' };
+            if (!quest.completed) return { success: false, reason: 'Квест не выполнен' };
+            if (_chapterClaimed.indexOf(questId) !== -1) return { success: false, reason: 'Награда уже получена' };
+
+            _chapterClaimed.push(questId);
+
+            if (Sherwood.addExp) Sherwood.addExp(quest.reward.exp);
+            if (Sherwood.addResource) {
+                Sherwood.addResource('gold', quest.reward.gold);
+                if (quest.reward.silver) Sherwood.addResource('silver', quest.reward.silver);
+            }
+
+            _saveDaily();
+
+            var result = { success: true, reward: quest.reward, quest: quest };
+            _emit('rewardClaimed', { source: 'chapter', chapterId: chapterId, questId: questId, reward: quest.reward });
+
+            return result;
+        },
+
+        getChapterProgress: function(chapterId) {
+            var quests = this.getChapterQuests(chapterId);
+            var completed = 0;
+            var claimed = 0;
+
+            for (var i = 0; i < quests.length; i++) {
+                if (quests[i].completed) completed++;
+                if (_chapterClaimed.indexOf(quests[i].id) !== -1) claimed++;
+            }
+
+            return {
+                chapter: chapterId,
+                total: quests.length,
+                completed: completed,
+                claimed: claimed,
+                percent: quests.length > 0 ? Math.round((completed / quests.length) * 100) : 0
+            };
+        },
+
+        isChapterUnlocked: function(chapterId) {
+            return _isChapterUnlocked(chapterId);
+        },
+
+        getAllChapters: function() {
+            var result = [];
+            for (var i = 0; i < CHAPTER_TEMPLATES.length; i++) {
+                var ct = CHAPTER_TEMPLATES[i];
+                var info = this.getChapterInfo(ct.chapter);
+                var progress = this.getChapterProgress(ct.chapter);
+                result.push({
+                    chapter: ct.chapter,
+                    name: ct.name,
+                    unlocked: info.unlocked,
+                    requirement: info.requirement,
+                    questCount: ct.quests.length,
+                    completed: progress.completed,
+                    total: progress.total,
+                    percent: progress.percent
+                });
+            }
+            return result;
+        },
+
+        on: function(event, callback) {
+            if (!_listeners[event]) _listeners[event] = [];
+            _listeners[event].push(callback);
+        },
+
+        off: function(event, callback) {
+            if (!_listeners[event]) return;
+            _listeners[event] = _listeners[event].filter(function(cb) { return cb !== callback; });
+        }
+    };
+
+})();
