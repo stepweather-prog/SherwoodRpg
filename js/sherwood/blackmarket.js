@@ -1,5 +1,5 @@
 /**
- * Sherwood BlackMarket — Чёрный рынок (Рефакторинг)
+ * Sherwood BlackMarket — Чёрный рынок
  */
 
 Sherwood.BlackMarket = (function() {
@@ -116,9 +116,7 @@ Sherwood.BlackMarket = (function() {
                 ownedJewelry: { rings: [], amulets: [] }
             };
         }
-        if (!p.marketData.ownedJewelry) {
-            p.marketData.ownedJewelry = { rings: [], amulets: [] };
-        }
+        if (!p.marketData.ownedJewelry) p.marketData.ownedJewelry = { rings: [], amulets: [] };
         if (!p.marketData.shopItems) p.marketData.shopItems = [];
         if (!p.marketData.purchasedToday) p.marketData.purchasedToday = {};
         if (p.marketData.refreshCountToday === undefined) p.marketData.refreshCountToday = 0;
@@ -133,10 +131,7 @@ Sherwood.BlackMarket = (function() {
             var amount = gives[resKey];
             var handler = RESOURCE_HANDLERS[resKey];
 
-            if (!handler) {
-                console.warn('[BlackMarket] Неизвестный ресурс:', resKey);
-                continue;
-            }
+            if (!handler) continue;
 
             switch (handler.method) {
                 case 'addItem':
@@ -266,6 +261,12 @@ Sherwood.BlackMarket = (function() {
                 _purchasedToday = p.marketData.purchasedToday || {};
                 _refreshCountToday = p.marketData.refreshCountToday || 0;
                 _lastRefreshDate = p.marketData.lastRefreshDate;
+                
+                // Если магазин пуст — генерируем
+                if (_shopItems.length === 0) {
+                    _shopItems = _generateShop();
+                    _saveMarketData();
+                }
             }
 
             _emit('init', { shopItems: _shopItems });
@@ -295,21 +296,52 @@ Sherwood.BlackMarket = (function() {
             _shopItems = _generateShop();
             _saveMarketData();
 
-            _emit('shopRefreshed', { shopItems: _shopItems, refreshesLeft: MAX_REFRESHES_PER_DAY - _refreshCountToday });
+            _emit('shopRefreshed', { shopItems: _shopItems });
 
-            return { success: true, shopItems: _shopItems, refreshesLeft: MAX_REFRESHES_PER_DAY - _refreshCountToday };
+            return { success: true, shopItems: _shopItems };
         },
 
-        isPurchased: function(itemId) {
-            return !!_purchasedToday[itemId];
-        },
-
-        buyItem: function(itemId) {
+        isPurchased: function(itemIdOrIndex) {
             var item = null;
+            
             for (var i = 0; i < _shopItems.length; i++) {
-                if (_shopItems[i].id === itemId) { item = _shopItems[i]; break; }
+                if (_shopItems[i].id === itemIdOrIndex) { item = _shopItems[i]; break; }
             }
+            
+            if (!item) {
+                var idx = parseInt(itemIdOrIndex, 10);
+                if (!isNaN(idx) && idx >= 0 && idx < _shopItems.length) {
+                    item = _shopItems[idx];
+                }
+            }
+            
+            if (!item) return true;
+            return !!_purchasedToday[item.id];
+        },
 
+        buyItem: function(itemIdOrIndex) {
+            var item = null;
+            
+            // Поиск по ID
+            for (var i = 0; i < _shopItems.length; i++) {
+                if (_shopItems[i].id === itemIdOrIndex) { item = _shopItems[i]; break; }
+            }
+            
+            // Поиск по индексу
+            if (!item) {
+                var idx = parseInt(itemIdOrIndex, 10);
+                if (!isNaN(idx) && idx >= 0 && idx < _shopItems.length) {
+                    item = _shopItems[idx];
+                }
+            }
+            
+            // Поиск по slot
+            if (!item) {
+                for (var j = 0; j < _shopItems.length; j++) {
+                    if (_shopItems[j].slot === parseInt(itemIdOrIndex, 10)) { item = _shopItems[j]; break; }
+                }
+            }
+            
             if (!item) return { success: false, reason: 'Товар не найден' };
             if (_purchasedToday[item.id]) return { success: false, reason: 'Уже куплено сегодня' };
 
