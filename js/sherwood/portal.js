@@ -1,5 +1,6 @@
 /**
  * Sherwood Portal — Порталы (7 уровней)
+ * Обновлено: новые боссы, элитная охрана, иконки
  */
 
 Sherwood.Portal = {
@@ -12,67 +13,76 @@ Sherwood.Portal = {
 
     PORTALS: [
         {
-            id: 1, name: 'Портал Нашествия', bg: 'assets/backgrounds/portal_1.jpeg',
+            id: 1, name: 'Портал Нашествия', icon: 'assets/portal_beasts/visual_portals/invasion_portal.png', bg: 'assets/backgrounds/portal_1.jpeg',
             enemies: [
-                { name: 'Костяной стрелок', image: 'image (7).png', hp: 800, attack: 60, defense: 30, exp: 150, gold: 100 },
-                { name: 'Забытый гвардеец', image: 'image (6).png', hp: 1200, attack: 75, defense: 40, exp: 250, gold: 180, isBoss: true }
+                { name: 'Костяной стрелок', image: 'assets/all_beasts/armored_beetle.png', hp: 800, attack: 60, defense: 30, exp: 150, gold: 100 },
+                { name: 'Кислотный Короед-Пожиратель', image: 'assets/all_beasts/acid_devourer.png', hp: 1000, attack: 70, defense: 35, exp: 200, gold: 140 },
+                { name: 'Повелитель Гнили', image: 'assets/all_beasts/blight_lord_beetle.png', hp: 1200, attack: 75, defense: 40, exp: 250, gold: 180 },
+                { name: 'Жнец-Полководец', image: 'assets/portal_beasts/the_reaper_commander.png', hp: 2500, attack: 120, defense: 60, exp: 500, gold: 400, isBoss: true }
             ],
             rewards: { gold: 300, exp: 500, silver: 800 }
         },
         {
-            id: 2, name: 'Портал Черепных Пауков', bg: 'assets/backgrounds/portal_2.png',
+            id: 2, name: 'Портал Черных Пауков', icon: 'assets/portal_beasts/visual_portals/skull_spider_portal.png', bg: 'assets/backgrounds/portal_2.png',
             enemies: [
-                { name: 'Черепной паук', image: 'image (19).png', hp: 1100, attack: 70, defense: 35, exp: 180, gold: 130 },
-                { name: 'Хранитель Врат', image: 'image (11).png', hp: 1600, attack: 90, defense: 50, exp: 300, gold: 220, isBoss: true }
+                { name: 'Окулярный Арахнид', image: 'assets/all_beasts/ocular_arachnid.png', hp: 1100, attack: 70, defense: 35, exp: 180, gold: 130 },
+                { name: 'Выжигающий Арахнид', image: 'assets/all_beasts/searing_arachnid.png', hp: 1400, attack: 85, defense: 45, exp: 280, gold: 200 },
+                { name: 'Арахнид-Некромант', image: 'assets/all_beasts/necromantic_arachnid.png', hp: 1600, attack: 90, defense: 50, exp: 300, gold: 220 },
+                { name: 'Ткачиха Мрака', image: 'assets/portal_beasts/the_dark_weaver.png', hp: 3000, attack: 140, defense: 70, exp: 600, gold: 450, isBoss: true }
             ],
             rewards: { gold: 400, exp: 650, silver: 1000 }
         },
         {
-            id: 3, name: 'Портал Увядания', bg: 'assets/backgrounds/portal_3.png',
+            id: 3, name: 'Портал Увядания', icon: 'assets/portal_beasts/visual_portals/portal_of_withering.png', bg: 'assets/backgrounds/portal_3.png',
             enemies: [
-                { name: 'Проклятая нимфа', image: 'image (25).png', hp: 1500, attack: 85, defense: 40, exp: 220, gold: 160 },
-                { name: 'Рогатый дух увядания', image: 'image (10).png', hp: 2100, attack: 105, defense: 60, exp: 380, gold: 280, isBoss: true }
+                { name: 'Оживший Тис', image: 'assets/all_beasts/animated_yew.png', hp: 1500, attack: 85, defense: 40, exp: 220, gold: 160 },
+                { name: 'Дочь Корней', image: 'assets/all_beasts/root_daughter.png', hp: 1800, attack: 95, defense: 50, exp: 300, gold: 220 },
+                { name: 'Повелительница корней', image: 'assets/all_beasts/mistress_of_the_roots.png', hp: 2100, attack: 105, defense: 60, exp: 380, gold: 280 },
+                { name: 'Истлевший Титан', image: 'assets/portal_beasts/the_decayed_titan.png', hp: 4000, attack: 170, defense: 90, exp: 800, gold: 600, isBoss: true }
             ],
             rewards: { gold: 550, exp: 850, silver: 1300 },
             trophy: { id: 'portal_3', name: 'Окровавленный Клык Волка', bonus: { attack: 15, defense: 15, hp: 15 }, icon: 'assets/all_trophies/portal_trophies/1_wolf_fang.png' }
         },
         {
-            id: 4, name: 'Портал Цепей', bg: 'assets/backgrounds/portal_1.jpeg',
+            id: 4, name: 'Портал Цепей', icon: 'assets/portal_beasts/visual_portals/portal_of_chains.png', bg: 'assets/backgrounds/portal_1.jpeg',
             enemies: [
-                { name: 'Повелитель цепей', image: 'image (8).png', hp: 2000, attack: 100, defense: 50, exp: 280, gold: 200 },
-                { name: 'Тюремщик Разлома', image: 'image (23).png', hp: 2400, attack: 115, defense: 65, exp: 350, gold: 260 },
-                { name: 'Кислотный голем', image: 'image (9).png', hp: 3200, attack: 135, defense: 80, exp: 500, gold: 380, isBoss: true }
+                { name: 'Ржавый Слуга', image: 'assets/all_beasts/rusty_servant.png', hp: 2000, attack: 100, defense: 50, exp: 280, gold: 200 },
+                { name: 'Ржавый Страх', image: 'assets/all_beasts/rusty_dread.png', hp: 2400, attack: 115, defense: 65, exp: 350, gold: 260 },
+                { name: 'Истязатель', image: 'assets/all_beasts/tormentor.png', hp: 2800, attack: 125, defense: 70, exp: 420, gold: 300 },
+                { name: 'Вечный Узник', image: 'assets/portal_beasts/the_eternal_prisoner.png', hp: 4500, attack: 190, defense: 100, exp: 900, gold: 700, isBoss: true }
             ],
             rewards: { gold: 700, exp: 1100, silver: 1700 },
             trophy: { id: 'portal_4', name: 'Сердце Ненасытного Тритона', bonus: { attack: 30, defense: 30, hp: 30 }, icon: 'assets/all_trophies/portal_trophies/2_heart_of_the_Insatiable_triton.png' }
         },
         {
-            id: 5, name: 'Портал Ликантропов', bg: 'assets/backgrounds/portal_2.png',
+            id: 5, name: 'Портал Ликантропов', icon: 'assets/portal_beasts/visual_portals/lycanthrope_portal.png', bg: 'assets/backgrounds/portal_2.png',
             enemies: [
-                { name: 'Кровавый упырь', image: 'image (18).png', hp: 2700, attack: 120, defense: 60, exp: 350, gold: 250 },
-                { name: 'Изумрудный ликантроп', image: 'image (24).png', hp: 3200, attack: 140, defense: 75, exp: 450, gold: 320 },
-                { name: 'Двойной ликантроп', image: 'image (29).png', hp: 4000, attack: 160, defense: 90, exp: 600, gold: 450, isBoss: true }
+                { name: 'Гниющий Волк', image: 'assets/all_beasts/putrid_wolf.png', hp: 2700, attack: 120, defense: 60, exp: 350, gold: 250 },
+                { name: 'Волк-Потрошитель', image: 'assets/all_beasts/ripper_wolf.png', hp: 3200, attack: 140, defense: 75, exp: 450, gold: 320 },
+                { name: 'Повелитель Стаи', image: 'assets/all_beasts/fox_pack_lord.png', hp: 3600, attack: 150, defense: 80, exp: 550, gold: 400 },
+                { name: 'Кровавый Вожак', image: 'assets/portal_beasts/the_blood_alpha.png', hp: 5000, attack: 210, defense: 110, exp: 1000, gold: 800, isBoss: true }
             ],
             rewards: { gold: 900, exp: 1400, silver: 2200 },
             trophy: { id: 'portal_5', name: 'Изумрудный Осколок Исполина', bonus: { attack: 50, defense: 50, hp: 50 }, icon: 'assets/all_trophies/portal_trophies/3_emerald_shard_of_the_giant.png' }
         },
         {
-            id: 6, name: 'Портал Скорпиона', bg: 'assets/backgrounds/portal_3.png',
+            id: 6, name: 'Портал Скорпиона', icon: 'assets/portal_beasts/visual_portals/scorpio_portal.png', bg: 'assets/backgrounds/portal_3.png',
             enemies: [
-                { name: 'Страж портала', image: 'image (14).png', hp: 3500, attack: 140, defense: 70, exp: 420, gold: 300 },
-                { name: 'Элитный страж', image: 'image (17).png', hp: 4000, attack: 155, defense: 80, exp: 500, gold: 360 },
-                { name: 'Механический скорпион', image: 'image (15).png', hp: 5000, attack: 185, defense: 100, exp: 750, gold: 550, isBoss: true }
+                { name: 'Базальтовый Пожиратель', image: 'assets/all_beasts/basalt_devourer.png', hp: 3500, attack: 140, defense: 70, exp: 420, gold: 300 },
+                { name: 'Громила Грота', image: 'assets/all_beasts/grotto_brute.png', hp: 4000, attack: 155, defense: 80, exp: 500, gold: 360 },
+                { name: 'Пещерный Наблюдатель', image: 'assets/all_beasts/cave_watcher.png', hp: 4300, attack: 165, defense: 85, exp: 550, gold: 400 },
+                { name: 'Базальтовый Жнец', image: 'assets/portal_beasts/the_basalt_reaper.png', hp: 6000, attack: 240, defense: 130, exp: 1200, gold: 900, isBoss: true }
             ],
             rewards: { gold: 1150, exp: 1800, silver: 2800 },
             trophy: { id: 'portal_6', name: 'Проклятая Эмблема Склепа', bonus: { attack: 80, defense: 80, hp: 80 }, icon: 'assets/all_trophies/portal_trophies/4_cursed_emblem_of_the_crypt.png' }
         },
         {
-            id: 7, name: 'Портал Искажения', bg: 'assets/backgrounds/portal_1.jpeg',
+            id: 7, name: 'Портал Искажения', icon: 'assets/portal_beasts/visual_portals/portal_of_distortion.png', bg: 'assets/backgrounds/portal_1.jpeg',
             enemies: [
-                { name: 'Страж искажения', image: 'image (16).png', hp: 4500, attack: 170, defense: 85, exp: 550, gold: 400 },
-                { name: 'Элита портала', image: 'image (21).png', hp: 5200, attack: 190, defense: 95, exp: 650, gold: 480 },
-                { name: 'Владыка Искажения', image: 'image (12).png', hp: 6000, attack: 210, defense: 110, exp: 850, gold: 650 },
-                { name: 'Кристаллический змей', image: 'image (20).png', hp: 7500, attack: 240, defense: 130, exp: 1100, gold: 850, isBoss: true }
+                { name: 'Енот Порчи', image: 'assets/all_beasts/corruption_raccoon.png', hp: 4500, attack: 170, defense: 85, exp: 550, gold: 400 },
+                { name: 'Слепой Терзатель', image: 'assets/all_beasts/blind_render.png', hp: 5200, attack: 190, defense: 95, exp: 650, gold: 480 },
+                { name: 'Страж Преисподней', image: 'assets/all_beasts/underworld_guardian.png', hp: 6000, attack: 210, defense: 110, exp: 850, gold: 650 },
+                { name: 'Воплощение Искажения', image: 'assets/portal_beasts/embodiment_of_distortion.png', hp: 7500, attack: 260, defense: 140, exp: 1500, gold: 1100, isBoss: true }
             ],
             rewards: { gold: 1500, exp: 2500, silver: 4000 },
             trophy: { id: 'portal_7', name: 'Корона Лесного Владыки', bonus: { attack: 150, defense: 150, hp: 150 }, icon: 'assets/all_trophies/portal_trophies/5_crown_of_the_forest_lord.png' }
@@ -96,7 +106,6 @@ Sherwood.Portal = {
 
     getAllPortals: function() { return this.PORTALS; },
 
-    // НОВЫЙ МЕТОД: Требования для входа
     getRequirements: function(portalId) {
         return {
             arrows: portalId * 150,
@@ -104,7 +113,6 @@ Sherwood.Portal = {
         };
     },
 
-    // НОВЫЙ МЕТОД: Проверка входа
     canEnter: function(portalId) {
         var req = this.getRequirements(portalId);
         var player = Sherwood.getPlayer();
@@ -130,19 +138,16 @@ Sherwood.Portal = {
         var req = this.getRequirements(portalId);
         var player = Sherwood.getPlayer();
         
-        // Проверка уровня
         if ((player.level || 1) < req.level) {
             return { success: false, reason: 'Нужен уровень ' + req.level };
         }
         
-        // Проверка стрел
         if (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) {
             var arrowCount = Sherwood.Forge.getArrowCount();
             if (arrowCount < req.arrows) {
                 return { success: false, reason: 'Нужно ' + req.arrows + ' стрел (у вас ' + arrowCount + ')' };
             }
             
-            // Списываем стрелы
             var bag = Sherwood.Bag;
             var items = bag.getItems();
             var toRemove = req.arrows;
@@ -212,7 +217,6 @@ Sherwood.Portal = {
         var player = Sherwood.getPlayer(); 
         var enemy = battle.enemy;
         
-        // Проверка: игрок жив?
         if (player.stats.hp <= 0) {
             return { dead: true, portalFailed: true };
         }
