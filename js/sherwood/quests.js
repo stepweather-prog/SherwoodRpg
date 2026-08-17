@@ -11,196 +11,196 @@ Sherwood.Quests = {
         {
             id: 1, name: 'Проклятие Зелёного Сердца',
             lore: 'Шервудский лес отравлен. Из расколотых недр хлынула сизая порча. Первыми жертвами стали рудокопы — их раздувшиеся тела намертво обвил неоновый мох.',
-            boss: { name: 'Лесное Лихо', image: 'image (46).png', hp: 400, atk: 28, def: 15, exp: 150, gold: 100 },
+            boss: { name: 'Лесничий-Отступник', image: '../beast_quest/fallen_forester.png', hp: 400, atk: 28, def: 15, exp: 150, gold: 100 },
             stages: 6, rewards: { exp: 200, gold: 50, silver: 500 },
             enemies: [
-                { name: 'Леший', image: 'image (1).png', hp: 100, atk: 15, def: 8, exp: 30, gold: 15 },
-                { name: 'Проклятый олень', image: 'image (3).png', hp: 120, atk: 18, def: 10, exp: 35, gold: 18 },
-                { name: 'Древесный голем', image: 'image (74).png', hp: 140, atk: 20, def: 12, exp: 40, gold: 20 },
-                { name: 'Рогатый Леший', image: 'image (9).png', hp: 160, atk: 22, def: 13, exp: 45, gold: 22 },
-                { name: 'Олень (Фаза тарана)', image: 'image (29).png', hp: 180, atk: 25, def: 14, exp: 50, gold: 25 }
+                { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 100, atk: 15, def: 8, exp: 30, gold: 15 },
+                { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 120, atk: 18, def: 10, exp: 35, gold: 18 },
+                { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 140, atk: 20, def: 12, exp: 40, gold: 20 },
+                { name: 'Корневой Палач', image: 'root_executioner.png', hp: 160, atk: 22, def: 13, exp: 45, gold: 22 },
+                { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 180, atk: 25, def: 14, exp: 50, gold: 25 }
             ]
         },
         {
             id: 2, name: 'Чёрный орден',
             lore: 'Древний Орден Следопытов спустился под землю, чтобы сдержать безумие. Но магия проклятия обратила их замысел против них самих.',
-            boss: { name: 'Разъярённое Лихо', image: 'image (47).png', hp: 550, atk: 35, def: 18, exp: 200, gold: 130 },
+            boss: { name: 'Вожак Искаженной Стаи', image: '../beast_quest/blight_alpha_stag.png', hp: 550, atk: 35, def: 18, exp: 200, gold: 130 },
             stages: 6, rewards: { exp: 400, gold: 100, silver: 1000 },
             enemies: [
-                { name: 'Болотный утопленник', image: 'image (12).png', hp: 150, atk: 20, def: 10, exp: 40, gold: 20 },
-                { name: 'Кикимора болотная', image: 'image (13).png', hp: 170, atk: 22, def: 12, exp: 45, gold: 22 },
-                { name: 'Болотный упырь', image: 'image (17).png', hp: 190, atk: 25, def: 13, exp: 50, gold: 25 },
-                { name: 'Упырь (Когти)', image: 'image (59).png', hp: 210, atk: 28, def: 15, exp: 55, gold: 28 },
-                { name: 'Костяной гигант', image: 'image (14).png', hp: 230, atk: 30, def: 16, exp: 60, gold: 30 }
+                { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 150, atk: 20, def: 10, exp: 40, gold: 20 },
+                { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 170, atk: 22, def: 12, exp: 45, gold: 22 },
+                { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 190, atk: 25, def: 13, exp: 50, gold: 25 },
+                { name: 'Корневой Палач', image: 'root_executioner.png', hp: 210, atk: 28, def: 15, exp: 55, gold: 28 },
+                { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 230, atk: 30, def: 16, exp: 60, gold: 30 }
             ]
         },
         {
             id: 3, name: 'Рождение Охотника',
             lore: 'Шериф бросил войска и запечатал ворота подземки. Один из лучших стрелков Ордена поклялся не возвращаться, пока Шервуд не будет очищен.',
-            boss: { name: 'Хозяин чащи', image: 'image (19).png', hp: 700, atk: 42, def: 22, exp: 250, gold: 160 },
+            boss: { name: 'Альфа-Гончая Егеря', image: '../beast_quest/huntsman_alpha_hound.png', hp: 700, atk: 42, def: 22, exp: 250, gold: 160 },
             stages: 6, rewards: { exp: 600, gold: 150, silver: 1500 },
             enemies: [
-                { name: 'Рогатая кикимора', image: 'image (16).png', hp: 200, atk: 28, def: 14, exp: 50, gold: 25 },
-                { name: 'Кикимора (Выпад)', image: 'image (52).png', hp: 220, atk: 30, def: 16, exp: 55, gold: 28 },
-                { name: 'Кикимора (Крик)', image: 'image (53).png', hp: 240, atk: 32, def: 17, exp: 60, gold: 30 },
-                { name: 'Упырь (Удар)', image: 'image (60).png', hp: 260, atk: 35, def: 18, exp: 65, gold: 32 },
-                { name: 'Упырь (Прыжок)', image: 'image (61).png', hp: 280, atk: 38, def: 20, exp: 70, gold: 35 }
+                { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 200, atk: 28, def: 14, exp: 50, gold: 25 },
+                { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 220, atk: 30, def: 16, exp: 55, gold: 28 },
+                { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 240, atk: 32, def: 17, exp: 60, gold: 30 },
+                { name: 'Корневой Палач', image: 'root_executioner.png', hp: 260, atk: 35, def: 18, exp: 65, gold: 32 },
+                { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 280, atk: 38, def: 20, exp: 70, gold: 35 }
             ]
         },
         {
             id: 4, name: 'Бестии Смертной Чащи',
             lore: 'Скверна перекинулась на фауну. Некогда благородные волки превратились в чудовищ с пульсирующими бирюзовыми венами.',
-            boss: { name: 'Призрак Ордена', image: 'image (41).png', hp: 850, atk: 48, def: 25, exp: 300, gold: 200 },
+            boss: { name: 'Падший Друид', image: '../beast_quest/fallen_druid.png', hp: 850, atk: 48, def: 25, exp: 300, gold: 200 },
             stages: 6, rewards: { exp: 800, gold: 200, silver: 2000 },
             enemies: [
-                { name: 'Скелетный гигант', image: 'image (63).png', hp: 250, atk: 32, def: 16, exp: 60, gold: 30 },
-                { name: 'Трёхглавый пёс', image: 'image (10).png', hp: 270, atk: 35, def: 18, exp: 65, gold: 32 },
-                { name: 'Заражённый секач', image: 'image (11).png', hp: 290, atk: 38, def: 19, exp: 70, gold: 35 },
-                { name: 'Волк-оборотень', image: 'image (32).png', hp: 310, atk: 40, def: 21, exp: 75, gold: 38 },
-                { name: 'Дьявольский ёж', image: 'image (35).png', hp: 330, atk: 42, def: 22, exp: 80, gold: 40 }
+                { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 250, atk: 32, def: 16, exp: 60, gold: 30 },
+                { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 270, atk: 35, def: 18, exp: 65, gold: 32 },
+                { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 290, atk: 38, def: 19, exp: 70, gold: 35 },
+                { name: 'Корневой Палач', image: 'root_executioner.png', hp: 310, atk: 40, def: 21, exp: 75, gold: 38 },
+                { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 330, atk: 42, def: 22, exp: 80, gold: 40 }
             ]
         },
         {
             id: 5, name: 'Шепот Тёмного Лешего',
             lore: 'Леший — вековой хранитель Шервуда — ослеп от ярости. Его тело срослось с чёрной корой и острыми камнями.',
-            boss: { name: 'Фантомный дух', image: 'image (42).png', hp: 1000, atk: 55, def: 28, exp: 350, gold: 250 },
+            boss: { name: 'Голод Чащи', image: '../beast_quest/thicket_hunger.png', hp: 1000, atk: 55, def: 28, exp: 350, gold: 250 },
             stages: 6, rewards: { exp: 1000, gold: 250, silver: 2500 },
             enemies: [
-                { name: 'Оборотень (Ярость)', image: 'image (33).png', hp: 300, atk: 38, def: 19, exp: 70, gold: 35 },
-                { name: 'Ёж (Ярость)', image: 'image (36).png', hp: 320, atk: 40, def: 21, exp: 75, gold: 38 },
-                { name: 'Костяной ликантроп', image: 'image (49).png', hp: 340, atk: 42, def: 22, exp: 80, gold: 40 },
-                { name: 'Ликантроп (Замах)', image: 'image (50).png', hp: 360, atk: 45, def: 24, exp: 85, gold: 42 },
-                { name: 'Голем (Замах)', image: 'image (75).png', hp: 380, atk: 48, def: 25, exp: 90, gold: 45 }
+                { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 300, atk: 38, def: 19, exp: 70, gold: 35 },
+                { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 320, atk: 40, def: 21, exp: 75, gold: 38 },
+                { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 340, atk: 42, def: 22, exp: 80, gold: 40 },
+                { name: 'Корневой Палач', image: 'root_executioner.png', hp: 360, atk: 45, def: 24, exp: 85, gold: 42 },
+                { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 380, atk: 48, def: 25, exp: 90, gold: 45 }
             ]
         },
         {
             id: 6, name: 'Твари Искажённой Эволюции',
             lore: 'В кромешной тьме затопленных гротов зародились новые формы жизни.',
-            boss: { name: 'Химера корней', image: 'image (20).png', hp: 1200, atk: 62, def: 32, exp: 400, gold: 300 },
+            boss: { name: 'Древний Владыка', image: '../beast_quest/blight_lord_leshy.png', hp: 1200, atk: 62, def: 32, exp: 400, gold: 300 },
             stages: 6, rewards: { exp: 1500, gold: 350, silver: 3500 },
             enemies: [
-                { name: 'Утопленник', image: 'image (62).png', hp: 350, atk: 42, def: 22, exp: 80, gold: 40 },
-                { name: 'Рогатый владыка', image: 'image (18).png', hp: 380, atk: 45, def: 24, exp: 85, gold: 42 },
-                { name: 'Проклятый титан', image: 'image (15).png', hp: 410, atk: 48, def: 26, exp: 90, gold: 45 },
-                { name: 'Кикимора ярости', image: 'image (54).png', hp: 440, atk: 50, def: 28, exp: 95, gold: 48 },
-                { name: 'Кристаллический ёж', image: 'image (37).png', hp: 470, atk: 55, def: 30, exp: 100, gold: 50 }
+                { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 350, atk: 42, def: 22, exp: 80, gold: 40 },
+                { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 380, atk: 45, def: 24, exp: 85, gold: 42 },
+                { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 410, atk: 48, def: 26, exp: 90, gold: 45 },
+                { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 440, atk: 50, def: 28, exp: 95, gold: 48 },
+                { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 470, atk: 55, def: 30, exp: 100, gold: 50 }
             ]
         },
         {
             id: 7, name: 'Эхо Прошлых Сражений',
             lore: 'Подземка поглощала не только плоть, но и души.',
-            boss: { name: 'Кислотный Кошмар', image: 'image (27).png', hp: 1400, atk: 70, def: 35, exp: 450, gold: 350 },
+            boss: { name: 'Пожиратель Эха', image: '../beast_quest/echo_devourer.png', hp: 1400, atk: 70, def: 35, exp: 450, gold: 350 },
             stages: 6, rewards: { exp: 2000, gold: 500, silver: 5000 },
             enemies: [
-                { name: 'Волк-оборотень', image: 'image (34).png', hp: 420, atk: 48, def: 26, exp: 90, gold: 45 },
-                { name: 'Лесное Лихо', image: 'image (46).png', hp: 450, atk: 52, def: 28, exp: 100, gold: 50 },
-                { name: 'Разъярённое Лихо', image: 'image (47).png', hp: 480, atk: 55, def: 30, exp: 110, gold: 55 },
-                { name: 'Лихо (Атака)', image: 'image (48).png', hp: 510, atk: 58, def: 32, exp: 120, gold: 60 },
-                { name: 'Лесная нимфа', image: 'image (19).png', hp: 550, atk: 62, def: 35, exp: 130, gold: 65 }
+                { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 420, atk: 48, def: 26, exp: 90, gold: 45 },
+                { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 450, atk: 52, def: 28, exp: 100, gold: 50 },
+                { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 480, atk: 55, def: 30, exp: 110, gold: 55 },
+                { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 510, atk: 58, def: 32, exp: 120, gold: 60 },
+                { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 550, atk: 62, def: 35, exp: 130, gold: 65 }
             ]
         },
         {
             id: 8, name: 'Ужас Болотных Недр',
             lore: 'В покрытых слизью пещерах зародилась Кикимора болотная.',
-            boss: { name: 'Очи Алтаря', image: 'image (5).png', hp: 1600, atk: 78, def: 38, exp: 500, gold: 400 },
+            boss: { name: 'Повелительница Топей', image: '../beast_quest/mistress_of_the_mires.png', hp: 1600, atk: 78, def: 38, exp: 500, gold: 400 },
             stages: 6, rewards: { exp: 2500, gold: 650, silver: 6500 },
             enemies: [
-                { name: 'Призрак Ордена', image: 'image (41).png', hp: 500, atk: 55, def: 30, exp: 110, gold: 55 },
-                { name: 'Фантомный дух', image: 'image (42).png', hp: 530, atk: 58, def: 32, exp: 120, gold: 60 },
-                { name: 'Химера корней', image: 'image (20).png', hp: 560, atk: 62, def: 34, exp: 130, gold: 65 },
-                { name: 'Кислотный Кошмар', image: 'image (27).png', hp: 590, atk: 65, def: 36, exp: 140, gold: 70 },
-                { name: 'Очи Алтаря', image: 'image (5).png', hp: 620, atk: 70, def: 38, exp: 150, gold: 75 }
+                { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 500, atk: 55, def: 30, exp: 110, gold: 55 },
+                { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 530, atk: 58, def: 32, exp: 120, gold: 60 },
+                { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 560, atk: 62, def: 34, exp: 130, gold: 65 },
+                { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 590, atk: 65, def: 36, exp: 140, gold: 70 },
+                { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 620, atk: 70, def: 38, exp: 150, gold: 75 }
             ]
         },
         {
             id: 9, name: 'Первые Трофеи',
             lore: 'Охотник научился использовать остатки тварей.',
-            boss: { name: 'Пожиратель душ', image: 'image (38).png', hp: 1800, atk: 86, def: 42, exp: 550, gold: 450 },
+            boss: { name: 'Страж Разломов', image: '../beast_quest/rift_warden.png', hp: 1800, atk: 86, def: 42, exp: 550, gold: 450 },
             stages: 6, rewards: { exp: 3000, gold: 800, silver: 8000 },
             enemies: [
-                { name: 'Пожиратель душ', image: 'image (38).png', hp: 580, atk: 62, def: 34, exp: 130, gold: 65 },
-                { name: 'Извергатель', image: 'image (39).png', hp: 610, atk: 65, def: 36, exp: 140, gold: 70 },
-                { name: 'Топор Палача', image: 'image (31).png', hp: 640, atk: 68, def: 38, exp: 150, gold: 75 },
-                { name: 'Проклятый Король', image: 'image (44).png', hp: 670, atk: 72, def: 40, exp: 160, gold: 80 },
-                { name: 'Безумие Короны', image: 'image (45).png', hp: 700, atk: 75, def: 42, exp: 170, gold: 85 }
+                { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 580, atk: 62, def: 34, exp: 130, gold: 65 },
+                { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 610, atk: 65, def: 36, exp: 140, gold: 70 },
+                { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 640, atk: 68, def: 38, exp: 150, gold: 75 },
+                { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 670, atk: 72, def: 40, exp: 160, gold: 80 },
+                { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 700, atk: 75, def: 42, exp: 170, gold: 85 }
             ]
         },
         {
             id: 10, name: 'Открытие Порталов',
             lore: 'Скверна прожгла ткань реальности.',
-            boss: { name: 'Извергатель ярости', image: 'image (39).png', hp: 2000, atk: 95, def: 46, exp: 600, gold: 500 },
+            boss: { name: 'Матка Лесных Короедов', image: '../beast_quest/the_hive_mother.png', hp: 2000, atk: 95, def: 46, exp: 600, gold: 500 },
             stages: 6, rewards: { exp: 4000, gold: 1000, silver: 10000 },
             enemies: [
-                { name: 'Инсектоид', image: 'image (55).png', hp: 650, atk: 68, def: 36, exp: 150, gold: 75 },
-                { name: 'Джаггернаут', image: 'image (79).png', hp: 680, atk: 72, def: 38, exp: 160, gold: 80 },
-                { name: 'Изумрудный призрак', image: 'image (77).png', hp: 710, atk: 75, def: 40, exp: 170, gold: 85 },
-                { name: 'Шервудское Отродье', image: 'image (2).png', hp: 740, atk: 78, def: 42, exp: 180, gold: 90 },
-                { name: 'Лесное Лихо', image: 'image (46).png', hp: 770, atk: 82, def: 44, exp: 190, gold: 95 }
+                { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 650, atk: 68, def: 36, exp: 150, gold: 75 },
+                { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 680, atk: 72, def: 38, exp: 160, gold: 80 },
+                { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 710, atk: 75, def: 40, exp: 170, gold: 85 },
+                { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 740, atk: 78, def: 42, exp: 180, gold: 90 },
+                { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 770, atk: 82, def: 44, exp: 190, gold: 95 }
             ]
         },
         {
             id: 11, name: 'Королева Короедов',
             lore: 'Из Портала Нашествия вышла Матка Лесных Короедов.',
-            boss: { name: 'Топор Палача', image: 'image (31).png', hp: 2300, atk: 105, def: 50, exp: 700, gold: 600 },
+            boss: { name: 'Проклятый Король Разбойников', image: '../beast_quest/the_cursed_outlaw_king.png', hp: 2300, atk: 105, def: 50, exp: 700, gold: 600 },
             stages: 6, rewards: { exp: 5000, gold: 1500, silver: 15000 },
             enemies: [
-                { name: 'Разъярённое Лихо', image: 'image (47).png', hp: 720, atk: 75, def: 40, exp: 170, gold: 85 },
-                { name: 'Хозяин чащи', image: 'image (19).png', hp: 750, atk: 78, def: 42, exp: 180, gold: 90 },
-                { name: 'Призрак Ордена', image: 'image (41).png', hp: 780, atk: 82, def: 44, exp: 190, gold: 95 },
-                { name: 'Фантомный дух', image: 'image (42).png', hp: 810, atk: 85, def: 46, exp: 200, gold: 100 },
-                { name: 'Химера корней', image: 'image (20).png', hp: 840, atk: 88, def: 48, exp: 210, gold: 105 }
+                { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 720, atk: 75, def: 40, exp: 170, gold: 85 },
+                { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 750, atk: 78, def: 42, exp: 180, gold: 90 },
+                { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 780, atk: 82, def: 44, exp: 190, gold: 95 },
+                { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 810, atk: 85, def: 46, exp: 200, gold: 100 },
+                { name: 'Вождь Гарпий', image: 'harpy_chieftain.png', hp: 840, atk: 88, def: 48, exp: 210, gold: 105 }
             ]
         },
         {
             id: 12, name: 'Призрачный Король',
             lore: 'В центре зала восседал Проклятый Король Разбойников.',
-            boss: { name: 'Проклятый Король', image: 'image (44).png', hp: 2600, atk: 115, def: 55, exp: 800, gold: 700 },
+            boss: { name: 'Древний Хранитель Склепа', image: '../beast_quest/ancient_crypt_warden.png', hp: 2600, atk: 115, def: 55, exp: 800, gold: 700 },
             stages: 6, rewards: { exp: 6000, gold: 2000, silver: 20000 },
             enemies: [
-                { name: 'Кислотный Кошмар', image: 'image (27).png', hp: 800, atk: 82, def: 44, exp: 190, gold: 95 },
-                { name: 'Очи Алтаря', image: 'image (5).png', hp: 830, atk: 85, def: 46, exp: 200, gold: 100 },
-                { name: 'Пожиратель душ', image: 'image (38).png', hp: 860, atk: 88, def: 48, exp: 210, gold: 105 },
-                { name: 'Извергатель', image: 'image (39).png', hp: 890, atk: 92, def: 50, exp: 220, gold: 110 },
-                { name: 'Топор Палача', image: 'image (31).png', hp: 920, atk: 95, def: 52, exp: 230, gold: 115 }
+                { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 800, atk: 82, def: 44, exp: 190, gold: 95 },
+                { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 830, atk: 85, def: 46, exp: 200, gold: 100 },
+                { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 860, atk: 88, def: 48, exp: 210, gold: 105 },
+                { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 890, atk: 92, def: 50, exp: 220, gold: 110 },
+                { name: 'Вождь Гарпий', image: 'harpy_chieftain.png', hp: 920, atk: 95, def: 52, exp: 230, gold: 115 }
             ]
         },
         {
             id: 13, name: 'Хранитель Склепа',
             lore: 'Третий портал вёл в хтоническое капище.',
-            boss: { name: 'Безумие Короны', image: 'image (45).png', hp: 3000, atk: 130, def: 60, exp: 900, gold: 800 },
+            boss: { name: 'Эхо Трех Порталов', image: '../beast_quest/echo_of_the_triumvirate.png', hp: 3000, atk: 130, def: 60, exp: 900, gold: 800 },
             stages: 6, rewards: { exp: 7500, gold: 2500, silver: 25000 },
             enemies: [
-                { name: 'Проклятый Король', image: 'image (44).png', hp: 880, atk: 90, def: 48, exp: 210, gold: 105 },
-                { name: 'Безумие Короны', image: 'image (45).png', hp: 910, atk: 95, def: 50, exp: 220, gold: 110 },
-                { name: 'Инсектоид', image: 'image (55).png', hp: 940, atk: 98, def: 52, exp: 230, gold: 115 },
-                { name: 'Джаггернаут', image: 'image (79).png', hp: 970, atk: 102, def: 54, exp: 240, gold: 120 },
-                { name: 'Изумрудный призрак', image: 'image (77).png', hp: 1000, atk: 105, def: 56, exp: 250, gold: 125 }
+                { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 880, atk: 90, def: 48, exp: 210, gold: 105 },
+                { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 910, atk: 95, def: 50, exp: 220, gold: 110 },
+                { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 940, atk: 98, def: 52, exp: 230, gold: 115 },
+                { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 970, atk: 102, def: 54, exp: 240, gold: 120 },
+                { name: 'Вождь Гарпий', image: 'harpy_chieftain.png', hp: 1000, atk: 105, def: 56, exp: 250, gold: 125 }
             ]
         },
         {
             id: 14, name: 'Пробуждение Отродья',
             lore: 'Из разлома поднялся ультимативный бог хаоса.',
-            boss: { name: 'Мясной инсектоид', image: 'image (55).png', hp: 3500, atk: 145, def: 68, exp: 1000, gold: 900 },
+            boss: { name: 'Палач Священного Древа', image: '../beast_quest/sacred_tree_executioner.png', hp: 3500, atk: 145, def: 68, exp: 1000, gold: 900 },
             stages: 6, rewards: { exp: 9000, gold: 3000, silver: 30000 },
             enemies: [
-                { name: 'Шервудское Отродье', image: 'image (2).png', hp: 950, atk: 95, def: 50, exp: 230, gold: 115 },
-                { name: 'Лесное Лихо', image: 'image (46).png', hp: 980, atk: 98, def: 52, exp: 240, gold: 120 },
-                { name: 'Разъярённое Лихо', image: 'image (47).png', hp: 1010, atk: 102, def: 54, exp: 250, gold: 125 },
-                { name: 'Пожиратель душ', image: 'image (38).png', hp: 1040, atk: 105, def: 56, exp: 260, gold: 130 },
-                { name: 'Безумие Короны', image: 'image (45).png', hp: 1070, atk: 110, def: 58, exp: 270, gold: 135 }
+                { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 950, atk: 95, def: 50, exp: 230, gold: 115 },
+                { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 980, atk: 98, def: 52, exp: 240, gold: 120 },
+                { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 1010, atk: 102, def: 54, exp: 250, gold: 125 },
+                { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 1040, atk: 105, def: 56, exp: 260, gold: 130 },
+                { name: 'Вождь Гарпий', image: 'harpy_chieftain.png', hp: 1070, atk: 110, def: 58, exp: 270, gold: 135 }
             ]
         },
         {
             id: 15, name: 'Доспех Вечности',
             lore: 'Финальная битва за Шервуд.',
-            boss: { name: 'Джаггернаут', image: 'image (79).png', hp: 4500, atk: 170, def: 80, exp: 1500, gold: 1200 },
+            boss: { name: 'Шервудское Отродье', image: '../beast_quest/sherwood_abomination.png', hp: 4500, atk: 170, def: 80, exp: 1500, gold: 1200 },
             stages: 6, rewards: { exp: 12000, gold: 5000, silver: 50000 },
             enemies: [
-                { name: 'Джаггернаут', image: 'image (79).png', hp: 1050, atk: 105, def: 55, exp: 260, gold: 130 },
-                { name: 'Изумрудный призрак', image: 'image (77).png', hp: 1080, atk: 108, def: 57, exp: 270, gold: 135 },
-                { name: 'Отродье', image: 'image (2).png', hp: 1110, atk: 112, def: 59, exp: 280, gold: 140 },
-                { name: 'Инсектоид', image: 'image (55).png', hp: 1140, atk: 115, def: 61, exp: 290, gold: 145 },
-                { name: 'Топор Палача', image: 'image (31).png', hp: 1170, atk: 118, def: 63, exp: 300, gold: 150 }
+                { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 1050, atk: 105, def: 55, exp: 260, gold: 130 },
+                { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 1080, atk: 108, def: 57, exp: 270, gold: 135 },
+                { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 1110, atk: 112, def: 59, exp: 280, gold: 140 },
+                { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 1140, atk: 115, def: 61, exp: 290, gold: 145 },
+                { name: 'Вождь Гарпий', image: 'harpy_chieftain.png', hp: 1170, atk: 118, def: 63, exp: 300, gold: 150 }
             ]
         }
     ],
@@ -209,15 +209,15 @@ Sherwood.Quests = {
         id: 'secret',
         name: 'Глубины Изумрудного Склепа',
         lore: 'Победа над Палачом открыла проход в древний Изумрудный Склеп.',
-        boss: { name: 'Чернильный Истязатель', image: 'abyssal_ooze.png', hp: 2500, atk: 100, def: 50, exp: 1000, gold: 300 },
+        boss: { name: 'Изначальный Стержень', image: '../beast_quest/the_primordial_core.png', hp: 2500, atk: 100, def: 50, exp: 1000, gold: 300 },
         stages: 6,
         rewards: { exp: 2000, gold: 500, silver: 1500 },
         enemies: [
-            { name: 'Костяной Собиратель', image: 'bone_collector.png', hp: 800, atk: 60, def: 30, exp: 200, gold: 50 },
-            { name: 'Чрево Леса', image: 'hollow_abomination.png', hp: 1000, atk: 70, def: 35, exp: 250, gold: 60 },
-            { name: 'Снайпер Гробниц', image: 'crypt_stalker.png', hp: 900, atk: 75, def: 28, exp: 200, gold: 50 },
-            { name: 'Егерь Ловчих Сетей', image: 'thorny_trapper.png', hp: 950, atk: 65, def: 32, exp: 220, gold: 55 },
-            { name: 'Безликий Палач', image: 'the_faceless_executioner.png', hp: 2200, atk: 90, def: 45, exp: 800, gold: 250 }
+            { name: 'Костяной Собиратель', image: 'bone_keeper.png', hp: 800, atk: 60, def: 30, exp: 200, gold: 50 },
+            { name: 'Чрево Леса', image: 'root_daughter.png', hp: 1000, atk: 70, def: 35, exp: 250, gold: 60 },
+            { name: 'Снайпер Гробниц', image: 'ash_stalker.png', hp: 900, atk: 75, def: 28, exp: 200, gold: 50 },
+            { name: 'Егерь Ловчих Сетей', image: 'thorn_moth.png', hp: 950, atk: 65, def: 32, exp: 220, gold: 55 },
+            { name: 'Безликий Палач', image: 'root_executioner.png', hp: 2200, atk: 90, def: 45, exp: 800, gold: 250 }
         ],
         trophy: { attack: 300, defense: 200, hp: 2500, name: 'Лук Жнеца Душ', icon: 'assets/all_trophies/soul_reaper\'s_bow_trophy.png' }
     },
