@@ -270,20 +270,22 @@ Sherwood.Combat = {
         var enemyName = 'Монстр';
         var enemyImage = monsterId || 'image (1).png';
         
-        if (Sherwood.Bestiary && Sherwood.Bestiary.getBeast) {
-            var beast = Sherwood.Bestiary.getBeast(monsterId);
-            if (beast && beast.name) {
-                enemyName = beast.name;
+        // Ищем имя в справочнике бестиария
+        if (Sherwood.Bestiary && Sherwood.Bestiary.BEASTS) {
+            var beastData = Sherwood.Bestiary.BEASTS[monsterId];
+            if (beastData && beastData.name) {
+                enemyName = beastData.name;
             }
         }
 
         var level = p.level || 1;
         var monsterLevel = 1;
         
-        if (monsterId) {
-            var numMatch = monsterId.match(/\((\d+)\)/);
-            if (numMatch) {
-                monsterLevel = Math.min(90, parseInt(numMatch[1], 10));
+        // Определяем уровень монстра по этажу
+        if (mode === 'dungeon' && Sherwood.Dungeon && Sherwood.Dungeon.getDungeon) {
+            var d = Sherwood.Dungeon.getDungeon();
+            if (d) {
+                monsterLevel = d.level || 1;
             }
         }
         
@@ -292,9 +294,9 @@ Sherwood.Combat = {
         var baseDef = 2 + monsterLevel * 0.8;
         
         if (isBoss) {
-            baseHp *= 3;
-            baseAtk *= 1.8;
-            baseDef *= 1.5;
+            baseHp *= 4;
+            baseAtk *= 2;
+            baseDef *= 2;
             enemyName = 'БОСС: ' + enemyName;
         }
 
@@ -469,7 +471,6 @@ Sherwood.Combat = {
                 break;
                 
             default:
-                // Damage skills
                 var totalDamage = 0;
                 var hits = skill.hits || 1;
                 var armorPierce = skill.armorPierce || 0;
@@ -492,7 +493,6 @@ Sherwood.Combat = {
                 result.damage = totalDamage;
                 result.hits = hits;
                 
-                // Рикошет
                 if (skill.ricochetDamage && b.enemy.hp > 0) {
                     var ricochetDamage = Math.floor(totalDamage * skill.ricochetDamage);
                     b.enemy.hp -= ricochetDamage;
@@ -500,7 +500,6 @@ Sherwood.Combat = {
                     result.effects.push('Рикошет: +' + ricochetDamage);
                 }
                 
-                // DoT (яд, огонь)
                 if (skill.dotDamage && skill.dotDuration && b.enemy.hp > 0) {
                     b.enemy.dots.push({
                         damagePerTurn: skill.dotDamage,
@@ -510,14 +509,12 @@ Sherwood.Combat = {
                     result.effects.push(skill.name + ' на ' + skill.dotDuration + ' хода');
                 }
                 
-                // Замедление
                 if (skill.slowPercent && skill.slowDuration && b.enemy.hp > 0) {
                     b.enemy.slowed.percent = skill.slowPercent;
                     b.enemy.slowed.remainingTurns = skill.slowDuration;
                     result.effects.push('Враг замедлен на ' + skill.slowDuration + ' хода');
                 }
                 
-                // Корни
                 if (skill.rootDamage && skill.rootDuration && b.enemy.hp > 0) {
                     b.enemy.rooted.damage = skill.rootDamage;
                     b.enemy.rooted.slow = skill.rootSlow;
@@ -525,13 +522,11 @@ Sherwood.Combat = {
                     result.effects.push('Корни на ' + skill.rootDuration + ' хода');
                 }
                 
-                // Стан
                 if (skill.stunDuration && b.enemy.hp > 0) {
                     b.enemy.stunned = skill.stunDuration;
                     result.effects.push('Враг оглушён на ' + skill.stunDuration + ' ход');
                 }
                 
-                // Вампиризм
                 if (skill.lifesteal && totalDamage > 0) {
                     var lifestealAmount = Math.floor(totalDamage * skill.lifesteal);
                     p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + lifestealAmount);
@@ -546,7 +541,6 @@ Sherwood.Combat = {
         result.enemyHp = b.enemy.hp;
         result.enemyMaxHp = b.enemy.maxHp;
         
-        // Проверка победы
         if (b.enemy.hp <= 0) {
             result.enemyDead = true;
             result.win = true;
@@ -556,7 +550,6 @@ Sherwood.Combat = {
             return result;
         }
         
-        // Ход врага (если не оглушён)
         if (b.enemy.stunned > 0) {
             b.enemy.stunned--;
             result.enemyStunned = true;
@@ -572,12 +565,10 @@ Sherwood.Combat = {
             result.enemyDamage = enemyResult.enemyDamage;
         }
         
-        // Тик баффов игрока
         if (this._playerBuffs.double_damage.remainingTurns > 0) this._playerBuffs.double_damage.remainingTurns--;
         if (this._playerBuffs.double_defense.remainingTurns > 0) this._playerBuffs.double_defense.remainingTurns--;
         if (this._playerBuffs.parry.remainingTurns > 0) this._playerBuffs.parry.remainingTurns--;
         
-        // Тик эффектов врага
         if (b.enemy.slowed.remainingTurns > 0) b.enemy.slowed.remainingTurns--;
         if (b.enemy.rooted.remainingTurns > 0) b.enemy.rooted.remainingTurns--;
         
@@ -594,7 +585,6 @@ Sherwood.Combat = {
         var b = this._battle;
         var p = Sherwood.getPlayer();
         
-        // Обработка DoT на враге
         var totalDot = 0;
         var remainingDots = [];
         for (var i = 0; i < b.enemy.dots.length; i++) {
@@ -609,7 +599,6 @@ Sherwood.Combat = {
         }
         b.enemy.dots = remainingDots;
         
-        // Корни наносят урон
         if (b.enemy.rooted.remainingTurns > 0) {
             var rootTick = Math.max(1, Math.floor(b.enemy.maxHp * b.enemy.rooted.damage));
             b.enemy.hp -= rootTick;
@@ -622,12 +611,10 @@ Sherwood.Combat = {
             return { playerDead: false, enemyDeadByDot: true, dotDamage: totalDot };
         }
         
-        // Проверка парирования
         if (this._playerBuffs.parry.remainingTurns > 0) {
             return { playerDead: false, enemyDamage: 0, parried: true };
         }
         
-        // Урон врага (с учётом замедления)
         var attackValue = b.enemy.attack;
         if (b.enemy.slowed.remainingTurns > 0) {
             attackValue = Math.floor(attackValue * (1 - b.enemy.slowed.percent));
@@ -643,7 +630,6 @@ Sherwood.Combat = {
         
         var enemyDamage = Math.max(1, Math.floor(attackValue - defenseValue * 0.5 + Math.random() * 5));
         
-        // Пассивный блок
         var passiveBlock = this._skills.passive_block;
         if (passiveBlock && passiveBlock.unlocked && passiveBlock.blockChance) {
             if (Math.random() < passiveBlock.blockChance) {
