@@ -401,6 +401,12 @@ Sherwood.Dungeon = {
         }
 
         if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
+            // Останавливаем анимацию перед боем
+            if (this._stepTimeout) {
+                clearTimeout(this._stepTimeout);
+                this._stepTimeout = null;
+            }
+            d.isMoving = false;
             this._saveDungeon();
             return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
         }
@@ -431,14 +437,12 @@ Sherwood.Dungeon = {
         d.monstersKilled++;
         
         var cell = null;
-        var nx = d.px, ny = d.py;
+        // Ищем монстра на соседних клетках или на той же
         var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
         for (var i = 0; i < checkDirs.length; i++) {
             var cx = d.px + checkDirs[i][0], cy = d.py + checkDirs[i][1];
             if (cx >= 0 && cx < d.size && cy >= 0 && cy < d.size && d.grid[cy][cx].monster) {
                 cell = d.grid[cy][cx];
-                nx = cx;
-                ny = cy;
                 break;
             }
         }
@@ -469,10 +473,7 @@ Sherwood.Dungeon = {
                     silver: rewardData.silver || 0
                 };
             }
-            
-            // Перемещаем героя на клетку монстра
-            d.px = nx;
-            d.py = ny;
+            // Не перемещаем героя автоматически – игрок должен сам шагнуть на клетку с лутом
         }
         
         if (d.monstersKilled >= d.minToKill) {
