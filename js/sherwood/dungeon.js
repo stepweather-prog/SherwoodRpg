@@ -8,6 +8,7 @@ Sherwood.Dungeon = {
     _autoFightEndTime: 0,
     _autoFightDungeonId: null,
     _autoFightLevel: 0,
+    _stepTimeout: null,
 
     init: function() {
         var p = Sherwood.getPlayer();
@@ -264,6 +265,14 @@ Sherwood.Dungeon = {
         var levelData = pool[level] || pool[1];
         var monList = levelData.easy;
         var bossId = levelData.boss;
+        
+        // Предзагрузка изображений монстров
+        var allMonsterIds = monList.concat([bossId]);
+        for (var pi = 0; pi < allMonsterIds.length; pi++) {
+            var img = new Image();
+            img.src = 'assets/all_beasts/' + allMonsterIds[pi];
+        }
+        
         var monsterCount = 12;
         var minToKill = 12;
 
@@ -373,16 +382,22 @@ Sherwood.Dungeon = {
         if (typeof SherwoodUI !== 'undefined') {
             SherwoodUI._playSound('steps');
             d.isMoving = true;
-            setTimeout(function() {
+            
+            if (this._stepTimeout) clearTimeout(this._stepTimeout);
+            
+            this._stepTimeout = setTimeout(function() {
+                Sherwood.Dungeon._stepTimeout = null;
                 SherwoodUI._stopSound('steps');
                 var dd = Sherwood.Dungeon.getDungeon();
                 if (dd) {
                     dd.isMoving = false;
-                    if (typeof SherwoodUI._renderDungeon === 'function') {
-                        SherwoodUI._renderDungeon();
+                    if (!document.getElementById('interact-btn')) {
+                        if (typeof SherwoodUI._renderDungeon === 'function') {
+                            SherwoodUI._renderDungeon();
+                        }
                     }
                 }
-            }, 400);
+            }, 700);
         }
 
         if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
@@ -410,17 +425,20 @@ Sherwood.Dungeon = {
         return { ok: true, type: 'move' };
     },
 
-    killMonster: function() {
+    killMonster: function(rewards) {
         if (!this._dungeon) return;
         var d = this._dungeon;
         d.monstersKilled++;
         
         var cell = null;
+        var nx = d.px, ny = d.py;
         var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
         for (var i = 0; i < checkDirs.length; i++) {
-            var nx = d.px + checkDirs[i][0], ny = d.py + checkDirs[i][1];
-            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size && d.grid[ny][nx].monster) {
-                cell = d.grid[ny][nx];
+            var cx = d.px + checkDirs[i][0], cy = d.py + checkDirs[i][1];
+            if (cx >= 0 && cx < d.size && cy >= 0 && cy < d.size && d.grid[cy][cx].monster) {
+                cell = d.grid[cy][cx];
+                nx = cx;
+                ny = cy;
                 break;
             }
         }
@@ -431,15 +449,30 @@ Sherwood.Dungeon = {
             cell.monsterId = null;
             cell.isBoss = false;
             
+            var rewardData = rewards || {};
             if (wasBoss) {
                 cell.chest = true;
                 cell.looted = false;
                 cell.type = this.TILE.CHEST;
+                cell.lootReward = {
+                    exp: rewardData.exp || 0,
+                    gold: rewardData.gold || 0,
+                    silver: rewardData.silver || 0
+                };
             } else {
                 cell.lootBag = true;
                 cell.lootCollected = false;
                 cell.type = this.TILE.EMPTY;
+                cell.lootReward = {
+                    exp: rewardData.exp || 0,
+                    gold: rewardData.gold || 0,
+                    silver: rewardData.silver || 0
+                };
             }
+            
+            // Перемещаем героя на клетку монстра
+            d.px = nx;
+            d.py = ny;
         }
         
         if (d.monstersKilled >= d.minToKill) {
