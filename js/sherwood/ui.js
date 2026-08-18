@@ -405,7 +405,7 @@ const SherwoodUI = {
 
     subway: function() { this.showDungeon(); },
 
-    showDungeon: function() {
+       showDungeon: function() {
         this._playSound('click');
         if (this._currentMusicKey === 'main_theme' || this._currentMusicKey === 'main_theme_2') {
             this._mainThemeWasPlaying = true;
@@ -451,7 +451,7 @@ const SherwoodUI = {
         
         h += '<div style="color:#aaa;font-size:0.85em;margin-top:16px;text-align:center;">Билетов: ' + tickets + '</div>';
         
-        this._openScreenScrollable('Подземелья', 'dungeon_select', h);
+        this._openScreenScrollable('Подземелья', 'assets/dungeon_tiles/visual_dungeon/sherwood_thicket.png', h);
     },
 
     _showDungeonLevels: function(dungeonId) {
@@ -492,7 +492,7 @@ const SherwoodUI = {
         }
         h += '</div>';
         
-        this._openScreenScrollable('Выбор этажа', 'dungeon_select', h);
+        this._openScreenScrollable('Выбор этажа', 'assets/dungeon_tiles/visual_dungeon/sherwood_thicket.png', h);
     },
 
     _showDungeonActions: function(dungeonId, level) {
@@ -523,7 +523,7 @@ const SherwoodUI = {
         }
         h += '</div>';
         
-        this._openScreen('Действия', 'dungeon_select', h);
+        this._openScreen('Действия', 'assets/dungeon_tiles/visual_dungeon/sherwood_thicket.png', h);
     },
 
     _startAutoFight: function(dungeonId, level, instant) {
