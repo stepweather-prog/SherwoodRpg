@@ -1,6 +1,6 @@
 /**
  * Sherwood Raid — Мировой рейд
- * Исправлен: участники, этапы, награды, обработка смерти
+ * Изначальный Ужас — Спящий в Корнях
  */
 
 Sherwood.Raid = {
@@ -16,24 +16,25 @@ Sherwood.Raid = {
 
     RAID_BOSSES: [
         {
-            id: 'sherwood_abomination',
-            name: 'Шервудское Отродье',
-            image: 'image (2).png',
-            hp: 15000, maxHp: 15000,
-            attack: 200, defense: 100,
-            exp: 2000, gold: 1500,
+            id: 'primordial_dread',
+            name: 'Изначальный Ужас — Спящий в Корнях',
+            image: 'the_primordial_core.png',
+            hp: 50000, maxHp: 50000,
+            attack: 350, defense: 180,
+            exp: 10000, gold: 8000,
             stages: [
-                { name: 'Элиты подземок', enemies: [
-                    { name: 'Проклятый титан', image: 'image (15).png', hp: 2000, maxHp: 2000, attack: 80, defense: 40 },
-                    { name: 'Костяной гигант', image: 'image (14).png', hp: 2200, maxHp: 2200, attack: 85, defense: 45 },
-                    { name: 'Кристаллический ёж', image: 'image (37).png', hp: 2500, maxHp: 2500, attack: 90, defense: 50 }
+                { name: 'Пробуждение Корней', enemies: [
+                    { name: 'Голем Скверного Дуба', image: 'blighted_oak_golem.png', hp: 5000, maxHp: 5000, attack: 140, defense: 70 },
+                    { name: 'Корневой Палач', image: 'root_executioner.png', hp: 5500, maxHp: 5500, attack: 155, defense: 75 },
+                    { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 6000, maxHp: 6000, attack: 170, defense: 85 }
                 ]},
-                { name: 'Боссы квестов', enemies: [
-                    { name: 'Лесное Лихо', image: 'image (46).png', hp: 3500, maxHp: 3500, attack: 110, defense: 60 },
-                    { name: 'Проклятый Король', image: 'image (44).png', hp: 4000, maxHp: 4000, attack: 130, defense: 70 }
+                { name: 'Стражи Бездны', enemies: [
+                    { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 7000, maxHp: 7000, attack: 190, defense: 95 },
+                    { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 7500, maxHp: 7500, attack: 205, defense: 100 },
+                    { name: 'Скверный Король', image: 'blight_king.png', hp: 8000, maxHp: 8000, attack: 220, defense: 110 }
                 ]},
-                { name: 'Мировой босс', enemies: [
-                    { name: 'Шервудское Отродье', image: 'image (2).png', hp: 15000, maxHp: 15000, attack: 200, defense: 100, isRaidBoss: true }
+                { name: 'Изначальный Ужас', enemies: [
+                    { name: 'Изначальный Ужас', image: 'the_primordial_core.png', hp: 50000, maxHp: 50000, attack: 350, defense: 180, isRaidBoss: true }
                 ]}
             ]
         }
@@ -51,23 +52,11 @@ Sherwood.Raid = {
         }
         this._raidsToday = p.raid.raidsToday || 0;
         this._participants = p.raid.participants || [];
-        
-        // Восстанавливаем активный рейд
         if (p.raid.activeRaid) {
             this._raidBoss = p.raid.activeRaid;
             this._raidActive = true;
             this._currentStage = p.raid.currentStage || 0;
             this._playerAlive = p.raid.playerAlive !== false;
-            
-            // Если игрок был мёртв — рейд завершён
-            if (!this._playerAlive) {
-                this._raidActive = false;
-                this._raidBoss = null;
-                p.raid.activeRaid = null;
-                p.raid.currentStage = 0;
-                p.raid.playerAlive = true;
-                Sherwood.saveGame();
-            }
         }
     },
 
@@ -207,7 +196,6 @@ Sherwood.Raid = {
             }
             var newEnemy = this.getCurrentEnemy();
             if (newEnemy) {
-                this._saveProgress();
                 return { stageComplete: true, nextEnemy: newEnemy, stageIndex: this._currentStage + 1 };
             }
             return { error: 'Нет врагов' };
@@ -244,7 +232,6 @@ Sherwood.Raid = {
             if (allDead) {
                 this._currentStage++;
                 if (this._currentStage >= this._totalStages) {
-                    this._saveProgress();
                     return this._completeRaid();
                 }
                 result.stageComplete = true;
@@ -270,21 +257,7 @@ Sherwood.Raid = {
             p.stats.hp = 1;
             this._playerAlive = false;
             result.playerDead = true;
-            
-            // СБРОС РЕЙДА ПРИ СМЕРТИ
-            this._raidActive = false;
-            this._raidBoss = null;
-            this._currentStage = 0;
-            
-            var player = Sherwood.getPlayer();
-            if (player && player.raid) {
-                player.raid.activeRaid = null;
-                player.raid.currentStage = 0;
-                player.raid.playerAlive = true;
-                Sherwood.saveGame();
-            }
-            
-            return result;
+            Sherwood.saveGame();
         }
 
         this._saveProgress();
@@ -293,90 +266,59 @@ Sherwood.Raid = {
     },
 
     _completeRaid: function() {
-    var boss = this._raidBoss;
-    var totalExp = boss.exp + Math.floor(Math.random() * 500);
-    var totalGold = boss.gold + Math.floor(Math.random() * 300);
-    var totalSilver = totalGold * 3 + Math.floor(Math.random() * 500);
+        var boss = this._raidBoss;
+        var totalExp = boss.exp + Math.floor(Math.random() * 2000);
+        var totalGold = boss.gold + Math.floor(Math.random() * 1000);
+        var totalSilver = totalGold * 3 + Math.floor(Math.random() * 2000);
 
-    var aliveCount = this._playerAlive ? 1 : 0;
+        var aliveCount = this._playerAlive ? 1 : 0;
 
-    if (this._playerAlive) {
-        Sherwood.addExp(totalExp);
-        Sherwood.addResource('gold', totalGold);
-        Sherwood.addResource('silver', totalSilver);
-    }
-
-    var player = Sherwood.getPlayer();
-    
-    // Трофей «Узы Вечности» — растёт с каждым убийством босса
-    if (player && this._playerAlive) {
-        var trophyId = 'raid_bonds_of_eternity';
-        var existingTrophy = null;
-        
-        // Ищем существующий трофей
-        if (!player.trophies) player.trophies = [];
-        for (var i = 0; i < player.trophies.length; i++) {
-            if (player.trophies[i].id === trophyId) {
-                existingTrophy = player.trophies[i];
-                break;
-            }
+        if (this._playerAlive) {
+            Sherwood.addExp(totalExp);
+            Sherwood.addResource('gold', totalGold);
+            Sherwood.addResource('silver', totalSilver);
         }
-        
-        var baseBonus = 10;
-        var bonusPerKill = 10;
-        var bonusHpPerKill = 10;
-        
-        if (existingTrophy) {
-            // Увеличиваем бонус
-            existingTrophy.kills = (existingTrophy.kills || 1) + 1;
-            existingTrophy.bonus.attack += bonusPerKill;
-            existingTrophy.bonus.defense += bonusPerKill;
-            existingTrophy.bonus.hp += bonusHpPerKill;
-            existingTrophy.acquiredAt = Date.now();
-        } else {
-    player.trophies.push({
-        id: trophyId,
-        name: 'Узы Вечности',
-        icon: 'assets/all_trophies/bonds_of_eternity.png',
-        category: 'raid',
-        kills: 1,
-        bonus: {
-            attack: 10,
-            defense: 10,
-            hp: 10
-        },
-        acquiredAt: Date.now()
-    });
-}
-        
-        // Пересчитываем статы
-        if (typeof Sherwood._recalcStats === 'function') {
-            Sherwood._recalcStats();
+
+        var trophy = {
+            id: 'raid_victory_' + Date.now(),
+            name: 'Узы Вечности',
+            icon: '👑',
+            description: 'Рейд пройден! Выжило: ' + aliveCount + ' участников'
+        };
+
+        var player = Sherwood.getPlayer();
+        if (player && this._playerAlive) {
+            if (!player.trophies) player.trophies = [];
+            player.trophies.push(trophy);
+            
+            // Узы Вечности — перманентный бонус за добивание
+            if (!player.eternityBonds) player.eternityBonds = { count: 0, bonus: 0 };
+            player.eternityBonds.count++;
+            player.eternityBonds.bonus = player.eternityBonds.count * 5;
         }
-    }
 
-    // Сбрасываем рейд
-    this._raidActive = false;
-    this._raidBoss = null;
+        this._raidActive = false;
+        this._raidBoss = null;
 
-    if (player && player.raid) {
-        player.raid.activeRaid = null;
-        player.raid.currentStage = 0;
-        player.raid.playerAlive = true;
-        Sherwood.saveGame();
-    }
+        if (player && player.raid) {
+            player.raid.activeRaid = null;
+            player.raid.currentStage = 0;
+            player.raid.playerAlive = true;
+            Sherwood.saveGame();
+        }
 
-    return {
-        raidComplete: true,
-        rewards: {
-            exp: this._playerAlive ? totalExp : Math.floor(totalExp * 0.1),
-            gold: this._playerAlive ? totalGold : 0,
-            silver: this._playerAlive ? totalSilver : Math.floor(totalSilver * 0.2)
-        },
-        aliveCount: aliveCount,
-        won: this._playerAlive
-    };
-},
+        return {
+            raidComplete: true,
+            rewards: {
+                exp: this._playerAlive ? totalExp : Math.floor(totalExp * 0.1),
+                gold: this._playerAlive ? totalGold : 0,
+                silver: this._playerAlive ? totalSilver : Math.floor(totalSilver * 0.2)
+            },
+            aliveCount: aliveCount,
+            trophy: trophy,
+            won: this._playerAlive
+        };
+    },
 
     _saveProgress: function() {
         var player = Sherwood.getPlayer();
@@ -392,13 +334,10 @@ Sherwood.Raid = {
     fleeRaid: function() {
         this._raidActive = false;
         this._raidBoss = null;
-        this._currentStage = 0;
-        this._playerAlive = true;
         var player = Sherwood.getPlayer();
         if (player && player.raid) {
             player.raid.activeRaid = null;
             player.raid.currentStage = 0;
-            player.raid.playerAlive = true;
             Sherwood.saveGame();
         }
         return { success: true };
