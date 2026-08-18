@@ -345,7 +345,15 @@ Sherwood.Quests = {
             this._currentStage++;
             var ch = this._currentChapter;
             
-            if (this._currentStage >= ch.stages) {
+            if (this._currentStage < ch.enemies.length) {
+                var nextEnemy = ch.enemies[this._currentStage];
+                this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
+                r.stageComplete = true;
+            } else if (this._currentStage === ch.enemies.length) {
+                var boss = ch.boss;
+                this._currentEnemy = { name: boss.name, image: boss.image, hp: boss.hp, maxHp: boss.hp, atk: boss.atk, def: boss.def, exp: boss.exp, gold: boss.gold, isBoss: true };
+                r.stageComplete = true;
+            } else {
                 this._inBattle = false;
                 r.chapterComplete = true;
                 r.rewards = ch.rewards;
@@ -365,10 +373,6 @@ Sherwood.Quests = {
                 this._currentChapter = null;
                 this._currentEnemy = null;
                 this._currentStage = 0;
-            } else if (this._currentStage < ch.enemies.length) {
-                var nextEnemy = ch.enemies[this._currentStage];
-                this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
-                r.stageComplete = true;
             }
         } else {
             var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense)));
@@ -422,8 +426,10 @@ Sherwood.Quests = {
         var enemyData = null;
         if (stage < ch.enemies.length) {
             enemyData = ch.enemies[stage];
-        } else if (stage >= ch.stages) {
+        } else if (stage === ch.enemies.length) {
             enemyData = ch.boss;
+        } else {
+            return;
         }
         
         if (!enemyData) return;
@@ -439,7 +445,7 @@ Sherwood.Quests = {
             def: enemyData.def,
             exp: enemyData.exp,
             gold: enemyData.gold,
-            isBoss: stage >= ch.stages - 1
+            isBoss: stage >= ch.enemies.length
         };
         this._inBattle = true;
     }
