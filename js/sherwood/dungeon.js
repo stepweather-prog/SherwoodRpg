@@ -8,30 +8,57 @@ Sherwood.Dungeon = {
     _autoFightEndTime: 0,
     _autoFightDungeonId: null,
     _autoFightLevel: 0,
-    _stepTimeout: null,
+
+    BEASTS: {
+        forest: {
+            1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
+            2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
+            3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
+            4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png','bog_brute.png'], boss: null },
+            5: { normal: ['oak_golem.png','blighted_oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
+            6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' },
+            7: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png','bog_brute.png'], boss: null },
+            8: { normal: ['oak_golem.png','blighted_oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' }
+        },
+        swamp: {
+            1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' },
+            2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' },
+            3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' },
+            4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' },
+            5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' },
+            6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' },
+            7: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' },
+            8: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' }
+        },
+        cave: {
+            1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' },
+            2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' },
+            3: { normal: ['root_daughter.png','bone_arachnid.png','necromantic_arachnid.png','animated_yew.png','rusty_servant.png'], boss: 'mistress_of_the_roots.png' },
+            4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
+            5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_chieftain.png','harpy_witch.png','harpy_hatchling.png'], boss: 'lord_of_the_feathered.png' },
+            6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underworld_guardian.png','blind_render.png'], boss: 'corruption_raccoon.png' },
+            7: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
+            8: { normal: ['chaos_harpy.png','blight_kite.png','harpy_chieftain.png','harpy_witch.png','harpy_hatchling.png'], boss: 'lord_of_the_feathered.png' }
+        }
+    },
 
     init: function() {
-        var p = Sherwood.getPlayer();
-        if (!p) return;
-        
-        if (p.dungeonProgress) {
-            this._progress = p.dungeonProgress;
+        var saved = localStorage.getItem('sherwood_dungeon_progress');
+        if (saved) {
+            this._progress = JSON.parse(saved);
         } else {
             this._progress = { 
                 forest: { level: 1, cups: {} },
                 swamp: { level: 1, cups: {} },
                 cave: { level: 1, cups: {} }
             };
-            p.dungeonProgress = this._progress;
-            Sherwood.saveGame();
         }
-        
         for (var id in this._progress) {
             if (!this._progress[id].cups) this._progress[id].cups = {};
         }
-        
         this._startTicketRegeneration();
         
+        var p = Sherwood.getPlayer();
         if (p && p.dungeon && p.dungeon.autoFight) {
             var af = p.dungeon.autoFight;
             if (af.active && af.endTime > Date.now()) {
@@ -44,8 +71,6 @@ Sherwood.Dungeon = {
                 this._completeAutoFight(af.dungeonId, af.level);
             }
         }
-        
-        this._restoreDungeon();
     },
 
     _startTicketRegeneration: function() {
@@ -101,29 +126,7 @@ Sherwood.Dungeon = {
         var currentCups = this._progress[dungeonId].cups[level] || 0;
         if (currentCups < 5) {
             this._progress[dungeonId].cups[level] = currentCups + 1;
-            this._saveProgress();
-        }
-    },
-
-    _saveProgress: function() {
-        var p = Sherwood.getPlayer();
-        if (p) {
-            p.dungeonProgress = this._progress;
-            Sherwood.saveGame();
-        }
-    },
-
-    _restoreDungeon: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.activeDungeon) return;
-        this._dungeon = p.activeDungeon;
-    },
-
-    _saveDungeon: function() {
-        var p = Sherwood.getPlayer();
-        if (p) {
-            p.activeDungeon = this._dungeon;
-            Sherwood.saveGame();
+            localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
         }
     },
 
@@ -234,47 +237,14 @@ Sherwood.Dungeon = {
         empties = empties.filter(function(e) { return !(e.x === spawnX && e.y === spawnY); });
         empties.sort(function() { return Math.random() - 0.5; });
 
-        var monsters = {
-            forest: {
-                1: { easy: ['plague_crow.png', 'bone_vulture.png', 'executioner_crow.png', 'plague_pixie.png', 'putrid_sprite.png'], boss: 'forest_strangler.png' },
-                2: { easy: ['warped_imp.png', 'bristle_boar.png', 'quill_beast.png', 'grave_borer.png', 'acid_devourer.png'], boss: 'shard_back.png' },
-                3: { easy: ['bone_borer.png', 'bark_beetle.png', 'blight_beetle_warden.png', 'armored_beetle.png', 'blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
-                4: { easy: ['blight_alpha.png', 'yew_blight_wolf.png', 'swamp_slugmouth.png', 'swamp_gorgymouth.png', 'swamp_drowner.png', 'bog_brute.png'], boss: 'root_executioner.png' },
-                5: { easy: ['blighted_oak_golem.png', 'oak_golem.png', 'twigtangle.png', 'woodland_terror.png', 'leshy.png'], boss: 'root_executioner.png' },
-                6: { easy: ['leshy_servant.png', 'spectral_stag.png', 'forest_blight_cyclops.png', 'blight_troglodyte.png', 'blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
-            },
-            swamp: {
-                1: { easy: ['bog_trapper.png', 'blight_spitter.png', 'swamp_spider.png', 'ocular_arachnid.png', 'blight_horn_worm.png'], boss: 'searing_arachnid.png' },
-                2: { easy: ['swamp_centipede.png', 'water_hag.png', 'marsh_witch.png', 'blight_snail.png', 'ancient_blight_snail.png'], boss: 'sherwood_lizard.png' },
-                3: { easy: ['peat_lord.png', 'lost_maiden.png', 'bog_witch.png', 'swamp_kikimora.png', 'blight_boletus.png'], boss: 'swamp_vodyanoy.png' },
-                4: { easy: ['swamp_drake.png', 'blight_cerberus.png', 'putrid_wolf.png', 'ripper_wolf.png', 'blight_fox.png'], boss: 'fox_pack_lord.png' },
-                5: { easy: ['swamp_viper.png', 'putrid_rat.png', 'oppressor_firefly.png', 'executioner_cricket.png', 'thorn_moth.png'], boss: 'plague_bat.png' },
-                6: { easy: ['ash_stalker.png', 'ash_assassin.png', 'bone_keeper.png', 'blight_blade.png', 'ash_wraith.png'], boss: 'ash_overlord.png' }
-            },
-            cave: {
-                1: { easy: ['basalt_devourer.png', 'grotto_brute.png', 'cave_watcher.png', 'runic_sentinel.png', 'ancient_watcher.png'], boss: 'lost_treasure_hunter.png' },
-                2: { easy: ['blight_moss_ogre.png', 'warped_worm.png', 'grotto_slug.png', 'underground_terror.png', 'shadow_maiden.png'], boss: 'cursed_priestess.png' },
-                3: { easy: ['root_daughter.png', 'bone_arachnid.png', 'necromantic_arachnid.png', 'animated_yew.png', 'rusty_servant.png', 'tormentor.png', 'grave_archer.png'], boss: 'mistress_of_the_roots.png' },
-                4: { easy: ['chaos_swordsman.png', 'chaos_knight.png', 'rusty_dread.png', 'chaos_harpy.png', 'blight_kite.png'], boss: 'chaos_lord.png' },
-                5: { easy: ['harpy_hatchling.png', 'harpy_witch.png', 'cave_tormentor.png', 'blight_keeper.png'], boss: 'harpy_chieftain.png' },
-                6: { easy: ['underworld_guardian.png', 'lord_of_the_feathered.png', 'blind_render.png', 'corruption_raccoon.png'], boss: 'blight_king.png' }
-            }
-        };
+        // Выбор бестий по этажу
+        var beastData = this.BEASTS[dungeonId] || this.BEASTS['forest'];
+        var floorData = beastData[level] || beastData[1];
+        var monList = floorData.normal || ['plague_crow.png'];
+        var bossImage = floorData.boss || null;
         
-        var pool = monsters[dungeonId] || monsters['forest'];
-        var levelData = pool[level] || pool[1];
-        var monList = levelData.easy;
-        var bossId = levelData.boss;
-        
-        // Предзагрузка изображений монстров
-        var allMonsterIds = monList.concat([bossId]);
-        for (var pi = 0; pi < allMonsterIds.length; pi++) {
-            var img = new Image();
-            img.src = 'assets/all_beasts/' + allMonsterIds[pi];
-        }
-        
-        var monsterCount = 12;
-        var minToKill = 12;
+        var monsterCount = 10;
+        var minToKill = 10;
 
         var placedMonsters = 0;
         var monsterCells = [];
@@ -290,15 +260,7 @@ Sherwood.Dungeon = {
             if (!tooClose) {
                 grid[cell.y][cell.x].type = self.TILE.MONSTER;
                 grid[cell.y][cell.x].monster = true;
-                
-                if (placedMonsters === monsterCount - 1) {
-                    grid[cell.y][cell.x].monsterId = bossId;
-                    grid[cell.y][cell.x].isBoss = true;
-                } else {
-                    grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
-                    grid[cell.y][cell.x].isBoss = false;
-                }
-                
+                grid[cell.y][cell.x].monsterId = monList[Math.floor(Math.random() * monList.length)];
                 monsterCells.push(cell);
                 cell.used = true;
                 placedMonsters++;
@@ -349,10 +311,9 @@ Sherwood.Dungeon = {
             chestsOpened: 0, isBossLevel: (level === 8),
             heroDirection: 'down', isMoving: false,
             chestPlaced: false,
+            bossImage: bossImage,
             collectedLoot: []
         };
-        
-        this._saveDungeon();
         return this._dungeon;
     },
 
@@ -362,120 +323,63 @@ Sherwood.Dungeon = {
         var cell = d.grid[ty][tx];
         if (!cell) return { ok: false };
         if (cell.type === this.TILE.WALL) return { ok: false };
-        
-        // Направление героя
-        if (tx > d.px) d.heroDirection = 'right';
-        else if (tx < d.px) d.heroDirection = 'left';
-        else if (ty > d.py) d.heroDirection = 'down';
-        else if (ty < d.py) d.heroDirection = 'up';
-        
-        // Звук открытия клетки
-        if (!cell.open && typeof SherwoodUI !== 'undefined') {
-            SherwoodUI._playSound('tile_open');
-        }
-        
+
         cell.open = true;
         d.px = tx;
         d.py = ty;
-        
-        // Звук шагов и анимация
-        if (typeof SherwoodUI !== 'undefined') {
-            SherwoodUI._playSound('steps');
-            d.isMoving = true;
-            
-            if (this._stepTimeout) clearTimeout(this._stepTimeout);
-            
-            this._stepTimeout = setTimeout(function() {
-                Sherwood.Dungeon._stepTimeout = null;
-                SherwoodUI._stopSound('steps');
-                var dd = Sherwood.Dungeon.getDungeon();
-                if (dd) {
-                    dd.isMoving = false;
-                    if (!document.getElementById('interact-btn')) {
-                        if (typeof SherwoodUI._renderDungeon === 'function') {
-                            SherwoodUI._renderDungeon();
-                        }
-                    }
-                }
-            }, 700);
-        }
 
         if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
-            // Останавливаем анимацию перед боем
-            if (this._stepTimeout) {
-                clearTimeout(this._stepTimeout);
-                this._stepTimeout = null;
-            }
-            d.isMoving = false;
-            this._saveDungeon();
             return { ok: true, type: 'battle', monsterId: cell.monsterId, boss: cell.isBoss || false };
         }
-        if (cell.chest && !cell.looted) { this._saveDungeon(); return { ok: true, type: 'chest' }; }
-        if (cell.altar && !cell.altarCollected) { this._saveDungeon(); return { ok: true, type: 'altar' }; }
-        if (cell.cauldron && !cell.cauldronCollected) { this._saveDungeon(); return { ok: true, type: 'cauldron' }; }
-        if (cell.potion && !cell.potionCollected) { this._saveDungeon(); return { ok: true, type: 'potion' }; }
-        if (cell.lootBag && !cell.lootCollected) { this._saveDungeon(); return { ok: true, type: 'lootBag' }; }
+        if (cell.chest && !cell.looted) return { ok: true, type: 'chest' };
+        if (cell.altar && !cell.altarCollected) return { ok: true, type: 'altar' };
+        if (cell.cauldron && !cell.cauldronCollected) return { ok: true, type: 'cauldron' };
+        if (cell.potion && !cell.potionCollected) return { ok: true, type: 'potion' };
+        if (cell.lootBag && !cell.lootCollected) return { ok: true, type: 'lootBag' };
         if (cell.exit) {
             if (cell.locked) {
                 if (d.monstersKilled >= d.minToKill) {
                     cell.locked = false;
-                    this._saveDungeon();
                     return { ok: true, type: 'exit' };
                 }
                 return { ok: true, type: 'exit_locked' };
             }
             return { ok: true, type: 'exit' };
         }
-        
-        this._saveDungeon();
         return { ok: true, type: 'move' };
     },
 
-    killMonster: function(rewards) {
+    killMonster: function() {
         if (!this._dungeon) return;
         var d = this._dungeon;
         d.monstersKilled++;
-        
+
         var cell = null;
-        // Ищем монстра на соседних клетках или на той же
         var checkDirs = [[0,0],[0,-1],[0,1],[-1,0],[1,0]];
         for (var i = 0; i < checkDirs.length; i++) {
-            var cx = d.px + checkDirs[i][0], cy = d.py + checkDirs[i][1];
-            if (cx >= 0 && cx < d.size && cy >= 0 && cy < d.size && d.grid[cy][cx].monster) {
-                cell = d.grid[cy][cx];
+            var nx = d.px + checkDirs[i][0], ny = d.py + checkDirs[i][1];
+            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size && d.grid[ny][nx].monster) {
+                cell = d.grid[ny][nx];
                 break;
             }
         }
-        
+
         if (cell && cell.monster) {
-            var wasBoss = cell.isBoss;
             cell.monster = false;
             cell.monsterId = null;
             cell.isBoss = false;
-            
-            var rewardData = rewards || {};
-            if (wasBoss) {
+
+            if (d.monstersKilled >= d.totalMonsters) {
                 cell.chest = true;
                 cell.looted = false;
                 cell.type = this.TILE.CHEST;
-                cell.lootReward = {
-                    exp: rewardData.exp || 0,
-                    gold: rewardData.gold || 0,
-                    silver: rewardData.silver || 0
-                };
             } else {
                 cell.lootBag = true;
                 cell.lootCollected = false;
                 cell.type = this.TILE.EMPTY;
-                cell.lootReward = {
-                    exp: rewardData.exp || 0,
-                    gold: rewardData.gold || 0,
-                    silver: rewardData.silver || 0
-                };
             }
-            // Не перемещаем героя автоматически – игрок должен сам шагнуть на клетку с лутом
         }
-        
+
         if (d.monstersKilled >= d.minToKill) {
             for (var y = 0; y < d.size; y++) {
                 for (var x = 0; x < d.size; x++) {
@@ -483,8 +387,6 @@ Sherwood.Dungeon = {
                 }
             }
         }
-        
-        this._saveDungeon();
     },
 
     complete: function() {
@@ -507,53 +409,19 @@ Sherwood.Dungeon = {
         var cups = prog.cups[d.level] || 0;
         if (cups >= 3 && d.level >= prog.level) {
             prog.level = Math.min(9, d.level + 1);
-            this._saveProgress();
+            localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
         }
 
         if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
-
-        if (d.level >= 1) {
-            var trophyBonuses = {
-                forest: { base: { attack: 7, defense: 7, hp: 70 }, name: 'Forest Trophy', icon: 'assets/all_trophies/subway_trophies/totem_of_the_forest_core.png' },
-                swamp: { base: { attack: 14, defense: 14, hp: 140 }, name: 'Swamp Trophy', icon: 'assets/all_trophies/subway_trophies/Idol_of_the_sunken_mire.png' },
-                cave: { base: { attack: 28, defense: 28, hp: 280 }, name: 'Cave Trophy', icon: 'assets/all_trophies/subway_trophies/heart_of_the_crystal_abyss.png' }
-            };
-            var tb = trophyBonuses[d.id];
-            if (tb && typeof Sherwood.addTrophy === 'function') {
-                var newLevel = prog.level - 1;
-                if (newLevel >= 1 && newLevel <= 8) {
-                    var bonus = {
-                        attack: tb.base.attack * newLevel,
-                        defense: tb.base.defense * newLevel,
-                        hp: tb.base.hp * newLevel
-                    };
-                    Sherwood.addTrophy('dungeon_' + d.id + '_' + newLevel, tb.name + ' ' + newLevel, bonus, tb.icon, 'dungeon');
-                }
-            }
-        }
 
         var dungeonId = d.id;
         var dungeonLevel = d.level;
         
         this._dungeon = null;
-        
-        var p = Sherwood.getPlayer();
-        if (p) {
-            p.activeDungeon = null;
-            Sherwood.saveGame();
-        }
-        
         return { gold: gold, silver: silver, exp: exp, items: items, dungeonId: dungeonId, dungeonLevel: dungeonLevel };
     },
 
-    leave: function() { 
-        this._dungeon = null; 
-        var p = Sherwood.getPlayer();
-        if (p) {
-            p.activeDungeon = null;
-            Sherwood.saveGame();
-        }
-    },
+    leave: function() { this._dungeon = null; },
     
     isAutoFightActive: function() {
         return this._autoFightActive;
