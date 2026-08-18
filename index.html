@@ -27,7 +27,6 @@
             position: relative;
         }
         
-        /* Статуи — только если ширина больше 480px */
         .statue-left {
             position: fixed;
             left: 0;
@@ -78,7 +77,6 @@
             display: none;
         }
         
-        /* Показываем статуи только на десктопе */
         @media (min-width: 768px) {
             .statue-left, .statue-right, .divider-left, .divider-right {
                 display: block;
@@ -293,7 +291,7 @@
         .left-buttons-column {
             position: absolute;
             bottom: 140px;
-            left: 30px;
+            left: 10px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -304,7 +302,7 @@
         .right-buttons-column {
             position: absolute;
             bottom: 140px;
-            right: 30px;
+            right: 10px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -440,7 +438,6 @@
             100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);}
         }
         
-        /* Мобильные */
         @media (max-width: 767px) {
             .statue-left, .statue-right, .divider-left, .divider-right {
                 display: none !important;
@@ -450,9 +447,27 @@
                 height: 100px;
                 margin-top: 80px;
             }
+            .left-buttons-column {
+                left: 5px;
+            }
+            .right-buttons-column {
+                right: 5px;
+            }
+            .side-btn {
+                width: 60px;
+                height: 60px;
+            }
+            .side-btn img {
+                width: 60px;
+                height: 60px;
+            }
+            .side-btn .label {
+                width: 70px;
+                height: 40px;
+                font-size: 10px;
+            }
         }
         
-        /* Нотч iPhone */
         @supports (padding: max(0px)) {
             .top-panel {
                 padding-top: max(4px, env(safe-area-inset-top));
@@ -492,7 +507,6 @@
             <div class="top-row-buttons">
                 <div class="top-btn" data-action="profile"><img src="assets/all_buttons/player_profile.png"><span class="label">Профиль</span></div>
                 <div class="top-btn" data-action="hearth"><img src="assets/all_buttons/button_hearth.png"><span class="label">Очаг</span></div>
-                <div class="top-btn" data-action="talents"><img src="assets/all_buttons/ranger_skills_button.png"><span class="label">Таланты</span></div>
                 <div class="top-btn" data-action="market"><img src="assets/all_buttons/sherwood_market.png"><span class="label">Рынок</span></div>
                 <div class="top-btn" data-action="chat"><img src="assets/all_buttons/chat_button.png"><span class="label">Чат</span></div>
                 <div class="top-btn" data-action="settings"><img src="assets/all_buttons/settings.png"><span class="label">Настройки</span></div>
@@ -541,7 +555,6 @@
     <script src="js/sherwood/ui.js"></script>
     
     <script>
-    // Масштабирование игры
     (function() {
         var container = document.getElementById('game-container');
         if (!container) return;
@@ -557,18 +570,20 @@
                 var vw = window.innerWidth;
                 var vh = window.innerHeight;
                 
-                if (vw >= GAME_WIDTH) {
-                    // Десктоп — без масштабирования
-                    container.style.transform = '';
-                    container.style.width = GAME_WIDTH + 'px';
+                // Всегда масштабируем по ширине
+                var scale = Math.min(1, vw / GAME_WIDTH);
+                
+                container.style.transform = 'scale(' + scale + ')';
+                container.style.transformOrigin = 'top center';
+                container.style.width = GAME_WIDTH + 'px';
+                
+                // Центрируем контейнер
+                if (scale < 1) {
+                    container.style.marginLeft = (-GAME_WIDTH * (1 - scale) / 2) + 'px';
+                    container.style.marginRight = (-GAME_WIDTH * (1 - scale) / 2) + 'px';
+                } else {
                     container.style.marginLeft = '0';
                     container.style.marginRight = '0';
-                } else {
-                    // Мобильный — масштабируем
-                    var scale = vw / GAME_WIDTH;
-                    container.style.transform = 'scale(' + scale + ')';
-                    container.style.width = GAME_WIDTH + 'px';
-                    container.style.marginLeft = (-GAME_WIDTH * (1 - scale) / 2) + 'px';
                 }
             });
         }
@@ -576,6 +591,7 @@
         scaleGame();
         window.addEventListener('resize', scaleGame);
         window.addEventListener('orientationchange', scaleGame);
+        document.addEventListener('DOMContentLoaded', scaleGame);
     })();
     </script>
 </body>
