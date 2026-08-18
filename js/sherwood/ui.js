@@ -1066,7 +1066,7 @@ const SherwoodUI = {
         this.updateDisplay();
         var self = this;
         setTimeout(function() { self._showCombatScreen(); }, 1000);
-    },    quest: function() {
+    },       quest: function() {
         this._playSound('click');
         if (!Sherwood.Quests) { this._showPlaceholder('Квесты', 'quests'); return; }
         
@@ -1081,16 +1081,31 @@ const SherwoodUI = {
         var isActive = Sherwood.Quests._currentChapter && Sherwood.Quests._currentChapter.id === ch.id && Sherwood.Quests._currentEnemy;
         
         var displayEnemy;
-        if (completed) displayEnemy = ch.boss;
-        else if (isActive) displayEnemy = Sherwood.Quests._currentEnemy;
-        else displayEnemy = ch.enemies[0];
+        var displayIsBoss = false;
+        
+        if (completed) {
+            displayEnemy = ch.boss;
+            displayIsBoss = true;
+        } else if (isActive) {
+            displayEnemy = Sherwood.Quests._currentEnemy;
+            displayIsBoss = displayEnemy.isBoss === true;
+        } else {
+            displayEnemy = ch.enemies[0];
+            displayIsBoss = false;
+        }
+        
+        var frameImg = displayIsBoss ? 'assets/interface/quest_boss.png' : 'assets/interface/quest_regular.png';
         
         var h = '';
         h += '<div style="text-align:center;">';
         h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
-        h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
-        h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
-        h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="width:210px;height:210px;object-fit:contain;">';
+        h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:8px;">' + displayEnemy.name + '</div>';
+        h += '<div style="position:relative;display:inline-block;width:280px;height:280px;margin:0 auto 16px;">';
+        h += '<img src="' + frameImg + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:1;">';
+        h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:70%;display:flex;align-items:center;justify-content:center;z-index:0;">';
+        h += '<img src="assets/all_beasts/' + displayEnemy.image + '" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:50%;" onerror="this.src=\'assets/all_beasts/forest_strangler.png\'">';
+        h += '</div>';
+        h += '</div>';
         
         if (completed) {
             h += '<div style="color:#4caf50;font-size:1em;font-weight:bold;">Пройдено</div>';
