@@ -20,25 +20,8 @@ Sherwood.BlackMarket = (function() {
         { id: 'portal_token_2',     name: 'Токен портала II',      icon: 'assets/interface/resource_token_on_entrance_portal_2.png', price: 750,  currency: 'silver', gives: { portalToken2: 1 },  desc: '+1 токен' },
         { id: 'portal_token_3',     name: 'Токен портала III',     icon: 'assets/interface/resource_token_on_entrance_portal_3.png', price: 1000, currency: 'silver', gives: { portalToken3: 1 },  desc: '+1 токен' },
         { id: 'wood',               name: 'Древесина',             icon: 'assets/interface/resource_wood.png',               price: 100,  currency: 'silver', gives: { wood: 20 },                desc: '+20 древесины' },
-        { id: 'arena_ticket',       name: 'Тикет арены',           icon: 'assets/interface/ticket_arena.png',               price: 200,  currency: 'gold',   gives: { arenaTickets: 5 },         desc: '+5 тикетов арены' }
+        { id: 'skin_drawing',       name: 'Чертёж скина',          icon: 'assets/interface/skin_drawing.png',               price: 500,  currency: 'gold',   gives: { skinDrawings: 1 },       desc: '+1 чертёж скина' }
     ];
-
-    var INGOT_CHAPTERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-
-    function _getIngotPrice(chapter) { return 25 + chapter * 5; }
-
-    function _makeIngotItem(chapter) {
-        return {
-            id: 'ingot_chapter_' + chapter,
-            name: 'Слиток главы ' + chapter,
-            icon: 'assets/ingots resource crafting skin/ingot_chapter_' + chapter + '.png',
-            chapter: chapter,
-            price: _getIngotPrice(chapter),
-            currency: 'gold',
-            gives: { ingots: 1 },
-            desc: '+1 Слиток главы ' + chapter
-        };
-    }
 
     var RINGS = [
         { chapter: 1,  price: 500,   stats: { attack: 5,   defense: 3 } },
@@ -81,8 +64,7 @@ Sherwood.BlackMarket = (function() {
         portalToken1:    { method: 'addResource', bagKey: 'portalToken1' },
         portalToken2:    { method: 'addResource', bagKey: 'portalToken2' },
         portalToken3:    { method: 'addResource', bagKey: 'portalToken3' },
-        ingots:          { method: 'direct',     resourceKey: 'ingots' },
-        arenaTickets:    { method: 'arena' }
+        skinDrawings:    { method: 'addResource', bagKey: 'skinTablets' }
     };
 
     var _shopItems = [];
@@ -145,43 +127,15 @@ Sherwood.BlackMarket = (function() {
                         Sherwood.Bag.addResource(handler.bagKey, amount);
                     }
                     break;
-
-                case 'direct':
-                    var p = _getPlayer();
-                    if (p && p.resources) {
-                        p.resources[handler.resourceKey] = (p.resources[handler.resourceKey] || 0) + amount;
-                    }
-                    break;
-
-                case 'arena':
-                    if (Sherwood.Arena && Sherwood.Arena._tickets !== undefined) {
-                        Sherwood.Arena._tickets += amount;
-                        var player = _getPlayer();
-                        if (player && player.arena) {
-                            player.arena.tickets = Sherwood.Arena._tickets;
-                            Sherwood.saveGame();
-                        }
-                    }
-                    break;
             }
         }
     }
 
     function _buildPool() {
-        var chapter = _getCurrentChapter();
         var pool = [];
-
         for (var i = 0; i < CONSUMABLES.length; i++) {
             pool.push(Object.assign({}, CONSUMABLES[i]));
         }
-
-        for (var j = 0; j < INGOT_CHAPTERS.length; j++) {
-            var ch = INGOT_CHAPTERS[j];
-            if (ch <= chapter) {
-                pool.push(_makeIngotItem(ch));
-            }
-        }
-
         return pool;
     }
 
@@ -262,7 +216,6 @@ Sherwood.BlackMarket = (function() {
                 _refreshCountToday = p.marketData.refreshCountToday || 0;
                 _lastRefreshDate = p.marketData.lastRefreshDate;
                 
-                // Если магазин пуст — генерируем
                 if (_shopItems.length === 0) {
                     _shopItems = _generateShop();
                     _saveMarketData();
@@ -322,12 +275,10 @@ Sherwood.BlackMarket = (function() {
         buyItem: function(itemIdOrIndex) {
             var item = null;
             
-            // Поиск по ID
             for (var i = 0; i < _shopItems.length; i++) {
                 if (_shopItems[i].id === itemIdOrIndex) { item = _shopItems[i]; break; }
             }
             
-            // Поиск по индексу
             if (!item) {
                 var idx = parseInt(itemIdOrIndex, 10);
                 if (!isNaN(idx) && idx >= 0 && idx < _shopItems.length) {
@@ -335,7 +286,6 @@ Sherwood.BlackMarket = (function() {
                 }
             }
             
-            // Поиск по slot
             if (!item) {
                 for (var j = 0; j < _shopItems.length; j++) {
                     if (_shopItems[j].slot === parseInt(itemIdOrIndex, 10)) { item = _shopItems[j]; break; }
