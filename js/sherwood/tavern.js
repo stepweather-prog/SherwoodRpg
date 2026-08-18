@@ -1,6 +1,6 @@
 /**
  * Sherwood Tavern — Таверна «Весёлый Разбойник»
- * Полная боевая логика
+ * Полная боевая логика + Таланты
  */
 
 Sherwood.Tavern = {
@@ -12,6 +12,7 @@ Sherwood.Tavern = {
     _cooldownEnd: 0,
     _cooldownMinutes: 20,
     _secretQuestUnlocked: false,
+    _tab: 1, // 1 - Контракты, 2 - Таланты
 
     init: function() {
         var p = Sherwood.getPlayer();
@@ -31,7 +32,6 @@ Sherwood.Tavern = {
             Sherwood.saveGame();
         }
         
-        // Восстановление текущего квеста
         if (p.tavern.currentQuest) {
             this._currentQuest = p.tavern.currentQuest;
         }
@@ -50,13 +50,13 @@ Sherwood.Tavern = {
         var enemyIndex = (questNum % 7) + 1;
         
         var enemies = [
-            { name: 'Лесная тварь', image: 'image (1).png', hp: 100 + chapter * 50, atk: 15 + chapter * 10, def: 5 + chapter * 5 },
-            { name: 'Болотный упырь', image: 'image (12).png', hp: 120 + chapter * 50, atk: 18 + chapter * 10, def: 8 + chapter * 5 },
-            { name: 'Древесный голем', image: 'image (74).png', hp: 150 + chapter * 60, atk: 20 + chapter * 12, def: 12 + chapter * 6 },
-            { name: 'Костяной гигант', image: 'image (14).png', hp: 180 + chapter * 70, atk: 25 + chapter * 15, def: 15 + chapter * 8 },
-            { name: 'Проклятый титан', image: 'image (15).png', hp: 220 + chapter * 80, atk: 30 + chapter * 18, def: 20 + chapter * 10 },
-            { name: 'Кислотный кошмар', image: 'image (27).png', hp: 280 + chapter * 100, atk: 38 + chapter * 22, def: 28 + chapter * 14 },
-            { name: 'Владыка портала', image: 'image (12).png', hp: 350 + chapter * 120, atk: 45 + chapter * 28, def: 35 + chapter * 18, isBoss: true }
+            { name: 'Лесная тварь', image: 'forest_strangler.png', hp: 100 + chapter * 50, atk: 15 + chapter * 10, def: 5 + chapter * 5 },
+            { name: 'Болотный упырь', image: 'searing_arachnid.png', hp: 120 + chapter * 50, atk: 18 + chapter * 10, def: 8 + chapter * 5 },
+            { name: 'Древесный голем', image: 'blight_lord_beetle.png', hp: 150 + chapter * 60, atk: 20 + chapter * 12, def: 12 + chapter * 6 },
+            { name: 'Костяной гигант', image: 'root_executioner.png', hp: 180 + chapter * 70, atk: 25 + chapter * 15, def: 15 + chapter * 8 },
+            { name: 'Проклятый титан', image: 'blight_lord_leshy.png', hp: 220 + chapter * 80, atk: 30 + chapter * 18, def: 20 + chapter * 10 },
+            { name: 'Кислотный кошмар', image: 'ash_overlord.png', hp: 280 + chapter * 100, atk: 38 + chapter * 22, def: 28 + chapter * 14 },
+            { name: 'Владыка портала', image: 'chaos_lord.png', hp: 350 + chapter * 120, atk: 45 + chapter * 28, def: 35 + chapter * 18, isBoss: true }
         ];
         
         var enemy = enemies[enemyIndex - 1];
@@ -78,7 +78,6 @@ Sherwood.Tavern = {
         return { quest: this._currentQuest, row: { npc: 'Егерь' } };
     },
 
-    // НОВЫЙ МЕТОД: Начать квест
     startQuest: function() {
         if (this._dailyQuestsDone >= this._maxDailyQuests) {
             return { success: false, reason: 'Лимит на сегодня (' + this._maxDailyQuests + ')' };
@@ -100,7 +99,6 @@ Sherwood.Tavern = {
         return { success: true, quest: quest, mode: 'battle', enemy: quest.enemy };
     },
 
-    // НОВЫЙ МЕТОД: Атака в бою таверны
     attackQuest: function() {
         if (!this._currentQuest) return { error: 'Нет квеста' };
         
@@ -110,7 +108,6 @@ Sherwood.Tavern = {
         
         if (!enemy.maxHp) enemy.maxHp = enemy.hp;
         
-        // Урон игрока
         var dmg = Sherwood.calculateDamage(p.stats.attack, enemy.def || 5);
         var crit = Math.random() * 100 < 15;
         if (crit) dmg = Math.floor(dmg * 1.8);
@@ -127,26 +124,22 @@ Sherwood.Tavern = {
             enemyDead: enemy.hp <= 0
         };
         
-        // Победа
         if (enemy.hp <= 0) {
             var r = this._completeQuest();
             result.win = true;
             result.rewards = r.reward;
             
-            // Восстановление HP
             p.stats.hp = p.stats.maxHp;
             Sherwood.saveGame();
             
             return result;
         }
         
-        // Контрудар врага
         var edmg = Sherwood.calculateDamage(enemy.atk || 20, p.stats.defense);
         p.stats.hp = Math.max(0, p.stats.hp - edmg);
         result.enemyDamage = edmg;
         result.playerHp = p.stats.hp;
         
-        // Поражение
         if (p.stats.hp <= 0) {
             result.playerDead = true;
             this._currentQuest = null;
@@ -161,7 +154,6 @@ Sherwood.Tavern = {
         return result;
     },
 
-    // НОВЫЙ МЕТОД: Автобой
     autoBattle: function() {
         if (!this._currentQuest) return { completed: false, failed: true };
         
@@ -184,7 +176,6 @@ Sherwood.Tavern = {
         return { completed: false, failed: true, damage: damage };
     },
 
-    // НОВЫЙ МЕТОД: Завершение квеста
     _completeQuest: function() {
         var quest = this._currentQuest;
         var p = Sherwood.getPlayer();
@@ -251,6 +242,12 @@ Sherwood.Tavern = {
     checkSecretQuest: function() { return this._secretQuestUnlocked; },
     getDailyQuestsDone: function() { return this._dailyQuestsDone; },
     getMaxDailyQuests: function() { return this._maxDailyQuests; },
+    
+    // ========== ТАЛАНТЫ ==========
+    
+    getTalents: function() {
+        return Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
+    },
 
     _saveCurrentQuest: function() {
         var p = Sherwood.getPlayer();
