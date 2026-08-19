@@ -2652,11 +2652,11 @@ _addWalletSilver: function(amount) {
 
     var h = '';
     
-    // Статы над скином
-    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:rgba(0,0,0,0.5);border-radius:10px;padding:12px;margin-bottom:12px;">';
-    h += '<div style="text-align:center;"><img src="' + this._statIcons.attack + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#f44336;font-size:1.1em;font-weight:bold;">' + p.stats.attack + '</div><div style="color:#aaa;font-size:0.6em;">Атака</div></div>';
-    h += '<div style="text-align:center;"><img src="' + this._statIcons.defense + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#2196f3;font-size:1.1em;font-weight:bold;">' + p.stats.defense + '</div><div style="color:#aaa;font-size:0.6em;">Защита</div></div>';
-    h += '<div style="text-align:center;"><img src="' + this._statIcons.hp + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#4caf50;font-size:1.1em;font-weight:bold;">' + p.stats.hp + '</div><div style="color:#aaa;font-size:0.6em;">Здоровье</div></div>';
+          // Статы над скином
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:12px;">';
+    h += '<div style="text-align:center;"><img src="' + this._statIcons.attack + '" style="width:56px;height:56px;object-fit:contain;"><div style="color:#fff;font-size:1.6em;font-weight:bold;">' + p.stats.attack + '</div></div>';
+    h += '<div style="text-align:center;"><img src="' + this._statIcons.defense + '" style="width:56px;height:56px;object-fit:contain;"><div style="color:#fff;font-size:1.6em;font-weight:bold;">' + p.stats.defense + '</div></div>';
+    h += '<div style="text-align:center;"><img src="' + this._statIcons.hp + '" style="width:56px;height:56px;object-fit:contain;"><div style="color:#fff;font-size:1.6em;font-weight:bold;">' + p.stats.hp + '</div></div>';
     h += '</div>';
     
     // Скин крупнее в 2 раза
