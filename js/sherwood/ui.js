@@ -488,7 +488,30 @@ const SherwoodUI = {
 
     _showDamageNumber: function(dmg, isCrit) { var container = document.getElementById('damage-numbers'); if (!container) return; var el = document.createElement('div'); el.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);color:' + (isCrit ? '#ff6a00' : '#ffd700') + ';font-size:' + (isCrit ? '1.8em' : '1.2em') + ';font-weight:bold;text-shadow:0 0 8px #000;z-index:10;pointer-events:none;animation:dmgFloat 1s ease-out forwards;'; el.textContent = (isCrit ? '💥 ' : '') + dmg; container.appendChild(el); setTimeout(function() { el.remove(); }, 1000); },
 
-    _showPlayerHitAnim: function() { var container = document.getElementById('player-hit-anim'); if (container) { container.style.display = 'block'; container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>'; setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600); } var overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;animation:bloodFlash 0.5s ease-out forwards;'; overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at left center, rgba(200,0,0,0.7) 0%, transparent 40%), radial-gradient(ellipse at right center, rgba(200,0,0,0.7) 0%, transparent 40%);"></div>'; document.body.appendChild(overlay); setTimeout(function() { overlay.remove(); }, 600); },
+    _showPlayerHitAnim: function() {
+    var container = document.getElementById('player-hit-anim');
+    if (container) {
+        container.style.display = 'block';
+        container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>';
+        setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
+    }
+    
+    // Кровь слева (отражённая)
+    var bloodLeft = document.createElement('div');
+    bloodLeft.style.cssText = 'position:fixed;top:0;left:0;width:50%;height:100%;z-index:9999;pointer-events:none;';
+    bloodLeft.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>';
+    document.body.appendChild(bloodLeft);
+    
+    // Кровь справа (обычная)
+    var bloodRight = document.createElement('div');
+    bloodRight.style.cssText = 'position:fixed;top:0;right:0;width:50%;height:100%;z-index:9999;pointer-events:none;';
+    bloodRight.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>';
+    document.body.appendChild(bloodRight);
+    
+    // Удаляем после проигрывания
+    setTimeout(function() { bloodLeft.remove(); }, 800);
+    setTimeout(function() { bloodRight.remove(); }, 800);
+},
 
     _showCriticalHitAnim: function() { var overlay = document.getElementById('enemy-hit-overlay'); if (!overlay) return; overlay.style.display = 'block'; overlay.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>'; setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800); },
 
