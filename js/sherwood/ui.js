@@ -24,23 +24,19 @@ const SherwoodUI = {
     },
     _previousScreen: null, _dungeon: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
 
-    init: function() {
+        init: function() {
         this._mainElements = ['.bg-layer', '.portal-video-bg', '.arch-layer', '.hero-layer', '.top-panel', '.left-buttons-column', '.right-buttons-column', '.bottom-stats'];
         this.container = document.getElementById('game-container'); if (!this.container) return;
         this._screenLayer = document.createElement('div'); this._screenLayer.id = 'screen-layer';
         this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:none;';
         this.container.appendChild(this._screenLayer);
         try { this._initSounds(); } catch(e) {}
-        this.bindPlayButton();
         try { var silverEl = document.getElementById('silver-display'); if (silverEl) { silverEl.parentElement.style.cursor = 'pointer'; silverEl.parentElement.onclick = function() { SherwoodUI._showExchangePanel(); }; } } catch(e) {}
         try { this._playMusic('main_theme'); } catch(e) {}
         try { this.updateDisplay(); } catch(e) {}
-        if (typeof Sherwood !== 'undefined') {
-            try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {}
-            try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {}
-        }
+        if (typeof Sherwood !== 'undefined') { try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {} try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {} }
         try { this._loadAudioSettings(); } catch(e) {}
-        this._scaleGame();
+        try { this._scaleGame(); } catch(e) {}
         window.addEventListener('resize', function() { SherwoodUI._scaleGame(); });
     },
 
@@ -456,7 +452,7 @@ const SherwoodUI = {
         this.showDungeon();
     },
         // ========== БОЙ ==========
-           _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
+               _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
         var e = enemyData, p = Sherwood.getPlayer();
         var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100;
         var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
@@ -499,11 +495,7 @@ const SherwoodUI = {
         var frameIndex = 0;
         effect.src = spritePaths[0];
         effect.onerror = function() { this.remove(); return; };
-        var frameInterval = setInterval(function() {
-            frameIndex++;
-            if (frameIndex >= spritePaths.length) { clearInterval(frameInterval); effect.remove(); return; }
-            effect.src = spritePaths[frameIndex];
-        }, frameDuration);
+        var frameInterval = setInterval(function() { frameIndex++; if (frameIndex >= spritePaths.length) { clearInterval(frameInterval); effect.remove(); return; } effect.src = spritePaths[frameIndex]; }, frameDuration);
     },
 
     _hitEnemyCard: function() {
@@ -523,13 +515,14 @@ const SherwoodUI = {
         if (container) { container.style.display = 'block'; container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>'; setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600); }
         var enemyCard = document.getElementById('enemy-card');
         if (!enemyCard) return;
+        var cardRect = enemyCard.getBoundingClientRect(); var containerRect = this.container.getBoundingClientRect();
+        var bloodLeft = document.createElement('div'); bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        var vidLeft = document.createElement('video'); vidLeft.src = 'assets/animation/blood_splatter.webm'; vidLeft.muted = true; vidLeft.playsInline = true; vidLeft.autoplay = true; vidLeft.style.cssText = 'width:100%;height:100%;object-fit:contain;transform:scaleX(-1);'; bloodLeft.appendChild(vidLeft); this._screenLayer.appendChild(bloodLeft);
+        var bloodRight = document.createElement('div'); bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        var vidRight = document.createElement('video'); vidRight.src = 'assets/animation/blood_splatter.webm'; vidRight.muted = true; vidRight.playsInline = true; vidRight.autoplay = true; vidRight.style.cssText = 'width:100%;height:100%;object-fit:contain;'; bloodRight.appendChild(vidRight); this._screenLayer.appendChild(bloodRight);
+        vidLeft.play().catch(function() {}); vidRight.play().catch(function() {});
         var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png'];
         this._showAnimatedEffect(clawSprites, 400, enemyCard, 140, 140);
-        var cardRect = enemyCard.getBoundingClientRect(); var containerRect = this.container.getBoundingClientRect();
-        var bloodLeft = document.createElement('div'); bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;'; bloodLeft.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;transform:scaleX(-1);"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>'; this._screenLayer.appendChild(bloodLeft);
-        var bloodRight = document.createElement('div'); bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;'; bloodRight.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>'; this._screenLayer.appendChild(bloodRight);
-        var vids = bloodLeft.querySelectorAll('video'); for (var i = 0; i < vids.length; i++) { vids[i].play().catch(function() {}); }
-        vids = bloodRight.querySelectorAll('video'); for (var i = 0; i < vids.length; i++) { vids[i].play().catch(function() {}); }
         setTimeout(function() { bloodLeft.remove(); }, 1000); setTimeout(function() { bloodRight.remove(); }, 1000);
     },
 
