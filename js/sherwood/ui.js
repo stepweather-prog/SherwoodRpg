@@ -106,7 +106,7 @@ updateDisplay: function() {
     } catch(e) {}
     try {
         var stats = document.querySelectorAll('.stat-value');
-        if (stats.length >= 3) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.hp + '/' + p.stats.maxHp; }
+        if (stats.length >= 3) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.hp; }
     } catch(e) {}
 },
 
@@ -1071,7 +1071,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:2px;">';
     h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_power.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.attack + '</span></div>';
     h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_defense.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.defense + '</span></div>';
-    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_health.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_health.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.hp + '</span></div>';
     h += '</div>';
     
     h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:2px;">' + e.name + '</div>';
@@ -1118,7 +1118,7 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '/' + p.stats.maxHp + '</span></div>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">HP ' + p.stats.hp + '</span></div>';
     h += '</div>';
     
     h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:4px 4%;min-height:55px;max-height:55px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
@@ -2842,7 +2842,7 @@ forge: function() {
     
     // Стрелы
     h += '<div onclick="SherwoodUI._craftArrowFromForge()" style="cursor:pointer;position:relative;width:70px;height:70px;background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">';
-    h += '<img src="assets/interface/sherwood_arrow.png" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+    h += '<img src="assets/interface/sherwood_hollow_arrow.png" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
     h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + arrowCount + '</span>';
     h += '</div>';
     
