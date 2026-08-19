@@ -1063,36 +1063,40 @@ _withdrawKeset: function() {
 // ========== БОЙ ==========
 _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
     var e = enemyData, p = Sherwood.getPlayer();
-    var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100, php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
+    var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100;
+    var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
     var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01');
     var imgPath = (mode === 'arena') ? e.image : (mode === 'portal' ? 'assets/portal_beasts/' + e.image : 'assets/all_beasts/' + e.image);
-    var h = '<div style="text-align:center;">';
     
-    h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:2px;">';
-    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_power.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.attack + '</span></div>';
-    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_defense.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.defense + '</span></div>';
-    h += '<div style="display:flex;align-items:center;gap:2px;"><img src="assets/interface/icon_health.png" style="width:28px;height:28px;"><span style="color:#fff;font-size:0.8em;font-weight:bold;">' + p.stats.hp + '</span></div>';
-    h += '</div>';
+    var h = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100%;padding:10px 16px;">';
     
-    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:2px;">' + e.name + '</div>';
+    // Имя врага
+    h += '<div style="color:#f44336;font-weight:bold;font-size:1.1em;margin-bottom:4px;text-align:center;">' + e.name + '</div>';
     
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">';
-    h += '<div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=&quot;none&quot;"></div>';
-    h += '<div style="position:relative;width:300px;height:150px;">';
+    // Жизни врага
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;width:100%;">';
+    h += '<div style="position:relative;width:280px;height:130px;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:86px;left:26px;right:26px;bottom:12px;overflow:hidden;z-index:0;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '/' + e.maxHp + '</span></div>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.75em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + e.hp + '</span></div>';
     h += '</div>';
     
-    h += '<div style="margin:4px 0;position:relative;display:inline-block;" id="enemy-card-area">';
-    h += '<img src="' + imgPath + '" id="enemy-card" style="width:300px;height:300px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
+    // Статы врага
+    h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px;">';
+    h += '<span style="color:#f44336;font-size:0.75em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span>';
+    h += '<span style="color:#2196f3;font-size:0.75em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span>';
+    h += '</div>';
+    
+    // Карта врага
+    h += '<div style="margin:0 0 6px 0;position:relative;display:inline-block;" id="enemy-card-area">';
+    h += '<img src="' + imgPath + '" id="enemy-card" style="width:260px;height:260px;object-fit:contain;position:relative;z-index:1;border-radius:16px;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
     h += '<div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div>';
     h += '<div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div>';
     h += '</div>';
     
-    // Проверяем заряженные таланты
+    // Кнопки: таланты слева и справа, удар по центру
     var chargedSkillLeft = null;
     var chargedSkillRight = null;
     
@@ -1108,7 +1112,6 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0;">';
     
-    // Левый талант (если заряжен)
     if (chargedSkillLeft) {
         var skL = skills[chargedSkillLeft];
         if (skL) {
@@ -1120,10 +1123,8 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
         h += '<div style="width:50px;height:50px;"></div>';
     }
     
-    // Обычный удар — всегда по центру
     h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:64px;height:64px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;flex-shrink:0;"></button>';
     
-    // Правый талант (если заряжен)
     if (chargedSkillRight) {
         var skR = skills[chargedSkillRight];
         if (skR) {
@@ -1137,20 +1138,27 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '</div>';
     
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:2px 0;">';
-    h += '<div id="player-avatar" style="width:48px;height:48px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
+    // Жизни героя
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0 2px 0;width:100%;">';
+    h += '<div id="player-avatar" style="width:40px;height:40px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:contain;position:relative;z-index:1;">';
     h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
     h += '</div>';
-    h += '<div style="position:relative;width:300px;height:150px;">';
+    h += '<div style="position:relative;width:240px;height:110px;">';
     h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:100px;left:28px;right:28px;bottom:14px;overflow:hidden;z-index:0;">';
+    h += '<div style="position:absolute;top:72px;left:22px;right:22px;bottom:10px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s ease-out;"></div>';
     h += '</div>';
     h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;text-shadow:0 0 6px #000;font-weight:bold;">' + p.stats.hp + '</span></div>';
     h += '</div>';
     
-    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:4px 4%;min-height:55px;max-height:55px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
+    // Статы героя
+    h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:4px;">';
+    h += '<span style="color:#fff;font-size:0.75em;font-weight:bold;">АТК ' + p.stats.attack + '</span>';
+    h += '<span style="color:#fff;font-size:0.75em;font-weight:bold;">ЗЩТ ' + p.stats.defense + '</span>';
+    h += '</div>';
+    
+    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:2px 4%;min-height:40px;max-height:40px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
     h += '</div>';
     
     this._openScreen('', customBg || 'dungeon_fight', h);
