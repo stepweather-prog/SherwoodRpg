@@ -560,55 +560,54 @@
     <script src="js/sherwood/ui.js"></script>
     
     <script>
-    (function() {
-        var container = document.getElementById('game-container');
-        if (!container) return;
-        
-        var GAME_WIDTH = 480;
-        var GAME_HEIGHT = 800;
-        var rafId = null;
-        
-        function scaleGame() {
-            if (rafId) return;
-            rafId = requestAnimationFrame(function() {
-                rafId = null;
-                
-                var vw = window.innerWidth;
-                var vh = window.innerHeight;
-                
-                var scaleX = vw / GAME_WIDTH;
-                var scaleY = vh / GAME_HEIGHT;
-                var scale = Math.min(scaleX, scaleY);
-                
-                if (vw >= GAME_WIDTH && vh >= GAME_HEIGHT) {
-                    scale = 1;
-                }
-                
-                container.style.transform = 'scale(' + scale + ')';
-                container.style.transformOrigin = 'top center';
-                container.style.width = GAME_WIDTH + 'px';
-                container.style.minHeight = GAME_HEIGHT + 'px';
-                
-                var scaledWidth = GAME_WIDTH * scale;
-                var leftOffset = (vw - scaledWidth) / 2;
-                container.style.marginLeft = leftOffset + 'px';
-                container.style.marginRight = '0';
-                
-                var scaledHeight = GAME_HEIGHT * scale;
-                var topOffset = Math.max(0, (vh - scaledHeight) / 2);
-                container.style.marginTop = topOffset + 'px';
-                
-                document.body.style.minHeight = '100vh';
-                document.body.style.height = 'auto';
-                document.documentElement.style.height = 'auto';
-            });
-        }
-        
-        scaleGame();
-        window.addEventListener('resize', scaleGame);
-        window.addEventListener('orientationchange', scaleGame);
-        document.addEventListener('DOMContentLoaded', scaleGame);
-    })();
-    </script>
+(function() {
+    var container = document.getElementById('game-container');
+    if (!container) return;
+    
+    var GAME_WIDTH = 480;
+    var GAME_HEIGHT = 800;
+    var rafId = null;
+    
+    function scaleGame() {
+        if (rafId) return;
+        rafId = requestAnimationFrame(function() {
+            rafId = null;
+            
+            var vw = window.innerWidth;
+            var vh = window.innerHeight;
+            
+            var scaleX = vw / GAME_WIDTH;
+            var scaleY = vh / GAME_HEIGHT;
+            var scale = Math.min(scaleX, scaleY);
+            
+            // На десктопе не увеличиваем больше 1
+            if (vw >= GAME_WIDTH && vh >= GAME_HEIGHT) {
+                scale = 1;
+            }
+            
+            container.style.transform = 'scale(' + scale + ')';
+            container.style.transformOrigin = 'top center';
+            container.style.width = GAME_WIDTH + 'px';
+            container.style.minHeight = GAME_HEIGHT + 'px';
+            
+            // Сбрасываем все margin
+            container.style.margin = '0 auto';
+            container.style.position = 'relative';
+            container.style.left = '0';
+            container.style.top = '0';
+            
+            // Центрируем контейнер
+            document.body.style.display = 'flex';
+            document.body.style.justifyContent = 'center';
+            document.body.style.alignItems = 'flex-start';
+        });
+    }
+    
+    scaleGame();
+    window.addEventListener('resize', scaleGame);
+    window.addEventListener('orientationchange', scaleGame);
+    document.addEventListener('DOMContentLoaded', scaleGame);
+})();
+</script>
 </body>
 </html>
