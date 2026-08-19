@@ -268,9 +268,8 @@ Sherwood.Combat = {
         if (!p) return;
 
         var enemyName = 'Монстр';
-        var enemyImage = monsterId || 'image (1).png';
+        var enemyImage = monsterId || 'plague_crow.png';
         
-        // Ищем имя в справочнике бестиария
         if (Sherwood.Bestiary && Sherwood.Bestiary.BEASTS) {
             var beastData = Sherwood.Bestiary.BEASTS[monsterId];
             if (beastData && beastData.name) {
@@ -281,7 +280,6 @@ Sherwood.Combat = {
         var level = p.level || 1;
         var monsterLevel = 1;
         
-        // Определяем уровень монстра по этажу
         if (mode === 'dungeon' && Sherwood.Dungeon && Sherwood.Dungeon.getDungeon) {
             var d = Sherwood.Dungeon.getDungeon();
             if (d) {
@@ -289,24 +287,30 @@ Sherwood.Combat = {
             }
         }
         
-        var baseHp = 50 + monsterLevel * 8;
-        var baseAtk = 8 + monsterLevel * 1.5;
-        var baseDef = 2 + monsterLevel * 0.8;
+        var playerAttack = p.stats.attack || 10;
+        var playerDefense = p.stats.defense || 10;
+        var playerHp = p.stats.maxHp || 100;
+        
+        var baseHp = Math.floor(playerHp * (0.4 + monsterLevel * 0.15));
+        var baseDef = Math.floor(playerAttack * (0.5 + monsterLevel * 0.03));
+        if (baseDef < 5) baseDef = 5;
+        var baseAtk = Math.floor(playerDefense * (0.4 + monsterLevel * 0.05));
+        if (baseAtk < 5) baseAtk = 5;
         
         if (isBoss) {
-            baseHp *= 4;
-            baseAtk *= 2;
-            baseDef *= 2;
+            baseHp *= 3;
+            baseAtk = Math.floor(baseAtk * 1.5);
+            baseDef = Math.floor(baseDef * 1.2);
             enemyName = 'БОСС: ' + enemyName;
         }
 
         var enemy = {
             name: enemyName,
             image: enemyImage,
-            hp: Math.floor(baseHp),
-            maxHp: Math.floor(baseHp),
-            attack: Math.floor(baseAtk),
-            defense: Math.floor(baseDef),
+            hp: baseHp,
+            maxHp: baseHp,
+            attack: baseAtk,
+            defense: baseDef,
             isBoss: isBoss || false,
             mode: mode || 'dungeon',
             dots: [],
@@ -372,7 +376,7 @@ Sherwood.Combat = {
         this._tickCooldowns();
         
         var damageBonus = this._playerBuffs.double_damage.remainingTurns > 0 ? 1.0 : 0;
-        var rawDamage = Math.max(1, p.stats.attack - b.enemy.defense + Math.floor(Math.random() * 10));
+        var rawDamage = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + b.enemy.defense) + Math.random() * 5));
         rawDamage = Math.floor(rawDamage * (1 + damageBonus));
         
         var crit = Math.random() * 100 < 15;
@@ -477,7 +481,7 @@ Sherwood.Combat = {
                 var effectiveDefense = b.enemy.defense * (1 - armorPierce);
                 
                 for (var h = 0; h < hits; h++) {
-                    var hitDamage = Math.max(1, Math.floor((p.stats.attack - effectiveDefense) * skill.damageMultiplier));
+                    var hitDamage = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + effectiveDefense) * skill.damageMultiplier));
                     
                     if (skill.critChance && Math.random() < skill.critChance) {
                         hitDamage = Math.floor(hitDamage * 1.8);
@@ -628,7 +632,7 @@ Sherwood.Combat = {
             defenseValue *= 2;
         }
         
-        var enemyDamage = Math.max(1, Math.floor(attackValue - defenseValue * 0.5 + Math.random() * 5));
+        var enemyDamage = Math.max(1, Math.floor((attackValue * attackValue) / (attackValue + defenseValue) + Math.random() * 3));
         
         var passiveBlock = this._skills.passive_block;
         if (passiveBlock && passiveBlock.unlocked && passiveBlock.blockChance) {
