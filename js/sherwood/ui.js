@@ -2621,41 +2621,30 @@ _addWalletSilver: function(amount) {
     var activeSkin = p.activeSkin || 'skin1_01';
     var unlockedSkins = p.unlockedSkins || ['skin1_01'];
 
-    var h = '<div style="text-align:center;margin-bottom:12px;">';
+    var h = '';
     
-    // Кликабельный скин
+    // Статы над скином
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:rgba(0,0,0,0.5);border-radius:10px;padding:12px;margin-bottom:12px;">';
+    h += '<div style="text-align:center;"><img src="' + this._statIcons.attack + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#f44336;font-size:1.1em;font-weight:bold;">' + p.stats.attack + '</div><div style="color:#aaa;font-size:0.6em;">Атака</div></div>';
+    h += '<div style="text-align:center;"><img src="' + this._statIcons.defense + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#2196f3;font-size:1.1em;font-weight:bold;">' + p.stats.defense + '</div><div style="color:#aaa;font-size:0.6em;">Защита</div></div>';
+    h += '<div style="text-align:center;"><img src="' + this._statIcons.hp + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#4caf50;font-size:1.1em;font-weight:bold;">' + p.stats.hp + '</div><div style="color:#aaa;font-size:0.6em;">Здоровье</div></div>';
+    h += '</div>';
+    
+    // Скин крупнее в 2 раза
+    h += '<div style="text-align:center;margin-bottom:12px;">';
     h += '<div onclick="SherwoodUI._showSkinSelector()" style="cursor:pointer;display:inline-block;position:relative;">';
-    h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:90px;height:90px;border-radius:12px;border:2px solid #ffd700;object-fit:contain;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">';
-    h += '<div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#ffd700;font-size:0.5em;font-weight:bold;padding:2px 8px;border-radius:4px;white-space:nowrap;">Сменить</div>';
+    h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:180px;height:180px;border-radius:16px;border:3px solid #ffd700;object-fit:contain;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">';
+    h += '<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#ffd700;font-size:0.6em;font-weight:bold;padding:3px 10px;border-radius:4px;white-space:nowrap;">Сменить</div>';
     h += '</div>';
-    
-    h += '<div style="color:#e0c080;font-weight:bold;margin-top:8px;">' + p.name + '</div>';
-    h += '<div style="color:#aaa;">Уровень ' + p.level + '</div></div>';
+    h += '<div style="color:#e0c080;font-weight:bold;margin-top:10px;font-size:1.2em;">' + p.name + '</div>';
+    h += '<div style="color:#aaa;font-size:1em;">Уровень ' + p.level + '</div></div>';
 
-    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(0,0,0,0.4);border-radius:10px;padding:12px;margin-bottom:12px;">';
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.attack + '" style="width:22px;height:22px;"><span style="color:#f44336;">' + p.stats.attack + '</span></div>';
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.defense + '" style="width:22px;height:22px;"><span style="color:#2196f3;">' + p.stats.defense + '</span></div>';
-    h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;"><img src="' + this._statIcons.hp + '" style="width:22px;height:22px;"><span style="color:#4caf50;">' + p.stats.hp + '</span></div>';
-    h += '</div>';
-
-    var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
-    var unlockedList = [];
-    for (var id in skills) { if (skills[id].unlocked) unlockedList.push(skills[id]); }
-    if (unlockedList.length > 0) {
-        h += '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">';
-        h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><img src="assets/all_buttons/ranger_skills_button.png" style="width:32px;height:32px;"><span style="color:#e0c080;font-weight:bold;">Таланты</span></div>';
-        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-        for (var i = 0; i < unlockedList.length; i++) {
-            h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:6px;padding:6px;text-align:center;width:70px;">';
-            h += '<img src="' + unlockedList[i].icon + '" style="width:32px;height:32px;object-fit:contain;"><div style="color:#ffa500;font-size:0.5em;margin-top:2px;">' + unlockedList[i].name + '</div></div>';
-        }
-        h += '</div></div>';
-    }
-
-    h += '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:12px;">';
+    // Кнопки: Трофеи, Кольца, Амулеты, Таланты
+    h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">';
     h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllTrophies()"><img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/interface/trophy_stand.png') + '"><span class="action-label">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</span></div>';
     h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllRings()"><img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '"><span class="action-label">' + (ring ? ring.name : 'Кольца') + '</span></div>';
     h += '<div class="profile-action-btn" onclick="SherwoodUI._showAllAmulets()"><img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '"><span class="action-label">' + (amulet ? amulet.name : 'Амулеты') + '</span></div>';
+    h += '<div class="profile-action-btn" onclick="SherwoodUI._showTalentsFromProfile()"><img src="assets/all_buttons/ranger_skills_button.png"><span class="action-label">Таланты</span></div>';
     h += '</div>';
 
     h += '<div class="profile-actions">';
@@ -2668,6 +2657,59 @@ _addWalletSilver: function(amount) {
     h += '<div id="profile-info" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:12px;"></div>';
     
     this._openScreenScrollable('Профиль', 'profile', h);
+},
+
+_showTalentsFromProfile: function() {
+    var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
+    var player = Sherwood.getPlayer();
+    if (!player.activeSkills) player.activeSkills = {};
+    
+    var h = '<div style="padding:10px;">';
+    h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;text-align:center;margin-bottom:12px;">Мои таланты</div>';
+    
+    var hasUnlocked = false;
+    for (var id in skills) {
+        var s = skills[id];
+        if (!s.unlocked) continue;
+        hasUnlocked = true;
+        
+        var isActive = player.activeSkills[id] !== false;
+        
+        h += '<div onclick="SherwoodUI._toggleTalentFromProfile(\'' + id + '\')" style="cursor:pointer;background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#4caf50' : '#555') + ';border-radius:8px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
+        h += '<img src="' + s.icon + '" style="width:44px;height:44px;object-fit:contain;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;">' + s.name + '</div><div style="color:#aaa;font-size:0.7em;">' + s.description + '</div></div>';
+        
+        if (isActive) {
+            h += '<div style="color:#4caf50;font-size:0.7em;font-weight:bold;">Вкл</div>';
+        } else {
+            h += '<div style="color:#888;font-size:0.7em;font-weight:bold;">Выкл</div>';
+        }
+        
+        h += '</div>';
+    }
+    
+    if (!hasUnlocked) {
+        h += '<div style="color:#aaa;text-align:center;padding:20px;">Нет изученных талантов</div>';
+    }
+    
+    h += '<div style="color:#aaa;font-size:0.65em;text-align:center;margin-top:8px;">Нажми на талант чтобы включить или выключить</div>';
+    h += '</div>';
+    
+    this._openScreenScrollable('Таланты', 'profile', h, 'SherwoodUI.profile()');
+},
+
+_toggleTalentFromProfile: function(id) {
+    var player = Sherwood.getPlayer();
+    if (!player.activeSkills) player.activeSkills = {};
+    
+    if (player.activeSkills[id] === false) {
+        player.activeSkills[id] = true;
+    } else {
+        player.activeSkills[id] = false;
+    }
+    
+    Sherwood.saveGame();
+    this._showTalentsFromProfile();
 },
 
 _showSkinSelector: function() {
@@ -2706,7 +2748,6 @@ _selectSkin: function(skinId) {
     var r = Sherwood.Forge ? Sherwood.Forge.equipSkin(skinId) : { success: false };
     
     if (r.success) {
-        // Обновляем героя на главной
         var heroImg = document.querySelector('.hero-layer img');
         if (heroImg) heroImg.src = 'assets/hero_skins/' + skinId + '.png';
         
