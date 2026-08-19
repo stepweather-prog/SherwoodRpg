@@ -1080,17 +1080,17 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     // Имя врага
     h += '<div style="color:#f44336;font-weight:bold;font-size:0.9em;text-align:center;">' + e.name + '</div>';
     
-    // HP врага
+    // HP врага — рамка, заливка поверх
     h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;">';
     h += '<div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;">';
     h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=&quot;none&quot;">';
     h += '</div>';
     h += '<div style="flex:1;position:relative;height:50px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:12px;left:30px;right:30px;bottom:12px;overflow:hidden;z-index:0;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;">';
+    h += '<div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;">' + e.hp + '</span>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span>';
     h += '</div>';
     h += '</div>';
     
@@ -1126,18 +1126,18 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     h += chargedSkillRight && skills[chargedSkillRight] ? '<button onclick="SherwoodUI._useSkill(\'' + chargedSkillRight + '\')" style="width:44px;height:44px;border-radius:50%;border:2px solid #ffd700;overflow:hidden;padding:0;background:rgba(201,168,76,0.3);"><img src="' + skills[chargedSkillRight].icon + '" style="width:100%;height:100%;object-fit:contain;"></button>' : '<div style="width:44px;height:44px;"></div>';
     h += '</div>';
     
-    // HP героя
+    // HP героя — рамка, заливка поверх
     h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;">';
     h += '<div style="width:48px;height:48px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:cover;">';
     h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
     h += '</div>';
     h += '<div style="flex:1;position:relative;height:50px;">';
-    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:1;">';
-    h += '<div style="position:absolute;top:12px;left:30px;right:30px;bottom:12px;overflow:hidden;z-index:0;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;">';
+    h += '<div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;">' + p.stats.hp + '</span>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + p.stats.hp + '</span>';
     h += '</div>';
     h += '</div>';
     
