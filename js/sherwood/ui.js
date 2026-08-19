@@ -496,20 +496,17 @@ const SherwoodUI = {
         setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
     }
     
-    // Находим карту врага
     var enemyCard = document.getElementById('enemy-card');
     if (!enemyCard) return;
     
     var cardRect = enemyCard.getBoundingClientRect();
     var containerRect = this.container.getBoundingClientRect();
     
-    // Кровь слева от карты
     var bloodLeft = document.createElement('div');
     bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 60) + 'px;width:60px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
     bloodLeft.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;transform:scaleX(-1);"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>';
     this._screenLayer.appendChild(bloodLeft);
     
-    // Кровь справа от карты
     var bloodRight = document.createElement('div');
     bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:60px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
     bloodRight.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>';
@@ -517,7 +514,15 @@ const SherwoodUI = {
     
     setTimeout(function() { bloodLeft.remove(); }, 1000);
     setTimeout(function() { bloodRight.remove(); }, 1000);
-}
+},
+
+_showCriticalHitAnim: function() {
+    var overlay = document.getElementById('enemy-hit-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'block';
+    overlay.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>';
+    setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800);
+},
 
     _showCriticalHitAnim: function() { var overlay = document.getElementById('enemy-hit-overlay'); if (!overlay) return; overlay.style.display = 'block'; overlay.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>'; setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800); },
 
