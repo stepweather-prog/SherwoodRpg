@@ -13,9 +13,8 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            min-height: 100vh;
-            overflow-x: hidden;
-            overflow-y: auto;
+            height: 100%;
+            overflow: hidden;
             background: #0a0a0f;
             font-family: 'Georgia', serif;
         }
@@ -85,7 +84,7 @@
         
         #game-container {
             width: 480px;
-            min-height: 800px;
+            height: 800px;
             position: relative;
             background: #0a0a0f;
             overflow: hidden;
@@ -198,6 +197,7 @@
             z-index: 1;
             overflow: hidden;
             pointer-events: none;
+            display: none;
         }
         
         .portal-video-bg video {
@@ -310,48 +310,6 @@
             pointer-events: auto;
         }
         
-        .top-buttons-row, .bottom-buttons-row, .left-buttons-column, .right-buttons-column {
-            z-index: 25 !important;
-            pointer-events: auto !important;
-        }
-        
-        .profile-actions {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .profile-action-btn {
-            width: 84px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .profile-action-btn img {
-            width: 84px;
-            height: 84px;
-            object-fit: contain;
-        }
-        
-        .profile-action-btn .action-label {
-            width: 100px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: url('assets/interface/all_stat.png') center/100% 100% no-repeat;
-            color: #fff;
-            font-size: 0.65em;
-            font-weight: bold;
-            text-shadow: 0 0 4px #000;
-            margin-top: -4px;
-        }
-        
         .loading-screen {
             position: absolute;
             top: 0;
@@ -400,14 +358,6 @@
             height: 100%;
             object-fit: contain;
             filter: drop-shadow(0 0 30px rgba(201,168,76,0.3));
-        }
-        
-        .loading-screen .play-btn:hover {
-            transform: scale(1.05);
-        }
-        
-        .loading-screen .play-btn:active {
-            transform: scale(0.95);
         }
         
         .main-interface {
@@ -476,12 +426,6 @@
         @supports (padding: max(0px)) {
             .top-panel {
                 padding-top: max(4px, env(safe-area-inset-top));
-            }
-            .left-buttons-column {
-                padding-left: max(0px, env(safe-area-inset-left));
-            }
-            .right-buttons-column {
-                padding-right: max(0px, env(safe-area-inset-right));
             }
         }
     </style>
@@ -560,45 +504,45 @@
     <script src="js/sherwood/ui.js"></script>
     
     <script>
-(function() {
-    var container = document.getElementById('game-container');
-    if (!container) return;
-    
-    var GAME_WIDTH = 480;
-    var GAME_HEIGHT = 800;
-    var rafId = null;
-    
-    function scaleGame() {
-        if (rafId) return;
-        rafId = requestAnimationFrame(function() {
-            rafId = null;
-            
-            var vw = window.innerWidth;
-            var vh = window.innerHeight;
-            
-            var scaleX = vw / GAME_WIDTH;
-            var scaleY = vh / GAME_HEIGHT;
-            var scale = Math.min(scaleX, scaleY);
-            
-            if (scale > 1) scale = 1;
-            
-            container.style.transform = 'scale(' + scale + ')';
-            container.style.transformOrigin = 'top center';
-            container.style.width = GAME_WIDTH + 'px';
-            container.style.minHeight = GAME_HEIGHT + 'px';
-            container.style.margin = '0 auto';
-            
-            document.body.style.display = 'flex';
-            document.body.style.justifyContent = 'center';
-            document.body.style.alignItems = 'flex-start';
-        });
-    }
-    
-    scaleGame();
-    window.addEventListener('resize', scaleGame);
-    window.addEventListener('orientationchange', scaleGame);
-    document.addEventListener('DOMContentLoaded', scaleGame);
-})();
-</script>
+    (function() {
+        var container = document.getElementById('game-container');
+        if (!container) return;
+        
+        var GAME_WIDTH = 480;
+        var GAME_HEIGHT = 800;
+        var rafId = null;
+        
+        function scaleGame() {
+            if (rafId) return;
+            rafId = requestAnimationFrame(function() {
+                rafId = null;
+                
+                var vw = window.innerWidth;
+                var vh = window.innerHeight;
+                
+                var scaleX = vw / GAME_WIDTH;
+                var scaleY = vh / GAME_HEIGHT;
+                var scale = Math.min(scaleX, scaleY);
+                
+                if (scale > 1) scale = 1;
+                
+                container.style.transform = 'scale(' + scale + ')';
+                container.style.transformOrigin = 'top center';
+                container.style.width = GAME_WIDTH + 'px';
+                container.style.height = GAME_HEIGHT + 'px';
+                container.style.margin = '0 auto';
+                
+                document.body.style.display = 'flex';
+                document.body.style.justifyContent = 'center';
+                document.body.style.alignItems = 'flex-start';
+            });
+        }
+        
+        scaleGame();
+        window.addEventListener('resize', scaleGame);
+        window.addEventListener('orientationchange', scaleGame);
+        document.addEventListener('DOMContentLoaded', scaleGame);
+    })();
+    </script>
 </body>
 </html>
