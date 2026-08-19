@@ -85,7 +85,7 @@
         
         #game-container {
             width: 480px;
-            min-height: 100vh;
+            min-height: 800px;
             position: relative;
             background: #0a0a0f;
             overflow: hidden;
@@ -438,6 +438,11 @@
             100%{transform:rotate(0deg);filter:brightness(1) blur(0px) saturate(1);}
         }
         
+        @keyframes bloodFlash {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
         @media (max-width: 767px) {
             .statue-left, .statue-right, .divider-left, .divider-right {
                 display: none !important;
@@ -560,6 +565,7 @@
         if (!container) return;
         
         var GAME_WIDTH = 480;
+        var GAME_HEIGHT = 800;
         var rafId = null;
         
         function scaleGame() {
@@ -570,21 +576,31 @@
                 var vw = window.innerWidth;
                 var vh = window.innerHeight;
                 
-                // Всегда масштабируем по ширине
-                var scale = Math.min(1, vw / GAME_WIDTH);
+                var scaleX = vw / GAME_WIDTH;
+                var scaleY = vh / GAME_HEIGHT;
+                var scale = Math.min(scaleX, scaleY);
+                
+                if (vw >= GAME_WIDTH && vh >= GAME_HEIGHT) {
+                    scale = 1;
+                }
                 
                 container.style.transform = 'scale(' + scale + ')';
                 container.style.transformOrigin = 'top center';
                 container.style.width = GAME_WIDTH + 'px';
+                container.style.minHeight = GAME_HEIGHT + 'px';
                 
-                // Центрируем контейнер
-                if (scale < 1) {
-                    container.style.marginLeft = (-GAME_WIDTH * (1 - scale) / 2) + 'px';
-                    container.style.marginRight = (-GAME_WIDTH * (1 - scale) / 2) + 'px';
-                } else {
-                    container.style.marginLeft = '0';
-                    container.style.marginRight = '0';
-                }
+                var scaledWidth = GAME_WIDTH * scale;
+                var leftOffset = (vw - scaledWidth) / 2;
+                container.style.marginLeft = leftOffset + 'px';
+                container.style.marginRight = '0';
+                
+                var scaledHeight = GAME_HEIGHT * scale;
+                var topOffset = Math.max(0, (vh - scaledHeight) / 2);
+                container.style.marginTop = topOffset + 'px';
+                
+                document.body.style.minHeight = '100vh';
+                document.body.style.height = 'auto';
+                document.documentElement.style.height = 'auto';
             });
         }
         
