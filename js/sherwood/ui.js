@@ -1068,39 +1068,40 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     var activeSkin = (Sherwood.Forge && Sherwood.Forge.getActiveSkin ? Sherwood.Forge.getActiveSkin() : 'skin1_01');
     var imgPath = (mode === 'arena') ? e.image : (mode === 'portal' ? 'assets/portal_beasts/' + e.image : 'assets/all_beasts/' + e.image);
     
-    var h = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:calc(100vh - 20px);padding:8px 10px;">';
+    var h = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:8px 10px;">';
     
     // Имя врага
     h += '<div style="color:#f44336;font-weight:bold;font-size:1em;margin-bottom:2px;text-align:center;">' + e.name + '</div>';
     
-    // Ряд: аватар врага слева + полоса HP по центру
-    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;width:100%;">';
-    h += '<div style="width:64px;height:64px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);">';
+    // Ряд: аватар врага слева + HP рамка
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;width:100%;">';
+    h += '<div style="width:64px;height:64px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;">';
     h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=&quot;none&quot;">';
     h += '</div>';
-    h += '<div style="flex:1;position:relative;height:56px;">';
-    h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);border:2px solid #f44336;border-radius:10px;overflow:hidden;">';
+    h += '<div style="flex:1;position:relative;width:280px;height:130px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:86px;left:26px;right:26px;bottom:12px;overflow:hidden;z-index:0;">';
     h += '<div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;transition:width 0.5s;"></div>';
     h += '</div>';
-    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.9em;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span>';
+    h += '<span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.75em;z-index:2;font-weight:bold;">' + e.hp + '</span>';
     h += '</div>';
     h += '</div>';
     
-    // Статы врага — 3 шт, белым цветом, одинаковые
-    h += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:4px;">';
-    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span>';
-    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span>';
-    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;">HP ' + e.hp + '</span>';
+    // Статы врага — 3 шт, крупнее
+    h += '<div style="display:flex;gap:12px;justify-content:center;margin-bottom:4px;">';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span>';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span>';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">HP ' + e.hp + '</span>';
     h += '</div>';
     
-    // Карта врага
+    // Карта врага — крупнее
     h += '<div style="margin:0 0 4px 0;position:relative;display:inline-block;" id="enemy-card-area">';
-    h += '<img src="' + imgPath + '" id="enemy-card" style="width:240px;height:240px;object-fit:contain;position:relative;z-index:1;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
+    h += '<img src="' + imgPath + '" id="enemy-card" style="width:300px;height:300px;object-fit:contain;position:relative;z-index:1;transition:filter 0.15s;" onerror="this.style.display=&quot;none&quot;">';
     h += '<div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div>';
     h += '<div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div>';
     h += '</div>';
     
-    // Кнопки: талант слева, удар по центру, талант справа
+    // Кнопки
     var chargedSkillLeft = null;
     var chargedSkillRight = null;
     
@@ -1142,28 +1143,30 @@ _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onF
     
     h += '</div>';
     
-    // Ряд: аватар героя слева + полоса HP по центру
-    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;width:100%;">';
-    h += '<div style="width:64px;height:64px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);position:relative;">';
+    // Ряд: аватар героя слева + HP рамка
+    h += '<div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;width:100%;">';
+    h += '<div style="width:64px;height:64px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;">';
     h += '<img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:cover;">';
     h += '<div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div>';
     h += '</div>';
-    h += '<div style="flex:1;position:relative;height:56px;">';
-    h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);border:2px solid #c9a040;border-radius:10px;overflow:hidden;">';
+    h += '<div style="flex:1;position:relative;width:280px;height:130px;">';
+    h += '<img src="assets/interface/life_scale.png" style="width:100%;height:155%;position:absolute;top:0;left:0;z-index:1;">';
+    h += '<div style="position:absolute;top:86px;left:26px;right:26px;bottom:12px;overflow:hidden;z-index:0;">';
     h += '<div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;transition:width 0.5s;"></div>';
     h += '</div>';
-    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.9em;font-weight:bold;text-shadow:0 0 4px #000;">' + p.stats.hp + '</span>';
+    h += '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.75em;z-index:2;font-weight:bold;">' + p.stats.hp + '</span>';
     h += '</div>';
     h += '</div>';
     
-    // Статы героя — 3 шт, белым цветом
-    h += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:4px;">';
-    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;">АТК ' + p.stats.attack + '</span>';
-    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;">ЗЩТ ' + p.stats.defense + '</span>';
-    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;">HP ' + p.stats.hp + '</span>';
+    // Статы героя — 3 шт, крупнее
+    h += '<div style="display:flex;gap:12px;justify-content:center;margin-bottom:4px;">';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">АТК ' + p.stats.attack + '</span>';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">ЗЩТ ' + p.stats.defense + '</span>';
+    h += '<span style="color:#fff;font-size:0.9em;font-weight:bold;">HP ' + p.stats.hp + '</span>';
     h += '</div>';
     
-    h += '<div id="battle-dialog" style="background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:4px;margin:2px 4%;min-height:36px;max-height:36px;overflow-y:auto;color:#aaa;font-size:0.65em;text-align:left;line-height:1.3;"></div>';
+    // Лог боя — шире, без полосы прокрутки
+    h += '<div id="battle-dialog" style="width:90%;background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:6px;margin:2px 0;min-height:40px;color:#aaa;font-size:0.7em;text-align:left;line-height:1.3;overflow:hidden;"></div>';
     h += '</div>';
     
     this._openScreen('', customBg || 'dungeon_fight', h);
@@ -1197,15 +1200,10 @@ _showPlayerHitAnim: function() {
         setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
     }
     
-    // Красная вспышка с кровью по бокам экрана
+    // Красная вспышка по бокам
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;pointer-events:none;';
-    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at left, rgba(255,0,0,0.6) 0%, transparent 50%), radial-gradient(ellipse at right, rgba(255,0,0,0.6) 0%, transparent 50%);animation:bloodFlash 0.5s ease-out forwards;"></div>';
-    
-    var styleSheet = document.createElement('style');
-    styleSheet.textContent = '@keyframes bloodFlash { 0% { opacity: 1; } 100% { opacity: 0; } }';
-    document.head.appendChild(styleSheet);
-    
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;animation:bloodFlash 0.5s ease-out forwards;';
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at left center, rgba(200,0,0,0.7) 0%, transparent 40%), radial-gradient(ellipse at right center, rgba(200,0,0,0.7) 0%, transparent 40%);"></div>';
     document.body.appendChild(overlay);
     setTimeout(function() { overlay.remove(); }, 600);
 },
