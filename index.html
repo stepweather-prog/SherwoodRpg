@@ -580,23 +580,14 @@
             var scaleY = vh / GAME_HEIGHT;
             var scale = Math.min(scaleX, scaleY);
             
-            // На десктопе не увеличиваем больше 1
-            if (vw >= GAME_WIDTH && vh >= GAME_HEIGHT) {
-                scale = 1;
-            }
+            if (scale > 1) scale = 1;
             
             container.style.transform = 'scale(' + scale + ')';
             container.style.transformOrigin = 'top center';
             container.style.width = GAME_WIDTH + 'px';
             container.style.minHeight = GAME_HEIGHT + 'px';
-            
-            // Сбрасываем все margin
             container.style.margin = '0 auto';
-            container.style.position = 'relative';
-            container.style.left = '0';
-            container.style.top = '0';
             
-            // Центрируем контейнер
             document.body.style.display = 'flex';
             document.body.style.justifyContent = 'center';
             document.body.style.alignItems = 'flex-start';
