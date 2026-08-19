@@ -136,19 +136,25 @@ const SherwoodUI = {
     },
 
     loadHome: function() {
-        try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
-        try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
-        try { this.container.style.background = ''; } catch(e) {}
-        this._previousScreen = null;    
-        var portalVideo = document.querySelector('.portal-video-bg');
+    try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
+    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
+    try { this.container.style.background = ''; } catch(e) {}
+    this._previousScreen = null;
+    
+    var portalVideo = document.querySelector('.portal-video-bg');
     if (portalVideo) {
         portalVideo.style.display = 'block';
         var video = portalVideo.querySelector('video');
-        if (video) { video.play().catch(function() {}); }
+        if (video) {
+            video.currentTime = 0;
+            video.muted = true;
+            video.play().catch(function() {});
+        }
     }
-        try { var self = this; if (!this._regenInterval) { this._regenInterval = setInterval(function() { var pl = Sherwood.getPlayer(); if (pl && !Sherwood.Combat._battle && !Sherwood.Dungeon.getDungeon()) { var regen = Math.floor(pl.stats.maxHp * 0.25); pl.stats.hp = Math.min(pl.stats.maxHp, pl.stats.hp + regen); self.updateDisplay(); Sherwood.saveGame(); } }, 15000); } } catch(e) {}
-        try { this.updateDisplay(); } catch(e) {}
-    },
+    
+    try { var self = this; if (!this._regenInterval) { this._regenInterval = setInterval(function() { var pl = Sherwood.getPlayer(); if (pl && !Sherwood.Combat._battle && !Sherwood.Dungeon.getDungeon()) { var regen = Math.floor(pl.stats.maxHp * 0.25); pl.stats.hp = Math.min(pl.stats.maxHp, pl.stats.hp + regen); self.updateDisplay(); Sherwood.saveGame(); } }, 15000); } } catch(e) {}
+    try { this.updateDisplay(); } catch(e) {}
+},
 
     _openScreen: function(title, bgKey, html, backFn) {
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
