@@ -20,18 +20,26 @@
         
         body {
             display: flex;
-            flex-direction: column;
-            height: 100dvh;
+            justify-content: center;
+            align-items: center;
             position: relative;
+            height: 100dvh;
+        }
+        
+        .statue-left, .statue-right, .divider-left, .divider-right {
+            display: none;
         }
         
         #game-container {
-            width: 100%;
-            height: 100%;
+            width: 480px;
+            height: 800px;
             position: relative;
             background: #0a0a0f;
             overflow: hidden;
+            border: 1px solid #2a2a3e;
+            box-shadow: 0 0 60px rgba(0,0,0,0.9);
             z-index: 10;
+            transform-origin: center center;
         }
         
         .bg-layer {
@@ -71,28 +79,36 @@
             padding: 4px 0;
         }
         
-        .top-resources-row, .top-stats-row, .top-row-buttons {
+        .top-resources-row, .top-stats-row {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            gap: 4px;
+            gap: 12px;
             margin-bottom: 4px;
+        }
+        
+        .top-row-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
         }
         
         .res-group {
             display: flex;
             align-items: center;
+            position: relative;
         }
         
         .res-group img {
-            width: clamp(28px, 7vw, 56px);
-            height: clamp(28px, 7vw, 56px);
+            width: 56px;
+            height: 56px;
             object-fit: contain;
+            margin-right: -3px;
         }
         
         .val-block {
-            width: clamp(50px, 13vw, 90px);
-            height: clamp(28px, 7vw, 56px);
+            width: 90px;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -101,7 +117,7 @@
         
         .val-block span {
             color: #fff;
-            font-size: clamp(0.7em, 2.5vw, 1em);
+            font-size: 1em;
             font-weight: bold;
         }
         
@@ -109,47 +125,63 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: clamp(50px, 13vw, 72px);
+            width: 72px;
             cursor: pointer;
             background: none;
             border: none;
         }
         
         .top-btn img {
-            width: clamp(50px, 13vw, 72px);
-            height: clamp(50px, 13vw, 72px);
+            width: 72px;
+            height: 72px;
             object-fit: contain;
         }
         
         .top-btn .label {
-            width: clamp(55px, 14vw, 90px);
-            height: clamp(28px, 7vw, 48px);
+            width: 90px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: url('assets/interface/all_stat.png') center/100% 100% no-repeat;
             color: #ffa500;
-            font-size: clamp(9px, 2vw, 11px);
+            font-size: 11px;
             font-weight: bold;
+            margin-top: -4px;
         }
         
         .arch-layer {
             position: absolute;
             bottom: 0;
+            left: 0;
+            right: 0;
             width: 100%;
-            height: clamp(300px, 70vh, 580px);
+            height: 580px;
             background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat;
             z-index: 3;
             pointer-events: none;
         }
         
-        .hero-layer {
+        .arch-layer::after {
+            content: '';
             position: absolute;
-            bottom: 10%;
+            top: 80px;
             left: 50%;
             transform: translateX(-50%);
-            width: clamp(160px, 55vw, 280px);
-            height: clamp(260px, 55vh, 480px);
+            width: 51%;
+            height: 65%;
+            background: url('assets/backgrounds/homepage_screen.jpeg') center/cover no-repeat;
+            border-radius: 50% 50% 0 0;
+            z-index: -1;
+        }
+        
+        .hero-layer {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 280px;
+            height: 480px;
             z-index: 4;
             display: flex;
             align-items: flex-end;
@@ -161,48 +193,58 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            object-position: bottom center;
         }
         
         .side-btn {
-            width: clamp(40px, 12vw, 72px);
-            height: clamp(40px, 12vw, 72px);
+            width: 72px;
+            height: 72px;
             cursor: pointer;
-            background: none;
-            border: none;
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: none;
+            border: none;
         }
         
         .side-btn img {
-            width: 100%;
-            height: 100%;
+            width: 72px;
+            height: 72px;
             object-fit: contain;
         }
         
         .side-btn .label {
-            width: clamp(45px, 13vw, 90px);
-            height: clamp(22px, 6vw, 56px);
+            width: 90px;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: url('assets/interface/all_stat.png') center/100% 100% no-repeat;
             color: #ffa500;
-            font-size: clamp(8px, 2vw, 12px);
+            font-size: 12px;
             font-weight: bold;
+            margin-top: -4px;
         }
         
-        .left-buttons-column, .right-buttons-column {
+        .left-buttons-column {
             position: absolute;
-            bottom: 10%;
+            bottom: 140px;
+            left: 30px;
             display: flex;
             flex-direction: column;
-            gap: clamp(4px, 1.5vh, 10px);
+            gap: 10px;
             z-index: 20;
         }
         
-        .left-buttons-column { left: 1%; }
-        .right-buttons-column { right: 1%; }
+        .right-buttons-column {
+            position: absolute;
+            bottom: 140px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 20;
+        }
         
         .loading-screen {
             position: absolute;
@@ -215,6 +257,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            transition: opacity 0.6s ease;
         }
         
         .loading-screen.hidden {
@@ -237,8 +280,9 @@
             background: transparent;
             border: none;
             cursor: pointer;
-            width: clamp(80px, 25vw, 140px);
-            height: clamp(80px, 25vw, 140px);
+            width: 140px;
+            height: 140px;
+            margin-top: 120px;
         }
         
         .loading-screen .play-btn img {
@@ -260,9 +304,63 @@
         .main-interface.active {
             display: block;
         }
+        
+        @media (min-width: 768px) {
+            .statue-left {
+                display: block;
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: calc((100vw - 480px) / 2);
+                height: 100%;
+                background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .statue-right {
+                display: block;
+                position: fixed;
+                right: 0;
+                top: 0;
+                width: calc((100vw - 480px) / 2);
+                height: 100%;
+                background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .divider-left {
+                display: block;
+                position: fixed;
+                left: calc((100vw - 480px) / 2 - 80px);
+                top: 0;
+                width: 160px;
+                height: 100vh;
+                background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
+                background-size: 100% 100%;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .divider-right {
+                display: block;
+                position: fixed;
+                right: calc((100vw - 480px) / 2 - 80px);
+                top: 0;
+                width: 160px;
+                height: 100vh;
+                background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
+                background-size: 100% 100%;
+                z-index: 9999;
+                pointer-events: none;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="statue-left"></div>
+    <div class="statue-right"></div>
+    <div class="divider-left"></div>
+    <div class="divider-right"></div>
+    
     <div id="game-container">
         <div class="bg-layer"></div>
         <div class="portal-video-bg"><video src="assets/animation/animation_frame_hero.webm" autoplay muted playsinline loop></video></div>
@@ -272,7 +370,7 @@
         <div class="top-panel">
             <div class="top-resources-row">
                 <div class="res-group"><img src="assets/interface/gold_plate.png"><div class="val-block"><span id="gold-display">0</span></div></div>
-                <div class="res-group"><img src="assets/interface/level_hero.png"><span id="level-display" style="position:absolute;color:#fff;font-weight:bold;">1</span><div class="val-block"><span id="exp-display">0%</span></div></div>
+                <div class="res-group"><img src="assets/interface/level_hero.png"><span id="level-display" style="position:absolute;top:50%;left:28px;transform:translate(-50%,-50%);color:#fff;font-size:0.85em;font-weight:bold;">1</span><div class="val-block"><span id="exp-display">0%</span></div></div>
                 <div class="res-group"><img src="assets/interface/silver_plaque.png"><div class="val-block"><span id="silver-display">0</span></div></div>
             </div>
             <div class="top-stats-row">
@@ -329,5 +427,34 @@
     <script src="js/sherwood/bestiary.js"></script>
     <script src="js/sherwood/daily.js"></script>
     <script src="js/sherwood/ui.js"></script>
+    
+    <script>
+    (function() {
+        var container = document.getElementById('game-container');
+        if (!container) return;
+        
+        var GAME_WIDTH = 480;
+        var GAME_HEIGHT = 800;
+        
+        function scaleGame() {
+            var vw = window.innerWidth;
+            var vh = window.innerHeight;
+            
+            var scaleX = vw / GAME_WIDTH;
+            var scaleY = vh / GAME_HEIGHT;
+            var scale = Math.min(scaleX, scaleY);
+            
+            if (scale > 1) scale = 1;
+            
+            container.style.transform = 'scale(' + scale + ')';
+            container.style.transformOrigin = 'center center';
+        }
+        
+        scaleGame();
+        window.addEventListener('resize', scaleGame);
+        window.addEventListener('orientationchange', scaleGame);
+        document.addEventListener('DOMContentLoaded', scaleGame);
+    })();
+    </script>
 </body>
 </html>
