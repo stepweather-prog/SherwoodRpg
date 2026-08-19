@@ -429,32 +429,45 @@
     <script src="js/sherwood/ui.js"></script>
     
     <script>
-    (function() {
-        var container = document.getElementById('game-container');
-        if (!container) return;
+(function() {
+    var container = document.getElementById('game-container');
+    if (!container) return;
+    
+    var GAME_WIDTH = 480;
+    var GAME_HEIGHT = 800;
+    
+    function scaleGame() {
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
         
-        var GAME_WIDTH = 480;
-        var GAME_HEIGHT = 800;
+        var scaleX = vw / GAME_WIDTH;
+        var scaleY = vh / GAME_HEIGHT;
+        var scale = Math.min(scaleX, scaleY);
         
-        function scaleGame() {
-            var vw = window.innerWidth;
-            var vh = window.innerHeight;
-            
-            var scaleX = vw / GAME_WIDTH;
-            var scaleY = vh / GAME_HEIGHT;
-            var scale = Math.min(scaleX, scaleY);
-            
-            if (scale > 1) scale = 1;
-            
-            container.style.transform = 'scale(' + scale + ')';
-            container.style.transformOrigin = 'center center';
-        }
+        if (scale > 1) scale = 1;
         
-        scaleGame();
-        window.addEventListener('resize', scaleGame);
-        window.addEventListener('orientationchange', scaleGame);
-        document.addEventListener('DOMContentLoaded', scaleGame);
-    })();
-    </script>
+        container.style.transform = 'scale(' + scale + ')';
+        container.style.transformOrigin = 'top left';
+        container.style.position = 'absolute';
+        container.style.left = '0';
+        container.style.top = '0';
+        
+        // Центрируем контейнер
+        var scaledWidth = GAME_WIDTH * scale;
+        var scaledHeight = GAME_HEIGHT * scale;
+        
+        var leftOffset = (vw - scaledWidth) / 2;
+        var topOffset = (vh - scaledHeight) / 2;
+        
+        container.style.marginLeft = leftOffset + 'px';
+        container.style.marginTop = topOffset + 'px';
+    }
+    
+    scaleGame();
+    window.addEventListener('resize', scaleGame);
+    window.addEventListener('orientationchange', scaleGame);
+    document.addEventListener('DOMContentLoaded', scaleGame);
+})();
+</script>
 </body>
 </html>
