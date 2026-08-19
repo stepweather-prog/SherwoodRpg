@@ -1354,10 +1354,17 @@ tavern: function() {
     var tab = Sherwood.Tavern._tab || 1;
     var h = '';
     
-    // Вкладки
-    h += '<div style="display:flex;gap:4px;margin-bottom:12px;">';
-    h += '<button onclick="Sherwood.Tavern._tab=1;SherwoodUI.tavern();" style="flex:1;background:' + (tab === 1 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (tab === 1 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Контракты</button>';
-    h += '<button onclick="Sherwood.Tavern._tab=2;SherwoodUI.tavern();" style="flex:1;background:' + (tab === 2 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:6px;padding:8px;color:' + (tab === 2 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.8em;font-weight:bold;">Таланты</button>';
+    // Рамка с егерем по центру сверху
+    h += '<div style="display:flex;flex-direction:column;align-items:center;padding:20px;">';
+    
+    h += '<div style="position:relative;width:240px;height:240px;margin-bottom:16px;">';
+    h += '<img src="assets/interface/old_huntsman_bertram.png" style="width:100%;height:100%;object-fit:contain;">';
+    h += '</div>';
+    
+    // Две кнопки
+    h += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
+    h += '<button onclick="Sherwood.Tavern._tab=1;SherwoodUI.tavern();" style="background:' + (tab === 1 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:8px;padding:10px 24px;color:' + (tab === 1 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.85em;font-weight:bold;">Контракты</button>';
+    h += '<button onclick="Sherwood.Tavern._tab=2;SherwoodUI.tavern();" style="background:' + (tab === 2 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:8px;padding:10px 24px;color:' + (tab === 2 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.85em;font-weight:bold;">Таланты</button>';
     h += '</div>';
     
     if (tab === 1) {
@@ -1370,29 +1377,23 @@ tavern: function() {
         var cdRemain = Sherwood.Tavern.getCooldownRemaining();
         var isActive = active && active.quest;
         
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:24px;padding:16px;">';
-        
-        h += '<div style="position:relative;width:220px;height:220px;flex-shrink:0;">';
-        h += '<img src="assets/interface/old_huntsman_bertram.png" style="width:100%;height:100%;object-fit:contain;">';
-        h += '</div>';
-        
         if (isActive) {
             var q = active.quest;
-            h += '<div style="position:relative;width:100%;max-width:440px;min-height:280px;display:flex;align-items:center;justify-content:center;">';
+            h += '<div style="position:relative;width:100%;max-width:440px;min-height:260px;display:flex;align-items:center;justify-content:center;">';
             h += '<img src="assets/interface/contracts.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;">';
-            h += '<div style="position:relative;z-index:1;text-align:center;padding:30px 24px;width:100%;">';
-            h += '<div style="color:#000;font-size:1.3em;font-weight:900;margin-bottom:12px;">' + q.name + '</div>';
-            h += '<div style="color:#000;font-size:1.1em;font-weight:900;margin-bottom:10px;">' + q.desc + '</div>';
-            h += '<div style="color:#8b0000;font-size:1em;font-weight:900;margin-bottom:10px;">Противник: ' + q.enemy.name + ' (HP ' + q.enemy.hp + ')</div>';
+            h += '<div style="position:relative;z-index:1;text-align:center;padding:28px 20px;width:100%;">';
+            h += '<div style="color:#000;font-size:1.3em;font-weight:900;margin-bottom:10px;">' + q.name + '</div>';
+            h += '<div style="color:#000;font-size:1em;font-weight:900;margin-bottom:8px;">' + q.desc + '</div>';
+            h += '<div style="color:#8b0000;font-size:0.9em;font-weight:900;">Противник: ' + q.enemy.name + ' (HP ' + q.enemy.hp + ')</div>';
             h += '</div>';
             h += '</div>';
             
-            h += '<button onclick="SherwoodUI._tavernBattle()" style="background:#c9a040;border:none;border-radius:12px;padding:16px 48px;color:#000;font-weight:900;cursor:pointer;font-size:1.1em;">В бой</button>';
+            h += '<button onclick="SherwoodUI._tavernBattle()" style="margin-top:12px;background:#c9a040;border:none;border-radius:10px;padding:14px 40px;color:#000;font-weight:900;cursor:pointer;font-size:1em;">В бой</button>';
         } else if (cooldown) {
-            h += '<div style="position:relative;width:100%;max-width:440px;min-height:280px;display:flex;align-items:center;justify-content:center;">';
+            h += '<div style="position:relative;width:100%;max-width:440px;min-height:260px;display:flex;align-items:center;justify-content:center;">';
             h += '<img src="assets/interface/contracts.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;">';
-            h += '<div style="position:relative;z-index:1;text-align:center;padding:30px 24px;width:100%;">';
-            h += '<div style="color:#000;font-size:1.3em;font-weight:900;margin-bottom:12px;">Перезарядка: ' + cdRemain + ' мин.</div>';
+            h += '<div style="position:relative;z-index:1;text-align:center;padding:28px 20px;width:100%;">';
+            h += '<div style="color:#000;font-size:1.3em;font-weight:900;margin-bottom:10px;">Перезарядка: ' + cdRemain + ' мин.</div>';
             h += '<div style="color:#000;font-size:1em;font-weight:900;">Контрактов сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
             h += '</div>';
             h += '</div>';
@@ -1400,27 +1401,28 @@ tavern: function() {
             var nextQuestId = completedCount + 1;
             var nextQuest = Sherwood.Tavern._getQuestById('tavern_' + nextQuestId);
             
-            h += '<div style="position:relative;width:100%;max-width:440px;min-height:280px;display:flex;align-items:center;justify-content:center;">';
+            h += '<div style="position:relative;width:100%;max-width:440px;min-height:260px;display:flex;align-items:center;justify-content:center;">';
             h += '<img src="assets/interface/contracts.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;">';
-            h += '<div style="position:relative;z-index:1;text-align:center;padding:30px 24px;width:100%;">';
-            h += '<div style="color:#000;font-size:1.3em;font-weight:900;margin-bottom:12px;">' + nextQuest.name + '</div>';
-            h += '<div style="color:#000;font-size:1.1em;font-weight:900;margin-bottom:10px;">' + nextQuest.desc + '</div>';
-            h += '<div style="color:#8b0000;font-size:1em;font-weight:900;margin-bottom:10px;">Противник: ' + nextQuest.enemy.name + ' (HP ' + nextQuest.enemy.hp + ')</div>';
-            h += '<div style="color:#000;font-size:1em;font-weight:900;">+' + nextQuest.reward.exp + 'XP +' + nextQuest.reward.gold + 'G</div>';
+            h += '<div style="position:relative;z-index:1;text-align:center;padding:28px 20px;width:100%;">';
+            h += '<div style="color:#000;font-size:1.3em;font-weight:900;margin-bottom:10px;">' + nextQuest.name + '</div>';
+            h += '<div style="color:#000;font-size:1em;font-weight:900;margin-bottom:8px;">' + nextQuest.desc + '</div>';
+            h += '<div style="color:#8b0000;font-size:0.9em;font-weight:900;margin-bottom:8px;">Противник: ' + nextQuest.enemy.name + ' (HP ' + nextQuest.enemy.hp + ')</div>';
+            h += '<div style="color:#000;font-size:0.9em;font-weight:900;">+' + nextQuest.reward.exp + 'XP +' + nextQuest.reward.gold + 'G</div>';
             h += '</div>';
             h += '</div>';
             
             if (dailyDone < dailyMax && completedCount < 100) {
-                h += '<button onclick="SherwoodUI._tavernStart(0,0)" style="background:#c9a040;border:none;border-radius:12px;padding:16px 48px;color:#000;font-weight:900;cursor:pointer;font-size:1.1em;">В бой</button>';
+                h += '<button onclick="SherwoodUI._tavernStart(0,0)" style="margin-top:12px;background:#c9a040;border:none;border-radius:10px;padding:14px 40px;color:#000;font-weight:900;cursor:pointer;font-size:1em;">В бой</button>';
             }
         }
         
-        h += '<div style="color:#e0c080;font-size:0.9em;font-weight:900;text-shadow:0 0 10px rgba(0,0,0,0.9);">Выполнено: ' + completedCount + '/100 | Сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
-        h += '</div>';
+        h += '<div style="margin-top:12px;color:#e0c080;font-size:0.85em;font-weight:900;text-shadow:0 0 10px rgba(0,0,0,0.9);">Выполнено: ' + completedCount + '/100 | Сегодня: ' + dailyDone + '/' + dailyMax + '</div>';
     } else {
         // ТАЛАНТЫ
         var skills = Sherwood.Tavern.getTalents();
-        h += '<div style="padding:10px;"><div style="color:#e0c080;font-size:1.1em;text-align:center;margin-bottom:12px;">Изучение талантов</div>';
+        
+        h += '<div style="width:100%;">';
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;text-align:center;margin-bottom:12px;">Таланты</div>';
         
         for (var id in skills) {
             var s = skills[id];
@@ -1440,12 +1442,11 @@ tavern: function() {
         h += '</div>';
     }
     
+    h += '</div>';
+    
     var bgImage = 'assets/backgrounds/section_tavern.png';
     
-    if (this._screenLayer) { 
-        this._screenLayer.innerHTML = '<div style="height:100%;background:url(\'' + bgImage + '\') center/cover no-repeat;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;flex-shrink:0;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;flex-shrink:0;">Таверна</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;display:flex;align-items:center;justify-content:center;">' + h + '</div></div>'; 
-        this._screenLayer.style.display = 'block'; 
-    }
+    this._openScreenScrollable('Таверна', 'tavern', h);
 },
 
 _tavernStart: function(r, q) {
