@@ -29,73 +29,75 @@
             min-height: var(--vh);
         }
         
-        .statue-left {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: max(0px, calc((100vw - 480px) / 2));
-            height: 100%;
-            background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat;
-            z-index: 9999;
-            pointer-events: none;
-            display: none;
-        }
-        
-        .statue-right {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: max(0px, calc((100vw - 480px) / 2));
-            height: 100%;
-            background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat;
-            z-index: 9999;
-            pointer-events: none;
-            display: none;
-        }
-        
-        .divider-left {
-            position: fixed;
-            left: max(0px, calc((100vw - 480px) / 2 - 80px));
-            top: 0;
-            width: 160px;
-            height: 100vh;
-            background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
-            background-size: 100% 100%;
-            z-index: 9999;
-            pointer-events: none;
-            display: none;
-        }
-        
-        .divider-right {
-            position: fixed;
-            right: max(0px, calc((100vw - 480px) / 2 - 80px));
-            top: 0;
-            width: 160px;
-            height: 100vh;
-            background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
-            background-size: 100% 100%;
-            z-index: 9999;
-            pointer-events: none;
+        .statue-left, .statue-right, .divider-left, .divider-right {
             display: none;
         }
         
         @media (min-width: 768px) {
-            .statue-left, .statue-right, .divider-left, .divider-right {
+            .statue-left {
                 display: block;
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: calc((100vw - 480px) / 2);
+                height: 100%;
+                background: url('assets/backgrounds/left_statue_of_the_main_screen.png') right/cover no-repeat;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .statue-right {
+                display: block;
+                position: fixed;
+                right: 0;
+                top: 0;
+                width: calc((100vw - 480px) / 2);
+                height: 100%;
+                background: url('assets/backgrounds/right_statue_of_the_main_screen.png') left/cover no-repeat;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .divider-left {
+                display: block;
+                position: fixed;
+                left: calc((100vw - 480px) / 2 - 80px);
+                top: 0;
+                width: 160px;
+                height: 100vh;
+                background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
+                background-size: 100% 100%;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            .divider-right {
+                display: block;
+                position: fixed;
+                right: calc((100vw - 480px) / 2 - 80px);
+                top: 0;
+                width: 160px;
+                height: 100vh;
+                background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
+                background-size: 100% 100%;
+                z-index: 9999;
+                pointer-events: none;
+            }
+            #game-container {
+                width: 480px;
+                height: 800px;
             }
         }
         
         #game-container {
-            width: 480px;
-            height: 800px;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
             position: relative;
             background: #0a0a0f;
             overflow: hidden;
             border: 1px solid #2a2a3e;
             box-shadow: 0 0 60px rgba(0,0,0,0.9);
             z-index: 10;
-            margin: 0 auto;
-            transform-origin: center center;
+            margin: 0;
         }
         
         .bg-layer {
@@ -137,29 +139,30 @@
             padding: 4px 0;
         }
         
-        .top-resources-row, .top-stats-row {
+        .top-resources-row, .top-stats-row, .top-row-buttons {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
+            gap: 6px;
             margin-bottom: 4px;
         }
         
         .res-group {
             display: flex;
             align-items: center;
-            gap: 0px;
+            gap: 0;
         }
         
         .res-group img {
-            width: 56px;
-            height: 56px;
+            width: 40px;
+            height: 40px;
             object-fit: contain;
             margin-right: -3px;
         }
         
         .val-block {
-            width: 90px;
-            height: 56px;
+            width: 70px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -168,43 +171,36 @@
         
         .val-block span {
             color: #fff;
-            font-size: 1em;
+            font-size: 0.85em;
             font-weight: bold;
             text-shadow: 0 0 4px #000;
-        }
-        
-        .top-row-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            margin-top: 8px;
         }
         
         .top-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 72px;
+            width: 60px;
             cursor: pointer;
             background: none;
             border: none;
         }
         
         .top-btn img {
-            width: 72px;
-            height: 72px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
         }
         
         .top-btn .label {
-            width: 90px;
-            height: 48px;
+            width: 70px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: url('assets/interface/all_stat.png') center/100% 100% no-repeat;
             color: #ffa500;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             text-shadow: 0 0 4px #000;
             margin-top: -4px;
@@ -216,7 +212,7 @@
             left: 0;
             right: 0;
             width: 100%;
-            height: 580px;
+            height: 70%;
             background: url('assets/interface/staircase_with_an_arch.png') bottom center / 100% 100% no-repeat;
             z-index: 3;
             pointer-events: none;
@@ -237,11 +233,11 @@
         
         .hero-layer {
             position: absolute;
-            bottom: 120px;
+            bottom: 10%;
             left: 50%;
             transform: translateX(-50%);
-            width: 280px;
-            height: 480px;
+            width: 70%;
+            height: 60%;
             z-index: 4;
             display: flex;
             align-items: flex-end;
@@ -258,8 +254,8 @@
         }
         
         .side-btn {
-            width: 72px;
-            height: 72px;
+            width: 50px;
+            height: 50px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -272,46 +268,37 @@
         }
         
         .side-btn img {
-            width: 72px;
-            height: 72px;
+            width: 50px;
+            height: 50px;
             object-fit: contain;
         }
         
         .side-btn .label {
-            width: 90px;
-            height: 56px;
+            width: 60px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: url('assets/interface/all_stat.png') center/100% 100% no-repeat;
             color: #ffa500;
-            font-size: 12px;
+            font-size: 9px;
             font-weight: bold;
             text-shadow: 0 0 4px #000;
             margin-top: -4px;
         }
         
-        .left-buttons-column {
+        .left-buttons-column, .right-buttons-column {
             position: absolute;
-            bottom: 140px;
-            left: 10px;
+            bottom: 80px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 6px;
             z-index: 20;
             pointer-events: auto;
         }
         
-        .right-buttons-column {
-            position: absolute;
-            bottom: 140px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 20;
-            pointer-events: auto;
-        }
+        .left-buttons-column { left: 5px; }
+        .right-buttons-column { right: 5px; }
         
         .loading-screen {
             position: absolute;
@@ -351,9 +338,9 @@
             border: none;
             cursor: pointer;
             transition: 0.2s;
-            width: 140px;
-            height: 140px;
-            margin-top: 120px;
+            width: 100px;
+            height: 100px;
+            margin: 0;
         }
         
         .loading-screen .play-btn img {
@@ -396,25 +383,6 @@
             100% { opacity: 0; }
         }
         
-        @media (max-width: 767px) {
-            .statue-left, .statue-right, .divider-left, .divider-right {
-                display: none !important;
-            }
-            .loading-screen .play-btn {
-                width: 100px;
-                height: 100px;
-                margin-top: 80px;
-            }
-            .left-buttons-column { left: 5px; }
-            .right-buttons-column { right: 5px; }
-            .side-btn { width: 60px; height: 60px; }
-            .side-btn img { width: 60px; height: 60px; }
-            .side-btn .label { width: 70px; height: 40px; font-size: 10px; }
-            #game-container { max-width: 100vw; max-height: 100vh; }
-            .hero-layer { width: 220px; height: 380px; bottom: 90px; }
-            .arch-layer { height: 440px; }
-        }
-        
         @supports (padding: max(0px)) {
             .top-panel { padding-top: max(4px, env(safe-area-inset-top)); }
         }
@@ -435,7 +403,7 @@
         <div class="top-panel">
             <div class="top-resources-row">
                 <div class="res-group"><img src="assets/interface/gold_plate.png"><div class="val-block"><span id="gold-display">0</span></div></div>
-                <div class="res-group" style="position:relative;"><img src="assets/interface/level_hero.png"><span id="level-display" style="position:absolute;top:50%;left:28px;transform:translate(-50%,-50%);color:#fff;font-size:0.85em;font-weight:bold;text-shadow:0 0 4px #000;">1</span><div class="val-block"><span id="exp-display">0%</span></div></div>
+                <div class="res-group" style="position:relative;"><img src="assets/interface/level_hero.png"><span id="level-display" style="position:absolute;top:50%;left:24px;transform:translate(-50%,-50%);color:#fff;font-size:0.8em;font-weight:bold;">1</span><div class="val-block"><span id="exp-display">0%</span></div></div>
                 <div class="res-group"><img src="assets/interface/silver_plaque.png"><div class="val-block"><span id="silver-display">0</span></div></div>
             </div>
             <div class="top-stats-row">
@@ -468,7 +436,7 @@
         
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-bg"></div>
-            <button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');}catch(e){}">
+            <button class="play-btn" id="playBtn" onclick="document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainInterface').classList.add('active');try{SherwoodUI._playSound('click');SherwoodUI._playVideoBackground();}catch(e){}">
                 <img src="assets/all_buttons/play.png" alt="Играть">
             </button>
         </div>
@@ -492,56 +460,5 @@
     <script src="js/sherwood/bestiary.js"></script>
     <script src="js/sherwood/daily.js"></script>
     <script src="js/sherwood/ui.js"></script>
-    
-    <script>
-    (function() {
-        var container = document.getElementById('game-container');
-        if (!container) return;
-        
-        var GAME_WIDTH = 480;
-        var GAME_HEIGHT = 800;
-        var rafId = null;
-        
-        function updateViewportHeight() {
-            var vh = window.innerHeight;
-            document.documentElement.style.setProperty('--vh', vh + 'px');
-        }
-        
-        function scaleGame() {
-            if (rafId) return;
-            rafId = requestAnimationFrame(function() {
-                rafId = null;
-                
-                updateViewportHeight();
-                
-                var vw = window.innerWidth;
-                var vh = window.innerHeight;
-                
-                var scaleX = vw / GAME_WIDTH;
-                var scaleY = vh / GAME_HEIGHT;
-                var scale = Math.min(scaleX, scaleY);
-                
-                if (vw < 768) {
-                    scale *= 0.97;
-                }
-                
-                if (scale > 1) scale = 1;
-                
-                container.style.transform = 'scale(' + scale + ')';
-                container.style.transformOrigin = 'center center';
-                container.style.width = GAME_WIDTH + 'px';
-                container.style.height = GAME_HEIGHT + 'px';
-                container.style.margin = '0 auto';
-            });
-        }
-        
-        scaleGame();
-        window.addEventListener('resize', scaleGame);
-        window.addEventListener('orientationchange', scaleGame);
-        document.addEventListener('DOMContentLoaded', scaleGame);
-        
-        updateViewportHeight();
-    })();
-    </script>
 </body>
 </html>
