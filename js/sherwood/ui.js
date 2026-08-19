@@ -43,29 +43,17 @@ const SherwoodUI = {
     _scaleGame: function() {
     var container = document.getElementById('game-container');
     if (!container) return;
-    
-    var windowWidth = window.innerWidth;
-    var windowHeight = window.innerHeight;
-    var gameWidth = 480;
-    var gameHeight = 800;
-    
-    var scaleX = windowWidth / gameWidth;
-    var scaleY = windowHeight / gameHeight;
-    var scale = Math.min(scaleX, scaleY);
-    
-    if (scale < 1) {
-        container.style.transform = 'scale(' + scale + ')';
-        container.style.transformOrigin = 'top center';
-        container.style.width = gameWidth + 'px';
-        container.style.minHeight = gameHeight + 'px';
-        container.style.marginLeft = '0';
-        container.style.marginRight = '0';
-    } else {
-        container.style.transform = '';
-        container.style.transformOrigin = '';
-        container.style.width = gameWidth + 'px';
-        container.style.minHeight = gameHeight + 'px';
-    }
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var scale = Math.min(vw / 480, vh / 800);
+    container.style.transform = 'scale(' + scale + ')';
+    container.style.transformOrigin = 'top center';
+    container.style.width = '480px';
+    container.style.height = '800px';
+    container.style.margin = '0 auto';
+    document.body.style.display = 'flex';
+    document.body.style.justifyContent = 'center';
+    document.body.style.alignItems = 'flex-start';
 },
 
     updateDisplay: function() {
@@ -151,7 +139,13 @@ const SherwoodUI = {
         try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
         try { this.container.style.background = ''; } catch(e) {}
-        this._previousScreen = null;
+        this._previousScreen = null;    
+        var portalVideo = document.querySelector('.portal-video-bg');
+    if (portalVideo) {
+        portalVideo.style.display = 'block';
+        var video = portalVideo.querySelector('video');
+        if (video) { video.play().catch(function() {}); }
+    }
         try { var self = this; if (!this._regenInterval) { this._regenInterval = setInterval(function() { var pl = Sherwood.getPlayer(); if (pl && !Sherwood.Combat._battle && !Sherwood.Dungeon.getDungeon()) { var regen = Math.floor(pl.stats.maxHp * 0.25); pl.stats.hp = Math.min(pl.stats.maxHp, pl.stats.hp + regen); self.updateDisplay(); Sherwood.saveGame(); } }, 15000); } } catch(e) {}
         try { this.updateDisplay(); } catch(e) {}
     },
@@ -160,35 +154,64 @@ const SherwoodUI = {
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
         try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {}
         var goBack = backFn || 'SherwoodUI.loadHome()';
+            var portalVideo = document.querySelector('.portal-video-bg');
+    if (portalVideo) {
+        portalVideo.style.display = 'none';
+        var video = portalVideo.querySelector('video');
+        if (video) { video.pause(); }
+    }
+            
         try { if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">' + title + '</span></div><div style="flex:1;overflow-y:auto;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; } } catch(e) {}
     },
 
     _showPlaceholder: function(title, bgKey, backAction) { this._playSound('click'); this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">&#128679;</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">'+title+'</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction); },
         _showVictoryScreen: function(rewards) {
-        var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:20px;">';
-        h += '<div style="position:relative;display:inline-block;">';
-        h += '<img src="assets/interface/vertical_slab_victory.png" style="width:600px;height:auto;display:block;">';
-        h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
-        if (rewards.dungeonId && rewards.dungeonLevel) { h += '<div style="margin:10px 0;"><img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:56px;height:56px;object-fit:contain;"><div style="color:#ffd700;font-size:1.2em;font-weight:bold;">+1 Кубок</div><div style="color:#aaa;font-size:0.9em;">Этаж ' + rewards.dungeonLevel + '</div></div>'; }
-        if (rewards.exp) h += '<div style="color:#fff;font-size:1.6em;margin:4px 0;">+ ' + rewards.exp + ' Опыта</div>';
-        if (rewards.gold) h += '<div style="color:#ffd700;font-size:1.6em;margin:4px 0;"><img src="assets/interface/resource_gold.png" style="width:28px;height:28px;vertical-align:middle;"> + ' + rewards.gold + ' Золота</div>';
-        if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1.6em;margin:4px 0;"><img src="assets/interface/resource_silver.png" style="width:28px;height:28px;vertical-align:middle;"> + ' + rewards.silver + ' Серебра</div>';
-        if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1.6em;margin:4px 0;">+ ' + rewards.scrolls + ' Скрижалей</div>';
-        if (rewards.items && rewards.items.length > 0) { var lootMap = {}; for (var i = 0; i < rewards.items.length; i++) { var item = rewards.items[i]; var key = item.icon + '|' + item.name; if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 }; lootMap[key].quantity += item.quantity || 1; } var lootKeys = Object.keys(lootMap); h += '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">'; for (var k = 0; k < lootKeys.length; k++) { var li = lootMap[lootKeys[k]]; h += '<div style="text-align:center;"><img src="' + li.icon + '" style="width:44px;height:44px;object-fit:contain;"><div style="color:#fff;font-size:1em;">' + li.name + '</div><div style="color:#aaa;font-size:0.85em;">x' + li.quantity + '</div></div>'; } h += '</div>'; }
+    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;">';
+    h += '<div style="position:relative;display:inline-block;">';
+    h += '<img src="assets/interface/vertical_slab_victory.png" style="width:400px;height:auto;display:block;">';
+    h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
+    if (rewards.dungeonId && rewards.dungeonLevel) { h += '<div style="margin:8px 0;"><img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:48px;height:48px;object-fit:contain;"><div style="color:#ffd700;font-size:1em;font-weight:bold;">+1 Кубок</div></div>'; }
+    if (rewards.exp) h += '<div style="color:#fff;font-size:1.2em;margin:3px 0;">+ ' + rewards.exp + ' Опыта</div>';
+    if (rewards.gold) h += '<div style="color:#ffd700;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_gold.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.gold + ' Золота</div>';
+    if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_silver.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.silver + ' Серебра</div>';
+    if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1.2em;margin:3px 0;">+ ' + rewards.scrolls + ' Скрижалей</div>';
+    if (rewards.items && rewards.items.length > 0) {
+        var lootMap = {};
+        for (var i = 0; i < rewards.items.length; i++) { var item = rewards.items[i]; var key = item.icon + '|' + item.name; if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 }; lootMap[key].quantity += item.quantity || 1; }
+        var lootKeys = Object.keys(lootMap);
+        h += '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:250px;margin-left:auto;margin-right:auto;">';
+        for (var k = 0; k < lootKeys.length; k++) { var li = lootMap[lootKeys[k]]; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:4px;text-align:center;"><img src="' + li.icon + '" style="width:36px;height:36px;object-fit:contain;"><div style="color:#fff;font-size:0.7em;">' + li.name + '</div><div style="color:#aaa;font-size:0.6em;">x' + li.quantity + '</div></div>'; }
         h += '</div>';
-        h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:14px;padding:16px 50px;color:#000;font-weight:bold;cursor:pointer;font-size:1.5em;z-index:2;">Забрать</button>';
-        h += '</div></div>';
-        this._openScreen('Победа', 'dungeon_fight', h);
-    },
+    }
+    h += '</div>';
+    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
+    h += '</div></div>';
+    this._openScreen('Победа', 'dungeon_fight', h);
+},
 
-    _showDefeatScreen: function(rewards) {
-        var h = '<div style="text-align:center;padding:10px;"><div style="position:relative;display:inline-block;"><img src="assets/interface/vertical_slab_defeat.png" style="width:400px;height:auto;display:block;"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;"><div style="color:#f44336;font-size:1.3em;font-weight:bold;">&#128128; ПОРАЖЕНИЕ</div>';
-        if (rewards.exp) h += '<div style="color:#fff;font-size:1em;">+ ' + rewards.exp + ' XP</div>';
-        if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1em;">+ ' + rewards.silver + ' Серебра</div>';
-        if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1em;">+ ' + rewards.scrolls + ' Свитков</div>';
-        h += '</div><button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;z-index:2;">Забрать</button></div></div>';
-        this._openScreen('Поражение', 'dungeon_fight', h);
-    },
+_showDefeatScreen: function(rewards) {
+    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;">';
+    h += '<div style="position:relative;display:inline-block;">';
+    h += '<img src="assets/interface/vertical_slab_defeat.png" style="width:400px;height:auto;display:block;">';
+    h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
+    h += '<div style="color:#f44336;font-size:1.2em;font-weight:bold;margin-bottom:8px;">&#128128; ПОРАЖЕНИЕ</div>';
+    if (rewards.exp) h += '<div style="color:#fff;font-size:1.2em;margin:3px 0;">+ ' + rewards.exp + ' Опыта</div>';
+    if (rewards.gold) h += '<div style="color:#ffd700;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_gold.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.gold + ' Золота</div>';
+    if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_silver.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.silver + ' Серебра</div>';
+    if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1.2em;margin:3px 0;">+ ' + rewards.scrolls + ' Скрижалей</div>';
+    if (rewards.items && rewards.items.length > 0) {
+        var lootMap = {};
+        for (var i = 0; i < rewards.items.length; i++) { var item = rewards.items[i]; var key = item.icon + '|' + item.name; if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 }; lootMap[key].quantity += item.quantity || 1; }
+        var lootKeys = Object.keys(lootMap);
+        h += '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:250px;margin-left:auto;margin-right:auto;">';
+        for (var k = 0; k < lootKeys.length; k++) { var li = lootMap[lootKeys[k]]; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:4px;text-align:center;"><img src="' + li.icon + '" style="width:36px;height:36px;object-fit:contain;"><div style="color:#fff;font-size:0.7em;">' + li.name + '</div><div style="color:#aaa;font-size:0.6em;">x' + li.quantity + '</div></div>'; }
+        h += '</div>';
+    }
+    h += '</div>';
+    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
+    h += '</div></div>';
+    this._openScreen('Поражение', 'dungeon_fight', h);
+},
 
     _claimReward: function() { this._pendingRewards = null; if (this._afterRewardAction) { var cb = this._afterRewardAction; this._afterRewardAction = null; cb(); } },
 
@@ -814,7 +837,7 @@ const SherwoodUI = {
     },
 
     _arenaVictory: function() { this._stopMusic(); Sherwood.Arena._wins++; var exp = 150, gold = 80, silver = 200; Sherwood.addExp(exp); Sherwood.addResource('gold', gold); Sherwood.addResource('silver', silver); Sherwood.saveGame(); SherwoodUI.updateDisplay(); this._currentArenaOpponents = null; this._pendingRewards = { exp: exp, gold: gold, silver: silver }; this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.arena(); }; this._showVictoryScreen(this._pendingRewards); },
-    _arenaDefeat: function() { this._stopMusic(); Sherwood.Arena._losses++; var player = Sherwood.getPlayer(); player.stats.hp = Math.max(1, Math.floor(player.stats.maxHp * 0.2)); Sherwood.saveGame(); this._currentArenaOpponents = null; this._pendingRewards = { exp: 20, silver: 50 }; this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.arena(); }; this._showDefeatScreen(this._pendingRewards); },
+    _arenaDefeat: function() { this._stopMusic(); Sherwood.Arena._losses++; var player = Sherwood.getPlayer(); player.stats.hp = player.stats.maxHp; Sherwood.saveGame(); this._currentArenaOpponents = null; this._pendingRewards = { exp: 20, silver: 50 }; this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.arena(); }; this._showDefeatScreen(this._pendingRewards); },
     _arenaFlee: function() { this._stopMusic(); this._currentArenaOpponents = null; Sherwood.Arena._losses++; this._playMusic('main_theme'); this.arena(); },
         // ========== НАСТРОЙКИ / ЧАТ / РЫНОК / ПРОФИЛЬ / СУМКА ==========
     settings: function() { 
