@@ -134,6 +134,17 @@ const SherwoodUI = {
     bindPlayButton: function() {
         try { var self = this; var btn = document.getElementById('playBtn'); if (btn) btn.addEventListener('click', function() { try { document.getElementById('loadingScreen').classList.add('hidden'); } catch(e) {} try { document.getElementById('mainInterface').classList.add('active'); } catch(e) {} try { self._playSound('click'); self._playMusic('main_theme'); } catch(e) {} }); } catch(e) {}
     },
+        _playVideoBackground: function() {
+        var portalVideo = document.querySelector('.portal-video-bg');
+        if (portalVideo) {
+            portalVideo.style.display = 'block';
+            var video = portalVideo.querySelector('video');
+            if (video) {
+                video.muted = true;
+                video.play().catch(function() {});
+            }
+        }
+    },
 
     loadHome: function() {
     try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
