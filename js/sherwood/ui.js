@@ -1186,10 +1186,23 @@ _showDamageNumber: function(dmg, isCrit) {
 
 _showPlayerHitAnim: function() {
     var container = document.getElementById('player-hit-anim');
-    if (!container) return;
-    container.style.display = 'block';
-    container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>';
-    setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
+    if (container) {
+        container.style.display = 'block';
+        container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>';
+        setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
+    }
+    
+    // Красная вспышка с кровью по бокам экрана
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;pointer-events:none;';
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at left, rgba(255,0,0,0.6) 0%, transparent 50%), radial-gradient(ellipse at right, rgba(255,0,0,0.6) 0%, transparent 50%);animation:bloodFlash 0.5s ease-out forwards;"></div>';
+    
+    var styleSheet = document.createElement('style');
+    styleSheet.textContent = '@keyframes bloodFlash { 0% { opacity: 1; } 100% { opacity: 0; } }';
+    document.head.appendChild(styleSheet);
+    
+    document.body.appendChild(overlay);
+    setTimeout(function() { overlay.remove(); }, 600);
 },
 
 _showCriticalHitAnim: function() {
