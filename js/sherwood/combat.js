@@ -200,9 +200,9 @@ Sherwood.Combat = {
                 id: 'health',
                 name: 'Лечение',
                 icon: 'assets/skills/health_skill.png',
-                description: 'Восстанавливает 30% максимального HP',
+                description: 'Восстанавливает 15% максимального HP',
                 damageMultiplier: 0,
-                healPercent: 0.3,
+                healPercent: 0.15,
                 hits: 1,
                 cooldown: 4,
                 currentCooldown: 0,
@@ -323,7 +323,9 @@ Sherwood.Combat = {
             enemy: enemy,
             playerHp: p.stats.hp,
             playerMaxHp: p.stats.maxHp,
-            turn: 0
+            turn: 0,
+            attackCounter: 0,
+            chargedSkills: []
         };
         
         for (var id in this._skills) {
@@ -367,6 +369,22 @@ Sherwood.Combat = {
         return result;
     },
 
+    _getRandomChargedSkills: function() {
+        var unlocked = [];
+        for (var id in this._skills) {
+            if (this._skills[id].unlocked && !this._skills[id].passive && this._skills[id].type !== 'passive') {
+                unlocked.push(id);
+            }
+        }
+        
+        for (var i = unlocked.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = unlocked[i]; unlocked[i] = unlocked[j]; unlocked[j] = tmp;
+        }
+        
+        return unlocked.slice(0, 2);
+    },
+
     attack: function() {
         if (!this._battle) return { error: 'Нет боя' };
         
@@ -374,6 +392,14 @@ Sherwood.Combat = {
         var p = Sherwood.getPlayer();
         
         this._tickCooldowns();
+        
+        if (!b.attackCounter) b.attackCounter = 0;
+        b.attackCounter++;
+        
+        if (b.attackCounter >= 2) {
+            b.attackCounter = 0;
+            b.chargedSkills = this._getRandomChargedSkills();
+        }
         
         var damageBonus = this._playerBuffs.double_damage.remainingTurns > 0 ? 1.0 : 0;
         var rawDamage = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + b.enemy.defense) + Math.random() * 5));
@@ -425,16 +451,11 @@ Sherwood.Combat = {
         var skill = this._skills[skillId];
         if (!skill) return { error: 'Скилл не найден' };
         if (!skill.unlocked) return { error: 'Скилл не открыт' };
-        if (skill.currentCooldown > 0) return { error: 'Перезарядка: ' + skill.currentCooldown };
         
         var b = this._battle;
         var p = Sherwood.getPlayer();
         
         this._tickCooldowns();
-        
-        if (skill.cooldown > 0) {
-            skill.currentCooldown = skill.cooldown;
-        }
         
         var result = {
             skillName: skill.name,
@@ -540,6 +561,14 @@ Sherwood.Combat = {
                 }
                 
                 break;
+        }
+        
+        // Сброс заряженного слота после использования
+        if (b.chargedSkills) {
+            var idx = b.chargedSkills.indexOf(skillId);
+            if (idx !== -1) {
+                b.chargedSkills[idx] = null;
+            }
         }
         
         result.enemyHp = b.enemy.hp;
