@@ -456,7 +456,7 @@ const SherwoodUI = {
         this.showDungeon();
     },
         // ========== БОЙ ==========
-        _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
+           _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
         var e = enemyData, p = Sherwood.getPlayer();
         var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100;
         var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
@@ -467,7 +467,7 @@ const SherwoodUI = {
         h += '<div style="color:#f44336;font-weight:bold;font-size:0.9em;text-align:center;">' + e.name + '</div>';
         h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=&quot;none&quot;"></div><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;"></div></div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span></div></div>';
         h += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:2px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">HP ' + e.hp + '</span></div>';
-        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:240px;height:240px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
+        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:300px;height:300px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
         var chargedSkillLeft = null, chargedSkillRight = null;
         if (Sherwood.Combat && Sherwood.Combat._battle) { var battle = Sherwood.Combat._battle; if (battle.chargedSkills && battle.chargedSkills.length > 0) { chargedSkillLeft = battle.chargedSkills[0] || null; chargedSkillRight = battle.chargedSkills[1] || null; } }
         var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
@@ -489,15 +489,21 @@ const SherwoodUI = {
 
     _showDamageNumber: function(dmg, isCrit) { var container = document.getElementById('damage-numbers'); if (!container) return; var el = document.createElement('div'); el.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);color:' + (isCrit ? '#ff6a00' : '#ffd700') + ';font-size:' + (isCrit ? '1.8em' : '1.2em') + ';font-weight:bold;text-shadow:0 0 8px #000;z-index:10;pointer-events:none;animation:dmgFloat 1s ease-out forwards;'; el.textContent = (isCrit ? '💥 ' : '') + dmg; container.appendChild(el); setTimeout(function() { el.remove(); }, 1000); },
 
-    _showOverlayEffect: function(spritePath, targetElement, duration) {
+    _showAnimatedEffect: function(spritePaths, duration, targetElement, effectWidth, effectHeight) {
         var targetRect = targetElement.getBoundingClientRect();
         var containerRect = this.container.getBoundingClientRect();
+        var frameDuration = duration / spritePaths.length;
         var effect = document.createElement('img');
-        effect.src = spritePath;
-        effect.style.cssText = 'position:absolute;top:' + (targetRect.top - containerRect.top) + 'px;left:' + (targetRect.left - containerRect.left) + 'px;width:' + targetRect.width + 'px;height:' + targetRect.height + 'px;object-fit:contain;z-index:999;pointer-events:none;';
-        effect.onerror = function() { this.remove(); };
+        effect.style.cssText = 'position:absolute;top:' + (targetRect.top - containerRect.top + targetRect.height / 2 - effectHeight / 2) + 'px;left:' + (targetRect.left - containerRect.left + targetRect.width / 2 - effectWidth / 2) + 'px;width:' + effectWidth + 'px;height:' + effectHeight + 'px;object-fit:contain;z-index:999;pointer-events:none;';
         this._screenLayer.appendChild(effect);
-        setTimeout(function() { effect.remove(); }, duration);
+        var frameIndex = 0;
+        effect.src = spritePaths[0];
+        effect.onerror = function() { this.remove(); return; };
+        var frameInterval = setInterval(function() {
+            frameIndex++;
+            if (frameIndex >= spritePaths.length) { clearInterval(frameInterval); effect.remove(); return; }
+            effect.src = spritePaths[frameIndex];
+        }, frameDuration);
     },
 
     _hitEnemyCard: function() {
@@ -508,52 +514,23 @@ const SherwoodUI = {
         card.style.filter = 'brightness(1.3) saturate(2) hue-rotate(-10deg)';
         setTimeout(function() { card.style.transform = ''; card.style.filter = ''; }, 200);
         var hitSprites = ['assets/animation/hit.png','assets/animation/hit_1.png','assets/animation/hit_1.1.png','assets/animation/hit_1.2.png','assets/animation/hit_2.png','assets/animation/hit_1.3.png'];
-        var randomHit = hitSprites[Math.floor(Math.random() * hitSprites.length)];
-        this._showOverlayEffect(randomHit, card, 400);
-        if (Math.random() < 0.5) {
-            var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png'];
-            var randomClaw = clawSprites[Math.floor(Math.random() * clawSprites.length)];
-            this._showOverlayEffect(randomClaw, card, 400);
-        }
+        this._showAnimatedEffect(hitSprites, 300, card, 120, 120);
+        if (Math.random() < 0.4) { var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png']; this._showAnimatedEffect(clawSprites, 350, card, 100, 100); }
     },
 
     _showPlayerHitAnim: function() {
         var container = document.getElementById('player-hit-anim');
-        if (container) {
-            container.style.display = 'block';
-            container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>';
-            setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600);
-        }
+        if (container) { container.style.display = 'block'; container.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;"><source src="assets/animation/hit.webm" type="video/webm"></video>'; setTimeout(function() { container.style.display = 'none'; container.innerHTML = ''; }, 600); }
         var enemyCard = document.getElementById('enemy-card');
         if (!enemyCard) return;
-        var cardRect = enemyCard.getBoundingClientRect();
-        var containerRect = this.container.getBoundingClientRect();
-        var bloodLeft = document.createElement('div');
-        bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
-        bloodLeft.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;transform:scaleX(-1);"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>';
-        this._screenLayer.appendChild(bloodLeft);
-        var bloodRight = document.createElement('div');
-        bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
-        bloodRight.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>';
-        this._screenLayer.appendChild(bloodRight);
-        var clawLeft = document.createElement('img');
-        clawLeft.src = 'assets/animation/strike_claws.png';
-        clawLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 50) + 'px;width:50px;height:' + cardRect.height + 'px;object-fit:contain;z-index:999;pointer-events:none;transform:scaleX(-1);';
-        clawLeft.onerror = function() { this.remove(); };
-        this._screenLayer.appendChild(clawLeft);
-        var clawRight = document.createElement('img');
-        clawRight.src = 'assets/animation/strike_claws_1.png';
-        clawRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:50px;height:' + cardRect.height + 'px;object-fit:contain;z-index:999;pointer-events:none;';
-        clawRight.onerror = function() { this.remove(); };
-        this._screenLayer.appendChild(clawRight);
-        var vids = bloodLeft.querySelectorAll('video');
-        for (var i = 0; i < vids.length; i++) { vids[i].play().catch(function() {}); }
-        vids = bloodRight.querySelectorAll('video');
-        for (var i = 0; i < vids.length; i++) { vids[i].play().catch(function() {}); }
-        setTimeout(function() { bloodLeft.remove(); }, 1000);
-        setTimeout(function() { bloodRight.remove(); }, 1000);
-        setTimeout(function() { clawLeft.remove(); }, 500);
-        setTimeout(function() { clawRight.remove(); }, 500);
+        var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png'];
+        this._showAnimatedEffect(clawSprites, 400, enemyCard, 140, 140);
+        var cardRect = enemyCard.getBoundingClientRect(); var containerRect = this.container.getBoundingClientRect();
+        var bloodLeft = document.createElement('div'); bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;'; bloodLeft.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;transform:scaleX(-1);"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>'; this._screenLayer.appendChild(bloodLeft);
+        var bloodRight = document.createElement('div'); bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;'; bloodRight.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/blood_splatter.webm" type="video/webm"></video>'; this._screenLayer.appendChild(bloodRight);
+        var vids = bloodLeft.querySelectorAll('video'); for (var i = 0; i < vids.length; i++) { vids[i].play().catch(function() {}); }
+        vids = bloodRight.querySelectorAll('video'); for (var i = 0; i < vids.length; i++) { vids[i].play().catch(function() {}); }
+        setTimeout(function() { bloodLeft.remove(); }, 1000); setTimeout(function() { bloodRight.remove(); }, 1000);
     },
 
     _showCriticalHitAnim: function() { var overlay = document.getElementById('enemy-hit-overlay'); if (!overlay) return; overlay.style.display = 'block'; overlay.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>'; setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800); },
