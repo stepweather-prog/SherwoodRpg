@@ -1275,26 +1275,41 @@ quest: function() {
     var isActive = Sherwood.Quests._currentChapter && Sherwood.Quests._currentChapter.id === ch.id && Sherwood.Quests._currentEnemy;
     
     var displayEnemy;
+    var displayImage;
+    var isBossStage = false;
+    
     if (completed) {
         displayEnemy = ch.boss;
+        displayImage = 'assets/beast_quest/' + ch.boss.image;
+        isBossStage = true;
     } else if (isActive) {
         displayEnemy = Sherwood.Quests._currentEnemy;
+        var currentStageIdx = Sherwood.Quests._currentStage;
+        // Если текущий этап — последний, показываем босса
+        if (currentStageIdx >= ch.stages - 1) {
+            displayEnemy = ch.boss;
+            displayImage = 'assets/beast_quest/' + ch.boss.image;
+            isBossStage = true;
+        } else {
+            displayImage = 'assets/all_beasts/' + displayEnemy.image;
+        }
     } else {
+        // Следующий враг — первый охранник
         displayEnemy = ch.enemies[0];
+        displayImage = 'assets/all_beasts/' + displayEnemy.image;
     }
     
-    var isBoss = completed || (isActive && Sherwood.Quests._currentStage >= ch.stages - 1);
-    var cardImg = isBoss ? 'assets/interface/quest_boss.png' : 'assets/interface/quest_regular.png';
+    var cardImg = isBossStage ? 'assets/interface/quest_boss.png' : 'assets/interface/quest_regular.png';
     
     var h = '';
     h += '<div style="text-align:center;">';
     h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
     h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
-    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + displayEnemy.atk + ' | ЗЩТ ' + displayEnemy.def + '</div>';
+    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + (displayEnemy.atk || displayEnemy.attack) + ' | ЗЩТ ' + (displayEnemy.def || displayEnemy.defense) + '</div>';
     
     h += '<div style="position:relative;display:block;width:360px;height:360px;margin:0 auto 24px;">';
     h += '<img src="' + cardImg + '" style="width:360px;height:360px;object-fit:contain;position:absolute;top:0;left:0;">';
-    h += '<img src="assets/beast_quest/' + displayEnemy.image + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:210px;height:210px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+    h += '<img src="' + displayImage + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:210px;height:210px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
     h += '</div>';
     
     if (completed) {
