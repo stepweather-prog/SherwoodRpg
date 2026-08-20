@@ -403,140 +403,231 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== ПСЕВДО-3D (ПЛОСКИЙ ПОЛ) ==========
-            _renderDungeon: function() {
+       // ========== 3D ПОДЗЕМКА (Вместо старого _renderDungeon) ==========
+    _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
 
-        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#0a0a0a;overflow:hidden;';
+        // --- 1. Прячем старый 2D интерфейс и показываем 3D сцену ---
         this._screenLayer.innerHTML = ''; 
-
+        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
         var container = document.createElement('div');
-        container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
+        container.id = 'three-dungeon-container';
+        container.style.cssText = 'width:100%;height:100%;';
         this._screenLayer.appendChild(container);
 
-        var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
-        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);z-index:10;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
-        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;z-index:10;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
-        container.insertAdjacentHTML('afterbegin', topBarHtml);
-        container.insertAdjacentHTML('beforeend', bottomBarHtml);
+        // --- 2. Инициализация Three.js ---
+        var scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a0f08);
+        scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
 
-        var canvas = document.createElement('canvas');
-        canvas.style.cssText = 'flex:1;width:100%;display:block;';
-        container.appendChild(canvas);
-        var ctx = canvas.getContext('2d');
+        var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
+        camera.position.set(0.5, 0.7, 0.5);
+        camera.rotation.order = 'YXZ';
 
-        var W = canvas.clientWidth;
-        var H = canvas.clientHeight;
-        if (W === 0 || H === 0) { W = 480; H = 500; }
-        canvas.width = W; canvas.height = H;
+        var renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
 
-        var wallTexture = this._getDungeonTexture(d.id);
-        var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
-        var dirV = dirMap[d.heroDirection] || [0, -1];
+        // --- 3. Свет ---
+        var ambient = new THREE.AmbientLight(0x442211, 0.6);
+        scene.add(ambient);
+        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+        mainLight.position.set(5, 10, 5);
+        scene.add(mainLight);
 
-        // Базовый размер стены на экране
-        var wallSize = 200;
+        // --- 4. Загрузка твоей текстуры стен (1024x1024) ---
+        var textureLoader = new THREE.TextureLoader();
+        // Берем твою текстуру labyrinth_asset.png
+        var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
+        // Если она не прогрузится - будет коричневая заглушка
+        var wallMat = new THREE.MeshStandardMaterial({
+            map: wallTexture,
+            roughness: 0.7,
+            metalness: 0.1
+        });
+        // Материал для пола и потолка (можно потом заменить на плитки)
+        var floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
+        var ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9 });
 
-        // Вычисляем, где находятся стены прямо перед камерой
-        var leftDir = [-dirV[1], dirV[0]]; // Вектор влево
-        var rightDir = [dirV[1], -dirV[0]]; // Вектор вправо
+        // --- 5. Строим лабиринт из твоей сетки d.grid ---
+        var size = d.size;
+        var wallHeight = 1.2;
+        var cellSize = 1;
+        var group = new THREE.Group();
 
-        // 1. Центральная стена (прямо перед игроком)
-        var fwdX = d.px + dirV[0];
-        var fwdY = d.py + dirV[1];
-        var fwdCell = d.grid[fwdY] && d.grid[fwdY][fwdX];
-        
-        var cx = W / 2;
-        var cy = H / 2 + 50;
+        // Центрируем лабиринт
+        var offsetX = Math.floor(size / 2);
+        var offsetZ = Math.floor(size / 2);
 
-        if (fwdCell && !fwdCell.open) {
-            if (wallTexture.complete && wallTexture.naturalWidth > 0) {
-                ctx.drawImage(wallTexture, cx - wallSize/2, cy - wallSize/2, wallSize, wallSize);
-            } else {
-                ctx.fillStyle = '#4a3d2b';
-                ctx.fillRect(cx - wallSize/2, cy - wallSize/2, wallSize, wallSize);
+        for (var row = 0; row < size; row++) {
+            for (var col = 0; col < size; col++) {
+                var x = col - offsetX;
+                var z = row - offsetZ;
+                var cell = d.grid[row][col];
+
+                // --- Пол ---
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.set(x, 0, z);
+                group.add(floor);
+
+                // --- Потолок (чтобы не было пустоты) ---
+                var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                ceil.rotation.x = Math.PI / 2;
+                ceil.position.set(x, wallHeight, z);
+                group.add(ceil);
+
+                // --- Стены (только если клетка НЕ открыта / стена) ---
+                if (!cell.open) {
+                    var wall = new THREE.Mesh(
+                        new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                        wallMat
+                    );
+                    wall.position.set(x, wallHeight/2, z);
+                    wall.castShadow = true;
+                    wall.receiveShadow = true;
+                    group.add(wall);
+                }
             }
-        } else if (fwdCell && fwdCell.open) {
-            // Если впереди проход, рисуем темный пол
-            ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-            ctx.fillRect(cx - wallSize/2, cy - wallSize/2, wallSize, wallSize);
         }
+        scene.add(group);
 
-        // 2. Левая стена
-        var leftX = d.px + leftDir[0];
-        var leftY = d.py + leftDir[1];
-        var leftCell = d.grid[leftY] && d.grid[leftY][leftX];
-        
-        if (leftCell && !leftCell.open) {
-            ctx.drawImage(wallTexture, cx - wallSize - 20, cy - wallSize/2, wallSize, wallSize);
-        }
+        // --- 6. Управление (WASD + Мышь) ---
+        var keys = { w: false, a: false, s: false, d: false };
+        var isLocked = false;
+        var yaw = 0, pitch = 0;
 
-        // 3. Правая стена
-        var rightX = d.px + rightDir[0];
-        var rightY = d.py + rightDir[1];
-        var rightCell = d.grid[rightY] && d.grid[rightY][rightX];
-        
-        if (rightCell && !rightCell.open) {
-            ctx.drawImage(wallTexture, cx + 20, cy - wallSize/2, wallSize, wallSize);
-        }
-
-        // 4. Подсветка (если впереди стена, которую можно открыть)
-        if (fwdCell && !fwdCell.open) {
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(cx - wallSize/2 + 8, cy - wallSize/2 + 8, wallSize - 16, wallSize - 16);
-        }
-
-        // Рисуем персонажа
-        var heroImg = new Image();
-        var dirFile = 'step_down.png'; 
-        if (d.heroDirection === 'up') dirFile = 'step_down.png'; 
-        else if (d.heroDirection === 'down') dirFile = 'step_up.png'; 
-        else if (d.heroDirection === 'left') dirFile = 'step_left.png';
-        else if (d.heroDirection === 'right') dirFile = 'step_right.png';
-        heroImg.src = 'assets/animation/' + dirFile;
-
-        var sprSize = Math.min(W * 0.6, H * 0.4); 
-        var drawHero = function() {
-            ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize - 10, sprSize, sprSize);
+        var onKeyDown = function(e) {
+            var k = e.key.toLowerCase();
+            if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = true; e.preventDefault(); }
+            if (e.key === 'ArrowUp') keys.w = true;
+            if (e.key === 'ArrowDown') keys.s = true;
+            if (e.key === 'ArrowLeft') keys.a = true;
+            if (e.key === 'ArrowRight') keys.d = true;
         };
-        heroImg.onload = drawHero;
-        if (heroImg.complete) { drawHero(); }
+        var onKeyUp = function(e) {
+            var k = e.key.toLowerCase();
+            if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = false; e.preventDefault(); }
+            if (e.key === 'ArrowUp') keys.w = false;
+            if (e.key === 'ArrowDown') keys.s = false;
+            if (e.key === 'ArrowLeft') keys.a = false;
+            if (e.key === 'ArrowRight') keys.d = false;
+        };
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
 
-        // Управление
-        var self = this;
-        canvas.addEventListener('click', function(e) {
-            var rect = canvas.getBoundingClientRect();
-            var y = (e.clientY - rect.top) / rect.height;
-            var x = (e.clientX - rect.left) / rect.width;
+        var onMouseClick = function() {
+            if (!isLocked) renderer.domElement.requestPointerLock();
+        };
+        renderer.domElement.addEventListener('click', onMouseClick);
 
-            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
-            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
-            var lVx = leftDir[0], lVy = leftDir[1];
-            var rVx = rightDir[0], rVy = rightDir[1];
+        var onPointerLockChange = function() {
+            isLocked = document.pointerLockElement === renderer.domElement;
+        };
+        document.addEventListener('pointerlockchange', onPointerLockChange);
 
-            if (Math.abs(x - 0.5) < 0.3) { 
-                if (y < 0.4) self._dungeonMove(fwdX, fwdY);
-                else if (y > 0.6) self._dungeonMove(bckX, bckY);
-            } else { 
-                if (x < 0.4) self._dungeonMove(d.px + lVx, d.py + lVy);
-                else if (x > 0.6) self._dungeonMove(d.px + rVx, d.py + rVy);
+        var onMouseMove = function(e) {
+            if (!isLocked) return;
+            var sens = 0.002;
+            yaw -= e.movementX * sens;
+            pitch -= e.movementY * sens;
+            pitch = Math.max(-1.2, Math.min(1.2, pitch));
+            var euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
+            camera.quaternion.setFromEuler(euler);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+
+        // --- 7. Логика движения и коллизии (как в твоем примере) ---
+        var speed = 0.06;
+        var movementForward = new THREE.Vector3();
+        var playerPos = camera.position;
+
+        var updateMovement = function() {
+            if (!isLocked) return;
+
+            if (keys.a) { yaw += 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
+            if (keys.d) { yaw -= 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
+
+            movementForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
+            movementForward.y = 0;
+            movementForward.normalize();
+
+            var dx = 0, dz = 0;
+            if (keys.w) { dx += movementForward.x; dz += movementForward.z; }
+            if (keys.s) { dx -= movementForward.x; dz -= movementForward.z; }
+
+            if (dx !== 0 || dz !== 0) {
+                var len = Math.sqrt(dx*dx + dz*dz);
+                dx = dx / len * speed;
+                dz = dz / len * speed;
+
+                var newX = playerPos.x + dx;
+                var newZ = playerPos.z + dz;
+
+                // Проверка коллизий со стенами
+                var col = Math.round(newX + offsetX);
+                var row = Math.round(newZ + offsetZ);
+                var canMoveX = true, canMoveZ = true;
+                
+                if (row >= 0 && row < size && col >= 0 && col < size) {
+                    if (d.grid[row] && !d.grid[row][col].open) canMoveX = false;
+                }
+                
+                col = Math.round(playerPos.x + offsetX);
+                row = Math.round(newZ + offsetZ);
+                if (row >= 0 && row < size && col >= 0 && col < size) {
+                    if (d.grid[row] && !d.grid[row][col].open) canMoveZ = false;
+                }
+
+                if (canMoveX) playerPos.x = newX;
+                if (canMoveZ) playerPos.z = newZ;
             }
-        });
+        };
+
+        // --- 8. Игровой цикл ---
+        var animate = function() {
+            requestAnimationFrame(animate);
+            updateMovement();
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        // --- 9. Кнопка выхода (ESC из подземки) ---
+        var leaveHandler = function(e) {
+            if (e.key === 'Escape' && isLocked) {
+                document.exitPointerLock();
+                // Очищаем сцену, удаляем обработчики и возвращаем старый интерфейс
+                renderer.dispose();
+                container.remove();
+                document.removeEventListener('keydown', onKeyDown);
+                document.removeEventListener('keyup', onKeyUp);
+                renderer.domElement.removeEventListener('click', onMouseClick);
+                document.removeEventListener('pointerlockchange', onPointerLockChange);
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('keydown', leaveHandler);
+                SherwoodUI._leaveDungeon(); // Твоя функция выхода
+            }
+        };
+        document.addEventListener('keydown', leaveHandler);
+
+        // --- 10. Ресайз окна ---
+        var resizeHandler = function() {
+            var w = container.clientWidth, h = container.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        };
+        window.addEventListener('resize', resizeHandler);
         
-        document.addEventListener('keydown', function(e) {
-            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
-            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
-            var lVx = leftDir[0], lVy = leftDir[1];
-            var rVx = rightDir[0], rVy = rightDir[1];
-            if (e.key === 'ArrowUp') self._dungeonMove(fwdX, fwdY);
-            else if (e.key === 'ArrowDown') self._dungeonMove(bckX, bckY);
-            else if (e.key === 'ArrowLeft') self._dungeonMove(d.px + lVx, d.py + lVy);
-            else if (e.key === 'ArrowRight') self._dungeonMove(d.px + rVx, d.py + rVy);
-        });
+        // Сохраняем обработчики, чтобы удалить при выходе
+        this._threeCleanup = function() {
+            window.removeEventListener('resize', resizeHandler);
+        };
     },
+    
     // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК (БЕЗ ИЗМЕНЕНИЙ) ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
