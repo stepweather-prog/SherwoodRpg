@@ -404,7 +404,7 @@ _showDefeatScreen: function(rewards) {
     },
 
     // ========== ПСЕВДО-3D (ПЛОСКИЙ ПОЛ) ==========
-               _renderDungeon: function() {
+            _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
@@ -436,58 +436,57 @@ _showDefeatScreen: function(rewards) {
         var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
         var dirV = dirMap[d.heroDirection] || [0, -1];
 
-        // Размеры и настройки
-        var baseSize = 140; 
-        var yStart = H * 0.35; // Нижняя точка для самого дальнего ряда
+        // Базовый размер стены на экране
+        var wallSize = 200;
 
-        var leftVec = [-dirV[1], dirV[0]];
-        var rightVec = [dirV[1], -dirV[0]];
+        // Вычисляем, где находятся стены прямо перед камерой
+        var leftDir = [-dirV[1], dirV[0]]; // Вектор влево
+        var rightDir = [dirV[1], -dirV[0]]; // Вектор вправо
 
-        // Рисуем от самого дальнего (row=4) до самого ближнего (row=-2)
-        for (var row = 4; row >= -2; row--) {
-            // Размер плитки. Чем ближе (row меньше), тем больше
-            var size = baseSize + (row * 15) * -1; 
-            
-            // Позиция по вертикали: ближние ниже, дальние выше
-            var yOffset = yStart + ((row + 2) * 18); 
+        // 1. Центральная стена (прямо перед игроком)
+        var fwdX = d.px + dirV[0];
+        var fwdY = d.py + dirV[1];
+        var fwdCell = d.grid[fwdY] && d.grid[fwdY][fwdX];
+        
+        var cx = W / 2;
+        var cy = H / 2 + 50;
 
-            for (var col = -2; col <= 2; col++) {
-                var mapX = d.px + leftVec[0] * col + dirV[0] * row;
-                var mapY = d.py + leftVec[1] * col + dirV[1] * row;
-
-                var cell = d.grid[mapY] && d.grid[mapY][mapX];
-                if (!cell) continue;
-
-                // Горизонтальное смещение: чем ближе, тем шире разброс
-                var spreadFactor = 1 + (row * 0.1) * -1;
-                var screenX = Math.floor(W / 2 + col * (size * 0.5) * spreadFactor);
-                var screenY = Math.floor(yOffset);
-
-                var isWalkable = cell.open;
-                var canOpen = (!cell.open && row === 1 && col === 0);
-
-                if (isWalkable) {
-                    ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
-                    ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
-                    ctx.strokeStyle = 'rgba(50, 50, 50, 0.5)';
-                    ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
-                }
-
-                if (!isWalkable) {
-                    if (wallTexture && wallTexture.complete && wallTexture.naturalWidth > 0) {
-                        ctx.drawImage(wallTexture, screenX - size/2, screenY - size/2, size, size);
-                    } else {
-                        ctx.fillStyle = '#4a3d2b';
-                        ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
-                    }
-                }
-
-                if (canOpen) {
-                    ctx.strokeStyle = '#00ff00';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(screenX - size/2 + 6, screenY - size/2 + 6, size - 12, size - 12);
-                }
+        if (fwdCell && !fwdCell.open) {
+            if (wallTexture.complete && wallTexture.naturalWidth > 0) {
+                ctx.drawImage(wallTexture, cx - wallSize/2, cy - wallSize/2, wallSize, wallSize);
+            } else {
+                ctx.fillStyle = '#4a3d2b';
+                ctx.fillRect(cx - wallSize/2, cy - wallSize/2, wallSize, wallSize);
             }
+        } else if (fwdCell && fwdCell.open) {
+            // Если впереди проход, рисуем темный пол
+            ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+            ctx.fillRect(cx - wallSize/2, cy - wallSize/2, wallSize, wallSize);
+        }
+
+        // 2. Левая стена
+        var leftX = d.px + leftDir[0];
+        var leftY = d.py + leftDir[1];
+        var leftCell = d.grid[leftY] && d.grid[leftY][leftX];
+        
+        if (leftCell && !leftCell.open) {
+            ctx.drawImage(wallTexture, cx - wallSize - 20, cy - wallSize/2, wallSize, wallSize);
+        }
+
+        // 3. Правая стена
+        var rightX = d.px + rightDir[0];
+        var rightY = d.py + rightDir[1];
+        var rightCell = d.grid[rightY] && d.grid[rightY][rightX];
+        
+        if (rightCell && !rightCell.open) {
+            ctx.drawImage(wallTexture, cx + 20, cy - wallSize/2, wallSize, wallSize);
+        }
+
+        // 4. Подсветка (если впереди стена, которую можно открыть)
+        if (fwdCell && !fwdCell.open) {
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(cx - wallSize/2 + 8, cy - wallSize/2 + 8, wallSize - 16, wallSize - 16);
         }
 
         // Рисуем персонажа
@@ -515,8 +514,8 @@ _showDefeatScreen: function(rewards) {
 
             var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
             var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
-            var lVx = leftVec[0], lVy = leftVec[1];
-            var rVx = rightVec[0], rVy = rightVec[1];
+            var lVx = leftDir[0], lVy = leftDir[1];
+            var rVx = rightDir[0], rVy = rightDir[1];
 
             if (Math.abs(x - 0.5) < 0.3) { 
                 if (y < 0.4) self._dungeonMove(fwdX, fwdY);
@@ -530,8 +529,8 @@ _showDefeatScreen: function(rewards) {
         document.addEventListener('keydown', function(e) {
             var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
             var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
-            var lVx = leftVec[0], lVy = leftVec[1];
-            var rVx = rightVec[0], rVy = rightVec[1];
+            var lVx = leftDir[0], lVy = leftDir[1];
+            var rVx = rightDir[0], rVy = rightDir[1];
             if (e.key === 'ArrowUp') self._dungeonMove(fwdX, fwdY);
             else if (e.key === 'ArrowDown') self._dungeonMove(bckX, bckY);
             else if (e.key === 'ArrowLeft') self._dungeonMove(d.px + lVx, d.py + lVy);
