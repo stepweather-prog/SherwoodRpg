@@ -404,228 +404,225 @@ _showDefeatScreen: function(rewards) {
     },
 
        // ========== 3D ПОДЗЕМКА (Вместо старого _renderDungeon) ==========
+       // ========== 3D ПОДЗЕМКА (Самоподключаемый Three.js) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
 
-        // --- 1. Прячем старый 2D интерфейс и показываем 3D сцену ---
-        this._screenLayer.innerHTML = ''; 
-        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
-        var container = document.createElement('div');
-        container.id = 'three-dungeon-container';
-        container.style.cssText = 'width:100%;height:100%;';
-        this._screenLayer.appendChild(container);
+        var self = this;
 
-        // --- 2. Инициализация Three.js ---
-        var scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a0f08);
-        scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
+        // Функция, которая запускает 3D сцену
+        var start3D = function() {
+            self._screenLayer.innerHTML = ''; 
+            self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
+            var container = document.createElement('div');
+            container.id = 'three-dungeon-container';
+            container.style.cssText = 'width:100%;height:100%;';
+            self._screenLayer.appendChild(container);
 
-        var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
-        camera.position.set(0.5, 0.7, 0.5);
-        camera.rotation.order = 'YXZ';
+            var scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a0f08);
+            scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
 
-        var renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.shadowMap.enabled = true;
-        container.appendChild(renderer.domElement);
+            var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
+            camera.position.set(0.5, 0.7, 0.5);
+            camera.rotation.order = 'YXZ';
 
-        // --- 3. Свет ---
-        var ambient = new THREE.AmbientLight(0x442211, 0.6);
-        scene.add(ambient);
-        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
-        mainLight.position.set(5, 10, 5);
-        scene.add(mainLight);
+            var renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
 
-        // --- 4. Загрузка твоей текстуры стен (1024x1024) ---
-        var textureLoader = new THREE.TextureLoader();
-        // Берем твою текстуру labyrinth_asset.png
-        var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-        // Если она не прогрузится - будет коричневая заглушка
-        var wallMat = new THREE.MeshStandardMaterial({
-            map: wallTexture,
-            roughness: 0.7,
-            metalness: 0.1
-        });
-        // Материал для пола и потолка (можно потом заменить на плитки)
-        var floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
-        var ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9 });
+            var ambient = new THREE.AmbientLight(0x442211, 0.6);
+            scene.add(ambient);
+            var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+            mainLight.position.set(5, 10, 5);
+            scene.add(mainLight);
 
-        // --- 5. Строим лабиринт из твоей сетки d.grid ---
-        var size = d.size;
-        var wallHeight = 1.2;
-        var cellSize = 1;
-        var group = new THREE.Group();
+            var textureLoader = new THREE.TextureLoader();
+            var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
+            var wallMat = new THREE.MeshStandardMaterial({
+                map: wallTexture,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            var floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
+            var ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9 });
 
-        // Центрируем лабиринт
-        var offsetX = Math.floor(size / 2);
-        var offsetZ = Math.floor(size / 2);
+            var size = d.size;
+            var wallHeight = 1.2;
+            var cellSize = 1;
+            var group = new THREE.Group();
+            var offsetX = Math.floor(size / 2);
+            var offsetZ = Math.floor(size / 2);
 
-        for (var row = 0; row < size; row++) {
-            for (var col = 0; col < size; col++) {
-                var x = col - offsetX;
-                var z = row - offsetZ;
-                var cell = d.grid[row][col];
+            for (var row = 0; row < size; row++) {
+                for (var col = 0; col < size; col++) {
+                    var x = col - offsetX;
+                    var z = row - offsetZ;
+                    var cell = d.grid[row][col];
 
-                // --- Пол ---
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-                floor.rotation.x = -Math.PI / 2;
-                floor.position.set(x, 0, z);
-                group.add(floor);
+                    var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                    floor.rotation.x = -Math.PI / 2;
+                    floor.position.set(x, 0, z);
+                    group.add(floor);
 
-                // --- Потолок (чтобы не было пустоты) ---
-                var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
-                ceil.rotation.x = Math.PI / 2;
-                ceil.position.set(x, wallHeight, z);
-                group.add(ceil);
+                    var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                    ceil.rotation.x = Math.PI / 2;
+                    ceil.position.set(x, wallHeight, z);
+                    group.add(ceil);
 
-                // --- Стены (только если клетка НЕ открыта / стена) ---
-                if (!cell.open) {
-                    var wall = new THREE.Mesh(
-                        new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
-                        wallMat
-                    );
-                    wall.position.set(x, wallHeight/2, z);
-                    wall.castShadow = true;
-                    wall.receiveShadow = true;
-                    group.add(wall);
+                    if (!cell.open) {
+                        var wall = new THREE.Mesh(
+                            new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                            wallMat
+                        );
+                        wall.position.set(x, wallHeight/2, z);
+                        wall.castShadow = true;
+                        wall.receiveShadow = true;
+                        group.add(wall);
+                    }
                 }
             }
+            scene.add(group);
+
+            var keys = { w: false, a: false, s: false, d: false };
+            var isLocked = false;
+            var yaw = 0, pitch = 0;
+
+            var onKeyDown = function(e) {
+                var k = e.key.toLowerCase();
+                if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = true; e.preventDefault(); }
+                if (e.key === 'ArrowUp') keys.w = true;
+                if (e.key === 'ArrowDown') keys.s = true;
+                if (e.key === 'ArrowLeft') keys.a = true;
+                if (e.key === 'ArrowRight') keys.d = true;
+            };
+            var onKeyUp = function(e) {
+                var k = e.key.toLowerCase();
+                if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = false; e.preventDefault(); }
+                if (e.key === 'ArrowUp') keys.w = false;
+                if (e.key === 'ArrowDown') keys.s = false;
+                if (e.key === 'ArrowLeft') keys.a = false;
+                if (e.key === 'ArrowRight') keys.d = false;
+            };
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+
+            var onMouseClick = function() {
+                if (!isLocked) renderer.domElement.requestPointerLock();
+            };
+            renderer.domElement.addEventListener('click', onMouseClick);
+
+            var onPointerLockChange = function() {
+                isLocked = document.pointerLockElement === renderer.domElement;
+            };
+            document.addEventListener('pointerlockchange', onPointerLockChange);
+
+            var onMouseMove = function(e) {
+                if (!isLocked) return;
+                var sens = 0.002;
+                yaw -= e.movementX * sens;
+                pitch -= e.movementY * sens;
+                pitch = Math.max(-1.2, Math.min(1.2, pitch));
+                var euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
+                camera.quaternion.setFromEuler(euler);
+            };
+            document.addEventListener('mousemove', onMouseMove);
+
+            var speed = 0.06;
+            var movementForward = new THREE.Vector3();
+            var playerPos = camera.position;
+
+            var updateMovement = function() {
+                if (!isLocked) return;
+
+                if (keys.a) { yaw += 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
+                if (keys.d) { yaw -= 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
+
+                movementForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
+                movementForward.y = 0;
+                movementForward.normalize();
+
+                var dx = 0, dz = 0;
+                if (keys.w) { dx += movementForward.x; dz += movementForward.z; }
+                if (keys.s) { dx -= movementForward.x; dz -= movementForward.z; }
+
+                if (dx !== 0 || dz !== 0) {
+                    var len = Math.sqrt(dx*dx + dz*dz);
+                    dx = dx / len * speed;
+                    dz = dz / len * speed;
+
+                    var newX = playerPos.x + dx;
+                    var newZ = playerPos.z + dz;
+
+                    var col = Math.round(newX + offsetX);
+                    var row = Math.round(newZ + offsetZ);
+                    var canMoveX = true, canMoveZ = true;
+                    
+                    if (row >= 0 && row < size && col >= 0 && col < size) {
+                        if (d.grid[row] && !d.grid[row][col].open) canMoveX = false;
+                    }
+                    
+                    col = Math.round(playerPos.x + offsetX);
+                    row = Math.round(newZ + offsetZ);
+                    if (row >= 0 && row < size && col >= 0 && col < size) {
+                        if (d.grid[row] && !d.grid[row][col].open) canMoveZ = false;
+                    }
+
+                    if (canMoveX) playerPos.x = newX;
+                    if (canMoveZ) playerPos.z = newZ;
+                }
+            };
+
+            var animate = function() {
+                requestAnimationFrame(animate);
+                updateMovement();
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            var leaveHandler = function(e) {
+                if (e.key === 'Escape' && isLocked) {
+                    document.exitPointerLock();
+                    renderer.dispose();
+                    container.remove();
+                    document.removeEventListener('keydown', onKeyDown);
+                    document.removeEventListener('keyup', onKeyUp);
+                    renderer.domElement.removeEventListener('click', onMouseClick);
+                    document.removeEventListener('pointerlockchange', onPointerLockChange);
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('keydown', leaveHandler);
+                    self._leaveDungeon();
+                }
+            };
+            document.addEventListener('keydown', leaveHandler);
+
+            var resizeHandler = function() {
+                var w = container.clientWidth, h = container.clientHeight;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            };
+            window.addEventListener('resize', resizeHandler);
+            
+            self._threeCleanup = function() {
+                window.removeEventListener('resize', resizeHandler);
+            };
+        };
+
+        // Проверяем, загружен ли THREE. Если нет — подключаем через CDN и ждем.
+        if (typeof THREE === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            script.onload = function() {
+                start3D();
+            };
+            document.head.appendChild(script);
+        } else {
+            start3D();
         }
-        scene.add(group);
-
-        // --- 6. Управление (WASD + Мышь) ---
-        var keys = { w: false, a: false, s: false, d: false };
-        var isLocked = false;
-        var yaw = 0, pitch = 0;
-
-        var onKeyDown = function(e) {
-            var k = e.key.toLowerCase();
-            if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = true; e.preventDefault(); }
-            if (e.key === 'ArrowUp') keys.w = true;
-            if (e.key === 'ArrowDown') keys.s = true;
-            if (e.key === 'ArrowLeft') keys.a = true;
-            if (e.key === 'ArrowRight') keys.d = true;
-        };
-        var onKeyUp = function(e) {
-            var k = e.key.toLowerCase();
-            if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = false; e.preventDefault(); }
-            if (e.key === 'ArrowUp') keys.w = false;
-            if (e.key === 'ArrowDown') keys.s = false;
-            if (e.key === 'ArrowLeft') keys.a = false;
-            if (e.key === 'ArrowRight') keys.d = false;
-        };
-        document.addEventListener('keydown', onKeyDown);
-        document.addEventListener('keyup', onKeyUp);
-
-        var onMouseClick = function() {
-            if (!isLocked) renderer.domElement.requestPointerLock();
-        };
-        renderer.domElement.addEventListener('click', onMouseClick);
-
-        var onPointerLockChange = function() {
-            isLocked = document.pointerLockElement === renderer.domElement;
-        };
-        document.addEventListener('pointerlockchange', onPointerLockChange);
-
-        var onMouseMove = function(e) {
-            if (!isLocked) return;
-            var sens = 0.002;
-            yaw -= e.movementX * sens;
-            pitch -= e.movementY * sens;
-            pitch = Math.max(-1.2, Math.min(1.2, pitch));
-            var euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
-            camera.quaternion.setFromEuler(euler);
-        };
-        document.addEventListener('mousemove', onMouseMove);
-
-        // --- 7. Логика движения и коллизии (как в твоем примере) ---
-        var speed = 0.06;
-        var movementForward = new THREE.Vector3();
-        var playerPos = camera.position;
-
-        var updateMovement = function() {
-            if (!isLocked) return;
-
-            if (keys.a) { yaw += 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
-            if (keys.d) { yaw -= 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
-
-            movementForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
-            movementForward.y = 0;
-            movementForward.normalize();
-
-            var dx = 0, dz = 0;
-            if (keys.w) { dx += movementForward.x; dz += movementForward.z; }
-            if (keys.s) { dx -= movementForward.x; dz -= movementForward.z; }
-
-            if (dx !== 0 || dz !== 0) {
-                var len = Math.sqrt(dx*dx + dz*dz);
-                dx = dx / len * speed;
-                dz = dz / len * speed;
-
-                var newX = playerPos.x + dx;
-                var newZ = playerPos.z + dz;
-
-                // Проверка коллизий со стенами
-                var col = Math.round(newX + offsetX);
-                var row = Math.round(newZ + offsetZ);
-                var canMoveX = true, canMoveZ = true;
-                
-                if (row >= 0 && row < size && col >= 0 && col < size) {
-                    if (d.grid[row] && !d.grid[row][col].open) canMoveX = false;
-                }
-                
-                col = Math.round(playerPos.x + offsetX);
-                row = Math.round(newZ + offsetZ);
-                if (row >= 0 && row < size && col >= 0 && col < size) {
-                    if (d.grid[row] && !d.grid[row][col].open) canMoveZ = false;
-                }
-
-                if (canMoveX) playerPos.x = newX;
-                if (canMoveZ) playerPos.z = newZ;
-            }
-        };
-
-        // --- 8. Игровой цикл ---
-        var animate = function() {
-            requestAnimationFrame(animate);
-            updateMovement();
-            renderer.render(scene, camera);
-        };
-        animate();
-
-        // --- 9. Кнопка выхода (ESC из подземки) ---
-        var leaveHandler = function(e) {
-            if (e.key === 'Escape' && isLocked) {
-                document.exitPointerLock();
-                // Очищаем сцену, удаляем обработчики и возвращаем старый интерфейс
-                renderer.dispose();
-                container.remove();
-                document.removeEventListener('keydown', onKeyDown);
-                document.removeEventListener('keyup', onKeyUp);
-                renderer.domElement.removeEventListener('click', onMouseClick);
-                document.removeEventListener('pointerlockchange', onPointerLockChange);
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('keydown', leaveHandler);
-                SherwoodUI._leaveDungeon(); // Твоя функция выхода
-            }
-        };
-        document.addEventListener('keydown', leaveHandler);
-
-        // --- 10. Ресайз окна ---
-        var resizeHandler = function() {
-            var w = container.clientWidth, h = container.clientHeight;
-            camera.aspect = w / h;
-            camera.updateProjectionMatrix();
-            renderer.setSize(w, h);
-        };
-        window.addEventListener('resize', resizeHandler);
-        
-        // Сохраняем обработчики, чтобы удалить при выходе
-        this._threeCleanup = function() {
-            window.removeEventListener('resize', resizeHandler);
-        };
     },
     
     // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК (БЕЗ ИЗМЕНЕНИЙ) ==========
