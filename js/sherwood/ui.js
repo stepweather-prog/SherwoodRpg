@@ -384,16 +384,17 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-             _startDungeon: function(id, level) { 
+       _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
 
-    // ========== КЭШ ТЕКСТУР ==========
+    // ========== КЭШ ТЕКСТУР (Твой оригинальный правильный вариант) ==========
     _textureCache: {},
-    _getTexture: function(src) {
+    _getDungeonTexture: function(dungeonId) {
+        var src = 'assets/interface/labyrinth_asset.png';
         if (!this._textureCache[src]) {
             var img = new Image();
             img.src = src;
@@ -402,7 +403,7 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== НАСТОЯЩИЙ РЕЙКАСТИНГ (с полом и стенами 1024) ==========
+    // ========== НАСТОЯЩИЙ РЕЙКАСТИНГ (Стены 1024, без пола) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -431,16 +432,10 @@ _showDefeatScreen: function(rewards) {
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // 1. Загрузка текстур (1024x1024)
-        var wallTexture = this._getTexture('assets/interface/labyrinth_asset.png');
-        var floorTextures = [
-            this._getTexture('assets/dungeon_tiles/dungeon1/tiles10.jpeg'),
-            this._getTexture('assets/dungeon_tiles/dungeon1/tiles11.jpeg'),
-            this._getTexture('assets/dungeon_tiles/dungeon1/tiles12.jpeg'),
-            this._getTexture('assets/dungeon_tiles/dungeon1/tiles13.jpeg'),
-            this._getTexture('assets/dungeon_tiles/dungeon1/tiles14.jpeg')
-        ];
+        // Текстура стены (1024x1024)
+        var wallTexture = this._getDungeonTexture(d.id);
 
+        // Направление и позиция игрока
         var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI/2, 'right': Math.PI/2 };
         var playerAngle = dirMap[d.heroDirection] || 0;
         var px = d.px + 0.5;
@@ -448,47 +443,11 @@ _showDefeatScreen: function(rewards) {
 
         var FOV = Math.PI / 2; // 90 градусов
 
-        // 2. Рисуем пол с перспективой
-        for (var y = H/2; y < H; y++) {
-            var rayDirX = Math.cos(playerAngle);
-            var rayDirY = Math.sin(playerAngle);
-            var planeX = Math.cos(playerAngle - Math.PI/2) * Math.tan(FOV/2);
-            var planeY = Math.sin(playerAngle - Math.PI/2) * Math.tan(FOV/2);
+        // --- ПОТОЛОК И ПОЛ (Просто заливка, пока нет текстур пола) ---
+        ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H/2); // Потолок
+        ctx.fillStyle = '#222'; ctx.fillRect(0, H/2, W, H/2); // Пол
 
-            var rowDistance = H / (2 * y - H);
-            var floorStepX = rowDistance * (rayDirX + planeX * 2);
-            var floorStepY = rowDistance * (rayDirY + planeY * 2);
-
-            var floorX = px + rowDistance * rayDirX;
-            var floorY = py + rowDistance * rayDirY;
-
-            // Рандомизируем текстуру пола для каждой клетки
-            var texW = 1024, texH = 1024;
-            for (var x = 0; x < W; x++) {
-                var cellX = Math.floor(floorX);
-                var cellY = Math.floor(floorY);
-                // Выбираем текстуру пола на основе координат клетки
-                var texIndex = (cellX + cellY * 7) % floorTextures.length;
-                var floorTex = floorTextures[texIndex];
-
-                if (floorTex.complete && floorTex.naturalWidth > 0) {
-                    var tx = Math.floor((floorX - cellX) * texW) % texW;
-                    var ty = Math.floor((floorY - cellY) * texH) % texH;
-                    try {
-                        ctx.drawImage(floorTex, tx, ty, 1, 1, x, y, 1, 1);
-                    } catch(e) {
-                        ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x, y, 1, 1);
-                    }
-                } else {
-                    ctx.fillStyle = '#2a1a0a'; ctx.fillRect(x, y, 1, 1);
-                }
-
-                floorX += floorStepX / W;
-                floorY += floorStepY / W;
-            }
-        }
-
-        // 3. Рейкастинг стен
+        // --- РЕЙКАСТИНГ СТЕН ---
         for (var x = 0; x < W; x++) {
             var cameraX = 2 * x / W - 1;
             var rayDirX = Math.cos(playerAngle) + Math.cos(playerAngle - Math.PI/2) * cameraX * Math.tan(FOV/2);
@@ -526,17 +485,18 @@ _showDefeatScreen: function(rewards) {
             var wallTop = H/2 - wallHeight/2;
             var wallBottom = H/2 + wallHeight/2;
 
-            // 4. Отрисовка стены из labyrinth_asset.png (1024x1024)
+            // --- Отрисовка стены с текстурой 1024x1024 ---
             if (wallTexture.complete && wallTexture.naturalWidth > 0) {
                 var wallX;
                 if (side === 0) wallX = py + correctedDist * rayDirY;
                 else wallX = px + correctedDist * rayDirX;
                 wallX -= Math.floor(wallX);
                 
-                var texX = Math.floor(wallX * 1024); // ширина текстуры 1024
+                var texX = Math.floor(wallX * 1024); // Берем 1 пиксель по ширине из 1024
                 if (side === 1) texX = 1023 - texX;
                 
                 try {
+                    // Рисуем вертикальную полоску текстуры
                     ctx.drawImage(wallTexture, texX, 0, 1, 1024, x, wallTop, 1, wallHeight);
                 } catch(e) {
                     ctx.fillStyle = '#5a4a3a'; ctx.fillRect(x, wallTop, 1, wallHeight);
@@ -548,7 +508,7 @@ _showDefeatScreen: function(rewards) {
             }
         }
 
-        // --- УПРАВЛЕНИЕ ---
+        // --- УПРАВЛЕНИЕ (Направление по углу) ---
         var self = this;
         canvas.addEventListener('click', function(e) {
             var rect = canvas.getBoundingClientRect();
@@ -639,7 +599,6 @@ _showDefeatScreen: function(rewards) {
         if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1)); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen(reward); return; }
         this._stopSound('steps');
     },
-       
         _showInteractButton: function(type) {
         var self = this; var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var dungId = d.id || 'forest'; var icon = '';
