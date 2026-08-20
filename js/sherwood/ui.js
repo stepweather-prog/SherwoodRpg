@@ -384,17 +384,17 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-             _startDungeon: function(id, level) { 
+                 _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
 
-    // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН (Пример из твоего кода) ==========
+    // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН ==========
     _textureCache: {},
     _getDungeonTexture: function(dungeonId) {
-        var src = 'assets/interface/labyrinth_asset.png'; // Твоя плитка
+        var src = 'assets/interface/labyrinth_asset.png';
         if (!this._textureCache[src]) {
             var img = new Image();
             img.src = src;
@@ -403,7 +403,7 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== НАСТОЯЩИЙ ДВИЖОК РЕЙКАСТИНГА (как в твоем примере) ==========
+    // ========== НАСТОЯЩИЙ РЕЙКАСТИНГ (КОРИДОР) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -417,149 +417,166 @@ _showDefeatScreen: function(rewards) {
         container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
         this._screenLayer.appendChild(container);
 
-        // Верхний и нижний интерфейс (ХП и килы)
+        // Интерфейс (ХП и счетчик)
         var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
         var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);z-index:10;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
         var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;z-index:10;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
         container.insertAdjacentHTML('afterbegin', topBarHtml);
         container.insertAdjacentHTML('beforeend', bottomBarHtml);
 
-        // --- Создаём Canvas точно как в примере ---
+        // --- Создаём Canvas ---
         var canvas = document.createElement('canvas');
         canvas.style.cssText = 'flex:1;width:100%;display:block;background:#000;';
         container.appendChild(canvas);
         var ctx = canvas.getContext('2d');
 
-        // Получаем точные размеры экрана
         var W = canvas.clientWidth;
         var H = canvas.clientHeight;
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // --- Данные для рейкастинга ---
+        // Текстура стены
         var wallTexture = this._getDungeonTexture(d.id);
-        var FOV = Math.PI / 3; // 60 градусов обзора
-        var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
-        var dirV = dirMap[d.heroDirection] || [0, -1];
         
-        // Игрок находится в центре своей клетки (важно для лучей)
+        // Направление игрока
+        var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI/2, 'right': Math.PI/2 };
+        var playerAngle = dirMap[d.heroDirection] || 0;
         var px = d.px + 0.5;
         var py = d.py + 0.5;
-        // Угол игрока (0 - вверх по сетке)
-        var angle = 0;
-        if (d.heroDirection === 'up') angle = 0;
-        else if (d.heroDirection === 'down') angle = Math.PI;
-        else if (d.heroDirection === 'left') angle = -Math.PI / 2;
-        else if (d.heroDirection === 'right') angle = Math.PI / 2;
 
-        // --- 1. Рисуем пол и потолок (как в примере) ---
-        var ceilGrad = ctx.createLinearGradient(0, 0, 0, H / 2);
-        ceilGrad.addColorStop(0, '#0a0a0a'); ceilGrad.addColorStop(1, '#151515');
-        ctx.fillStyle = ceilGrad; ctx.fillRect(0, 0, W, H / 2);
-        
-        var floorGrad = ctx.createLinearGradient(0, H / 2, 0, H);
-        floorGrad.addColorStop(0, '#1a1a1a'); floorGrad.addColorStop(1, '#050505');
-        ctx.fillStyle = floorGrad; ctx.fillRect(0, H / 2, W, H / 2);
+        // Заливка пола и потолка
+        ctx.fillStyle = '#222'; ctx.fillRect(0, 0, W, H/2); // Потолок
+        ctx.fillStyle = '#555'; ctx.fillRect(0, H/2, W, H/2); // Пол
 
-        // --- 2. Бросаем лучи (Raycasting) ---
+        // --- РЕЙКАСТИНГ (Алгоритм из твоего примера) ---
+        var FOV = Math.PI / 2; // 90 градусов обзора
         for (var x = 0; x < W; x++) {
-            // Угол текущего луча
-            var rayAngle = angle - FOV / 2 + (x / W) * FOV;
+            // Вычисляем направление луча
+            var cameraX = 2 * x / W - 1;
+            var rayDirX = Math.cos(playerAngle) + Math.cos(playerAngle - Math.PI/2) * cameraX * Math.tan(FOV/2);
+            var rayDirY = Math.sin(playerAngle) + Math.sin(playerAngle - Math.PI/2) * cameraX * Math.tan(FOV/2);
             
-            // Бросаем луч
-            var dist = 0;
-            var hit = false;
-            while (!hit && dist < 20) {
-                dist += 0.005;
-                var testX = px + Math.cos(rayAngle) * dist;
-                var testY = py + Math.sin(rayAngle) * dist;
+            var rayAngle = Math.atan2(rayDirY, rayDirX);
+            
+            // DDA Алгоритм
+            var mapX = Math.floor(px);
+            var mapY = Math.floor(py);
+            
+            var deltaDistX = Math.abs(1 / rayDirX);
+            var deltaDistY = Math.abs(1 / rayDirY);
+            
+            var stepX, stepY, sideDistX, sideDistY;
+            if (rayDirX < 0) { stepX = -1; sideDistX = (px - mapX) * deltaDistX; } 
+            else { stepX = 1; sideDistX = (mapX + 1 - px) * deltaDistX; }
+            if (rayDirY < 0) { stepY = -1; sideDistY = (py - mapY) * deltaDistY; } 
+            else { stepY = 1; sideDistY = (mapY + 1 - py) * deltaDistY; }
+            
+            var hit = false, side = 0;
+            while (!hit) {
+                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
+                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
                 
-                var mapX = Math.floor(testX);
-                var mapY = Math.floor(testY);
-                
-                // Проверяем клетку
                 var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
-                // Если клетки нет ИЛИ она закрыта (!open) -> стена
-                if (!cellCheck || !cellCheck.open) {
-                    hit = true;
-                }
+                // Если клетки нет или она закрыта -> стена
+                if (!cellCheck || !cellCheck.open) { hit = true; }
             }
+            
+            var distance;
+            if (side === 0) distance = sideDistX - deltaDistX;
+            else distance = sideDistY - deltaDistY;
+            
+            // Исправление "рыбьего глаза"
+            var correctedDist = Math.max(0.1, distance * Math.cos(rayAngle - playerAngle));
+            var wallHeight = H / correctedDist;
+            var wallTop = H/2 - wallHeight/2;
+            var wallBottom = H/2 + wallHeight/2;
 
-            // Корректировка искажения (Fisheye fix)
-            var correctedDist = dist * Math.cos(rayAngle - angle);
-            if (correctedDist < 0.1) correctedDist = 0.1;
-
-            // Высота стены на экране
-            var wallHeight = Math.min(H * 2, (H / correctedDist) * 1.2);
-            var wallTop = Math.floor((H - wallHeight) / 2);
-            var wallBottom = Math.floor(wallTop + wallHeight);
-
-            // --- 3. Рисуем текстуру на стене ---
+            // --- Рисуем кирпичи (как в примере, но с текстурой) ---
             if (wallTexture && wallTexture.complete && wallTexture.naturalWidth > 0) {
-                // Вычисляем координату X на текстуре
-                var hitX = px + Math.cos(rayAngle) * dist;
-                var hitY = py + Math.sin(rayAngle) * dist;
-                var texX = 0;
+                // Определяем, какой кусок текстуры брать
+                var wallX;
+                if (side === 0) wallX = py + correctedDist * rayDirY;
+                else wallX = px + correctedDist * rayDirX;
+                wallX -= Math.floor(wallX);
                 
-                var wallX = hitX - Math.floor(hitX);
-                var wallY = hitY - Math.floor(hitY);
+                var texX = Math.floor(wallX * 64); // 64 - ширина текстуры
+                if (side === 1) texX = 63 - texX;
                 
-                if (Math.abs(wallX - 0) < 0.001 || Math.abs(wallX - 1) < 0.001) {
-                    texX = Math.floor(wallY * 64);
-                } else {
-                    texX = Math.floor(wallX * 64);
-                }
+                // Затемнение
+                var shade = Math.max(0.3, 1 - distance / 20);
                 
-                // Затемнение в зависимости от расстояния (чтобы стены казались 3D)
-                var shade = Math.max(0.3, 1 - dist / 8);
-                
-                // Рисуем вертикальную полоску текстуры
+                // Рисуем полоску текстуры
                 try {
-                    ctx.drawImage(wallTexture, texX, 0, 1, 64, x, wallTop, 1, wallBottom - wallTop);
+                    ctx.drawImage(wallTexture, texX, 0, 1, 64, x, wallTop, 1, wallHeight);
                 } catch(e) {
-                    ctx.fillStyle = '#5a4a3a'; ctx.fillRect(x, wallTop, 1, wallBottom - wallTop);
+                    ctx.fillStyle = '#5a4a3a'; ctx.fillRect(x, wallTop, 1, wallHeight);
                 }
             } else {
-                // Заглушка, если текстура не прогрузилась
-                var brightness = Math.max(0.2, 1 - dist / 8);
-                var c = Math.floor(120 * brightness);
-                ctx.fillStyle = 'rgb('+c+','+(c-20)+','+(c-40)+')';
-                ctx.fillRect(x, wallTop, 1, wallBottom - wallTop);
+                // Если текстура не загружена - рисуем цветные кирпичи
+                var brickHeight = 16;
+                var brickWidth = 32;
+                var bX = Math.floor(wallX * brickWidth);
+                for (var y = Math.ceil(wallTop); y < wallBottom; y++) {
+                    var texY = Math.floor((y - wallTop) / (wallBottom - wallTop) * 64);
+                    var brickRow = Math.floor(texY / 16);
+                    var offset = brickRow % 2 === 0 ? 0 : 16;
+                    var inBrickX = (bX + offset) % 32;
+                    var inBrickY = texY % 16;
+                    var shade = Math.max(0.3, 1 - distance / 20);
+                    if (inBrickY < 1 || inBrickY > 14 || inBrickX < 1 || inBrickX > 30) {
+                        ctx.fillStyle = `rgb(${Math.floor(60 * shade)}, ${Math.floor(50 * shade)}, ${Math.floor(45 * shade)})`;
+                    } else {
+                        ctx.fillStyle = `rgb(${Math.floor(139 * shade * 0.9)}, ${Math.floor(69 * shade * 0.9)}, ${Math.floor(19 * shade * 0.9)})`;
+                    }
+                    ctx.fillRect(x, y, 1, 1);
+                }
             }
         }
 
-        // --- 4. УПРАВЛЕНИЕ (Клики и клавиатура) ---
+        // --- УПРАВЛЕНИЕ (как ты просил) ---
         var self = this;
         canvas.addEventListener('click', function(e) {
             var rect = canvas.getBoundingClientRect();
             var y = (e.clientY - rect.top) / rect.height;
             var x = (e.clientX - rect.left) / rect.width;
 
-            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
-            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
-            var lV = [-dirV[1], dirV[0]], rV = [dirV[1], -dirV[0]];
+            var fwdX = d.px + Math.round(Math.cos(playerAngle)); 
+            var fwdY = d.py + Math.round(Math.sin(playerAngle));
+            var bckX = d.px - Math.round(Math.cos(playerAngle));
+            var bckY = d.py - Math.round(Math.sin(playerAngle));
+
+            var lVx = Math.round(Math.cos(playerAngle - Math.PI/2));
+            var lVy = Math.round(Math.sin(playerAngle - Math.PI/2));
+            var rVx = Math.round(Math.cos(playerAngle + Math.PI/2));
+            var rVy = Math.round(Math.sin(playerAngle + Math.PI/2));
 
             if (Math.abs(x - 0.5) < 0.3) { 
-                if (y < 0.4) self._dungeonMove(fwdX, fwdY);   // Вперед
-                else if (y > 0.6) self._dungeonMove(bckX, bckY); // Назад
+                if (y < 0.4) self._dungeonMove(fwdX, fwdY);
+                else if (y > 0.6) self._dungeonMove(bckX, bckY);
             } else { 
-                if (x < 0.4) self._dungeonMove(d.px + lV[0], d.py + lV[1]); // Влево
-                else if (x > 0.6) self._dungeonMove(d.px + rV[0], d.py + rV[1]); // Вправо
+                if (x < 0.4) self._dungeonMove(d.px + lVx, d.py + lVy);
+                else if (x > 0.6) self._dungeonMove(d.px + rVx, d.py + rVy);
             }
         });
         
         document.addEventListener('keydown', function(e) {
-            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
-            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
-            var lV = [-dirV[1], dirV[0]], rV = [dirV[1], -dirV[0]];
+            var fwdX = d.px + Math.round(Math.cos(playerAngle)); 
+            var fwdY = d.py + Math.round(Math.sin(playerAngle));
+            var bckX = d.px - Math.round(Math.cos(playerAngle));
+            var bckY = d.py - Math.round(Math.sin(playerAngle));
+            var lVx = Math.round(Math.cos(playerAngle - Math.PI/2));
+            var lVy = Math.round(Math.sin(playerAngle - Math.PI/2));
+            var rVx = Math.round(Math.cos(playerAngle + Math.PI/2));
+            var rVy = Math.round(Math.sin(playerAngle + Math.PI/2));
+
             if (e.key === 'ArrowUp') self._dungeonMove(fwdX, fwdY);
             else if (e.key === 'ArrowDown') self._dungeonMove(bckX, bckY);
-            else if (e.key === 'ArrowLeft') self._dungeonMove(d.px + lV[0], d.py + lV[1]);
-            else if (e.key === 'ArrowRight') self._dungeonMove(d.px + rV[0], d.py + rV[1]);
+            else if (e.key === 'ArrowLeft') self._dungeonMove(d.px + lVx, d.py + lVy);
+            else if (e.key === 'ArrowRight') self._dungeonMove(d.px + rVx, d.py + rVy);
         });
     },
 
-    // ========== ДВИЖЕНИЕ (Ничего не менять) ==========
+    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
