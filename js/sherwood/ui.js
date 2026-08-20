@@ -384,15 +384,15 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-    _startDungeon: function(id, level) { 
+        _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
 
-            // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН ==========
-        _textureCache: {},
+    // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН ==========
+    _textureCache: {},
     _getDungeonTexture: function(dungeonId) {
         var src = 'assets/interface/labyrinth_asset.png';
         if (!this._textureCache[src]) {
@@ -403,11 +403,13 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
+    // ========== 3D РЕНДЕР ПЛИТОК (ИСПРАВЛЕННАЯ ПЕРСПЕКТИВА) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
 
+        // 1. Очистка и подготовка контейнера
         this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#0a0a0a;overflow:hidden;';
         this._screenLayer.innerHTML = ''; 
 
@@ -415,12 +417,14 @@ _showDefeatScreen: function(rewards) {
         container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
         this._screenLayer.appendChild(container);
 
+        // 2. Интерфейс (ХП и счетчик)
         var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
-        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
-        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
+        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);z-index:10;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
+        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;z-index:10;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
         container.insertAdjacentHTML('afterbegin', topBarHtml);
         container.insertAdjacentHTML('beforeend', bottomBarHtml);
 
+        // 3. Подготовка Canvas
         var canvas = document.createElement('canvas');
         canvas.style.cssText = 'flex:1;width:100%;display:block;';
         container.appendChild(canvas);
@@ -428,60 +432,84 @@ _showDefeatScreen: function(rewards) {
 
         var W = canvas.clientWidth;
         var H = canvas.clientHeight;
-        if (W === 0 || H === 0) { W = 480; H = 400; }
+        if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
+        // 4. Загрузка текстуры стены
         var wallTexture = this._getDungeonTexture(d.id);
+
+        // 5. Логика 3D перспективы
         var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
         var dirV = dirMap[d.heroDirection] || [0, -1];
-        var tileSize = 70;
+        var fovScale = 0.8; 
+        var tileSize = 100; // Размер плитки. Если слишком мелко/крупно - поменяй это число!
 
-        for (var row = -5; row <= 5; row++) {
-            for (var col = -5; col <= 5; col++) {
+        // Проходимся по сетке 7x7 вокруг героя
+        for (var row = -3; row <= 3; row++) {
+            for (var col = -3; col <= 3; col++) {
                 var mapX = d.px + col;
                 var mapY = d.py + row;
                 var cell = d.grid[mapY] && d.grid[mapY][mapX];
                 if (!cell) continue;
 
+                // Считаем расстояние от центра
                 var dist = Math.sqrt(col * col + row * row);
-                if (dist === 0) continue;
+                if (dist === 0) continue; // Пропускаем клетку под героем
 
-                var depth = 1 + dist * 0.25;
+                // Вычисляем размер на экране и положение
+                var depth = 1 + dist * 0.3;
                 var size = Math.floor(tileSize / depth);
-                if (size < 2) continue;
+                if (size < 5) continue;
 
+                // Поворот координат относительно направления взгляда
                 var relX = col * dirV[0] + row * dirV[1];
                 var relY = -col * dirV[1] + row * dirV[0];
-                var screenX = Math.floor(W / 2 + relY * (tileSize / depth) * 0.8);
-                var screenY = Math.floor(H / 2 - relX * (tileSize / depth) * 0.8 + 20);
 
+                var screenX = Math.floor(W / 2 + relY * (tileSize / depth) * fovScale);
+                var screenY = Math.floor(H / 2 - relX * (tileSize / depth) * fovScale + 30);
+
+                // Проверяем, на экране ли плитка
+                if (screenX + size/2 < 0 || screenX - size/2 > W) continue;
+                if (screenY + size/2 < 0 || screenY - size/2 > H) continue;
+
+                // Рисуем пол (открытую клетку)
                 if (cell.open) {
-                    ctx.fillStyle = 'rgba(20,20,20,0.8)';
+                    ctx.fillStyle = 'rgba(30, 30, 30, 0.8)';
                     ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
-                } else {
+                    ctx.strokeStyle = 'rgba(50, 50, 50, 0.5)';
+                    ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
+                } 
+                // Рисуем стену (закрытую клетку) - твоя labyrinth_asset.png
+                else {
                     if (wallTexture.complete && wallTexture.naturalWidth > 0) {
                         ctx.drawImage(wallTexture, screenX - size/2, screenY - size/2, size, size);
                     } else {
-                        ctx.fillStyle = '#4a3d2b';
+                        // Заглушка, если картинка не прогрузилась
+                        ctx.fillStyle = '#3d2b1f';
                         ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
                     }
                 }
             }
         }
 
+        // 6. Рисуем персонажа (СПИНОЙ, если идешь вперед, и ЛИЦОМ, если назад)
         var heroImg = new Image();
         var dirFile = 'step_down.png'; 
-        if (d.heroDirection === 'up') dirFile = 'step_down.png';
-        else if (d.heroDirection === 'down') dirFile = 'step_up.png';
+        // ИСПРАВЛЕНИЕ: Вперед (up) = спина. Назад (down) = лицо.
+        if (d.heroDirection === 'up') dirFile = 'step_down.png'; 
+        else if (d.heroDirection === 'down') dirFile = 'step_up.png'; 
         else if (d.heroDirection === 'left') dirFile = 'step_left.png';
         else if (d.heroDirection === 'right') dirFile = 'step_right.png';
         heroImg.src = 'assets/animation/' + dirFile;
 
-        var sprSize = Math.min(W * 0.7, H * 0.65); 
-        var drawHero = function() { ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize - 5, sprSize, sprSize); };
+        var sprSize = Math.min(W * 0.7, H * 0.6); 
+        var drawHero = function() {
+            ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize - 5, sprSize, sprSize);
+        };
         heroImg.onload = drawHero;
         if (heroImg.complete) { drawHero(); }
 
+        // 7. Обработчики кликов и клавиш
         var self = this;
         canvas.addEventListener('click', function(e) {
             var rect = canvas.getBoundingClientRect();
@@ -493,13 +521,14 @@ _showDefeatScreen: function(rewards) {
             var lV = [-dirV[1], dirV[0]], rV = [dirV[1], -dirV[0]];
 
             if (Math.abs(x - 0.5) < 0.3) { 
-                if (y < 0.4) self._dungeonMove(fwdX, fwdY);
-                else if (y > 0.6) self._dungeonMove(bckX, bckY);
+                if (y < 0.4) self._dungeonMove(fwdX, fwdY);   // Вперед
+                else if (y > 0.6) self._dungeonMove(bckX, bckY); // Назад
             } else { 
-                if (x < 0.4) self._dungeonMove(d.px + lV[0], d.py + lV[1]);
-                else if (x > 0.6) self._dungeonMove(d.px + rV[0], d.py + rV[1]);
+                if (x < 0.4) self._dungeonMove(d.px + lV[0], d.py + lV[1]); // Влево
+                else if (x > 0.6) self._dungeonMove(d.px + rV[0], d.py + rV[1]); // Вправо
             }
         });
+        
         document.addEventListener('keydown', function(e) {
             var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
             var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
@@ -511,6 +540,7 @@ _showDefeatScreen: function(rewards) {
         });
     },
 
+    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
@@ -560,9 +590,6 @@ _showDefeatScreen: function(rewards) {
         this._stopSound('steps');
     },
        
-       
-
-    
         _showInteractButton: function(type) {
         var self = this; var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var dungId = d.id || 'forest'; var icon = '';
