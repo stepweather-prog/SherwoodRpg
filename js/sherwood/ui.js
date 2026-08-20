@@ -404,7 +404,7 @@ _showDefeatScreen: function(rewards) {
     },
 
     // ========== ПСЕВДО-3D (ПЛОСКИЙ ПОЛ) ==========
-            _renderDungeon: function() {
+               _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
@@ -436,15 +436,21 @@ _showDefeatScreen: function(rewards) {
         var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
         var dirV = dirMap[d.heroDirection] || [0, -1];
 
-        var tileSize = 150; 
-        var fovScale = 0.6;
-        var yStartOffset = 50; // Отступ от центра вниз
+        // Размеры и настройки
+        var baseSize = 140; 
+        var yStart = H * 0.35; // Нижняя точка для самого дальнего ряда
 
         var leftVec = [-dirV[1], dirV[0]];
         var rightVec = [dirV[1], -dirV[0]];
 
-        // Идем от ДАЛЬНЕГО к БЛИЖНЕМУ (чтобы передние перекрывали задние)
-        for (var row = 3; row >= -2; row--) {
+        // Рисуем от самого дальнего (row=4) до самого ближнего (row=-2)
+        for (var row = 4; row >= -2; row--) {
+            // Размер плитки. Чем ближе (row меньше), тем больше
+            var size = baseSize + (row * 15) * -1; 
+            
+            // Позиция по вертикали: ближние ниже, дальние выше
+            var yOffset = yStart + ((row + 2) * 18); 
+
             for (var col = -2; col <= 2; col++) {
                 var mapX = d.px + leftVec[0] * col + dirV[0] * row;
                 var mapY = d.py + leftVec[1] * col + dirV[1] * row;
@@ -452,27 +458,18 @@ _showDefeatScreen: function(rewards) {
                 var cell = d.grid[mapY] && d.grid[mapY][mapX];
                 if (!cell) continue;
 
-                // Глубина (влияет и на размер, и на высоту на экране)
-                var depth = 1 + row * 0.2;
-                var size = Math.floor(tileSize / depth);
-                if (size < 2) continue;
-
-                // Считаем позицию по X (влево-вправо)
-                var screenX = Math.floor(W / 2 + col * (tileSize / depth) * fovScale);
-                
-                // Считаем позицию по Y (вверх-вниз).
-                // ОШИБКА БЫЛА ЗДЕСЬ: мы не использовали depth для Y.
-                // Теперь Y напрямую зависит от глубины: чем глубже (row больше) -> тем выше на экране.
-                // 0.3 - это коэффициент сглаживания вертикали.
-                var screenY = Math.floor(H / 2 - (tileSize / depth) * fovScale * 0.35 + yStartOffset);
+                // Горизонтальное смещение: чем ближе, тем шире разброс
+                var spreadFactor = 1 + (row * 0.1) * -1;
+                var screenX = Math.floor(W / 2 + col * (size * 0.5) * spreadFactor);
+                var screenY = Math.floor(yOffset);
 
                 var isWalkable = cell.open;
                 var canOpen = (!cell.open && row === 1 && col === 0);
 
                 if (isWalkable) {
-                    ctx.fillStyle = 'rgba(30, 30, 30, 0.9)';
+                    ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
                     ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
-                    ctx.strokeStyle = 'rgba(60, 60, 60, 0.5)';
+                    ctx.strokeStyle = 'rgba(50, 50, 50, 0.5)';
                     ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
                 }
 
@@ -488,7 +485,7 @@ _showDefeatScreen: function(rewards) {
                 if (canOpen) {
                     ctx.strokeStyle = '#00ff00';
                     ctx.lineWidth = 3;
-                    ctx.strokeRect(screenX - size/2 + 4, screenY - size/2 + 4, size - 8, size - 8);
+                    ctx.strokeRect(screenX - size/2 + 6, screenY - size/2 + 6, size - 12, size - 12);
                 }
             }
         }
@@ -502,9 +499,9 @@ _showDefeatScreen: function(rewards) {
         else if (d.heroDirection === 'right') dirFile = 'step_right.png';
         heroImg.src = 'assets/animation/' + dirFile;
 
-        var sprSize = Math.min(W * 0.6, H * 0.5); 
+        var sprSize = Math.min(W * 0.6, H * 0.4); 
         var drawHero = function() {
-            ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize, sprSize, sprSize);
+            ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize - 10, sprSize, sprSize);
         };
         heroImg.onload = drawHero;
         if (heroImg.complete) { drawHero(); }
