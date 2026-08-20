@@ -384,7 +384,7 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-           _startDungeon: function(id, level) { 
+              _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
@@ -403,7 +403,7 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== 3D РЕНДЕР ПЛИТОК (С ПРАВИЛЬНОЙ СОРТИРОВКОЙ) ==========
+    // ========== 3D РЕНДЕР ПОТОЧНЫЙ (БЕЗ ТОРМОЗОВ) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -425,7 +425,7 @@ _showDefeatScreen: function(rewards) {
 
         // --- CANVAS ---
         var canvas = document.createElement('canvas');
-        canvas.style.cssText = 'flex:1;width:100%;display:block;';
+        canvas.style.cssText = 'flex:1;width:100%;display:block;background:#050505;';
         container.appendChild(canvas);
         var ctx = canvas.getContext('2d');
 
@@ -435,69 +435,66 @@ _showDefeatScreen: function(rewards) {
         canvas.width = W; canvas.height = H;
 
         var wallTexture = this._getDungeonTexture(d.id);
+        var wallImg = new Image();
+        wallImg.src = 'assets/interface/labyrinth_asset.png';
+
+        // Направления взгляда
         var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
         var dirV = dirMap[d.heroDirection] || [0, -1];
 
-        // --- СБОР ПЛИТОК ПЕРЕД ОТРИСОВКОЙ ---
-        var tilesToDraw = [];
-        var fovScale = 1.0; // Масштаб для "приближения"
-        var tileBaseSize = 120; // Размер ближайшей плитки
-
-        // 1. Собираем плитки вокруг (ограничиваем дистанцию -3..+3 спереди, и -1..+3 сзади)
-        // Задние плитки нам не нужны, создаем только "коридор" перед лицом
-        for (var row = -2; row <= 3; row++) {
-            for (var col = -3; col <= 3; col++) {
-                var mapX = d.px + col;
-                var mapY = d.py + row;
-                var cell = d.grid[mapY] && d.grid[mapY][mapX];
-                if (!cell) continue;
-
-                var dist = Math.sqrt(col * col + row * row);
-                if (dist === 0) continue; // клетка героя не рисуется
-
-                var depth = 1 + dist * 0.22; // глубина
-                var size = Math.floor(tileBaseSize / depth);
-                if (size < 4) continue;
-
-                var relX = col * dirV[0] + row * dirV[1];
-                var relY = -col * dirV[1] + row * dirV[0];
-
-                // Если плитка сильно сзади (отрицательная глубина), пропускаем
-                if (relX < -1) continue; 
-
-                var screenX = Math.floor(W / 2 + relY * (tileBaseSize / depth) * fovScale);
-                var screenY = Math.floor(H / 2 - relX * (tileBaseSize / depth) * fovScale + 30);
-
-                // Сохраняем в массив. Сортировка будет по расстоянию: дальше (dist больше) = рисовать первым
-                tilesToDraw.push({ 
-                    dist: dist, 
-                    x: screenX, y: screenY, 
-                    size: size, 
-                    open: cell.open,
-                    texture: wallTexture
-                });
+        // Идем по оси X (ширине экрана) и пускаем луч!
+        // ЭТО КЛАССИЧЕСКИЙ АЛГОРИТМ DOOM, ОН МГНОВЕННЫЙ И БЕЗ ТОРМОЗОВ.
+        for (var x = 0; x < W; x++) {
+            var cameraX = 2 * x / W - 1;
+            var rayDirX = dirV[0] + 0.66 * cameraX * dirV[1];
+            var rayDirY = dirV[1] - 0.66 * cameraX * dirV[0];
+            
+            var mapX = Math.floor(d.px);
+            var mapY = Math.floor(d.py);
+            
+            var deltaDistX = Math.abs(1 / rayDirX);
+            var deltaDistY = Math.abs(1 / rayDirY);
+            
+            var stepX, stepY, sideDistX, sideDistY;
+            if (rayDirX < 0) { stepX = -1; sideDistX = (d.px - mapX) * deltaDistX; } 
+            else { stepX = 1; sideDistX = (mapX + 1 - d.px) * deltaDistX; }
+            if (rayDirY < 0) { stepY = -1; sideDistY = (d.py - mapY) * deltaDistY; } 
+            else { stepY = 1; sideDistY = (mapY + 1 - d.py) * deltaDistY; }
+            
+            var hit = 0, side = 0;
+            while (hit === 0) {
+                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
+                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                
+                // Проверяем, есть ли стена (или закрытая клетка)
+                var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
+                if (!cellCheck || !cellCheck.open) { hit = 1; }
             }
-        }
+            
+            var perpDist;
+            if (side === 0) perpDist = (sideDistX - deltaDistX);
+            else perpDist = (sideDistY - deltaDistY);
+            if (perpDist < 0.1) perpDist = 0.1;
+            
+            var lineHeight = Math.floor(H / perpDist);
+            var drawStart = Math.floor(-lineHeight / 2 + H / 2);
+            var drawEnd = Math.floor(lineHeight / 2 + H / 2);
 
-        // 2. Сортируем: от дальних к ближним (ОЧЕНЬ ВАЖНО!)
-        tilesToDraw.sort(function(a, b) { return b.dist - a.dist; });
-
-        // 3. Рисуем в правильном порядке
-        for (var i = 0; i < tilesToDraw.length; i++) {
-            var tile = tilesToDraw[i];
-            var sx = tile.x - tile.size/2;
-            var sy = tile.y - tile.size/2;
-
-            if (tile.open) {
-                ctx.fillStyle = 'rgba(15, 15, 15, 0.9)';
-                ctx.fillRect(sx, sy, tile.size, tile.size);
-            } else {
-                if (tile.texture.complete && tile.texture.naturalWidth > 0) {
-                    ctx.drawImage(tile.texture, sx, sy, tile.size, tile.size);
-                } else {
-                    ctx.fillStyle = '#3d2b1f';
-                    ctx.fillRect(sx, sy, tile.size, tile.size);
+            // Рисуем текстуру стены или заглушку
+            if (wallImg.complete && wallImg.naturalWidth > 0) {
+                var texX = Math.floor((side === 0 ? d.py + perpDist * rayDirY : d.px + perpDist * rayDirX) * 64) % 64;
+                if (side === 1) texX = 63 - texX;
+                try {
+                    ctx.drawImage(wallImg, texX, 0, 1, 64, x, drawStart, 1, drawEnd - drawStart);
+                } catch(e) {
+                    ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
                 }
+            } else {
+                var brightness = Math.min(1, 1.0 / (perpDist * 0.3 + 0.5));
+                var r = Math.floor(100 * brightness); var g = Math.floor(90 * brightness); var b = Math.floor(70 * brightness);
+                if (side === 1) { r *= 0.7; g *= 0.7; b *= 0.7; }
+                ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
+                ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
             }
         }
 
@@ -547,7 +544,7 @@ _showDefeatScreen: function(rewards) {
         });
     },
 
-    // ========== ДВИЖЕНИЕ ==========
+    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
