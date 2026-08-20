@@ -347,28 +347,42 @@ _showDefeatScreen: function(rewards) {
     },
 
     _showDungeonActions: function(dungeonId, level) {
-        var progress = Sherwood.Dungeon._progress[dungeonId] || { level: 1, cups: {} }; var cups = progress.cups || {};
-        var cupCount = cups[level] || 0; var maxCups = 3; var autoFightCups = 5;
-        var p = Sherwood.getPlayer(); var autoTickets = Sherwood.Bag.getResource('autoFightTickets');
-        var h = '<div style="text-align:center;padding:20px;"><div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:12px;">Этаж ' + level + '</div><div style="margin-bottom:16px;">';
-        for (var c = 0; c < maxCups; c++) { h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:40px;height:40px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">'; }
-        h += '<div style="color:#aaa;font-size:0.7em;">' + cupCount + '/' + maxCups + ' кубков</div></div>';
-        h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти (1 билет)</button>';
-        if (cupCount >= autoFightCups) {
-            if (Sherwood.Dungeon.isAutoFightActive()) { h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Автобой уже активен</div>'; }
-            else { h += '<button onclick="SherwoodUI._startAutoFight(\'' + dungeonId + '\',' + level + ',false)" style="display:block;width:80%;margin:0 auto 8px;background:#ff9800;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Автобой (15 мин) — 50 золота</button>'; }
-            if (autoTickets > 0) { h += '<button onclick="SherwoodUI._startAutoFight(\'' + dungeonId + '\',' + level + ',true)" style="display:block;width:80%;margin:0 auto 8px;background:#4caf50;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Мгновенный автобой — 1 тикет (' + autoTickets + ' шт.)</button>'; }
-            else { h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Мгновенный автобой — нет тикетов</div>'; }
+    var progress = Sherwood.Dungeon._progress[dungeonId] || { level: 1, cups: {} }; var cups = progress.cups || {};
+    var cupCount = cups[level] || 0; var maxCups = 3; var autoFightCups = 5;
+    var p = Sherwood.getPlayer(); var autoTickets = Sherwood.Bag.getResource('autoFightTickets');
+    var h = '<div style="text-align:center;padding:20px;"><div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:12px;">Этаж ' + level + '</div><div style="margin-bottom:16px;">';
+    for (var c = 0; c < maxCups; c++) { h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:40px;height:40px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">'; }
+    h += '<div style="color:#aaa;font-size:0.7em;">' + cupCount + '/' + maxCups + ' кубков</div></div>';
+    
+    // Войти вручную
+    h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти</button>';
+    
+    // Если есть хотя бы 1 кубок — предложить автобой
+    if (cupCount >= 1) {
+        // Автобой за золото
+        if (Sherwood.Dungeon.isAutoFightActive()) {
+            h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Автобой уже активен</div>';
+        } else {
+            h += '<button onclick="SherwoodUI._startAutoFight(\'' + dungeonId + '\',' + level + ',false)" style="display:block;width:80%;margin:0 auto 8px;background:#ff9800;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Автобой (10 мин) — 50 золота</button>';
         }
-        h += '<div style="color:#aaa;font-size:0.65em;margin-top:8px;">3 кубка — следующий этаж. 5 кубков — автобой.</div></div>';
-        if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI._showDungeonLevels(\'' + dungeonId + '\')" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Действия</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:flex;align-items:center;justify-content:center;">' + h + '</div></div>'; this._screenLayer.style.display = 'block'; }
-    },
+        
+        // Мгновенный автобой за тикет
+        if (autoTickets > 0) {
+            h += '<button onclick="SherwoodUI._startAutoFight(\'' + dungeonId + '\',' + level + ',true)" style="display:block;width:80%;margin:0 auto 8px;background:#4caf50;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;cursor:pointer;font-size:0.9em;">Мгновенный автобой — 1 тикет (' + autoTickets + ' шт.)</button>';
+        } else {
+            h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Мгновенный автобой — нет тикетов</div>';
+        }
+    }
+    
+    h += '<div style="color:#aaa;font-size:0.65em;margin-top:8px;">3 кубка — следующий этаж. Автобой доступен с 1 кубка.</div></div>';
+    if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI._showDungeonLevels(\'' + dungeonId + '\')" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Действия</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;display:flex;align-items:center;justify-content:center;">' + h + '</div></div>'; this._screenLayer.style.display = 'block'; }
+},
 
     _startAutoFight: function(dungeonId, level, instant) {
-        var result = Sherwood.Dungeon.startAutoFight(dungeonId, level, instant);
-        if (result.success) { if (result.instant) { this._showToast('Автобой завершён! Кубок получен.'); this._showDungeonLevels(dungeonId); } else { this._showToast('Автобой запущен на 15 минут!'); this.showDungeon(); } }
-        else { this._showToast(result.reason); }
-    },
+    var result = Sherwood.Dungeon.startAutoFight(dungeonId, level, instant);
+    if (result.success) { if (result.instant) { this._showToast('Автобой завершён! Кубок получен.'); this._showDungeonLevels(dungeonId); } else { this._showToast('Автобой запущен на 10 минут!'); this.showDungeon(); } }
+    else { this._showToast(result.reason); }
+},
 
     _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
