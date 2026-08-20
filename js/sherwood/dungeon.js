@@ -37,11 +37,18 @@ Sherwood.Dungeon = {
     },
 
     init: function() {
-        var saved = localStorage.getItem('sherwood_dungeon_progress');
-        if (saved) { this._progress = JSON.parse(saved); }
-        else { this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } }; }
-        for (var id in this._progress) { if (!this._progress[id].cups) this._progress[id].cups = {}; }
-        this._startTicketRegeneration();
+    var saved = localStorage.getItem('sherwood_dungeon_progress');
+    if (saved) { this._progress = JSON.parse(saved); }
+    else { this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } }; }
+    for (var id in this._progress) { if (!this._progress[id].cups) this._progress[id].cups = {}; }
+    
+    var p = Sherwood.getPlayer();
+    if (p && p.dungeon) {
+        if (!p.dungeon.maxTickets) p.dungeon.maxTickets = 20;
+        if (!p.dungeon.ticketTimer) p.dungeon.ticketTimer = 3600;
+    }
+    
+    this._startTicketRegeneration();
         var p = Sherwood.getPlayer();
         if (p && p.dungeon && p.dungeon.autoFight) {
             var af = p.dungeon.autoFight;
@@ -51,13 +58,23 @@ Sherwood.Dungeon = {
     },
 
     _startTicketRegeneration: function() {
-        var self = this;
-        if (this._ticketTimer) clearInterval(this._ticketTimer);
-        this._ticketTimer = setInterval(function() {
-            var p = Sherwood.getPlayer();
-            if (p && p.dungeon) { if (p.dungeon.tickets < p.dungeon.maxTickets) { p.dungeon.tickets = Math.min(p.dungeon.maxTickets, p.dungeon.tickets + 1); Sherwood.saveGame(); } }
-        }, 90 * 60 * 1000);
-    },
+    var self = this;
+    if (this._ticketTimer) clearInterval(this._ticketTimer);
+    this._ticketTimer = setInterval(function() {
+        var p = Sherwood.getPlayer();
+        if (p && p.dungeon) {
+            if (!p.dungeon.ticketTimer) p.dungeon.ticketTimer = 3600;
+            p.dungeon.ticketTimer--;
+            if (p.dungeon.ticketTimer <= 0) {
+                if (p.dungeon.tickets < p.dungeon.maxTickets) {
+                    p.dungeon.tickets = Math.min(p.dungeon.maxTickets, p.dungeon.tickets + 1);
+                }
+                p.dungeon.ticketTimer = 3600;
+            }
+            Sherwood.saveGame();
+        }
+    }, 1000);
+},
 
     _startAutoFightTimer: function() {
         var self = this;
@@ -184,6 +201,6 @@ Sherwood.Dungeon = {
     startAutoFight: function(dungeonId, level, instant) {
         var p = Sherwood.getPlayer(); if (!p) return { success: false, reason: 'Игрок не найден' };
         if (instant) { var tickets = Sherwood.Bag.getResource('autoFightTickets'); if (tickets <= 0) return { success: false, reason: 'Нет тикетов автобоя' }; Sherwood.Bag.spendResource('autoFightTickets', 1); this._completeAutoFight(dungeonId, level); return { success: true, instant: true }; }
-        else { if ((p.resources.gold || 0) < 50) return { success: false, reason: 'Нужно 50 золота' }; p.resources.gold -= 50; var endTime = Date.now() + 15 * 60 * 1000; this._autoFightActive = true; this._autoFightEndTime = endTime; this._autoFightDungeonId = dungeonId; this._autoFightLevel = level; if (!p.dungeon) p.dungeon = { tickets: 5, maxTickets: 5 }; p.dungeon.autoFight = { active: true, endTime: endTime, dungeonId: dungeonId, level: level }; Sherwood.saveGame(); this._startAutoFightTimer(); return { success: true, instant: false, endTime: endTime }; }
+        else { if ((p.resources.gold || 0) < 50) return { success: false, reason: 'Нужно 50 золота' }; p.resources.gold -= 50; var endTime = Date.now() + 10 * 60 * 1000; this._autoFightActive = true; this._autoFightEndTime = endTime; this._autoFightDungeonId = dungeonId; this._autoFightLevel = level; if (!p.dungeon) p.dungeon = { tickets: 5, maxTickets: 5 }; p.dungeon.autoFight = { active: true, endTime: endTime, dungeonId: dungeonId, level: level }; Sherwood.saveGame(); this._startAutoFightTimer(); return { success: true, instant: false, endTime: endTime }; }
     }
 };
