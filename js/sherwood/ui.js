@@ -358,7 +358,7 @@ _showDefeatScreen: function(rewards) {
     h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти</button>';
     
     // Если есть хотя бы 1 кубок — предложить автобой
-    if (cupCount >= 1) {
+       if (cupCount >= 1 && cupCount < 3) {
         // Автобой за золото
         if (Sherwood.Dungeon.isAutoFightActive()) {
             h += '<div style="width:80%;margin:0 auto 8px;background:#555;border:none;border-radius:8px;padding:12px;color:#999;font-size:0.9em;">Автобой уже активен</div>';
@@ -452,11 +452,11 @@ _showDefeatScreen: function(rewards) {
         if (currentCell && currentCell.lootBag && !currentCell.lootCollected) { currentCell.lootCollected = false; currentCell.lootBag = true; }
         this._renderDungeon(); SherwoodUI.updateDisplay();
         if (res.type === 'battle') { this._stopSound('steps'); d.isMoving = false; d.px = prevX; d.py = prevY; this._renderDungeon(); this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
-        if (res.type === 'lootBag' && currentCell && !currentCell.lootCollected) { this._stopSound('steps'); this._playSound('bag_drop'); this._showInteractButton('lootBag'); return; }
-        if (res.type === 'chest' && currentCell && !currentCell.looted) { this._stopSound('steps'); this._playSound('chest_open'); this._showInteractButton('chest'); return; }
-        if (res.type === 'altar' && currentCell && !currentCell.altarCollected) { this._stopSound('steps'); this._playSound('altar'); this._showInteractButton('altar'); return; }
-        if (res.type === 'cauldron' && currentCell && !currentCell.cauldronCollected) { this._stopSound('steps'); this._playSound('cauldron'); this._showInteractButton('cauldron'); return; }
-        if (res.type === 'potion' && currentCell && !currentCell.potionCollected) { this._stopSound('steps'); this._playSound('potion'); this._showInteractButton('potion'); return; }
+        if (res.type === 'lootBag' && currentCell && !currentCell.lootCollected) { this._stopSound('steps'); this._showInteractButton('lootBag'); return; }
+        if (res.type === 'chest' && currentCell && !currentCell.looted) { this._stopSound('steps'); this._showInteractButton('chest'); return; }
+        if (res.type === 'altar' && currentCell && !currentCell.altarCollected) { this._stopSound('steps'); this._showInteractButton('altar'); return; }
+        if (res.type === 'cauldron' && currentCell && !currentCell.cauldronCollected) { this._stopSound('steps'); this._showInteractButton('cauldron'); return; }
+        if (res.type === 'potion' && currentCell && !currentCell.potionCollected) { this._stopSound('steps'); this._showInteractButton('potion'); return; }
         if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1)); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen(reward); return; }
         if (res.type === 'exit_locked') { this._stopSound('steps'); this._showToast('Закрыто! Убейте всех монстров!'); return; }
         this._stopSound('steps');
