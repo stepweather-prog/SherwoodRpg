@@ -148,6 +148,7 @@ const SherwoodUI = {
 
     loadHome: function() {
     try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
+    if (this._ticketDisplayInterval) { clearInterval(this._ticketDisplayInterval); this._ticketDisplayInterval = null; }
     try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = ''; }); }); } catch(e) {}
     try { this.container.style.background = ''; } catch(e) {}
     this._previousScreen = null;
@@ -171,6 +172,7 @@ const SherwoodUI = {
         try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
         try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {}
         var goBack = backFn || 'SherwoodUI.loadHome()';
+            if (this._ticketDisplayInterval) { clearInterval(this._ticketDisplayInterval); this._ticketDisplayInterval = null; }
             var portalVideo = document.querySelector('.portal-video-bg');
     if (portalVideo) {
         portalVideo.style.display = 'none';
@@ -260,31 +262,62 @@ _showDefeatScreen: function(rewards) {
         // ========== ПОДЗЕМКА ==========
     subway: function() { this.showDungeon(); },
     showDungeon: function() {
-        this._playSound('click');
-        if (this._currentMusicKey === 'main_theme' || this._currentMusicKey === 'main_theme_2') { this._mainThemeWasPlaying = true; this._mainThemeKey = this._currentMusicKey; this._mainThemeTime = this._currentMusic ? this._currentMusic.currentTime : 0; }
-        this._playMusic('dungeon_1');
-        var dungeons = Sherwood.Dungeon ? Sherwood.Dungeon.getAvailable() : {};
-        var dungeonList = [{ id: 'forest', name: 'Проклятая чаща', icon: 'the_cursed_thicket.png' }, { id: 'swamp', name: 'Первородное болото', icon: 'primordial_swamp.png' }, { id: 'cave', name: 'Базальтовый грот', icon: 'basalt_grotto.png' }];
-        var h = '';
-        var p = Sherwood.getPlayer();
-        var tickets = p ? (p.dungeon ? p.dungeon.tickets : 0) : 0;
-        var afActive = Sherwood.Dungeon.isAutoFightActive();
-        if (afActive) { var afRemain = Sherwood.Dungeon.getAutoFightRemaining(); h += '<div style="text-align:center;background:rgba(201,160,64,0.3);border:1px solid #c9a040;border-radius:8px;padding:8px;margin-bottom:12px;"><div style="color:#ffd700;font-size:0.85em;">⚔️ Автобой активен</div><div style="color:#aaa;font-size:0.7em;">Осталось: ' + afRemain + ' мин.</div></div>'; }
-        for (var i = 0; i < dungeonList.length; i++) {
-            var dl = dungeonList[i]; var d = dungeons[dl.id];
-            if (d) {
-                h += '<div style="text-align:center;margin-bottom:24px;"><div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + dl.name + '</div><img src="assets/dungeon_tiles/visual_dungeon/' + dl.icon + '" style="width:160px;height:160px;object-fit:contain;display:block;margin:0 auto 10px;">';
-                if (d.unlocked) { h += '<button onclick="SherwoodUI._showDungeonLevels(\'' + dl.id + '\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">Войти</button>'; }
-                else { h += '<div style="color:#f44336;font-size:0.8em;">Заблокировано</div><div style="color:#aaa;font-size:0.65em;">Нужно пройти последний этаж предыдущей подземки на 3 кубка</div>'; }
-                h += '</div>';
-            }
+    this._playSound('click');
+    if (this._currentMusicKey === 'main_theme' || this._currentMusicKey === 'main_theme_2') { this._mainThemeWasPlaying = true; this._mainThemeKey = this._currentMusicKey; this._mainThemeTime = this._currentMusic ? this._currentMusic.currentTime : 0; }
+    this._playMusic('dungeon_1');
+    var dungeons = Sherwood.Dungeon ? Sherwood.Dungeon.getAvailable() : {};
+    var dungeonList = [{ id: 'forest', name: 'Проклятая чаща', icon: 'the_cursed_thicket.png' }, { id: 'swamp', name: 'Первородное болото', icon: 'primordial_swamp.png' }, { id: 'cave', name: 'Базальтовый грот', icon: 'basalt_grotto.png' }];
+       var h = '';
+    var p = Sherwood.getPlayer();
+    var tickets = p ? (p.dungeon ? p.dungeon.tickets : 0) : 0;
+    var maxTickets = p ? (p.dungeon ? p.dungeon.maxTickets : 20) : 20;
+    var autoTickets = Sherwood.Bag ? Sherwood.Bag.getResource('autoFightTickets') : 0;
+    var afActive = Sherwood.Dungeon.isAutoFightActive();
+    
+    h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:8px;">';
+    h += '<div style="position:relative;width:50px;height:50px;"><img src="assets/interface/resource_key_to_locked_levels.png" style="width:100%;height:100%;object-fit:contain;"><span style="position:absolute;bottom:0;right:0;color:#fff;font-size:0.7em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 5px;border-radius:3px;">' + tickets + '/' + maxTickets + '</span></div>';
+    h += '<div style="position:relative;width:50px;height:50px;"><img src="assets/interface/ticket_autofight.png" style="width:100%;height:100%;object-fit:contain;"><span style="position:absolute;bottom:0;right:0;color:#fff;font-size:0.7em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 5px;border-radius:3px;">' + autoTickets + '</span></div>';
+    h += '</div>';
+    h += '<div id="ticket-timer" style="text-align:center;color:#aaa;font-size:0.7em;margin-bottom:12px;">Восстановление: ' + (p && p.dungeon && p.dungeon.ticketTimer ? Math.ceil(p.dungeon.ticketTimer / 60) + ' мин.' : '60 мин.') + '</div>';
+    
+    // Тикеты
+    h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:8px;">';
+    h += '<div style="position:relative;width:50px;height:50px;"><img src="assets/interface/resource_key_to_locked_levels.png" style="width:100%;height:100%;object-fit:contain;"><span style="position:absolute;bottom:0;right:0;color:#fff;font-size:0.7em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 5px;border-radius:3px;">' + tickets + '/' + maxTickets + '</span></div>';
+    h += '<div style="position:relative;width:50px;height:50px;"><img src="assets/interface/ticket_autofight.png" style="width:100%;height:100%;object-fit:contain;"><span style="position:absolute;bottom:0;right:0;color:#fff;font-size:0.7em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 5px;border-radius:3px;">' + autoTickets + '</span></div>';
+    h += '</div>';
+    
+    // Таймер восстановления
+    h += '<div style="text-align:center;color:#aaa;font-size:0.7em;margin-bottom:12px;">Восстановление: ' + (p && p.dungeon && p.dungeon.ticketTimer ? 'через ' + p.dungeon.ticketTimer + ' мин.' : '1 час') + '</div>';
+    
+    if (afActive) { var afRemain = Sherwood.Dungeon.getAutoFightRemaining(); h += '<div style="text-align:center;background:rgba(201,160,64,0.3);border:1px solid #c9a040;border-radius:8px;padding:8px;margin-bottom:12px;"><div style="color:#ffd700;font-size:0.85em;">⚔️ Автобой активен</div><div style="color:#aaa;font-size:0.7em;">Осталось: ' + afRemain + ' мин.</div></div>'; }
+    for (var i = 0; i < dungeonList.length; i++) {
+        var dl = dungeonList[i]; var d = dungeons[dl.id];
+        if (d) {
+            h += '<div style="text-align:center;margin-bottom:24px;"><div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + dl.name + '</div><img src="assets/dungeon_tiles/visual_dungeon/' + dl.icon + '" style="width:200px;height:200px;object-fit:contain;display:block;margin:0 auto 10px;">';
+            if (d.unlocked) { h += '<button onclick="SherwoodUI._showDungeonLevels(\'' + dl.id + '\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;">Войти</button>'; }
+            else { h += '<div style="color:#f44336;font-size:0.8em;">Заблокировано</div><div style="color:#aaa;font-size:0.65em;">Нужно пройти последний этаж предыдущей подземки на 3 кубка</div>'; }
+            h += '</div>';
         }
-        h += '<div style="color:#aaa;font-size:0.85em;margin-top:16px;text-align:center;">Билетов: ' + tickets + '</div>';
-        var bgImage = 'assets/dungeon_tiles/visual_dungeon/sherwood_thicket.png';
-        try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
-        this.container.style.background = "url('" + bgImage + "') center/cover no-repeat";
-        if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="height:100%;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Подземелья</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;padding-top:30px;padding-bottom:40px;-webkit-overflow-scrolling:touch;">' + h + '</div></div>'; this._screenLayer.style.display = 'block'; }
-    },
+    }
+            var self = this;
+    if (this._ticketDisplayInterval) clearInterval(this._ticketDisplayInterval);
+    this._ticketDisplayInterval = setInterval(function() {
+        var timerEl = document.getElementById('ticket-timer');
+        if (timerEl) {
+            var pl = Sherwood.getPlayer();
+            if (pl && pl.dungeon && pl.dungeon.ticketTimer) {
+                timerEl.textContent = 'Восстановление: ' + Math.ceil(pl.dungeon.ticketTimer / 60) + ' мин.';
+            }
+        } else {
+            clearInterval(self._ticketDisplayInterval);
+            self._ticketDisplayInterval = null;
+        }
+    }, 1000);
+    var bgImage = 'assets/dungeon_tiles/visual_dungeon/sherwood_thicket.png';
+    try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {}
+    this.container.style.background = "url('" + bgImage + "') center/cover no-repeat";
+    if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="height:100%;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="SherwoodUI.loadHome()" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">Подземелья</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:20px;padding-top:10px;padding-bottom:40px;-webkit-overflow-scrolling:touch;">' + h + '</div></div>'; this._screenLayer.style.display = 'block'; }
+},
 
     _showDungeonLevels: function(dungeonId) {
         var dungeons = Sherwood.Dungeon ? Sherwood.Dungeon.getAvailable() : {}; var d = dungeons[dungeonId]; if (!d) return;
@@ -303,7 +336,7 @@ _showDefeatScreen: function(rewards) {
             var img = unlocked ? (tp + lvl + te) : 'assets/interface/closed_level_lock_icon.png';
             h += '<div style="text-align:center;">';
             h += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;min-height:24px;">';
-            for (var c = 0; c < 3; c++) { if (c < cupCount) { h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">'; } else { h += '<div style="width:20px;height:20px;"></div>'; } }
+            for (var c = 0; c < 3; c++) { if (c < cupCount) { h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:40px;height:40px;object-fit:contain;">'; } else { h += '<div style="width:20px;height:20px;"></div>'; } }
             h += '</div>';
             h += '<div onclick="' + (unlocked ? 'SherwoodUI._showDungeonActions(\'' + dungeonId + '\',' + lvl + ')' : '') + '" style="width:100px;height:100px;background-image:url(\'' + img + '\');background-size:cover;background-position:center;border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto;"><span style="position:absolute;bottom:2px;right:4px;font-size:0.7em;color:' + (unlocked ? '#000' : '#888') + ';font-weight:bold;">' + lvl + '</span></div>';
             h += '</div>';
@@ -318,7 +351,7 @@ _showDefeatScreen: function(rewards) {
         var cupCount = cups[level] || 0; var maxCups = 3; var autoFightCups = 5;
         var p = Sherwood.getPlayer(); var autoTickets = Sherwood.Bag.getResource('autoFightTickets');
         var h = '<div style="text-align:center;padding:20px;"><div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:12px;">Этаж ' + level + '</div><div style="margin-bottom:16px;">';
-        for (var c = 0; c < maxCups; c++) { h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:24px;height:24px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">'; }
+        for (var c = 0; c < maxCups; c++) { h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:40px;height:40px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">'; }
         h += '<div style="color:#aaa;font-size:0.7em;">' + cupCount + '/' + maxCups + ' кубков</div></div>';
         h += '<button onclick="SherwoodUI._startDungeon(\'' + dungeonId + '\',' + level + ')" style="display:block;width:80%;margin:0 auto 8px;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Войти (1 билет)</button>';
         if (cupCount >= autoFightCups) {
