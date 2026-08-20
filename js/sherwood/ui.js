@@ -384,14 +384,14 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-       _startDungeon: function(id, level) { 
+          _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
 
-    // ========== КЭШ ТЕКСТУР (Твой оригинальный правильный вариант) ==========
+    // ========== ТЕКСТУРЫ ==========
     _textureCache: {},
     _getDungeonTexture: function(dungeonId) {
         var src = 'assets/interface/labyrinth_asset.png';
@@ -403,7 +403,7 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== НАСТОЯЩИЙ РЕЙКАСТИНГ (Стены 1024, без пола) ==========
+    // ========== ВИД СЗАДИ (ПОШАГОВЫЙ) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -423,7 +423,7 @@ _showDefeatScreen: function(rewards) {
         container.insertAdjacentHTML('beforeend', bottomBarHtml);
 
         var canvas = document.createElement('canvas');
-        canvas.style.cssText = 'flex:1;width:100%;display:block;background:#000;';
+        canvas.style.cssText = 'flex:1;width:100%;display:block;';
         container.appendChild(canvas);
         var ctx = canvas.getContext('2d');
 
@@ -432,97 +432,98 @@ _showDefeatScreen: function(rewards) {
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // Текстура стены (1024x1024)
         var wallTexture = this._getDungeonTexture(d.id);
+        var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
+        var dirV = dirMap[d.heroDirection] || [0, -1];
 
-        // Направление и позиция игрока
-        var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI/2, 'right': Math.PI/2 };
-        var playerAngle = dirMap[d.heroDirection] || 0;
-        var px = d.px + 0.5;
-        var py = d.py + 0.5;
+        // Параметры перспективы (подогнаны под вертикальный экран)
+        var tileSize = 150; 
+        var fovScale = 0.6;
 
-        var FOV = Math.PI / 2; // 90 градусов
+        // 1. Проходимся по сетке 5x5 ПЕРЕД игроком
+        // Вперед = dirV, влево/вправо = перпендикулярные векторы
+        var leftVec = [-dirV[1], dirV[0]];
+        var rightVec = [dirV[1], -dirV[0]];
 
-        // --- ПОТОЛОК И ПОЛ (Просто заливка, пока нет текстур пола) ---
-        ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H/2); // Потолок
-        ctx.fillStyle = '#222'; ctx.fillRect(0, H/2, W, H/2); // Пол
+        // Рисуем слой за слоем (от дальнего к ближнему)
+        for (var row = 3; row >= -2; row--) { // 3 ряда вперед, 2 ряда назад
+            for (var col = -2; col <= 2; col++) { // 2 клетки влево и вправо
+                // Преобразуем координаты сетки в карту
+                var mapX = d.px + leftVec[0] * col + dirV[0] * row;
+                var mapY = d.py + leftVec[1] * col + dirV[1] * row;
 
-        // --- РЕЙКАСТИНГ СТЕН ---
-        for (var x = 0; x < W; x++) {
-            var cameraX = 2 * x / W - 1;
-            var rayDirX = Math.cos(playerAngle) + Math.cos(playerAngle - Math.PI/2) * cameraX * Math.tan(FOV/2);
-            var rayDirY = Math.sin(playerAngle) + Math.sin(playerAngle - Math.PI/2) * cameraX * Math.tan(FOV/2);
-            
-            var rayAngle = Math.atan2(rayDirY, rayDirX);
-            
-            var mapX = Math.floor(px);
-            var mapY = Math.floor(py);
-            
-            var deltaDistX = Math.abs(1 / rayDirX);
-            var deltaDistY = Math.abs(1 / rayDirY);
-            
-            var stepX, stepY, sideDistX, sideDistY;
-            if (rayDirX < 0) { stepX = -1; sideDistX = (px - mapX) * deltaDistX; } 
-            else { stepX = 1; sideDistX = (mapX + 1 - px) * deltaDistX; }
-            if (rayDirY < 0) { stepY = -1; sideDistY = (py - mapY) * deltaDistY; } 
-            else { stepY = 1; sideDistY = (mapY + 1 - py) * deltaDistY; }
-            
-            var hit = false, side = 0;
-            while (!hit) {
-                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
-                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
-                
-                var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
-                if (!cellCheck || !cellCheck.open) { hit = true; }
-            }
-            
-            var distance;
-            if (side === 0) distance = sideDistX - deltaDistX;
-            else distance = sideDistY - deltaDistY;
-            
-            var correctedDist = Math.max(0.1, distance * Math.cos(rayAngle - playerAngle));
-            var wallHeight = H / correctedDist;
-            var wallTop = H/2 - wallHeight/2;
-            var wallBottom = H/2 + wallHeight/2;
+                var cell = d.grid[mapY] && d.grid[mapY][mapX];
+                if (!cell) continue;
 
-            // --- Отрисовка стены с текстурой 1024x1024 ---
-            if (wallTexture.complete && wallTexture.naturalWidth > 0) {
-                var wallX;
-                if (side === 0) wallX = py + correctedDist * rayDirY;
-                else wallX = px + correctedDist * rayDirX;
-                wallX -= Math.floor(wallX);
-                
-                var texX = Math.floor(wallX * 1024); // Берем 1 пиксель по ширине из 1024
-                if (side === 1) texX = 1023 - texX;
-                
-                try {
-                    // Рисуем вертикальную полоску текстуры
-                    ctx.drawImage(wallTexture, texX, 0, 1, 1024, x, wallTop, 1, wallHeight);
-                } catch(e) {
-                    ctx.fillStyle = '#5a4a3a'; ctx.fillRect(x, wallTop, 1, wallHeight);
+                // Глубина и размер
+                var depth = 1 + row * 0.2;
+                var size = Math.floor(tileSize / depth);
+                if (size < 2) continue;
+
+                // Позиция на экране
+                var screenX = Math.floor(W / 2 + col * (tileSize / depth) * fovScale);
+                var screenY = Math.floor(H / 2 - row * (tileSize / depth) * fovScale + 20);
+
+                // Определяем, надо ли рисовать пол или стену
+                var isWalkable = cell.open;
+
+                // ПОДСВЕТКА: Если это соседняя клетка (row=1, col=0) И она не открыта -> подсвечиваем
+                var canOpen = (!cell.open && row === 1 && col === 0);
+
+                // 2. Рисуем пол (текстура пола, если она есть, или темный квадрат)
+                if (isWalkable) {
+                    ctx.fillStyle = 'rgba(30, 30, 30, 0.9)';
+                    ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                    // Рисуем границы пола для глубины
+                    ctx.strokeStyle = 'rgba(60, 60, 60, 0.5)';
+                    ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
                 }
-            } else {
-                var shade = Math.max(0.3, 1 - distance / 20);
-                ctx.fillStyle = `rgb(${Math.floor(100 * shade)}, ${Math.floor(80 * shade)}, ${Math.floor(60 * shade)})`;
-                ctx.fillRect(x, wallTop, 1, wallHeight);
+
+                // 3. Рисуем стену (если НЕ открыта)
+                if (!isWalkable) {
+                    if (wallTexture && wallTexture.complete && wallTexture.naturalWidth > 0) {
+                        ctx.drawImage(wallTexture, screenX - size/2, screenY - size/2, size, size);
+                    } else {
+                        ctx.fillStyle = '#4a3d2b'; ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                    }
+                }
+
+                // 4. Если это подсвеченная клетка (можно открыть) - рисуем рамку
+                if (canOpen) {
+                    ctx.strokeStyle = '#00ff00'; // Ярко-зеленая рамка
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(screenX - size/2 + 4, screenY - size/2 + 4, size - 8, size - 8);
+                }
             }
         }
 
-        // --- УПРАВЛЕНИЕ (Направление по углу) ---
+        // 5. Рисуем персонажа (внизу по центру)
+        var heroImg = new Image();
+        var dirFile = 'step_down.png'; 
+        if (d.heroDirection === 'up') dirFile = 'step_down.png'; 
+        else if (d.heroDirection === 'down') dirFile = 'step_up.png'; 
+        else if (d.heroDirection === 'left') dirFile = 'step_left.png';
+        else if (d.heroDirection === 'right') dirFile = 'step_right.png';
+        heroImg.src = 'assets/animation/' + dirFile;
+
+        var sprSize = Math.min(W * 0.6, H * 0.5); 
+        var drawHero = function() {
+            ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize, sprSize, sprSize);
+        };
+        heroImg.onload = drawHero;
+        if (heroImg.complete) { drawHero(); }
+
+        // --- УПРАВЛЕНИЕ ---
         var self = this;
         canvas.addEventListener('click', function(e) {
             var rect = canvas.getBoundingClientRect();
             var y = (e.clientY - rect.top) / rect.height;
             var x = (e.clientX - rect.left) / rect.width;
 
-            var fwdX = d.px + Math.round(Math.cos(playerAngle)); 
-            var fwdY = d.py + Math.round(Math.sin(playerAngle));
-            var bckX = d.px - Math.round(Math.cos(playerAngle));
-            var bckY = d.py - Math.round(Math.sin(playerAngle));
-            var lVx = Math.round(Math.cos(playerAngle - Math.PI/2));
-            var lVy = Math.round(Math.sin(playerAngle - Math.PI/2));
-            var rVx = Math.round(Math.cos(playerAngle + Math.PI/2));
-            var rVy = Math.round(Math.sin(playerAngle + Math.PI/2));
+            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
+            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
+            var lVx = leftVec[0], lVy = leftVec[1];
+            var rVx = rightVec[0], rVy = rightVec[1];
 
             if (Math.abs(x - 0.5) < 0.3) { 
                 if (y < 0.4) self._dungeonMove(fwdX, fwdY);
@@ -534,14 +535,10 @@ _showDefeatScreen: function(rewards) {
         });
         
         document.addEventListener('keydown', function(e) {
-            var fwdX = d.px + Math.round(Math.cos(playerAngle)); 
-            var fwdY = d.py + Math.round(Math.sin(playerAngle));
-            var bckX = d.px - Math.round(Math.cos(playerAngle));
-            var bckY = d.py - Math.round(Math.sin(playerAngle));
-            var lVx = Math.round(Math.cos(playerAngle - Math.PI/2));
-            var lVy = Math.round(Math.sin(playerAngle - Math.PI/2));
-            var rVx = Math.round(Math.cos(playerAngle + Math.PI/2));
-            var rVy = Math.round(Math.sin(playerAngle + Math.PI/2));
+            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
+            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
+            var lVx = leftVec[0], lVy = leftVec[1];
+            var rVx = rightVec[0], rVy = rightVec[1];
 
             if (e.key === 'ArrowUp') self._dungeonMove(fwdX, fwdY);
             else if (e.key === 'ArrowDown') self._dungeonMove(bckX, bckY);
