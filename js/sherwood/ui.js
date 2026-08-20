@@ -404,7 +404,7 @@ _showDefeatScreen: function(rewards) {
     },
 
     // ========== ПСЕВДО-3D (ПЛОСКИЙ ПОЛ) ==========
-        _renderDungeon: function() {
+            _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
@@ -436,13 +436,14 @@ _showDefeatScreen: function(rewards) {
         var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
         var dirV = dirMap[d.heroDirection] || [0, -1];
 
-        // Жесткие размеры без деления
         var tileSize = 150; 
         var fovScale = 0.6;
+        var yStartOffset = 50; // Отступ от центра вниз
 
         var leftVec = [-dirV[1], dirV[0]];
         var rightVec = [dirV[1], -dirV[0]];
 
+        // Идем от ДАЛЬНЕГО к БЛИЖНЕМУ (чтобы передние перекрывали задние)
         for (var row = 3; row >= -2; row--) {
             for (var col = -2; col <= 2; col++) {
                 var mapX = d.px + leftVec[0] * col + dirV[0] * row;
@@ -451,14 +452,19 @@ _showDefeatScreen: function(rewards) {
                 var cell = d.grid[mapY] && d.grid[mapY][mapX];
                 if (!cell) continue;
 
-                // РАЗМЕР ПЛИТКИ ЗАВИСИТ ТОЛЬКО ОТ РЯДА, БЕЗ ДЕЛЕНИЯ!
-                var size = Math.floor(tileSize - (row * 8));
+                // Глубина (влияет и на размер, и на высоту на экране)
+                var depth = 1 + row * 0.2;
+                var size = Math.floor(tileSize / depth);
                 if (size < 2) continue;
 
-                // ПОЗИЦИЯ ПО X БЕЗ ГЛУБИНЫ
-                var screenX = Math.floor(W / 2 + col * (size * 0.7));
-                // ПОЗИЦИЯ ПО Y БЕЗ ЛЕСТНИЦЫ
-                var screenY = Math.floor(H / 2 + row * 8 + 20);
+                // Считаем позицию по X (влево-вправо)
+                var screenX = Math.floor(W / 2 + col * (tileSize / depth) * fovScale);
+                
+                // Считаем позицию по Y (вверх-вниз).
+                // ОШИБКА БЫЛА ЗДЕСЬ: мы не использовали depth для Y.
+                // Теперь Y напрямую зависит от глубины: чем глубже (row больше) -> тем выше на экране.
+                // 0.3 - это коэффициент сглаживания вертикали.
+                var screenY = Math.floor(H / 2 - (tileSize / depth) * fovScale * 0.35 + yStartOffset);
 
                 var isWalkable = cell.open;
                 var canOpen = (!cell.open && row === 1 && col === 0);
