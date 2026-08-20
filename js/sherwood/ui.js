@@ -403,8 +403,8 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== ВИД СЗАДИ (ПОШАГОВЫЙ) ==========
-    _renderDungeon: function() {
+    // ========== ПСЕВДО-3D (ПЛОСКИЙ ПОЛ) ==========
+        _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
@@ -436,68 +436,58 @@ _showDefeatScreen: function(rewards) {
         var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
         var dirV = dirMap[d.heroDirection] || [0, -1];
 
-        // Параметры перспективы (подогнаны под вертикальный экран)
+        // Жесткие размеры без деления
         var tileSize = 150; 
         var fovScale = 0.6;
 
-        // 1. Проходимся по сетке 5x5 ПЕРЕД игроком
-        // Вперед = dirV, влево/вправо = перпендикулярные векторы
         var leftVec = [-dirV[1], dirV[0]];
         var rightVec = [dirV[1], -dirV[0]];
 
-        // Рисуем слой за слоем (от дальнего к ближнему)
-        for (var row = 3; row >= -2; row--) { // 3 ряда вперед, 2 ряда назад
-            for (var col = -2; col <= 2; col++) { // 2 клетки влево и вправо
-                // Преобразуем координаты сетки в карту
+        for (var row = 3; row >= -2; row--) {
+            for (var col = -2; col <= 2; col++) {
                 var mapX = d.px + leftVec[0] * col + dirV[0] * row;
                 var mapY = d.py + leftVec[1] * col + dirV[1] * row;
 
                 var cell = d.grid[mapY] && d.grid[mapY][mapX];
                 if (!cell) continue;
 
-                // Глубина и размер
-                var depth = 1 + row * 0.2;
-                var size = Math.floor(tileSize / depth);
+                // РАЗМЕР ПЛИТКИ ЗАВИСИТ ТОЛЬКО ОТ РЯДА, БЕЗ ДЕЛЕНИЯ!
+                var size = Math.floor(tileSize - (row * 8));
                 if (size < 2) continue;
 
-                // Позиция на экране
-                var screenX = Math.floor(W / 2 + col * (tileSize / depth) * fovScale);
-                var screenY = Math.floor(H / 2 - row * (tileSize / depth) * fovScale + 20);
+                // ПОЗИЦИЯ ПО X БЕЗ ГЛУБИНЫ
+                var screenX = Math.floor(W / 2 + col * (size * 0.7));
+                // ПОЗИЦИЯ ПО Y БЕЗ ЛЕСТНИЦЫ
+                var screenY = Math.floor(H / 2 + row * 8 + 20);
 
-                // Определяем, надо ли рисовать пол или стену
                 var isWalkable = cell.open;
-
-                // ПОДСВЕТКА: Если это соседняя клетка (row=1, col=0) И она не открыта -> подсвечиваем
                 var canOpen = (!cell.open && row === 1 && col === 0);
 
-                // 2. Рисуем пол (текстура пола, если она есть, или темный квадрат)
                 if (isWalkable) {
                     ctx.fillStyle = 'rgba(30, 30, 30, 0.9)';
                     ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
-                    // Рисуем границы пола для глубины
                     ctx.strokeStyle = 'rgba(60, 60, 60, 0.5)';
                     ctx.strokeRect(screenX - size/2, screenY - size/2, size, size);
                 }
 
-                // 3. Рисуем стену (если НЕ открыта)
                 if (!isWalkable) {
                     if (wallTexture && wallTexture.complete && wallTexture.naturalWidth > 0) {
                         ctx.drawImage(wallTexture, screenX - size/2, screenY - size/2, size, size);
                     } else {
-                        ctx.fillStyle = '#4a3d2b'; ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                        ctx.fillStyle = '#4a3d2b';
+                        ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
                     }
                 }
 
-                // 4. Если это подсвеченная клетка (можно открыть) - рисуем рамку
                 if (canOpen) {
-                    ctx.strokeStyle = '#00ff00'; // Ярко-зеленая рамка
+                    ctx.strokeStyle = '#00ff00';
                     ctx.lineWidth = 3;
                     ctx.strokeRect(screenX - size/2 + 4, screenY - size/2 + 4, size - 8, size - 8);
                 }
             }
         }
 
-        // 5. Рисуем персонажа (внизу по центру)
+        // Рисуем персонажа
         var heroImg = new Image();
         var dirFile = 'step_down.png'; 
         if (d.heroDirection === 'up') dirFile = 'step_down.png'; 
@@ -513,7 +503,7 @@ _showDefeatScreen: function(rewards) {
         heroImg.onload = drawHero;
         if (heroImg.complete) { drawHero(); }
 
-        // --- УПРАВЛЕНИЕ ---
+        // Управление
         var self = this;
         canvas.addEventListener('click', function(e) {
             var rect = canvas.getBoundingClientRect();
@@ -539,15 +529,13 @@ _showDefeatScreen: function(rewards) {
             var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
             var lVx = leftVec[0], lVy = leftVec[1];
             var rVx = rightVec[0], rVy = rightVec[1];
-
             if (e.key === 'ArrowUp') self._dungeonMove(fwdX, fwdY);
             else if (e.key === 'ArrowDown') self._dungeonMove(bckX, bckY);
             else if (e.key === 'ArrowLeft') self._dungeonMove(d.px + lVx, d.py + lVy);
             else if (e.key === 'ArrowRight') self._dungeonMove(d.px + rVx, d.py + rVy);
         });
     },
-
-    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
+    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК (БЕЗ ИЗМЕНЕНИЙ) ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
