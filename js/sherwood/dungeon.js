@@ -83,15 +83,20 @@ Sherwood.Dungeon = {
     },
 
     _completeAutoFight: function(dungeonId, level) {
-        this._autoFightActive = false; this._autoFightEndTime = 0;
-        if (this._autoFightTimer) clearInterval(this._autoFightTimer);
-        var p = Sherwood.getPlayer();
-        if (p && p.dungeon) { p.dungeon.autoFight = { active: false, endTime: 0, dungeonId: null, level: 0 }; Sherwood.saveGame(); }
-        var gold = 5 + Math.floor(Math.random() * 10); var silver = 200 + Math.floor(Math.random() * 300); var exp = 100 + Math.floor(Math.random() * 100);
-        Sherwood.addResource('gold', gold); Sherwood.addResource('silver', silver); Sherwood.addExp(exp);
-        this._addCup(dungeonId, level);
-        Sherwood.dispatch({ type: 'AUTO_FIGHT_COMPLETE', payload: { dungeonId: dungeonId, level: level, rewards: { gold: gold, silver: silver, exp: exp } } });
-    },
+    this._autoFightActive = false; this._autoFightEndTime = 0;
+    if (this._autoFightTimer) clearInterval(this._autoFightTimer);
+    var p = Sherwood.getPlayer();
+    if (p && p.dungeon) { p.dungeon.autoFight = { active: false, endTime: 0, dungeonId: null, level: 0 }; Sherwood.saveGame(); }
+    
+    var progress = this._progress[dungeonId] || { level: 1, cups: {} };
+    var currentCups = progress.cups[level] || 0;
+    if (currentCups >= 3) return; // Нельзя автобоем получить больше 3 кубков
+    
+    var gold = 5 + Math.floor(Math.random() * 10); var silver = 200 + Math.floor(Math.random() * 300); var exp = 100 + Math.floor(Math.random() * 100);
+    Sherwood.addResource('gold', gold); Sherwood.addResource('silver', silver); Sherwood.addExp(exp);
+    this._addCup(dungeonId, level);
+    Sherwood.dispatch({ type: 'AUTO_FIGHT_COMPLETE', payload: { dungeonId: dungeonId, level: level, rewards: { gold: gold, silver: silver, exp: exp } } });
+},
 
     _addCup: function(dungeonId, level) {
         if (!this._progress[dungeonId]) this._progress[dungeonId] = { level: 1, cups: {} };
@@ -162,7 +167,7 @@ Sherwood.Dungeon = {
         if (cell.type === this.TILE.WALL) return { ok: false };
         cell.open = true; d.px = tx; d.py = ty;
         if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) { return { ok: true, type: 'battle', monsterId: cell.monsterId, monsterStats: cell.monsterStats, boss: cell.isBoss || false }; }
-        if (cell.chest && !cell.looted) return { ok: true, type: 'chest' };
+                if (cell.chest && !cell.looted) return { ok: true, type: 'chest' };
         if (cell.altar && !cell.altarCollected) return { ok: true, type: 'altar' };
         if (cell.cauldron && !cell.cauldronCollected) return { ok: true, type: 'cauldron' };
         if (cell.potion && !cell.potionCollected) return { ok: true, type: 'potion' };
