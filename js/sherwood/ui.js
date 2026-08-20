@@ -391,14 +391,14 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-        // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН (Вспомогательная функция) ==========
+            // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН ==========
     _textureCache: {},
 
     _getDungeonTexture: function(dungeonId) {
-        // Путь к вашей картинке-плитке
+        // Укажи путь к твоей текстурной плитке стены
         var src = 'assets/interface/labyrinth_asset.png'; 
 
-        /* Если захотите разные текстуры для разных подземелий:
+        /* Если захочешь разные плитки для разных подземелий, просто убери комментарий:
         if (dungeonId === 'forest') src = 'assets/dungeon_tiles/dungeon1/tiles/1.jpeg';
         else if (dungeonId === 'swamp') src = 'assets/dungeon_tiles/dungeon2/tiles2.1.png';
         else if (dungeonId === 'cave') src = 'assets/dungeon_tiles/dungeon3/tiles3.1.png';
@@ -412,39 +412,58 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== НОВЫЙ 3D РЕНДЕР (Текстурированный, Вид сзади) ==========
+    // ========== НОВЫЙ 3D РЕНДЕР (СТРУКТУРА FLEX) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
 
-        // --- 1. Подготовка Canvas ---
+        // Делаем слой видимым, обнуляем стили и очищаем старый контент
+        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:transparent;overflow:hidden;';
         this._screenLayer.innerHTML = ''; 
+
+        // --- 1. Подготовка Flex-контейнера ---
+        var container = document.createElement('div');
+        container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
+        this._screenLayer.appendChild(container);
+
+        // --- 2. Создание Canvas внутри контейнера ---
         var canvas = document.createElement('canvas');
-        var containerRect = this.container.getBoundingClientRect();
-        var W = Math.floor(containerRect.width); 
-        var H = Math.floor(containerRect.height - 100); 
-        canvas.width = W; canvas.height = H;
-        canvas.style.cssText = 'width:100%; height:calc(100% - 100px); display:block;';
-        this._screenLayer.appendChild(canvas);
+        canvas.style.cssText = 'flex:1;width:100%;display:block;background:#0a0f0a;';
+        container.appendChild(canvas);
         var ctx = canvas.getContext('2d');
 
-        // --- 2. Данные игрока и камеры (смещение назад) ---
+        // --- 3. Верхний интерфейс (пока создаем в JS, потом вставим в DOM поверх) ---
+        var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
+        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.4);'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
+        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.5);padding:3px;text-align:center;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
+
+        // Вставляем HTML
+        container.insertAdjacentHTML('afterbegin', topBarHtml);
+        container.insertAdjacentHTML('beforeend', bottomBarHtml);
+
+        // --- 4. МАТЕМАТИКА РЕЙКАСТИНГА ---
+        // Принудительно ставим размеры Canvas (должны совпадать с его визуальными пикселями экрана)
+        var W = canvas.clientWidth;
+        var H = canvas.clientHeight;
+        if (W === 0 || H === 0) { W = 480; H = 500; } // Заглушка на случай если браузер еще не просчитал CSS
+        canvas.width = W; canvas.height = H;
+
+        // Данные игрока и камеры
         var dirOffset = 1.6; // Камера позади спины
         var angleMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
         var dirAngle = angleMap[d.heroDirection] || 0;
         var dirX = Math.sin(dirAngle), dirY = -Math.cos(dirAngle);
-        var planeX = Math.cos(dirAngle) * 0.66, planeY = Math.sin(dirAngle) * 0.66; // 66% FOV
+        var planeX = Math.cos(dirAngle) * 0.66, planeY = Math.sin(dirAngle) * 0.66; 
 
         var camX = d.px + 0.5 - dirX * dirOffset;
         var camY = d.py + 0.5 - dirY * dirOffset;
         
-        // Загружаем текстуру стены
         var wallTexture = this._getDungeonTexture(d.id);
-        var texWidth = 64, texHeight = 64; // Размер текстуры
+        var texWidth = 64, texHeight = 64;
 
-        // --- 3. Рейкастинг (Бросание лучей) ---
-        ctx.fillStyle = '#0a0f0a'; ctx.fillRect(0, 0, W, H); 
+        // --- 5. Сам рейкастинг ---
+        ctx.fillStyle = '#0a0f0a'; ctx.fillRect(0, 0, W, H); // Фон
         ctx.fillStyle = '#1a2a1a'; ctx.fillRect(0, 0, W, H / 2); // Потолок
         ctx.fillStyle = '#151515'; ctx.fillRect(0, H / 2, W, H / 2); // Пол
 
@@ -470,7 +489,6 @@ _showDefeatScreen: function(rewards) {
                 if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
                 else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
                 
-                // Проверяем: является ли клетка стеной (закрытой плиткой)
                 var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
                 if (!cellCheck || !cellCheck.open) { hit = 1; }
             }
@@ -484,16 +502,14 @@ _showDefeatScreen: function(rewards) {
             var drawStart = Math.floor(-lineHeight / 2 + H / 2);
             var drawEnd = Math.floor(lineHeight / 2 + H / 2);
 
-            // Вычисляем точное место на текстуре (wallX)
             var wallX;
             if (side == 0) wallX = camY + perpDist * rayDirY;
             else wallX = camX + perpDist * rayDirX;
             wallX -= Math.floor(wallX);
             
             var texX = Math.floor(wallX * texWidth);
-            if (side == 1) texX = texWidth - texX - 1; // Зеркалим текстуру
+            if (side == 1) texX = texWidth - texX - 1;
 
-            // --- 4. Отрисовка стены с текстурой ---
             if (wallTexture && wallTexture.complete && wallTexture.naturalWidth > 0) {
                 try {
                     ctx.drawImage(wallTexture, texX, 0, 1, texHeight, x, drawStart, 1, drawEnd - drawStart);
@@ -505,7 +521,7 @@ _showDefeatScreen: function(rewards) {
             }
         }
 
-        // --- 5. Отрисовка Игрока (Вид сзади, твой персонаж) ---
+        // --- 6. Рисуем Героя (Спрайт сзади) ---
         var heroImage = new Image();
         var dirImg = 'step_down.png'; 
         if (d.heroDirection === 'up') dirImg = 'step_up.png';
@@ -513,24 +529,14 @@ _showDefeatScreen: function(rewards) {
         else if (d.heroDirection === 'right') dirImg = 'step_right.png';
         heroImage.src = 'assets/animation/' + dirImg;
 
-        var sprSize = Math.min(W * 0.7, H * 0.8); 
-        var self = this;
-        heroImage.onload = function() {
-            ctx.drawImage(heroImage, W/2 - sprSize/2, H - sprSize - 20, sprSize, sprSize);
+        var sprSize = Math.min(W * 0.7, H * 0.6); 
+        var drawHero = function() {
+            ctx.drawImage(heroImage, W/2 - sprSize/2, H - sprSize - 10, sprSize, sprSize);
         };
-        if (heroImage.complete) {
-            ctx.drawImage(heroImage, W/2 - sprSize/2, H - sprSize - 20, sprSize, sprSize);
-        }
-
-        // --- 6. Интерфейс поверх Canvas ---
-        var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
-        var topBar = "<div style='padding:4px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;position:absolute;top:0;left:0;right:0;z-index:10;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
-        var bottomBar = "<div style='position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:3px;text-align:center;z-index:10;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
-        
-        this._screenLayer.innerHTML += topBar + bottomBar; 
+        heroImage.onload = drawHero;
+        if (heroImage.complete) { drawHero(); }
     },
 
-    // Фоллбэк, если текстура не прогрузится
     _drawSolidWall: function(ctx, x, y, height, perpDist, side) {
         var brightness = Math.min(1, 1.0 / (perpDist * 0.2 + 0.4));
         var r = Math.floor(100 * brightness); var g = Math.floor(100 * brightness); var b = Math.floor(100 * brightness);
@@ -539,13 +545,12 @@ _showDefeatScreen: function(rewards) {
         ctx.fillRect(x, y, 1, height);
     },
 
-    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
+    // ========== ДВИЖЕНИЕ (СВАЙПЫ И КЛИКИ) ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
         var dist = Math.abs(d.px - tx) + Math.abs(d.py - ty);
 
-        // Действия на текущей клетке (когда стоим на месте)
         if (tx === d.px && ty === d.py) { 
             if (cell.lootBag && !cell.lootCollected) { this._showInteractButton('lootBag'); return; }
             if (cell.chest && !cell.looted) { this._showInteractButton('chest'); return; }
@@ -556,16 +561,14 @@ _showDefeatScreen: function(rewards) {
             return; 
         }
 
-        // Открытие новой плитки (эффект разрушения стены в 3D)
         if (!cell.open && dist === 1) {
             if (cell.type === 0) return;
             cell.open = true;
             this._playSound('tile_open');
-            this._renderDungeon(); // Перерисовываем 3D сцену заново
+            this._renderDungeon(); 
             return;
         }
 
-        // Шаг на открытую клетку
         if (cell.open && dist === 1) {
             if (cell.exit && cell.locked) { this._showToast('Kill all monsters first!'); return; }
             this._doStep(tx, ty);
@@ -575,7 +578,6 @@ _showDefeatScreen: function(rewards) {
 
     _doStep: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
-        // Меняем направление перед шагом для анимации спрайта
         if (tx > d.px) d.heroDirection = 'right'; 
         else if (tx < d.px) d.heroDirection = 'left'; 
         else if (ty > d.py) d.heroDirection = 'down'; 
@@ -585,10 +587,9 @@ _showDefeatScreen: function(rewards) {
         if (!res || !res.ok) { this._renderDungeon(); return; }
         
         this._playSound('steps');
-        this._renderDungeon(); // Обновляем 3D сцену сразу после шага
+        this._renderDungeon(); 
         SherwoodUI.updateDisplay();
 
-        // Обработка событий после шага (бой, сундук и т.д.)
         if (res.type === 'battle') { this._stopSound('steps'); this._pauseMusic(); this._playSound('trap'); Sherwood.Combat.start(res.monsterId, res.boss, 'dungeon'); setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400); return; }
         if (res.type === 'lootBag' || res.type === 'chest' || res.type === 'altar' || res.type === 'cauldron' || res.type === 'potion') { this._stopSound('steps'); this._showInteractButton(res.type); return; }
         if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1)); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen(reward); return; }
