@@ -392,18 +392,9 @@ _showDefeatScreen: function(rewards) {
     },
 
             // ========== ЗАГРУЗКА ТЕКСТУРЫ СТЕН ==========
-    _textureCache: {},
-
+        _textureCache: {},
     _getDungeonTexture: function(dungeonId) {
-        // Укажи путь к твоей текстурной плитке стены
-        var src = 'assets/interface/labyrinth_asset.png'; 
-
-        /* Если захочешь разные плитки для разных подземелий, просто убери комментарий:
-        if (dungeonId === 'forest') src = 'assets/dungeon_tiles/dungeon1/tiles/1.jpeg';
-        else if (dungeonId === 'swamp') src = 'assets/dungeon_tiles/dungeon2/tiles2.1.png';
-        else if (dungeonId === 'cave') src = 'assets/dungeon_tiles/dungeon3/tiles3.1.png';
-        */
-
+        var src = 'assets/interface/labyrinth_asset.png';
         if (!this._textureCache[src]) {
             var img = new Image();
             img.src = src;
@@ -412,140 +403,114 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-    // ========== НОВЫЙ 3D РЕНДЕР (СТРУКТУРА FLEX) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
 
-        // Делаем слой видимым, обнуляем стили и очищаем старый контент
-        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:transparent;overflow:hidden;';
+        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#0a0a0a;overflow:hidden;';
         this._screenLayer.innerHTML = ''; 
 
-        // --- 1. Подготовка Flex-контейнера ---
         var container = document.createElement('div');
         container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
         this._screenLayer.appendChild(container);
 
-        // --- 2. Создание Canvas внутри контейнера ---
-        var canvas = document.createElement('canvas');
-        canvas.style.cssText = 'flex:1;width:100%;display:block;background:#0a0f0a;';
-        container.appendChild(canvas);
-        var ctx = canvas.getContext('2d');
-
-        // --- 3. Верхний интерфейс (пока создаем в JS, потом вставим в DOM поверх) ---
         var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
-        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.4);'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
-        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.5);padding:3px;text-align:center;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
-
-        // Вставляем HTML
+        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
+        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
         container.insertAdjacentHTML('afterbegin', topBarHtml);
         container.insertAdjacentHTML('beforeend', bottomBarHtml);
 
-        // --- 4. МАТЕМАТИКА РЕЙКАСТИНГА ---
-        // Принудительно ставим размеры Canvas (должны совпадать с его визуальными пикселями экрана)
+        var canvas = document.createElement('canvas');
+        canvas.style.cssText = 'flex:1;width:100%;display:block;';
+        container.appendChild(canvas);
+        var ctx = canvas.getContext('2d');
+
         var W = canvas.clientWidth;
         var H = canvas.clientHeight;
-        if (W === 0 || H === 0) { W = 480; H = 500; } // Заглушка на случай если браузер еще не просчитал CSS
+        if (W === 0 || H === 0) { W = 480; H = 400; }
         canvas.width = W; canvas.height = H;
 
-        // Данные игрока и камеры
-        var dirOffset = 1.6; // Камера позади спины
-        var angleMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
-        var dirAngle = angleMap[d.heroDirection] || 0;
-        var dirX = Math.sin(dirAngle), dirY = -Math.cos(dirAngle);
-        var planeX = Math.cos(dirAngle) * 0.66, planeY = Math.sin(dirAngle) * 0.66; 
-
-        var camX = d.px + 0.5 - dirX * dirOffset;
-        var camY = d.py + 0.5 - dirY * dirOffset;
-        
         var wallTexture = this._getDungeonTexture(d.id);
-        var texWidth = 64, texHeight = 64;
+        var dirMap = { 'up': [0, -1], 'down': [0, 1], 'left': [-1, 0], 'right': [1, 0] };
+        var dirV = dirMap[d.heroDirection] || [0, -1];
+        var tileSize = 70;
 
-        // --- 5. Сам рейкастинг ---
-        ctx.fillStyle = '#0a0f0a'; ctx.fillRect(0, 0, W, H); // Фон
-        ctx.fillStyle = '#1a2a1a'; ctx.fillRect(0, 0, W, H / 2); // Потолок
-        ctx.fillStyle = '#151515'; ctx.fillRect(0, H / 2, W, H / 2); // Пол
+        for (var row = -5; row <= 5; row++) {
+            for (var col = -5; col <= 5; col++) {
+                var mapX = d.px + col;
+                var mapY = d.py + row;
+                var cell = d.grid[mapY] && d.grid[mapY][mapX];
+                if (!cell) continue;
 
-        for (var x = 0; x < W; x++) {
-            var cameraX = 2 * x / W - 1;
-            var rayDirX = dirX + planeX * cameraX;
-            var rayDirY = dirY + planeY * cameraX;
+                var dist = Math.sqrt(col * col + row * row);
+                if (dist === 0) continue;
 
-            var mapX = Math.floor(camX);
-            var mapY = Math.floor(camY);
+                var depth = 1 + dist * 0.25;
+                var size = Math.floor(tileSize / depth);
+                if (size < 2) continue;
 
-            var deltaDistX = Math.abs(1 / rayDirX);
-            var deltaDistY = Math.abs(1 / rayDirY);
+                var relX = col * dirV[0] + row * dirV[1];
+                var relY = -col * dirV[1] + row * dirV[0];
+                var screenX = Math.floor(W / 2 + relY * (tileSize / depth) * 0.8);
+                var screenY = Math.floor(H / 2 - relX * (tileSize / depth) * 0.8 + 20);
 
-            var stepX, stepY, sideDistX, sideDistY;
-            if (rayDirX < 0) { stepX = -1; sideDistX = (camX - mapX) * deltaDistX; } 
-            else { stepX = 1; sideDistX = (mapX + 1 - camX) * deltaDistX; }
-            if (rayDirY < 0) { stepY = -1; sideDistY = (camY - mapY) * deltaDistY; } 
-            else { stepY = 1; sideDistY = (mapY + 1 - camY) * deltaDistY; }
-
-            var hit = 0, side = 0;
-            while (hit === 0) {
-                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
-                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
-                
-                var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
-                if (!cellCheck || !cellCheck.open) { hit = 1; }
-            }
-
-            var perpDist;
-            if (side === 0) perpDist = (sideDistX - deltaDistX);
-            else perpDist = (sideDistY - deltaDistY);
-            if (perpDist < 0.1) perpDist = 0.1;
-
-            var lineHeight = Math.floor(H / perpDist);
-            var drawStart = Math.floor(-lineHeight / 2 + H / 2);
-            var drawEnd = Math.floor(lineHeight / 2 + H / 2);
-
-            var wallX;
-            if (side == 0) wallX = camY + perpDist * rayDirY;
-            else wallX = camX + perpDist * rayDirX;
-            wallX -= Math.floor(wallX);
-            
-            var texX = Math.floor(wallX * texWidth);
-            if (side == 1) texX = texWidth - texX - 1;
-
-            if (wallTexture && wallTexture.complete && wallTexture.naturalWidth > 0) {
-                try {
-                    ctx.drawImage(wallTexture, texX, 0, 1, texHeight, x, drawStart, 1, drawEnd - drawStart);
-                } catch (e) {
-                    this._drawSolidWall(ctx, x, drawStart, drawEnd - drawStart, perpDist, side);
+                if (cell.open) {
+                    ctx.fillStyle = 'rgba(20,20,20,0.8)';
+                    ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                } else {
+                    if (wallTexture.complete && wallTexture.naturalWidth > 0) {
+                        ctx.drawImage(wallTexture, screenX - size/2, screenY - size/2, size, size);
+                    } else {
+                        ctx.fillStyle = '#4a3d2b';
+                        ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                    }
                 }
-            } else {
-                this._drawSolidWall(ctx, x, drawStart, drawEnd - drawStart, perpDist, side);
             }
         }
 
-        // --- 6. Рисуем Героя (Спрайт сзади) ---
-        var heroImage = new Image();
-        var dirImg = 'step_down.png'; 
-        if (d.heroDirection === 'up') dirImg = 'step_up.png';
-        else if (d.heroDirection === 'left') dirImg = 'step_left.png';
-        else if (d.heroDirection === 'right') dirImg = 'step_right.png';
-        heroImage.src = 'assets/animation/' + dirImg;
+        var heroImg = new Image();
+        var dirFile = 'step_down.png'; 
+        if (d.heroDirection === 'up') dirFile = 'step_down.png';
+        else if (d.heroDirection === 'down') dirFile = 'step_up.png';
+        else if (d.heroDirection === 'left') dirFile = 'step_left.png';
+        else if (d.heroDirection === 'right') dirFile = 'step_right.png';
+        heroImg.src = 'assets/animation/' + dirFile;
 
-        var sprSize = Math.min(W * 0.7, H * 0.6); 
-        var drawHero = function() {
-            ctx.drawImage(heroImage, W/2 - sprSize/2, H - sprSize - 10, sprSize, sprSize);
-        };
-        heroImage.onload = drawHero;
-        if (heroImage.complete) { drawHero(); }
+        var sprSize = Math.min(W * 0.7, H * 0.65); 
+        var drawHero = function() { ctx.drawImage(heroImg, W/2 - sprSize/2, H - sprSize - 5, sprSize, sprSize); };
+        heroImg.onload = drawHero;
+        if (heroImg.complete) { drawHero(); }
+
+        var self = this;
+        canvas.addEventListener('click', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var y = (e.clientY - rect.top) / rect.height;
+            var x = (e.clientX - rect.left) / rect.width;
+
+            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
+            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
+            var lV = [-dirV[1], dirV[0]], rV = [dirV[1], -dirV[0]];
+
+            if (Math.abs(x - 0.5) < 0.3) { 
+                if (y < 0.4) self._dungeonMove(fwdX, fwdY);
+                else if (y > 0.6) self._dungeonMove(bckX, bckY);
+            } else { 
+                if (x < 0.4) self._dungeonMove(d.px + lV[0], d.py + lV[1]);
+                else if (x > 0.6) self._dungeonMove(d.px + rV[0], d.py + rV[1]);
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            var fwdX = d.px + dirV[0], fwdY = d.py + dirV[1];
+            var bckX = d.px - dirV[0], bckY = d.py - dirV[1];
+            var lV = [-dirV[1], dirV[0]], rV = [dirV[1], -dirV[0]];
+            if (e.key === 'ArrowUp') self._dungeonMove(fwdX, fwdY);
+            else if (e.key === 'ArrowDown') self._dungeonMove(bckX, bckY);
+            else if (e.key === 'ArrowLeft') self._dungeonMove(d.px + lV[0], d.py + lV[1]);
+            else if (e.key === 'ArrowRight') self._dungeonMove(d.px + rV[0], d.py + rV[1]);
+        });
     },
 
-    _drawSolidWall: function(ctx, x, y, height, perpDist, side) {
-        var brightness = Math.min(1, 1.0 / (perpDist * 0.2 + 0.4));
-        var r = Math.floor(100 * brightness); var g = Math.floor(100 * brightness); var b = Math.floor(100 * brightness);
-        if (side === 1) { r *= 0.6; g *= 0.6; b *= 0.6; }
-        ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
-        ctx.fillRect(x, y, 1, height);
-    },
-
-    // ========== ДВИЖЕНИЕ (СВАЙПЫ И КЛИКИ) ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
@@ -585,7 +550,6 @@ _showDefeatScreen: function(rewards) {
 
         var res = Sherwood.Dungeon.move(tx, ty);
         if (!res || !res.ok) { this._renderDungeon(); return; }
-        
         this._playSound('steps');
         this._renderDungeon(); 
         SherwoodUI.updateDisplay();
@@ -595,6 +559,10 @@ _showDefeatScreen: function(rewards) {
         if (res.type === 'exit') { this._stopSound('steps'); this._stopMusic(); var reward = Sherwood.Dungeon.complete(); SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1)); SherwoodUI.updateDisplay(); this._afterRewardAction = function() { SherwoodUI._playMusic('main_theme'); SherwoodUI.showDungeon(); }; this._showVictoryScreen(reward); return; }
         this._stopSound('steps');
     },
+       
+       
+
+    
         _showInteractButton: function(type) {
         var self = this; var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var dungId = d.id || 'forest'; var icon = '';
