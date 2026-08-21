@@ -1,42 +1,38 @@
-// ========== 3D ПОДЗЕМКА (Pseudo-3D Sprite-based Rendering) ==========
+// ========== 3D ПОДЗЕМКА (Псевдо-3D рендеринг на спрайтах) ==========
 Sherwood.Dungeon2D5 = {
     _canvas: null,
     _ctx: null,
     _dungeon: null,
-    _dir: 0,
-    _isMoving: false,
-    _isTurning: false,
-    _moveX: 0,
-    _moveY: 0,
-    _fromX: 0,
-    _fromY: 0,
-    _toX: 0,
-    _toY: 0,
-    _moveT: 0,
-    _turnT: 0,
-    _turnDir: 0,
-    _bobT: 0,
-    _renderLoop: null,
-    _walls: [],
-    _floors: [],
-    _ceilings: [],
-    _images: {},
-    _animImages: {},
-    _monsterImages: {},
-    _joystick: null,
-    _joystickImg: null,
-    _interactBtn: null,
-    _interactBtnImg: null,
-    _interactType: null,
-    _w: 480,
-    _h: 800,
-    _lastDrawTime: 0,
-    _bobOffset: 0,
+    _dir: 0,                    // Направление: 0-север, 1-восток, 2-юг, 3-запад
+    _isMoving: false,           // Флаг движения
+    _isTurning: false,          // Флаг поворота
+    _fromX: 0, _fromY: 0,       // Начальная позиция движения
+    _toX: 0, _toY: 0,           // Конечная позиция движения
+    _moveT: 0,                  // Прогресс движения (0-1)
+    _turnT: 0,                  // Прогресс поворота (0-1)
+    _turnDir: 0,                // Направление поворота
+    _bobT: 0,                   // Таймер для эффекта покачивания
+    _renderLoop: null,          // ID цикла рендеринга
+    _walls: [],                 // Текстуры стен
+    _floors: [],                // Текстуры пола
+    _ceilings: [],              // Текстуры потолка
+    _images: {},                // Изображения объектов
+    _animImages: {},            // Анимации движения
+    _monsterImages: {},         // Изображения монстров
+    _joystick: null,            // Джойстик управления
+    _joystickImg: null,         // Иконка джойстика
+    _interactBtn: null,         // Кнопка взаимодействия
+    _interactBtnImg: null,      // Иконка кнопки взаимодействия
+    _interactType: null,        // Тип интерактивного объекта
+    _w: 480,                    // Ширина канваса
+    _h: 800,                    // Высота канваса
 
+    // Инициализация компонента
     init: function() {
         this._w = SherwoodUI.container ? SherwoodUI.container.clientWidth : 480;
         this._h = SherwoodUI.container ? SherwoodUI.container.clientHeight : 800;
         
+        // Создание канваса
         this._canvas = document.createElement('canvas');
         this._canvas.width = this._w;
         this._canvas.height = this._h;
@@ -47,12 +43,15 @@ Sherwood.Dungeon2D5 = {
         this._setupControls();
     },
 
+    // Загрузка всех изображений
     _loadImages: function() {
         // Загрузка текстур стен
         for (let i = 1; i <= 6; i++) {
             let img = new Image();
             img.src = 'assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png';
-            img.onload = () => { if (this._renderLoop) this._draw(); };
+            img.onload = () => { 
+                if (this._renderLoop) this._draw(); 
+            };
             this._walls.push(img);
         }
         
@@ -60,7 +59,9 @@ Sherwood.Dungeon2D5 = {
         for (let i = 8; i <= 13; i++) {
             let img = new Image();
             img.src = 'assets/dungeon_tiles/dungeon1/tiles' + i + '.jpeg';
-            img.onload = () => { if (this._renderLoop) this._draw(); };
+            img.onload = () => { 
+                if (this._renderLoop) this._draw(); 
+            };
             this._floors.push(img);
         }
         
@@ -68,7 +69,9 @@ Sherwood.Dungeon2D5 = {
         for (let i = 1; i <= 6; i++) {
             let img = new Image();
             img.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png';
-            img.onload = () => { if (this._renderLoop) this._draw(); };
+            img.onload = () => { 
+                if (this._renderLoop) this._draw(); 
+            };
             this._ceilings.push(img);
         }
         
@@ -88,7 +91,9 @@ Sherwood.Dungeon2D5 = {
         for (let key in objs) {
             let img = new Image();
             img.src = 'assets/interface/' + objs[key];
-            img.onload = () => { if (this._renderLoop) this._draw(); };
+            img.onload = () => { 
+                if (this._renderLoop) this._draw(); 
+            };
             this._images[key] = img;
         }
         
@@ -99,12 +104,14 @@ Sherwood.Dungeon2D5 = {
         this._animImages.right = this._makeImg('assets/animation/step_right.png');
     },
 
+    // Создание объекта изображения
     _makeImg: function(src) {
         let img = new Image();
         img.src = src;
         return img;
     },
 
+    // Получение изображения монстра
     _getMonsterImg: function(id) {
         if (!id) return null;
         if (!this._monsterImages[id]) {
@@ -113,6 +120,7 @@ Sherwood.Dungeon2D5 = {
         return this._monsterImages[id];
     },
 
+    // Настройка элементов управления
     _setupControls: function() {
         const self = this;
         
@@ -120,7 +128,7 @@ Sherwood.Dungeon2D5 = {
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:130px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,0.65);border:3px solid #c9a040;z-index:10;';
         
-        // Центральная иконка
+        // Центральная иконка направления
         this._joystickImg = document.createElement('img');
         this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;';
         this._joystickImg.src = this._animImages.down.src;
@@ -140,10 +148,14 @@ Sherwood.Dungeon2D5 = {
             btn.innerHTML = '<span style="transform:rotate(' + a.rot + 'deg);font-size:24px;color:#000;font-weight:bold;">' + a.ch + '</span>';
             btn.title = a.label;
             
+            // Обработка клика
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                if (a.d === 0) self._moveForward();
-                else self._turnTo(a.d);
+                if (a.d === 0) {
+                    self._moveForward();  // Движение вперед
+                } else {
+                    self._turnTo(a.d);    // Поворот
+                }
             });
             
             // Эффект нажатия
@@ -166,7 +178,9 @@ Sherwood.Dungeon2D5 = {
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
-        this._interactBtn.addEventListener('click', function() { self._onInteract(); });
+        this._interactBtn.addEventListener('click', function() { 
+            self._onInteract(); 
+        });
         
         // Добавление CSS анимации
         if (!document.getElementById('dungeon-2d5-styles')) {
@@ -183,25 +197,28 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    // Движение вперед
     _moveForward: function() {
         if (this._isMoving || this._isTurning) return;
         
         const d = Sherwood.Dungeon.getDungeon();
         if (!d) return;
         
+        // Вычисление смещения в зависимости от направления
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = -1;
-        else if (this._dir === 1) dx = 1;
-        else if (this._dir === 2) dy = 1;
-        else dx = -1;
+        if (this._dir === 0) dy = -1;       // Север
+        else if (this._dir === 1) dx = 1;    // Восток
+        else if (this._dir === 2) dy = 1;    // Юг
+        else dx = -1;                         // Запад
         
         const nx = d.px + dx;
         const ny = d.py + dy;
         
+        // Проверка границ
         if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
         
         const cell = d.grid[ny][nx];
-        if (!cell || !cell.open) return;
+        if (!cell || !cell.open) return;  // Если стена - не идем
         
         // Проверка на монстра
         if (cell.monster) {
@@ -209,6 +226,7 @@ Sherwood.Dungeon2D5 = {
             return;
         }
         
+        // Начало движения
         this._fromX = d.px;
         this._fromY = d.py;
         this._toX = nx;
@@ -218,10 +236,12 @@ Sherwood.Dungeon2D5 = {
         this._bobT = 0;
     },
 
+    // Поворот в указанном направлении
     _turnTo: function(newDir) {
         if (this._isMoving || this._isTurning) return;
         if (newDir === this._dir) return;
         
+        // Вычисление кратчайшего поворота
         let diff = newDir - this._dir;
         if (diff === 3) diff = -1;
         if (diff === -3) diff = 1;
@@ -231,6 +251,7 @@ Sherwood.Dungeon2D5 = {
         this._isTurning = true;
     },
 
+    // Обработка взаимодействия с объектом
     _onInteract: function() {
         if (!this._interactType) return;
         
@@ -240,6 +261,7 @@ Sherwood.Dungeon2D5 = {
         const cell = d.grid[d.py][d.px];
         if (!cell) return;
         
+        // Вызов соответствующего обработчика
         switch(this._interactType) {
             case 'lootBag': 
                 if (cell.lootBag && !cell.lootCollected) SherwoodUI._collectLootBag(); 
@@ -261,11 +283,13 @@ Sherwood.Dungeon2D5 = {
                 break;
         }
         
+        // Скрываем кнопку взаимодействия
         this._interactType = null;
         this._interactBtn.style.display = 'none';
         this._draw();
     },
 
+    // Проверка наличия интерактивных объектов на текущей клетке
     _checkInteract: function() {
         const d = Sherwood.Dungeon.getDungeon();
         if (!d) return;
@@ -276,6 +300,7 @@ Sherwood.Dungeon2D5 = {
         let type = null;
         let icon = null;
         
+        // Определение типа объекта для взаимодействия
         if (cell.lootBag && !cell.lootCollected) { 
             type = 'lootBag'; 
             icon = this._images.loot_bag; 
@@ -296,6 +321,7 @@ Sherwood.Dungeon2D5 = {
             icon = this._images.exit; 
         }
 
+        // Показываем или скрываем кнопку взаимодействия
         if (type && icon) {
             this._interactType = type;
             this._interactBtnImg.src = icon.src;
@@ -306,11 +332,13 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    // Функция плавности анимации
     _ease: function(t) {
         // Плавное замедление в конце
         return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     },
 
+    // Основная функция отрисовки
     _draw: function() {
         const ctx = this._ctx;
         const w = this._w;
@@ -319,10 +347,11 @@ Sherwood.Dungeon2D5 = {
         
         if (!ctx || !d) return;
         
+        // Очистка экрана
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, w, h);
         
-        // Текущая позиция с интерполяцией
+        // Текущая позиция с интерполяцией при движении
         let posX = d.px;
         let posY = d.py;
         
@@ -332,7 +361,7 @@ Sherwood.Dungeon2D5 = {
             posY = this._fromY + (this._toY - this._fromY) * t;
         }
         
-        // Определяем клетку перед игроком
+        // Определение клетки перед игроком
         let frontX = Math.round(posX);
         let frontY = Math.round(posY);
         
@@ -341,7 +370,7 @@ Sherwood.Dungeon2D5 = {
         else if (this._dir === 2) frontY = Math.round(posY + 1);
         else frontX = Math.round(posX - 1);
         
-        // Проверяем, есть ли стена перед игроком
+        // Проверка наличия стены
         let hasWall = false;
         if (frontX >= 0 && frontX < d.size && frontY >= 0 && frontY < d.size) {
             const cell = d.grid[frontY][frontX];
@@ -350,16 +379,16 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        const horizon = h * 0.45;
+        const horizon = h * 0.45;  // Линия горизонта
         
-        // Выбираем текстуры по направлению и позиции
+        // Выбор текстур на основе позиции и направления
         const texIdx = Math.abs((this._dir + Math.floor(posX + posY)) % 6);
         
         const ceilImg = this._ceilings[texIdx];
         const floorImg = this._floors[texIdx];
         const wallImg = this._walls[texIdx];
         
-        // Рисуем потолок
+        // Отрисовка потолка
         if (ceilImg && ceilImg.complete && ceilImg.naturalWidth > 0) {
             ctx.drawImage(ceilImg, 0, 0, w, horizon);
         } else {
@@ -367,14 +396,14 @@ Sherwood.Dungeon2D5 = {
             ctx.fillRect(0, 0, w, horizon);
         }
         
-        // Добавляем тень на потолок
+        // Тень на потолке
         const ceilGradient = ctx.createLinearGradient(0, 0, 0, horizon);
         ceilGradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
         ceilGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = ceilGradient;
         ctx.fillRect(0, 0, w, horizon);
         
-        // Рисуем пол
+        // Отрисовка пола
         if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
             ctx.drawImage(floorImg, 0, horizon, w, h - horizon);
         } else {
@@ -382,24 +411,24 @@ Sherwood.Dungeon2D5 = {
             ctx.fillRect(0, horizon, w, h - horizon);
         }
         
-        // Добавляем тень на пол
+        // Тень на полу
         const floorGradient = ctx.createLinearGradient(0, horizon, 0, h);
         floorGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
         floorGradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
         ctx.fillStyle = floorGradient;
         ctx.fillRect(0, horizon, w, h - horizon);
         
-        // Если стена перед игроком — рисуем её
+        // Отрисовка стены, если она есть
         if (hasWall) {
             let wallScale = 0.6;
             
+            // Увеличение стены при приближении
             if (this._isMoving) {
-                // Если идём вперёд — стена приближается
                 const t = this._moveT;
                 wallScale = 0.6 + t * 0.4;
             }
             
-            // Добавляем эффект покачивания при ходьбе
+            // Эффект покачивания при ходьбе
             let bobOffset = 0;
             if (this._isMoving) {
                 bobOffset = Math.sin(this._bobT * Math.PI * 2) * 2;
@@ -413,7 +442,7 @@ Sherwood.Dungeon2D5 = {
             if (wallImg && wallImg.complete && wallImg.naturalWidth > 0) {
                 ctx.drawImage(wallImg, wallX, wallY, wallW, wallH);
                 
-                // Добавляем блик на стену
+                // Блик на стене
                 const wallGradient = ctx.createLinearGradient(wallX, wallY, wallX + wallW, wallY);
                 wallGradient.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
                 wallGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
@@ -425,14 +454,14 @@ Sherwood.Dungeon2D5 = {
                 ctx.fillRect(wallX, wallY, wallW, wallH);
             }
         } else {
-            // Если стены нет — рисуем открытый проход
+            // Открытый проход
             const grad = ctx.createLinearGradient(0, horizon, 0, h);
             grad.addColorStop(0, '#2a1a0a');
             grad.addColorStop(1, '#1a0f08');
             ctx.fillStyle = grad;
             ctx.fillRect(0, horizon, w, h - horizon);
             
-            // Добавляем эффект глубины
+            // Эффект глубины
             const depthGradient = ctx.createRadialGradient(w/2, horizon, 0, w/2, horizon, w/2);
             depthGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
             depthGradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
@@ -440,7 +469,7 @@ Sherwood.Dungeon2D5 = {
             ctx.fillRect(0, horizon, w, h - horizon);
         }
         
-        // Объекты на клетке перед игроком
+        // Отрисовка объектов на клетке перед игроком
         if (frontX >= 0 && frontX < d.size && frontY >= 0 && frontY < d.size) {
             const cell = d.grid[frontY][frontX];
             if (cell && cell.open) {
@@ -448,28 +477,22 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        // Объекты на текущей клетке (если смотрим вниз)
-        if (this._dir === 2) {
-            const currentCell = d.grid[d.py][d.px];
-            if (currentCell && currentCell.open) {
-                this._drawObjectOnCell(ctx, w, h, horizon, currentCell);
-            }
-        }
-        
-        // Виньетка
+        // Виньетка (затемнение по краям)
         const vignette = ctx.createRadialGradient(w/2, h/2, h*0.3, w/2, h/2, h*0.7);
         vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
         vignette.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
         ctx.fillStyle = vignette;
         ctx.fillRect(0, 0, w, h);
         
-        // Обновление джойстика
+        // Обновление иконки джойстика
         this._updateJoystick();
     },
 
+    // Отрисовка объекта на клетке
     _drawObjectOnCell: function(ctx, w, h, horizon, cell) {
         let img = null;
         
+        // Выбор изображения в зависимости от типа объекта
         if (cell.monster) {
             img = this._getMonsterImg(cell.monsterId);
         } else if (cell.lootBag && !cell.lootCollected) {
@@ -498,13 +521,14 @@ Sherwood.Dungeon2D5 = {
         const objX = (w - objSize) / 2;
         const objY = horizon + (h - horizon) * 0.3 - objSize / 2;
         
-        // Добавляем свечение для интерактивных объектов
+        // Свечение для интерактивных объектов
         ctx.shadowColor = '#ffd700';
         ctx.shadowBlur = 20;
         ctx.drawImage(img, objX, objY, objSize, objSize);
         ctx.shadowBlur = 0;
     },
 
+    // Обновление иконки джойстика
     _updateJoystick: function() {
         if (!this._joystickImg) return;
         
@@ -516,6 +540,7 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    // Запуск цикла рендеринга
     _startRenderLoop: function() {
         const self = this;
         let lastTime = performance.now();
@@ -523,6 +548,7 @@ Sherwood.Dungeon2D5 = {
         function render(time) {
             self._renderLoop = requestAnimationFrame(render);
             
+            // Вычисление delta time
             let dt = (time - lastTime) / 1000;
             if (dt > 0.1) dt = 0.1;
             lastTime = time;
@@ -555,10 +581,10 @@ Sherwood.Dungeon2D5 = {
                 }
             }
 
-            // Отрисовка
+            // Отрисовка сцены
             self._draw();
             
-            // Проверка интерактивных объектов после завершения движения
+            // Проверка интерактивных объектов
             if (!self._isMoving && !self._isTurning) {
                 self._checkInteract();
             }
@@ -567,6 +593,7 @@ Sherwood.Dungeon2D5 = {
         this._renderLoop = requestAnimationFrame(render);
     },
 
+    // Обновление компонента
     update: function() {
         if (this._dungeon) {
             this._checkInteract();
@@ -574,11 +601,13 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    // Показ компонента
     show: function() {
         if (!this._canvas) this.init();
         
         this._dungeon = Sherwood.Dungeon.getDungeon();
         
+        // Добавление элементов в DOM
         if (this._canvas.parentNode !== SherwoodUI.container) {
             SherwoodUI.container.appendChild(this._canvas);
             if (this._joystick && !this._joystick.parentNode) {
@@ -593,12 +622,14 @@ Sherwood.Dungeon2D5 = {
         this._startRenderLoop();
     },
 
+    // Скрытие компонента
     hide: function() {
         if (this._renderLoop) {
             cancelAnimationFrame(this._renderLoop);
             this._renderLoop = null;
         }
         
+        // Удаление элементов из DOM
         if (this._canvas && this._canvas.parentNode) {
             this._canvas.parentNode.removeChild(this._canvas);
         }
