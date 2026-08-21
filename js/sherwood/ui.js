@@ -461,7 +461,7 @@ _showDefeatScreen: function(rewards) {
         if (res.type === 'exit_locked') { this._stopSound('steps'); this._showToast('Закрыто! Убейте всех монстров!'); return; }
         this._stopSound('steps');
     },
-     _showInteractButton: function(type) {
+_showInteractButton: function(type) {
         var self = this; var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var dungId = d.id || 'forest'; var icon = '';
         var altarImg = dungId === 'forest' ? 'assets/interface/altar_of_the_first_dungeon.png' : dungId === 'swamp' ? 'assets/interface/altar_of_the_second_dungeon.png' : 'assets/interface/the_third_altar_of_the_dungeon.png';
@@ -495,6 +495,7 @@ _showDefeatScreen: function(rewards) {
         this._playSound('altar');
         this._showFlyingLoot([{ icon: 'assets/interface/resource_appearance_crafting_tablet.png', text: '+' + scrolls }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
         SherwoodUI.updateDisplay();
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) { Sherwood.Dungeon2D5.render(); } else { this._renderDungeon(); }
     },
 
     _collectCauldron: function() {
@@ -508,6 +509,7 @@ _showDefeatScreen: function(rewards) {
         this._playSound('cauldron');
         this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + gold }, { icon: 'assets/interface/silver_plaque.png', text: '+' + silver }]);
         SherwoodUI.updateDisplay();
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) { Sherwood.Dungeon2D5.render(); } else { this._renderDungeon(); }
     },
 
     _collectPotion: function() {
@@ -521,7 +523,8 @@ _showDefeatScreen: function(rewards) {
         d.collectedLoot.push({ icon: 'assets/interface/icon_health.png', name: 'Здоровье', quantity: heal });
         this._playSound('potion');
         this._showFlyingLoot([{ icon: 'assets/interface/icon_health.png', text: '+' + heal + ' HP' }]);
-        Sherwood.saveGame(); SherwoodUI.updateDisplay(); this._renderDungeon();
+        Sherwood.saveGame(); SherwoodUI.updateDisplay();
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) { Sherwood.Dungeon2D5.render(); } else { this._renderDungeon(); }
     },
 
     _collectChest: function() {
@@ -536,7 +539,8 @@ _showDefeatScreen: function(rewards) {
         d.collectedLoot.push({ icon: 'assets/interface/silver_plaque.png', name: 'Серебро', quantity: s });
         this._playSound('chest_open');
         this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + g }, { icon: 'assets/interface/silver_plaque.png', text: '+' + s }]);
-        Sherwood.saveGame(); SherwoodUI.updateDisplay(); this._renderDungeon();
+        Sherwood.saveGame(); SherwoodUI.updateDisplay();
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) { Sherwood.Dungeon2D5.render(); } else { this._renderDungeon(); }
     },
 
     _collectLootBag: function() {
@@ -553,7 +557,8 @@ _showDefeatScreen: function(rewards) {
         if (reward.silver) d.collectedLoot.push({ icon: 'assets/interface/silver_plaque.png', name: 'Серебро', quantity: reward.silver });
         this._playSound('bag_drop');
         this._showFlyingLoot([{ icon: 'assets/interface/gold_plate.png', text: '+' + (reward.gold || 0) }, { icon: 'assets/interface/silver_plaque.png', text: '+' + (reward.silver || 0) }]);
-        Sherwood.saveGame(); SherwoodUI.updateDisplay(); this._renderDungeon();
+        Sherwood.saveGame(); SherwoodUI.updateDisplay();
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) { Sherwood.Dungeon2D5.render(); } else { this._renderDungeon(); }
     },
 
     _showFlyingLoot: function(items) {
@@ -651,15 +656,99 @@ _showDefeatScreen: function(rewards) {
 
     _updateEnemyHP: function(hp, max) { var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + '%'; } if (txt) txt.textContent = hp; var p = Sherwood.getPlayer(); if (p) { var playerBar = document.getElementById('player-hp-bar'); if (playerBar) { var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0; playerBar.style.width = php + '%'; } } },
 
-    _showCombatScreen: function() { var b = Sherwood.Combat.getState(); if (!b) { this._renderDungeon(); return; } this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp, attack: b.enemyAttack, defense: b.enemyDefense }, "dungeon", (b.isBoss ? "БОСС: " : "") + b.enemyName, "", "SherwoodUI._combatAttack()", "SherwoodUI._combatFlee"); },
+    _showCombatScreen: function() { 
+        var b = Sherwood.Combat.getState(); 
+        if (!b) { 
+            if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) {
+                Sherwood.Dungeon2D5.render();
+            } else {
+                this._renderDungeon();
+            }
+            return; 
+        } 
+        this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp, attack: b.enemyAttack, defense: b.enemyDefense }, "dungeon", (b.isBoss ? "БОСС: " : "") + b.enemyName, "", "SherwoodUI._combatAttack()", "SherwoodUI._combatFlee"); 
+    },
+    
     _combatAttack: function() { this._playHitSounds(); this._handleCombat(Sherwood.Combat.attack()); },
-    _combatFlee: function() { var r = Sherwood.Combat.flee(); if (r.success) { this._resumeMusic(); this._leaveDungeon(); return; } if (r.lose) { this._showDialog('Поражение...', '#f44336'); this._resumeMusic(); var self = this; setTimeout(function() { self._leaveDungeon(); }, 1200); return; } this._showDialog('Побег не удался! Враг: -' + r.damage, '#ff9800'); this._showCombatScreen(); },
+    
+    _combatFlee: function() { 
+        var r = Sherwood.Combat.flee(); 
+        if (r.success) { 
+            this._resumeMusic(); 
+            if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) {
+                Sherwood.Dungeon2D5.render();
+            } else {
+                this._leaveDungeon();
+            }
+            return; 
+        } 
+        if (r.lose) { 
+            this._showDialog('Поражение...', '#f44336'); 
+            this._resumeMusic(); 
+            var self = this; 
+            setTimeout(function() { 
+                if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) {
+                    Sherwood.Dungeon2D5.render();
+                } else {
+                    self._leaveDungeon();
+                }
+            }, 1200); 
+            return; 
+        } 
+        this._showDialog('Побег не удался! Враг: -' + r.damage, '#ff9800'); 
+        this._showCombatScreen(); 
+    },
 
     _handleCombat: function(r) {
         if (!r) return;
-        if (r.win) { if (r.exp) Sherwood.addExp(r.exp); if (r.gold) { Sherwood.addResource('gold', r.gold); Sherwood.addResource('silver', Math.floor(r.gold * 2)); } Sherwood.saveGame(); if (Sherwood.Daily) { Sherwood.Daily.updateProgress('kill_beasts', 1); Sherwood.Daily.updateProgress('collect_loot', 1); } if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster(); if (Sherwood.Bestiary && r.enemyImage) Sherwood.Bestiary.registerKill(r.enemyImage); this._resumeMusic(); this.updateDisplay(); var d = Sherwood.Dungeon.getDungeon(); if (d) { d.px = d.prevPx || d.px; d.py = d.prevPy || d.py; } this._renderDungeon(); }
-        else if (r.lose) { this._resumeMusic(); this.updateDisplay(); var scrolls = Math.random() < 0.08 ? 1 : 0; if (scrolls) Sherwood.addResource('scrolls', scrolls); this._pendingRewards = { exp: Math.floor(r.exp * 0.3), silver: Math.floor(r.gold * 1.5), scrolls: scrolls }; this._afterRewardAction = function() { SherwoodUI._leaveDungeon(); }; this._showDefeatScreen(this._pendingRewards); }
-        else { this._hitEnemyCard(); this._showPlayerHitAnim(); this._showDamageNumber(r.damage, r.crit); if (r.crit) this._showCriticalHitAnim(); this._updateEnemyHP(r.enemyHp, r.enemyMaxHp); this._showDialog((r.crit ? 'CRIT ' : '') + 'Damage: ' + r.damage, r.crit ? '#ff6a00' : '#fff'); if (r.armorDmg) this._showDialog('Armor broken: ' + r.armorDmg, '#2196f3'); if (r.enemy && r.enemy.damage) { var self = this; setTimeout(function() { self._showDialog((r.enemyName || 'Enemy') + ' hit: ' + r.enemy.damage, '#f44336'); }, 700); } this.updateDisplay(); var self = this; setTimeout(function() { self._showCombatScreen(); }, 1000); }
+        if (r.win) { 
+            if (r.exp) Sherwood.addExp(r.exp); 
+            if (r.gold) { Sherwood.addResource('gold', r.gold); Sherwood.addResource('silver', Math.floor(r.gold * 2)); } 
+            Sherwood.saveGame(); 
+            if (Sherwood.Daily) { Sherwood.Daily.updateProgress('kill_beasts', 1); Sherwood.Daily.updateProgress('collect_loot', 1); } 
+            if (Sherwood.Dungeon && Sherwood.Dungeon.killMonster) Sherwood.Dungeon.killMonster(); 
+            if (Sherwood.Bestiary && r.enemyImage) Sherwood.Bestiary.registerKill(r.enemyImage); 
+            this._resumeMusic(); 
+            this.updateDisplay(); 
+            if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) {
+                Sherwood.Dungeon2D5.render();
+            } else {
+                var d = Sherwood.Dungeon.getDungeon(); 
+                if (d) { d.px = d.prevPx || d.px; d.py = d.prevPy || d.py; } 
+                this._renderDungeon();
+            }
+        }
+        else if (r.lose) { 
+            this._resumeMusic(); 
+            this.updateDisplay(); 
+            var scrolls = Math.random() < 0.08 ? 1 : 0; 
+            if (scrolls) Sherwood.addResource('scrolls', scrolls); 
+            this._pendingRewards = { exp: Math.floor(r.exp * 0.3), silver: Math.floor(r.gold * 1.5), scrolls: scrolls }; 
+            this._afterRewardAction = function() { 
+                if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) {
+                    Sherwood.Dungeon2D5.render();
+                } else {
+                    SherwoodUI._leaveDungeon();
+                }
+            }; 
+            this._showDefeatScreen(this._pendingRewards); 
+        }
+        else { 
+            this._hitEnemyCard(); 
+            this._showPlayerHitAnim(); 
+            this._showDamageNumber(r.damage, r.crit); 
+            if (r.crit) this._showCriticalHitAnim(); 
+            this._updateEnemyHP(r.enemyHp, r.enemyMaxHp); 
+            this._showDialog((r.crit ? 'CRIT ' : '') + 'Damage: ' + r.damage, r.crit ? '#ff6a00' : '#fff'); 
+            if (r.armorDmg) this._showDialog('Armor broken: ' + r.armorDmg, '#2196f3'); 
+            if (r.enemy && r.enemy.damage) { 
+                var self = this; 
+                setTimeout(function() { self._showDialog((r.enemyName || 'Enemy') + ' hit: ' + r.enemy.damage, '#f44336'); }, 700); 
+            } 
+            this.updateDisplay(); 
+            var self = this; 
+            setTimeout(function() { self._showCombatScreen(); }, 1000); 
+        }
     },
         // ===== КВЕСТЫ =====
     quest: function() {
