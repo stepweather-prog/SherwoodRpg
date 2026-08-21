@@ -1,3 +1,4 @@
+// ========== 3D ПОДЗЕМКА (Canvas 2D Raycasting / Настоящий 2.5D Doom-style) ==========
 Sherwood.Dungeon2D5 = {
     _canvas: null,
     _ctx: null,
@@ -202,6 +203,7 @@ Sherwood.Dungeon2D5 = {
         this._interactBtn.style.display = 'none';
     },
 
+    // ===== ДОПИСАННЫЙ МЕТОД ПРОВЕРКИ ИНТЕРАКТИВНЫХ ОБЪЕКТОВ =====
     _checkInteract: function() {
         const d = Sherwood.Dungeon.getDungeon();
         if (!d) return;
@@ -218,8 +220,8 @@ Sherwood.Dungeon2D5 = {
         else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
         else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
         else if (cell.exit && !cell.locked) { type = 'exit'; icon = this._images.exit; }
-        
-        if (type) {
+
+        if (type && icon) {
             this._interactType = type;
             this._interactBtnImg.src = icon.src;
             this._interactBtn.style.display = 'flex';
@@ -229,342 +231,28 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
-    render: function(dungeonData) {
-        this._dungeon = dungeonData;
-        this._dir = 0;
-        this._isMoving = false;
-        this._isTurning = false;
-        
-        if (this._canvas.parentNode !== SherwoodUI._screenLayer) {
-            SherwoodUI._screenLayer.innerHTML = '';
-            SherwoodUI._screenLayer.appendChild(this._canvas);
-            SherwoodUI._screenLayer.appendChild(this._joystick);
-            SherwoodUI._screenLayer.appendChild(this._interactBtn);
-        }
-        
-        SherwoodUI._screenLayer.style.display = 'block';
-        
-        this._checkInteract();
-        this._draw();
-        
-        if (this._renderLoop) cancelAnimationFrame(this._renderLoop);
-        this._animate();
-    },
-
-    _animate: function() {
+    // ===== НАСТОЯЩИЙ ИГРОВОЙ ЦИКЛ РЕНДЕРИНГА И РАСЧЕТА ЛУЧЕЙ (RAYCASTING) =====
+    _startRenderLoop: function() {
         const self = this;
-        
-        const loop = function() {
-            if (!self._dungeon) return;
+        let lastTime = performance.now();
+
+        function render(time) {
+            self._renderLoop = requestAnimationFrame(render);
             
-            if (self._isTurning) {
-                self._turnT += 0.08;
-                if (self._turnT >= 1) {
-                    self._turnT = 1;
-                    self._dir = (self._dir + self._turnDir + 4) % 4;
-                    self._isTurning = false;
-                }
-                self._draw();
-            }
-            
+            let dt = (time - lastTime) / 1000;
+            if (dt > 0.1) dt = 0.1;
+            lastTime = time;
+
+            const d = Sherwood.Dungeon.getDungeon();
+            if (!d) return;
+
+            // Обработка интерполяции плавного движения
+            let viewX = d.px + 0.5;
+            let viewY = d.py + 0.5;
             if (self._isMoving) {
-                self._moveT += 0.06;
+                self._moveT += dt * 4; // Скорость шага
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
-                    
-                    const d = Sherwood.Dungeon.getDungeon();
-                    if (d) {
-                        const result = Sherwood.Dungeon.move(self._toX, self._toY);
-                        if (result && result.type === 'battle') {
-                            self._draw();
-                            SherwoodUI._dungeonMove(self._toX, self._toY);
-                            return;
-                        }
-                        if (result && result.ok) {
-                            self._checkInteract();
-                        }
-                    }
-                }
-                self._draw();
-            }
-            
-            self._renderLoop = requestAnimationFrame(loop);
-        };
-        
-        this._renderLoop = requestAnimationFrame(loop);
-    },
-
-    _ease: function(t) {
-        return t * t * (3 - 2 * t);
-    },
-
-    _draw: function() {
-        const ctx = this._ctx;
-        const w = this._w;
-        const h = this._h;
-        const d = this._dungeon;
-        
-        if (!ctx || !d) return;
-        
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, w, h);
-        
-        // Текущая позиция с учётом движения
-        let posX = d.px;
-        let posY = d.py;
-        let dir = this._dir;
-        
-        if (this._isMoving) {
-            const t = this._ease(this._moveT);
-            posX = this._fromX + (this._toX - this._fromX) * t;
-            posY = this._fromY + (this._toY - this._fromY) * t;
-        }
-        
-        if (this._isTurning) {
-            const t = this._ease(this._turnT);
-            dir = this._dir + this._turnDir * t;
-        }
-        
-        // Направление взгляда
-        let dirX = 0, dirY = 0;
-        if (dir === 0) { dirX = 0; dirY = -1; }
-        else if (dir === 1) { dirX = 1; dirY = 0; }
-        else if (dir === 2) { dirX = 0; dirY = 1; }
-        else { dirX = -1; dirY = 0; }
-        
-        // Если поворачиваем - интерполируем направление
-        if (this._isTurning) {
-            const t = this._ease(this._turnT);
-            const angle = dir * Math.PI / 2;
-            dirX = Math.cos(angle);
-            dirY = Math.sin(angle);
-        }
-        
-        // Горизонт
-        const horizon = h * 0.45;
-        
-        // Рисуем потолок
-        const ceilIdx = Math.floor(((this._dir % 6) + 6) % 6);
-        const ceilImg = this._ceilings[ceilIdx];
-        if (ceilImg && ceilImg.complete && ceilImg.naturalWidth > 0) {
-            ctx.drawImage(ceilImg, 0, 0, w, horizon);
-        } else {
-            ctx.fillStyle = '#1a0f08';
-            ctx.fillRect(0, 0, w, horizon);
-        }
-        
-        // Рисуем пол
-        const floorIdx = Math.floor(((this._dir % 6) + 6) % 6);
-        const floorImg = this._floors[floorIdx];
-        if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
-            ctx.drawImage(floorImg, 0, horizon, w, h - horizon);
-        } else {
-            ctx.fillStyle = '#2a1a0a';
-            ctx.fillRect(0, horizon, w, h - horizon);
-        }
-        
-        // Raycasting стены
-        this._castWalls(ctx, w, h, horizon, posX, posY, dirX, dirY);
-        
-        // Объекты
-        this._drawObjects(ctx, w, h, horizon, posX, posY, dirX, dirY);
-        
-        // Обновляем джойстик
-        this._updateJoystick();
-    },
-
-    _castWalls: function(ctx, w, h, horizon, posX, posY, dirX, dirY) {
-        const d = this._dungeon;
-        
-        for (let x = 0; x < w; x += 2) {
-            const cameraX = 2 * x / w - 1;
-            
-            let rayX = dirX;
-            let rayY = dirY;
-            
-            // Перпендикуляр для плоскости камеры
-            const planeX = -dirY * 0.66;
-            const planeY = dirX * 0.66;
-            
-            rayX = dirX + planeX * cameraX;
-            rayY = dirY + planeY * cameraX;
-            
-            let mapX = Math.floor(posX);
-            let mapY = Math.floor(posY);
-            
-            const deltaX = Math.abs(1 / (rayX === 0 ? 0.0001 : rayX));
-            const deltaY = Math.abs(1 / (rayY === 0 ? 0.0001 : rayY));
-            
-            let stepX, stepY, sideX, sideY;
-            
-            if (rayX < 0) { stepX = -1; sideX = (posX - mapX) * deltaX; }
-            else { stepX = 1; sideX = (mapX + 1 - posX) * deltaX; }
-            
-            if (rayY < 0) { stepY = -1; sideY = (posY - mapY) * deltaY; }
-            else { stepY = 1; sideY = (mapY + 1 - posY) * deltaY; }
-            
-            let hit = false;
-            let side = 0;
-            
-            for (let i = 0; i < 20; i++) {
-                if (sideX < sideY) {
-                    sideX += deltaX;
-                    mapX += stepX;
-                    side = 0;
-                } else {
-                    sideY += deltaY;
-                    mapY += stepY;
-                    side = 1;
-                }
-                
-                if (mapX < 0 || mapX >= d.size || mapY < 0 || mapY >= d.size) break;
-                
-                const cell = d.grid[mapY][mapX];
-                if (cell && !cell.open) {
-                    hit = true;
-                    break;
-                }
-            }
-            
-            if (!hit) continue;
-            
-            let dist;
-            if (side === 0) {
-                dist = (mapX - posX + (1 - stepX) / 2) / (rayX === 0 ? 0.0001 : rayX);
-            } else {
-                dist = (mapY - posY + (1 - stepY) / 2) / (rayY === 0 ? 0.0001 : rayY);
-            }
-            
-            if (dist < 0.05) dist = 0.05;
-            
-            const wallH = (h - horizon) / dist;
-            const startY = horizon - wallH / 2;
-            const endY = horizon + wallH / 2;
-            
-            const wallIdx = (Math.abs(mapX * 3 + mapY * 5) + this._dir) % 6;
-            const wallImg = this._walls[wallIdx];
-            
-            if (wallImg && wallImg.complete && wallImg.naturalWidth > 0) {
-                let texX;
-                if (side === 0) texX = posY + dist * rayY;
-                else texX = posX + dist * rayX;
-                texX -= Math.floor(texX);
-                const srcX = Math.floor(texX * wallImg.naturalWidth);
-                
-                ctx.drawImage(
-                    wallImg,
-                    srcX, 0, 2, wallImg.naturalHeight,
-                    x, startY, 2, endY - startY
-                );
-            } else {
-                ctx.fillStyle = side === 0 ? '#5a3a22' : '#4a2a12';
-                ctx.fillRect(x, startY, 2, endY - startY);
-            }
-            
-            const dark = Math.min(0.7, dist / 10);
-            ctx.fillStyle = 'rgba(0,0,0,' + dark + ')';
-            ctx.fillRect(x, startY, 2, endY - startY);
-        }
-    },
-
-    _drawObjects: function(ctx, w, h, horizon, posX, posY, dirX, dirY) {
-        const d = this._dungeon;
-        
-        const planeX = -dirY * 0.66;
-        const planeY = dirX * 0.66;
-        
-        for (let dist = 1; dist <= 3; dist++) {
-            const checkX = Math.round(posX + dirX * dist);
-            const checkY = Math.round(posY + dirY * dist);
-            
-            if (checkX < 0 || checkX >= d.size || checkY < 0 || checkY >= d.size) continue;
-            
-            const cell = d.grid[checkY][checkX];
-            if (!cell || !cell.open) continue;
-            
-            // Проверяем, перед камерой ли объект
-            const relX = checkX - posX;
-            const relY = checkY - posY;
-            
-            const invDet = 1 / (planeX * dirY - dirX * planeY);
-            if (invDet === Infinity || invDet === -Infinity || isNaN(invDet)) continue;
-            
-            const transformX = invDet * (relY * planeX - relX * planeY);
-            const transformY = invDet * (-relY * dirX + relX * dirY);
-            
-            if (transformY <= 0.1) continue;
-            
-            const screenX = (w / 2) * (1 + transformX / transformY);
-            
-            if (screenX < -100 || screenX > w + 100) continue;
-            
-            let img = null;
-            
-            if (cell.monster) {
-                img = this._getMonsterImg(cell.monsterId);
-            } else if (cell.lootBag && !cell.lootCollected) {
-                img = this._images.loot_bag;
-            } else if (cell.chest && !cell.looted) {
-                img = this._images.chest_locked;
-            } else if (cell.altar && !cell.altarCollected) {
-                img = this._images.altar;
-            } else if (cell.cauldron && !cell.cauldronCollected) {
-                img = this._images.cauldron;
-            } else if (cell.potion && !cell.potionCollected) {
-                img = this._images.potion;
-            } else if (cell.exit && cell.locked) {
-                img = this._images.exit_locked;
-            } else if (cell.exit && !cell.locked) {
-                img = this._images.exit;
-            }
-            
-            if (!img || !img.complete || img.naturalWidth === 0) continue;
-            
-            const objSize = (h - horizon) / transformY * 0.5;
-            const objBottom = horizon + (h - horizon) * 0.5;
-            const objX = screenX - objSize / 2;
-            const objY = objBottom - objSize;
-            
-            const alpha = Math.min(1, 2.5 / dist);
-            ctx.globalAlpha = alpha;
-            ctx.drawImage(img, objX, objY, objSize, objSize);
-            ctx.globalAlpha = 1;
-        }
-    },
-
-    _updateJoystick: function() {
-        if (this._isMoving) {
-            const anims = [this._animImages.down, this._animImages.right, this._animImages.up, this._animImages.left];
-            const img = anims[this._dir];
-            if (img && img.complete) {
-                this._joystickImg.src = img.src;
-            }
-        } else {
-            this._joystickImg.src = this._animImages.down.src;
-        }
-    },
-
-    destroy: function() {
-        if (this._renderLoop) {
-            cancelAnimationFrame(this._renderLoop);
-            this._renderLoop = null;
-        }
-        if (this._canvas && this._canvas.parentNode) {
-            this._canvas.parentNode.removeChild(this._canvas);
-        }
-        if (this._joystick && this._joystick.parentNode) {
-            this._joystick.parentNode.removeChild(this._joystick);
-        }
-        if (this._interactBtn && this._interactBtn.parentNode) {
-            this._interactBtn.parentNode.removeChild(this._interactBtn);
-        }
-        this._dungeon = null;
-    }
-};
-
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof Sherwood !== 'undefined' && typeof SherwoodUI !== 'undefined') {
-        Sherwood.Dungeon2D5.init();
-    }
-});
+                    d.px = self._toX;
+                    d.py = self._toY;
