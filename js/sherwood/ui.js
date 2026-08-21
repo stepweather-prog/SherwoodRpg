@@ -390,26 +390,37 @@ _showDefeatScreen: function(rewards) {
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
-// ========== 3D ПОДЗЕМКА (Только стены + пол + туман) ==========
+// ========== 3D ПОДЗЕМКА (Камера на уровне глаз, видит пол, стены и коридор сзади) ==========
 _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon();
     if (!d) { this.showDungeon(); return; }
+    var p = Sherwood.getPlayer();
     var self = this;
 
     var start3D = function() {
         self._screenLayer.innerHTML = ''; 
         self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
         var container = document.createElement('div');
+        container.id = 'three-dungeon-container';
         container.style.cssText = 'width:100%;height:100%;';
         self._screenLayer.appendChild(container);
 
         var scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0500);
-        scene.fog = new THREE.Fog(0x0a0500, 4, 10);
+        scene.background = new THREE.Color(0x1a0f08);
 
-        // КАМЕРА
-        var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
-        camera.position.set(d.px + 0.5, 1.6, d.py + 0.5);
+        // КАМЕРА НА УРОВНЕ ГЛАЗ (1.6) С ШИРОКИМ УГЛОМ (75°) ЧТОБЫ ВИДЕТЬ ПОЛ
+        var camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 30);
+        
+        // СМЕЩЕНИЕ ОТ ЦЕНТРА КЛЕТКИ (0.3) ЧТОБЫ ВИДЕТЬ КОРИДОР СЗАДИ
+        var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
+        var currentDir = dirMap[d.heroDirection] || 0;
+        var dirRad = currentDir * Math.PI / 180;
+        var offset = 0.35;
+        var offsetX = Math.cos(dirRad) * offset;
+        var offsetZ = Math.sin(dirRad) * offset;
+        
+        // ПОЗИЦИЯ: центр клетки (0.5) - смещение назад (чтоб коридор был виден) + высота глаз (1.6)
+        camera.position.set(d.px + 0.5 - offsetX, 1.6, d.py + 0.5 - offsetZ);
         camera.rotation.order = 'YXZ';
 
         var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -417,67 +428,56 @@ _renderDungeon: function() {
         renderer.shadowMap.enabled = true;
         container.appendChild(renderer.domElement);
 
-        // СВЕТ
-        var ambient = new THREE.AmbientLight(0x332211, 0.4);
+        var ambient = new THREE.AmbientLight(0x442211, 0.6);
         scene.add(ambient);
-        
-        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.5);
+        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
         mainLight.position.set(5, 10, 5);
         scene.add(mainLight);
 
-        // ТЕКСТУРЫ
+        // Текстура пола
         var textureLoader = new THREE.TextureLoader();
-        var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-        var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.png');
-
-        // МАТЕРИАЛЫ
-        var wallMat = new THREE.MeshStandardMaterial({
-            map: wallTexture,
+        var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.jpeg');
+        var floorMat = new THREE.MeshStandardMaterial({
+            map: floorTexture,
             roughness: 0.8,
             metalness: 0.0
         });
 
-        var wallMatDark = new THREE.MeshStandardMaterial({
-            color: 0x0a0500,
-            roughness: 0.9,
-            metalness: 0.0
+        // Текстура стены
+        var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
+        var wallMat = new THREE.MeshStandardMaterial({
+            map: wallTexture,
+            roughness: 0.7,
+            metalness: 0.1
         });
 
-        var floorMat = new THREE.MeshStandardMaterial({
-            map: floorTexture,
-            roughness: 0.9,
-            metalness: 0.0
-        });
-
-        // СТРОИМ ПОДЗЕМЕЛЬЕ
         var size = d.size;
         var wallHeight = 2.4;
+        var cellSize = 1;
         var group = new THREE.Group();
-        var offsetX = Math.floor(size / 2);
-        var offsetZ = Math.floor(size / 2);
+        var offsetXmap = Math.floor(size / 2);
+        var offsetZmap = Math.floor(size / 2);
 
         for (var row = 0; row < size; row++) {
             for (var col = 0; col < size; col++) {
-                var x = col - offsetX;
-                var z = row - offsetZ;
+                var x = col - offsetXmap;
+                var z = row - offsetZmap;
                 var cell = d.grid[row][col];
 
-                // ПОЛ
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(x, 0, z);
+                floor.receiveShadow = true;
                 group.add(floor);
 
-                // СТЕНЫ
                 if (!cell.open) {
-                    var mat = wallMat;
-                    // Внешние стены - тёмные
-                    if (row === 0 || row === size-1 || col === 0 || col === size-1) {
-                        mat = wallMatDark;
-                    }
-                    
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 1), mat);
+                    var wall = new THREE.Mesh(
+                        new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                        wallMat
+                    );
                     wall.position.set(x, wallHeight / 2, z);
+                    wall.castShadow = true;
+                    wall.receiveShadow = true;
                     group.add(wall);
                 }
             }
@@ -485,11 +485,10 @@ _renderDungeon: function() {
         scene.add(group);
 
         // === УПРАВЛЕНИЕ ===
-        var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
-        var currentDir = dirMap[d.heroDirection] || 0;
         var currentYaw = -currentDir * Math.PI / 180;
         var targetYaw = currentYaw;
-        var currentPos = new THREE.Vector3(d.px + 0.5, 1.6, d.py + 0.5);
+
+        var currentPos = new THREE.Vector3(d.px + 0.5 - offsetX, 1.6, d.py + 0.5 - offsetZ);
         var targetPos = currentPos.clone();
 
         function moveForward() {
@@ -497,7 +496,11 @@ _renderDungeon: function() {
             var fwdX = Math.round(Math.cos(dirRad));
             var fwdY = Math.round(Math.sin(dirRad));
             self._dungeonMove(d.px + fwdX, d.py + fwdY);
-            targetPos.set(d.px + 0.5, 1.6, d.py + 0.5);
+            
+            // Обновляем позицию с учетом смещения
+            var newOffsetX = Math.cos(dirRad) * offset;
+            var newOffsetZ = Math.sin(dirRad) * offset;
+            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
         }
 
         function moveBack() {
@@ -505,50 +508,74 @@ _renderDungeon: function() {
             var fwdX = Math.round(Math.cos(dirRad));
             var fwdY = Math.round(Math.sin(dirRad));
             self._dungeonMove(d.px - fwdX, d.py - fwdY);
-            targetPos.set(d.px + 0.5, 1.6, d.py + 0.5);
+            
+            var newOffsetX = Math.cos(dirRad) * offset;
+            var newOffsetZ = Math.sin(dirRad) * offset;
+            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
         }
 
         function turnLeft() {
             currentDir = (currentDir - 90 + 360) % 360;
             d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
             targetYaw = -currentDir * Math.PI / 180;
+            
+            // Обновляем смещение при повороте
+            var dirRad = currentDir * Math.PI / 180;
+            var newOffsetX = Math.cos(dirRad) * offset;
+            var newOffsetZ = Math.sin(dirRad) * offset;
+            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
         }
 
         function turnRight() {
             currentDir = (currentDir + 90) % 360;
             d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
             targetYaw = -currentDir * Math.PI / 180;
+            
+            var dirRad = currentDir * Math.PI / 180;
+            var newOffsetX = Math.cos(dirRad) * offset;
+            var newOffsetZ = Math.sin(dirRad) * offset;
+            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
         }
 
-        // КНОПКИ
-        var panel = document.createElement('div');
-        panel.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:200px;height:200px;z-index:10;';
-        container.appendChild(panel);
+        // ШАР С КНОПКАМИ
+        var controlPanel = document.createElement('div');
+        controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:10;pointer-events:auto;';
+        container.appendChild(controlPanel);
 
-        var btns = [
-            { key: 'up', top: '5px', left: '50%', text: '▲', action: moveForward },
-            { key: 'down', bottom: '5px', left: '50%', text: '▼', action: moveBack },
-            { key: 'left', left: '5px', top: '50%', text: '◀', action: turnLeft },
-            { key: 'right', right: '5px', top: '50%', text: '▶', action: turnRight }
-        ];
+        var sphere = document.createElement('div');
+        sphere.style.cssText = 'position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.3);';
+        controlPanel.appendChild(sphere);
 
-        btns.forEach(function(b) {
-            var btn = document.createElement('button');
-            btn.textContent = b.text;
-            var style = 'position:absolute;width:50px;height:50px;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:20px;color:#fff;';
-            if (b.top) style += 'top:'+b.top+';left:'+b.left+';transform:translateX(-50%);';
-            if (b.bottom) style += 'bottom:'+b.bottom+';left:'+b.left+';transform:translateX(-50%);';
-            if (b.left) style += 'left:'+b.left+';top:'+b.top+';transform:translateY(-50%);';
-            if (b.right) style += 'right:'+b.right+';top:'+b.top+';transform:translateY(-50%);';
-            btn.style.cssText = style;
-            btn.onclick = b.action;
-            panel.appendChild(btn);
-        });
+        var btnUp = document.createElement('button');
+        btnUp.textContent = '▲';
+        btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnUp);
 
-        // АНИМАЦИЯ
-        function animate() {
+        var btnDown = document.createElement('button');
+        btnDown.textContent = '▼';
+        btnDown.style.cssText = 'position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnDown);
+
+        var btnLeft = document.createElement('button');
+        btnLeft.textContent = '⟲';
+        btnLeft.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnLeft);
+
+        var btnRight = document.createElement('button');
+        btnRight.textContent = '⟳';
+        btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnRight);
+
+        btnUp.addEventListener('click', function() { moveForward(); });
+        btnDown.addEventListener('click', function() { moveBack(); });
+        btnLeft.addEventListener('click', function() { turnLeft(); });
+        btnRight.addEventListener('click', function() { turnRight(); });
+
+        // === АНИМАЦИЯ (Плавная камера) ===
+        var animate = function() {
             requestAnimationFrame(animate);
-            
+
+            // Плавный поворот
             if (currentYaw != targetYaw) {
                 var diff = targetYaw - currentYaw;
                 if (diff > Math.PI) diff -= 2 * Math.PI;
@@ -557,16 +584,17 @@ _renderDungeon: function() {
             }
             camera.rotation.y = currentYaw;
 
+            // Плавное движение
             if (currentPos.distanceTo(targetPos) > 0.01) {
                 currentPos.lerp(targetPos, 0.15);
             }
             camera.position.copy(currentPos);
-            
+
             renderer.render(scene, camera);
-        }
+        };
         animate();
 
-        // ВЫХОД
+        // === ВЫХОД ===
         var leaveHandler = function(e) {
             if (e.key === 'Escape') {
                 document.removeEventListener('keydown', leaveHandler);
@@ -577,17 +605,26 @@ _renderDungeon: function() {
         };
         document.addEventListener('keydown', leaveHandler);
 
-        window.addEventListener('resize', function() {
-            camera.aspect = container.clientWidth / container.clientHeight;
+        var resizeHandler = function() {
+            var w = container.clientWidth, h = container.clientHeight;
+            camera.aspect = w / h;
             camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
+            renderer.setSize(w, h);
+        };
+        window.addEventListener('resize', resizeHandler);
+        
+        self._threeCleanup = function() {
+            window.removeEventListener('resize', resizeHandler);
+        };
     };
 
+    // Если THREE отсутствует, подключаем через CDN
     if (typeof THREE === 'undefined') {
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-        script.onload = start3D;
+        script.onload = function() {
+            start3D();
+        };
         document.head.appendChild(script);
     } else {
         start3D();
