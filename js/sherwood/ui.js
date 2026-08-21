@@ -391,18 +391,12 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-       // ========== УЛУЧШЕННАЯ ВЕРСИЯ С ПОДДЕРЖКОЙ PNG ==========
+// ========== 3D ПОДЗЕМКА (Туман войны, стены целиком) ==========
 _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon();
     if (!d) { this.showDungeon(); return; }
     var p = Sherwood.getPlayer();
     var self = this;
-
-    // Показываем загрузку
-    var loadingDiv = document.createElement('div');
-    loadingDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font:24px monospace;z-index:60;';
-    loadingDiv.textContent = '⏳ Загрузка текстур...';
-    this._screenLayer.appendChild(loadingDiv);
 
     var start3D = function() {
         self._screenLayer.innerHTML = ''; 
@@ -414,127 +408,163 @@ _renderDungeon: function() {
 
         var scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a0f08);
-        scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
+        
+        // === ТУМАН ВОЙНЫ (светлеет к игроку) ===
+        scene.fog = new THREE.Fog(0x1a0f08, 3, 8); // Тёмный туман с 3 до 8 метров
 
-        // КАМЕРА
-        var camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 30);
-        camera.position.set(d.px + 0.5, 0.3, d.py + 0.5);
+        // === КАМЕРА (уровень глаз, центр клетки) ===
+        var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
+        camera.position.set(d.px + 0.5, 1.6, d.py + 0.5);
         camera.rotation.order = 'YXZ';
 
         var renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.8;
         container.appendChild(renderer.domElement);
 
-        var ambient = new THREE.AmbientLight(0x442211, 0.6);
+        // === СВЕТ (приглушённый) ===
+        var ambient = new THREE.AmbientLight(0x332211, 0.3);
         scene.add(ambient);
-        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+        
+        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.3);
         mainLight.position.set(5, 10, 5);
-        mainLight.castShadow = true;
         scene.add(mainLight);
 
-        // === ЗАГРУЗЧИК ТЕКСТУР ===
+        // === ЗАГРУЗКА ТЕКСТУР ===
         var textureLoader = new THREE.TextureLoader();
         var texturesLoaded = 0;
         var totalTextures = 2;
+        var useTextures = true;
 
         function onTextureProgress() {
             texturesLoaded++;
             if (texturesLoaded >= totalTextures) {
-                loadingDiv.style.display = 'none';
                 buildDungeon();
             }
         }
 
-        // НАСТРОЙКИ ТЕКСТУР
-        function setupTexture(texture) {
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(1, 1);
-            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            return texture;
-        }
-
-        // Загружаем PNG 1024x1024
-        var floorTexture = textureLoader.load(
-            'assets/dungeon_tiles/dungeon1/tiles10.png', // Твой PNG пола
-            function(tex) { 
-                setupTexture(tex); 
-                onTextureProgress(); 
-            },
-            undefined,
-            function() { 
-                console.warn('Ошибка загрузки пола, использую цвет');
-                onTextureProgress(); 
-            }
-        );
-
+        // Загружаем PNG стены (1024x1024)
         var wallTexture = textureLoader.load(
-            'assets/interface/labyrinth_asset.png', // Твой PNG стены
+            'assets/interface/labyrinth_asset.png',
             function(tex) { 
-                setupTexture(tex); 
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(1, 1);
+                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
                 onTextureProgress(); 
             },
             undefined,
             function() { 
-                console.warn('Ошибка загрузки стены, использую цвет');
+                console.warn('Ошибка загрузки стены');
+                useTextures = false;
                 onTextureProgress(); 
             }
         );
 
-        // МАТЕРИАЛЫ
-        var floorMat, wallMat;
-        var useTextures = true;
+        // Загружаем PNG пола
+        var floorTexture = textureLoader.load(
+            'assets/dungeon_tiles/dungeon1/tiles10.png',
+            function(tex) { 
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(2, 2);
+                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                onTextureProgress(); 
+            },
+            undefined,
+            function() { 
+                console.warn('Ошибка загрузки пола');
+                useTextures = false;
+                onTextureProgress(); 
+            }
+        );
+
+        // === МАТЕРИАЛЫ ===
+        var wallMat, wallMatDark, floorMat, wallMatGlow;
 
         function buildDungeon() {
-            // Проверяем, загрузились ли текстуры
-            if (!floorTexture.image || !wallTexture.image) {
-                useTextures = false;
-                // Используем цвета, если текстуры не загрузились
+            if (!useTextures) {
+                wallMat = new THREE.MeshStandardMaterial({
+                    color: 0x3a2215,
+                    roughness: 0.9,
+                    metalness: 0.0
+                });
+                wallMatDark = new THREE.MeshStandardMaterial({
+                    color: 0x1a0a00,
+                    roughness: 0.9,
+                    metalness: 0.0
+                });
+                wallMatGlow = new THREE.MeshStandardMaterial({
+                    color: 0x5a3a22,
+                    emissive: new THREE.Color(0x442211),
+                    emissiveIntensity: 0.2,
+                    roughness: 0.7
+                });
                 floorMat = new THREE.MeshStandardMaterial({
                     color: 0x2a1a0a,
                     roughness: 0.9,
                     metalness: 0.0
                 });
-                wallMat = new THREE.MeshStandardMaterial({
-                    color: 0x5a3a22,
-                    roughness: 0.7,
-                    metalness: 0.1
-                });
             } else {
-                // Используем текстуры
-                floorMat = new THREE.MeshStandardMaterial({
-                    map: floorTexture,
-                    roughness: 0.8,
-                    metalness: 0.0
-                });
-
+                // СТЕНЫ: обычные (тёмные)
                 wallMat = new THREE.MeshStandardMaterial({
                     map: wallTexture,
-                    roughness: 0.7,
-                    metalness: 0.1
+                    roughness: 0.8,
+                    metalness: 0.0,
+                    emissive: new THREE.Color(0x0a0500),
+                    emissiveIntensity: 0.05
+                });
+
+                // СТЕНЫ: очень тёмные (для тумана войны)
+                wallMatDark = new THREE.MeshStandardMaterial({
+                    map: wallTexture,
+                    roughness: 0.9,
+                    metalness: 0.0,
+                    emissive: new THREE.Color(0x000000),
+                    emissiveIntensity: 0,
+                    color: 0x1a0a00
+                });
+
+                // СТЕНЫ: светящиеся (двери/проходы)
+                wallMatGlow = new THREE.MeshStandardMaterial({
+                    map: wallTexture,
+                    roughness: 0.6,
+                    metalness: 0.1,
+                    emissive: new THREE.Color(0x664422),
+                    emissiveIntensity: 0.3,
+                    color: 0x8a6a4a
+                });
+
+                // ПОЛ
+                floorMat = new THREE.MeshStandardMaterial({
+                    map: floorTexture,
+                    roughness: 0.9,
+                    metalness: 0.0
                 });
             }
 
             // === ПОСТРОЕНИЕ ПОДЗЕМЕЛЬЯ ===
             var size = d.size;
-            var wallHeight = 2.0;
+            var wallHeight = 2.4;
             var cellSize = 1;
             var group = new THREE.Group();
             var offsetX = Math.floor(size / 2);
             var offsetZ = Math.floor(size / 2);
 
-            // Для оптимизации - объединяем стены по возможности
-            var wallMeshes = [];
-            
+            // Сохраняем все стены
+            var walls = [];
+
             for (var row = 0; row < size; row++) {
                 for (var col = 0; col < size; col++) {
                     var x = col - offsetX;
                     var z = row - offsetZ;
                     var cell = d.grid[row][col];
 
-                    // Пол
+                    // === ПОЛ ===
                     var floor = new THREE.Mesh(
                         new THREE.PlaneGeometry(cellSize, cellSize),
                         floorMat
@@ -544,45 +574,92 @@ _renderDungeon: function() {
                     floor.receiveShadow = true;
                     group.add(floor);
 
+                    // === ПОТОЛОК ===
+                    var ceilMat = new THREE.MeshStandardMaterial({
+                        color: 0x0a0500,
+                        roughness: 0.9,
+                        metalness: 0.0
+                    });
+                    var ceil = new THREE.Mesh(
+                        new THREE.PlaneGeometry(cellSize, cellSize),
+                        ceilMat
+                    );
+                    ceil.rotation.x = Math.PI / 2;
+                    ceil.position.set(x, wallHeight, z);
+                    group.add(ceil);
+
+                    // === СТЕНЫ ===
                     if (!cell.open) {
-                        // СТЕНА с текстурой
+                        // Проверяем, есть ли проход рядом (дверь)
+                        var hasDoor = false;
+                        var neighbors = [
+                            [row-1, col], [row+1, col], 
+                            [row, col-1], [row, col+1]
+                        ];
+                        for (var n of neighbors) {
+                            var nr = n[0], nc = n[1];
+                            if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+                                if (d.grid[nr][nc].open) {
+                                    hasDoor = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Выбираем материал
+                        var mat;
+                        if (hasDoor) {
+                            // Если рядом есть проход - стена слегка светится
+                            mat = wallMatGlow;
+                        } else if (row === 0 || row === size-1 || col === 0 || col === size-1) {
+                            // Внешние стены - очень тёмные
+                            mat = wallMatDark;
+                        } else {
+                            // Обычные стены
+                            mat = wallMat;
+                        }
+
                         var wall = new THREE.Mesh(
                             new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
-                            wallMat
+                            mat
                         );
                         wall.position.set(x, wallHeight / 2, z);
                         wall.castShadow = true;
                         wall.receiveShadow = true;
                         group.add(wall);
-                    }
-                }
-            }
-            scene.add(group);
-
-            // === ДЕКОРАТИВНЫЕ ЛАМПЫ ===
-            for (var row = 0; row < size; row++) {
-                for (var col = 0; col < size; col++) {
-                    if (d.grid[row][col].open && row % 2 === 0 && col % 2 === 0) {
-                        var x = col - offsetX;
-                        var z = row - offsetZ;
-                        var lampMat = new THREE.MeshStandardMaterial({
-                            color: 0xff6633,
-                            emissive: new THREE.Color(0xff4400),
-                            emissiveIntensity: 0.3
+                        walls.push({ 
+                            mesh: wall, 
+                            x: x, 
+                            z: z, 
+                            hasDoor: hasDoor,
+                            row: row,
+                            col: col
                         });
-                        var lamp = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.06, 8, 8),
-                            lampMat
-                        );
-                        lamp.position.set(x, wallHeight - 0.1, z);
-                        group.add(lamp);
-
-                        var light = new THREE.PointLight(0xff6633, 0.2, 3);
-                        light.position.set(x, wallHeight - 0.2, z);
-                        scene.add(light);
                     }
                 }
             }
+
+            // === ДОПОЛНИТЕЛЬНЫЙ ЭФФЕКТ: свечение на полу у проходов ===
+            for (var wall of walls) {
+                if (wall.hasDoor) {
+                    var glowMat = new THREE.MeshStandardMaterial({
+                        color: 0x664422,
+                        emissive: new THREE.Color(0x442211),
+                        emissiveIntensity: 0.2,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+                    var glow = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.8, 0.8),
+                        glowMat
+                    );
+                    glow.rotation.x = -Math.PI / 2;
+                    glow.position.set(wall.x, 0.02, wall.z);
+                    group.add(glow);
+                }
+            }
+
+            scene.add(group);
 
             // === УПРАВЛЕНИЕ ===
             setupControls();
@@ -595,7 +672,7 @@ _renderDungeon: function() {
             var currentYaw = -currentDir * Math.PI / 180;
             var targetYaw = currentYaw;
 
-            var currentPos = new THREE.Vector3(d.px + 0.5, 0.3, d.py + 0.5);
+            var currentPos = new THREE.Vector3(d.px + 0.5, 1.6, d.py + 0.5);
             var targetPos = currentPos.clone();
 
             function moveForward() {
@@ -603,7 +680,7 @@ _renderDungeon: function() {
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
                 self._dungeonMove(d.px + fwdX, d.py + fwdY);
-                targetPos.set(d.px + 0.5, 0.3, d.py + 0.5);
+                targetPos.set(d.px + 0.5, 1.6, d.py + 0.5);
             }
 
             function moveBack() {
@@ -611,7 +688,7 @@ _renderDungeon: function() {
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
                 self._dungeonMove(d.px - fwdX, d.py - fwdY);
-                targetPos.set(d.px + 0.5, 0.3, d.py + 0.5);
+                targetPos.set(d.px + 0.5, 1.6, d.py + 0.5);
             }
 
             function turnLeft() {
@@ -626,74 +703,105 @@ _renderDungeon: function() {
                 targetYaw = -currentDir * Math.PI / 180;
             }
 
-            // КНОПКИ УПРАВЛЕНИЯ
+            // === КНОПКИ УПРАВЛЕНИЯ ===
             var controlPanel = document.createElement('div');
-            controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:200px;height:200px;z-index:10;pointer-events:auto;';
+            controlPanel.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:200px;height:200px;z-index:10;pointer-events:auto;';
             container.appendChild(controlPanel);
 
-            var sphere = document.createElement('div');
-            sphere.style.cssText = 'position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.2);';
-            controlPanel.appendChild(sphere);
+            var bg = document.createElement('div');
+            bg.style.cssText = 'position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.15);';
+            controlPanel.appendChild(bg);
 
-            // Кнопки с иконками
-            var btnUp = document.createElement('button');
-            btnUp.innerHTML = '▲';
-            btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
-            btnUp.onmousedown = function(e) { 
-                e.preventDefault();
-                this.style.transform = 'translateX(-50%) scale(0.9)';
-                moveForward(); 
+            var btns = {
+                up: { top: '5px', left: '50%', transform: 'translateX(-50%)', text: '▲' },
+                down: { bottom: '5px', left: '50%', transform: 'translateX(-50%)', text: '▼' },
+                left: { left: '5px', top: '50%', transform: 'translateY(-50%)', text: '◀' },
+                right: { right: '5px', top: '50%', transform: 'translateY(-50%)', text: '▶' }
             };
-            btnUp.onmouseup = function() { this.style.transform = 'translateX(-50%) scale(1)'; };
-            controlPanel.appendChild(btnUp);
 
-            var btnDown = document.createElement('button');
-            btnDown.innerHTML = '▼';
-            btnDown.style.cssText = 'position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
-            btnDown.onmousedown = function(e) { 
-                e.preventDefault();
-                this.style.transform = 'translateX(-50%) scale(0.9)';
-                moveBack(); 
-            };
-            btnDown.onmouseup = function() { this.style.transform = 'translateX(-50%) scale(1)'; };
-            controlPanel.appendChild(btnDown);
-
-            var btnLeft = document.createElement('button');
-            btnLeft.innerHTML = '◀';
-            btnLeft.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
-            btnLeft.onmousedown = function(e) { 
-                e.preventDefault();
-                this.style.transform = 'translateY(-50%) scale(0.9)';
-                turnLeft(); 
-            };
-            btnLeft.onmouseup = function() { this.style.transform = 'translateY(-50%) scale(1)'; };
-            controlPanel.appendChild(btnLeft);
-
-            var btnRight = document.createElement('button');
-            btnRight.innerHTML = '▶';
-            btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
-            btnRight.onmousedown = function(e) { 
-                e.preventDefault();
-                this.style.transform = 'translateY(-50%) scale(0.9)';
-                turnRight(); 
-            };
-            btnRight.onmouseup = function() { this.style.transform = 'translateY(-50%) scale(1)'; };
-            controlPanel.appendChild(btnRight);
+            Object.keys(btns).forEach(key => {
+                var btn = document.createElement('button');
+                var style = btns[key];
+                btn.textContent = style.text;
+                btn.style.cssText = `
+                    position:absolute;
+                    ${style.top ? 'top:'+style.top : ''}
+                    ${style.bottom ? 'bottom:'+style.bottom : ''}
+                    ${style.left ? 'left:'+style.left : ''}
+                    ${style.right ? 'right:'+style.right : ''}
+                    transform:${style.transform};
+                    width:50px;
+                    height:50px;
+                    background:rgba(255,255,255,0.15);
+                    border:2px solid rgba(255,255,255,0.2);
+                    border-radius:50%;
+                    cursor:pointer;
+                    font-size:20px;
+                    color:#fff;
+                    transition:all 0.1s;
+                    text-shadow:0 0 10px rgba(255,255,255,0.3);
+                    touch-action:none;
+                `;
+                
+                btn.onmousedown = function(e) {
+                    e.preventDefault();
+                    this.style.transform = style.transform + ' scale(0.85)';
+                    this.style.background = 'rgba(255,255,255,0.3)';
+                    switch(key) {
+                        case 'up': moveForward(); break;
+                        case 'down': moveBack(); break;
+                        case 'left': turnLeft(); break;
+                        case 'right': turnRight(); break;
+                    }
+                };
+                btn.onmouseup = function() {
+                    this.style.transform = style.transform + ' scale(1)';
+                    this.style.background = 'rgba(255,255,255,0.15)';
+                };
+                btn.onmouseleave = function() {
+                    this.style.transform = style.transform + ' scale(1)';
+                    this.style.background = 'rgba(255,255,255,0.15)';
+                };
+                
+                btn.ontouchstart = function(e) {
+                    e.preventDefault();
+                    this.style.transform = style.transform + ' scale(0.85)';
+                    this.style.background = 'rgba(255,255,255,0.3)';
+                    switch(key) {
+                        case 'up': moveForward(); break;
+                        case 'down': moveBack(); break;
+                        case 'left': turnLeft(); break;
+                        case 'right': turnRight(); break;
+                    }
+                };
+                btn.ontouchend = function() {
+                    this.style.transform = style.transform + ' scale(1)';
+                    this.style.background = 'rgba(255,255,255,0.15)';
+                };
+                
+                controlPanel.appendChild(btn);
+            });
 
             // === АНИМАЦИЯ ===
             var animate = function() {
                 requestAnimationFrame(animate);
 
-                if (currentYaw != targetYaw) {
+                // Плавный поворот
+                if (Math.abs(currentYaw - targetYaw) > 0.001) {
                     var diff = targetYaw - currentYaw;
                     if (diff > Math.PI) diff -= 2 * Math.PI;
                     if (diff < -Math.PI) diff += 2 * Math.PI;
                     currentYaw += diff * 0.15;
+                } else {
+                    currentYaw = targetYaw;
                 }
                 camera.rotation.y = currentYaw;
 
+                // Плавное движение
                 if (currentPos.distanceTo(targetPos) > 0.01) {
                     currentPos.lerp(targetPos, 0.15);
+                } else {
+                    currentPos.copy(targetPos);
                 }
                 camera.position.copy(currentPos);
 
@@ -726,7 +834,7 @@ _renderDungeon: function() {
         }
     };
 
-    // Проверка THREE
+    // === ПРОВЕРКА THREE ===
     if (typeof THREE === 'undefined') {
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
