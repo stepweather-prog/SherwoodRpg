@@ -390,7 +390,7 @@ _showDefeatScreen: function(rewards) {
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
-// ========== 3D ПОДЗЕМКА (Камера на уровне глаз, видит пол, стены и коридор сзади) ==========
+// ========== 3D ПОДЗЕМКА (Правильная математика) ==========
 _renderDungeon: function() {
     var d = Sherwood.Dungeon.getDungeon();
     if (!d) { this.showDungeon(); return; }
@@ -408,20 +408,62 @@ _renderDungeon: function() {
         var scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a0f08);
 
-        // КАМЕРА НА УРОВНЕ ГЛАЗ (1.6) С ШИРОКИМ УГЛОМ (75°) ЧТОБЫ ВИДЕТЬ ПОЛ
+        // ===== КАМЕРА =====
         var camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 30);
+        camera.rotation.order = 'YXZ';
+
+        // ===== РАЗМЕРЫ ЛАБИРИНТА =====
+        var size = d.size;
+        var wallHeight = 2.4;
+        var cellSize = 1;
+        var offsetXmap = Math.floor(size / 2);
+        var offsetZmap = Math.floor(size / 2);
+
+        // ===== ПРЕОБРАЗОВАНИЕ КООРДИНАТ =====
+        // d.px, d.py — индексы в сетке (col, row)
+        // Мир THREE.js: X = col - offset, Z = row - offset
+        function getWorldPos(px, py) {
+            return {
+                x: px - offsetXmap,
+                z: py - offsetZmap
+            };
+        }
+
+        // ===== НАПРАВЛЕНИЯ В МИРЕ THREE.JS =====
+        // В THREE.js: 
+        // - ВПЕРЁД = -Z (угол 0° по карте = вверх = -Z)
+        // - ВПРАВО = +X (угол 90° по карте = вправо = +X)
+        // - НАЗАД = +Z
+        // - ВЛЕВО = -X
         
-        // СМЕЩЕНИЕ ОТ ЦЕНТРА КЛЕТКИ (0.3) ЧТОБЫ ВИДЕТЬ КОРИДОР СЗАДИ
         var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
         var currentDir = dirMap[d.heroDirection] || 0;
         var dirRad = currentDir * Math.PI / 180;
-        var offset = 0.35;
-        var offsetX = Math.cos(dirRad) * offset;
-        var offsetZ = Math.sin(dirRad) * offset;
         
-        // ПОЗИЦИЯ: центр клетки (0.5) - смещение назад (чтоб коридор был виден) + высота глаз (1.6)
-        camera.position.set(d.px + 0.5 - offsetX, 1.6, d.py + 0.5 - offsetZ);
-        camera.rotation.order = 'YXZ';
+        // ===== ПРАВИЛЬНЫЙ ВЕКТОР НАПРАВЛЕНИЯ В THREE.JS =====
+        // Для угла 0 (вверх по карте): смотрим в -Z
+        // Для угла 90 (вправо по карте): смотрим в +X
+        var forwardX = Math.sin(dirRad);     // sin(0)=0, sin(90)=1
+        var forwardZ = -Math.cos(dirRad);    // cos(0)=1, cos(90)=0 => -Z
+        
+        // ===== СМЕЩЕНИЕ КАМЕРЫ =====
+        var offset = 0.35; // Смещение от центра клетки
+        
+        // Смещение НАЗАД (чтобы видеть коридор)
+        var backX = forwardX * 0.25;
+        var backZ = forwardZ * 0.25;
+        
+        // Смещение ВЛЕВО (чтобы видеть стену слева)
+        // В THREE.js влево = -X, вправо = +X
+        var leftX = -forwardZ * 0.35;  // Перпендикуляр к forward
+        var leftZ = forwardX * 0.35;
+        
+        // ИТОГОВАЯ ПОЗИЦИЯ
+        var worldPos = getWorldPos(d.px, d.py);
+        var camX = worldPos.x + 0.5 + leftX - backX;
+        var camZ = worldPos.z + 0.5 + leftZ - backZ;
+        
+        camera.position.set(camX, 1.6, camZ);
 
         var renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
@@ -434,7 +476,7 @@ _renderDungeon: function() {
         mainLight.position.set(5, 10, 5);
         scene.add(mainLight);
 
-        // Текстура пола
+        // Текстуры
         var textureLoader = new THREE.TextureLoader();
         var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.jpeg');
         var floorMat = new THREE.MeshStandardMaterial({
@@ -443,7 +485,6 @@ _renderDungeon: function() {
             metalness: 0.0
         });
 
-        // Текстура стены
         var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
         var wallMat = new THREE.MeshStandardMaterial({
             map: wallTexture,
@@ -451,12 +492,8 @@ _renderDungeon: function() {
             metalness: 0.1
         });
 
-        var size = d.size;
-        var wallHeight = 2.4;
-        var cellSize = 1;
+        // ===== ПОСТРОЕНИЕ ЛАБИРИНТА =====
         var group = new THREE.Group();
-        var offsetXmap = Math.floor(size / 2);
-        var offsetZmap = Math.floor(size / 2);
 
         for (var row = 0; row < size; row++) {
             for (var col = 0; col < size; col++) {
@@ -484,60 +521,92 @@ _renderDungeon: function() {
         }
         scene.add(group);
 
-        // === УПРАВЛЕНИЕ ===
+        // ===== УПРАВЛЕНИЕ =====
+        // В THREE.js rotation.y: 0 = смотрим в -Z (вверх по карте)
         var currentYaw = -currentDir * Math.PI / 180;
         var targetYaw = currentYaw;
 
-        var currentPos = new THREE.Vector3(d.px + 0.5 - offsetX, 1.6, d.py + 0.5 - offsetZ);
-        var targetPos = currentPos.clone();
-
-        function moveForward() {
+        function updateTargetPos() {
+            var worldPos = getWorldPos(d.px, d.py);
             var dirRad = currentDir * Math.PI / 180;
-            var fwdX = Math.round(Math.cos(dirRad));
-            var fwdY = Math.round(Math.sin(dirRad));
-            self._dungeonMove(d.px + fwdX, d.py + fwdY);
             
-            // Обновляем позицию с учетом смещения
-            var newOffsetX = Math.cos(dirRad) * offset;
-            var newOffsetZ = Math.sin(dirRad) * offset;
-            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
+            var forwardX = Math.sin(dirRad);
+            var forwardZ = -Math.cos(dirRad);
+            
+            var backX = forwardX * 0.25;
+            var backZ = forwardZ * 0.25;
+            var leftX = -forwardZ * 0.35;
+            var leftZ = forwardX * 0.35;
+            
+            targetPos.set(
+                worldPos.x + 0.5 + leftX - backX,
+                1.6,
+                worldPos.z + 0.5 + leftZ - backZ
+            );
+        }
+
+        var currentPos = camera.position.clone();
+        var targetPos = currentPos.clone();
+        updateTargetPos();
+
+        // ===== ПРАВИЛЬНОЕ ДВИЖЕНИЕ =====
+        // В карте: row = py, col = px
+        // Вверх по карте: py-1, вниз: py+1, вправо: px+1, влево: px-1
+        function moveForward() {
+            var stepX = 0, stepY = 0;
+            switch(currentDir) {
+                case 0:   // up
+                    stepY = -1;
+                    break;
+                case 90:  // right
+                    stepX = 1;
+                    break;
+                case 180: // down
+                    stepY = 1;
+                    break;
+                case 270: // left
+                    stepX = -1;
+                    break;
+            }
+            self._dungeonMove(d.px + stepX, d.py + stepY);
+            updateTargetPos();
         }
 
         function moveBack() {
-            var dirRad = currentDir * Math.PI / 180;
-            var fwdX = Math.round(Math.cos(dirRad));
-            var fwdY = Math.round(Math.sin(dirRad));
-            self._dungeonMove(d.px - fwdX, d.py - fwdY);
-            
-            var newOffsetX = Math.cos(dirRad) * offset;
-            var newOffsetZ = Math.sin(dirRad) * offset;
-            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
+            var stepX = 0, stepY = 0;
+            switch(currentDir) {
+                case 0:   // up
+                    stepY = 1;
+                    break;
+                case 90:  // right
+                    stepX = -1;
+                    break;
+                case 180: // down
+                    stepY = -1;
+                    break;
+                case 270: // left
+                    stepX = 1;
+                    break;
+            }
+            self._dungeonMove(d.px + stepX, d.py + stepY);
+            updateTargetPos();
         }
 
         function turnLeft() {
             currentDir = (currentDir - 90 + 360) % 360;
             d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
             targetYaw = -currentDir * Math.PI / 180;
-            
-            // Обновляем смещение при повороте
-            var dirRad = currentDir * Math.PI / 180;
-            var newOffsetX = Math.cos(dirRad) * offset;
-            var newOffsetZ = Math.sin(dirRad) * offset;
-            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
+            updateTargetPos();
         }
 
         function turnRight() {
             currentDir = (currentDir + 90) % 360;
             d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
             targetYaw = -currentDir * Math.PI / 180;
-            
-            var dirRad = currentDir * Math.PI / 180;
-            var newOffsetX = Math.cos(dirRad) * offset;
-            var newOffsetZ = Math.sin(dirRad) * offset;
-            targetPos.set(d.px + 0.5 - newOffsetX, 1.6, d.py + 0.5 - newOffsetZ);
+            updateTargetPos();
         }
 
-        // ШАР С КНОПКАМИ
+        // КНОПКИ
         var controlPanel = document.createElement('div');
         controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:10;pointer-events:auto;';
         container.appendChild(controlPanel);
@@ -571,11 +640,10 @@ _renderDungeon: function() {
         btnLeft.addEventListener('click', function() { turnLeft(); });
         btnRight.addEventListener('click', function() { turnRight(); });
 
-        // === АНИМАЦИЯ (Плавная камера) ===
+        // === АНИМАЦИЯ ===
         var animate = function() {
             requestAnimationFrame(animate);
 
-            // Плавный поворот
             if (currentYaw != targetYaw) {
                 var diff = targetYaw - currentYaw;
                 if (diff > Math.PI) diff -= 2 * Math.PI;
@@ -584,7 +652,6 @@ _renderDungeon: function() {
             }
             camera.rotation.y = currentYaw;
 
-            // Плавное движение
             if (currentPos.distanceTo(targetPos) > 0.01) {
                 currentPos.lerp(targetPos, 0.15);
             }
@@ -618,7 +685,6 @@ _renderDungeon: function() {
         };
     };
 
-    // Если THREE отсутствует, подключаем через CDN
     if (typeof THREE === 'undefined') {
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
