@@ -403,8 +403,7 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-       // ========== 3D ПОДЗЕМКА (Вместо старого _renderDungeon) ==========
-       // ========== 3D ПОДЗЕМКА (Самоподключаемый Three.js) ==========
+           // ========== 3D ПОДЗЕМКА (Click to Move) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -412,7 +411,6 @@ _showDefeatScreen: function(rewards) {
 
         var self = this;
 
-        // Функция, которая запускает 3D сцену
         var start3D = function() {
             self._screenLayer.innerHTML = ''; 
             self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
@@ -487,60 +485,78 @@ _showDefeatScreen: function(rewards) {
             }
             scene.add(group);
 
-            var keys = { w: false, a: false, s: false, d: false };
-            var isLocked = false;
-            var yaw = 0, pitch = 0;
+            // --- СЕНСОРНЫЕ КНОПКИ (Мышь заменена на клики) ---
+            var overBtn = document.createElement('div');
+            overBtn.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:auto;';
+            container.appendChild(overBtn);
 
-            var onKeyDown = function(e) {
-                var k = e.key.toLowerCase();
-                if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = true; e.preventDefault(); }
-                if (e.key === 'ArrowUp') keys.w = true;
-                if (e.key === 'ArrowDown') keys.s = true;
-                if (e.key === 'ArrowLeft') keys.a = true;
-                if (e.key === 'ArrowRight') keys.d = true;
-            };
-            var onKeyUp = function(e) {
-                var k = e.key.toLowerCase();
-                if (k === 'w' || k === 'a' || k === 's' || k === 'd') { keys[k] = false; e.preventDefault(); }
-                if (e.key === 'ArrowUp') keys.w = false;
-                if (e.key === 'ArrowDown') keys.s = false;
-                if (e.key === 'ArrowLeft') keys.a = false;
-                if (e.key === 'ArrowRight') keys.d = false;
-            };
-            document.addEventListener('keydown', onKeyDown);
-            document.addEventListener('keyup', onKeyUp);
+            var onClick = function(e) {
+                var rect = overBtn.getBoundingClientRect();
+                var x = (e.clientX - rect.left) / rect.width;
+                var y = (e.clientY - rect.top) / rect.height;
 
-            var onMouseClick = function() {
-                if (!isLocked) renderer.domElement.requestPointerLock();
+                // Клик вверх (вперед): x ближе к 0.5, y < 0.4
+                if (Math.abs(x - 0.5) < 0.3) {
+                    if (y < 0.4) {
+                        self._dungeonMove(d.px + 1, d.py); // Вперед
+                    } else if (y > 0.6) {
+                        self._dungeonMove(d.px - 1, d.py); // Назад
+                    }
+                }
+                // Клик справа: x > 0.6
+                else if (x > 0.6) {
+                    self._dungeonMove(d.px, d.py + 1); // Вправо
+                }
+                // Клик слева: x < 0.4
+                else if (x < 0.4) {
+                    self._dungeonMove(d.px, d.py - 1); // Влево
+                }
             };
-            renderer.domElement.addEventListener('click', onMouseClick);
+            overBtn.addEventListener('click', onClick);
 
-            var onPointerLockChange = function() {
-                isLocked = document.pointerLockElement === renderer.domElement;
-            };
-            document.addEventListener('pointerlockchange', onPointerLockChange);
+            // --- ЛОГИКА ДВИЖЕНИЯ (ПОШАГОВОЕ) ---
+            var isStepping = false;
+            var stepTimer = null;
 
-            var onMouseMove = function(e) {
-                if (!isLocked) return;
-                var sens = 0.002;
-                yaw -= e.movementX * sens;
-                pitch -= e.movementY * sens;
-                pitch = Math.max(-1.2, Math.min(1.2, pitch));
-                var euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
-                camera.quaternion.setFromEuler(euler);
-            };
-            document.addEventListener('mousemove', onMouseMove);
-
-            var speed = 0.06;
-            var movementForward = new THREE.Vector3();
             var playerPos = camera.position;
 
-            var updateMovement = function() {
-                if (!isLocked) return;
+            var stepDirection = function(dirX, dirZ) {
+                if (isStepping) return;
+                isStepping = true;
 
-                if (keys.a) { yaw += 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
-                if (keys.d) { yaw -= 0.035; camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
+                var newX = playerPos.x + dirX * 0.5;
+                var newZ = playerPos.z + dirZ * 0.5;
 
+                var col = Math.round(newX + offsetX);
+                var row = Math.round(newZ + offsetZ);
+
+                var cell = d.grid[row] && d.grid[row][col];
+                if (!cell) return;
+
+                if (cell.open) {
+                    var stepAnim = new THREE.Vector3(newX, newZ);
+                    camera.position.x = newX;
+                    camera.position.z = newZ;
+                    isStepping = false;
+                } else {
+                    if (row === d.py + 1 && col === d.px) {
+                        cell.open = true;
+                        camera.position.x = newX;
+                        camera.position.z = newZ;
+                        isStepping = false;
+                    } else {
+                        isStepping = false;
+                    }
+                }
+            };
+
+            // --- Имитация пошагового движка (CLICK TO MOVE) ---
+            var animate = function() {
+                requestAnimationFrame(animate);
+                
+                // Если впереди есть открытая клетка, рисуем im вдали
+                var speed = 0.05;
+                var movementForward = new THREE.Vector3();
                 movementForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
                 movementForward.y = 0;
                 movementForward.normalize();
@@ -562,37 +578,23 @@ _showDefeatScreen: function(rewards) {
                     var canMoveX = true, canMoveZ = true;
                     
                     if (row >= 0 && row < size && col >= 0 && col < size) {
-                        if (d.grid[row] && !d.grid[row][col].open) canMoveX = false;
+                        if (d.grid[row] && !d.grid[row][col].open) {
+                            canMoveX = false;
+                            canMoveZ = false;
+                        }
                     }
                     
-                    col = Math.round(playerPos.x + offsetX);
-                    row = Math.round(newZ + offsetZ);
-                    if (row >= 0 && row < size && col >= 0 && col < size) {
-                        if (d.grid[row] && !d.grid[row][col].open) canMoveZ = false;
-                    }
-
                     if (canMoveX) playerPos.x = newX;
                     if (canMoveZ) playerPos.z = newZ;
                 }
             };
-
-            var animate = function() {
-                requestAnimationFrame(animate);
-                updateMovement();
-                renderer.render(scene, camera);
-            };
             animate();
 
             var leaveHandler = function(e) {
-                if (e.key === 'Escape' && isLocked) {
+                if (e.key === 'Escape') {
                     document.exitPointerLock();
                     renderer.dispose();
                     container.remove();
-                    document.removeEventListener('keydown', onKeyDown);
-                    document.removeEventListener('keyup', onKeyUp);
-                    renderer.domElement.removeEventListener('click', onMouseClick);
-                    document.removeEventListener('pointerlockchange', onPointerLockChange);
-                    document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('keydown', leaveHandler);
                     self._leaveDungeon();
                 }
@@ -612,7 +614,7 @@ _showDefeatScreen: function(rewards) {
             };
         };
 
-        // Проверяем, загружен ли THREE. Если нет — подключаем через CDN и ждем.
+        // Если THREE отсутствует, подключаем через CDN
         if (typeof THREE === 'undefined') {
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
@@ -624,7 +626,6 @@ _showDefeatScreen: function(rewards) {
             start3D();
         }
     },
-    
     // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК (БЕЗ ИЗМЕНЕНИЙ) ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
