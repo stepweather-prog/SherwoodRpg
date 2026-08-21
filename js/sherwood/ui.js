@@ -391,7 +391,7 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-    // ========== 3D ПОДЗЕМКА (Финальный вариант: центр клетки, локальные ссылки) ==========
+        // ========== 3D ПОДЗЕМКА (Безопасный вариант без массивов) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -421,33 +421,34 @@ _showDefeatScreen: function(rewards) {
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // ===== ТЕКСТУРЫ (ВСЕ НА ЛОКАЛЬНЫХ ПУТЯХ) =====
-        var wallTiles = [];
-        for (var i = 1; i <= 6; i++) {
-            var img = new Image();
-            img.src = 'assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png';
-            img.onerror = function() { this.src = 'assets/dungeon_tiles/visual_dungeon/wall_1.png'; };
-            wallTiles.push(img);
+        // ===== ТЕКСТУРЫ (Одна загружается, остальные - фолбэк) =====
+        var wallImg = new Image();
+        wallImg.src = 'assets/dungeon_tiles/visual_dungeon/wall_1.png';
+        if (!wallImg.complete) {
+            wallImg.onload = function() { /* Картинка готова */ };
         }
 
-        var ceilTiles = [];
-        for (var c = 1; c <= 6; c++) {
-            var imgC = new Image();
-            imgC.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + c + '.png';
-            imgC.onerror = function() { this.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_1.png'; };
-            ceilTiles.push(imgC);
+        var ceilImg = new Image();
+        ceilImg.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_1.png';
+        if (!ceilImg.complete) {
+            ceilImg.onload = function() { /* Картинка готова */ };
         }
 
         var floorImg = new Image();
         floorImg.src = 'assets/dungeon_tiles/dungeon1/tiles10.jpeg';
+        if (!floorImg.complete) {
+            floorImg.onload = function() { /* Картинка готова */ };
+        }
 
         var openableWallImg = new Image();
         openableWallImg.src = 'assets/interface/labyrinth_asset.png';
+        if (!openableWallImg.complete) {
+            openableWallImg.onload = function() { /* Картинка готова */ };
+        }
 
-        // ===== КАМЕРА В ЦЕНТРЕ КЛЕТКИ =====
+        // ===== КАМЕРА В ЦЕНТРЕ =====
         var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI / 2, 'right': Math.PI / 2 };
         var playerAngle = dirMap[d.heroDirection] || 0;
-
         var px = d.px + 0.5;
         var py = d.py + 0.5;
 
@@ -472,24 +473,20 @@ _showDefeatScreen: function(rewards) {
                 var posX = px + rowDistance * rayDirX;
                 var posY = py + rowDistance * rayDirY;
 
-                var cellX = Math.floor(posX);
-                var cellY = Math.floor(posY);
-
                 if (isFloor) {
                     if (floorImg.complete && floorImg.naturalWidth > 0) {
-                        var tx = Math.floor((posX - cellX) * floorImg.width);
-                        var ty = Math.floor((posY - cellY) * floorImg.height);
+                        var tx = Math.floor(posX % 1 * floorImg.width);
+                        var ty = Math.floor(posY % 1 * floorImg.height);
                         ctx.drawImage(floorImg, tx, ty, 1, 1, x, y, 1, 1);
                     } else {
                         ctx.fillStyle = '#222222';
                         ctx.fillRect(x, y, 1, 1);
                     }
                 } else {
-                    var ceilTex = ceilTiles[Math.abs(cellX + cellY) % 6];
-                    if (ceilTex.complete && ceilTex.naturalWidth > 0) {
-                        var txC = Math.floor((posX - cellX) * ceilTex.width);
-                        var tyC = Math.floor((posY - cellY) * ceilTex.height);
-                        ctx.drawImage(ceilTex, txC, tyC, 1, 1, x, y, 1, 1);
+                    if (ceilImg.complete && ceilImg.naturalWidth > 0) {
+                        var txC = Math.floor(posX % 1 * ceilImg.width);
+                        var tyC = Math.floor(posY % 1 * ceilImg.height);
+                        ctx.drawImage(ceilImg, txC, tyC, 1, 1, x, y, 1, 1);
                     } else {
                         ctx.fillStyle = '#111111';
                         ctx.fillRect(x, y, 1, 1);
@@ -535,7 +532,7 @@ _showDefeatScreen: function(rewards) {
             var drawStart = Math.floor(-lineHeight / 2 + H / 2);
             var drawEnd = Math.floor(lineHeight / 2 + H / 2);
 
-            var wallImgToUse = wallTiles[Math.abs(mapX + mapY) % 6];
+            var wallImgToUse = wallImg;
             if (mapX === d.px && mapY === d.py + 1) {
                 wallImgToUse = openableWallImg;
             }
