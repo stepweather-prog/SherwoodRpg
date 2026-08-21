@@ -403,7 +403,7 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-             // ========== 3D ПОДЗЕМКА (Без утечек памяти) ==========
+          // ========== 3D ПОДЗЕМКА (УПРАВЛЕНИЕ ЧЕРЕЗ ПОЛУПРОЗРАЧНЫЙ ШАР) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -413,16 +413,10 @@ _showDefeatScreen: function(rewards) {
         // 1. Удаляем старую 3D сцену, если она есть (чтобы не копить WebGL контексты)
         if (self._threeRenderer) {
             try {
-                // Останавливаем цикл анимации
-                if (self._threeAnimationId) {
-                    cancelAnimationFrame(self._threeAnimationId);
-                }
-                // Удаляем все обработчики
+                if (self._threeAnimationId) cancelAnimationFrame(self._threeAnimationId);
                 if (self._threeCleanup) self._threeCleanup();
-                // Удаляем DOM элемент
                 var oldContainer = document.getElementById('three-dungeon-container');
                 if (oldContainer) oldContainer.remove();
-                // Принудительно освобождаем WebGL контекст
                 self._threeRenderer.dispose();
                 self._threeRenderer.forceContextLoss();
             } catch(e) {}
@@ -449,8 +443,6 @@ _showDefeatScreen: function(rewards) {
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
-            
-            // Сохраняем ссылку на рендерер для очистки
             self._threeRenderer = renderer;
 
             var ambient = new THREE.AmbientLight(0x442211, 0.6);
@@ -499,15 +491,11 @@ _showDefeatScreen: function(rewards) {
             }
             scene.add(group);
 
-            // === УПРАВЛЕНИЕ КЛИКАМИ (Пошаговое) ===
-            var clickLayer = document.createElement('div');
-            clickLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;cursor:pointer;';
-            container.appendChild(clickLayer);
-
+            // === УПРАВЛЕНИЕ ЧЕРЕЗ НИЖНИЙ ШАР ===
             var dirMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
             var currentDir = dirMap[d.heroDirection] || 0;
 
-            function handleClick(x, y) {
+            function getTargets() {
                 var fwdX = d.px + Math.round(Math.cos(currentDir));
                 var fwdY = d.py + Math.round(Math.sin(currentDir));
                 var bckX = d.px - Math.round(Math.cos(currentDir));
@@ -517,35 +505,64 @@ _showDefeatScreen: function(rewards) {
                 var rVx = Math.round(Math.cos(currentDir + Math.PI / 2));
                 var rVy = Math.round(Math.sin(currentDir + Math.PI / 2));
 
-                if (Math.abs(x - 0.5) < 0.3) {
-                    if (y < 0.4) self._dungeonMove(fwdX, fwdY);
-                    else if (y > 0.6) self._dungeonMove(bckX, bckY);
-                } else {
-                    if (x < 0.4) self._dungeonMove(d.px + lVx, d.py + lVy);
-                    else if (x > 0.6) self._dungeonMove(d.px + rVx, d.py + rVy);
-                }
+                return { fwdX: fwdX, fwdY: fwdY, bckX: bckX, bckY: bckY, lVx: lVx, lVy: lVy, rVx: rVx, rVy: rVy };
             }
 
-            clickLayer.addEventListener('touchstart', function(e) {
-                var touch = e.touches[0];
-                var rect = clickLayer.getBoundingClientRect();
-                var x = (touch.clientX - rect.left) / rect.width;
-                var y = (touch.clientY - rect.top) / rect.height;
-                handleClick(x, y);
-                e.preventDefault();
-            }, { passive: false });
+            // Создаем шар с кнопками
+            var uiLayer = document.createElement('div');
+            uiLayer.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:220px;height:220px;z-index:10;';
+            container.appendChild(uiLayer);
 
-            clickLayer.addEventListener('click', function(e) {
-                var rect = clickLayer.getBoundingClientRect();
-                var x = (e.clientX - rect.left) / rect.width;
-                var y = (e.clientY - rect.top) / rect.height;
-                handleClick(x, y);
+            var sphereDiv = document.createElement('div');
+            sphereDiv.style.cssText = 'position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.3);';
+            uiLayer.appendChild(sphereDiv);
+
+            // Кнопка "Вперед"
+            var btnUp = document.createElement('button');
+            btnUp.textContent = '▲';
+            btnUp.style.cssText = 'position:absolute;top:10px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+            uiLayer.appendChild(btnUp);
+
+            // Кнопка "Назад"
+            var btnDown = document.createElement('button');
+            btnDown.textContent = '▼';
+            btnDown.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+            uiLayer.appendChild(btnDown);
+
+            // Кнопка "Влево"
+            var btnLeft = document.createElement('button');
+            btnLeft.textContent = '◀';
+            btnLeft.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+            uiLayer.appendChild(btnLeft);
+
+            // Кнопка "Вправо"
+            var btnRight = document.createElement('button');
+            btnRight.textContent = '▶';
+            btnRight.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+            uiLayer.appendChild(btnRight);
+
+            // Привязываем клики
+            btnUp.addEventListener('click', function() {
+                var t = getTargets();
+                self._dungeonMove(t.fwdX, t.fwdY);
+            });
+            btnDown.addEventListener('click', function() {
+                var t = getTargets();
+                self._dungeonMove(t.bckX, t.bckY);
+            });
+            btnLeft.addEventListener('click', function() {
+                var t = getTargets();
+                self._dungeonMove(d.px + t.lVx, d.py + t.lVy);
+            });
+            btnRight.addEventListener('click', function() {
+                var t = getTargets();
+                self._dungeonMove(d.px + t.rVx, d.py + t.rVy);
             });
 
-            // === КНОПКА ВЫХОДА И ОЧИСТКА ===
+            // === ВЫХОД ===
             var leaveButton = document.createElement('button');
-            leaveButton.textContent = 'Выйти (Esc)';
-            leaveButton.style.cssText = 'position:absolute;bottom:20px;right:20px;z-index:10;padding:8px 16px;background:#8b0000;color:#fff;border:none;border-radius:4px;cursor:pointer;';
+            leaveButton.textContent = 'Выйти';
+            leaveButton.style.cssText = 'position:absolute;top:20px;right:20px;z-index:10;padding:8px 16px;background:#8b0000;color:#fff;border:none;border-radius:4px;cursor:pointer;';
             container.appendChild(leaveButton);
             leaveButton.addEventListener('click', function() {
                 if (self._threeCleanup) self._threeCleanup();
@@ -568,7 +585,7 @@ _showDefeatScreen: function(rewards) {
             };
             document.addEventListener('keydown', leaveHandler);
 
-            // === АНИМАЦИЯ И ОЧИСТКА ПРИ ЗАКРЫТИИ ===
+            // === АНИМАЦИЯ ===
             var animId;
             var animate = function() {
                 animId = requestAnimationFrame(animate);
@@ -576,7 +593,6 @@ _showDefeatScreen: function(rewards) {
             };
             animate();
 
-            // Сохраняем функции для удаления при выходе
             self._threeAnimationId = animId;
             self._threeCleanup = function() {
                 cancelAnimationFrame(animId);
