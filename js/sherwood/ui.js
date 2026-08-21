@@ -390,7 +390,7 @@ _showDefeatScreen: function(rewards) {
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
-       // ========== 3D ПОДЗЕМКА (Обновленные текстуры + Правильная камера) ==========
+           // ========== 3D ПОДЗЕМКА (Узкий коридор, повтор текстур, потолок виден) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -406,17 +406,20 @@ _showDefeatScreen: function(rewards) {
         container.style.cssText = 'width:100%;height:100%;position:relative;';
         this._screenLayer.appendChild(container);
 
-        // Ждем, пока контейнер отрисуется, иначе размеры = 0
         var start3D = function() {
             setTimeout(function() {
                 var scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x1a0f08);
-                scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
+                scene.fog = new THREE.Fog(0x1a0f08, 3, 9); // Туман, чтобы дальние стены не грузились
 
-                // Камера: высота 0.9 для видимости пола, чтобы не прижиматься к стене
+                // ===== КАМЕРА =====
                 var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
                 camera.rotation.order = 'YXZ';
-                camera.position.set(0.5, 0.9, 0.5);
+
+                // Ставим камеру на 0.3 вглубь клетки, чтобы видеть стены впереди и по бокам
+                var startX = d.px - Math.floor(size / 2) + 0.3;
+                var startZ = d.py - Math.floor(size / 2) + 0.3;
+                camera.position.set(startX, 0.6, startZ);
 
                 var renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(container.clientWidth, container.clientHeight);
@@ -429,44 +432,46 @@ _showDefeatScreen: function(rewards) {
                 mainLight.position.set(5, 10, 5);
                 scene.add(mainLight);
 
-                // ===== НОВЫЕ ТЕКСТУРЫ =====
+                // ===== ТЕКСТУРЫ (Повторяющиеся) =====
                 var textureLoader = new THREE.TextureLoader();
 
-                // Потолок (Чередование 6 текстур)
-                var ceilTextures = [];
+                var wallTiles = [];
                 for (var i = 1; i <= 6; i++) {
-                    var ceilTex = textureLoader.load('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png');
-                    ceilTextures.push(new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.8 }));
+                    var wTex = textureLoader.load('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png');
+                    wTex.wrapS = THREE.RepeatWrapping;
+                    wTex.wrapT = THREE.RepeatWrapping;
+                    wallTiles.push(new THREE.MeshStandardMaterial({ map: wTex, roughness: 0.8 }));
                 }
-                // Функция для случайного выбора потолка
-                function getRandomCeilMat() {
-                    return ceilTextures[Math.floor(Math.random() * ceilTextures.length)];
-                }
-
-                // Стены (Чередование 6 текстур)
-                var wallTextures = [];
-                for (var j = 1; j <= 6; j++) {
-                    var wallTex = textureLoader.load('assets/dungeon_tiles/visual_dungeon/wall_' + j + '.png');
-                    wallTextures.push(new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.7, metalness: 0.1 }));
-                }
-                // Функция для случайного выбора стены
                 function getRandomWallMat() {
-                    return wallTextures[Math.floor(Math.random() * wallTextures.length)];
+                    return wallTiles[Math.floor(Math.random() * wallTiles.length)];
                 }
 
-                // Открываемая стена (старая картинка)
-                var openableWallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-                var openableWallMat = new THREE.MeshStandardMaterial({ map: openableWallTexture, roughness: 0.7 });
+                var ceilTiles = [];
+                for (var c = 1; c <= 6; c++) {
+                    var cTex = textureLoader.load('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + c + '.png');
+                    cTex.wrapS = THREE.RepeatWrapping;
+                    cTex.wrapT = THREE.RepeatWrapping;
+                    ceilTiles.push(new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.8 }));
+                }
+                function getRandomCeilMat() {
+                    return ceilTiles[Math.floor(Math.random() * ceilTiles.length)];
+                }
 
-                // Пол (остается старая)
+                // Пол (тот самый)
                 var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.jpeg');
                 var floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.9 });
 
-                // ===== ПОСТРОЕНИЕ ЛАБИРИНТА =====
-                var wallHeight = 2.4;
-                var group = new THREE.Group();
+                // Открываемая стена (из labyrinth_asset)
+                var openableWallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
+                var openableWallMat = new THREE.MeshStandardMaterial({ map: openableWallTexture, roughness: 0.7 });
+
+                // ===== ПОСТРОЕНИЕ ЛАБИРИНТА (Узкий коридор) =====
+                // Стены и потолок высотой 1.2 (ровно как рост)
+                var wallHeight = 1.2;
                 var offsetX = Math.floor(size / 2);
                 var offsetZ = Math.floor(size / 2);
+
+                var group = new THREE.Group();
 
                 for (var row = 0; row < size; row++) {
                     for (var col = 0; col < size; col++) {
@@ -474,24 +479,29 @@ _showDefeatScreen: function(rewards) {
                         var z = row - offsetZ;
                         var cell = d.grid[row][col];
 
+                        // Пол
                         var floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
                         floor.rotation.x = -Math.PI / 2;
                         floor.position.set(x, 0, z);
                         group.add(floor);
 
-                        // Потолок (случайная из 6)
+                        // Потолок
                         var ceil = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), getRandomCeilMat());
                         ceil.rotation.x = Math.PI / 2;
                         ceil.position.set(x, wallHeight, z);
                         group.add(ceil);
 
-                        // Стены
+                        // Стены (только если клетка закрыта)
                         if (!cell.open) {
-                            // Если это соседняя клетка, которую можно открыть — используем старую стену
+                            // Если соседняя клетка, значит можно открыть
                             var isOpenable = (Math.abs(col - d.px) + Math.abs(row - d.py) === 1);
                             var wallMat = isOpenable ? openableWallMat : getRandomWallMat();
-                            
-                            var wall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 1), wallMat);
+
+                            // Каждая стена — это 4 стенки (север, юг, запад, восток)
+                            var wall = new THREE.Mesh(
+                                new THREE.BoxGeometry(1, wallHeight, 1),
+                                wallMat
+                            );
                             wall.position.set(x, wallHeight / 2, z);
                             group.add(wall);
                         }
@@ -499,19 +509,16 @@ _showDefeatScreen: function(rewards) {
                 }
                 scene.add(group);
 
-                // ===== КАМЕРА (видно пол и обе стены) =====
+                // ===== КАМЕРА (в начале клетки, в центре) =====
                 var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
                 var currentDir = dirMap[d.heroDirection] || 0;
                 var currentYaw = -currentDir * Math.PI / 180;
                 var targetYaw = currentYaw;
 
-                // Камера в центре клетки, но с наклоном вниз (чтобы видеть пол)
-                var currentPos = new THREE.Vector3(d.px - offsetX + 0.5, 0.9, d.py - offsetZ + 0.5);
+                var currentPos = new THREE.Vector3(startX, 0.6, startZ);
                 var targetPos = currentPos.clone();
                 camera.position.copy(currentPos);
                 camera.rotation.y = currentYaw;
-                // Настройка наклона камеры вниз (чтобы видеть пол)
-                camera.rotation.x = -0.2;
 
                 // ===== ДВИЖЕНИЕ =====
                 function moveForward() {
@@ -523,7 +530,7 @@ _showDefeatScreen: function(rewards) {
                         case 270: stepX = -1; break;
                     }
                     self._dungeonMove(d.px + stepX, d.py + stepY);
-                    targetPos.set(d.px - offsetX + 0.5, 0.9, d.py - offsetZ + 0.5);
+                    targetPos.set(d.px - offsetX + 0.3, 0.6, d.py - offsetZ + 0.3);
                 }
 
                 function moveBack() {
@@ -535,7 +542,7 @@ _showDefeatScreen: function(rewards) {
                         case 270: stepX = 1; break;
                     }
                     self._dungeonMove(d.px + stepX, d.py + stepY);
-                    targetPos.set(d.px - offsetX + 0.5, 0.9, d.py - offsetZ + 0.5);
+                    targetPos.set(d.px - offsetX + 0.3, 0.6, d.py - offsetZ + 0.3);
                 }
 
                 function turnLeft() {
@@ -584,7 +591,7 @@ _showDefeatScreen: function(rewards) {
                 btnLeft.addEventListener('click', function() { turnLeft(); });
                 btnRight.addEventListener('click', function() { turnRight(); });
 
-                // ===== АНИМАЦИЯ =====
+                // ===== АНИМАЦИЯ (плавный поворот) =====
                 var clock = new THREE.Clock();
                 var animate = function() {
                     requestAnimationFrame(animate);
@@ -616,7 +623,7 @@ _showDefeatScreen: function(rewards) {
                 };
                 document.addEventListener('keydown', leaveHandler);
 
-                // Авторесайз
+                // ===== РЕСАЙЗ =====
                 window.addEventListener('resize', function() {
                     if (!container || !renderer || !camera) return;
                     camera.aspect = container.clientWidth / container.clientHeight;
@@ -624,10 +631,10 @@ _showDefeatScreen: function(rewards) {
                     renderer.setSize(container.clientWidth, container.clientHeight);
                 });
 
-            }, 100); // Ждем, чтобы контейнер получил размеры
+            }, 100);
         };
 
-        // Подключение Three.js через CDN
+        // Подключение THREE (CDN)
         if (typeof THREE === 'undefined') {
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
