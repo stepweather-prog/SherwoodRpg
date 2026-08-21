@@ -390,261 +390,226 @@ _showDefeatScreen: function(rewards) {
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
-           // ========== 3D ПОДЗЕМКА (Узкий коридор, повтор текстур, потолок виден) ==========
+           // ========== 3D ПОДЗЕМКА (Псевдо-3D коридор без Three.js) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
         var self = this;
-        var size = d.size;
 
+        // 1. Очистка
         this._screenLayer.innerHTML = ''; 
         this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
 
         var container = document.createElement('div');
-        container.id = 'three-dungeon-container';
-        container.style.cssText = 'width:100%;height:100%;position:relative;';
+        container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
         this._screenLayer.appendChild(container);
 
-        var start3D = function() {
-            setTimeout(function() {
-                var scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x1a0f08);
-                scene.fog = new THREE.Fog(0x1a0f08, 3, 9); // Туман, чтобы дальние стены не грузились
+        // 2. Интерфейс (HP и счетчик)
+        var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
+        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);z-index:10;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
+        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;z-index:10;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
+        container.insertAdjacentHTML('afterbegin', topBarHtml);
+        container.insertAdjacentHTML('beforeend', bottomBarHtml);
 
-                // ===== КАМЕРА =====
-                var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
-                camera.rotation.order = 'YXZ';
+        // 3. Canvas
+        var canvas = document.createElement('canvas');
+        canvas.style.cssText = 'flex:1;width:100%;display:block;background:#000;';
+        container.appendChild(canvas);
+        var ctx = canvas.getContext('2d');
 
-                // Ставим камеру на 0.3 вглубь клетки, чтобы видеть стены впереди и по бокам
-                var startX = d.px - Math.floor(size / 2) + 0.3;
-                var startZ = d.py - Math.floor(size / 2) + 0.3;
-                camera.position.set(startX, 0.6, startZ);
+        var W = canvas.clientWidth;
+        var H = canvas.clientHeight;
+        if (W === 0 || H === 0) { W = 480; H = 500; }
+        canvas.width = W; canvas.height = H;
 
-                var renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(container.clientWidth, container.clientHeight);
-                renderer.shadowMap.enabled = true;
-                container.appendChild(renderer.domElement);
-
-                var ambient = new THREE.AmbientLight(0x442211, 0.6);
-                scene.add(ambient);
-                var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
-                mainLight.position.set(5, 10, 5);
-                scene.add(mainLight);
-
-                // ===== ТЕКСТУРЫ (Повторяющиеся) =====
-                var textureLoader = new THREE.TextureLoader();
-
-                var wallTiles = [];
-                for (var i = 1; i <= 6; i++) {
-                    var wTex = textureLoader.load('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png');
-                    wTex.wrapS = THREE.RepeatWrapping;
-                    wTex.wrapT = THREE.RepeatWrapping;
-                    wallTiles.push(new THREE.MeshStandardMaterial({ map: wTex, roughness: 0.8 }));
-                }
-                function getRandomWallMat() {
-                    return wallTiles[Math.floor(Math.random() * wallTiles.length)];
-                }
-
-                var ceilTiles = [];
-                for (var c = 1; c <= 6; c++) {
-                    var cTex = textureLoader.load('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + c + '.png');
-                    cTex.wrapS = THREE.RepeatWrapping;
-                    cTex.wrapT = THREE.RepeatWrapping;
-                    ceilTiles.push(new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.8 }));
-                }
-                function getRandomCeilMat() {
-                    return ceilTiles[Math.floor(Math.random() * ceilTiles.length)];
-                }
-
-                // Пол (тот самый)
-                var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.jpeg');
-                var floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.9 });
-
-                // Открываемая стена (из labyrinth_asset)
-                var openableWallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-                var openableWallMat = new THREE.MeshStandardMaterial({ map: openableWallTexture, roughness: 0.7 });
-
-                // ===== ПОСТРОЕНИЕ ЛАБИРИНТА (Узкий коридор) =====
-                // Стены и потолок высотой 1.2 (ровно как рост)
-                var wallHeight = 1.2;
-                var offsetX = Math.floor(size / 2);
-                var offsetZ = Math.floor(size / 2);
-
-                var group = new THREE.Group();
-
-                for (var row = 0; row < size; row++) {
-                    for (var col = 0; col < size; col++) {
-                        var x = col - offsetX;
-                        var z = row - offsetZ;
-                        var cell = d.grid[row][col];
-
-                        // Пол
-                        var floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
-                        floor.rotation.x = -Math.PI / 2;
-                        floor.position.set(x, 0, z);
-                        group.add(floor);
-
-                        // Потолок
-                        var ceil = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), getRandomCeilMat());
-                        ceil.rotation.x = Math.PI / 2;
-                        ceil.position.set(x, wallHeight, z);
-                        group.add(ceil);
-
-                        // Стены (только если клетка закрыта)
-                        if (!cell.open) {
-                            // Если соседняя клетка, значит можно открыть
-                            var isOpenable = (Math.abs(col - d.px) + Math.abs(row - d.py) === 1);
-                            var wallMat = isOpenable ? openableWallMat : getRandomWallMat();
-
-                            // Каждая стена — это 4 стенки (север, юг, запад, восток)
-                            var wall = new THREE.Mesh(
-                                new THREE.BoxGeometry(1, wallHeight, 1),
-                                wallMat
-                            );
-                            wall.position.set(x, wallHeight / 2, z);
-                            group.add(wall);
-                        }
-                    }
-                }
-                scene.add(group);
-
-                // ===== КАМЕРА (в начале клетки, в центре) =====
-                var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
-                var currentDir = dirMap[d.heroDirection] || 0;
-                var currentYaw = -currentDir * Math.PI / 180;
-                var targetYaw = currentYaw;
-
-                var currentPos = new THREE.Vector3(startX, 0.6, startZ);
-                var targetPos = currentPos.clone();
-                camera.position.copy(currentPos);
-                camera.rotation.y = currentYaw;
-
-                // ===== ДВИЖЕНИЕ =====
-                function moveForward() {
-                    var stepX = 0, stepY = 0;
-                    switch(currentDir) {
-                        case 0: stepY = -1; break;
-                        case 90: stepX = 1; break;
-                        case 180: stepY = 1; break;
-                        case 270: stepX = -1; break;
-                    }
-                    self._dungeonMove(d.px + stepX, d.py + stepY);
-                    targetPos.set(d.px - offsetX + 0.3, 0.6, d.py - offsetZ + 0.3);
-                }
-
-                function moveBack() {
-                    var stepX = 0, stepY = 0;
-                    switch(currentDir) {
-                        case 0: stepY = 1; break;
-                        case 90: stepX = -1; break;
-                        case 180: stepY = -1; break;
-                        case 270: stepX = 1; break;
-                    }
-                    self._dungeonMove(d.px + stepX, d.py + stepY);
-                    targetPos.set(d.px - offsetX + 0.3, 0.6, d.py - offsetZ + 0.3);
-                }
-
-                function turnLeft() {
-                    currentDir = (currentDir - 90 + 360) % 360;
-                    d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
-                    targetYaw = -currentDir * Math.PI / 180;
-                }
-
-                function turnRight() {
-                    currentDir = (currentDir + 90) % 360;
-                    d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
-                    targetYaw = -currentDir * Math.PI / 180;
-                }
-
-                // ===== КНОПКИ =====
-                var controlPanel = document.createElement('div');
-                controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:80;pointer-events:auto;';
-                container.appendChild(controlPanel);
-
-                var sphere = document.createElement('div');
-                sphere.style.cssText = 'position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.3);';
-                controlPanel.appendChild(sphere);
-
-                var btnUp = document.createElement('button');
-                btnUp.textContent = '▲';
-                btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
-                controlPanel.appendChild(btnUp);
-
-                var btnDown = document.createElement('button');
-                btnDown.textContent = '▼';
-                btnDown.style.cssText = 'position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
-                controlPanel.appendChild(btnDown);
-
-                var btnLeft = document.createElement('button');
-                btnLeft.textContent = '⟲';
-                btnLeft.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
-                controlPanel.appendChild(btnLeft);
-
-                var btnRight = document.createElement('button');
-                btnRight.textContent = '⟳';
-                btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
-                controlPanel.appendChild(btnRight);
-
-                btnUp.addEventListener('click', function() { moveForward(); });
-                btnDown.addEventListener('click', function() { moveBack(); });
-                btnLeft.addEventListener('click', function() { turnLeft(); });
-                btnRight.addEventListener('click', function() { turnRight(); });
-
-                // ===== АНИМАЦИЯ (плавный поворот) =====
-                var clock = new THREE.Clock();
-                var animate = function() {
-                    requestAnimationFrame(animate);
-
-                    var delta = clock.getDelta();
-                    var speed = 12 * delta;
-
-                    var diffYaw = targetYaw - currentYaw;
-                    while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
-                    while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
-                    currentYaw += diffYaw * Math.min(speed, 1);
-                    camera.rotation.y = currentYaw;
-
-                    currentPos.lerp(targetPos, Math.min(speed, 1));
-                    camera.position.copy(currentPos);
-
-                    renderer.render(scene, camera);
-                };
-                animate();
-
-                // ===== ВЫХОД =====
-                var leaveHandler = function(e) {
-                    if (e.key === 'Escape') {
-                        document.removeEventListener('keydown', leaveHandler);
-                        renderer.dispose();
-                        container.remove();
-                        self._leaveDungeon();
-                    }
-                };
-                document.addEventListener('keydown', leaveHandler);
-
-                // ===== РЕСАЙЗ =====
-                window.addEventListener('resize', function() {
-                    if (!container || !renderer || !camera) return;
-                    camera.aspect = container.clientWidth / container.clientHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(container.clientWidth, container.clientHeight);
-                });
-
-            }, 100);
-        };
-
-        // Подключение THREE (CDN)
-        if (typeof THREE === 'undefined') {
-            var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-            script.onload = function() {
-                start3D();
-            };
-            document.head.appendChild(script);
-        } else {
-            start3D();
+        // 4. Текстуры (потолок, стены, пол)
+        var wallTiles = []; // 6 стен
+        for (var i = 1; i <= 6; i++) {
+            var img = new Image();
+            img.src = 'assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png';
+            wallTiles.push(img);
         }
+        
+        var ceilTiles = []; // 6 потолков
+        for (var c = 1; c <= 6; c++) {
+            var imgC = new Image();
+            imgC.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + c + '.png';
+            ceilTiles.push(imgC);
+        }
+        var floorImg = new Image();
+        floorImg.src = 'assets/dungeon_tiles/dungeon1/tiles10.jpeg';
+        var openableWallImg = new Image();
+        openableWallImg.src = 'assets/interface/labyrinth_asset.png';
+
+        // 5. Позиция и направления
+        var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI / 2, 'right': Math.PI / 2 };
+        var playerAngle = dirMap[d.heroDirection] || 0;
+        var px = d.px + 0.3; // 0.3 - стоим в начале клетки
+        var py = d.py + 0.3;
+
+        var dirX = Math.cos(playerAngle);
+        var dirY = Math.sin(playerAngle);
+        var planeX = -dirY * 0.66;
+        var planeY = dirX * 0.66;
+
+        var FOV = Math.PI / 3;
+
+        // ===== РИСУЕМ ПОЛ И ПОТОЛОК (как в настоящем ДУМЕ) =====
+        for (var y = 0; y < H; y++) {
+            var isFloor = y > H / 2;
+            var rowDistance = (H / (2 * y - H));
+            if (rowDistance < 0) rowDistance = -rowDistance;
+            
+            // Проходим по горизонтали
+            for (var x = 0; x < W; x++) {
+                var cameraX = 2 * x / W - 1;
+                var rayDirX = dirX + planeX * cameraX;
+                var rayDirY = dirY + planeY * cameraX;
+                
+                // Координаты точки на полу/потолке
+                var posX = px + rowDistance * rayDirX;
+                var posY = py + rowDistance * rayDirY;
+                
+                var cellX = Math.floor(posX);
+                var cellY = Math.floor(posY);
+                
+                if (isFloor) {
+                    // Пол
+                    if (floorImg.complete && floorImg.naturalWidth > 0) {
+                        var tx = Math.floor((posX - cellX) * floorImg.width);
+                        var ty = Math.floor((posY - cellY) * floorImg.height);
+                        ctx.drawImage(floorImg, tx, ty, 1, 1, x, y, 1, 1);
+                    } else {
+                        ctx.fillStyle = '#222222';
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                } else {
+                    // Потолок (случайная текстура)
+                    var ceilTex = ceilTiles[Math.abs(cellX + cellY) % 6];
+                    if (ceilTex.complete && ceilTex.naturalWidth > 0) {
+                        var txC = Math.floor((posX - cellX) * ceilTex.width);
+                        var tyC = Math.floor((posY - cellY) * ceilTex.height);
+                        ctx.drawImage(ceilTex, txC, tyC, 1, 1, x, y, 1, 1);
+                    } else {
+                        ctx.fillStyle = '#111111';
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+        }
+
+        // ===== РИСУЕМ СТЕНЫ (RAYCASTING) =====
+        for (var x = 0; x < W; x++) {
+            var cameraX = 2 * x / W - 1;
+            var rayDirX = dirX + planeX * cameraX;
+            var rayDirY = dirY + planeY * cameraX;
+            
+            var mapX = Math.floor(px);
+            var mapY = Math.floor(py);
+            
+            var deltaDistX = Math.abs(1 / rayDirX);
+            var deltaDistY = Math.abs(1 / rayDirY);
+            
+            var stepX, stepY, sideDistX, sideDistY;
+            if (rayDirX < 0) { stepX = -1; sideDistX = (px - mapX) * deltaDistX; } 
+            else { stepX = 1; sideDistX = (mapX + 1 - px) * deltaDistX; }
+            if (rayDirY < 0) { stepY = -1; sideDistY = (py - mapY) * deltaDistY; } 
+            else { stepY = 1; sideDistY = (mapY + 1 - py) * deltaDistY; }
+            
+            var hit = false, side = 0;
+            while (!hit) {
+                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
+                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                
+                var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
+                if (!cellCheck || !cellCheck.open) { hit = true; }
+            }
+            
+            var perpWallDist;
+            if (side === 0) perpWallDist = (sideDistX - deltaDistX);
+            else perpWallDist = (sideDistY - deltaDistY);
+            if (perpWallDist < 0.1) perpWallDist = 0.1;
+            
+            var lineHeight = H / perpWallDist;
+            var drawStart = Math.floor(-lineHeight / 2 + H / 2);
+            var drawEnd = Math.floor(lineHeight / 2 + H / 2);
+
+            // Выбираем текстуру стены
+            var wallImgToUse = (mapX === d.px && mapY === d.py + 1) ? openableWallImg : wallTiles[Math.abs(mapX + mapY) % 6];
+            
+            var wallX;
+            if (side === 0) wallX = py + perpWallDist * rayDirY;
+            else wallX = px + perpWallDist * rayDirX;
+            wallX -= Math.floor(wallX);
+            
+            var texX = Math.floor(wallX * 64);
+            if (side === 1) texX = 63 - texX;
+
+            if (wallImgToUse.complete && wallImgToUse.naturalWidth > 0) {
+                try {
+                    ctx.drawImage(wallImgToUse, texX, 0, 1, 64, x, drawStart, 1, lineHeight);
+                } catch(e) {}
+            } else {
+                ctx.fillStyle = '#5a4a3a';
+                ctx.fillRect(x, drawStart, 1, lineHeight);
+            }
+        }
+
+        // ===== УПРАВЛЕНИЕ =====
+        var controlPanel = document.createElement('div');
+        controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:80;pointer-events:auto;';
+        container.appendChild(controlPanel);
+
+        var sphere = document.createElement('div');
+        sphere.style.cssText = 'position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.3);';
+        controlPanel.appendChild(sphere);
+
+        var btnUp = document.createElement('button');
+        btnUp.textContent = '▲';
+        btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnUp);
+
+        var btnDown = document.createElement('button');
+        btnDown.textContent = '▼';
+        btnDown.style.cssText = 'position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnDown);
+
+        var btnLeft = document.createElement('button');
+        btnLeft.textContent = '⟲';
+        btnLeft.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnLeft);
+
+        var btnRight = document.createElement('button');
+        btnRight.textContent = '⟳';
+        btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+        controlPanel.appendChild(btnRight);
+
+        btnUp.addEventListener('click', function() { 
+            var fwdX = Math.round(Math.cos(playerAngle));
+            var fwdY = Math.round(Math.sin(playerAngle));
+            self._dungeonMove(d.px + fwdX, d.py + fwdY); 
+            self._renderDungeon(); 
+        });
+
+        btnDown.addEventListener('click', function() { 
+            var fwdX = Math.round(Math.cos(playerAngle));
+            var fwdY = Math.round(Math.sin(playerAngle));
+            self._dungeonMove(d.px - fwdX, d.py - fwdY); 
+            self._renderDungeon(); 
+        });
+
+        btnLeft.addEventListener('click', function() { 
+            playerAngle -= Math.PI / 2;
+            d.heroDirection = playerAngle === 0 ? 'up' : playerAngle === Math.PI ? 'down' : playerAngle === -Math.PI / 2 ? 'left' : 'right';
+            self._renderDungeon(); 
+        });
+
+        btnRight.addEventListener('click', function() { 
+            playerAngle += Math.PI / 2;
+            d.heroDirection = playerAngle === 0 ? 'up' : playerAngle === Math.PI ? 'down' : playerAngle === Math.PI / 2 ? 'right' : 'left';
+            self._renderDungeon(); 
+        });
     },
 
     // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
