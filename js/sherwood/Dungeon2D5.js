@@ -40,7 +40,6 @@ Sherwood.Dungeon2D5 = {
     },
 
     _loadTextures: function() {
-        const self = this;
         const loader = new THREE.TextureLoader();
         
         function loadTex(src) {
@@ -154,6 +153,91 @@ Sherwood.Dungeon2D5 = {
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
         this._interactBtn.addEventListener('click', function() { self._onInteract(); });
+        
+        // Клик по канвасу для открытия стен
+        this._renderer.domElement.addEventListener('click', function(e) {
+            self._handleWallClick(e);
+        });
+        
+        this._renderer.domElement.addEventListener('touchend', function(e) {
+            if (e.changedTouches && e.changedTouches[0]) {
+                self._handleWallClick(e.changedTouches[0]);
+            }
+        });
+    },
+
+    _handleWallClick: function(e) {
+        if (this._isMoving || this._isTurning) return;
+        
+        const d = this._dungeon;
+        if (!d) return;
+        
+        const rect = this._renderer.domElement.getBoundingClientRect();
+        const mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this._camera);
+        
+        const intersects = raycaster.intersectObjects(this._group.children, false);
+        
+        for (let i = 0; i < intersects.length; i++) {
+            const obj = intersects[i].object;
+            if (obj.userData && obj.userData.openable) {
+                const gridX = obj.userData.gridX;
+                const gridY = obj.userData.gridY;
+                
+                const dir = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
+                
+                let dx = 0, dy = 0;
+                if (dir === 0) dy = -1;
+                else if (dir === 1) dx = 1;
+                else if (dir === 2) dy = 1;
+                else dx = -1;
+                
+                const frontX = d.px + dx;
+                const frontY = d.py + dy;
+                
+                if (gridX === frontX && gridY === frontY) {
+                    this._openWall(gridX, gridY);
+                    break;
+                }
+            }
+        }
+    },
+
+    _openWall: function(gridX, gridY) {
+        const d = this._dungeon;
+        if (!d) return;
+        
+        const cell = d.grid[gridY][gridX];
+        if (!cell) return;
+        
+        cell.open = true;
+        
+        if (cell.monster) {
+            const monsterId = cell.monsterId;
+            const isBoss = cell.isBoss || false;
+            
+            d.px = gridX;
+            d.py = gridY;
+            
+            this._buildMesh();
+            this._updateCamera();
+            this._updateJoystickAnim();
+            this._renderer.render(this._scene, this._camera);
+            
+            Sherwood.Combat.start(monsterId, isBoss, 'dungeon');
+            setTimeout(function() {
+                SherwoodUI._showCombatScreen();
+            }, 400);
+        } else {
+            if (SherwoodUI && SherwoodUI._playSound) {
+                SherwoodUI._playSound('tile_open');
+            }
+            this._buildMesh();
+            this._checkInteract();
+        }
     },
 
     _moveForward: function() {
@@ -496,7 +580,14 @@ Sherwood.Dungeon2D5 = {
                             self._updateCamera();
                             self._updateJoystickAnim();
                             self._renderer.render(self._scene, self._camera);
-                            SherwoodUI._dungeonMove(d.px, d.py);
+                            
+                            const monsterId = cell.monsterId;
+                            const isBoss = cell.isBoss || false;
+                            
+                            Sherwood.Combat.start(monsterId, isBoss, 'dungeon');
+                            setTimeout(function() {
+                                SherwoodUI._showCombatScreen();
+                            }, 400);
                             return;
                         }
                         
