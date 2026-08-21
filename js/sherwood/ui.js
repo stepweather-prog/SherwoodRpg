@@ -391,12 +391,11 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-     // ========== 3D ПОДЗЕМКА (ПОЛНОЦЕННЫЙ КОРИДОР) ==========
+        // ========== 3D ПОДЗЕМКА (Пол виден, нет стыков, камера сзади) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
-
         var self = this;
 
         var start3D = function() {
@@ -410,8 +409,9 @@ _showDefeatScreen: function(rewards) {
             var scene = new THREE.Scene();
             scene.background = new THREE.Color(0x1a0f08);
 
-            var camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 30);
-            camera.position.set(d.px + 0.5, 0.6, d.py + 0.5); // Идеальный центр клетки
+            // КАМЕРА НА ВЫСОТЕ 0.3, ЧТОБЫ ВИДЕТЬ ПОЛ
+            var camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 30);
+            camera.position.set(d.px + 0.5, 0.3, d.py + 0.5);
             camera.rotation.order = 'YXZ';
 
             var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -443,7 +443,7 @@ _showDefeatScreen: function(rewards) {
             });
 
             var size = d.size;
-            var wallHeight = 2.5; // Стены выше, чтобы они были видны
+            var wallHeight = 2.0;
             var cellSize = 1;
             var group = new THREE.Group();
             var offsetX = Math.floor(size / 2);
@@ -461,8 +461,8 @@ _showDefeatScreen: function(rewards) {
                     floor.receiveShadow = true;
                     group.add(floor);
 
-                    // Убираем потолок
                     if (!cell.open) {
+                        // СТЕНА ИЗ ОДНОГО КУБА (не стык!)
                         var wall = new THREE.Mesh(
                             new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
                             wallMat
@@ -482,7 +482,7 @@ _showDefeatScreen: function(rewards) {
             var currentYaw = -currentDir * Math.PI / 180;
             var targetYaw = currentYaw;
 
-            var currentPos = new THREE.Vector3(d.px + 0.5, 0.6, d.py + 0.5);
+            var currentPos = new THREE.Vector3(d.px + 0.5, 0.3, d.py + 0.5);
             var targetPos = currentPos.clone();
 
             function moveForward() {
@@ -490,7 +490,7 @@ _showDefeatScreen: function(rewards) {
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
                 self._dungeonMove(d.px + fwdX, d.py + fwdY);
-                targetPos.set(d.px + 0.5, 0.6, d.py + 0.5);
+                targetPos.set(d.px + 0.5, 0.3, d.py + 0.5);
             }
 
             function moveBack() {
@@ -498,7 +498,7 @@ _showDefeatScreen: function(rewards) {
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
                 self._dungeonMove(d.px - fwdX, d.py - fwdY);
-                targetPos.set(d.px + 0.5, 0.6, d.py + 0.5);
+                targetPos.set(d.px + 0.5, 0.3, d.py + 0.5);
             }
 
             function turnLeft() {
@@ -513,7 +513,7 @@ _showDefeatScreen: function(rewards) {
                 targetYaw = -currentDir * Math.PI / 180;
             }
 
-            // Создаем шар с кнопками
+            // ШАР С КНОПКАМИ
             var controlPanel = document.createElement('div');
             controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:10;pointer-events:auto;';
             container.appendChild(controlPanel);
@@ -547,7 +547,7 @@ _showDefeatScreen: function(rewards) {
             btnLeft.addEventListener('click', function() { turnLeft(); });
             btnRight.addEventListener('click', function() { turnRight(); });
 
-            // === АНИМАЦИЯ (ПЛАВНЫЙ ПОВОРОТ) ===
+            // === АНИМАЦИЯ (Плавная камера) ===
             var animate = function() {
                 requestAnimationFrame(animate);
 
