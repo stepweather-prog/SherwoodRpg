@@ -391,57 +391,133 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-        // ========== 3D ПОДЗЕМКА (Пол виден, нет стыков, камера сзади) ==========
-    _renderDungeon: function() {
-        var d = Sherwood.Dungeon.getDungeon();
-        if (!d) { this.showDungeon(); return; }
-        var p = Sherwood.getPlayer();
-        var self = this;
+       // ========== УЛУЧШЕННАЯ ВЕРСИЯ С ПОДДЕРЖКОЙ PNG ==========
+_renderDungeon: function() {
+    var d = Sherwood.Dungeon.getDungeon();
+    if (!d) { this.showDungeon(); return; }
+    var p = Sherwood.getPlayer();
+    var self = this;
 
-        var start3D = function() {
-            self._screenLayer.innerHTML = ''; 
-            self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
-            var container = document.createElement('div');
-            container.id = 'three-dungeon-container';
-            container.style.cssText = 'width:100%;height:100%;';
-            self._screenLayer.appendChild(container);
+    // Показываем загрузку
+    var loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font:24px monospace;z-index:60;';
+    loadingDiv.textContent = '⏳ Загрузка текстур...';
+    this._screenLayer.appendChild(loadingDiv);
 
-            var scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a0f08);
+    var start3D = function() {
+        self._screenLayer.innerHTML = ''; 
+        self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
+        var container = document.createElement('div');
+        container.id = 'three-dungeon-container';
+        container.style.cssText = 'width:100%;height:100%;';
+        self._screenLayer.appendChild(container);
 
-            // КАМЕРА НА ВЫСОТЕ 0.3, ЧТОБЫ ВИДЕТЬ ПОЛ
-            var camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 30);
-            camera.position.set(d.px + 0.5, 0.3, d.py + 0.5);
-            camera.rotation.order = 'YXZ';
+        var scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a0f08);
+        scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
 
-            var renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
+        // КАМЕРА
+        var camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 30);
+        camera.position.set(d.px + 0.5, 0.3, d.py + 0.5);
+        camera.rotation.order = 'YXZ';
 
-            var ambient = new THREE.AmbientLight(0x442211, 0.6);
-            scene.add(ambient);
-            var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
-            mainLight.position.set(5, 10, 5);
-            scene.add(mainLight);
+        var renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
 
-            // Текстура пола
-            var textureLoader = new THREE.TextureLoader();
-            var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.jpeg');
-            var floorMat = new THREE.MeshStandardMaterial({
-                map: floorTexture,
-                roughness: 0.8,
-                metalness: 0.0
-            });
+        var ambient = new THREE.AmbientLight(0x442211, 0.6);
+        scene.add(ambient);
+        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+        mainLight.position.set(5, 10, 5);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
 
-            // Текстура стены
-            var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-            var wallMat = new THREE.MeshStandardMaterial({
-                map: wallTexture,
-                roughness: 0.7,
-                metalness: 0.1
-            });
+        // === ЗАГРУЗЧИК ТЕКСТУР ===
+        var textureLoader = new THREE.TextureLoader();
+        var texturesLoaded = 0;
+        var totalTextures = 2;
 
+        function onTextureProgress() {
+            texturesLoaded++;
+            if (texturesLoaded >= totalTextures) {
+                loadingDiv.style.display = 'none';
+                buildDungeon();
+            }
+        }
+
+        // НАСТРОЙКИ ТЕКСТУР
+        function setupTexture(texture) {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            return texture;
+        }
+
+        // Загружаем PNG 1024x1024
+        var floorTexture = textureLoader.load(
+            'assets/dungeon_tiles/dungeon1/tiles10.png', // Твой PNG пола
+            function(tex) { 
+                setupTexture(tex); 
+                onTextureProgress(); 
+            },
+            undefined,
+            function() { 
+                console.warn('Ошибка загрузки пола, использую цвет');
+                onTextureProgress(); 
+            }
+        );
+
+        var wallTexture = textureLoader.load(
+            'assets/interface/labyrinth_asset.png', // Твой PNG стены
+            function(tex) { 
+                setupTexture(tex); 
+                onTextureProgress(); 
+            },
+            undefined,
+            function() { 
+                console.warn('Ошибка загрузки стены, использую цвет');
+                onTextureProgress(); 
+            }
+        );
+
+        // МАТЕРИАЛЫ
+        var floorMat, wallMat;
+        var useTextures = true;
+
+        function buildDungeon() {
+            // Проверяем, загрузились ли текстуры
+            if (!floorTexture.image || !wallTexture.image) {
+                useTextures = false;
+                // Используем цвета, если текстуры не загрузились
+                floorMat = new THREE.MeshStandardMaterial({
+                    color: 0x2a1a0a,
+                    roughness: 0.9,
+                    metalness: 0.0
+                });
+                wallMat = new THREE.MeshStandardMaterial({
+                    color: 0x5a3a22,
+                    roughness: 0.7,
+                    metalness: 0.1
+                });
+            } else {
+                // Используем текстуры
+                floorMat = new THREE.MeshStandardMaterial({
+                    map: floorTexture,
+                    roughness: 0.8,
+                    metalness: 0.0
+                });
+
+                wallMat = new THREE.MeshStandardMaterial({
+                    map: wallTexture,
+                    roughness: 0.7,
+                    metalness: 0.1
+                });
+            }
+
+            // === ПОСТРОЕНИЕ ПОДЗЕМЕЛЬЯ ===
             var size = d.size;
             var wallHeight = 2.0;
             var cellSize = 1;
@@ -449,20 +525,27 @@ _showDefeatScreen: function(rewards) {
             var offsetX = Math.floor(size / 2);
             var offsetZ = Math.floor(size / 2);
 
+            // Для оптимизации - объединяем стены по возможности
+            var wallMeshes = [];
+            
             for (var row = 0; row < size; row++) {
                 for (var col = 0; col < size; col++) {
                     var x = col - offsetX;
                     var z = row - offsetZ;
                     var cell = d.grid[row][col];
 
-                    var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                    // Пол
+                    var floor = new THREE.Mesh(
+                        new THREE.PlaneGeometry(cellSize, cellSize),
+                        floorMat
+                    );
                     floor.rotation.x = -Math.PI / 2;
                     floor.position.set(x, 0, z);
                     floor.receiveShadow = true;
                     group.add(floor);
 
                     if (!cell.open) {
-                        // СТЕНА ИЗ ОДНОГО КУБА (не стык!)
+                        // СТЕНА с текстурой
                         var wall = new THREE.Mesh(
                             new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
                             wallMat
@@ -476,7 +559,37 @@ _showDefeatScreen: function(rewards) {
             }
             scene.add(group);
 
+            // === ДЕКОРАТИВНЫЕ ЛАМПЫ ===
+            for (var row = 0; row < size; row++) {
+                for (var col = 0; col < size; col++) {
+                    if (d.grid[row][col].open && row % 2 === 0 && col % 2 === 0) {
+                        var x = col - offsetX;
+                        var z = row - offsetZ;
+                        var lampMat = new THREE.MeshStandardMaterial({
+                            color: 0xff6633,
+                            emissive: new THREE.Color(0xff4400),
+                            emissiveIntensity: 0.3
+                        });
+                        var lamp = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.06, 8, 8),
+                            lampMat
+                        );
+                        lamp.position.set(x, wallHeight - 0.1, z);
+                        group.add(lamp);
+
+                        var light = new THREE.PointLight(0xff6633, 0.2, 3);
+                        light.position.set(x, wallHeight - 0.2, z);
+                        scene.add(light);
+                    }
+                }
+            }
+
             // === УПРАВЛЕНИЕ ===
+            setupControls();
+        }
+
+        // === УПРАВЛЕНИЕ ===
+        function setupControls() {
             var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
             var currentDir = dirMap[d.heroDirection] || 0;
             var currentYaw = -currentDir * Math.PI / 180;
@@ -513,45 +626,64 @@ _showDefeatScreen: function(rewards) {
                 targetYaw = -currentDir * Math.PI / 180;
             }
 
-            // ШАР С КНОПКАМИ
+            // КНОПКИ УПРАВЛЕНИЯ
             var controlPanel = document.createElement('div');
-            controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:10;pointer-events:auto;';
+            controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:200px;height:200px;z-index:10;pointer-events:auto;';
             container.appendChild(controlPanel);
 
             var sphere = document.createElement('div');
-            sphere.style.cssText = 'position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.3);';
+            sphere.style.cssText = 'position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.2);';
             controlPanel.appendChild(sphere);
 
+            // Кнопки с иконками
             var btnUp = document.createElement('button');
-            btnUp.textContent = '▲';
-            btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+            btnUp.innerHTML = '▲';
+            btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
+            btnUp.onmousedown = function(e) { 
+                e.preventDefault();
+                this.style.transform = 'translateX(-50%) scale(0.9)';
+                moveForward(); 
+            };
+            btnUp.onmouseup = function() { this.style.transform = 'translateX(-50%) scale(1)'; };
             controlPanel.appendChild(btnUp);
 
             var btnDown = document.createElement('button');
-            btnDown.textContent = '▼';
-            btnDown.style.cssText = 'position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+            btnDown.innerHTML = '▼';
+            btnDown.style.cssText = 'position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
+            btnDown.onmousedown = function(e) { 
+                e.preventDefault();
+                this.style.transform = 'translateX(-50%) scale(0.9)';
+                moveBack(); 
+            };
+            btnDown.onmouseup = function() { this.style.transform = 'translateX(-50%) scale(1)'; };
             controlPanel.appendChild(btnDown);
 
             var btnLeft = document.createElement('button');
-            btnLeft.textContent = '⟲';
-            btnLeft.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+            btnLeft.innerHTML = '◀';
+            btnLeft.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
+            btnLeft.onmousedown = function(e) { 
+                e.preventDefault();
+                this.style.transform = 'translateY(-50%) scale(0.9)';
+                turnLeft(); 
+            };
+            btnLeft.onmouseup = function() { this.style.transform = 'translateY(-50%) scale(1)'; };
             controlPanel.appendChild(btnLeft);
 
             var btnRight = document.createElement('button');
-            btnRight.textContent = '⟳';
-            btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
+            btnRight.innerHTML = '▶';
+            btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:50%;cursor:pointer;font-size:24px;color:#fff;transition:all 0.1s;';
+            btnRight.onmousedown = function(e) { 
+                e.preventDefault();
+                this.style.transform = 'translateY(-50%) scale(0.9)';
+                turnRight(); 
+            };
+            btnRight.onmouseup = function() { this.style.transform = 'translateY(-50%) scale(1)'; };
             controlPanel.appendChild(btnRight);
 
-            btnUp.addEventListener('click', function() { moveForward(); });
-            btnDown.addEventListener('click', function() { moveBack(); });
-            btnLeft.addEventListener('click', function() { turnLeft(); });
-            btnRight.addEventListener('click', function() { turnRight(); });
-
-            // === АНИМАЦИЯ (Плавная камера) ===
+            // === АНИМАЦИЯ ===
             var animate = function() {
                 requestAnimationFrame(animate);
 
-                // Плавный поворот
                 if (currentYaw != targetYaw) {
                     var diff = targetYaw - currentYaw;
                     if (diff > Math.PI) diff -= 2 * Math.PI;
@@ -560,7 +692,6 @@ _showDefeatScreen: function(rewards) {
                 }
                 camera.rotation.y = currentYaw;
 
-                // Плавное движение
                 if (currentPos.distanceTo(targetPos) > 0.01) {
                     currentPos.lerp(targetPos, 0.15);
                 }
@@ -592,20 +723,21 @@ _showDefeatScreen: function(rewards) {
             self._threeCleanup = function() {
                 window.removeEventListener('resize', resizeHandler);
             };
-        };
-
-        // Если THREE отсутствует, подключаем через CDN
-        if (typeof THREE === 'undefined') {
-            var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-            script.onload = function() {
-                start3D();
-            };
-            document.head.appendChild(script);
-        } else {
-            start3D();
         }
-    },
+    };
+
+    // Проверка THREE
+    if (typeof THREE === 'undefined') {
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        script.onload = function() {
+            start3D();
+        };
+        document.head.appendChild(script);
+    } else {
+        start3D();
+    }
+},
 
     // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
     _dungeonMove: function(tx, ty) {
