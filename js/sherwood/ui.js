@@ -391,7 +391,7 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-         // ========== 3D ПОДЗЕМКА (Плавный поворот, пол, без потолка) ==========
+     // ========== 3D ПОДЗЕМКА (ПОЛНОЦЕННЫЙ КОРИДОР) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -411,7 +411,7 @@ _showDefeatScreen: function(rewards) {
             scene.background = new THREE.Color(0x1a0f08);
 
             var camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 30);
-            camera.position.set(d.px + 0.5, 0.5, d.py + 0.5); // Центр клетки, высота 0.5 (уровень глаз)
+            camera.position.set(d.px + 0.5, 0.6, d.py + 0.5); // Идеальный центр клетки
             camera.rotation.order = 'YXZ';
 
             var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -425,7 +425,7 @@ _showDefeatScreen: function(rewards) {
             mainLight.position.set(5, 10, 5);
             scene.add(mainLight);
 
-            // Текстура пола (твои плитки!)
+            // Текстура пола
             var textureLoader = new THREE.TextureLoader();
             var floorTexture = textureLoader.load('assets/dungeon_tiles/dungeon1/tiles10.jpeg');
             var floorMat = new THREE.MeshStandardMaterial({
@@ -443,7 +443,7 @@ _showDefeatScreen: function(rewards) {
             });
 
             var size = d.size;
-            var wallHeight = 1; // Стена ровно 1 клетка (не выше!)
+            var wallHeight = 2.5; // Стены выше, чтобы они были видны
             var cellSize = 1;
             var group = new THREE.Group();
             var offsetX = Math.floor(size / 2);
@@ -455,16 +455,13 @@ _showDefeatScreen: function(rewards) {
                     var z = row - offsetZ;
                     var cell = d.grid[row][col];
 
-                    // ПОЛ (Твоя текстура)
                     var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                     floor.rotation.x = -Math.PI / 2;
                     floor.position.set(x, 0, z);
                     floor.receiveShadow = true;
                     group.add(floor);
 
-                    // ПОТОЛОК УБРАН (никакого черного верха!)
-
-                    // СТЕНА
+                    // Убираем потолок
                     if (!cell.open) {
                         var wall = new THREE.Mesh(
                             new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
@@ -485,11 +482,7 @@ _showDefeatScreen: function(rewards) {
             var currentYaw = -currentDir * Math.PI / 180;
             var targetYaw = currentYaw;
 
-            // Для плавного поворота
-            var yawDiff = 0;
-
-            // Позиция камеры: цент клетки игрока
-            var currentPos = new THREE.Vector3(d.px + 0.5, 0.5, d.py + 0.5);
+            var currentPos = new THREE.Vector3(d.px + 0.5, 0.6, d.py + 0.5);
             var targetPos = currentPos.clone();
 
             function moveForward() {
@@ -497,7 +490,7 @@ _showDefeatScreen: function(rewards) {
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
                 self._dungeonMove(d.px + fwdX, d.py + fwdY);
-                targetPos.set(d.px + 0.5, 0.5, d.py + 0.5);
+                targetPos.set(d.px + 0.5, 0.6, d.py + 0.5);
             }
 
             function moveBack() {
@@ -505,7 +498,7 @@ _showDefeatScreen: function(rewards) {
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
                 self._dungeonMove(d.px - fwdX, d.py - fwdY);
-                targetPos.set(d.px + 0.5, 0.5, d.py + 0.5);
+                targetPos.set(d.px + 0.5, 0.6, d.py + 0.5);
             }
 
             function turnLeft() {
@@ -520,7 +513,7 @@ _showDefeatScreen: function(rewards) {
                 targetYaw = -currentDir * Math.PI / 180;
             }
 
-            // ШАР С КНОПКАМИ
+            // Создаем шар с кнопками
             var controlPanel = document.createElement('div');
             controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:10;pointer-events:auto;';
             container.appendChild(controlPanel);
@@ -554,20 +547,20 @@ _showDefeatScreen: function(rewards) {
             btnLeft.addEventListener('click', function() { turnLeft(); });
             btnRight.addEventListener('click', function() { turnRight(); });
 
-            // === АНИМАЦИЯ (Плавный поворот) ===
+            // === АНИМАЦИЯ (ПЛАВНЫЙ ПОВОРОТ) ===
             var animate = function() {
                 requestAnimationFrame(animate);
 
-                // 1. Плавный поворот камеры
+                // Плавный поворот
                 if (currentYaw != targetYaw) {
-                    yawDiff = targetYaw - currentYaw;
-                    if (yawDiff > Math.PI) yawDiff -= 2 * Math.PI;
-                    if (yawDiff < -Math.PI) yawDiff += 2 * Math.PI;
-                    currentYaw += yawDiff * 0.12;
+                    var diff = targetYaw - currentYaw;
+                    if (diff > Math.PI) diff -= 2 * Math.PI;
+                    if (diff < -Math.PI) diff += 2 * Math.PI;
+                    currentYaw += diff * 0.15;
                 }
                 camera.rotation.y = currentYaw;
 
-                // 2. Плавное движение камеры
+                // Плавное движение
                 if (currentPos.distanceTo(targetPos) > 0.01) {
                     currentPos.lerp(targetPos, 0.15);
                 }
