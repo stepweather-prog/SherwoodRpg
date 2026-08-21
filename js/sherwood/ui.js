@@ -403,12 +403,31 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-           // ========== 3D ПОДЗЕМКА (Three.js, Клики для перемещения) ==========
+             // ========== 3D ПОДЗЕМКА (Без утечек памяти) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
         var self = this;
+
+        // 1. Удаляем старую 3D сцену, если она есть (чтобы не копить WebGL контексты)
+        if (self._threeRenderer) {
+            try {
+                // Останавливаем цикл анимации
+                if (self._threeAnimationId) {
+                    cancelAnimationFrame(self._threeAnimationId);
+                }
+                // Удаляем все обработчики
+                if (self._threeCleanup) self._threeCleanup();
+                // Удаляем DOM элемент
+                var oldContainer = document.getElementById('three-dungeon-container');
+                if (oldContainer) oldContainer.remove();
+                // Принудительно освобождаем WebGL контекст
+                self._threeRenderer.dispose();
+                self._threeRenderer.forceContextLoss();
+            } catch(e) {}
+            self._threeRenderer = null;
+        }
 
         var start3D = function() {
             self._screenLayer.innerHTML = ''; 
@@ -430,6 +449,9 @@ _showDefeatScreen: function(rewards) {
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
+            
+            // Сохраняем ссылку на рендерер для очистки
+            self._threeRenderer = renderer;
 
             var ambient = new THREE.AmbientLight(0x442211, 0.6);
             scene.add(ambient);
@@ -477,13 +499,33 @@ _showDefeatScreen: function(rewards) {
             }
             scene.add(group);
 
-            // === УПРАВЛЕНИЕ КЛИКАМИ ===
-            // Создаем невидимый слой для обработки кликов
+            // === УПРАВЛЕНИЕ КЛИКАМИ (Пошаговое) ===
             var clickLayer = document.createElement('div');
             clickLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;cursor:pointer;';
             container.appendChild(clickLayer);
 
-            // Свайпы/Клики
+            var dirMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
+            var currentDir = dirMap[d.heroDirection] || 0;
+
+            function handleClick(x, y) {
+                var fwdX = d.px + Math.round(Math.cos(currentDir));
+                var fwdY = d.py + Math.round(Math.sin(currentDir));
+                var bckX = d.px - Math.round(Math.cos(currentDir));
+                var bckY = d.py - Math.round(Math.sin(currentDir));
+                var lVx = Math.round(Math.cos(currentDir - Math.PI / 2));
+                var lVy = Math.round(Math.sin(currentDir - Math.PI / 2));
+                var rVx = Math.round(Math.cos(currentDir + Math.PI / 2));
+                var rVy = Math.round(Math.sin(currentDir + Math.PI / 2));
+
+                if (Math.abs(x - 0.5) < 0.3) {
+                    if (y < 0.4) self._dungeonMove(fwdX, fwdY);
+                    else if (y > 0.6) self._dungeonMove(bckX, bckY);
+                } else {
+                    if (x < 0.4) self._dungeonMove(d.px + lVx, d.py + lVy);
+                    else if (x > 0.6) self._dungeonMove(d.px + rVx, d.py + rVy);
+                }
+            }
+
             clickLayer.addEventListener('touchstart', function(e) {
                 var touch = e.touches[0];
                 var rect = clickLayer.getBoundingClientRect();
@@ -500,77 +542,47 @@ _showDefeatScreen: function(rewards) {
                 handleClick(x, y);
             });
 
-            var dirMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
-            var currentDir = dirMap[d.heroDirection] || 0;
-
-            function handleClick(x, y) {
-                var fwdX = d.px + Math.round(Math.cos(currentDir));
-                var fwdY = d.py + Math.round(Math.sin(currentDir));
-                var bckX = d.px - Math.round(Math.cos(currentDir));
-                var bckY = d.py - Math.round(Math.sin(currentDir));
-                var lVx = Math.round(Math.cos(currentDir - Math.PI / 2));
-                var lVy = Math.round(Math.sin(currentDir - Math.PI / 2));
-                var rVx = Math.round(Math.cos(currentDir + Math.PI / 2));
-                var rVy = Math.round(Math.sin(currentDir + Math.PI / 2));
-
-                // Клик в центре: вверх/вниз
-                if (Math.abs(x - 0.5) < 0.3) {
-                    if (y < 0.4) self._dungeonMove(fwdX, fwdY);
-                    else if (y > 0.6) self._dungeonMove(bckX, bckY);
-                } 
-                // Клик слева/справа: поворот/движение
-                else {
-                    if (x < 0.4) self._dungeonMove(d.px + lVx, d.py + lVy);
-                    else if (x > 0.6) self._dungeonMove(d.px + rVx, d.py + rVy);
-                }
-            }
-
-            // Загрузка текстур и инициализация движения
-            var keys = {}; // Инициализируем keys, чтобы не было ошибки
-
-            document.addEventListener('keydown', function(e) {
-                keys[e.key.toLowerCase()] = true;
-                if (e.key === 'ArrowUp') { handleClick(0.5, 0.2); e.preventDefault(); }
-                if (e.key === 'ArrowDown') { handleClick(0.5, 0.8); e.preventDefault(); }
-                if (e.key === 'ArrowLeft') { handleClick(0.2, 0.5); e.preventDefault(); }
-                if (e.key === 'ArrowRight') { handleClick(0.8, 0.5); e.preventDefault(); }
-            });
-
-            document.addEventListener('keyup', function(e) {
-                keys[e.key.toLowerCase()] = false;
-            });
-
-            // Кнопка выхода
+            // === КНОПКА ВЫХОДА И ОЧИСТКА ===
             var leaveButton = document.createElement('button');
             leaveButton.textContent = 'Выйти (Esc)';
             leaveButton.style.cssText = 'position:absolute;bottom:20px;right:20px;z-index:10;padding:8px 16px;background:#8b0000;color:#fff;border:none;border-radius:4px;cursor:pointer;';
             container.appendChild(leaveButton);
             leaveButton.addEventListener('click', function() {
-                document.exitPointerLock();
+                if (self._threeCleanup) self._threeCleanup();
                 renderer.dispose();
+                renderer.forceContextLoss();
                 container.remove();
-                document.removeEventListener('keydown', leaveHandler);
+                self._threeRenderer = null;
                 self._leaveDungeon();
             });
 
             var leaveHandler = function(e) {
                 if (e.key === 'Escape') {
-                    document.exitPointerLock();
+                    if (self._threeCleanup) self._threeCleanup();
                     renderer.dispose();
+                    renderer.forceContextLoss();
                     container.remove();
-                    document.removeEventListener('keydown', leaveHandler);
+                    self._threeRenderer = null;
                     self._leaveDungeon();
                 }
             };
             document.addEventListener('keydown', leaveHandler);
 
-            // Анимация (запускаем отрисовку)
+            // === АНИМАЦИЯ И ОЧИСТКА ПРИ ЗАКРЫТИИ ===
+            var animId;
             var animate = function() {
-                requestAnimationFrame(animate);
-                // Мы не двигаем камеру плавно, так как у нас пошаговая игра.
+                animId = requestAnimationFrame(animate);
                 renderer.render(scene, camera);
             };
             animate();
+
+            // Сохраняем функции для удаления при выходе
+            self._threeAnimationId = animId;
+            self._threeCleanup = function() {
+                cancelAnimationFrame(animId);
+                document.removeEventListener('keydown', leaveHandler);
+                window.removeEventListener('resize', resizeHandler);
+            };
 
             var resizeHandler = function() {
                 var w = container.clientWidth, h = container.clientHeight;
