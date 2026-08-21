@@ -385,11 +385,11 @@ _showDefeatScreen: function(rewards) {
 },
 
     _startDungeon: function(id, level) { 
-        if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
-        var d = Sherwood.Dungeon.generate(id, level); 
-        if (!d) { this._showToast('Нет билетов!'); return; } 
-        this._renderDungeon(); 
-    },
+    if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
+    var d = Sherwood.Dungeon.generate(id, level); 
+    if (!d) { this._showToast('Нет билетов!'); return; } 
+    Sherwood.Dungeon2D5.render(d);
+},
 
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) { this.showDungeon(); return; }
@@ -565,8 +565,9 @@ _showDefeatScreen: function(rewards) {
     },
 
     _leaveDungeon: function() {
-        if (Sherwood.Dungeon) Sherwood.Dungeon.leave();
-        this._stopMusic();
+    Sherwood.Dungeon2D5.destroy();
+    if (Sherwood.Dungeon) Sherwood.Dungeon.leave();
+    this._stopMusic();
         if (this._mainThemeWasPlaying && this._mainThemeKey) { this._playMusic(this._mainThemeKey); if (this._currentMusic && this._mainThemeTime) { this._currentMusic.currentTime = this._mainThemeTime; } this._mainThemeWasPlaying = false; }
         else { this._playMusic('main_theme'); }
         this.showDungeon();
