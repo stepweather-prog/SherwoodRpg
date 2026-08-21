@@ -384,27 +384,14 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-          _startDungeon: function(id, level) { 
+            _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
 
-    // ========== ТЕКСТУРЫ ==========
-    _textureCache: {},
-    _getDungeonTexture: function(dungeonId) {
-        var src = 'assets/interface/labyrinth_asset.png';
-        if (!this._textureCache[src]) {
-            var img = new Image();
-            img.src = src;
-            this._textureCache[src] = img;
-        }
-        return this._textureCache[src];
-    },
-
-          
-        // ========== РЕНДЕР ПОДЗЕМКИ (3D ВИД ОТ ПЕРВОГО ЛИЦА) ==========
+    // ========== РЕНДЕР ПОДЗЕМКИ (3D ВИД ОТ ПЕРВОГО ЛИЦА, ЧИСТЫЙ РЕЙКАСТИНГ) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -435,13 +422,13 @@ _showDefeatScreen: function(rewards) {
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // Загрузка текстуры стен
+        // Загрузка текстуры стен (1024x1024)
         var wallTexture = new Image();
         wallTexture.src = 'assets/interface/labyrinth_asset.png';
         var wallTextureLoaded = false;
         wallTexture.onload = function() { wallTextureLoaded = true; };
 
-        // Направления и позиция игрока (3D расчеты)
+        // Позиция и угол игрока
         var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI / 2, 'right': Math.PI / 2 };
         var playerAngle = dirMap[d.heroDirection] || 0;
         var px = d.px + 0.5;
@@ -542,7 +529,7 @@ _showDefeatScreen: function(rewards) {
         btnRight.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
         controlPanel.appendChild(btnRight);
 
-        // Обработчики кнопок (СНАЧАЛА вызываем _dungeonMove, ПОТОМ перерисовываем)
+        // Обработчики кнопок (вызывают движение и перерисовку)
         btnUp.addEventListener('click', function() {
             self._dungeonMove(d.px + 1, d.py); // Вперед
             self._renderDungeon(); // Обновляем картинку
@@ -560,87 +547,8 @@ _showDefeatScreen: function(rewards) {
             self._renderDungeon();
         });
     },
-            // Привязываем клики
-            btnUp.addEventListener('click', function() {
-                var t = getTargets();
-                self._dungeonMove(t.fwdX, t.fwdY);
-            });
-            btnDown.addEventListener('click', function() {
-                var t = getTargets();
-                self._dungeonMove(t.bckX, t.bckY);
-            });
-            btnLeft.addEventListener('click', function() {
-                var t = getTargets();
-                self._dungeonMove(d.px + t.lVx, d.py + t.lVy);
-            });
-            btnRight.addEventListener('click', function() {
-                var t = getTargets();
-                self._dungeonMove(d.px + t.rVx, d.py + t.rVy);
-            });
 
-            // === ВЫХОД ===
-            var leaveButton = document.createElement('button');
-            leaveButton.textContent = 'Выйти';
-            leaveButton.style.cssText = 'position:absolute;top:20px;right:20px;z-index:10;padding:8px 16px;background:#8b0000;color:#fff;border:none;border-radius:4px;cursor:pointer;';
-            container.appendChild(leaveButton);
-            leaveButton.addEventListener('click', function() {
-                if (self._threeCleanup) self._threeCleanup();
-                renderer.dispose();
-                renderer.forceContextLoss();
-                container.remove();
-                self._threeRenderer = null;
-                self._leaveDungeon();
-            });
-
-            var leaveHandler = function(e) {
-                if (e.key === 'Escape') {
-                    if (self._threeCleanup) self._threeCleanup();
-                    renderer.dispose();
-                    renderer.forceContextLoss();
-                    container.remove();
-                    self._threeRenderer = null;
-                    self._leaveDungeon();
-                }
-            };
-            document.addEventListener('keydown', leaveHandler);
-
-            // === АНИМАЦИЯ ===
-            var animId;
-            var animate = function() {
-                animId = requestAnimationFrame(animate);
-                renderer.render(scene, camera);
-            };
-            animate();
-
-            self._threeAnimationId = animId;
-            self._threeCleanup = function() {
-                cancelAnimationFrame(animId);
-                document.removeEventListener('keydown', leaveHandler);
-                window.removeEventListener('resize', resizeHandler);
-            };
-
-            var resizeHandler = function() {
-                var w = container.clientWidth, h = container.clientHeight;
-                camera.aspect = w / h;
-                camera.updateProjectionMatrix();
-                renderer.setSize(w, h);
-            };
-            window.addEventListener('resize', resizeHandler);
-        };
-
-        // Если THREE отсутствует, подключаем через CDN
-        if (typeof THREE === 'undefined') {
-            var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-            script.onload = function() {
-                start3D();
-            };
-            document.head.appendChild(script);
-        } else {
-            start3D();
-        }
-    },
-    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК (БЕЗ ИЗМЕНЕНИЙ) ==========
+    // ========== ДВИЖЕНИЕ И ОТКРЫТИЕ ПЛИТОК ==========
     _dungeonMove: function(tx, ty) {
         var d = Sherwood.Dungeon.getDungeon(); if (!d) return;
         var cell = d.grid[ty] && d.grid[ty][tx]; if (!cell) return;
