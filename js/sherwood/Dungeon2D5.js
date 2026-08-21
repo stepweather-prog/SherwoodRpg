@@ -80,7 +80,6 @@ Sherwood.Dungeon2D5 = {
             this._images[key] = loadTex('assets/interface/' + objs[key]);
         }
         
-        this._animImages.down = loadTex('assets/animation/step_down.png');
         this._animImages.up = loadTex('assets/animation/step_up.png');
         this._animImages.left = loadTex('assets/animation/step_left.png');
         this._animImages.right = loadTex('assets/animation/step_right.png');
@@ -245,12 +244,10 @@ Sherwood.Dungeon2D5 = {
         const d = this._dungeon;
         if (!d) return;
         
-        const dir = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        
         let dx = 0, dy = 0;
-        if (dir === 0) dy = -1;
-        else if (dir === 1) dx = 1;
-        else if (dir === 2) dy = 1;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
         else dx = -1;
         
         const nx = d.px + dx;
@@ -273,6 +270,7 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving || this._isTurning) return;
         this._turnFrom = this._yaw;
         this._yaw += Math.PI / 2;
+        this._dir = (this._dir + 1) % 4;
         this._turnT = 0;
         this._isTurning = true;
     },
@@ -281,6 +279,7 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving || this._isTurning) return;
         this._turnFrom = this._yaw;
         this._yaw -= Math.PI / 2;
+        this._dir = (this._dir + 3) % 4;
         this._turnT = 0;
         this._isTurning = true;
     },
@@ -306,7 +305,6 @@ Sherwood.Dungeon2D5 = {
         this._interactType = null;
         this._interactBtn.style.display = 'none';
         
-        // После сбора возвращаемся в 2.5D
         setTimeout(function() {
             Sherwood.Dungeon2D5.render();
         }, 300);
@@ -352,9 +350,6 @@ Sherwood.Dungeon2D5 = {
         const cellSize = 1;
         const center = Math.floor(size / 2);
         
-        const dir = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        
-        // Открываемые стены — соседние с игроком (спереди, слева, справа)
         const openableWalls = [];
         const neighborDirs = [
             { dx: 0, dy: -1 },
@@ -366,15 +361,14 @@ Sherwood.Dungeon2D5 = {
             let dx = neighborDirs[i].dx;
             let dy = neighborDirs[i].dy;
             
-            // Поворачиваем в зависимости от направления
-            if (dir === 1) {
+            if (this._dir === 1) {
                 const oldDx = dx, oldDy = dy;
                 dx = -oldDy;
                 dy = oldDx;
-            } else if (dir === 2) {
+            } else if (this._dir === 2) {
                 dx = -dx;
                 dy = -dy;
-            } else if (dir === 3) {
+            } else if (this._dir === 3) {
                 const oldDx = dx, oldDy = dy;
                 dx = oldDy;
                 dy = -oldDx;
@@ -445,7 +439,11 @@ Sherwood.Dungeon2D5 = {
                         }
                     }
                     
-                    if (openable && this._images.wall_openable) {
+                    // Границы карты — обычные стены
+                    if (row === 0 || row === size - 1 || col === 0 || col === size - 1) {
+                        openable = false;
+                        mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
+                    } else if (openable && this._images.wall_openable) {
                         mat = new THREE.MeshStandardMaterial({
                             map: this._images.wall_openable,
                             roughness: 0.7,
@@ -545,9 +543,11 @@ Sherwood.Dungeon2D5 = {
     _updateJoystickAnim: function() {
         if (!this._joystickImg) return;
         
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        const dirIcons = ['down', 'right', 'up', 'left'];
-        const iconName = dirIcons[dirIndex] || 'down';
+        let iconName;
+        if (this._dir === 0) iconName = 'up';
+        else if (this._dir === 1) iconName = 'right';
+        else if (this._dir === 2) iconName = 'up';
+        else iconName = 'left';
         
         if (this._animImages[iconName] && this._animImages[iconName].image) {
             this._joystickImg.src = this._animImages[iconName].image.src;
@@ -596,6 +596,7 @@ Sherwood.Dungeon2D5 = {
         
         SherwoodUI._screenLayer.style.display = 'block';
         
+        this._dir = 0;
         this._yaw = 0;
         this._isMoving = false;
         this._isTurning = false;
