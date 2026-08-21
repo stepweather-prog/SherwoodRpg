@@ -391,7 +391,7 @@ _showDefeatScreen: function(rewards) {
         this._renderDungeon(); 
     },
 
-       // ========== 3D ПОДЗЕМКА (Three.js + Маленький шар управления) ==========
+           // ========== 3D ПОДЗЕМКА (Поворот и Движение с плавной камерой) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -399,7 +399,6 @@ _showDefeatScreen: function(rewards) {
 
         var self = this;
 
-        // Функция, которая запускает 3D сцену
         var start3D = function() {
             self._screenLayer.innerHTML = ''; 
             self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
@@ -410,10 +409,11 @@ _showDefeatScreen: function(rewards) {
 
             var scene = new THREE.Scene();
             scene.background = new THREE.Color(0x1a0f08);
-            scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
+            scene.fog = new THREE.Fog(0x1a0f08, 10, 20);
 
-            var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
-            camera.position.set(0.5, 0.7, 0.5);
+            // УМЕНЬШАЕМ FOV ДО 60, чтобы стены по бокам было видно
+            var camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 30);
+            camera.position.set(d.px + 0.5, 0.9, d.py + 0.5); // Ставим камеру в ЦЕНТР клетки игрока
             camera.rotation.order = 'YXZ';
 
             var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -438,7 +438,8 @@ _showDefeatScreen: function(rewards) {
             var ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9 });
 
             var size = d.size;
-            var wallHeight = 1.2;
+            // ПОДНИМАЕМ СТЕНЫ ДО 2.0, чтобы они перекрывали бока
+            var wallHeight = 2.0;
             var cellSize = 1;
             var group = new THREE.Group();
             var offsetX = Math.floor(size / 2);
@@ -465,7 +466,7 @@ _showDefeatScreen: function(rewards) {
                             new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
                             wallMat
                         );
-                        wall.position.set(x, wallHeight/2, z);
+                        wall.position.set(x, wallHeight / 2, z);
                         wall.castShadow = true;
                         wall.receiveShadow = true;
                         group.add(wall);
@@ -474,85 +475,49 @@ _showDefeatScreen: function(rewards) {
             }
             scene.add(group);
 
-            // === УПРАВЛЕНИЕ (Поворот на 90 градусов через КНОПКИ) ===
-            
-            // Карта направлений (0 = вперед, 90 = вправо, 180 = назад, 270 = влево)
+            // === УПРАВЛЕНИЕ ===
             var dirMap = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
             var currentDir = dirMap[d.heroDirection] || 0;
 
-            // Базовые векторы для движения на 1 клетку
-            function getMoveTargets() {
-                // Вектор направления взгляда
+            // Для плавного поворота камеры
+            var targetYaw = -currentDir * Math.PI / 180;
+            var currentYaw = targetYaw;
+
+            // Для плавного движения камеры
+            var targetPos = new THREE.Vector3(d.px + 0.5, 0.9, d.py + 0.5);
+            var currentPos = targetPos.clone();
+
+            // Движение на 1 клетку
+            function moveForward() {
                 var dirRad = currentDir * Math.PI / 180;
                 var fwdX = Math.round(Math.cos(dirRad));
                 var fwdY = Math.round(Math.sin(dirRad));
-                
-                // Вектор влево (перпендикулярно)
-                var leftX = Math.round(Math.cos((currentDir - 90) * Math.PI / 180));
-                var leftY = Math.round(Math.sin((currentDir - 90) * Math.PI / 180));
-                
-                // Вектор вправо (перпендикулярно)
-                var rightX = Math.round(Math.cos((currentDir + 90) * Math.PI / 180));
-                var rightY = Math.round(Math.sin((currentDir + 90) * Math.PI / 180));
-                
-                return {
-                    fwdX: fwdX, fwdY: fwdY,
-                    leftX: leftX, leftY: leftY,
-                    rightX: rightX, rightY: rightY
-                };
+                self._dungeonMove(d.px + fwdX, d.py + fwdY);
+                targetPos.set(d.px + 0.5, 0.9, d.py + 0.5);
             }
 
-            // Полностью БЕЗОПАСНЫЙ вызов движения (чтобы не сломать ядро)
-            function safeMove(targetX, targetY) {
-                // Удаляем обработчик событий, который может конфликтовать
-                document.removeEventListener('keydown', leaveHandler);
-                self._dungeonMove(targetX, targetY);
-                
-                // Обновляем направление по факту движения
-                if (targetX > d.px) currentDir = 90;
-                else if (targetX < d.px) currentDir = 270;
-                else if (targetY > d.py) currentDir = 180;
-                else if (targetY < d.py) currentDir = 0;
-            }
-
-            // Управление: влево/вправо - ПОВОРОТ, вверх/вниз - ДВИЖЕНИЕ
-            var dirMapState = { 'up': 0, 'right': 90, 'down': 180, 'left': 270 };
-            var dirYaw = 0; // текущий угол Yaw камеры
-
-            // Кнопка ВПЕРЕД (шаг в текущем направлении)
-            function moveForward() {
-                var t = getMoveTargets();
-                safeMove(d.px + t.fwdX, d.py + t.fwdY);
-                
-                // Обновляем камеру
-                var newDir = currentDir;
-                camera.rotation.y = -newDir * Math.PI / 180;
-            }
-
-            // Кнопка НАЗАД (шаг назад относительно текущего направления)
             function moveBack() {
-                var t = getMoveTargets();
-                safeMove(d.px - t.fwdX, d.py - t.fwdY);
-                
-                var newDir = currentDir;
-                camera.rotation.y = -newDir * Math.PI / 180;
+                var dirRad = currentDir * Math.PI / 180;
+                var fwdX = Math.round(Math.cos(dirRad));
+                var fwdY = Math.round(Math.sin(dirRad));
+                self._dungeonMove(d.px - fwdX, d.py - fwdY);
+                targetPos.set(d.px + 0.5, 0.9, d.py + 0.5);
             }
 
-            // Кнопка ВЛЕВО: Поворот камеры на 90 градусов влево
+            // Поворот на 90 градусов
             function turnLeft() {
                 currentDir = (currentDir - 90 + 360) % 360;
                 d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
-                camera.rotation.y = -currentDir * Math.PI / 180;
+                targetYaw = -currentDir * Math.PI / 180;
             }
 
-            // Кнопка ВПРАВО: Поворот камеры на 90 градусов вправо
             function turnRight() {
                 currentDir = (currentDir + 90) % 360;
                 d.heroDirection = currentDir === 0 ? 'up' : currentDir === 90 ? 'right' : currentDir === 180 ? 'down' : 'left';
-                camera.rotation.y = -currentDir * Math.PI / 180;
+                targetYaw = -currentDir * Math.PI / 180;
             }
 
-            // Создаем НЕБОЛЬШОЙ сфер-контроллер
+            // Создаем НЕБОЛЬШОЙ шар с кнопками
             var controlPanel = document.createElement('div');
             controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:10;pointer-events:auto;';
             container.appendChild(controlPanel);
@@ -561,7 +526,6 @@ _showDefeatScreen: function(rewards) {
             sphere.style.cssText = 'position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.3);';
             controlPanel.appendChild(sphere);
 
-            // Кнопки
             var btnUp = document.createElement('button');
             btnUp.textContent = '▲';
             btnUp.style.cssText = 'position:absolute;top:5px;left:50%;transform:translateX(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
@@ -582,23 +546,37 @@ _showDefeatScreen: function(rewards) {
             btnRight.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:18px;color:#fff;';
             controlPanel.appendChild(btnRight);
 
-            // Обработчики кнопок
             btnUp.addEventListener('click', function() { moveForward(); });
             btnDown.addEventListener('click', function() { moveBack(); });
             btnLeft.addEventListener('click', function() { turnLeft(); });
             btnRight.addEventListener('click', function() { turnRight(); });
 
-            // Инициализация камеры (взгляд вперед)
-            var initialDir = dirMap[d.heroDirection] || 0;
-            camera.rotation.y = -initialDir * Math.PI / 180;
+            // === АНИМАЦИЯ (ПЛАВНЫЙ ПОВОРОТ И ПЕРЕМЕЩЕНИЕ) ===
+            var animate = function() {
+                requestAnimationFrame(animate);
 
-            // === ОЧИСТКА ПРИ ВЫХОДЕ ===
+                // 1. Плавный поворот
+                if (currentYaw != targetYaw) {
+                    var diff = targetYaw - currentYaw;
+                    if (diff > Math.PI) diff -= 2 * Math.PI;
+                    if (diff < -Math.PI) diff += 2 * Math.PI;
+                    currentYaw += diff * 0.15;
+                }
+                camera.rotation.y = currentYaw;
+
+                // 2. Плавное перемещение
+                if (currentPos.distanceTo(targetPos) > 0.01) {
+                    currentPos.lerp(targetPos, 0.15);
+                }
+                camera.position.copy(currentPos);
+
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            // === ВЫХОД ===
             var leaveHandler = function(e) {
                 if (e.key === 'Escape') {
-                    document.removeEventListener('keydown', onKeyDown);
-                    document.removeEventListener('keyup', onKeyUp);
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('pointerlockchange', onPointerLockChange);
                     document.removeEventListener('keydown', leaveHandler);
                     renderer.dispose();
                     container.remove();
@@ -606,13 +584,6 @@ _showDefeatScreen: function(rewards) {
                 }
             };
             document.addEventListener('keydown', leaveHandler);
-
-            // === АНИМАЦИЯ (БЕЗ ДВИЖЕНИЯ ПО МЫШИ) ===
-            var animate = function() {
-                requestAnimationFrame(animate);
-                renderer.render(scene, camera);
-            };
-            animate();
 
             var resizeHandler = function() {
                 var w = container.clientWidth, h = container.clientHeight;
