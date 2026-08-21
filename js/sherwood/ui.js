@@ -384,13 +384,14 @@ _showDefeatScreen: function(rewards) {
     else { this._showToast(result.reason); }
 },
 
-            _startDungeon: function(id, level) { 
+                _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
-              // ========== 3D ПОДЗЕМКА (Финальный вариант: центр клетки, локальные ссылки) ==========
+
+    // ========== 3D ПОДЗЕМКА (Финальный вариант: центр клетки, локальные ссылки) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
