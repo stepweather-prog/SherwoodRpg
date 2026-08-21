@@ -89,7 +89,6 @@ Sherwood.Dungeon2D5 = {
     _setupThree: function() {
         this._scene = new THREE.Scene();
         this._scene.background = new THREE.Color(0x1a0f08);
-        this._scene.fog = new THREE.Fog(0x1a0f08, 6, 12);
         
         this._camera = new THREE.PerspectiveCamera(70, this._w / this._h, 0.1, 30);
         this._camera.rotation.order = 'YXZ';
@@ -99,14 +98,14 @@ Sherwood.Dungeon2D5 = {
         this._renderer.setPixelRatio(1);
         this._renderer.setClearColor(0x1a0f08, 1);
         
-        const ambient = new THREE.AmbientLight(0x442211, 0.6);
+        const ambient = new THREE.AmbientLight(0x664422, 0.8);
         this._scene.add(ambient);
         
-        const mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+        const mainLight = new THREE.DirectionalLight(0xffcc88, 0.9);
         mainLight.position.set(5, 10, 5);
         this._scene.add(mainLight);
         
-        const fillLight = new THREE.DirectionalLight(0x885533, 0.3);
+        const fillLight = new THREE.DirectionalLight(0x996633, 0.4);
         fillLight.position.set(-5, 2, -5);
         this._scene.add(fillLight);
         
@@ -117,7 +116,6 @@ Sherwood.Dungeon2D5 = {
     _setupControls: function() {
         const self = this;
         
-        // Верхняя панель
         this._topPanel = document.createElement('div');
         this._topPanel.style.cssText = 'position:absolute;top:10px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 10px;z-index:15;';
         
@@ -137,7 +135,6 @@ Sherwood.Dungeon2D5 = {
             '<span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
         
-        // Джойстик
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:100px;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;background:rgba(0,0,0,0.65);border:3px solid #c9a040;z-index:10;';
         
@@ -202,24 +199,8 @@ Sherwood.Dungeon2D5 = {
         for (let i = 0; i < intersects.length; i++) {
             const obj = intersects[i].object;
             if (obj.userData && obj.userData.openable) {
-                const gridX = obj.userData.gridX;
-                const gridY = obj.userData.gridY;
-                
-                const dir = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-                
-                let dx = 0, dy = 0;
-                if (dir === 0) dy = -1;
-                else if (dir === 1) dx = 1;
-                else if (dir === 2) dy = 1;
-                else dx = -1;
-                
-                const frontX = d.px + dx;
-                const frontY = d.py + dy;
-                
-                if (gridX === frontX && gridY === frontY) {
-                    this._openWall(gridX, gridY);
-                    break;
-                }
+                this._openWall(obj.userData.gridX, obj.userData.gridY);
+                break;
             }
         }
     },
@@ -324,6 +305,11 @@ Sherwood.Dungeon2D5 = {
         
         this._interactType = null;
         this._interactBtn.style.display = 'none';
+        
+        // После сбора возвращаемся в 2.5D
+        setTimeout(function() {
+            Sherwood.Dungeon2D5.render();
+        }, 300);
     },
 
     _checkInteract: function() {
@@ -367,14 +353,43 @@ Sherwood.Dungeon2D5 = {
         const center = Math.floor(size / 2);
         
         const dir = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        let frontDx = 0, frontDy = 0;
-        if (dir === 0) frontDy = -1;
-        else if (dir === 1) frontDx = 1;
-        else if (dir === 2) frontDy = 1;
-        else frontDx = -1;
         
-        const frontGridX = d.px + frontDx;
-        const frontGridY = d.py + frontDy;
+        // Открываемые стены — соседние с игроком (спереди, слева, справа)
+        const openableWalls = [];
+        const neighborDirs = [
+            { dx: 0, dy: -1 },
+            { dx: 1, dy: 0 },
+            { dx: -1, dy: 0 }
+        ];
+        
+        for (let i = 0; i < neighborDirs.length; i++) {
+            let dx = neighborDirs[i].dx;
+            let dy = neighborDirs[i].dy;
+            
+            // Поворачиваем в зависимости от направления
+            if (dir === 1) {
+                const oldDx = dx, oldDy = dy;
+                dx = -oldDy;
+                dy = oldDx;
+            } else if (dir === 2) {
+                dx = -dx;
+                dy = -dy;
+            } else if (dir === 3) {
+                const oldDx = dx, oldDy = dy;
+                dx = oldDy;
+                dy = -oldDx;
+            }
+            
+            const nx = d.px + dx;
+            const ny = d.py + dy;
+            
+            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                const cell = d.grid[ny][nx];
+                if (cell && !cell.open) {
+                    openableWalls.push({ x: nx, y: ny });
+                }
+            }
+        }
         
         const floorMat = new THREE.MeshStandardMaterial({
             map: this._floors[0],
@@ -423,7 +438,14 @@ Sherwood.Dungeon2D5 = {
                     let mat;
                     let openable = false;
                     
-                    if (col === frontGridX && row === frontGridY && this._images.wall_openable) {
+                    for (let i = 0; i < openableWalls.length; i++) {
+                        if (openableWalls[i].x === col && openableWalls[i].y === row) {
+                            openable = true;
+                            break;
+                        }
+                    }
+                    
+                    if (openable && this._images.wall_openable) {
                         mat = new THREE.MeshStandardMaterial({
                             map: this._images.wall_openable,
                             roughness: 0.7,
@@ -431,7 +453,6 @@ Sherwood.Dungeon2D5 = {
                             transparent: true,
                             opacity: 0.85
                         });
-                        openable = true;
                     } else {
                         mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
                     }
