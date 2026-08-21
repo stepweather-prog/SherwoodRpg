@@ -390,7 +390,7 @@ _showDefeatScreen: function(rewards) {
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
-           // ========== 3D ПОДЗЕМКА (Безопасные текстуры, центр клетки) ==========
+              // ========== 3D ПОДЗЕМКА (Финальный вариант: центр клетки, локальные ссылки) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -420,21 +420,12 @@ _showDefeatScreen: function(rewards) {
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // ===== БЕЗОПАСНАЯ ЗАГРУЗКА ТЕКСТУР =====
-        // Создаём функцию, которая создаёт картинку, но если её нет, возвращает готовую заглушку
-        var floorImg = new Image();
-        floorImg.src = 'assets/dungeon_tiles/dungeon1/tiles10.jpeg';
-        floorImg.onerror = function() { floorImg.src = ''; }; // Если нет файла, просто оставляем пустым
-
-        // Для стен: создаём массив, но если файла нет, используем соседний или просто серый фон
+        // ===== ТЕКСТУРЫ (ВСЕ НА ЛОКАЛЬНЫХ ПУТЯХ) =====
         var wallTiles = [];
         for (var i = 1; i <= 6; i++) {
             var img = new Image();
             img.src = 'assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png';
-            // Защита: если файл не загрузился (например, нет wall_6.png), используем wall_1
-            img.onerror = function() { 
-                this.src = 'assets/dungeon_tiles/visual_dungeon/wall_1.png'; 
-            };
+            img.onerror = function() { this.src = 'assets/dungeon_tiles/visual_dungeon/wall_1.png'; };
             wallTiles.push(img);
         }
 
@@ -442,18 +433,20 @@ _showDefeatScreen: function(rewards) {
         for (var c = 1; c <= 6; c++) {
             var imgC = new Image();
             imgC.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + c + '.png';
-            imgC.onerror = function() { 
-                this.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_1.png'; 
-            };
+            imgC.onerror = function() { this.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_1.png'; };
             ceilTiles.push(imgC);
         }
+
+        var floorImg = new Image();
+        floorImg.src = 'assets/dungeon_tiles/dungeon1/tiles10.jpeg';
 
         var openableWallImg = new Image();
         openableWallImg.src = 'assets/interface/labyrinth_asset.png';
 
-        // ===== КАМЕРА В ЦЕНТРЕ =====
+        // ===== КАМЕРА В ЦЕНТРЕ КЛЕТКИ =====
         var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI / 2, 'right': Math.PI / 2 };
         var playerAngle = dirMap[d.heroDirection] || 0;
+
         var px = d.px + 0.5;
         var py = d.py + 0.5;
 
@@ -461,6 +454,8 @@ _showDefeatScreen: function(rewards) {
         var dirY = Math.sin(playerAngle);
         var planeX = -dirY * 0.66;
         var planeY = dirX * 0.66;
+
+        var FOV = Math.PI / 3;
 
         // ===== РИСУЕМ ПОЛ И ПОТОЛОК =====
         for (var y = 0; y < H; y++) {
@@ -489,7 +484,6 @@ _showDefeatScreen: function(rewards) {
                         ctx.fillRect(x, y, 1, 1);
                     }
                 } else {
-                    // Случайная текстура потолка (иногда 0, иногда 1...)
                     var ceilTex = ceilTiles[Math.abs(cellX + cellY) % 6];
                     if (ceilTex.complete && ceilTex.naturalWidth > 0) {
                         var txC = Math.floor((posX - cellX) * ceilTex.width);
