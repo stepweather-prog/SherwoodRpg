@@ -1,63 +1,54 @@
-// ========== 3D ПОДЗЕМКА (Raycasting на Canvas 2D) ==========
 Sherwood.Dungeon2D5 = {
-    _canvas: null,
-    _ctx: null,
+    _scene: null,
+    _camera: null,
+    _renderer: null,
+    _group: null,
     _dungeon: null,
     _dir: 0,
-    _isMoving: false,
+    _targetDir: 0,
     _isTurning: false,
-    _fromX: 0, _fromY: 0,
-    _toX: 0, _toY: 0,
-    _moveT: 0,
     _turnT: 0,
-    _turnDir: 0,
+    _turnFrom: 0,
+    _isMoving: false,
+    _moveT: 0,
+    _fromX: 0,
+    _fromY: 0,
+    _toX: 0,
+    _toY: 0,
+    _yaw: 0,
     _renderLoop: null,
+    _joystick: null,
+    _joystickImg: null,
+    _interactBtn: null,
+    _interactBtnImg: null,
+    _interactType: null,
     _walls: [],
     _floors: [],
     _ceilings: [],
     _images: {},
     _animImages: {},
     _monsterImages: {},
-    _joystick: null,
-    _joystickImg: null,
-    _interactBtn: null,
-    _interactBtnImg: null,
-    _interactType: null,
     _w: 480,
     _h: 800,
-    _lastTime: 0,
 
     init: function() {
         this._w = SherwoodUI.container ? SherwoodUI.container.clientWidth : 480;
         this._h = SherwoodUI.container ? SherwoodUI.container.clientHeight : 800;
         
-        this._canvas = document.createElement('canvas');
-        this._canvas.width = this._w;
-        this._canvas.height = this._h;
-        this._canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;';
-        this._ctx = this._canvas.getContext('2d');
-        
-        this._loadImages();
+        this._loadTextures();
+        this._setupThree();
         this._setupControls();
     },
 
-    _loadImages: function() {
+    _loadTextures: function() {
         for (let i = 1; i <= 6; i++) {
-            let img = new Image();
-            img.src = 'assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png';
-            this._walls.push(img);
+            this._walls.push(this._loadTex('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png'));
         }
-        
         for (let i = 8; i <= 13; i++) {
-            let img = new Image();
-            img.src = 'assets/dungeon_tiles/dungeon1/tiles' + i + '.jpeg';
-            this._floors.push(img);
+            this._floors.push(this._loadTex('assets/dungeon_tiles/dungeon1/tiles' + i + '.jpeg'));
         }
-        
         for (let i = 1; i <= 6; i++) {
-            let img = new Image();
-            img.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png';
-            this._ceilings.push(img);
+            this._ceilings.push(this._loadTex('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png'));
         }
         
         const objs = {
@@ -73,29 +64,49 @@ Sherwood.Dungeon2D5 = {
         };
         
         for (let key in objs) {
-            let img = new Image();
-            img.src = 'assets/interface/' + objs[key];
-            this._images[key] = img;
+            this._images[key] = this._loadTex('assets/interface/' + objs[key]);
         }
         
-        this._animImages.down = this._makeImg('assets/animation/step_down.png');
-        this._animImages.up = this._makeImg('assets/animation/step_up.png');
-        this._animImages.left = this._makeImg('assets/animation/step_left.png');
-        this._animImages.right = this._makeImg('assets/animation/step_right.png');
+        this._animImages.down = this._loadTex('assets/animation/step_down.png');
+        this._animImages.up = this._loadTex('assets/animation/step_up.png');
+        this._animImages.left = this._loadTex('assets/animation/step_left.png');
+        this._animImages.right = this._loadTex('assets/animation/step_right.png');
     },
 
-    _makeImg: function(src) {
-        let img = new Image();
-        img.src = src;
-        return img;
+    _loadTex: function(src) {
+        const loader = new THREE.TextureLoader();
+        const tex = loader.load(src);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
     },
 
-    _getMonsterImg: function(id) {
-        if (!id) return null;
-        if (!this._monsterImages[id]) {
-            this._monsterImages[id] = this._makeImg('assets/all_beasts/' + id);
-        }
-        return this._monsterImages[id];
+    _setupThree: function() {
+        this._scene = new THREE.Scene();
+        this._scene.background = new THREE.Color(0x1a0f08);
+        this._scene.fog = new THREE.Fog(0x1a0f08, 6, 12);
+        
+        this._camera = new THREE.PerspectiveCamera(70, this._w / this._h, 0.1, 30);
+        this._camera.rotation.order = 'YXZ';
+        
+        this._renderer = new THREE.WebGLRenderer({ antialias: true });
+        this._renderer.setSize(this._w, this._h);
+        this._renderer.setPixelRatio(1);
+        this._renderer.setClearColor(0x1a0f08, 1);
+        
+        const ambient = new THREE.AmbientLight(0x442211, 0.6);
+        this._scene.add(ambient);
+        
+        const mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
+        mainLight.position.set(5, 10, 5);
+        this._scene.add(mainLight);
+        
+        const fillLight = new THREE.DirectionalLight(0x885533, 0.3);
+        fillLight.position.set(-5, 2, -5);
+        this._scene.add(fillLight);
+        
+        this._group = new THREE.Group();
+        this._scene.add(this._group);
     },
 
     _setupControls: function() {
@@ -106,20 +117,19 @@ Sherwood.Dungeon2D5 = {
         
         this._joystickImg = document.createElement('img');
         this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;';
-        this._joystickImg.src = this._animImages.down ? this._animImages.down.src : '';
         this._joystick.appendChild(this._joystickImg);
         
         const arrows = [
-            { d: 0, cx: 100, cy: 10, ch: '▲', rot: 0 },
-            { d: 1, cx: 190, cy: 100, ch: '▲', rot: 90 },
-            { d: 2, cx: 100, cy: 190, ch: '▲', rot: 180 },
-            { d: 3, cx: 10, cy: 100, ch: '▲', rot: -90 }
+            { d: 0, cx: 100, cy: 10, rot: 0 },
+            { d: 1, cx: 190, cy: 100, rot: 90 },
+            { d: 2, cx: 100, cy: 190, rot: 180 },
+            { d: 3, cx: 10, cy: 100, rot: -90 }
         ];
         
         arrows.forEach(function(a) {
-            let btn = document.createElement('button');
+            const btn = document.createElement('button');
             btn.style.cssText = 'position:absolute;left:' + (a.cx - 28) + 'px;top:' + (a.cy - 28) + 'px;width:56px;height:56px;border-radius:50%;background:#c9a040;border:2px solid #8b6914;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:12;';
-            btn.innerHTML = '<span style="transform:rotate(' + a.rot + 'deg);font-size:24px;color:#000;font-weight:bold;">' + a.ch + '</span>';
+            btn.innerHTML = '<span style="transform:rotate(' + a.rot + 'deg);font-size:24px;color:#000;font-weight:bold;">▲</span>';
             
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -174,7 +184,8 @@ Sherwood.Dungeon2D5 = {
         if (diff === 3) diff = -1;
         if (diff === -3) diff = 1;
         
-        this._turnDir = diff;
+        this._turnFrom = this._yaw;
+        this._yaw += diff * Math.PI / 2;
         this._turnT = 0;
         this._isTurning = true;
     },
@@ -220,7 +231,7 @@ Sherwood.Dungeon2D5 = {
 
         if (type && icon) {
             this._interactType = type;
-            this._interactBtnImg.src = icon.src;
+            this._interactBtnImg.src = icon.image ? icon.image.src : icon.src;
             this._interactBtn.style.display = 'flex';
         } else {
             this._interactType = null;
@@ -228,329 +239,222 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
-    _ease: function(t) {
-        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    _buildMesh: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        
+        while (this._group.children.length > 0) {
+            this._group.remove(this._group.children[0]);
+        }
+        
+        const size = d.size;
+        const wallHeight = 1.2;
+        const cellSize = 1;
+        const center = Math.floor(size / 2);
+        
+        const wallMat = new THREE.MeshStandardMaterial({
+            map: this._walls[0],
+            roughness: 0.7,
+            metalness: 0.1
+        });
+        
+        const floorMat = new THREE.MeshStandardMaterial({
+            map: this._floors[0],
+            roughness: 0.9,
+            metalness: 0.0
+        });
+        
+        const ceilMat = new THREE.MeshStandardMaterial({
+            map: this._ceilings[0],
+            roughness: 0.9,
+            metalness: 0.0
+        });
+        
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const x = col - center;
+                const z = row - center;
+                const cell = d.grid[row][col];
+                const isWall = cell && !cell.open;
+                
+                const floor = new THREE.Mesh(
+                    new THREE.PlaneGeometry(cellSize, cellSize),
+                    floorMat.clone()
+                );
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.set(x, 0, z);
+                this._group.add(floor);
+                
+                const ceil = new THREE.Mesh(
+                    new THREE.PlaneGeometry(cellSize, cellSize),
+                    ceilMat.clone()
+                );
+                ceil.rotation.x = Math.PI / 2;
+                ceil.position.set(x, wallHeight, z);
+                this._group.add(ceil);
+                
+                if (isWall) {
+                    const wall = new THREE.Mesh(
+                        new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                        wallMat.clone()
+                    );
+                    wall.position.set(x, wallHeight / 2, z);
+                    this._group.add(wall);
+                }
+            }
+        }
+        
+        // Спрайты для объектов
+        this._addObjectSprites();
     },
 
-    _draw: function() {
-        const ctx = this._ctx;
-        const w = this._w;
-        const h = this._h;
+    _addObjectSprites: function() {
         const d = this._dungeon;
+        if (!d) return;
         
-        if (!ctx || !d) return;
+        const size = d.size;
+        const center = Math.floor(size / 2);
         
-        let posX = d.px + 0.5;
-        let posY = d.py + 0.5;
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const cell = d.grid[row][col];
+                if (!cell || !cell.open) continue;
+                
+                let tex = null;
+                
+                if (cell.monster) {
+                    const id = cell.monsterId || 'plague_crow.png';
+                    if (!this._monsterImages[id]) {
+                        this._monsterImages[id] = this._loadTex('assets/all_beasts/' + id);
+                    }
+                    tex = this._monsterImages[id];
+                } else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
+                else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
+                else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
+                else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
+                else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
+                else if (cell.exit && cell.locked) tex = this._images.exit_locked;
+                else if (cell.exit && !cell.locked) tex = this._images.exit;
+                
+                if (tex) {
+                    const spriteMat = new THREE.SpriteMaterial({
+                        map: tex,
+                        transparent: true
+                    });
+                    const sprite = new THREE.Sprite(spriteMat);
+                    sprite.position.set(col - center, 0.5, row - center);
+                    sprite.scale.set(0.6, 0.6, 1);
+                    this._group.add(sprite);
+                }
+            }
+        }
+    },
+
+    _updateCamera: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        
+        const center = Math.floor(d.size / 2);
+        
+        let posX = d.px - center;
+        let posZ = d.py - center;
         
         if (this._isMoving) {
             const t = this._ease(this._moveT);
-            posX = this._fromX + 0.5 + (this._toX - this._fromX) * t;
-            posY = this._fromY + 0.5 + (this._toY - this._fromY) * t;
+            posX = (this._fromX - center) + ((this._toX - center) - (this._fromX - center)) * t;
+            posZ = (this._fromY - center) + ((this._toY - center) - (this._fromY - center)) * t;
         }
         
-        let dirAngle = this._dir * Math.PI / 2;
+        this._camera.position.set(posX, 0.7, posZ);
+        
+        let yaw = this._yaw;
         if (this._isTurning) {
             const t = this._ease(this._turnT);
-            dirAngle = (this._dir + this._turnDir * t) * Math.PI / 2;
+            const diff = this._yaw - this._turnFrom;
+            yaw = this._turnFrom + diff * t;
         }
         
-        const dirX = Math.sin(dirAngle);
-        const dirY = -Math.cos(dirAngle);
-        const planeX = Math.cos(dirAngle) * 0.66;
-        const planeY = Math.sin(dirAngle) * 0.66;
-        
-        const horizon = Math.floor(h * 0.45);
-        const numRays = Math.floor(w / 2);
-        
-        // Потолок
-        const ceilImg = this._ceilings[((this._dir % 6) + 6) % 6];
-        if (ceilImg && ceilImg.complete && ceilImg.naturalWidth > 0) {
-            ctx.drawImage(ceilImg, 0, 0, w, horizon);
-        } else {
-            ctx.fillStyle = '#1a0f08';
-            ctx.fillRect(0, 0, w, horizon);
-        }
-        
-        // Пол
-        const floorImg = this._floors[((this._dir % 6) + 6) % 6];
-        if (floorImg && floorImg.complete && floorImg.naturalWidth > 0) {
-            ctx.drawImage(floorImg, 0, horizon, w, h - horizon);
-        } else {
-            ctx.fillStyle = '#2a1a0a';
-            ctx.fillRect(0, horizon, w, h - horizon);
-        }
-        
-        // Стены raycasting
-        for (let x = 0; x < numRays; x++) {
-            const cameraX = 2 * x / numRays - 1;
-            const rayDirX = dirX + planeX * cameraX;
-            const rayDirY = dirY + planeY * cameraX;
-            
-            let mapX = Math.floor(posX);
-            let mapY = Math.floor(posY);
-            
-            const deltaDistX = Math.abs(1 / (rayDirX || 0.0001));
-            const deltaDistY = Math.abs(1 / (rayDirY || 0.0001));
-            
-            let stepX, stepY, sideDistX, sideDistY;
-            
-            if (rayDirX < 0) {
-                stepX = -1;
-                sideDistX = (posX - mapX) * deltaDistX;
-            } else {
-                stepX = 1;
-                sideDistX = (mapX + 1 - posX) * deltaDistX;
-            }
-            
-            if (rayDirY < 0) {
-                stepY = -1;
-                sideDistY = (posY - mapY) * deltaDistY;
-            } else {
-                stepY = 1;
-                sideDistY = (mapY + 1 - posY) * deltaDistY;
-            }
-            
-            let hit = false;
-            let side = 0;
-            let maxDepth = 20;
-            
-            while (!hit && maxDepth > 0) {
-                if (sideDistX < sideDistY) {
-                    sideDistX += deltaDistX;
-                    mapX += stepX;
-                    side = 0;
-                } else {
-                    sideDistY += deltaDistY;
-                    mapY += stepY;
-                    side = 1;
-                }
-                
-                if (mapX < 0 || mapX >= d.size || mapY < 0 || mapY >= d.size) {
-                    hit = true;
-                } else if (d.grid[mapY][mapX] && !d.grid[mapY][mapX].open) {
-                    hit = true;
-                }
-                maxDepth--;
-            }
-            
-            let perpWallDist;
-            if (side === 0) {
-                perpWallDist = (mapX - posX + (1 - stepX) / 2) / (rayDirX || 0.0001);
-            } else {
-                perpWallDist = (mapY - posY + (1 - stepY) / 2) / (rayDirY || 0.0001);
-            }
-            
-            if (perpWallDist < 0.01) perpWallDist = 0.01;
-            
-            const lineHeight = Math.floor(h / perpWallDist);
-            const drawStart = Math.max(0, horizon - lineHeight / 2);
-            const drawEnd = Math.min(h, horizon + lineHeight / 2);
-            
-            const wallIdx = ((Math.abs(mapX * 3 + mapY * 5) + this._dir) % 6 + 6) % 6;
-            const wallImg = this._walls[wallIdx];
-            
-            if (wallImg && wallImg.complete && wallImg.naturalWidth > 0) {
-                let wallX;
-                if (side === 0) {
-                    wallX = posY + perpWallDist * rayDirY;
-                } else {
-                    wallX = posX + perpWallDist * rayDirX;
-                }
-                wallX -= Math.floor(wallX);
-                
-                let texX = Math.floor(wallX * wallImg.naturalWidth);
-                
-                ctx.drawImage(
-                    wallImg,
-                    texX, 0, 2, wallImg.naturalHeight,
-                    x * 2, drawStart, 2, drawEnd - drawStart
-                );
-                
-                const darkness = Math.min(0.7, perpWallDist / 10);
-                ctx.fillStyle = 'rgba(0,0,0,' + darkness + ')';
-                ctx.fillRect(x * 2, drawStart, 2, drawEnd - drawStart);
-            } else {
-                ctx.fillStyle = side === 0 ? '#5a3a22' : '#4a2a12';
-                ctx.fillRect(x * 2, drawStart, 2, drawEnd - drawStart);
-            }
-        }
-        
-        // Спрайты объектов
-        this._renderSprites(posX, posY, dirAngle, d);
-        
-        // Джойстик
-        this._updateJoystick();
+        const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
+        this._camera.quaternion.setFromEuler(euler);
     },
 
-    _renderSprites: function(posX, posY, dirAngle, dungeon) {
-        const ctx = this._ctx;
-        const w = this._w;
-        const h = this._h;
-        const horizon = Math.floor(h * 0.45);
-        
-        const sprites = [];
-        
-        for (let y = 0; y < dungeon.size; y++) {
-            for (let x = 0; x < dungeon.size; x++) {
-                const cell = dungeon.grid[y][x];
-                if (!cell || !cell.open) continue;
-                
-                let img = null;
-                
-                if (cell.monster) {
-                    img = this._getMonsterImg(cell.monsterId);
-                } else if (cell.lootBag && !cell.lootCollected) {
-                    img = this._images.loot_bag;
-                } else if (cell.lootBag && cell.lootCollected) {
-                    img = this._images.loot_bag_empty;
-                } else if (cell.chest && !cell.looted) {
-                    img = this._images.chest_locked;
-                } else if (cell.chest && cell.looted) {
-                    img = this._images.chest_open;
-                } else if (cell.altar && !cell.altarCollected) {
-                    img = this._images.altar;
-                } else if (cell.cauldron && !cell.cauldronCollected) {
-                    img = this._images.cauldron;
-                } else if (cell.potion && !cell.potionCollected) {
-                    img = this._images.potion;
-                } else if (cell.exit && cell.locked) {
-                    img = this._images.exit_locked;
-                } else if (cell.exit && !cell.locked) {
-                    img = this._images.exit;
-                }
-                
-                if (img && img.complete && img.naturalWidth > 0) {
-                    sprites.push({
-                        x: x + 0.5,
-                        y: y + 0.5,
-                        img: img,
-                        dist: Math.sqrt((x + 0.5 - posX) ** 2 + (y + 0.5 - posY) ** 2)
-                    });
-                }
-            }
-        }
-        
-        sprites.sort(function(a, b) { return b.dist - a.dist; });
-        
-        sprites.forEach(function(sprite) {
-            if (sprite.dist > 8) return;
-            
-            const spriteAngle = Math.atan2(sprite.y - posY, sprite.x - posX);
-            let relAngle = spriteAngle - dirAngle;
-            
-            while (relAngle > Math.PI) relAngle -= 2 * Math.PI;
-            while (relAngle < -Math.PI) relAngle += 2 * Math.PI;
-            
-            if (Math.abs(relAngle) > Math.PI / 2.2) return;
-            
-            const screenX = (relAngle / (Math.PI / 3) + 1) * w / 2;
-            const spriteHeight = Math.floor(h / sprite.dist * 0.7);
-            const spriteWidth = Math.floor(spriteHeight * 0.8);
-            
-            const darkness = Math.min(0.6, sprite.dist / 10);
-            ctx.globalAlpha = 1 - darkness;
-            
-            ctx.drawImage(
-                sprite.img,
-                screenX - spriteWidth / 2,
-                horizon - spriteHeight / 2,
-                spriteWidth,
-                spriteHeight
-            );
-            
-            ctx.globalAlpha = 1;
-        });
-    },
-
-    _updateJoystick: function() {
-        if (!this._joystickImg) return;
-        
-        const dirIcons = ['down', 'right', 'up', 'left'];
-        const iconName = dirIcons[this._dir] || 'down';
-        
-        if (this._animImages[iconName] && this._animImages[iconName].complete) {
-            this._joystickImg.src = this._animImages[iconName].src;
-        }
+    _ease: function(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     },
 
     render: function() {
         this._dungeon = Sherwood.Dungeon.getDungeon();
         if (!this._dungeon) return;
         
-        if (!this._canvas) this.init();
+        if (!this._scene) this.init();
         
-        // Добавляем canvas в screenLayer
-        if (this._canvas.parentNode !== SherwoodUI._screenLayer) {
+        if (this._renderer.domElement.parentNode !== SherwoodUI._screenLayer) {
             SherwoodUI._screenLayer.innerHTML = '';
-            SherwoodUI._screenLayer.appendChild(this._canvas);
-            if (this._joystick && !this._joystick.parentNode) {
-                SherwoodUI._screenLayer.appendChild(this._joystick);
-            }
-            if (this._interactBtn && !this._interactBtn.parentNode) {
-                SherwoodUI._screenLayer.appendChild(this._interactBtn);
-            }
+            SherwoodUI._screenLayer.appendChild(this._renderer.domElement);
+            SherwoodUI._screenLayer.appendChild(this._joystick);
+            SherwoodUI._screenLayer.appendChild(this._interactBtn);
         }
         
         SherwoodUI._screenLayer.style.display = 'block';
         
         this._dir = 0;
+        this._yaw = 0;
         this._isMoving = false;
         this._isTurning = false;
         
+        this._buildMesh();
+        this._updateCamera();
         this._checkInteract();
-        this._draw();
         
-        // Запускаем цикл рендера
         if (this._renderLoop) cancelAnimationFrame(this._renderLoop);
-        this._startRenderLoop();
+        this._startLoop();
     },
 
-    _startRenderLoop: function() {
+    _startLoop: function() {
         const self = this;
         let lastTime = performance.now();
         
         function loop(time) {
             self._renderLoop = requestAnimationFrame(loop);
             
-            let dt = (time - lastTime) / 1000;
-            if (dt > 0.1) dt = 0.1;
+            const dt = Math.min((time - lastTime) / 1000, 0.1);
             lastTime = time;
             
-            const d = Sherwood.Dungeon.getDungeon();
-            if (!d) return;
-            
-            self._dungeon = d;
-            
             if (self._isMoving) {
-                self._moveT += dt * 3;
+                self._moveT += dt * 2.5;
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
-                    d.px = self._toX;
-                    d.py = self._toY;
                     
-                    const cell = d.grid[d.py][d.px];
-                    if (cell && cell.monster) {
-                        self._draw();
-                        SherwoodUI._dungeonMove(d.px, d.py);
-                        return;
+                    const d = self._dungeon;
+                    if (d) {
+                        d.px = self._toX;
+                        d.py = self._toY;
+                        
+                        const cell = d.grid[d.py][d.px];
+                        if (cell && cell.monster) {
+                            self._updateCamera();
+                            self._renderer.render(self._scene, self._camera);
+                            SherwoodUI._dungeonMove(d.px, d.py);
+                            return;
+                        }
+                        
+                        self._checkInteract();
+                        self._buildMesh();
                     }
-                    
-                    self._checkInteract();
                 }
             }
             
             if (self._isTurning) {
-                self._turnT += dt * 4;
+                self._turnT += dt * 3;
                 if (self._turnT >= 1) {
                     self._turnT = 1;
                     self._isTurning = false;
-                    self._dir = (self._dir + self._turnDir + 4) % 4;
                 }
             }
             
-            self._draw();
+            self._updateCamera();
+            self._renderer.render(self._scene, self._camera);
         }
         
         this._renderLoop = requestAnimationFrame(loop);
@@ -562,8 +466,8 @@ Sherwood.Dungeon2D5 = {
             this._renderLoop = null;
         }
         
-        if (this._canvas && this._canvas.parentNode) {
-            this._canvas.parentNode.removeChild(this._canvas);
+        if (this._renderer && this._renderer.domElement.parentNode) {
+            this._renderer.domElement.parentNode.removeChild(this._renderer.domElement);
         }
         if (this._joystick && this._joystick.parentNode) {
             this._joystick.parentNode.removeChild(this._joystick);
@@ -573,8 +477,6 @@ Sherwood.Dungeon2D5 = {
         }
         
         this._dungeon = null;
-        this._isMoving = false;
-        this._isTurning = false;
     }
 };
 
