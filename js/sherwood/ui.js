@@ -403,12 +403,11 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-           // ========== 3D ПОДЗЕМКА (Click to Move) ==========
+           // ========== 3D ПОДЗЕМКА (Three.js, Клики для перемещения) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
-
         var self = this;
 
         var start3D = function() {
@@ -440,11 +439,7 @@ _showDefeatScreen: function(rewards) {
 
             var textureLoader = new THREE.TextureLoader();
             var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-            var wallMat = new THREE.MeshStandardMaterial({
-                map: wallTexture,
-                roughness: 0.7,
-                metalness: 0.1
-            });
+            var wallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.7, metalness: 0.1 });
             var floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
             var ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9 });
 
@@ -472,11 +467,8 @@ _showDefeatScreen: function(rewards) {
                     group.add(ceil);
 
                     if (!cell.open) {
-                        var wall = new THREE.Mesh(
-                            new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
-                            wallMat
-                        );
-                        wall.position.set(x, wallHeight/2, z);
+                        var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
+                        wall.position.set(x, wallHeight / 2, z);
                         wall.castShadow = true;
                         wall.receiveShadow = true;
                         group.add(wall);
@@ -485,110 +477,81 @@ _showDefeatScreen: function(rewards) {
             }
             scene.add(group);
 
-            // --- СЕНСОРНЫЕ КНОПКИ (Мышь заменена на клики) ---
-            var overBtn = document.createElement('div');
-            overBtn.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:auto;';
-            container.appendChild(overBtn);
+            // === УПРАВЛЕНИЕ КЛИКАМИ ===
+            // Создаем невидимый слой для обработки кликов
+            var clickLayer = document.createElement('div');
+            clickLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;cursor:pointer;';
+            container.appendChild(clickLayer);
 
-            var onClick = function(e) {
-                var rect = overBtn.getBoundingClientRect();
+            // Свайпы/Клики
+            clickLayer.addEventListener('touchstart', function(e) {
+                var touch = e.touches[0];
+                var rect = clickLayer.getBoundingClientRect();
+                var x = (touch.clientX - rect.left) / rect.width;
+                var y = (touch.clientY - rect.top) / rect.height;
+                handleClick(x, y);
+                e.preventDefault();
+            }, { passive: false });
+
+            clickLayer.addEventListener('click', function(e) {
+                var rect = clickLayer.getBoundingClientRect();
                 var x = (e.clientX - rect.left) / rect.width;
                 var y = (e.clientY - rect.top) / rect.height;
+                handleClick(x, y);
+            });
 
-                // Клик вверх (вперед): x ближе к 0.5, y < 0.4
+            var dirMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
+            var currentDir = dirMap[d.heroDirection] || 0;
+
+            function handleClick(x, y) {
+                var fwdX = d.px + Math.round(Math.cos(currentDir));
+                var fwdY = d.py + Math.round(Math.sin(currentDir));
+                var bckX = d.px - Math.round(Math.cos(currentDir));
+                var bckY = d.py - Math.round(Math.sin(currentDir));
+                var lVx = Math.round(Math.cos(currentDir - Math.PI / 2));
+                var lVy = Math.round(Math.sin(currentDir - Math.PI / 2));
+                var rVx = Math.round(Math.cos(currentDir + Math.PI / 2));
+                var rVy = Math.round(Math.sin(currentDir + Math.PI / 2));
+
+                // Клик в центре: вверх/вниз
                 if (Math.abs(x - 0.5) < 0.3) {
-                    if (y < 0.4) {
-                        self._dungeonMove(d.px + 1, d.py); // Вперед
-                    } else if (y > 0.6) {
-                        self._dungeonMove(d.px - 1, d.py); // Назад
-                    }
+                    if (y < 0.4) self._dungeonMove(fwdX, fwdY);
+                    else if (y > 0.6) self._dungeonMove(bckX, bckY);
+                } 
+                // Клик слева/справа: поворот/движение
+                else {
+                    if (x < 0.4) self._dungeonMove(d.px + lVx, d.py + lVy);
+                    else if (x > 0.6) self._dungeonMove(d.px + rVx, d.py + rVy);
                 }
-                // Клик справа: x > 0.6
-                else if (x > 0.6) {
-                    self._dungeonMove(d.px, d.py + 1); // Вправо
-                }
-                // Клик слева: x < 0.4
-                else if (x < 0.4) {
-                    self._dungeonMove(d.px, d.py - 1); // Влево
-                }
-            };
-            overBtn.addEventListener('click', onClick);
+            }
 
-            // --- ЛОГИКА ДВИЖЕНИЯ (ПОШАГОВОЕ) ---
-            var isStepping = false;
-            var stepTimer = null;
+            // Загрузка текстур и инициализация движения
+            var keys = {}; // Инициализируем keys, чтобы не было ошибки
 
-            var playerPos = camera.position;
+            document.addEventListener('keydown', function(e) {
+                keys[e.key.toLowerCase()] = true;
+                if (e.key === 'ArrowUp') { handleClick(0.5, 0.2); e.preventDefault(); }
+                if (e.key === 'ArrowDown') { handleClick(0.5, 0.8); e.preventDefault(); }
+                if (e.key === 'ArrowLeft') { handleClick(0.2, 0.5); e.preventDefault(); }
+                if (e.key === 'ArrowRight') { handleClick(0.8, 0.5); e.preventDefault(); }
+            });
 
-            var stepDirection = function(dirX, dirZ) {
-                if (isStepping) return;
-                isStepping = true;
+            document.addEventListener('keyup', function(e) {
+                keys[e.key.toLowerCase()] = false;
+            });
 
-                var newX = playerPos.x + dirX * 0.5;
-                var newZ = playerPos.z + dirZ * 0.5;
-
-                var col = Math.round(newX + offsetX);
-                var row = Math.round(newZ + offsetZ);
-
-                var cell = d.grid[row] && d.grid[row][col];
-                if (!cell) return;
-
-                if (cell.open) {
-                    var stepAnim = new THREE.Vector3(newX, newZ);
-                    camera.position.x = newX;
-                    camera.position.z = newZ;
-                    isStepping = false;
-                } else {
-                    if (row === d.py + 1 && col === d.px) {
-                        cell.open = true;
-                        camera.position.x = newX;
-                        camera.position.z = newZ;
-                        isStepping = false;
-                    } else {
-                        isStepping = false;
-                    }
-                }
-            };
-
-            // --- Имитация пошагового движка (CLICK TO MOVE) ---
-            var animate = function() {
-                requestAnimationFrame(animate);
-                
-                // Если впереди есть открытая клетка, рисуем im вдали
-                var speed = 0.05;
-                var movementForward = new THREE.Vector3();
-                movementForward.set(0, 0, -1).applyQuaternion(camera.quaternion);
-                movementForward.y = 0;
-                movementForward.normalize();
-
-                var dx = 0, dz = 0;
-                if (keys.w) { dx += movementForward.x; dz += movementForward.z; }
-                if (keys.s) { dx -= movementForward.x; dz -= movementForward.z; }
-
-                if (dx !== 0 || dz !== 0) {
-                    var len = Math.sqrt(dx*dx + dz*dz);
-                    dx = dx / len * speed;
-                    dz = dz / len * speed;
-
-                    var newX = playerPos.x + dx;
-                    var newZ = playerPos.z + dz;
-
-                    var col = Math.round(newX + offsetX);
-                    var row = Math.round(newZ + offsetZ);
-                    var canMoveX = true, canMoveZ = true;
-                    
-                    if (row >= 0 && row < size && col >= 0 && col < size) {
-                        if (d.grid[row] && !d.grid[row][col].open) {
-                            canMoveX = false;
-                            canMoveZ = false;
-                        }
-                    }
-                    
-                    if (canMoveX) playerPos.x = newX;
-                    if (canMoveZ) playerPos.z = newZ;
-                }
-            };
-            animate();
+            // Кнопка выхода
+            var leaveButton = document.createElement('button');
+            leaveButton.textContent = 'Выйти (Esc)';
+            leaveButton.style.cssText = 'position:absolute;bottom:20px;right:20px;z-index:10;padding:8px 16px;background:#8b0000;color:#fff;border:none;border-radius:4px;cursor:pointer;';
+            container.appendChild(leaveButton);
+            leaveButton.addEventListener('click', function() {
+                document.exitPointerLock();
+                renderer.dispose();
+                container.remove();
+                document.removeEventListener('keydown', leaveHandler);
+                self._leaveDungeon();
+            });
 
             var leaveHandler = function(e) {
                 if (e.key === 'Escape') {
@@ -601,6 +564,14 @@ _showDefeatScreen: function(rewards) {
             };
             document.addEventListener('keydown', leaveHandler);
 
+            // Анимация (запускаем отрисовку)
+            var animate = function() {
+                requestAnimationFrame(animate);
+                // Мы не двигаем камеру плавно, так как у нас пошаговая игра.
+                renderer.render(scene, camera);
+            };
+            animate();
+
             var resizeHandler = function() {
                 var w = container.clientWidth, h = container.clientHeight;
                 camera.aspect = w / h;
@@ -608,10 +579,6 @@ _showDefeatScreen: function(rewards) {
                 renderer.setSize(w, h);
             };
             window.addEventListener('resize', resizeHandler);
-            
-            self._threeCleanup = function() {
-                window.removeEventListener('resize', resizeHandler);
-            };
         };
 
         // Если THREE отсутствует, подключаем через CDN
