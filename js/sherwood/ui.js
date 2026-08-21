@@ -383,14 +383,13 @@ _showDefeatScreen: function(rewards) {
     if (result.success) { if (result.instant) { this._showToast('Автобой завершён! Кубок получен.'); this._showDungeonLevels(dungeonId); } else { this._showToast('Автобой запущен на 10 минут!'); this.showDungeon(); } }
     else { this._showToast(result.reason); }
 },
-    _startDungeon: function(id, level) { 
+        _startDungeon: function(id, level) { 
         if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
         var d = Sherwood.Dungeon.generate(id, level); 
         if (!d) { this._showToast('Нет билетов!'); return; } 
         this._renderDungeon(); 
     },
 
-    // ========== 3D ПОДЗЕМКА (Чередование всех 6 текстур) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
@@ -420,28 +419,20 @@ _showDefeatScreen: function(rewards) {
         if (W === 0 || H === 0) { W = 480; H = 500; }
         canvas.width = W; canvas.height = H;
 
-        // ===== ТЕКСТУРЫ (ТОЛЬКО ТВОИ ФАЙЛЫ) =====
-        var wallTiles = [];
-        for (var i = 1; i <= 6; i++) {
-            var img = new Image();
-            img.src = 'assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png';
-            wallTiles.push(img);
-        }
-
-        var ceilTiles = [];
-        for (var c = 1; c <= 6; c++) {
-            var imgC = new Image();
-            imgC.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + c + '.png';
-            ceilTiles.push(imgC);
-        }
-
+        // Картинки (ТВОИ пути, 1 шт. на каждый тип, чтобы не было массивов)
         var floorImg = new Image();
         floorImg.src = 'assets/dungeon_tiles/dungeon1/tiles10.jpeg';
+
+        var wallImg = new Image();
+        wallImg.src = 'assets/dungeon_tiles/visual_dungeon/wall_1.png';
 
         var openableWallImg = new Image();
         openableWallImg.src = 'assets/interface/labyrinth_asset.png';
 
-        // ===== КАМЕРА В ЦЕНТРЕ КЛЕТКИ =====
+        var ceilImg = new Image();
+        ceilImg.src = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_1.png';
+
+        // Камера в центре клетки
         var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI / 2, 'right': Math.PI / 2 };
         var playerAngle = dirMap[d.heroDirection] || 0;
         var px = d.px + 0.5;
@@ -452,7 +443,7 @@ _showDefeatScreen: function(rewards) {
         var planeX = -dirY * 0.66;
         var planeY = dirX * 0.66;
 
-        // ===== РИСУЕМ ПОЛ И ПОТОЛОК (чередование) =====
+        // Пол и потолок
         for (var y = 0; y < H; y++) {
             var isFloor = y > H / 2;
             var rowDistance = Math.abs(H / (2 * y - H));
@@ -465,33 +456,29 @@ _showDefeatScreen: function(rewards) {
                 var posX = px + rowDistance * rayDirX;
                 var posY = py + rowDistance * rayDirY;
 
-                var cellX = Math.floor(posX);
-                var cellY = Math.floor(posY);
-
                 if (isFloor) {
                     if (floorImg.complete && floorImg.naturalWidth > 0) {
                         var tx = Math.floor(posX % 1 * floorImg.width);
                         var ty = Math.floor(posY % 1 * floorImg.height);
                         ctx.drawImage(floorImg, tx, ty, 1, 1, x, y, 1, 1);
                     } else {
-                        ctx.fillStyle = '#222222';
+                        ctx.fillStyle = '#222';
                         ctx.fillRect(x, y, 1, 1);
                     }
                 } else {
-                    var ceilTex = ceilTiles[Math.abs(cellX + cellY) % 6];
-                    if (ceilTex.complete && ceilTex.naturalWidth > 0) {
-                        var txC = Math.floor(posX % 1 * ceilTex.width);
-                        var tyC = Math.floor(posY % 1 * ceilTex.height);
-                        ctx.drawImage(ceilTex, txC, tyC, 1, 1, x, y, 1, 1);
+                    if (ceilImg.complete && ceilImg.naturalWidth > 0) {
+                        var txC = Math.floor(posX % 1 * ceilImg.width);
+                        var tyC = Math.floor(posY % 1 * ceilImg.height);
+                        ctx.drawImage(ceilImg, txC, tyC, 1, 1, x, y, 1, 1);
                     } else {
-                        ctx.fillStyle = '#111111';
+                        ctx.fillStyle = '#111';
                         ctx.fillRect(x, y, 1, 1);
                     }
                 }
             }
         }
 
-        // ===== РИСУЕМ СТЕНЫ (чередование) =====
+        // Стены
         for (var x = 0; x < W; x++) {
             var cameraX = 2 * x / W - 1;
             var rayDirX = dirX + planeX * cameraX;
@@ -528,7 +515,7 @@ _showDefeatScreen: function(rewards) {
             var drawStart = Math.floor(-lineHeight / 2 + H / 2);
             var drawEnd = Math.floor(lineHeight / 2 + H / 2);
 
-            var wallImgToUse = wallTiles[Math.abs(mapX + mapY) % 6];
+            var wallImgToUse = wallImg;
             if (mapX === d.px && mapY === d.py + 1) {
                 wallImgToUse = openableWallImg;
             }
@@ -551,7 +538,7 @@ _showDefeatScreen: function(rewards) {
             }
         }
 
-        // ===== УПРАВЛЕНИЕ =====
+        // Кнопки
         var controlPanel = document.createElement('div');
         controlPanel.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:160px;height:160px;z-index:80;pointer-events:auto;';
         container.appendChild(controlPanel);
