@@ -403,144 +403,163 @@ _showDefeatScreen: function(rewards) {
         return this._textureCache[src];
     },
 
-          // ========== 3D ПОДЗЕМКА (УПРАВЛЕНИЕ ЧЕРЕЗ ПОЛУПРОЗРАЧНЫЙ ШАР) ==========
+          
+        // ========== РЕНДЕР ПОДЗЕМКИ (3D ВИД ОТ ПЕРВОГО ЛИЦА) ==========
     _renderDungeon: function() {
         var d = Sherwood.Dungeon.getDungeon();
         if (!d) { this.showDungeon(); return; }
         var p = Sherwood.getPlayer();
-        var self = this;
 
-        // 1. Удаляем старую 3D сцену, если она есть (чтобы не копить WebGL контексты)
-        if (self._threeRenderer) {
-            try {
-                if (self._threeAnimationId) cancelAnimationFrame(self._threeAnimationId);
-                if (self._threeCleanup) self._threeCleanup();
-                var oldContainer = document.getElementById('three-dungeon-container');
-                if (oldContainer) oldContainer.remove();
-                self._threeRenderer.dispose();
-                self._threeRenderer.forceContextLoss();
-            } catch(e) {}
-            self._threeRenderer = null;
+        // Очистка и подготовка контейнера
+        this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#0a0a0a;overflow:hidden;';
+        this._screenLayer.innerHTML = ''; 
+
+        var container = document.createElement('div');
+        container.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
+        this._screenLayer.appendChild(container);
+
+        var hpPct = Math.round((p.stats.hp / p.stats.maxHp) * 100);
+        var topBarHtml = "<div style='flex-shrink:0;padding:4px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.8);z-index:10;'><button onclick='SherwoodUI._leaveDungeon()' style='background:transparent;border:none;cursor:pointer;padding:0;width:36px;height:36px;'><img src='assets/all_buttons/back.png' style='width:100%;height:100%;object-fit:contain;'></button><div style='color:#70a0e0;font-weight:bold;font-size:0.85em;'>" + (d.id||"") + " " + (d.level||1) + "</div><div style='position:relative;width:280px;height:50px;'><img src='assets/interface/life_scale.png' style='width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;'><div style='position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;'><div style='background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:" + hpPct + "%;'></div></div><span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;'>" + p.stats.hp + "</span></div></div>";
+        var bottomBarHtml = "<div style='flex-shrink:0;background:rgba(0,0,0,0.8);padding:3px;text-align:center;z-index:10;'><span style='font-size:10px;color:#aaa;'>" + (d.monstersKilled||0) + "/" + (d.totalMonsters||0) + " | " + (d.monstersKilled >= d.totalMonsters ? "EXIT OPEN" : "KILL ALL") + "</span></div>";
+        container.insertAdjacentHTML('afterbegin', topBarHtml);
+        container.insertAdjacentHTML('beforeend', bottomBarHtml);
+
+        // Подготовка Canvas
+        var canvas = document.createElement('canvas');
+        canvas.style.cssText = 'flex:1;width:100%;display:block;background:#000;';
+        container.appendChild(canvas);
+        var ctx = canvas.getContext('2d');
+
+        var W = canvas.clientWidth;
+        var H = canvas.clientHeight;
+        if (W === 0 || H === 0) { W = 480; H = 500; }
+        canvas.width = W; canvas.height = H;
+
+        // Загрузка текстуры стен
+        var wallTexture = new Image();
+        wallTexture.src = 'assets/interface/labyrinth_asset.png';
+        var wallTextureLoaded = false;
+        wallTexture.onload = function() { wallTextureLoaded = true; };
+
+        // Направления и позиция игрока (3D расчеты)
+        var dirMap = { 'up': 0, 'down': Math.PI, 'left': -Math.PI / 2, 'right': Math.PI / 2 };
+        var playerAngle = dirMap[d.heroDirection] || 0;
+        var px = d.px + 0.5;
+        var py = d.py + 0.5;
+
+        var FOV = Math.PI / 3; // 60 градусов
+
+        // РЕЙКАСТИНГ (Raycasting)
+        // Рисуем пол и потолок
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, W, H / 2);
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, H / 2, W, H / 2);
+
+        for (var x = 0; x < W; x++) {
+            var cameraX = 2 * x / W - 1;
+            var rayDirX = Math.cos(playerAngle) + Math.cos(playerAngle - Math.PI / 2) * cameraX * Math.tan(FOV / 2);
+            var rayDirY = Math.sin(playerAngle) + Math.sin(playerAngle - Math.PI / 2) * cameraX * Math.tan(FOV / 2);
+            
+            var mapX = Math.floor(px);
+            var mapY = Math.floor(py);
+            
+            var deltaDistX = Math.abs(1 / rayDirX);
+            var deltaDistY = Math.abs(1 / rayDirY);
+            
+            var stepX, stepY, sideDistX, sideDistY;
+            if (rayDirX < 0) { stepX = -1; sideDistX = (px - mapX) * deltaDistX; } 
+            else { stepX = 1; sideDistX = (mapX + 1 - px) * deltaDistX; }
+            if (rayDirY < 0) { stepY = -1; sideDistY = (py - mapY) * deltaDistY; } 
+            else { stepY = 1; sideDistY = (mapY + 1 - py) * deltaDistY; }
+            
+            var hit = false, side = 0;
+            while (!hit) {
+                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; } 
+                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                
+                var cellCheck = d.grid[mapY] && d.grid[mapY][mapX];
+                if (!cellCheck || !cellCheck.open) { hit = true; }
+            }
+            
+            var distance;
+            if (side === 0) distance = sideDistX - deltaDistX;
+            else distance = sideDistY - deltaDistY;
+            
+            var correctedDist = Math.max(0.1, distance * Math.cos(rayAngle - playerAngle));
+            var wallHeight = H / correctedDist;
+            var wallTop = Math.floor(H / 2 - wallHeight / 2);
+            var wallBottom = Math.floor(H / 2 + wallHeight / 2);
+
+            // Рисуем стены
+            if (wallTextureLoaded) {
+                var wallX;
+                if (side === 0) wallX = py + correctedDist * rayDirY;
+                else wallX = px + correctedDist * rayDirX;
+                wallX -= Math.floor(wallX);
+                
+                // 1024 - размер текстуры
+                var texX = Math.floor(wallX * 1024);
+                if (side === 1) texX = 1023 - texX;
+                
+                try {
+                    ctx.drawImage(wallTexture, texX, 0, 1, 1024, x, wallTop, 1, wallHeight);
+                } catch(e) {}
+            } else {
+                // Пока текстура грузится
+                ctx.fillStyle = '#5a4a3a';
+                ctx.fillRect(x, wallTop, 1, wallHeight);
+            }
         }
 
-        var start3D = function() {
-            self._screenLayer.innerHTML = ''; 
-            self._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;display:block;padding:0;background:#000;overflow:hidden;';
-            var container = document.createElement('div');
-            container.id = 'three-dungeon-container';
-            container.style.cssText = 'width:100%;height:100%;';
-            self._screenLayer.appendChild(container);
+        // === УПРАВЛЕНИЕ ===
+        // Внизу создаем понятные HTML кнопки для управления
+        var controlPanel = document.createElement('div');
+        controlPanel.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:220px;height:220px;z-index:10;pointer-events:auto;';
+        container.appendChild(controlPanel);
 
-            var scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a0f08);
-            scene.fog = new THREE.Fog(0x1a0f08, 8, 15);
+        var sphere = document.createElement('div');
+        sphere.style.cssText = 'position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.3);';
+        controlPanel.appendChild(sphere);
 
-            var camera = new THREE.PerspectiveCamera(70, container.clientWidth / container.clientHeight, 0.1, 30);
-            camera.position.set(0.5, 0.7, 0.5);
-            camera.rotation.order = 'YXZ';
+        var btnUp = document.createElement('button');
+        btnUp.textContent = '▲';
+        btnUp.style.cssText = 'position:absolute;top:10px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+        controlPanel.appendChild(btnUp);
 
-            var renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
-            self._threeRenderer = renderer;
+        var btnDown = document.createElement('button');
+        btnDown.textContent = '▼';
+        btnDown.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+        controlPanel.appendChild(btnDown);
 
-            var ambient = new THREE.AmbientLight(0x442211, 0.6);
-            scene.add(ambient);
-            var mainLight = new THREE.DirectionalLight(0xffcc88, 0.8);
-            mainLight.position.set(5, 10, 5);
-            scene.add(mainLight);
+        var btnLeft = document.createElement('button');
+        btnLeft.textContent = '◀';
+        btnLeft.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+        controlPanel.appendChild(btnLeft);
 
-            var textureLoader = new THREE.TextureLoader();
-            var wallTexture = textureLoader.load('assets/interface/labyrinth_asset.png');
-            var wallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.7, metalness: 0.1 });
-            var floorMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
-            var ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9 });
+        var btnRight = document.createElement('button');
+        btnRight.textContent = '▶';
+        btnRight.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
+        controlPanel.appendChild(btnRight);
 
-            var size = d.size;
-            var wallHeight = 1.2;
-            var cellSize = 1;
-            var group = new THREE.Group();
-            var offsetX = Math.floor(size / 2);
-            var offsetZ = Math.floor(size / 2);
-
-            for (var row = 0; row < size; row++) {
-                for (var col = 0; col < size; col++) {
-                    var x = col - offsetX;
-                    var z = row - offsetZ;
-                    var cell = d.grid[row][col];
-
-                    var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-                    floor.rotation.x = -Math.PI / 2;
-                    floor.position.set(x, 0, z);
-                    group.add(floor);
-
-                    var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
-                    ceil.rotation.x = Math.PI / 2;
-                    ceil.position.set(x, wallHeight, z);
-                    group.add(ceil);
-
-                    if (!cell.open) {
-                        var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
-                        wall.position.set(x, wallHeight / 2, z);
-                        wall.castShadow = true;
-                        wall.receiveShadow = true;
-                        group.add(wall);
-                    }
-                }
-            }
-            scene.add(group);
-
-            // === УПРАВЛЕНИЕ ЧЕРЕЗ НИЖНИЙ ШАР ===
-            var dirMap = { 'up': 0, 'right': Math.PI / 2, 'down': Math.PI, 'left': -Math.PI / 2 };
-            var currentDir = dirMap[d.heroDirection] || 0;
-
-            function getTargets() {
-                var fwdX = d.px + Math.round(Math.cos(currentDir));
-                var fwdY = d.py + Math.round(Math.sin(currentDir));
-                var bckX = d.px - Math.round(Math.cos(currentDir));
-                var bckY = d.py - Math.round(Math.sin(currentDir));
-                var lVx = Math.round(Math.cos(currentDir - Math.PI / 2));
-                var lVy = Math.round(Math.sin(currentDir - Math.PI / 2));
-                var rVx = Math.round(Math.cos(currentDir + Math.PI / 2));
-                var rVy = Math.round(Math.sin(currentDir + Math.PI / 2));
-
-                return { fwdX: fwdX, fwdY: fwdY, bckX: bckX, bckY: bckY, lVx: lVx, lVy: lVy, rVx: rVx, rVy: rVy };
-            }
-
-            // Создаем шар с кнопками
-            var uiLayer = document.createElement('div');
-            uiLayer.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:220px;height:220px;z-index:10;';
-            container.appendChild(uiLayer);
-
-            var sphereDiv = document.createElement('div');
-            sphereDiv.style.cssText = 'position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.3);';
-            uiLayer.appendChild(sphereDiv);
-
-            // Кнопка "Вперед"
-            var btnUp = document.createElement('button');
-            btnUp.textContent = '▲';
-            btnUp.style.cssText = 'position:absolute;top:10px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
-            uiLayer.appendChild(btnUp);
-
-            // Кнопка "Назад"
-            var btnDown = document.createElement('button');
-            btnDown.textContent = '▼';
-            btnDown.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
-            uiLayer.appendChild(btnDown);
-
-            // Кнопка "Влево"
-            var btnLeft = document.createElement('button');
-            btnLeft.textContent = '◀';
-            btnLeft.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
-            uiLayer.appendChild(btnLeft);
-
-            // Кнопка "Вправо"
-            var btnRight = document.createElement('button');
-            btnRight.textContent = '▶';
-            btnRight.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:rgba(255,255,255,0.4);border:none;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;';
-            uiLayer.appendChild(btnRight);
-
+        // Обработчики кнопок (СНАЧАЛА вызываем _dungeonMove, ПОТОМ перерисовываем)
+        btnUp.addEventListener('click', function() {
+            self._dungeonMove(d.px + 1, d.py); // Вперед
+            self._renderDungeon(); // Обновляем картинку
+        });
+        btnDown.addEventListener('click', function() {
+            self._dungeonMove(d.px - 1, d.py); // Назад
+            self._renderDungeon();
+        });
+        btnLeft.addEventListener('click', function() {
+            self._dungeonMove(d.px, d.py - 1); // Влево
+            self._renderDungeon();
+        });
+        btnRight.addEventListener('click', function() {
+            self._dungeonMove(d.px, d.py + 1); // Вправо
+            self._renderDungeon();
+        });
+    },
             // Привязываем клики
             btnUp.addEventListener('click', function() {
                 var t = getTargets();
