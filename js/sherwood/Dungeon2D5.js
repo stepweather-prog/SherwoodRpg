@@ -11,10 +11,9 @@ Sherwood.Dungeon2D5 = {
     _toX: 0,
     _toY: 0,
     _moveT: 0,
-    _animFrame: 0,
     _renderLoop: null,
     _joystick: null,
-    _joystickImg: null,
+    _joystickVideo: null,
     _interactBtn: null,
     _interactBtnImg: null,
     _interactType: null,
@@ -115,7 +114,6 @@ Sherwood.Dungeon2D5 = {
         const center = mapSize / 2;
         const radius = mapSize / 2 - 4;
         const cellSize = (radius * 2) / d.size;
-        
         ctx.clearRect(0, 0, mapSize, mapSize);
         ctx.save();
         ctx.beginPath();
@@ -123,24 +121,19 @@ Sherwood.Dungeon2D5 = {
         ctx.clip();
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, mapSize, mapSize);
-        
         const offsetX = center - (d.px * cellSize + cellSize / 2);
         const offsetY = center - (d.py * cellSize + cellSize / 2);
-        
         for (let row = 0; row < d.size; row++) {
             for (let col = 0; col < d.size; col++) {
                 const cell = d.grid[row][col];
                 const x = col * cellSize + offsetX;
                 const y = row * cellSize + offsetY;
-                
                 if (x + cellSize < 0 || x > mapSize || y + cellSize < 0 || y > mapSize) continue;
-                
                 if (cell && cell.open) { ctx.fillStyle = '#4a4a4a'; ctx.fillRect(x, y, cellSize, cellSize); }
                 else if (cell && cell.isPath && this._isAdjacentToOpen(d, col, row)) { ctx.fillStyle = '#8b6914'; ctx.fillRect(x, y, cellSize, cellSize); }
                 else { ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x, y, cellSize, cellSize); }
             }
         }
-        
         ctx.fillStyle = '#ff4444';
         ctx.beginPath();
         ctx.arc(center, center, cellSize / 2, 0, Math.PI * 2);
@@ -159,28 +152,32 @@ Sherwood.Dungeon2D5 = {
         this._exitBtn.addEventListener('click', function() { SherwoodUI._leaveDungeon(); });
         this._topPanel.appendChild(this._exitBtn);
         
-        // Счётчик убийств
         this._killCounter = document.createElement('div');
         this._killCounter.style.cssText = 'color:#e0c080;font-size:14px;font-weight:bold;text-shadow:0 0 5px #000;';
         this._killCounter.textContent = '0/0';
         this._topPanel.appendChild(this._killCounter);
         
-        // HP бар с кровью
         this._hpBar = document.createElement('div');
         this._hpBar.style.cssText = 'position:relative;width:150px;height:30px;';
         this._hpBar.innerHTML = '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">' +
             '<div style="position:absolute;top:6px;left:15px;right:15px;bottom:6px;overflow:hidden;z-index:1;">' +
-            '<div id="hp-fill-2d5" style="background:url(\'assets/interface/filling_the_poisoned_health_bar.jpeg\') left/auto 100%;height:100%;width:100%;"></div></div>' +
+            '<div id="hp-fill-2d5" style="background:url(\'assets/interface/life_interface_asset_horizontal_progress_bar.jpeg\') left/auto 100%;height:100%;width:100%;"></div></div>' +
             '<span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
         
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
-        this._joystickImg = document.createElement('img');
-        this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100px;height:100px;object-fit:contain;pointer-events:none;';
-        this._joystickImg.src = 'assets/animation/step_up.png';
-        this._joystick.appendChild(this._joystickImg);
+        // Видео анимация ходьбы в центре джойстика
+        this._joystickVideo = document.createElement('video');
+        this._joystickVideo.src = 'assets/animation/step_down.webm';
+        this._joystickVideo.loop = true;
+        this._joystickVideo.muted = true;
+        this._joystickVideo.playsInline = true;
+        this._joystickVideo.autoplay = true;
+        this._joystickVideo.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;border-radius:50%;';
+        this._joystick.appendChild(this._joystickVideo);
+        this._joystickVideo.play().catch(function() {});
         
         const arrowAreas = [
             { d: 'forward', top: '10%', left: '38%', width: '24%', height: '24%' },
@@ -301,8 +298,6 @@ Sherwood.Dungeon2D5 = {
         this._toY = ny;
         this._moveT = 0;
         this._isMoving = true;
-        this._animFrame = 0;
-        this._joystickImg.src = 'assets/animation/step_up.png';
     },
 
     _turnLeft: function() {
@@ -327,14 +322,12 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         const cell = d.grid[d.py][d.px];
         if (!cell) return;
-        
         if (this._interactType === 'exit' && cell.exit && !cell.locked) {
             this._interactType = null;
             this._interactBtn.style.display = 'none';
             SherwoodUI._doStep(d.px, d.py);
             return;
         }
-        
         switch(this._interactType) {
             case 'lootBag': if (cell.lootBag && !cell.lootCollected) SherwoodUI._collectLootBag(); break;
             case 'chest': if (cell.chest && !cell.looted) SherwoodUI._collectChest(); break;
@@ -463,11 +456,7 @@ Sherwood.Dungeon2D5 = {
                 const cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
                 if ((row + col) % 3 !== 0) continue;
-                
-                // Всегда в углу — у стены
-                let offsetX = 0;
-                let offsetZ = 0;
-                let found = false;
+                let offsetX = 0, offsetZ = 0, found = false;
                 const dirs = [
                     { dx: -1, dy: 0, ox: 0.4, oz: 0.2 },
                     { dx: 1, dy: 0, ox: -0.4, oz: -0.2 },
@@ -478,17 +467,10 @@ Sherwood.Dungeon2D5 = {
                     const nx = col + dirs[i].dx, ny = row + dirs[i].dy;
                     if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
                         const neighbor = d.grid[ny][nx];
-                        if (neighbor && !neighbor.open && !neighbor.isPath) { 
-                            offsetX = dirs[i].ox; 
-                            offsetZ = dirs[i].oz; 
-                            found = true;
-                            break; 
-                        }
+                        if (neighbor && !neighbor.open && !neighbor.isPath) { offsetX = dirs[i].ox; offsetZ = dirs[i].oz; found = true; break; }
                     }
                 }
-                
-                if (!found) continue; // Не ставим если нет стены рядом
-                
+                if (!found) continue;
                 const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._brazierTexture, transparent: true, depthWrite: false }));
                 sprite.position.set(col - center + offsetX, 0.25, row - center + offsetZ);
                 sprite.scale.set(0.3, 0.3, 1);
@@ -571,7 +553,7 @@ Sherwood.Dungeon2D5 = {
                     if (cell.exit) { scale = 0.8; sy = 0.5; }
                     else if (cell.chest) { scale = 0.45; sy = 0.2; }
                     else if (cell.lootBag !== undefined) { scale = 0.4; sy = 0.15; }
-                    else if (cell.potion) { scale = 0.3; sy = 0.15; } // Зелье меньше
+                    else if (cell.potion) { scale = 0.3; sy = 0.15; }
                     sprite.position.set(col - center, sy, row - center);
                     sprite.scale.set(scale, scale, 1);
                     this._group.add(sprite);
@@ -602,8 +584,6 @@ Sherwood.Dungeon2D5 = {
         const text = document.getElementById('hp-text-2d5');
         if (fill) fill.style.width = Math.round((hp / maxHp) * 100) + '%';
         if (text) text.textContent = hp + '/' + maxHp;
-        
-        // Обновляем счётчик убийств
         const d = this._dungeon;
         if (d && this._killCounter) {
             this._killCounter.textContent = (d.monstersKilled || 0) + '/' + (d.totalMonsters || 0);
@@ -645,19 +625,9 @@ Sherwood.Dungeon2D5 = {
             lastTime = time;
             if (self._isMoving) {
                 self._moveT += dt * 2.5;
-                // Анимация: переключаем кадры step_up/step_down
-                self._animFrame++;
-                if (self._animFrame % 10 === 0) {
-                    if (self._joystickImg.src.includes('step_up')) {
-                        self._joystickImg.src = 'assets/animation/step_down.png';
-                    } else {
-                        self._joystickImg.src = 'assets/animation/step_up.png';
-                    }
-                }
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
-                    self._joystickImg.src = 'assets/animation/step_up.png';
                     const d = self._dungeon;
                     if (d) {
                         d.px = self._toX;
@@ -690,6 +660,7 @@ Sherwood.Dungeon2D5 = {
     destroy: function() {
         if (this._renderLoop) { cancelAnimationFrame(this._renderLoop); this._renderLoop = null; }
         if (this._brazierVideo) { this._brazierVideo.pause(); this._brazierVideo = null; }
+        if (this._joystickVideo) { this._joystickVideo.pause(); this._joystickVideo = null; }
         if (this._renderer && this._renderer.domElement.parentNode) this._renderer.domElement.parentNode.removeChild(this._renderer.domElement);
         if (this._joystick && this._joystick.parentNode) this._joystick.parentNode.removeChild(this._joystick);
         if (this._interactBtn && this._interactBtn.parentNode) this._interactBtn.parentNode.removeChild(this._interactBtn);
