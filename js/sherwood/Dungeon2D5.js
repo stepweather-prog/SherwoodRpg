@@ -214,7 +214,6 @@ Sherwood.Dungeon2D5 = {
             '<span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
         
-        // Джойстик
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
@@ -257,7 +256,7 @@ Sherwood.Dungeon2D5 = {
         });
         
         this._interactBtn = document.createElement('button');
-        this._interactBtn.style.cssText = 'position:absolute;bottom:340px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
+        this._interactBtn.style.cssText = 'position:absolute;bottom:350px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
@@ -364,7 +363,11 @@ Sherwood.Dungeon2D5 = {
         const cell = d.grid[ny][nx];
         
         if (!cell || !cell.isPath) return;
-        if (!cell.open) return;
+        
+        if (!cell.open) {
+            cell.open = true;
+            cell.type = 1;
+        }
         
         this._fromX = d.px;
         this._fromY = d.py;
@@ -653,19 +656,6 @@ Sherwood.Dungeon2D5 = {
         const cellSize = 1;
         const center = Math.floor(size / 2);
         
-        const openableWalls = [];
-        for (let row = 1; row < size - 1; row++) {
-            for (let col = 1; col < size - 1; col++) {
-                const cell = d.grid[row][col];
-                if (!cell || cell.open) continue;
-                if (!cell.isPath) continue;
-                
-                if (this._isAdjacentToOpen(d, col, row)) {
-                    openableWalls.push({ x: col, y: row });
-                }
-            }
-        }
-        
         const ceilMat = new THREE.MeshStandardMaterial({
             map: this._ceilings[0],
             roughness: 0.9,
@@ -876,29 +866,6 @@ Sherwood.Dungeon2D5 = {
         SherwoodUI._screenLayer.style.display = 'block';
         
         this._isMoving = false;
-        
-        const d = this._dungeon;
-        let foundAngle = 0;
-        const dirs = [
-            { dx: 0, dy: -1, angle: 0 },
-            { dx: 1, dy: 0, angle: Math.PI / 2 },
-            { dx: 0, dy: 1, angle: Math.PI },
-            { dx: -1, dy: 0, angle: -Math.PI / 2 }
-        ];
-        
-        for (let i = 0; i < dirs.length; i++) {
-            const nx = d.px + dirs[i].dx;
-            const ny = d.py + dirs[i].dy;
-            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
-                const cell = d.grid[ny][nx];
-                if (cell && cell.isPath && cell.open) {
-                    foundAngle = dirs[i].angle;
-                    break;
-                }
-            }
-        }
-        
-        this._yaw = foundAngle;
         
         this._buildMesh();
         this._updateCamera();
