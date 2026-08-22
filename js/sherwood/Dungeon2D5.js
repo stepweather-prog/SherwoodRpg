@@ -672,7 +672,11 @@ Sherwood.Dungeon2D5 = {
                     tex = this._images.chest_open;
                 } else if (cell.altar && !cell.altarCollected) {
                     tex = this._images.altar;
+                } else if (cell.altar && cell.altarCollected) {
+                    tex = this._images.altar;
                 } else if (cell.cauldron && !cell.cauldronCollected) {
+                    tex = this._images.cauldron;
+                } else if (cell.cauldron && cell.cauldronCollected) {
                     tex = this._images.cauldron;
                 } else if (cell.potion && !cell.potionCollected) {
                     tex = this._images.potion;
