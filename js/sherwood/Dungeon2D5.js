@@ -200,10 +200,10 @@ Sherwood.Dungeon2D5 = {
         const py = d.py * cellSize + cellSize / 2;
         ctx.moveTo(px, py);
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = -1;
-        else if (this._dir === 1) dx = 1;
-        else if (this._dir === 2) dy = 1;
-        else dx = -1;
+        if (this._dir === 0) dy = 1;
+        else if (this._dir === 1) dx = -1;
+        else if (this._dir === 2) dy = -1;
+        else dx = 1;
         ctx.lineTo(px + dx * cellSize, py + dy * cellSize);
         ctx.stroke();
         
@@ -360,10 +360,10 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = -1;
-        else if (this._dir === 1) dx = 1;
-        else if (this._dir === 2) dy = 1;
-        else dx = -1;
+        if (this._dir === 0) dy = 1;
+        else if (this._dir === 1) dx = -1;
+        else if (this._dir === 2) dy = -1;
+        else dx = 1;
         
         const nx = d.px + dx;
         const ny = d.py + dy;
@@ -811,18 +811,17 @@ Sherwood.Dungeon2D5 = {
                     });
                     const sprite = new THREE.Sprite(spriteMat);
                     
-                    // Разный размер для разных объектов
                     let spriteScale = 0.5;
                     let spriteY = 0.3;
                     
                     if (cell.exit) {
-                        spriteScale = 0.8; // Выход — большой, как стена
+                        spriteScale = 0.8;
                         spriteY = 0.5;
                     } else if (cell.chest) {
-                        spriteScale = 0.45; // Сундук ниже
+                        spriteScale = 0.45;
                         spriteY = 0.2;
                     } else if (cell.lootBag !== undefined) {
-                        spriteScale = 0.4; // Мешок ниже
+                        spriteScale = 0.4;
                         spriteY = 0.15;
                     }
                     
@@ -851,11 +850,12 @@ Sherwood.Dungeon2D5 = {
         
         this._camera.position.set(posX, 0.5, posZ);
         
-        let yaw = this._dir * Math.PI / 2;
+        let yaw = (this._dir + 2) % 4 * Math.PI / 2;
+        
         if (this._isTurning) {
             const t = this._ease(this._turnT);
             const fromYaw = this._turnFrom;
-            const toYaw = this._dir * Math.PI / 2;
+            const toYaw = (this._dir + 2) % 4 * Math.PI / 2;
             let diff = toYaw - fromYaw;
             if (diff > Math.PI) diff -= Math.PI * 2;
             if (diff < -Math.PI) diff += Math.PI * 2;
@@ -871,9 +871,9 @@ Sherwood.Dungeon2D5 = {
         
         let iconName;
         if (this._dir === 0) iconName = 'up';
-        else if (this._dir === 1) iconName = 'right';
+        else if (this._dir === 1) iconName = 'left';
         else if (this._dir === 2) iconName = 'up';
-        else iconName = 'left';
+        else iconName = 'right';
         
         if (this._animImages[iconName] && this._animImages[iconName].image) {
             this._joystickImg.src = this._animImages[iconName].image.src;
