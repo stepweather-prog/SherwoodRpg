@@ -291,7 +291,14 @@ Sherwood.Dungeon2D5 = {
         for (let i = 0; i < intersects.length; i++) {
             const obj = intersects[i].object;
             if (obj.userData && obj.userData.openable) {
-                this._openWall(obj.userData.gridX, obj.userData.gridY);
+                const gridX = obj.userData.gridX;
+                const gridY = obj.userData.gridY;
+                
+                const dist = Math.abs(gridX - d.px) + Math.abs(gridY - d.py);
+                
+                if (dist === 1) {
+                    this._openWall(gridX, gridY);
+                }
                 break;
             }
         }
@@ -303,6 +310,9 @@ Sherwood.Dungeon2D5 = {
         
         const cell = d.grid[gridY][gridX];
         if (!cell) return;
+        
+        const dist = Math.abs(gridX - d.px) + Math.abs(gridY - d.py);
+        if (dist !== 1) return;
         
         cell.open = true;
         
@@ -323,10 +333,14 @@ Sherwood.Dungeon2D5 = {
                 SherwoodUI._showCombatScreen();
             }, 400);
         } else {
+            d.px = gridX;
+            d.py = gridY;
+            
             if (SherwoodUI && SherwoodUI._playSound) {
                 SherwoodUI._playSound('tile_open');
             }
             this._buildMesh();
+            this._updateCamera();
             this._updateMinimap();
             this._checkInteract();
         }
@@ -657,13 +671,25 @@ Sherwood.Dungeon2D5 = {
                         this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
                     }
                     tex = this._monsterImages[id];
-                } else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
-                else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
-                else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
-                else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
-                else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
-                else if (cell.exit && cell.locked) tex = this._images.exit_locked;
-                else if (cell.exit && !cell.locked) tex = this._images.exit;
+                } else if (cell.lootBag && !cell.lootCollected) {
+                    tex = this._images.loot_bag;
+                } else if (cell.lootBag && cell.lootCollected) {
+                    tex = this._images.loot_bag_empty;
+                } else if (cell.chest && !cell.looted) {
+                    tex = this._images.chest_locked;
+                } else if (cell.chest && cell.looted) {
+                    tex = this._images.chest_open;
+                } else if (cell.altar && !cell.altarCollected) {
+                    tex = this._images.altar;
+                } else if (cell.cauldron && !cell.cauldronCollected) {
+                    tex = this._images.cauldron;
+                } else if (cell.potion && !cell.potionCollected) {
+                    tex = this._images.potion;
+                } else if (cell.exit && cell.locked) {
+                    tex = this._images.exit_locked;
+                } else if (cell.exit && !cell.locked) {
+                    tex = this._images.exit;
+                }
                 
                 if (tex && tex.image) {
                     const spriteMat = new THREE.SpriteMaterial({
@@ -671,7 +697,7 @@ Sherwood.Dungeon2D5 = {
                         transparent: true
                     });
                     const sprite = new THREE.Sprite(spriteMat);
-                    sprite.position.set(col - center, 0.1, row - center);
+                    sprite.position.set(col - center, 0.15, row - center);
                     sprite.scale.set(0.5, 0.5, 1);
                     this._group.add(sprite);
                 }
