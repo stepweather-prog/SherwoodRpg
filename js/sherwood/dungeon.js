@@ -253,11 +253,23 @@ Sherwood.Dungeon = {
 
         var self = this;
 
+        // ЧИСТЫЙ DFS-лабиринт — создаёт коридоры и тупики
         function carve(x, y) {
+            grid[y][x].type = self.TILE.EMPTY;
+            
             var dirs = [[0,-2],[0,2],[-2,0],[2,0]];
-            dirs.sort(function() { return Math.random() - 0.5; });
+            // Перемешиваем направления для случайности
+            for (var i = dirs.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = dirs[i];
+                dirs[i] = dirs[j];
+                dirs[j] = temp;
+            }
+            
             for (var i = 0; i < dirs.length; i++) {
-                var nx = x + dirs[i][0], ny = y + dirs[i][1];
+                var nx = x + dirs[i][0];
+                var ny = y + dirs[i][1];
+                
                 if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && grid[ny][nx].type === self.TILE.WALL) {
                     grid[ny][nx].type = self.TILE.EMPTY;
                     grid[y + dirs[i][1]/2][x + dirs[i][0]/2].type = self.TILE.EMPTY;
@@ -267,11 +279,11 @@ Sherwood.Dungeon = {
         }
 
         var startX = 1, startY = 1;
-        if (startX % 2 === 0) startX++;
-        if (startY % 2 === 0) startY++;
-        grid[startY][startX].type = this.TILE.EMPTY;
         carve(startX, startY);
 
+        // БЕЗ extraPassages — лабиринт остаётся лабиринтом
+
+        // Собираем все пустые клетки
         var empties = [];
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
@@ -279,29 +291,7 @@ Sherwood.Dungeon = {
             }
         }
 
-        var extraPassages = Math.floor(empties.length * 0.03);
-        for (var i = 0; i < extraPassages; i++) {
-            var idx = Math.floor(Math.random() * empties.length);
-            var cell = empties[idx];
-            var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-            dirs.sort(function() { return Math.random() - 0.5; });
-            for (var d = 0; d < dirs.length; d++) {
-                var nx = cell.x + dirs[d][0], ny = cell.y + dirs[d][1];
-                var nx2 = cell.x + dirs[d][0]*2, ny2 = cell.y + dirs[d][1]*2;
-                if (nx2 > 0 && nx2 < size-1 && ny2 > 0 && ny2 < size-1 && grid[ny2][nx2].type === self.TILE.EMPTY && grid[ny][nx].type === self.TILE.WALL) {
-                    grid[ny][nx].type = self.TILE.EMPTY;
-                    break;
-                }
-            }
-        }
-
-        empties = [];
-        for (var y = 1; y < size-1; y++) {
-            for (var x = 1; x < size-1; x++) {
-                if (grid[y][x].type === this.TILE.EMPTY) empties.push({x: x, y: y});
-            }
-        }
-
+        // Открываем только стартовую клетку
         var spawnX = startX, spawnY = startY;
         grid[spawnY][spawnX].type = this.TILE.SPAWN;
         grid[spawnY][spawnX].open = true;
@@ -471,11 +461,13 @@ Sherwood.Dungeon = {
         }
 
         if (cell && cell.monster) {
+            var wasBoss = cell.isBoss;
+            
             cell.monster = false;
             cell.monsterId = null;
             cell.isBoss = false;
 
-            if (d.monstersKilled >= d.totalMonsters) {
+            if (wasBoss || d.monstersKilled >= d.totalMonsters) {
                 cell.chest = true;
                 cell.looted = false;
                 cell.type = this.TILE.CHEST;
