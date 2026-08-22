@@ -279,7 +279,7 @@ Sherwood.Dungeon = {
             }
         }
 
-        var extraPassages = Math.floor(empties.length * 0.15);
+        var extraPassages = Math.floor(empties.length * 0.03);
         for (var i = 0; i < extraPassages; i++) {
             var idx = Math.floor(Math.random() * empties.length);
             var cell = empties[idx];
