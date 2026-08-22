@@ -371,7 +371,12 @@ Sherwood.Dungeon2D5 = {
         if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
         
         const cell = d.grid[ny][nx];
-        if (!cell || !cell.open) return;
+        
+        if (!cell) return;
+        if (cell.type === 0) return;
+        if (!cell.open && cell.type !== 0) {
+            cell.open = true;
+        }
         
         this._fromX = d.px;
         this._fromY = d.py;
@@ -593,7 +598,7 @@ Sherwood.Dungeon2D5 = {
             this._brazierCanvas = document.createElement('canvas');
             this._brazierCanvas.width = 256;
             this._brazierCanvas.height = 256;
-            this._brazierCtx = this._brazierCanvas.getContext('2d');
+            this._brazierCtx = this._brazierCanvas.getContext('2d', { willReadFrequently: true });
             this._brazierTexture = new THREE.CanvasTexture(this._brazierCanvas);
             this._brazierTexture.minFilter = THREE.LinearFilter;
             this._brazierTexture.magFilter = THREE.LinearFilter;
@@ -693,7 +698,7 @@ Sherwood.Dungeon2D5 = {
                 const x = col - center;
                 const z = row - center;
                 const cell = d.grid[row][col];
-                const isWall = cell && !cell.open;
+                const isWall = cell && !cell.open && cell.type === 0;
                 
                 const floorMat = new THREE.MeshStandardMaterial({
                     map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length],
@@ -805,8 +810,24 @@ Sherwood.Dungeon2D5 = {
                         transparent: true
                     });
                     const sprite = new THREE.Sprite(spriteMat);
-                    sprite.position.set(col - center, 0.3, row - center);
-                    sprite.scale.set(0.5, 0.5, 1);
+                    
+                    // Разный размер для разных объектов
+                    let spriteScale = 0.5;
+                    let spriteY = 0.3;
+                    
+                    if (cell.exit) {
+                        spriteScale = 0.8; // Выход — большой, как стена
+                        spriteY = 0.5;
+                    } else if (cell.chest) {
+                        spriteScale = 0.45; // Сундук ниже
+                        spriteY = 0.2;
+                    } else if (cell.lootBag !== undefined) {
+                        spriteScale = 0.4; // Мешок ниже
+                        spriteY = 0.15;
+                    }
+                    
+                    sprite.position.set(col - center, spriteY, row - center);
+                    sprite.scale.set(spriteScale, spriteScale, 1);
                     this._group.add(sprite);
                 }
             }
@@ -954,7 +975,6 @@ Sherwood.Dungeon2D5 = {
                             return;
                         }
                         
-                        self._buildMesh();
                         self._updateCamera();
                         self._checkInteract();
                         self._updateMinimap();
@@ -967,7 +987,6 @@ Sherwood.Dungeon2D5 = {
                 if (self._turnT >= 1) {
                     self._turnT = 1;
                     self._isTurning = false;
-                    self._buildMesh();
                 }
             }
             
