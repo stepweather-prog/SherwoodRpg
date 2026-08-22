@@ -1,3 +1,4 @@
+// ========== Dungeon2D5.js ==========
 Sherwood.Dungeon2D5 = {
     _scene: null,
     _camera: null,
@@ -178,7 +179,7 @@ Sherwood.Dungeon2D5 = {
                 if (cell && cell.open) {
                     ctx.fillStyle = '#4a4a4a';
                     ctx.fillRect(x, y, cellSize, cellSize);
-                } else if (cell && !cell.open && this._isAdjacentToOpen(d, col, row)) {
+                } else if (cell && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
                     ctx.fillStyle = '#8b6914';
                     ctx.fillRect(x, y, cellSize, cellSize);
                 } else {
@@ -200,10 +201,10 @@ Sherwood.Dungeon2D5 = {
         const py = d.py * cellSize + cellSize / 2;
         ctx.moveTo(px, py);
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = 1;
-        else if (this._dir === 1) dx = -1;
-        else if (this._dir === 2) dy = -1;
-        else dx = 1;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
+        else dx = -1;
         ctx.lineTo(px + dx * cellSize, py + dy * cellSize);
         ctx.stroke();
         
@@ -327,7 +328,10 @@ Sherwood.Dungeon2D5 = {
         const dist = Math.abs(gridX - d.px) + Math.abs(gridY - d.py);
         if (dist !== 1) return;
         
+        if (!cell.isPath) return;
+        
         cell.open = true;
+        cell.type = 1;
         
         if (cell.monster) {
             const monsterId = cell.monsterId;
@@ -360,10 +364,10 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = 1;
-        else if (this._dir === 1) dx = -1;
-        else if (this._dir === 2) dy = -1;
-        else dx = 1;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
+        else dx = -1;
         
         const nx = d.px + dx;
         const ny = d.py + dy;
@@ -373,9 +377,12 @@ Sherwood.Dungeon2D5 = {
         const cell = d.grid[ny][nx];
         
         if (!cell) return;
-        if (cell.type === 0) return;
-        if (!cell.open && cell.type !== 0) {
+        if (!cell.isPath) return;
+        if (!cell.open && !cell.isPath) return;
+        
+        if (!cell.open && cell.isPath) {
             cell.open = true;
+            cell.type = 1;
         }
         
         this._fromX = d.px;
@@ -630,7 +637,7 @@ Sherwood.Dungeon2D5 = {
                     const ny = row + dirs[i].dy;
                     if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
                         const neighbor = d.grid[ny][nx];
-                        if (neighbor && !neighbor.open) {
+                        if (neighbor && !neighbor.open && !neighbor.isPath) {
                             offsetX = dirs[i].ox;
                             offsetZ = dirs[i].oz;
                             break;
@@ -672,6 +679,7 @@ Sherwood.Dungeon2D5 = {
             for (let col = 1; col < size - 1; col++) {
                 const cell = d.grid[row][col];
                 if (!cell || cell.open) continue;
+                if (!cell.isPath) continue;
                 
                 if (this._isAdjacentToOpen(d, col, row)) {
                     openableWalls.push({ x: col, y: row });
@@ -698,7 +706,7 @@ Sherwood.Dungeon2D5 = {
                 const x = col - center;
                 const z = row - center;
                 const cell = d.grid[row][col];
-                const isWall = cell && !cell.open && cell.type === 0;
+                const isWall = cell && !cell.open && !cell.isPath;
                 
                 const floorMat = new THREE.MeshStandardMaterial({
                     map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length],
@@ -850,12 +858,12 @@ Sherwood.Dungeon2D5 = {
         
         this._camera.position.set(posX, 0.5, posZ);
         
-        let yaw = (this._dir + 2) % 4 * Math.PI / 2;
+        let yaw = this._dir * Math.PI / 2;
         
         if (this._isTurning) {
             const t = this._ease(this._turnT);
             const fromYaw = this._turnFrom;
-            const toYaw = (this._dir + 2) % 4 * Math.PI / 2;
+            const toYaw = this._dir * Math.PI / 2;
             let diff = toYaw - fromYaw;
             if (diff > Math.PI) diff -= Math.PI * 2;
             if (diff < -Math.PI) diff += Math.PI * 2;
@@ -871,9 +879,9 @@ Sherwood.Dungeon2D5 = {
         
         let iconName;
         if (this._dir === 0) iconName = 'up';
-        else if (this._dir === 1) iconName = 'left';
+        else if (this._dir === 1) iconName = 'right';
         else if (this._dir === 2) iconName = 'up';
-        else iconName = 'right';
+        else iconName = 'left';
         
         if (this._animImages[iconName] && this._animImages[iconName].image) {
             this._joystickImg.src = this._animImages[iconName].image.src;
