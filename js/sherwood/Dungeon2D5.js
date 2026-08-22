@@ -30,6 +30,8 @@ Sherwood.Dungeon2D5 = {
     _particles: [],
     _brazierVideo: null,
     _brazierTexture: null,
+    _brazierCanvas: null,
+    _brazierCtx: null,
     _walls: [],
     _floors: [],
     _ceilings: [],
@@ -90,7 +92,6 @@ Sherwood.Dungeon2D5 = {
         this._animImages.left = loadTex('assets/animation/step_left.png');
         this._animImages.right = loadTex('assets/animation/step_right.png');
         
-        // Жаровня
         this._brazierVideo = document.createElement('video');
         this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
         this._brazierVideo.loop = true;
@@ -98,7 +99,7 @@ Sherwood.Dungeon2D5 = {
         this._brazierVideo.playsInline = true;
         this._brazierVideo.autoplay = true;
         this._brazierVideo.play().catch(function() {});
-        this._brazierTexture = new THREE.VideoTexture(this._brazierVideo);
+        this._brazierTexture = null;
     },
 
     _setupThree: function() {
@@ -547,6 +548,38 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    _processBrazierFrame: function() {
+        const self = this;
+        
+        function processFrame() {
+            if (!self._brazierVideo || !self._brazierCtx) return;
+            
+            if (self._brazierVideo.readyState >= 2) {
+                self._brazierCtx.drawImage(self._brazierVideo, 0, 0, 256, 256);
+                
+                const imageData = self._brazierCtx.getImageData(0, 0, 256, 256);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    if (g > 80 && g > r * 1.4 && g > b * 1.4) {
+                        data[i + 3] = 0;
+                    }
+                }
+                
+                self._brazierCtx.putImageData(imageData, 0, 0);
+                self._brazierTexture.needsUpdate = true;
+            }
+            
+            requestAnimationFrame(processFrame);
+        }
+        
+        processFrame();
+    },
+
     _addBraziers: function() {
         const d = this._dungeon;
         if (!d) return;
@@ -555,7 +588,20 @@ Sherwood.Dungeon2D5 = {
         const brazierCount = 6;
         let placed = 0;
         
-        if (!this._brazierTexture || !this._brazierTexture.image) return;
+        if (!this._brazierVideo) return;
+        
+        if (!this._brazierCanvas) {
+            this._brazierCanvas = document.createElement('canvas');
+            this._brazierCanvas.width = 256;
+            this._brazierCanvas.height = 256;
+            this._brazierCtx = this._brazierCanvas.getContext('2d');
+            
+            this._brazierTexture = new THREE.CanvasTexture(this._brazierCanvas);
+            this._brazierTexture.minFilter = THREE.LinearFilter;
+            this._brazierTexture.magFilter = THREE.LinearFilter;
+            
+            this._processBrazierFrame();
+        }
         
         for (let row = 1; row < d.size - 1 && placed < brazierCount; row++) {
             for (let col = 1; col < d.size - 1 && placed < brazierCount; col++) {
@@ -563,6 +609,29 @@ Sherwood.Dungeon2D5 = {
                 if (!cell || !cell.open) continue;
                 
                 if ((row * d.size + col) % 5 === 0) {
+                    let offsetX = 0.3;
+                    let offsetZ = 0.3;
+                    
+                    const dirs = [
+                        { dx: -1, dy: 0, ox: 0.35, oz: 0 },
+                        { dx: 1, dy: 0, ox: -0.35, oz: 0 },
+                        { dx: 0, dy: -1, ox: 0, oz: 0.35 },
+                        { dx: 0, dy: 1, ox: 0, oz: -0.35 }
+                    ];
+                    
+                    for (let i = 0; i < dirs.length; i++) {
+                        const nx = col + dirs[i].dx;
+                        const ny = row + dirs[i].dy;
+                        if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+                            const neighbor = d.grid[ny][nx];
+                            if (neighbor && !neighbor.open) {
+                                offsetX = dirs[i].ox;
+                                offsetZ = dirs[i].oz;
+                                break;
+                            }
+                        }
+                    }
+                    
                     const spriteMat = new THREE.SpriteMaterial({
                         map: this._brazierTexture,
                         transparent: true,
@@ -570,8 +639,12 @@ Sherwood.Dungeon2D5 = {
                     });
                     
                     const sprite = new THREE.Sprite(spriteMat);
-                    sprite.position.set(col - center, 0.4, row - center);
-                    sprite.scale.set(0.6, 0.6, 1);
+                    sprite.position.set(
+                        col - center + offsetX,
+                        0.25,
+                        row - center + offsetZ
+                    );
+                    sprite.scale.set(0.35, 0.35, 1);
                     sprite.userData = { brazier: true, gridX: col, gridY: row };
                     this._group.add(sprite);
                     
