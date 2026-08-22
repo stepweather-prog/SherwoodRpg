@@ -4,6 +4,7 @@ Sherwood.Dungeon2D5 = {
     _renderer: null,
     _group: null,
     _dungeon: null,
+    _dir: 0,
     _isMoving: false,
     _fromX: 0,
     _fromY: 0,
@@ -46,27 +47,12 @@ Sherwood.Dungeon2D5 = {
 
     _loadTextures: function() {
         const loader = new THREE.TextureLoader();
-        function loadTex(src) {
-            const tex = loader.load(src);
-            tex.wrapS = THREE.RepeatWrapping;
-            tex.wrapT = THREE.RepeatWrapping;
-            return tex;
-        }
+        function loadTex(src) { const tex = loader.load(src); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex; }
         for (let i = 1; i <= 6; i++) this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png'));
         for (let i = 1; i <= 6; i++) this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/tiles_' + i + '.png'));
         for (let i = 1; i <= 6; i++) this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png'));
         this._images.wall_openable = loadTex('assets/interface/labyrinth_asset.png');
-        const objs = {
-            altar: 'altar_of_the_first_dungeon.png',
-            cauldron: 'cauldron_first_dungeon.png',
-            potion: 'resource_life_potion.png',
-            chest_locked: 'locked_chest_first_dungeon.png',
-            chest_open: 'open_chest_first_dungeon.png',
-            loot_bag: 'loot_bag_of_beasts.png',
-            loot_bag_empty: 'empty_bag_of_loot_beasts.png',
-            exit: 'exit_completion_dungeon.png',
-            exit_locked: 'closed_level_lock_icon.png'
-        };
+        const objs = { altar: 'altar_of_the_first_dungeon.png', cauldron: 'cauldron_first_dungeon.png', potion: 'resource_life_potion.png', chest_locked: 'locked_chest_first_dungeon.png', chest_open: 'open_chest_first_dungeon.png', loot_bag: 'loot_bag_of_beasts.png', loot_bag_empty: 'empty_bag_of_loot_beasts.png', exit: 'exit_completion_dungeon.png', exit_locked: 'closed_level_lock_icon.png' };
         for (let key in objs) this._images[key] = loadTex('assets/interface/' + objs[key]);
         this._brazierVideo = document.createElement('video');
         this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
@@ -140,16 +126,9 @@ Sherwood.Dungeon2D5 = {
                 const cell = d.grid[row][col];
                 const x = col * cellSize;
                 const y = row * cellSize;
-                if (cell && cell.open) {
-                    ctx.fillStyle = '#4a4a4a';
-                    ctx.fillRect(x, y, cellSize, cellSize);
-                } else if (cell && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    ctx.fillStyle = '#8b6914';
-                    ctx.fillRect(x, y, cellSize, cellSize);
-                } else {
-                    ctx.fillStyle = '#1a1a1a';
-                    ctx.fillRect(x, y, cellSize, cellSize);
-                }
+                if (cell && cell.open) { ctx.fillStyle = '#4a4a4a'; ctx.fillRect(x, y, cellSize, cellSize); }
+                else if (cell && cell.isPath && this._isAdjacentToOpen(d, col, row)) { ctx.fillStyle = '#8b6914'; ctx.fillRect(x, y, cellSize, cellSize); }
+                else { ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x, y, cellSize, cellSize); }
             }
         }
         ctx.fillStyle = '#ff4444';
@@ -162,38 +141,28 @@ Sherwood.Dungeon2D5 = {
     _setupControls: function() {
         const self = this;
         this._setupMinimap();
-        
         this._topPanel = document.createElement('div');
         this._topPanel.style.cssText = 'position:absolute;top:10px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 10px;z-index:15;';
-        
         this._exitBtn = document.createElement('button');
         this._exitBtn.style.cssText = 'width:40px;height:40px;background:transparent;border:none;cursor:pointer;';
         this._exitBtn.innerHTML = '<img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">';
         this._exitBtn.addEventListener('click', function() { SherwoodUI._leaveDungeon(); });
         this._topPanel.appendChild(this._exitBtn);
-        
         this._hpBar = document.createElement('div');
         this._hpBar.style.cssText = 'position:relative;width:150px;height:30px;';
-        this._hpBar.innerHTML = '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">' +
-            '<div style="position:absolute;top:6px;left:15px;right:15px;bottom:6px;overflow:hidden;z-index:1;">' +
-            '<div id="hp-fill-2d5" style="background:red;height:100%;width:100%;"></div></div>' +
-            '<span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
+        this._hpBar.innerHTML = '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:6px;left:15px;right:15px;bottom:6px;overflow:hidden;z-index:1;"><div id="hp-fill-2d5" style="background:red;height:100%;width:100%;"></div></div><span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
-        
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
-        
         this._joystickImg = document.createElement('img');
         this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;';
         this._joystickImg.src = 'assets/animation/step_down.png';
         this._joystick.appendChild(this._joystickImg);
-        
         const arrowAreas = [
             { d: 'forward', top: '5%', left: '35%', width: '30%', height: '30%' },
             { d: 'left', top: '35%', left: '5%', width: '30%', height: '30%' },
             { d: 'right', top: '35%', left: '65%', width: '30%', height: '30%' }
         ];
-        
         arrowAreas.forEach(function(a) {
             const btn = document.createElement('button');
             btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:transparent;border:none;cursor:pointer;z-index:12;transition:transform 0.1s;';
@@ -216,18 +185,14 @@ Sherwood.Dungeon2D5 = {
             btn.addEventListener('touchend', function() { btn.style.transform = 'scale(1)'; });
             self._joystick.appendChild(btn);
         });
-        
         this._interactBtn = document.createElement('button');
         this._interactBtn.style.cssText = 'position:absolute;bottom:350px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
         this._interactBtn.addEventListener('click', function() { self._onInteract(); });
-        
         this._renderer.domElement.addEventListener('click', function(e) { self._handleWallClick(e); });
-        this._renderer.domElement.addEventListener('touchend', function(e) {
-            if (e.changedTouches && e.changedTouches[0]) self._handleWallClick(e.changedTouches[0]);
-        });
+        this._renderer.domElement.addEventListener('touchend', function(e) { if (e.changedTouches && e.changedTouches[0]) self._handleWallClick(e.changedTouches[0]); });
     },
 
     _handleWallClick: function(e) {
@@ -275,11 +240,10 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving) return;
         const d = this._dungeon;
         if (!d) return;
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
         let dx = 0, dy = 0;
-        if (dirIndex === 0) dy = -1;
-        else if (dirIndex === 1) dx = 1;
-        else if (dirIndex === 2) dy = 1;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
         else dx = -1;
         const nx = d.px + dx;
         const ny = d.py + dy;
@@ -298,7 +262,8 @@ Sherwood.Dungeon2D5 = {
 
     _turnLeft: function() {
         if (this._isMoving) return;
-        this._yaw -= Math.PI / 2;
+        this._dir = (this._dir + 3) % 4;
+        this._yaw = this._dir * Math.PI / 2;
         this._updateCamera();
         this._buildMesh();
         this._updateMinimap();
@@ -306,7 +271,8 @@ Sherwood.Dungeon2D5 = {
 
     _turnRight: function() {
         if (this._isMoving) return;
-        this._yaw += Math.PI / 2;
+        this._dir = (this._dir + 1) % 4;
+        this._yaw = this._dir * Math.PI / 2;
         this._updateCamera();
         this._buildMesh();
         this._updateMinimap();
@@ -557,7 +523,7 @@ Sherwood.Dungeon2D5 = {
             posZ = (this._fromY - center) + ((this._toY - center) - (this._fromY - center)) * t;
         }
         this._camera.position.set(posX, 0.5, posZ);
-        this._camera.quaternion.setFromEuler(new THREE.Euler(0, this._yaw, 0, 'YXZ'));
+        this._camera.quaternion.setFromEuler(new THREE.Euler(0, this._dir * Math.PI / 2, 0, 'YXZ'));
     },
 
     _updateHP: function() {
@@ -649,6 +615,7 @@ Sherwood.Dungeon2D5 = {
         if (this._minimapFrame && this._minimapFrame.parentNode) this._minimapFrame.parentNode.removeChild(this._minimapFrame);
         this._dungeon = null;
         this._isMoving = false;
+        this._dir = 0;
         this._yaw = 0;
         this._particles = [];
     }
