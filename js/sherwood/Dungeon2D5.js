@@ -120,7 +120,7 @@ Sherwood.Dungeon2D5 = {
         this._minimap = document.createElement('canvas');
         this._minimap.width = 120;
         this._minimap.height = 120;
-        this._minimap.style.cssText = 'position:absolute;top:50px;right:10px;width:120px;height:120px;border:2px solid #c9a040;border-radius:4px;z-index:15;background:rgba(0,0,0,0.7);';
+        this._minimap.style.cssText = 'position:absolute;top:50px;right:10px;width:120px;height:120px;border-radius:50%;z-index:15;';
         this._minimapCtx = this._minimap.getContext('2d');
     },
 
@@ -141,9 +141,20 @@ Sherwood.Dungeon2D5 = {
         
         const ctx = this._minimapCtx;
         const d = this._dungeon;
-        const cellSize = 120 / d.size;
+        const mapSize = 120;
+        const center = mapSize / 2;
+        const radius = mapSize / 2 - 2;
+        const cellSize = (radius * 2) / d.size;
         
-        ctx.clearRect(0, 0, 120, 120);
+        ctx.clearRect(0, 0, mapSize, mapSize);
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, Math.PI * 2);
+        ctx.clip();
+        
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, mapSize, mapSize);
         
         for (let row = 0; row < d.size; row++) {
             for (let col = 0; col < d.size; col++) {
@@ -181,6 +192,14 @@ Sherwood.Dungeon2D5 = {
         else if (this._dir === 2) dy = 1;
         else dx = -1;
         ctx.lineTo(px + dx * cellSize, py + dy * cellSize);
+        ctx.stroke();
+        
+        ctx.restore();
+        
+        ctx.strokeStyle = '#c9a040';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, Math.PI * 2);
         ctx.stroke();
     },
 
@@ -418,6 +437,19 @@ Sherwood.Dungeon2D5 = {
         
         const center = Math.floor(d.size / 2);
         
+        const particleCanvas = document.createElement('canvas');
+        particleCanvas.width = 32;
+        particleCanvas.height = 32;
+        const pctx = particleCanvas.getContext('2d');
+        const gradient = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+        gradient.addColorStop(0, 'rgba(255, 255, 200, 1)');
+        gradient.addColorStop(0.3, 'rgba(255, 220, 100, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 200, 50, 0)');
+        pctx.fillStyle = gradient;
+        pctx.fillRect(0, 0, 32, 32);
+        
+        const particleTexture = new THREE.CanvasTexture(particleCanvas);
+        
         for (let row = 0; row < d.size; row++) {
             for (let col = 0; col < d.size; col++) {
                 const cell = d.grid[row][col];
@@ -431,26 +463,28 @@ Sherwood.Dungeon2D5 = {
                                (cell.exit && cell.locked);
                 
                 if (hasItem) {
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = 0; i < 8; i++) {
                         const sprite = new THREE.Sprite(
                             new THREE.SpriteMaterial({
-                                color: 0xffdd44,
+                                map: particleTexture,
                                 transparent: true,
-                                opacity: 0.7
+                                opacity: 0.8,
+                                blending: THREE.AdditiveBlending,
+                                depthWrite: false
                             })
                         );
                         sprite.position.set(
-                            col - center + (Math.random() - 0.5) * 0.4,
-                            0.3 + Math.random() * 0.5,
-                            row - center + (Math.random() - 0.5) * 0.4
+                            col - center + (Math.random() - 0.5) * 0.5,
+                            0.2 + Math.random() * 0.6,
+                            row - center + (Math.random() - 0.5) * 0.5
                         );
-                        sprite.scale.set(0.05, 0.05, 1);
+                        sprite.scale.set(0.08, 0.08, 1);
                         sprite.userData = {
-                            baseY: 0.3 + Math.random() * 0.3,
-                            speed: 0.3 + Math.random() * 0.5,
+                            baseY: 0.2 + Math.random() * 0.4,
+                            speed: 0.5 + Math.random() * 1,
                             phase: Math.random() * Math.PI * 2,
-                            offsetX: (Math.random() - 0.5) * 0.4,
-                            offsetZ: (Math.random() - 0.5) * 0.4,
+                            offsetX: (Math.random() - 0.5) * 0.5,
+                            offsetZ: (Math.random() - 0.5) * 0.5,
                             gridX: col,
                             gridY: row
                         };
@@ -509,29 +543,13 @@ Sherwood.Dungeon2D5 = {
         const cellSize = 1;
         const center = Math.floor(size / 2);
         
-        // Все открываемые стены — соседние с открытыми клетками
         const openableWalls = [];
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
+        for (let row = 1; row < size - 1; row++) {
+            for (let col = 1; col < size - 1; col++) {
                 const cell = d.grid[row][col];
                 if (!cell || cell.open) continue;
                 
-                if (row === 0 || row === size - 1 || col === 0 || col === size - 1) continue;
-                
-                const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-                let adjacent = false;
-                for (let i = 0; i < dirs.length; i++) {
-                    const nx = col + dirs[i][0];
-                    const ny = row + dirs[i][1];
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-                        if (d.grid[ny][nx] && d.grid[ny][nx].open) {
-                            adjacent = true;
-                            break;
-                        }
-                    }
-                }
-                
-                if (adjacent) {
+                if (this._isAdjacentToOpen(d, col, row)) {
                     openableWalls.push({ x: col, y: row });
                 }
             }
@@ -807,6 +825,7 @@ Sherwood.Dungeon2D5 = {
                         self._updateCamera();
                         self._checkInteract();
                         self._updateMinimap();
+                        self._buildMesh();
                     }
                 }
             }
