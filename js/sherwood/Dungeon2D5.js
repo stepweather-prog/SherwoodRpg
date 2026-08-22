@@ -26,6 +26,7 @@ Sherwood.Dungeon2D5 = {
     _hpBar: null,
     _minimap: null,
     _minimapCtx: null,
+    _minimapFrame: null,
     _initialized: false,
     _particles: [],
     _brazierVideo: null,
@@ -130,11 +131,17 @@ Sherwood.Dungeon2D5 = {
     },
 
     _setupMinimap: function() {
+        // Canvas для карты
         this._minimap = document.createElement('canvas');
-        this._minimap.width = 120;
-        this._minimap.height = 120;
-        this._minimap.style.cssText = 'position:absolute;top:50px;right:10px;width:120px;height:120px;border-radius:50%;z-index:15;';
+        this._minimap.width = 100;
+        this._minimap.height = 100;
+        this._minimap.style.cssText = 'position:absolute;top:55px;right:15px;width:100px;height:100px;border-radius:50%;z-index:15;';
         this._minimapCtx = this._minimap.getContext('2d');
+        
+        // Круглая рамка
+        this._minimapFrame = document.createElement('img');
+        this._minimapFrame.src = 'assets/interface/visual_resource.png';
+        this._minimapFrame.style.cssText = 'position:absolute;top:50px;right:10px;width:110px;height:110px;z-index:16;pointer-events:none;';
     },
 
     _isAdjacentToOpen: function(d, col, row) {
@@ -154,7 +161,7 @@ Sherwood.Dungeon2D5 = {
         
         const ctx = this._minimapCtx;
         const d = this._dungeon;
-        const mapSize = 120;
+        const mapSize = 100;
         const center = mapSize / 2;
         const radius = mapSize / 2 - 2;
         const cellSize = (radius * 2) / d.size;
@@ -210,12 +217,6 @@ Sherwood.Dungeon2D5 = {
         ctx.stroke();
         
         ctx.restore();
-        
-        ctx.strokeStyle = '#c9a040';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(center, center, radius, 0, Math.PI * 2);
-        ctx.stroke();
     },
 
     _setupControls: function() {
@@ -925,6 +926,7 @@ Sherwood.Dungeon2D5 = {
             SherwoodUI._screenLayer.appendChild(this._renderer.domElement);
             SherwoodUI._screenLayer.appendChild(this._topPanel);
             SherwoodUI._screenLayer.appendChild(this._minimap);
+            SherwoodUI._screenLayer.appendChild(this._minimapFrame);
             SherwoodUI._screenLayer.appendChild(this._joystick);
             SherwoodUI._screenLayer.appendChild(this._interactBtn);
         }
@@ -933,6 +935,31 @@ Sherwood.Dungeon2D5 = {
         
         this._isMoving = false;
         this._isTurning = false;
+        
+        // Развернуть в сторону открытого коридора
+        const d = this._dungeon;
+        let foundAngle = 0;
+        const dirs = [
+            { dx: 0, dy: -1, angle: 0 },
+            { dx: 1, dy: 0, angle: Math.PI / 2 },
+            { dx: 0, dy: 1, angle: Math.PI },
+            { dx: -1, dy: 0, angle: -Math.PI / 2 }
+        ];
+        
+        for (let i = 0; i < dirs.length; i++) {
+            const nx = d.px + dirs[i].dx;
+            const ny = d.py + dirs[i].dy;
+            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+                const cell = d.grid[ny][nx];
+                if (cell && cell.isPath && cell.open) {
+                    foundAngle = dirs[i].angle;
+                    break;
+                }
+            }
+        }
+        
+        this._yaw = foundAngle;
+        this._dir = ((Math.round(foundAngle / (Math.PI / 2)) % 4) + 4) % 4;
         
         this._buildMesh();
         this._updateCamera();
@@ -1034,6 +1061,9 @@ Sherwood.Dungeon2D5 = {
         }
         if (this._minimap && this._minimap.parentNode) {
             this._minimap.parentNode.removeChild(this._minimap);
+        }
+        if (this._minimapFrame && this._minimapFrame.parentNode) {
+            this._minimapFrame.parentNode.removeChild(this._minimapFrame);
         }
         
         this._dungeon = null;
