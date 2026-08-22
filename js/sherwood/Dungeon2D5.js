@@ -64,8 +64,8 @@ Sherwood.Dungeon2D5 = {
             this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png'));
         }
         for (let i = 1; i <= 6; i++) {
-    this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/tiles_' + i + '.png'));
-}
+            this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/tiles_' + i + '.png'));
+        }
         for (let i = 1; i <= 6; i++) {
             this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png'));
         }
@@ -347,6 +347,7 @@ Sherwood.Dungeon2D5 = {
                 SherwoodUI._playSound('tile_open');
             }
             this._buildMesh();
+            this._updateCamera();
             this._updateMinimap();
             this._checkInteract();
         }
@@ -901,12 +902,6 @@ Sherwood.Dungeon2D5 = {
         
         SherwoodUI._screenLayer.style.display = 'block';
         
-        if (!this._initialized) {
-            this._dir = 0;
-            this._yaw = 0;
-            this._initialized = true;
-        }
-        
         this._isMoving = false;
         this._isTurning = false;
         
@@ -1018,6 +1013,8 @@ Sherwood.Dungeon2D5 = {
         this._isMoving = false;
         this._isTurning = false;
         this._initialized = false;
+        this._dir = 0;
+        this._yaw = 0;
         this._particles = [];
     }
 };
