@@ -320,9 +320,6 @@ Sherwood.Dungeon2D5 = {
             const monsterId = cell.monsterId;
             const isBoss = cell.isBoss || false;
             
-            d.px = gridX;
-            d.py = gridY;
-            
             this._buildMesh();
             this._updateCamera();
             this._updateJoystickAnim();
@@ -333,14 +330,10 @@ Sherwood.Dungeon2D5 = {
                 SherwoodUI._showCombatScreen();
             }, 400);
         } else {
-            d.px = gridX;
-            d.py = gridY;
-            
             if (SherwoodUI && SherwoodUI._playSound) {
                 SherwoodUI._playSound('tile_open');
             }
             this._buildMesh();
-            this._updateCamera();
             this._updateMinimap();
             this._checkInteract();
         }
@@ -627,9 +620,7 @@ Sherwood.Dungeon2D5 = {
                         mat = new THREE.MeshStandardMaterial({
                             map: this._images.wall_openable,
                             roughness: 0.7,
-                            metalness: 0.1,
-                            transparent: true,
-                            opacity: 0.85
+                            metalness: 0.1
                         });
                     } else {
                         mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
@@ -697,7 +688,7 @@ Sherwood.Dungeon2D5 = {
                         transparent: true
                     });
                     const sprite = new THREE.Sprite(spriteMat);
-                    sprite.position.set(col - center, 0.15, row - center);
+                    sprite.position.set(col - center, 0.3, row - center);
                     sprite.scale.set(0.5, 0.5, 1);
                     this._group.add(sprite);
                 }
@@ -851,7 +842,6 @@ Sherwood.Dungeon2D5 = {
                         self._updateCamera();
                         self._checkInteract();
                         self._updateMinimap();
-                        self._buildMesh();
                     }
                 }
             }
@@ -861,7 +851,6 @@ Sherwood.Dungeon2D5 = {
                 if (self._turnT >= 1) {
                     self._turnT = 1;
                     self._isTurning = false;
-                    self._buildMesh();
                 }
             }
             
