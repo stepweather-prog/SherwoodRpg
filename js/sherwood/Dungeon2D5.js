@@ -200,9 +200,10 @@ Sherwood.Dungeon2D5 = {
         const py = d.py * cellSize + cellSize / 2;
         ctx.moveTo(px, py);
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = -1;
-        else if (this._dir === 1) dx = 1;
-        else if (this._dir === 2) dy = 1;
+        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
+        if (dirIndex === 0) dy = -1;
+        else if (dirIndex === 1) dx = 1;
+        else if (dirIndex === 2) dy = 1;
         else dx = -1;
         ctx.lineTo(px + dx * cellSize, py + dy * cellSize);
         ctx.stroke();
@@ -358,10 +359,12 @@ Sherwood.Dungeon2D5 = {
         const d = this._dungeon;
         if (!d) return;
         
+        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
+        
         let dx = 0, dy = 0;
-        if (this._dir === 0) dy = -1;
-        else if (this._dir === 1) dx = 1;
-        else if (this._dir === 2) dy = 1;
+        if (dirIndex === 0) dy = -1;
+        else if (dirIndex === 1) dx = 1;
+        else if (dirIndex === 2) dy = 1;
         else dx = -1;
         
         const nx = d.px + dx;
@@ -585,8 +588,6 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         
         const center = Math.floor(d.size / 2);
-        const brazierCount = 6;
-        let placed = 0;
         
         if (!this._brazierVideo) return;
         
@@ -595,61 +596,55 @@ Sherwood.Dungeon2D5 = {
             this._brazierCanvas.width = 256;
             this._brazierCanvas.height = 256;
             this._brazierCtx = this._brazierCanvas.getContext('2d');
-            
             this._brazierTexture = new THREE.CanvasTexture(this._brazierCanvas);
             this._brazierTexture.minFilter = THREE.LinearFilter;
             this._brazierTexture.magFilter = THREE.LinearFilter;
-            
             this._processBrazierFrame();
         }
         
-        for (let row = 1; row < d.size - 1 && placed < brazierCount; row++) {
-            for (let col = 1; col < d.size - 1 && placed < brazierCount; col++) {
+        for (let row = 1; row < d.size - 1; row++) {
+            for (let col = 1; col < d.size - 1; col++) {
+                const isPerimeter = (row === 1 || row === d.size - 2 || col === 1 || col === d.size - 2);
+                if (!isPerimeter) continue;
+                
                 const cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
                 
-                if ((row * d.size + col) % 5 === 0) {
-                    let offsetX = 0.3;
-                    let offsetZ = 0.3;
-                    
-                    const dirs = [
-                        { dx: -1, dy: 0, ox: 0.35, oz: 0 },
-                        { dx: 1, dy: 0, ox: -0.35, oz: 0 },
-                        { dx: 0, dy: -1, ox: 0, oz: 0.35 },
-                        { dx: 0, dy: 1, ox: 0, oz: -0.35 }
-                    ];
-                    
-                    for (let i = 0; i < dirs.length; i++) {
-                        const nx = col + dirs[i].dx;
-                        const ny = row + dirs[i].dy;
-                        if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
-                            const neighbor = d.grid[ny][nx];
-                            if (neighbor && !neighbor.open) {
-                                offsetX = dirs[i].ox;
-                                offsetZ = dirs[i].oz;
-                                break;
-                            }
+                if ((row + col) % 3 !== 0) continue;
+                
+                let offsetX = 0.35;
+                let offsetZ = 0.35;
+                
+                const dirs = [
+                    { dx: -1, dy: 0, ox: 0.35, oz: 0 },
+                    { dx: 1, dy: 0, ox: -0.35, oz: 0 },
+                    { dx: 0, dy: -1, ox: 0, oz: 0.35 },
+                    { dx: 0, dy: 1, ox: 0, oz: -0.35 }
+                ];
+                
+                for (let i = 0; i < dirs.length; i++) {
+                    const nx = col + dirs[i].dx;
+                    const ny = row + dirs[i].dy;
+                    if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+                        const neighbor = d.grid[ny][nx];
+                        if (neighbor && !neighbor.open) {
+                            offsetX = dirs[i].ox;
+                            offsetZ = dirs[i].oz;
+                            break;
                         }
                     }
-                    
-                    const spriteMat = new THREE.SpriteMaterial({
-                        map: this._brazierTexture,
-                        transparent: true,
-                        depthWrite: false
-                    });
-                    
-                    const sprite = new THREE.Sprite(spriteMat);
-                    sprite.position.set(
-                        col - center + offsetX,
-                        0.25,
-                        row - center + offsetZ
-                    );
-                    sprite.scale.set(0.35, 0.35, 1);
-                    sprite.userData = { brazier: true, gridX: col, gridY: row };
-                    this._group.add(sprite);
-                    
-                    placed++;
                 }
+                
+                const spriteMat = new THREE.SpriteMaterial({
+                    map: this._brazierTexture,
+                    transparent: true,
+                    depthWrite: false
+                });
+                
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.position.set(col - center + offsetX, 0.25, row - center + offsetZ);
+                sprite.scale.set(0.3, 0.3, 1);
+                this._group.add(sprite);
             }
         }
     },
@@ -782,10 +777,10 @@ Sherwood.Dungeon2D5 = {
                         this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
                     }
                     tex = this._monsterImages[id];
+                } else if (cell.lootCollected && cell.lootBag !== undefined) {
+                    tex = this._images.loot_bag_empty;
                 } else if (cell.lootBag && !cell.lootCollected) {
                     tex = this._images.loot_bag;
-                } else if (cell.lootBag && cell.lootCollected) {
-                    tex = this._images.loot_bag_empty;
                 } else if (cell.chest && !cell.looted) {
                     tex = this._images.chest_locked;
                 } else if (cell.chest && cell.looted) {
@@ -851,10 +846,12 @@ Sherwood.Dungeon2D5 = {
     _updateJoystickAnim: function() {
         if (!this._joystickImg) return;
         
+        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
+        
         let iconName;
-        if (this._dir === 0) iconName = 'up';
-        else if (this._dir === 1) iconName = 'right';
-        else if (this._dir === 2) iconName = 'up';
+        if (dirIndex === 0) iconName = 'up';
+        else if (dirIndex === 1) iconName = 'right';
+        else if (dirIndex === 2) iconName = 'up';
         else iconName = 'left';
         
         if (this._animImages[iconName] && this._animImages[iconName].image) {
