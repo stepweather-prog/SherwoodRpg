@@ -26,6 +26,8 @@ Sherwood.Dungeon2D5 = {
     _hpBar: null,
     _minimap: null,
     _minimapCtx: null,
+    _initialized: false,
+    _particles: [],
     _walls: [],
     _floors: [],
     _ceilings: [],
@@ -162,13 +164,11 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        // Игрок
         ctx.fillStyle = '#ff4444';
         ctx.beginPath();
         ctx.arc(d.px * cellSize + cellSize / 2, d.py * cellSize + cellSize / 2, cellSize / 2, 0, Math.PI * 2);
         ctx.fill();
         
-        // Направление
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -308,6 +308,7 @@ Sherwood.Dungeon2D5 = {
                 SherwoodUI._playSound('tile_open');
             }
             this._buildMesh();
+            this._updateMinimap();
             this._checkInteract();
         }
     },
@@ -379,9 +380,9 @@ Sherwood.Dungeon2D5 = {
         this._interactType = null;
         this._interactBtn.style.display = 'none';
         
-        setTimeout(function() {
-            Sherwood.Dungeon2D5.render();
-        }, 300);
+        this._buildMesh();
+        this._updateMinimap();
+        this._checkInteract();
     },
 
     _checkInteract: function() {
@@ -411,6 +412,88 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    _createParticles: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        
+        const center = Math.floor(d.size / 2);
+        
+        for (let row = 0; row < d.size; row++) {
+            for (let col = 0; col < d.size; col++) {
+                const cell = d.grid[row][col];
+                if (!cell || !cell.open) continue;
+                
+                const hasItem = (cell.chest && !cell.looted) || 
+                               (cell.lootBag && !cell.lootCollected) ||
+                               (cell.altar && !cell.altarCollected) ||
+                               (cell.cauldron && !cell.cauldronCollected) ||
+                               (cell.potion && !cell.potionCollected) ||
+                               (cell.exit && cell.locked);
+                
+                if (hasItem) {
+                    for (let i = 0; i < 5; i++) {
+                        const sprite = new THREE.Sprite(
+                            new THREE.SpriteMaterial({
+                                color: 0xffdd44,
+                                transparent: true,
+                                opacity: 0.7
+                            })
+                        );
+                        sprite.position.set(
+                            col - center + (Math.random() - 0.5) * 0.4,
+                            0.3 + Math.random() * 0.5,
+                            row - center + (Math.random() - 0.5) * 0.4
+                        );
+                        sprite.scale.set(0.05, 0.05, 1);
+                        sprite.userData = {
+                            baseY: 0.3 + Math.random() * 0.3,
+                            speed: 0.3 + Math.random() * 0.5,
+                            phase: Math.random() * Math.PI * 2,
+                            offsetX: (Math.random() - 0.5) * 0.4,
+                            offsetZ: (Math.random() - 0.5) * 0.4,
+                            gridX: col,
+                            gridY: row
+                        };
+                        this._group.add(sprite);
+                        this._particles.push(sprite);
+                    }
+                }
+            }
+        }
+    },
+
+    _updateParticles: function(time) {
+        const d = this._dungeon;
+        if (!d) return;
+        
+        const center = Math.floor(d.size / 2);
+        
+        for (let i = 0; i < this._particles.length; i++) {
+            const p = this._particles[i];
+            const cell = d.grid[p.userData.gridY][p.userData.gridX];
+            
+            const hasItem = cell && ((cell.chest && !cell.looted) || 
+                           (cell.lootBag && !cell.lootCollected) ||
+                           (cell.altar && !cell.altarCollected) ||
+                           (cell.cauldron && !cell.cauldronCollected) ||
+                           (cell.potion && !cell.potionCollected) ||
+                           (cell.exit && cell.locked));
+            
+            if (!hasItem) {
+                p.visible = false;
+                continue;
+            }
+            
+            p.visible = true;
+            
+            const y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.phase) * 0.2;
+            p.position.y = y;
+            
+            p.position.x = p.userData.gridX - center + p.userData.offsetX + Math.sin(time * 0.5 + p.userData.phase) * 0.1;
+            p.position.z = p.userData.gridY - center + p.userData.offsetZ + Math.cos(time * 0.5 + p.userData.phase) * 0.1;
+        }
+    },
+
     _buildMesh: function() {
         const d = this._dungeon;
         if (!d) return;
@@ -419,42 +502,37 @@ Sherwood.Dungeon2D5 = {
             this._group.remove(this._group.children[0]);
         }
         
+        this._particles = [];
+        
         const size = d.size;
         const wallHeight = 1.2;
         const cellSize = 1;
         const center = Math.floor(size / 2);
         
+        // Все открываемые стены — соседние с открытыми клетками
         const openableWalls = [];
-        const neighborDirs = [
-            { dx: 0, dy: -1 },
-            { dx: 1, dy: 0 },
-            { dx: -1, dy: 0 }
-        ];
-        
-        for (let i = 0; i < neighborDirs.length; i++) {
-            let dx = neighborDirs[i].dx;
-            let dy = neighborDirs[i].dy;
-            
-            if (this._dir === 1) {
-                const oldDx = dx, oldDy = dy;
-                dx = -oldDy;
-                dy = oldDx;
-            } else if (this._dir === 2) {
-                dx = -dx;
-                dy = -dy;
-            } else if (this._dir === 3) {
-                const oldDx = dx, oldDy = dy;
-                dx = oldDy;
-                dy = -oldDx;
-            }
-            
-            const nx = d.px + dx;
-            const ny = d.py + dy;
-            
-            if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-                const cell = d.grid[ny][nx];
-                if (cell && !cell.open) {
-                    openableWalls.push({ x: nx, y: ny });
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const cell = d.grid[row][col];
+                if (!cell || cell.open) continue;
+                
+                if (row === 0 || row === size - 1 || col === 0 || col === size - 1) continue;
+                
+                const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+                let adjacent = false;
+                for (let i = 0; i < dirs.length; i++) {
+                    const nx = col + dirs[i][0];
+                    const ny = row + dirs[i][1];
+                    if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+                        if (d.grid[ny][nx] && d.grid[ny][nx].open) {
+                            adjacent = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (adjacent) {
+                    openableWalls.push({ x: col, y: row });
                 }
             }
         }
@@ -480,7 +558,6 @@ Sherwood.Dungeon2D5 = {
                 const cell = d.grid[row][col];
                 const isWall = cell && !cell.open;
                 
-                // Пол — рандомная текстура для каждой клетки
                 const floorMat = new THREE.MeshStandardMaterial({
                     map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length],
                     roughness: 0.9,
@@ -514,10 +591,7 @@ Sherwood.Dungeon2D5 = {
                         }
                     }
                     
-                    if (row === 0 || row === size - 1 || col === 0 || col === size - 1) {
-                        openable = false;
-                        mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
-                    } else if (openable && this._images.wall_openable) {
+                    if (openable && this._images.wall_openable) {
                         mat = new THREE.MeshStandardMaterial({
                             map: this._images.wall_openable,
                             roughness: 0.7,
@@ -541,6 +615,7 @@ Sherwood.Dungeon2D5 = {
         }
         
         this._addObjectSprites();
+        this._createParticles();
     },
 
     _addObjectSprites: function() {
@@ -671,8 +746,12 @@ Sherwood.Dungeon2D5 = {
         
         SherwoodUI._screenLayer.style.display = 'block';
         
-        this._dir = 0;
-        this._yaw = 0;
+        if (!this._initialized) {
+            this._dir = 0;
+            this._yaw = 0;
+            this._initialized = true;
+        }
+        
         this._isMoving = false;
         this._isTurning = false;
         
@@ -725,8 +804,9 @@ Sherwood.Dungeon2D5 = {
                             return;
                         }
                         
+                        self._updateCamera();
                         self._checkInteract();
-                        self._buildMesh();
+                        self._updateMinimap();
                     }
                 }
             }
@@ -736,6 +816,7 @@ Sherwood.Dungeon2D5 = {
                 if (self._turnT >= 1) {
                     self._turnT = 1;
                     self._isTurning = false;
+                    self._buildMesh();
                 }
             }
             
@@ -743,6 +824,7 @@ Sherwood.Dungeon2D5 = {
             self._updateJoystickAnim();
             self._updateHP();
             self._updateMinimap();
+            self._updateParticles(time / 1000);
             self._renderer.render(self._scene, self._camera);
         }
         
@@ -774,6 +856,8 @@ Sherwood.Dungeon2D5 = {
         this._dungeon = null;
         this._isMoving = false;
         this._isTurning = false;
+        this._initialized = false;
+        this._particles = [];
     }
 };
 
