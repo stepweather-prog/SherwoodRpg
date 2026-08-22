@@ -168,7 +168,6 @@ Sherwood.Dungeon2D5 = {
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
-        // Видео анимация ходьбы (на паузе до нажатия)
         this._joystickVideo = document.createElement('video');
         this._joystickVideo.src = 'assets/animation/step_up.webm';
         this._joystickVideo.loop = true;
@@ -297,7 +296,6 @@ Sherwood.Dungeon2D5 = {
         this._moveT = 0;
         this._isMoving = true;
         
-        // Включаем анимацию
         if (this._joystickVideo) {
             this._joystickVideo.currentTime = 0;
             this._joystickVideo.play().catch(function() {});
@@ -391,9 +389,9 @@ Sherwood.Dungeon2D5 = {
                 if (hasItem) {
                     for (let i = 0; i < 8; i++) {
                         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: particleTexture, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
-                        sprite.position.set(col - center + (Math.random() - 0.5) * 0.5, 0.2 + Math.random() * 0.6, row - center + (Math.random() - 0.5) * 0.5);
+                        sprite.position.set(col - center + (Math.random() - 0.5) * 0.5, 0.1 + Math.random() * 0.5, row - center + (Math.random() - 0.5) * 0.5);
                         sprite.scale.set(0.08, 0.08, 1);
-                        sprite.userData = { baseY: 0.2 + Math.random() * 0.4, speed: 0.5 + Math.random() * 1, phase: Math.random() * Math.PI * 2, offsetX: (Math.random() - 0.5) * 0.5, offsetZ: (Math.random() - 0.5) * 0.5, gridX: col, gridY: row };
+                        sprite.userData = { baseY: 0.1 + Math.random() * 0.3, speed: 0.5 + Math.random() * 1, phase: Math.random() * Math.PI * 2, offsetX: (Math.random() - 0.5) * 0.5, offsetZ: (Math.random() - 0.5) * 0.5, gridX: col, gridY: row };
                         this._group.add(sprite);
                         this._particles.push(sprite);
                     }
@@ -412,9 +410,9 @@ Sherwood.Dungeon2D5 = {
             const hasItem = cell && ((cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) || (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) || (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked));
             if (!hasItem) { p.visible = false; continue; }
             p.visible = true;
-            p.position.y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.phase) * 0.2;
-            p.position.x = p.userData.gridX - center + p.userData.offsetX + Math.sin(time * 0.5 + p.userData.phase) * 0.1;
-            p.position.z = p.userData.gridY - center + p.userData.offsetZ + Math.cos(time * 0.5 + p.userData.phase) * 0.1;
+            p.position.y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.phase) * 0.15;
+            p.position.x = p.userData.gridX - center + p.userData.offsetX + Math.sin(time * 0.5 + p.userData.phase) * 0.08;
+            p.position.z = p.userData.gridY - center + p.userData.offsetZ + Math.cos(time * 0.5 + p.userData.phase) * 0.08;
         }
     },
 
@@ -476,8 +474,8 @@ Sherwood.Dungeon2D5 = {
                 }
                 if (!found) continue;
                 const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._brazierTexture, transparent: true, depthWrite: false }));
-                sprite.position.set(col - center + offsetX, 0.25, row - center + offsetZ);
-                sprite.scale.set(0.3, 0.3, 1);
+                sprite.position.set(col - center + offsetX, 0.08, row - center + offsetZ);
+                sprite.scale.set(0.2, 0.2, 1);
                 this._group.add(sprite);
             }
         }
@@ -553,11 +551,13 @@ Sherwood.Dungeon2D5 = {
                 else if (cell.exit && !cell.locked) tex = this._images.exit;
                 if (tex && tex.image) {
                     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-                    let scale = 0.5, sy = 0.3;
-                    if (cell.exit) { scale = 0.8; sy = 0.5; }
-                    else if (cell.chest) { scale = 0.45; sy = 0.2; }
-                    else if (cell.lootBag !== undefined) { scale = 0.4; sy = 0.15; }
-                    else if (cell.potion) { scale = 0.3; sy = 0.15; }
+                    let scale = 0.5, sy = 0.1;
+                    if (cell.exit) { scale = 0.8; sy = 0.3; }
+                    else if (cell.chest) { scale = 0.4; sy = 0.08; }
+                    else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.05; }
+                    else if (cell.potion) { scale = 0.25; sy = 0.05; }
+                    else if (cell.altar) { scale = 0.4; sy = 0.08; }
+                    else if (cell.cauldron) { scale = 0.35; sy = 0.05; }
                     sprite.position.set(col - center, sy, row - center);
                     sprite.scale.set(scale, scale, 1);
                     this._group.add(sprite);
@@ -633,7 +633,6 @@ Sherwood.Dungeon2D5 = {
                     self._moveT = 1;
                     self._isMoving = false;
                     
-                    // Останавливаем анимацию через 1 секунду
                     if (self._joystickVideo) {
                         setTimeout(function() {
                             if (!self._isMoving && self._joystickVideo) {
