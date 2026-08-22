@@ -168,16 +168,14 @@ Sherwood.Dungeon2D5 = {
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
-        // Видео анимация ходьбы в центре джойстика
+        // Видео анимация ходьбы (на паузе до нажатия)
         this._joystickVideo = document.createElement('video');
-        this._joystickVideo.src = 'assets/animation/step_down.webm';
+        this._joystickVideo.src = 'assets/animation/step_up.webm';
         this._joystickVideo.loop = true;
         this._joystickVideo.muted = true;
         this._joystickVideo.playsInline = true;
-        this._joystickVideo.autoplay = true;
         this._joystickVideo.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;border-radius:50%;';
         this._joystick.appendChild(this._joystickVideo);
-        this._joystickVideo.play().catch(function() {});
         
         const arrowAreas = [
             { d: 'forward', top: '10%', left: '38%', width: '24%', height: '24%' },
@@ -298,6 +296,12 @@ Sherwood.Dungeon2D5 = {
         this._toY = ny;
         this._moveT = 0;
         this._isMoving = true;
+        
+        // Включаем анимацию
+        if (this._joystickVideo) {
+            this._joystickVideo.currentTime = 0;
+            this._joystickVideo.play().catch(function() {});
+        }
     },
 
     _turnLeft: function() {
@@ -628,6 +632,16 @@ Sherwood.Dungeon2D5 = {
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
+                    
+                    // Останавливаем анимацию через 1 секунду
+                    if (self._joystickVideo) {
+                        setTimeout(function() {
+                            if (!self._isMoving && self._joystickVideo) {
+                                self._joystickVideo.pause();
+                            }
+                        }, 1000);
+                    }
+                    
                     const d = self._dungeon;
                     if (d) {
                         d.px = self._toX;
