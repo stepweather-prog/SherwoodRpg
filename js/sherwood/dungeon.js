@@ -247,18 +247,16 @@ Sherwood.Dungeon = {
         for (var y = 0; y < size; y++) {
             grid[y] = [];
             for (var x = 0; x < size; x++) {
-                grid[y][x] = { type: this.TILE.WALL, open: false };
+                grid[y][x] = { type: this.TILE.WALL, open: false, isPath: false };
             }
         }
 
         var self = this;
 
-        // ЧИСТЫЙ DFS-лабиринт — создаёт коридоры и тупики
         function carve(x, y) {
             grid[y][x].type = self.TILE.EMPTY;
             
             var dirs = [[0,-2],[0,2],[-2,0],[2,0]];
-            // Перемешиваем направления для случайности
             for (var i = dirs.length - 1; i > 0; i--) {
                 var j = Math.floor(Math.random() * (i + 1));
                 var temp = dirs[i];
@@ -281,20 +279,29 @@ Sherwood.Dungeon = {
         var startX = 1, startY = 1;
         carve(startX, startY);
 
-        // БЕЗ extraPassages — лабиринт остаётся лабиринтом
-
-        // Собираем все пустые клетки
-        var empties = [];
+        // Помечаем все клетки лабиринта как isPath, но закрываем
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
-                if (grid[y][x].type === this.TILE.EMPTY) empties.push({x: x, y: y});
+                if (grid[y][x].type === self.TILE.EMPTY) {
+                    grid[y][x].isPath = true;
+                    grid[y][x].type = self.TILE.WALL;
+                    grid[y][x].open = false;
+                }
             }
         }
 
-        // Открываем только стартовую клетку
+        // Собираем isPath клетки
+        var empties = [];
+        for (var y = 1; y < size-1; y++) {
+            for (var x = 1; x < size-1; x++) {
+                if (grid[y][x].isPath) empties.push({x: x, y: y});
+            }
+        }
+
         var spawnX = startX, spawnY = startY;
-        grid[spawnY][spawnX].type = this.TILE.SPAWN;
+        grid[spawnY][spawnX].type = self.TILE.SPAWN;
         grid[spawnY][spawnX].open = true;
+        grid[spawnY][spawnX].isPath = true;
 
         empties = empties.filter(function(e) { return !(e.x === spawnX && e.y === spawnY); });
         empties.sort(function() { return Math.random() - 0.5; });
@@ -407,13 +414,14 @@ Sherwood.Dungeon = {
 
         var cell = d.grid[ty][tx];
         if (!cell) return { ok: false };
-        if (cell.type === this.TILE.WALL) return { ok: false };
+        if (!cell.isPath) return { ok: false };
 
         cell.open = true;
+        cell.type = this.TILE.EMPTY;
         d.px = tx;
         d.py = ty;
 
-        if (cell.type === this.TILE.MONSTER || cell.type === this.TILE.BOSS) {
+        if (cell.monster) {
             return {
                 ok: true,
                 type: 'battle',
