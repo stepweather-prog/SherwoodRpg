@@ -131,14 +131,12 @@ Sherwood.Dungeon2D5 = {
     },
 
     _setupMinimap: function() {
-        // Canvas для карты
         this._minimap = document.createElement('canvas');
         this._minimap.width = 100;
         this._minimap.height = 100;
         this._minimap.style.cssText = 'position:absolute;top:55px;right:15px;width:100px;height:100px;border-radius:50%;z-index:15;';
         this._minimapCtx = this._minimap.getContext('2d');
         
-        // Круглая рамка
         this._minimapFrame = document.createElement('img');
         this._minimapFrame.src = 'assets/interface/visual_resource.png';
         this._minimapFrame.style.cssText = 'position:absolute;top:50px;right:10px;width:110px;height:110px;z-index:16;pointer-events:none;';
@@ -243,23 +241,20 @@ Sherwood.Dungeon2D5 = {
             '<span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
         
+        // Джойстик с картинкой
         this._joystick = document.createElement('div');
-        this._joystick.style.cssText = 'position:absolute;bottom:100px;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;background:rgba(0,0,0,0.65);border:3px solid #c9a040;z-index:10;';
+        this._joystick.style.cssText = 'position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:220px;height:220px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
-        this._joystickImg = document.createElement('img');
-        this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100px;height:100px;object-fit:contain;';
-        this._joystick.appendChild(this._joystickImg);
-        
-        const arrows = [
-            { d: 'forward', cx: 90, cy: 5, rot: 0 },
-            { d: 'left', cx: 5, cy: 90, rot: -90 },
-            { d: 'right', cx: 175, cy: 90, rot: 90 }
+        // Невидимые кнопки поверх рук
+        const arrowAreas = [
+            { d: 'forward', top: '0%', left: '35%', width: '30%', height: '30%' },
+            { d: 'left', top: '35%', left: '0%', width: '30%', height: '30%' },
+            { d: 'right', top: '35%', left: '70%', width: '30%', height: '30%' }
         ];
         
-        arrows.forEach(function(a) {
+        arrowAreas.forEach(function(a) {
             const btn = document.createElement('button');
-            btn.style.cssText = 'position:absolute;left:' + (a.cx - 28) + 'px;top:' + (a.cy - 28) + 'px;width:56px;height:56px;border-radius:50%;background:#c9a040;border:2px solid #8b6914;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:12;';
-            btn.innerHTML = '<span style="transform:rotate(' + a.rot + 'deg);font-size:24px;color:#000;font-weight:bold;">▲</span>';
+            btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:transparent;border:none;cursor:pointer;z-index:12;';
             
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -268,11 +263,19 @@ Sherwood.Dungeon2D5 = {
                 else if (a.d === 'right') self._turnRight();
             });
             
+            btn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (a.d === 'forward') self._moveForward();
+                else if (a.d === 'left') self._turnLeft();
+                else if (a.d === 'right') self._turnRight();
+            }, { passive: false });
+            
             self._joystick.appendChild(btn);
         });
         
         this._interactBtn = document.createElement('button');
-        this._interactBtn.style.cssText = 'position:absolute;bottom:310px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
+        this._interactBtn.style.cssText = 'position:absolute;bottom:330px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
@@ -341,7 +344,6 @@ Sherwood.Dungeon2D5 = {
             
             this._buildMesh();
             this._updateCamera();
-            this._updateJoystickAnim();
             this._renderer.render(this._scene, this._camera);
             
             Sherwood.Combat.start(monsterId, isBoss, 'dungeon');
@@ -353,7 +355,6 @@ Sherwood.Dungeon2D5 = {
                 SherwoodUI._playSound('tile_open');
             }
             this._buildMesh();
-            this._updateCamera();
             this._updateMinimap();
             this._checkInteract();
         }
@@ -398,18 +399,18 @@ Sherwood.Dungeon2D5 = {
 
     _turnLeft: function() {
         if (this._isMoving || this._isTurning) return;
-        this._turnFrom = this._yaw;
         this._yaw += Math.PI / 2;
-        this._turnT = 0;
-        this._isTurning = true;
+        this._updateCamera();
+        this._buildMesh();
+        this._updateMinimap();
     },
 
     _turnRight: function() {
         if (this._isMoving || this._isTurning) return;
-        this._turnFrom = this._yaw;
         this._yaw -= Math.PI / 2;
-        this._turnT = 0;
-        this._isTurning = true;
+        this._updateCamera();
+        this._buildMesh();
+        this._updateMinimap();
     },
 
     _onInteract: function() {
@@ -707,7 +708,6 @@ Sherwood.Dungeon2D5 = {
                 const x = col - center;
                 const z = row - center;
                 const cell = d.grid[row][col];
-                const isWall = cell && !cell.open && !cell.isPath;
                 
                 const floorMat = new THREE.MeshStandardMaterial({
                     map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length],
@@ -731,33 +731,31 @@ Sherwood.Dungeon2D5 = {
                 ceil.position.set(x, wallHeight, z);
                 this._group.add(ceil);
                 
-                if (isWall) {
-                    let mat;
-                    let openable = false;
-                    
-                    for (let i = 0; i < openableWalls.length; i++) {
-                        if (openableWalls[i].x === col && openableWalls[i].y === row) {
-                            openable = true;
-                            break;
-                        }
-                    }
-                    
-                    if (openable && this._images.wall_openable) {
-                        mat = new THREE.MeshStandardMaterial({
-                            map: this._images.wall_openable,
-                            roughness: 0.7,
-                            metalness: 0.1
-                        });
-                    } else {
-                        mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
-                    }
-                    
+                // Стена — обычная (не isPath)
+                if (cell && !cell.open && !cell.isPath) {
+                    const mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
                     const wall = new THREE.Mesh(
                         new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
                         mat
                     );
                     wall.position.set(x, wallHeight / 2, z);
-                    wall.userData = { openable: openable, gridX: col, gridY: row };
+                    wall.userData = { openable: false, gridX: col, gridY: row };
+                    this._group.add(wall);
+                }
+                
+                // Открываемая стена (isPath, не открыта, соседняя с открытой)
+                if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
+                    const mat = new THREE.MeshStandardMaterial({
+                        map: this._images.wall_openable,
+                        roughness: 0.7,
+                        metalness: 0.1
+                    });
+                    const wall = new THREE.Mesh(
+                        new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                        mat
+                    );
+                    wall.position.set(x, wallHeight / 2, z);
+                    wall.userData = { openable: true, gridX: col, gridY: row };
                     this._group.add(wall);
                 }
             }
@@ -778,7 +776,9 @@ Sherwood.Dungeon2D5 = {
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const cell = d.grid[row][col];
-                if (!cell || !cell.open) continue;
+                if (!cell) continue;
+                if (!cell.open && !cell.isPath) continue;
+                if (!cell.open && cell.isPath && !this._isAdjacentToOpen(d, col, row)) continue;
                 
                 let tex = null;
                 
@@ -859,41 +859,12 @@ Sherwood.Dungeon2D5 = {
         
         this._camera.position.set(posX, 0.5, posZ);
         
-        let yaw = this._yaw;
-        
-        if (this._isTurning) {
-            const t = this._ease(this._turnT);
-            const fromYaw = this._turnFrom;
-            let diff = this._yaw - fromYaw;
-            if (diff > Math.PI) diff -= Math.PI * 2;
-            if (diff < -Math.PI) diff += Math.PI * 2;
-            yaw = fromYaw + diff * t;
-        }
-        
-        const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
+        const euler = new THREE.Euler(0, this._yaw, 0, 'YXZ');
         this._camera.quaternion.setFromEuler(euler);
     },
 
     _updateJoystickAnim: function() {
-        if (!this._joystickImg) return;
-        
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        let iconName;
-        if (dirIndex === 0) iconName = 'up';
-        else if (dirIndex === 1) iconName = 'right';
-        else if (dirIndex === 2) iconName = 'up';
-        else iconName = 'left';
-        
-        if (this._animImages[iconName] && this._animImages[iconName].image) {
-            this._joystickImg.src = this._animImages[iconName].image.src;
-        }
-        
-        if (this._isMoving) {
-            const bob = Math.sin(this._moveT * Math.PI * 4) * 3;
-            this._joystickImg.style.transform = 'translate(-50%,-50%) translateY(' + bob + 'px)';
-        } else {
-            this._joystickImg.style.transform = 'translate(-50%,-50%)';
-        }
+        // Джойстик теперь картинка, анимация не нужна
     },
 
     _updateHP: function() {
@@ -959,11 +930,9 @@ Sherwood.Dungeon2D5 = {
         }
         
         this._yaw = foundAngle;
-        this._dir = ((Math.round(foundAngle / (Math.PI / 2)) % 4) + 4) % 4;
         
         this._buildMesh();
         this._updateCamera();
-        this._updateJoystickAnim();
         this._updateHP();
         this._updateMinimap();
         this._checkInteract();
@@ -996,7 +965,6 @@ Sherwood.Dungeon2D5 = {
                         const cell = d.grid[d.py][d.px];
                         if (cell && cell.monster) {
                             self._updateCamera();
-                            self._updateJoystickAnim();
                             self._updateMinimap();
                             self._renderer.render(self._scene, self._camera);
                             
@@ -1010,6 +978,7 @@ Sherwood.Dungeon2D5 = {
                             return;
                         }
                         
+                        self._buildMesh();
                         self._updateCamera();
                         self._checkInteract();
                         self._updateMinimap();
@@ -1017,16 +986,7 @@ Sherwood.Dungeon2D5 = {
                 }
             }
             
-            if (self._isTurning) {
-                self._turnT += dt * 3;
-                if (self._turnT >= 1) {
-                    self._turnT = 1;
-                    self._isTurning = false;
-                }
-            }
-            
             self._updateCamera();
-            self._updateJoystickAnim();
             self._updateHP();
             self._updateMinimap();
             self._updateParticles(time / 1000);
