@@ -28,6 +28,8 @@ Sherwood.Dungeon2D5 = {
     _minimapCtx: null,
     _initialized: false,
     _particles: [],
+    _brazierVideo: null,
+    _brazierTexture: null,
     _walls: [],
     _floors: [],
     _ceilings: [],
@@ -87,6 +89,16 @@ Sherwood.Dungeon2D5 = {
         this._animImages.up = loadTex('assets/animation/step_up.png');
         this._animImages.left = loadTex('assets/animation/step_left.png');
         this._animImages.right = loadTex('assets/animation/step_right.png');
+        
+        // Жаровня
+        this._brazierVideo = document.createElement('video');
+        this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
+        this._brazierVideo.loop = true;
+        this._brazierVideo.muted = true;
+        this._brazierVideo.playsInline = true;
+        this._brazierVideo.autoplay = true;
+        this._brazierVideo.play().catch(function() {});
+        this._brazierTexture = new THREE.VideoTexture(this._brazierVideo);
     },
 
     _setupThree: function() {
@@ -535,6 +547,40 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
+    _addBraziers: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        
+        const center = Math.floor(d.size / 2);
+        const brazierCount = 6;
+        let placed = 0;
+        
+        if (!this._brazierTexture || !this._brazierTexture.image) return;
+        
+        for (let row = 1; row < d.size - 1 && placed < brazierCount; row++) {
+            for (let col = 1; col < d.size - 1 && placed < brazierCount; col++) {
+                const cell = d.grid[row][col];
+                if (!cell || !cell.open) continue;
+                
+                if ((row * d.size + col) % 5 === 0) {
+                    const spriteMat = new THREE.SpriteMaterial({
+                        map: this._brazierTexture,
+                        transparent: true,
+                        depthWrite: false
+                    });
+                    
+                    const sprite = new THREE.Sprite(spriteMat);
+                    sprite.position.set(col - center, 0.4, row - center);
+                    sprite.scale.set(0.6, 0.6, 1);
+                    sprite.userData = { brazier: true, gridX: col, gridY: row };
+                    this._group.add(sprite);
+                    
+                    placed++;
+                }
+            }
+        }
+    },
+
     _buildMesh: function() {
         const d = this._dungeon;
         if (!d) return;
@@ -638,6 +684,7 @@ Sherwood.Dungeon2D5 = {
         }
         
         this._addObjectSprites();
+        this._addBraziers();
         this._createParticles();
     },
 
@@ -843,6 +890,7 @@ Sherwood.Dungeon2D5 = {
                             return;
                         }
                         
+                        self._buildMesh();
                         self._updateCamera();
                         self._checkInteract();
                         self._updateMinimap();
@@ -855,6 +903,7 @@ Sherwood.Dungeon2D5 = {
                 if (self._turnT >= 1) {
                     self._turnT = 1;
                     self._isTurning = false;
+                    self._buildMesh();
                 }
             }
             
@@ -873,6 +922,11 @@ Sherwood.Dungeon2D5 = {
         if (this._renderLoop) {
             cancelAnimationFrame(this._renderLoop);
             this._renderLoop = null;
+        }
+        
+        if (this._brazierVideo) {
+            this._brazierVideo.pause();
+            this._brazierVideo = null;
         }
         
         if (this._renderer && this._renderer.domElement.parentNode) {
