@@ -200,10 +200,9 @@ Sherwood.Dungeon2D5 = {
         const py = d.py * cellSize + cellSize / 2;
         ctx.moveTo(px, py);
         let dx = 0, dy = 0;
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        if (dirIndex === 0) dy = -1;
-        else if (dirIndex === 1) dx = 1;
-        else if (dirIndex === 2) dy = 1;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
         else dx = -1;
         ctx.lineTo(px + dx * cellSize, py + dy * cellSize);
         ctx.stroke();
@@ -359,12 +358,10 @@ Sherwood.Dungeon2D5 = {
         const d = this._dungeon;
         if (!d) return;
         
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        
         let dx = 0, dy = 0;
-        if (dirIndex === 0) dy = -1;
-        else if (dirIndex === 1) dx = 1;
-        else if (dirIndex === 2) dy = 1;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
         else dx = -1;
         
         const nx = d.px + dx;
@@ -386,8 +383,8 @@ Sherwood.Dungeon2D5 = {
     _turnLeft: function() {
         if (this._isMoving || this._isTurning) return;
         this._turnFrom = this._yaw;
-        this._yaw += Math.PI / 2;
         this._dir = (this._dir + 1) % 4;
+        this._yaw = this._dir * Math.PI / 2;
         this._turnT = 0;
         this._isTurning = true;
     },
@@ -395,8 +392,8 @@ Sherwood.Dungeon2D5 = {
     _turnRight: function() {
         if (this._isMoving || this._isTurning) return;
         this._turnFrom = this._yaw;
-        this._yaw -= Math.PI / 2;
         this._dir = (this._dir + 3) % 4;
+        this._yaw = this._dir * Math.PI / 2;
         this._turnT = 0;
         this._isTurning = true;
     },
@@ -832,11 +829,15 @@ Sherwood.Dungeon2D5 = {
         
         this._camera.position.set(posX, 0.5, posZ);
         
-        let yaw = this._yaw;
+        let yaw = this._dir * Math.PI / 2;
         if (this._isTurning) {
             const t = this._ease(this._turnT);
-            const diff = this._yaw - this._turnFrom;
-            yaw = this._turnFrom + diff * t;
+            const fromYaw = this._turnFrom;
+            const toYaw = this._dir * Math.PI / 2;
+            let diff = toYaw - fromYaw;
+            if (diff > Math.PI) diff -= Math.PI * 2;
+            if (diff < -Math.PI) diff += Math.PI * 2;
+            yaw = fromYaw + diff * t;
         }
         
         const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
@@ -846,12 +847,10 @@ Sherwood.Dungeon2D5 = {
     _updateJoystickAnim: function() {
         if (!this._joystickImg) return;
         
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        
         let iconName;
-        if (dirIndex === 0) iconName = 'up';
-        else if (dirIndex === 1) iconName = 'right';
-        else if (dirIndex === 2) iconName = 'up';
+        if (this._dir === 0) iconName = 'up';
+        else if (this._dir === 1) iconName = 'right';
+        else if (this._dir === 2) iconName = 'up';
         else iconName = 'left';
         
         if (this._animImages[iconName] && this._animImages[iconName].image) {
