@@ -152,45 +152,64 @@ Sherwood.Dungeon2D5 = {
         this._hpBar.style.cssText = 'position:relative;width:150px;height:30px;';
         this._hpBar.innerHTML = '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:6px;left:15px;right:15px;bottom:6px;overflow:hidden;z-index:1;"><div id="hp-fill-2d5" style="background:red;height:100%;width:100%;"></div></div><span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
+        
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
+        
         this._joystickImg = document.createElement('img');
         this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;';
-        this._joystickImg.src = 'assets/animation/step_down.png';
+        this._joystickImg.src = 'assets/animation/step_up.png';
         this._joystick.appendChild(this._joystickImg);
+        
         const arrowAreas = [
             { d: 'forward', top: '5%', left: '35%', width: '30%', height: '30%' },
             { d: 'left', top: '35%', left: '5%', width: '30%', height: '30%' },
             { d: 'right', top: '35%', left: '65%', width: '30%', height: '30%' }
         ];
+        
         arrowAreas.forEach(function(a) {
             const btn = document.createElement('button');
-            btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:transparent;border:none;cursor:pointer;z-index:12;transition:transform 0.1s;';
+            btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:transparent;border:none;cursor:pointer;z-index:12;transition:filter 0.1s, transform 0.1s;';
+            
             btn.addEventListener('mousedown', function(e) {
                 e.stopPropagation();
-                btn.style.transform = 'scale(0.8)';
+                btn.style.filter = 'brightness(1.5)';
+                btn.style.transform = 'scale(0.9)';
                 if (a.d === 'forward') self._moveForward();
                 else if (a.d === 'left') self._turnLeft();
                 else if (a.d === 'right') self._turnRight();
             });
-            btn.addEventListener('mouseup', function() { btn.style.transform = 'scale(1)'; });
+            
+            btn.addEventListener('mouseup', function() {
+                btn.style.filter = 'none';
+                btn.style.transform = 'scale(1)';
+            });
+            
             btn.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                btn.style.transform = 'scale(0.8)';
+                btn.style.filter = 'brightness(1.5)';
+                btn.style.transform = 'scale(0.9)';
                 if (a.d === 'forward') self._moveForward();
                 else if (a.d === 'left') self._turnLeft();
                 else if (a.d === 'right') self._turnRight();
             }, { passive: false });
-            btn.addEventListener('touchend', function() { btn.style.transform = 'scale(1)'; });
+            
+            btn.addEventListener('touchend', function() {
+                btn.style.filter = 'none';
+                btn.style.transform = 'scale(1)';
+            });
+            
             self._joystick.appendChild(btn);
         });
+        
         this._interactBtn = document.createElement('button');
         this._interactBtn.style.cssText = 'position:absolute;bottom:350px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
         this._interactBtn.addEventListener('click', function() { self._onInteract(); });
+        
         this._renderer.domElement.addEventListener('click', function(e) { self._handleWallClick(e); });
         this._renderer.domElement.addEventListener('touchend', function(e) { if (e.changedTouches && e.changedTouches[0]) self._handleWallClick(e.changedTouches[0]); });
     },
@@ -262,8 +281,7 @@ Sherwood.Dungeon2D5 = {
 
     _turnLeft: function() {
         if (this._isMoving) return;
-        this._dir = (this._dir + 3) % 4;
-        this._yaw = this._dir * Math.PI / 2;
+        this._dir = (this._dir + 1) % 4;
         this._updateCamera();
         this._buildMesh();
         this._updateMinimap();
@@ -271,8 +289,7 @@ Sherwood.Dungeon2D5 = {
 
     _turnRight: function() {
         if (this._isMoving) return;
-        this._dir = (this._dir + 1) % 4;
-        this._yaw = this._dir * Math.PI / 2;
+        this._dir = (this._dir + 3) % 4;
         this._updateCamera();
         this._buildMesh();
         this._updateMinimap();
@@ -574,7 +591,6 @@ Sherwood.Dungeon2D5 = {
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
-                    self._joystickImg.src = 'assets/animation/step_down.png';
                     const d = self._dungeon;
                     if (d) {
                         d.px = self._toX;
@@ -616,7 +632,6 @@ Sherwood.Dungeon2D5 = {
         this._dungeon = null;
         this._isMoving = false;
         this._dir = 0;
-        this._yaw = 0;
         this._particles = [];
     }
 };
