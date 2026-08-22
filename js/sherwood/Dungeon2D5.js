@@ -4,20 +4,15 @@ Sherwood.Dungeon2D5 = {
     _renderer: null,
     _group: null,
     _dungeon: null,
-    _dir: 0,
     _isMoving: false,
-    _isTurning: false,
     _fromX: 0,
     _fromY: 0,
     _toX: 0,
     _toY: 0,
     _moveT: 0,
-    _turnT: 0,
-    _turnFrom: 0,
     _yaw: 0,
     _renderLoop: null,
     _joystick: null,
-    _joystickImg: null,
     _interactBtn: null,
     _interactBtnImg: null,
     _interactType: null,
@@ -27,7 +22,6 @@ Sherwood.Dungeon2D5 = {
     _minimap: null,
     _minimapCtx: null,
     _minimapFrame: null,
-    _initialized: false,
     _particles: [],
     _brazierVideo: null,
     _brazierTexture: null,
@@ -37,7 +31,6 @@ Sherwood.Dungeon2D5 = {
     _floors: [],
     _ceilings: [],
     _images: {},
-    _animImages: {},
     _monsterImages: {},
     _w: 480,
     _h: 800,
@@ -88,10 +81,6 @@ Sherwood.Dungeon2D5 = {
         for (let key in objs) {
             this._images[key] = loadTex('assets/interface/' + objs[key]);
         }
-        
-        this._animImages.up = loadTex('assets/animation/step_up.png');
-        this._animImages.left = loadTex('assets/animation/step_left.png');
-        this._animImages.right = loadTex('assets/animation/step_right.png');
         
         this._brazierVideo = document.createElement('video');
         this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
@@ -198,22 +187,6 @@ Sherwood.Dungeon2D5 = {
         ctx.arc(d.px * cellSize + cellSize / 2, d.py * cellSize + cellSize / 2, cellSize / 2, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.strokeStyle = '#ff4444';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        const px = d.px * cellSize + cellSize / 2;
-        const py = d.py * cellSize + cellSize / 2;
-        ctx.moveTo(px, py);
-        
-        const dirIndex = ((Math.round(this._yaw / (Math.PI / 2)) % 4) + 4) % 4;
-        let dx = 0, dy = 0;
-        if (dirIndex === 0) dy = -1;
-        else if (dirIndex === 1) dx = 1;
-        else if (dirIndex === 2) dy = 1;
-        else dx = -1;
-        ctx.lineTo(px + dx * cellSize, py + dy * cellSize);
-        ctx.stroke();
-        
         ctx.restore();
     },
 
@@ -241,41 +214,50 @@ Sherwood.Dungeon2D5 = {
             '<span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
         
-        // Джойстик с картинкой
+        // Джойстик
         this._joystick = document.createElement('div');
-        this._joystick.style.cssText = 'position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:220px;height:220px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
+        this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
-        // Невидимые кнопки поверх рук
         const arrowAreas = [
-            { d: 'forward', top: '0%', left: '35%', width: '30%', height: '30%' },
-            { d: 'left', top: '35%', left: '0%', width: '30%', height: '30%' },
-            { d: 'right', top: '35%', left: '70%', width: '30%', height: '30%' }
+            { d: 'forward', top: '5%', left: '35%', width: '30%', height: '30%' },
+            { d: 'left', top: '35%', left: '5%', width: '30%', height: '30%' },
+            { d: 'right', top: '35%', left: '65%', width: '30%', height: '30%' }
         ];
         
         arrowAreas.forEach(function(a) {
             const btn = document.createElement('button');
-            btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:transparent;border:none;cursor:pointer;z-index:12;';
+            btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:transparent;border:none;cursor:pointer;z-index:12;transition:transform 0.1s;';
             
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('mousedown', function(e) {
                 e.stopPropagation();
+                btn.style.transform = 'scale(0.8)';
                 if (a.d === 'forward') self._moveForward();
                 else if (a.d === 'left') self._turnLeft();
                 else if (a.d === 'right') self._turnRight();
             });
             
+            btn.addEventListener('mouseup', function() {
+                btn.style.transform = 'scale(1)';
+            });
+            
             btn.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                btn.style.transform = 'scale(0.8)';
                 if (a.d === 'forward') self._moveForward();
                 else if (a.d === 'left') self._turnLeft();
                 else if (a.d === 'right') self._turnRight();
             }, { passive: false });
             
+            btn.addEventListener('touchend', function() {
+                btn.style.transform = 'scale(1)';
+            });
+            
             self._joystick.appendChild(btn);
         });
         
         this._interactBtn = document.createElement('button');
-        this._interactBtn.style.cssText = 'position:absolute;bottom:330px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
+        this._interactBtn.style.cssText = 'position:absolute;bottom:340px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
@@ -293,7 +275,7 @@ Sherwood.Dungeon2D5 = {
     },
 
     _handleWallClick: function(e) {
-        if (this._isMoving || this._isTurning) return;
+        if (this._isMoving) return;
         
         const d = this._dungeon;
         if (!d) return;
@@ -361,7 +343,7 @@ Sherwood.Dungeon2D5 = {
     },
 
     _moveForward: function() {
-        if (this._isMoving || this._isTurning) return;
+        if (this._isMoving) return;
         
         const d = this._dungeon;
         if (!d) return;
@@ -381,13 +363,8 @@ Sherwood.Dungeon2D5 = {
         
         const cell = d.grid[ny][nx];
         
-        if (!cell) return;
-        if (!cell.isPath) return;
-        
-        if (!cell.open && cell.isPath) {
-            cell.open = true;
-            cell.type = 1;
-        }
+        if (!cell || !cell.isPath) return;
+        if (!cell.open) return;
         
         this._fromX = d.px;
         this._fromY = d.py;
@@ -398,7 +375,7 @@ Sherwood.Dungeon2D5 = {
     },
 
     _turnLeft: function() {
-        if (this._isMoving || this._isTurning) return;
+        if (this._isMoving) return;
         this._yaw += Math.PI / 2;
         this._updateCamera();
         this._buildMesh();
@@ -406,7 +383,7 @@ Sherwood.Dungeon2D5 = {
     },
 
     _turnRight: function() {
-        if (this._isMoving || this._isTurning) return;
+        if (this._isMoving) return;
         this._yaw -= Math.PI / 2;
         this._updateCamera();
         this._buildMesh();
@@ -731,7 +708,6 @@ Sherwood.Dungeon2D5 = {
                 ceil.position.set(x, wallHeight, z);
                 this._group.add(ceil);
                 
-                // Стена — обычная (не isPath)
                 if (cell && !cell.open && !cell.isPath) {
                     const mat = wallMats[Math.abs(col * 7 + row * 13) % wallMats.length];
                     const wall = new THREE.Mesh(
@@ -743,7 +719,6 @@ Sherwood.Dungeon2D5 = {
                     this._group.add(wall);
                 }
                 
-                // Открываемая стена (isPath, не открыта, соседняя с открытой)
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
                     const mat = new THREE.MeshStandardMaterial({
                         map: this._images.wall_openable,
@@ -863,10 +838,6 @@ Sherwood.Dungeon2D5 = {
         this._camera.quaternion.setFromEuler(euler);
     },
 
-    _updateJoystickAnim: function() {
-        // Джойстик теперь картинка, анимация не нужна
-    },
-
     _updateHP: function() {
         const p = Sherwood.getPlayer();
         if (!p || !this._hpBar) return;
@@ -905,9 +876,7 @@ Sherwood.Dungeon2D5 = {
         SherwoodUI._screenLayer.style.display = 'block';
         
         this._isMoving = false;
-        this._isTurning = false;
         
-        // Развернуть в сторону открытого коридора
         const d = this._dungeon;
         let foundAngle = 0;
         const dirs = [
@@ -1028,9 +997,6 @@ Sherwood.Dungeon2D5 = {
         
         this._dungeon = null;
         this._isMoving = false;
-        this._isTurning = false;
-        this._initialized = false;
-        this._dir = 0;
         this._yaw = 0;
         this._particles = [];
     }
