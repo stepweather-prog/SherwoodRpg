@@ -420,11 +420,9 @@ Sherwood.Dungeon2D5 = {
         
         if (!cell || !cell.isPath) return;
         
-        // Открываем клетку если она не открыта
         if (!cell.open) {
             cell.open = true;
             cell.type = 1;
-            // Удаляем стену если она есть
             for (let i = this._group.children.length - 1; i >= 0; i--) {
                 const child = this._group.children[i];
                 if (child.userData && child.userData.openable && child.userData.gridX === nx && child.userData.gridY === ny) {
@@ -432,8 +430,6 @@ Sherwood.Dungeon2D5 = {
                     break;
                 }
             }
-            // Добавляем объект если есть
-            this._addObjectSprite(nx, ny);
         }
         
         this._fromX = d.px;
@@ -802,7 +798,6 @@ Sherwood.Dungeon2D5 = {
                             return;
                         }
                         self._updateCamera();
-                        self._checkInteract();
                         self._updateMinimap();
                     }
                 }
