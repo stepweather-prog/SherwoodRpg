@@ -552,7 +552,8 @@ Sherwood.Dungeon2D5 = {
                 if (tex && tex.image) {
                     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
                     let scale = 0.5, sy = 0.15;
-                    if (cell.exit) { scale = 1.6; sy = 0.55; }
+                    if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; } // Замок обычный
+                    else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; } // Выход большой
                     else if (cell.monster) { scale = 0.7; sy = 0.35; }
                     else if (cell.chest) { scale = 0.4; sy = 0.12; }
                     else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
