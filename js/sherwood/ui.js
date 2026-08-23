@@ -655,11 +655,75 @@ _showInteractButton: function(type) {
         var enemyCard = document.getElementById('enemy-card');
         if (!enemyCard) return;
         var cardRect = enemyCard.getBoundingClientRect(); var containerRect = this.container.getBoundingClientRect();
-        var bloodLeft = document.createElement('div'); bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
-        var vidLeft = document.createElement('video'); vidLeft.src = 'assets/animation/blood_splatter.webm'; vidLeft.muted = true; vidLeft.playsInline = true; vidLeft.autoplay = true; vidLeft.style.cssText = 'width:100%;height:100%;object-fit:contain;transform:scaleX(-1);mix-blend-mode:screen;filter:brightness(1.2) contrast(1.2);'; bloodLeft.appendChild(vidLeft); this._screenLayer.appendChild(bloodLeft);
-        var bloodRight = document.createElement('div'); bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
-        var vidRight = document.createElement('video'); vidRight.src = 'assets/animation/blood_splatter.webm'; vidRight.muted = true; vidRight.playsInline = true; vidRight.autoplay = true; vidRight.style.cssText = 'width:100%;height:100%;object-fit:contain;mix-blend-mode:screen;filter:brightness(1.2) contrast(1.2);'; bloodRight.appendChild(vidRight); this._screenLayer.appendChild(bloodRight);
-        vidLeft.play().catch(function() {}); vidRight.play().catch(function() {});
+        
+        // Создаём canvas-обработчик для крови
+        this._bloodCanvas = document.createElement('canvas');
+        this._bloodCanvas.width = 256;
+        this._bloodCanvas.height = 256;
+        this._bloodCtx = this._bloodCanvas.getContext('2d', { willReadFrequently: true });
+        
+        this._bloodVideo = document.createElement('video');
+        this._bloodVideo.src = 'assets/animation/blood_splatter.webm';
+        this._bloodVideo.muted = true;
+        this._bloodVideo.playsInline = true;
+        this._bloodVideo.autoplay = true;
+        this._bloodVideo.loop = true;
+        
+        // Обработка кадров — убираем зелёный фон
+        var self = this;
+        function processBlood() {
+            if (!self._bloodVideo || !self._bloodCtx) return;
+            if (self._bloodVideo.readyState >= 2) {
+                self._bloodCtx.drawImage(self._bloodVideo, 0, 0, 256, 256);
+                var imageData = self._bloodCtx.getImageData(0, 0, 256, 256);
+                var data = imageData.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var r = data[i], g = data[i+1], b = data[i+2];
+                    if (g > 80 && g > r * 1.4 && g > b * 1.4) {
+                        data[i+3] = 0;
+                    }
+                }
+                self._bloodCtx.putImageData(imageData, 0, 0);
+            }
+            requestAnimationFrame(processBlood);
+        }
+        
+        var bloodLeft = document.createElement('div'); 
+        bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px; width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        bloodLeft.appendChild(this._bloodCanvas);
+        this._screenLayer.appendChild(bloodLeft);
+        
+        var bloodRight = document.createElement('div'); 
+        bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left - 70) + 'px;width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        var bloodCanvasRight = document.createElement('canvas');
+        bloodCanvasRight.width = 256;
+        bloodCanvasRight.height = 256;
+        var bloodCtxRight = bloodCanvasRight.getContext('2d', { willReadFrequently: true });
+        bloodRight.appendChild(bloodCanvasRight);
+        this._screenLayer.appendChild(bloodRight);
+        
+        this._bloodVideo.play().catch(function() {});
+        processBlood();
+        
+        // Копируем кадры на правый canvas
+        function processBloodRight() {
+            if (!self._bloodVideo || !bloodCtxRight) return;
+            if (self._bloodVideo.readyState >= 2) {
+                bloodCtxRight.drawImage(self._bloodVideo, 0, 0, 256, 256);
+                var imageData = bloodCtxRight.getImageData(0, 0, 256, 256);
+                var data = imageData.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var r = data[i], g = data[i+1], b = data[i+2];
+                    if (g > 80 && g > r * 1.4 && g > b * 1.4) {
+                        data[i+3] = 0;
+                    }
+                }
+                bloodCtxRight.putImageData(imageData, 0, 0);
+            }
+            requestAnimationFrame(processBloodRight);
+        }
+        processBloodRight();
+        
         var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png'];
         this._showAnimatedEffect(clawSprites, 400, enemyCard, 140, 140, 30, 0);
         setTimeout(function() { bloodLeft.remove(); }, 1000); setTimeout(function() { bloodRight.remove(); }, 1000);
