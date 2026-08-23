@@ -328,11 +328,7 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        this._particles.forEach(p => {
-            if (p.userData.gridX === gridX && p.userData.gridY === gridY) {
-                p.visible = false;
-            }
-        });
+        this._addObjectSprite(gridX, gridY);
         
         if (cell.monster) {
             this._updateCamera();
@@ -341,10 +337,10 @@ Sherwood.Dungeon2D5 = {
             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
         } else {
             if (SherwoodUI && SherwoodUI._playSound) SherwoodUI._playSound('tile_open');
-            this._addObjectSprite(gridX, gridY);
-            this._updateMinimap();
-            this._checkInteract();
         }
+        
+        this._updateMinimap();
+        this._checkInteract();
     },
 
     _addObjectSprite: function(gridX, gridY) {
@@ -352,6 +348,9 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         const cell = d.grid[gridY][gridX];
         if (!cell || !cell.open) return;
+        
+        // Не добавляем спрайт если клетка пустая
+        if (!cell.monster && !cell.lootBag && !cell.chest && !cell.altar && !cell.cauldron && !cell.potion && !cell.exit) return;
         
         let tex = null;
         if (cell.monster) {
@@ -474,13 +473,6 @@ Sherwood.Dungeon2D5 = {
         }
         this._interactType = null;
         this._interactBtn.style.display = 'none';
-        
-        this._particles.forEach(p => {
-            if (p.userData.gridX === d.px && p.userData.gridY === d.py) {
-                p.visible = false;
-            }
-        });
-        
         this._updateMinimap();
         this._checkInteract();
     },
