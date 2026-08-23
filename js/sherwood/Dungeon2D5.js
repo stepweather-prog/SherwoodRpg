@@ -324,12 +324,6 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         const cell = d.grid[d.py][d.px];
         if (!cell) return;
-        if (this._interactType === 'exit' && cell.exit && !cell.locked) {
-            this._interactType = null;
-            this._interactBtn.style.display = 'none';
-            SherwoodUI._doStep(d.px, d.py);
-            return;
-        }
         switch(this._interactType) {
             case 'lootBag': if (cell.lootBag && !cell.lootCollected) SherwoodUI._collectLootBag(); break;
             case 'chest': if (cell.chest && !cell.looted) SherwoodUI._collectChest(); break;
@@ -355,7 +349,11 @@ Sherwood.Dungeon2D5 = {
         else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
         else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
         else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
-        else if (cell.exit && !cell.locked) { type = 'exit'; icon = this._images.exit; }
+        else if (cell.exit && !cell.locked) {
+            // Выход — без кнопки, завершаем при входе
+            type = 'exit';
+            icon = this._images.exit;
+        }
         if (type && icon && icon.image) {
             this._interactType = type;
             this._interactBtnImg.src = icon.image.src;
@@ -474,7 +472,7 @@ Sherwood.Dungeon2D5 = {
                 }
                 if (!found) continue;
                 const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._brazierTexture, transparent: true, depthWrite: false }));
-                sprite.position.set(col - center + offsetX, 0.08, row - center + offsetZ);
+                sprite.position.set(col - center + offsetX, 0.12, row - center + offsetZ);
                 sprite.scale.set(0.2, 0.2, 1);
                 this._group.add(sprite);
             }
@@ -524,6 +522,15 @@ Sherwood.Dungeon2D5 = {
         const d = this._dungeon;
         if (!d) return;
         const size = d.size, center = Math.floor(size / 2);
+        
+        // Определяем направление от игрока
+        const dirIndex = ((Math.round(this._dir * Math.PI / 2 / (Math.PI / 2)) % 4) + 4) % 4;
+        let offsetObjX = 0, offsetObjZ = 0;
+        if (this._dir === 0) offsetObjZ = -0.3;
+        else if (this._dir === 1) offsetObjX = 0.3;
+        else if (this._dir === 2) offsetObjZ = 0.3;
+        else offsetObjX = -0.3;
+        
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const cell = d.grid[row][col];
@@ -551,14 +558,19 @@ Sherwood.Dungeon2D5 = {
                 else if (cell.exit && !cell.locked) tex = this._images.exit;
                 if (tex && tex.image) {
                     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-                    let scale = 0.5, sy = 0.1;
-                    if (cell.exit) { scale = 0.8; sy = 0.3; }
-                    else if (cell.chest) { scale = 0.4; sy = 0.08; }
-                    else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.05; }
-                    else if (cell.potion) { scale = 0.25; sy = 0.05; }
-                    else if (cell.altar) { scale = 0.4; sy = 0.08; }
-                    else if (cell.cauldron) { scale = 0.35; sy = 0.05; }
-                    sprite.position.set(col - center, sy, row - center);
+                    let scale = 0.5, sy = 0.15;
+                    if (cell.exit) { scale = 1.2; sy = 0.4; }
+                    else if (cell.chest) { scale = 0.4; sy = 0.12; }
+                    else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
+                    else if (cell.potion) { scale = 0.25; sy = 0.1; }
+                    else if (cell.altar) { scale = 0.4; sy = 0.12; }
+                    else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
+                    
+                    // Смещение на дальний край клетки от игрока
+                    const objX = col - center + offsetObjX;
+                    const objZ = row - center + offsetObjZ;
+                    
+                    sprite.position.set(objX, sy, objZ);
                     sprite.scale.set(scale, scale, 1);
                     this._group.add(sprite);
                 }
@@ -646,6 +658,20 @@ Sherwood.Dungeon2D5 = {
                         d.px = self._toX;
                         d.py = self._toY;
                         const cell = d.grid[d.py][d.px];
+                        
+                        // Проверяем выход — завершаем уровень без кнопки
+                        if (cell && cell.exit && !cell.locked) {
+                            const reward = Sherwood.Dungeon.complete();
+                            SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1));
+                            SherwoodUI.updateDisplay();
+                            SherwoodUI._afterRewardAction = function() {
+                                SherwoodUI._playMusic('main_theme');
+                                SherwoodUI.showDungeon();
+                            };
+                            SherwoodUI._showVictoryScreen(reward);
+                            return;
+                        }
+                        
                         if (cell && cell.monster) {
                             self._updateCamera();
                             self._updateMinimap();
@@ -654,6 +680,7 @@ Sherwood.Dungeon2D5 = {
                             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
                             return;
                         }
+                        
                         self._buildMesh();
                         self._updateCamera();
                         self._checkInteract();
