@@ -36,6 +36,7 @@ Sherwood.Dungeon2D5 = {
     _monsterImages: {},
     _cachedMats: {},
     _currentDungeonId: null,
+    _particleTexture: null,
     _w: 480,
     _h: 800,
 
@@ -319,7 +320,6 @@ Sherwood.Dungeon2D5 = {
         cell.open = true;
         cell.type = 1;
         
-        // Удаляем стену
         for (let i = this._group.children.length - 1; i >= 0; i--) {
             const child = this._group.children[i];
             if (child.userData && child.userData.openable && child.userData.gridX === gridX && child.userData.gridY === gridY) {
@@ -328,7 +328,6 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        // Убираем светлячков
         this._particles.forEach(p => {
             if (p.userData.gridX === gridX && p.userData.gridY === gridY) {
                 p.visible = false;
@@ -418,8 +417,25 @@ Sherwood.Dungeon2D5 = {
         const ny = d.py + dy;
         if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
         const cell = d.grid[ny][nx];
+        
         if (!cell || !cell.isPath) return;
-        if (!cell.open) return;
+        
+        // Открываем клетку если она не открыта
+        if (!cell.open) {
+            cell.open = true;
+            cell.type = 1;
+            // Удаляем стену если она есть
+            for (let i = this._group.children.length - 1; i >= 0; i--) {
+                const child = this._group.children[i];
+                if (child.userData && child.userData.openable && child.userData.gridX === nx && child.userData.gridY === ny) {
+                    this._group.remove(child);
+                    break;
+                }
+            }
+            // Добавляем объект если есть
+            this._addObjectSprite(nx, ny);
+        }
+        
         this._fromX = d.px;
         this._fromY = d.py;
         this._toX = nx;
@@ -463,7 +479,6 @@ Sherwood.Dungeon2D5 = {
         this._interactType = null;
         this._interactBtn.style.display = 'none';
         
-        // Убираем светлячков
         this._particles.forEach(p => {
             if (p.userData.gridX === d.px && p.userData.gridY === d.py) {
                 p.visible = false;
@@ -622,7 +637,6 @@ Sherwood.Dungeon2D5 = {
         
         const size = d.size, wallHeight = 1.2, cellSize = 1, center = Math.floor(size / 2);
         
-        // Кешируем материалы
         if (!this._cachedMats.ceil) {
             this._cachedMats.ceil = new THREE.MeshStandardMaterial({ map: this._ceilings[0], roughness: 0.9 });
         }
@@ -671,24 +685,17 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        // Добавляем объекты
-        this._addAllObjectSprites();
-        this._addBraziers();
-        this._createParticles();
-    },
-
-    _addAllObjectSprites: function() {
-        const d = this._dungeon;
-        if (!d) return;
-        const size = d.size, center = Math.floor(size / 2);
-        
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const cell = d.grid[row][col];
-                if (!cell || !cell.open) continue;
-                this._addObjectSprite(col, row);
+                if (cell && cell.open) {
+                    this._addObjectSprite(col, row);
+                }
             }
         }
+        
+        this._addBraziers();
+        this._createParticles();
     },
 
     _updateCamera: function() {
