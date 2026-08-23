@@ -36,24 +36,25 @@ Sherwood.Dungeon2D5 = {
     _monsterImages: {},
     _w: 480,
     _h: 800,
+    _texturesLoaded: false,
 
     init: function() {
         this._w = SherwoodUI.container ? SherwoodUI.container.clientWidth : 480;
         this._h = SherwoodUI.container ? SherwoodUI.container.clientHeight : 800;
-        this._loadTextures();
         this._setupThree();
         this._setupControls();
+        this._loadCommonTextures();
     },
 
-    _loadTextures: function() {
+    _loadCommonTextures: function() {
         const loader = new THREE.TextureLoader();
         function loadTex(src) { const tex = loader.load(src); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex; }
-        for (let i = 1; i <= 6; i++) this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png'));
-        for (let i = 1; i <= 6; i++) this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/tiles_' + i + '.png'));
-        for (let i = 1; i <= 6; i++) this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png'));
+        
         this._images.wall_openable = loadTex('assets/interface/labyrinth_asset.png');
+        
         const objs = { altar: 'altar_of_the_first_dungeon.png', cauldron: 'cauldron_first_dungeon.png', potion: 'resource_life_potion.png', chest_locked: 'locked_chest_first_dungeon.png', chest_open: 'open_chest_first_dungeon.png', loot_bag: 'loot_bag_of_beasts.png', loot_bag_empty: 'empty_bag_of_loot_beasts.png', exit: 'exit_completion_dungeon.png', exit_locked: 'closed_level_lock_icon.png' };
         for (let key in objs) this._images[key] = loadTex('assets/interface/' + objs[key]);
+        
         this._brazierVideo = document.createElement('video');
         this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
         this._brazierVideo.loop = true;
@@ -61,6 +62,39 @@ Sherwood.Dungeon2D5 = {
         this._brazierVideo.playsInline = true;
         this._brazierVideo.autoplay = true;
         this._brazierVideo.play().catch(function() {});
+    },
+
+    _loadDungeonTextures: function(dungeonId) {
+        const loader = new THREE.TextureLoader();
+        function loadTex(src) { const tex = loader.load(src); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex; }
+        
+        this._walls = [];
+        this._floors = [];
+        this._ceilings = [];
+        
+        let wallPrefix = '';
+        let floorPrefix = '';
+        let ceilPrefix = '';
+        
+        if (dungeonId === 'swamp') {
+            wallPrefix = 'swamp_';
+            floorPrefix = 'swamp_';
+            ceilPrefix = 'swamp_';
+        } else if (dungeonId === 'cave') {
+            wallPrefix = 'grotto_';
+            floorPrefix = 'grotto_';
+            ceilPrefix = 'grotto_';
+        }
+        
+        for (let i = 1; i <= 6; i++) {
+            this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + wallPrefix + 'wall_' + i + '.png'));
+        }
+        for (let i = 1; i <= 6; i++) {
+            this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/' + floorPrefix + 'tiles_' + i + '.png'));
+        }
+        for (let i = 1; i <= 6; i++) {
+            this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + ceilPrefix + 'ceiling_dungeon_' + i + '.png'));
+        }
     },
 
     _setupThree: function() {
@@ -517,13 +551,11 @@ Sherwood.Dungeon2D5 = {
         const d = this._dungeon;
         if (!d) return;
         const size = d.size, center = Math.floor(size / 2);
-        
         let offsetObjX = 0, offsetObjZ = 0;
         if (this._dir === 0) offsetObjZ = -0.3;
         else if (this._dir === 1) offsetObjX = 0.3;
         else if (this._dir === 2) offsetObjZ = 0.3;
         else offsetObjX = -0.3;
-        
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const cell = d.grid[row][col];
@@ -552,18 +584,16 @@ Sherwood.Dungeon2D5 = {
                 if (tex && tex.image) {
                     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
                     let scale = 0.5, sy = 0.15;
-                    if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; } // Замок обычный
-                    else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; } // Выход большой
+                    if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; }
+                    else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; }
                     else if (cell.monster) { scale = 0.7; sy = 0.35; }
                     else if (cell.chest) { scale = 0.4; sy = 0.12; }
                     else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
                     else if (cell.potion) { scale = 0.25; sy = 0.1; }
                     else if (cell.altar) { scale = 0.4; sy = 0.18; }
                     else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
-                    
                     const objX = col - center + offsetObjX;
                     const objZ = row - center + offsetObjZ;
-                    
                     sprite.position.set(objX, sy, objZ);
                     sprite.scale.set(scale, scale, 1);
                     this._group.add(sprite);
@@ -606,6 +636,10 @@ Sherwood.Dungeon2D5 = {
         this._dungeon = Sherwood.Dungeon.getDungeon();
         if (!this._dungeon) return;
         if (!this._scene) this.init();
+        
+        // Загружаем текстуры для текущей подземки
+        this._loadDungeonTextures(this._dungeon.id);
+        
         if (this._renderer.domElement.parentNode !== SherwoodUI._screenLayer) {
             SherwoodUI._screenLayer.innerHTML = '';
             SherwoodUI._screenLayer.appendChild(this._renderer.domElement);
@@ -638,7 +672,6 @@ Sherwood.Dungeon2D5 = {
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
-                    
                     if (self._joystickVideo) {
                         setTimeout(function() {
                             if (!self._isMoving && self._joystickVideo) {
@@ -646,13 +679,11 @@ Sherwood.Dungeon2D5 = {
                             }
                         }, 1000);
                     }
-                    
                     const d = self._dungeon;
                     if (d) {
                         d.px = self._toX;
                         d.py = self._toY;
                         const cell = d.grid[d.py][d.px];
-                        
                         if (cell && cell.exit && !cell.locked) {
                             const reward = Sherwood.Dungeon.complete();
                             SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1));
@@ -664,7 +695,6 @@ Sherwood.Dungeon2D5 = {
                             SherwoodUI._showVictoryScreen(reward);
                             return;
                         }
-                        
                         if (cell && cell.monster) {
                             self._updateCamera();
                             self._updateMinimap();
@@ -673,7 +703,6 @@ Sherwood.Dungeon2D5 = {
                             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
                             return;
                         }
-                        
                         self._buildMesh();
                         self._updateCamera();
                         self._checkInteract();
