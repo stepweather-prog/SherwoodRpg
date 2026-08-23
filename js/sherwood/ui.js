@@ -622,12 +622,14 @@ _showInteractButton: function(type) {
 
     _showDamageNumber: function(dmg, isCrit) { var container = document.getElementById('damage-numbers'); if (!container) return; var el = document.createElement('div'); el.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);color:' + (isCrit ? '#ff6a00' : '#ffd700') + ';font-size:' + (isCrit ? '1.8em' : '1.2em') + ';font-weight:bold;text-shadow:0 0 8px #000;z-index:10;pointer-events:none;animation:dmgFloat 1s ease-out forwards;'; el.textContent = (isCrit ? '💥 ' : '') + dmg; container.appendChild(el); setTimeout(function() { el.remove(); }, 1000); },
 
-    _showAnimatedEffect: function(spritePaths, duration, targetElement, effectWidth, effectHeight) {
+    _showAnimatedEffect: function(spritePaths, duration, targetElement, effectWidth, effectHeight, offsetX, offsetY) {
+        offsetX = offsetX || 0;
+        offsetY = offsetY || 0;
         var targetRect = targetElement.getBoundingClientRect();
         var containerRect = this.container.getBoundingClientRect();
         var frameDuration = duration / spritePaths.length;
         var effect = document.createElement('img');
-        effect.style.cssText = 'position:absolute;top:' + (targetRect.top - containerRect.top + targetRect.height / 2 - effectHeight / 2) + 'px;left:' + (targetRect.left - containerRect.left + targetRect.width / 2 - effectWidth / 2) + 'px;width:' + effectWidth + 'px;height:' + effectHeight + 'px;object-fit:contain;z-index:999;pointer-events:none;';
+        effect.style.cssText = 'position:absolute;top:' + (targetRect.top - containerRect.top + targetRect.height / 2 - effectHeight / 2 + offsetY) + 'px;left:' + (targetRect.left - containerRect.left + targetRect.width / 2 - effectWidth / 2 + offsetX) + 'px;width:' + effectWidth + 'px;height:' + effectHeight + 'px;object-fit:contain;z-index:999;pointer-events:none;';
         this._screenLayer.appendChild(effect);
         var frameIndex = 0;
         effect.src = spritePaths[0];
@@ -643,8 +645,8 @@ _showInteractButton: function(type) {
         card.style.filter = 'brightness(1.3) saturate(2) hue-rotate(-10deg)';
         setTimeout(function() { card.style.transform = ''; card.style.filter = ''; }, 200);
         var hitSprites = ['assets/animation/hit.png','assets/animation/hit_1.png','assets/animation/hit_1.1.png','assets/animation/hit_1.2.png','assets/animation/hit_2.png','assets/animation/hit_1.3.png'];
-        this._showAnimatedEffect(hitSprites, 300, card, 120, 120);
-        if (Math.random() < 0.4) { var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png']; this._showAnimatedEffect(clawSprites, 350, card, 100, 100); }
+        this._showAnimatedEffect(hitSprites, 300, card, 120, 120, 30, 0);
+        if (Math.random() < 0.4) { var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png']; this._showAnimatedEffect(clawSprites, 350, card, 100, 100, 30, 0); }
     },
 
     _showPlayerHitAnim: function() {
@@ -653,17 +655,23 @@ _showInteractButton: function(type) {
         var enemyCard = document.getElementById('enemy-card');
         if (!enemyCard) return;
         var cardRect = enemyCard.getBoundingClientRect(); var containerRect = this.container.getBoundingClientRect();
-        var bloodLeft = document.createElement('div'); bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
-        var vidLeft = document.createElement('video'); vidLeft.src = 'assets/animation/blood_splatter.webm'; vidLeft.muted = true; vidLeft.playsInline = true; vidLeft.autoplay = true; vidLeft.style.cssText = 'width:100%;height:100%;object-fit:contain;transform:scaleX(-1);'; bloodLeft.appendChild(vidLeft); this._screenLayer.appendChild(bloodLeft);
-        var bloodRight = document.createElement('div'); bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:80px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
-        var vidRight = document.createElement('video'); vidRight.src = 'assets/animation/blood_splatter.webm'; vidRight.muted = true; vidRight.playsInline = true; vidRight.autoplay = true; vidRight.style.cssText = 'width:100%;height:100%;object-fit:contain;'; bloodRight.appendChild(vidRight); this._screenLayer.appendChild(bloodRight);
+        var bloodLeft = document.createElement('div'); bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px;width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        var vidLeft = document.createElement('video'); vidLeft.src = 'assets/animation/blood_splatter.webm'; vidLeft.muted = true; vidLeft.playsInline = true; vidLeft.autoplay = true; vidLeft.style.cssText = 'width:200%;height:200%;object-fit:contain;transform:scaleX(-1);mix-blend-mode:screen;'; bloodLeft.appendChild(vidLeft); this._screenLayer.appendChild(bloodLeft);
+        var bloodRight = document.createElement('div'); bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left + 10) + 'px;width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        var vidRight = document.createElement('video'); vidRight.src = 'assets/animation/blood_splatter.webm'; vidRight.muted = true; vidRight.playsInline = true; vidRight.autoplay = true; vidRight.style.cssText = 'width:200%;height:200%;object-fit:contain;mix-blend-mode:screen;'; bloodRight.appendChild(vidRight); this._screenLayer.appendChild(bloodRight);
         vidLeft.play().catch(function() {}); vidRight.play().catch(function() {});
         var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png'];
-        this._showAnimatedEffect(clawSprites, 400, enemyCard, 140, 140);
+        this._showAnimatedEffect(clawSprites, 400, enemyCard, 140, 140, 30, 0);
         setTimeout(function() { bloodLeft.remove(); }, 1000); setTimeout(function() { bloodRight.remove(); }, 1000);
     },
 
-    _showCriticalHitAnim: function() { var overlay = document.getElementById('enemy-hit-overlay'); if (!overlay) return; overlay.style.display = 'block'; overlay.innerHTML = '<video autoplay muted playsinline style="width:100%;height:100%;object-fit:contain;"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>'; setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800); },
+    _showCriticalHitAnim: function() { 
+        var overlay = document.getElementById('enemy-hit-overlay'); 
+        if (!overlay) return; 
+        overlay.style.display = 'block'; 
+        overlay.innerHTML = '<video autoplay muted playsinline style="width:50%;height:50%;object-fit:contain;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>'; 
+        setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800); 
+    },
 
     _updateEnemyHP: function(hp, max) { var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + '%'; } if (txt) txt.textContent = hp; var p = Sherwood.getPlayer(); if (p) { var playerBar = document.getElementById('player-hp-bar'); if (playerBar) { var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0; playerBar.style.width = php + '%'; } } },
 
