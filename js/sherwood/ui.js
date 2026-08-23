@@ -600,7 +600,7 @@ _showInteractButton: function(type) {
         h += '<div style="color:#f44336;font-weight:bold;font-size:0.9em;text-align:center;">' + e.name + '</div>';
         h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=&quot;none&quot;"></div><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;"></div></div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span></div></div>';
         h += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:2px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">HP ' + e.hp + '</span></div>';
-        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:300px;height:300px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
+        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:350px;height:350px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
         var chargedSkillLeft = null, chargedSkillRight = null;
         if (Sherwood.Combat && Sherwood.Combat._battle) { var battle = Sherwood.Combat._battle; if (battle.chargedSkills && battle.chargedSkills.length > 0) { chargedSkillLeft = battle.chargedSkills[0] || null; chargedSkillRight = battle.chargedSkills[1] || null; } }
         var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
@@ -656,7 +656,7 @@ _showInteractButton: function(type) {
         if (!enemyCard) return;
         var cardRect = enemyCard.getBoundingClientRect(); var containerRect = this.container.getBoundingClientRect();
         
-        // Создаём canvas-обработчик для крови
+        // Одна кровь поверх карты врага
         this._bloodCanvas = document.createElement('canvas');
         this._bloodCanvas.width = 256;
         this._bloodCanvas.height = 256;
@@ -669,7 +669,6 @@ _showInteractButton: function(type) {
         this._bloodVideo.autoplay = true;
         this._bloodVideo.loop = true;
         
-        // Обработка кадров — убираем зелёный фон
         var self = this;
         function processBlood() {
             if (!self._bloodVideo || !self._bloodCtx) return;
@@ -688,54 +687,23 @@ _showInteractButton: function(type) {
             requestAnimationFrame(processBlood);
         }
         
-       var bloodLeft = document.createElement('div'); 
-        bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top + cardRect.height * 0.1) + 'px;left:' + (cardRect.left - containerRect.left - 50) + 'px;width:100px;height:' + (cardRect.height * 0.8) + 'px;z-index:999;pointer-events:none;';
-        bloodLeft.appendChild(this._bloodCanvas);
-        this._screenLayer.appendChild(bloodLeft);
-        
-        var bloodRight = document.createElement('div'); 
-        bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top + cardRect.height * 0.1) + 'px;left:' + (cardRect.right - containerRect.left - 50) + 'px;width:100px;height:' + (cardRect.height * 0.8) + 'px;z-index:999;pointer-events:none;';
-        var bloodCanvasRight = document.createElement('canvas');
-        bloodCanvasRight.width = 256;
-        bloodCanvasRight.height = 256;
-        var bloodCtxRight = bloodCanvasRight.getContext('2d', { willReadFrequently: true });
-        bloodRight.appendChild(bloodCanvasRight);
-        this._screenLayer.appendChild(bloodRight);
+        // Кровь по центру карты врага, с прозрачностью
+        var bloodOverlay = document.createElement('div'); 
+        bloodOverlay.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left) + 'px;width:' + cardRect.width + 'px;height:' + cardRect.height + 'px;z-index:998;pointer-events:none;opacity:0.7;';
+        bloodOverlay.appendChild(this._bloodCanvas);
+        this._screenLayer.appendChild(bloodOverlay);
         
         this._bloodVideo.play().catch(function() {});
         processBlood();
         
-        // Копируем кадры на правый canvas
-        function processBloodRight() {
-            if (!self._bloodVideo || !bloodCtxRight) return;
-            if (self._bloodVideo.readyState >= 2) {
-                bloodCtxRight.drawImage(self._bloodVideo, 0, 0, 256, 256);
-                var imageData = bloodCtxRight.getImageData(0, 0, 256, 256);
-                var data = imageData.data;
-                for (var i = 0; i < data.length; i += 4) {
-                    var r = data[i], g = data[i+1], b = data[i+2];
-                    if (g > 80 && g > r * 1.4 && g > b * 1.4) {
-                        data[i+3] = 0;
-                    }
-                }
-                bloodCtxRight.putImageData(imageData, 0, 0);
-            }
-            requestAnimationFrame(processBloodRight);
-        }
-        processBloodRight();
-        
         var clawSprites = ['assets/animation/strike_claws.png','assets/animation/strike_claws_1.png','assets/animation/strike_claws_2.png','assets/animation/strike_claws_3.png','assets/animation/strike_claws_4.png','assets/animation/strike_claws_5.png','assets/animation/strike_claws_6.png'];
         this._showAnimatedEffect(clawSprites, 400, enemyCard, 140, 140, 30, 0);
-        setTimeout(function() { bloodLeft.remove(); }, 1000); setTimeout(function() { bloodRight.remove(); }, 1000);
+        setTimeout(function() { bloodOverlay.remove(); }, 1000);
     },
 
     _showCriticalHitAnim: function() { 
-        var overlay = document.getElementById('enemy-hit-overlay'); 
-        if (!overlay) return; 
-        overlay.style.display = 'block'; 
-        overlay.innerHTML = '<video autoplay muted playsinline style="width:50%;height:50%;object-fit:contain;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"><source src="assets/animation/critical_hit.webm" type="video/webm"></video>'; 
-        setTimeout(function() { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 800); 
-    },
+    return;
+},
 
     _updateEnemyHP: function(hp, max) { var bar = document.getElementById('enemy-hp-bar'), txt = document.getElementById('enemy-hp-text'); if (bar) { var pct = max > 0 ? Math.round((hp / max) * 100) : 0; bar.style.width = pct + '%'; } if (txt) txt.textContent = hp; var p = Sherwood.getPlayer(); if (p) { var playerBar = document.getElementById('player-hp-bar'); if (playerBar) { var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 0; playerBar.style.width = php + '%'; } } },
 
