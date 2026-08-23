@@ -13,7 +13,7 @@ Sherwood.Dungeon2D5 = {
     _moveT: 0,
     _renderLoop: null,
     _joystick: null,
-    _joystickVideo: null,
+    _joystickImg: null,
     _interactBtn: null,
     _interactBtnImg: null,
     _interactType: null,
@@ -227,13 +227,10 @@ Sherwood.Dungeon2D5 = {
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
         
-        this._joystickVideo = document.createElement('video');
-        this._joystickVideo.src = 'assets/animation/step_up.webm';
-        this._joystickVideo.loop = true;
-        this._joystickVideo.muted = true;
-        this._joystickVideo.playsInline = true;
-        this._joystickVideo.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;border-radius:50%;';
-        this._joystick.appendChild(this._joystickVideo);
+        this._joystickImg = document.createElement('img');
+        this._joystickImg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;';
+        this._joystickImg.src = 'assets/animation/step_up.png';
+        this._joystick.appendChild(this._joystickImg);
         
         const arrowAreas = [
             { d: 'forward', top: '10%', left: '38%', width: '24%', height: '24%' },
@@ -319,87 +316,17 @@ Sherwood.Dungeon2D5 = {
         if (!cell || !cell.isPath) return;
         cell.open = true;
         cell.type = 1;
-        
-        for (let i = this._group.children.length - 1; i >= 0; i--) {
-            const child = this._group.children[i];
-            if (child.userData && child.userData.openable && child.userData.gridX === gridX && child.userData.gridY === gridY) {
-                this._group.remove(child);
-                break;
-            }
-        }
-        
-        this._addObjectSprite(gridX, gridY);
-        
         if (cell.monster) {
+            this._buildMesh();
             this._updateCamera();
             this._renderer.render(this._scene, this._camera);
             Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
         } else {
             if (SherwoodUI && SherwoodUI._playSound) SherwoodUI._playSound('tile_open');
-        }
-        
-        this._updateMinimap();
-        this._checkInteract();
-    },
-
-    _addObjectSprite: function(gridX, gridY) {
-        const d = this._dungeon;
-        if (!d) return;
-        const cell = d.grid[gridY][gridX];
-        if (!cell || !cell.open) return;
-        
-        // Не добавляем спрайт если клетка пустая
-        if (!cell.monster && !cell.lootBag && !cell.chest && !cell.altar && !cell.cauldron && !cell.potion && !cell.exit) return;
-        
-        let tex = null;
-        if (cell.monster) {
-            const id = cell.monsterId || 'plague_crow.png';
-            if (!this._monsterImages[id]) {
-                const loader = new THREE.TextureLoader();
-                this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
-            }
-            tex = this._monsterImages[id];
-        } else if (cell.lootCollected && cell.lootBag !== undefined) tex = this._images.loot_bag_empty;
-        else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
-        else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
-        else if (cell.chest && cell.looted) tex = this._images.chest_open;
-        else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
-        else if (cell.altar && cell.altarCollected) tex = this._images.altar;
-        else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
-        else if (cell.cauldron && cell.cauldronCollected) tex = this._images.cauldron;
-        else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
-        else if (cell.exit && cell.locked) tex = this._images.exit_locked;
-        else if (cell.exit && !cell.locked) tex = this._images.exit;
-        
-        if (!tex || !tex.image) return;
-        
-        const center = Math.floor(d.size / 2);
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-        
-        let scale = 0.5, sy = 0.15;
-        if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; }
-        else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; }
-        else if (cell.monster) { scale = 0.7; sy = 0.35; }
-        else if (cell.chest) { scale = 0.4; sy = 0.12; }
-        else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
-        else if (cell.potion) { scale = 0.25; sy = 0.1; }
-        else if (cell.altar) { scale = 0.4; sy = 0.18; }
-        else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
-        
-        sprite.position.set(gridX - center, sy, gridY - center);
-        sprite.scale.set(scale, scale, 1);
-        sprite.userData = { objSprite: true, gridX: gridX, gridY: gridY };
-        this._group.add(sprite);
-    },
-
-    _removeObjectSprite: function(gridX, gridY) {
-        for (let i = this._group.children.length - 1; i >= 0; i--) {
-            const child = this._group.children[i];
-            if (child.userData && child.userData.objSprite && child.userData.gridX === gridX && child.userData.gridY === gridY) {
-                this._group.remove(child);
-                break;
-            }
+            this._buildMesh();
+            this._updateMinimap();
+            this._checkInteract();
         }
     },
 
@@ -416,21 +343,8 @@ Sherwood.Dungeon2D5 = {
         const ny = d.py + dy;
         if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
         const cell = d.grid[ny][nx];
-        
         if (!cell || !cell.isPath) return;
-        
-        if (!cell.open) {
-            cell.open = true;
-            cell.type = 1;
-            for (let i = this._group.children.length - 1; i >= 0; i--) {
-                const child = this._group.children[i];
-                if (child.userData && child.userData.openable && child.userData.gridX === nx && child.userData.gridY === ny) {
-                    this._group.remove(child);
-                    break;
-                }
-            }
-        }
-        
+        if (!cell.open) { cell.open = true; cell.type = 1; }
         this._fromX = d.px;
         this._fromY = d.py;
         this._toX = nx;
@@ -438,9 +352,8 @@ Sherwood.Dungeon2D5 = {
         this._moveT = 0;
         this._isMoving = true;
         
-        if (this._joystickVideo) {
-            this._joystickVideo.currentTime = 0;
-            this._joystickVideo.play().catch(function() {});
+        if (this._joystickImg) {
+            this._joystickImg.src = 'assets/animation/step_up.png';
         }
     },
 
@@ -448,6 +361,7 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving) return;
         this._dir = (this._dir + 3) % 4;
         this._updateCamera();
+        this._buildMesh();
         this._updateMinimap();
     },
 
@@ -455,6 +369,7 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving) return;
         this._dir = (this._dir + 1) % 4;
         this._updateCamera();
+        this._buildMesh();
         this._updateMinimap();
     },
 
@@ -465,14 +380,16 @@ Sherwood.Dungeon2D5 = {
         const cell = d.grid[d.py][d.px];
         if (!cell) return;
         switch(this._interactType) {
-            case 'lootBag': if (cell.lootBag && !cell.lootCollected) { SherwoodUI._collectLootBag(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
-            case 'chest': if (cell.chest && !cell.looted) { SherwoodUI._collectChest(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
-            case 'altar': if (cell.altar && !cell.altarCollected) { SherwoodUI._collectAltar(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
-            case 'cauldron': if (cell.cauldron && !cell.cauldronCollected) { SherwoodUI._collectCauldron(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
-            case 'potion': if (cell.potion && !cell.potionCollected) { SherwoodUI._collectPotion(); this._removeObjectSprite(d.px, d.py); } break;
+            case 'lootBag': if (cell.lootBag && !cell.lootCollected) SherwoodUI._collectLootBag(); break;
+            case 'chest': if (cell.chest && !cell.looted) SherwoodUI._collectChest(); break;
+            case 'altar': if (cell.altar && !cell.altarCollected) SherwoodUI._collectAltar(); break;
+            case 'cauldron': if (cell.cauldron && !cell.cauldronCollected) SherwoodUI._collectCauldron(); break;
+            case 'potion': if (cell.potion && !cell.potionCollected) SherwoodUI._collectPotion(); break;
+            case 'exit': if (cell.exit && !cell.locked) SherwoodUI._doStep(d.px, d.py); break;
         }
         this._interactType = null;
         this._interactBtn.style.display = 'none';
+        this._buildMesh();
         this._updateMinimap();
         this._checkInteract();
     },
@@ -488,6 +405,7 @@ Sherwood.Dungeon2D5 = {
         else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
         else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
         else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
+        else if (cell.exit && !cell.locked) { type = 'exit'; icon = this._images.exit; }
         if (type && icon && icon.image) {
             this._interactType = type;
             this._interactBtnImg.src = icon.image.src;
@@ -594,21 +512,15 @@ Sherwood.Dungeon2D5 = {
                 const cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
                 if ((row + col) % 3 !== 0) continue;
-                let offsetX = 0, offsetZ = 0, found = false;
-                const dirs = [
-                    { dx: -1, dy: 0, ox: 0.35, oz: 0.15 },
-                    { dx: 1, dy: 0, ox: -0.35, oz: -0.15 },
-                    { dx: 0, dy: -1, ox: 0.15, oz: 0.35 },
-                    { dx: 0, dy: 1, ox: -0.15, oz: -0.35 }
-                ];
+                let offsetX = 0.35, offsetZ = 0.35;
+                const dirs = [{ dx: -1, dy: 0, ox: 0.35, oz: 0 }, { dx: 1, dy: 0, ox: -0.35, oz: 0 }, { dx: 0, dy: -1, ox: 0, oz: 0.35 }, { dx: 0, dy: 1, ox: 0, oz: -0.35 }];
                 for (let i = 0; i < dirs.length; i++) {
                     const nx = col + dirs[i].dx, ny = row + dirs[i].dy;
                     if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
                         const neighbor = d.grid[ny][nx];
-                        if (neighbor && !neighbor.open && !neighbor.isPath) { offsetX = dirs[i].ox; offsetZ = dirs[i].oz; found = true; break; }
+                        if (neighbor && !neighbor.open && !neighbor.isPath) { offsetX = dirs[i].ox; offsetZ = dirs[i].oz; break; }
                     }
                 }
-                if (!found) continue;
                 const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._brazierTexture, transparent: true, depthWrite: false }));
                 sprite.position.set(col - center + offsetX, 0.1, row - center + offsetZ);
                 sprite.scale.set(0.18, 0.18, 1);
@@ -673,17 +585,63 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
+        this._addObjectSprites();
+        this._addBraziers();
+        this._createParticles();
+    },
+
+    _addObjectSprites: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        const size = d.size, center = Math.floor(size / 2);
+        
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const cell = d.grid[row][col];
-                if (cell && cell.open) {
-                    this._addObjectSprite(col, row);
+                if (!cell) continue;
+                if (!cell.open && !cell.isPath) continue;
+                if (!cell.open && cell.isPath && !this._isAdjacentToOpen(d, col, row)) continue;
+                
+                if (!cell.monster && !cell.lootBag && !cell.chest && !cell.altar && !cell.cauldron && !cell.potion && !cell.exit) continue;
+                
+                let tex = null;
+                if (cell.monster) {
+                    const id = cell.monsterId || 'plague_crow.png';
+                    if (!this._monsterImages[id]) {
+                        const loader = new THREE.TextureLoader();
+                        this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
+                    }
+                    tex = this._monsterImages[id];
+                } else if (cell.lootCollected && cell.lootBag !== undefined) tex = this._images.loot_bag_empty;
+                else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
+                else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
+                else if (cell.chest && cell.looted) tex = this._images.chest_open;
+                else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
+                else if (cell.altar && cell.altarCollected) tex = this._images.altar;
+                else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
+                else if (cell.cauldron && cell.cauldronCollected) tex = this._images.cauldron;
+                else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
+                else if (cell.exit && cell.locked) tex = this._images.exit_locked;
+                else if (cell.exit && !cell.locked) tex = this._images.exit;
+                
+                if (tex && tex.image) {
+                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                    let scale = 0.5, sy = 0.15;
+                    if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; }
+                    else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; }
+                    else if (cell.monster) { scale = 0.7; sy = 0.35; }
+                    else if (cell.chest) { scale = 0.4; sy = 0.12; }
+                    else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
+                    else if (cell.potion) { scale = 0.25; sy = 0.1; }
+                    else if (cell.altar) { scale = 0.4; sy = 0.18; }
+                    else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
+                    
+                    sprite.position.set(col - center, sy, row - center);
+                    sprite.scale.set(scale, scale, 1);
+                    this._group.add(sprite);
                 }
             }
         }
-        
-        this._addBraziers();
-        this._createParticles();
     },
 
     _updateCamera: function() {
@@ -758,13 +716,6 @@ Sherwood.Dungeon2D5 = {
                 if (self._moveT >= 1) {
                     self._moveT = 1;
                     self._isMoving = false;
-                    if (self._joystickVideo) {
-                        setTimeout(function() {
-                            if (!self._isMoving && self._joystickVideo) {
-                                self._joystickVideo.pause();
-                            }
-                        }, 1000);
-                    }
                     const d = self._dungeon;
                     if (d) {
                         d.px = self._toX;
@@ -789,7 +740,9 @@ Sherwood.Dungeon2D5 = {
                             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
                             return;
                         }
+                        self._buildMesh();
                         self._updateCamera();
+                        self._checkInteract();
                         self._updateMinimap();
                     }
                 }
@@ -806,7 +759,6 @@ Sherwood.Dungeon2D5 = {
     destroy: function() {
         if (this._renderLoop) { cancelAnimationFrame(this._renderLoop); this._renderLoop = null; }
         if (this._brazierVideo) { this._brazierVideo.pause(); this._brazierVideo = null; }
-        if (this._joystickVideo) { this._joystickVideo.pause(); this._joystickVideo = null; }
         if (this._renderer && this._renderer.domElement.parentNode) this._renderer.domElement.parentNode.removeChild(this._renderer.domElement);
         if (this._joystick && this._joystick.parentNode) this._joystick.parentNode.removeChild(this._joystick);
         if (this._interactBtn && this._interactBtn.parentNode) this._interactBtn.parentNode.removeChild(this._interactBtn);
