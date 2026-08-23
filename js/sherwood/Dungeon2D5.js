@@ -36,7 +36,6 @@ Sherwood.Dungeon2D5 = {
     _monsterImages: {},
     _w: 480,
     _h: 800,
-    _texturesLoaded: false,
 
     init: function() {
         this._w = SherwoodUI.container ? SherwoodUI.container.clientWidth : 480;
@@ -51,9 +50,10 @@ Sherwood.Dungeon2D5 = {
         function loadTex(src) { const tex = loader.load(src); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex; }
         
         this._images.wall_openable = loadTex('assets/interface/labyrinth_asset.png');
-        
-        const objs = { altar: 'altar_of_the_first_dungeon.png', cauldron: 'cauldron_first_dungeon.png', potion: 'resource_life_potion.png', chest_locked: 'locked_chest_first_dungeon.png', chest_open: 'open_chest_first_dungeon.png', loot_bag: 'loot_bag_of_beasts.png', loot_bag_empty: 'empty_bag_of_loot_beasts.png', exit: 'exit_completion_dungeon.png', exit_locked: 'closed_level_lock_icon.png' };
-        for (let key in objs) this._images[key] = loadTex('assets/interface/' + objs[key]);
+        this._images.potion = loadTex('assets/interface/resource_life_potion.png');
+        this._images.loot_bag = loadTex('assets/interface/loot_bag_of_beasts.png');
+        this._images.loot_bag_empty = loadTex('assets/interface/empty_bag_of_loot_beasts.png');
+        this._images.exit_locked = loadTex('assets/interface/closed_level_lock_icon.png');
         
         this._brazierVideo = document.createElement('video');
         this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
@@ -75,15 +75,30 @@ Sherwood.Dungeon2D5 = {
         let wallPrefix = '';
         let floorPrefix = '';
         let ceilPrefix = '';
+        let altarFile = 'altar_of_the_first_dungeon.png';
+        let cauldronFile = 'cauldron_first_dungeon.png';
+        let chestLockedFile = 'locked_chest_first_dungeon.png';
+        let chestOpenFile = 'open_chest_first_dungeon.png';
+        let exitFile = 'exit_completion_dungeon.png';
         
         if (dungeonId === 'swamp') {
             wallPrefix = 'swamp_';
             floorPrefix = 'swamp_';
             ceilPrefix = 'swamp_';
+            altarFile = 'altar_of_the_second_dungeon.png';
+            cauldronFile = 'cauldron_of_the_second_dungeon.png';
+            chestLockedFile = 'locked_chest_second_dungeon.png';
+            chestOpenFile = 'open_chest_of_the_second_dungeon.png';
+            exitFile = 'completion_of_the_second_underground_level.png';
         } else if (dungeonId === 'cave') {
             wallPrefix = 'grotto_';
             floorPrefix = 'grotto_';
             ceilPrefix = 'grotto_';
+            altarFile = 'the_third_altar_of_the_dungeon.png';
+            cauldronFile = 'the_third_cauldron_of_the_dungeon.png';
+            chestLockedFile = 'locked_chest_third_dungeon.png';
+            chestOpenFile = 'open_chest_third_dungeon.png';
+            exitFile = 'completion_of_level_three_subway.png';
         }
         
         for (let i = 1; i <= 6; i++) {
@@ -95,6 +110,12 @@ Sherwood.Dungeon2D5 = {
         for (let i = 1; i <= 6; i++) {
             this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + ceilPrefix + 'ceiling_dungeon_' + i + '.png'));
         }
+        
+        this._images.altar = loadTex('assets/interface/' + altarFile);
+        this._images.cauldron = loadTex('assets/interface/' + cauldronFile);
+        this._images.chest_locked = loadTex('assets/interface/' + chestLockedFile);
+        this._images.chest_open = loadTex('assets/interface/' + chestOpenFile);
+        this._images.exit = loadTex('assets/interface/' + exitFile);
     },
 
     _setupThree: function() {
@@ -637,7 +658,6 @@ Sherwood.Dungeon2D5 = {
         if (!this._dungeon) return;
         if (!this._scene) this.init();
         
-        // Загружаем текстуры для текущей подземки
         this._loadDungeonTextures(this._dungeon.id);
         
         if (this._renderer.domElement.parentNode !== SherwoodUI._screenLayer) {
