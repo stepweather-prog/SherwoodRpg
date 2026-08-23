@@ -34,6 +34,8 @@ Sherwood.Dungeon2D5 = {
     _ceilings: [],
     _images: {},
     _monsterImages: {},
+    _cachedMats: {},
+    _currentDungeonId: null,
     _w: 480,
     _h: 800,
 
@@ -71,6 +73,7 @@ Sherwood.Dungeon2D5 = {
         this._walls = [];
         this._floors = [];
         this._ceilings = [];
+        this._cachedMats = {};
         
         let wallPrefix = '';
         let floorPrefix = '';
@@ -123,7 +126,7 @@ Sherwood.Dungeon2D5 = {
         this._scene.background = new THREE.Color(0x1a0f08);
         this._camera = new THREE.PerspectiveCamera(70, this._w / this._h, 0.1, 30);
         this._camera.rotation.order = 'YXZ';
-        this._renderer = new THREE.WebGLRenderer({ antialias: true });
+        this._renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power' });
         this._renderer.setSize(this._w, this._h);
         this._renderer.setPixelRatio(1);
         this._renderer.setClearColor(0x1a0f08, 1);
@@ -315,17 +318,90 @@ Sherwood.Dungeon2D5 = {
         if (!cell || !cell.isPath) return;
         cell.open = true;
         cell.type = 1;
+        
+        // Удаляем стену
+        for (let i = this._group.children.length - 1; i >= 0; i--) {
+            const child = this._group.children[i];
+            if (child.userData && child.userData.openable && child.userData.gridX === gridX && child.userData.gridY === gridY) {
+                this._group.remove(child);
+                break;
+            }
+        }
+        
+        // Убираем светлячков
+        this._particles.forEach(p => {
+            if (p.userData.gridX === gridX && p.userData.gridY === gridY) {
+                p.visible = false;
+            }
+        });
+        
         if (cell.monster) {
-            this._buildMesh();
             this._updateCamera();
             this._renderer.render(this._scene, this._camera);
             Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
         } else {
             if (SherwoodUI && SherwoodUI._playSound) SherwoodUI._playSound('tile_open');
-            this._buildMesh();
+            this._addObjectSprite(gridX, gridY);
             this._updateMinimap();
             this._checkInteract();
+        }
+    },
+
+    _addObjectSprite: function(gridX, gridY) {
+        const d = this._dungeon;
+        if (!d) return;
+        const cell = d.grid[gridY][gridX];
+        if (!cell || !cell.open) return;
+        
+        let tex = null;
+        if (cell.monster) {
+            const id = cell.monsterId || 'plague_crow.png';
+            if (!this._monsterImages[id]) {
+                const loader = new THREE.TextureLoader();
+                this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
+            }
+            tex = this._monsterImages[id];
+        } else if (cell.lootCollected && cell.lootBag !== undefined) tex = this._images.loot_bag_empty;
+        else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
+        else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
+        else if (cell.chest && cell.looted) tex = this._images.chest_open;
+        else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
+        else if (cell.altar && cell.altarCollected) tex = this._images.altar;
+        else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
+        else if (cell.cauldron && cell.cauldronCollected) tex = this._images.cauldron;
+        else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
+        else if (cell.exit && cell.locked) tex = this._images.exit_locked;
+        else if (cell.exit && !cell.locked) tex = this._images.exit;
+        
+        if (!tex || !tex.image) return;
+        
+        const center = Math.floor(d.size / 2);
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+        
+        let scale = 0.5, sy = 0.15;
+        if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; }
+        else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; }
+        else if (cell.monster) { scale = 0.7; sy = 0.35; }
+        else if (cell.chest) { scale = 0.4; sy = 0.12; }
+        else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
+        else if (cell.potion) { scale = 0.25; sy = 0.1; }
+        else if (cell.altar) { scale = 0.4; sy = 0.18; }
+        else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
+        
+        sprite.position.set(gridX - center, sy, gridY - center);
+        sprite.scale.set(scale, scale, 1);
+        sprite.userData = { objSprite: true, gridX: gridX, gridY: gridY };
+        this._group.add(sprite);
+    },
+
+    _removeObjectSprite: function(gridX, gridY) {
+        for (let i = this._group.children.length - 1; i >= 0; i--) {
+            const child = this._group.children[i];
+            if (child.userData && child.userData.objSprite && child.userData.gridX === gridX && child.userData.gridY === gridY) {
+                this._group.remove(child);
+                break;
+            }
         }
     },
 
@@ -361,7 +437,6 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving) return;
         this._dir = (this._dir + 3) % 4;
         this._updateCamera();
-        this._buildMesh();
         this._updateMinimap();
     },
 
@@ -369,7 +444,6 @@ Sherwood.Dungeon2D5 = {
         if (this._isMoving) return;
         this._dir = (this._dir + 1) % 4;
         this._updateCamera();
-        this._buildMesh();
         this._updateMinimap();
     },
 
@@ -380,15 +454,22 @@ Sherwood.Dungeon2D5 = {
         const cell = d.grid[d.py][d.px];
         if (!cell) return;
         switch(this._interactType) {
-            case 'lootBag': if (cell.lootBag && !cell.lootCollected) SherwoodUI._collectLootBag(); break;
-            case 'chest': if (cell.chest && !cell.looted) SherwoodUI._collectChest(); break;
-            case 'altar': if (cell.altar && !cell.altarCollected) SherwoodUI._collectAltar(); break;
-            case 'cauldron': if (cell.cauldron && !cell.cauldronCollected) SherwoodUI._collectCauldron(); break;
-            case 'potion': if (cell.potion && !cell.potionCollected) SherwoodUI._collectPotion(); break;
+            case 'lootBag': if (cell.lootBag && !cell.lootCollected) { SherwoodUI._collectLootBag(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
+            case 'chest': if (cell.chest && !cell.looted) { SherwoodUI._collectChest(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
+            case 'altar': if (cell.altar && !cell.altarCollected) { SherwoodUI._collectAltar(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
+            case 'cauldron': if (cell.cauldron && !cell.cauldronCollected) { SherwoodUI._collectCauldron(); this._removeObjectSprite(d.px, d.py); this._addObjectSprite(d.px, d.py); } break;
+            case 'potion': if (cell.potion && !cell.potionCollected) { SherwoodUI._collectPotion(); this._removeObjectSprite(d.px, d.py); } break;
         }
         this._interactType = null;
         this._interactBtn.style.display = 'none';
-        this._buildMesh();
+        
+        // Убираем светлячков
+        this._particles.forEach(p => {
+            if (p.userData.gridX === d.px && p.userData.gridY === d.py) {
+                p.visible = false;
+            }
+        });
+        
         this._updateMinimap();
         this._checkInteract();
     },
@@ -418,28 +499,32 @@ Sherwood.Dungeon2D5 = {
         const d = this._dungeon;
         if (!d) return;
         const center = Math.floor(d.size / 2);
-        const particleCanvas = document.createElement('canvas');
-        particleCanvas.width = 32;
-        particleCanvas.height = 32;
-        const pctx = particleCanvas.getContext('2d');
-        const gradient = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-        gradient.addColorStop(0, 'rgba(255,255,200,1)');
-        gradient.addColorStop(0.3, 'rgba(255,220,100,0.8)');
-        gradient.addColorStop(1, 'rgba(255,200,50,0)');
-        pctx.fillStyle = gradient;
-        pctx.fillRect(0, 0, 32, 32);
-        const particleTexture = new THREE.CanvasTexture(particleCanvas);
+        
+        if (!this._particleTexture) {
+            const particleCanvas = document.createElement('canvas');
+            particleCanvas.width = 32;
+            particleCanvas.height = 32;
+            const pctx = particleCanvas.getContext('2d');
+            const gradient = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, 'rgba(255,255,200,1)');
+            gradient.addColorStop(0.3, 'rgba(255,220,100,0.8)');
+            gradient.addColorStop(1, 'rgba(255,200,50,0)');
+            pctx.fillStyle = gradient;
+            pctx.fillRect(0, 0, 32, 32);
+            this._particleTexture = new THREE.CanvasTexture(particleCanvas);
+        }
+        
         for (let row = 0; row < d.size; row++) {
             for (let col = 0; col < d.size; col++) {
                 const cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
                 const hasItem = (cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) || (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) || (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked);
                 if (hasItem) {
-                    for (let i = 0; i < 8; i++) {
-                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: particleTexture, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
-                        sprite.position.set(col - center + (Math.random() - 0.5) * 0.5, 0.1 + Math.random() * 0.5, row - center + (Math.random() - 0.5) * 0.5);
-                        sprite.scale.set(0.08, 0.08, 1);
-                        sprite.userData = { baseY: 0.1 + Math.random() * 0.3, speed: 0.5 + Math.random() * 1, phase: Math.random() * Math.PI * 2, offsetX: (Math.random() - 0.5) * 0.5, offsetZ: (Math.random() - 0.5) * 0.5, gridX: col, gridY: row };
+                    for (let i = 0; i < 5; i++) {
+                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._particleTexture, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+                        sprite.position.set(col - center + (Math.random() - 0.5) * 0.4, 0.1 + Math.random() * 0.4, row - center + (Math.random() - 0.5) * 0.4);
+                        sprite.scale.set(0.06, 0.06, 1);
+                        sprite.userData = { baseY: 0.1 + Math.random() * 0.3, speed: 0.5 + Math.random() * 0.8, phase: Math.random() * Math.PI * 2, offsetX: (Math.random() - 0.5) * 0.4, offsetZ: (Math.random() - 0.5) * 0.4, gridX: col, gridY: row };
                         this._group.add(sprite);
                         this._particles.push(sprite);
                     }
@@ -454,13 +539,13 @@ Sherwood.Dungeon2D5 = {
         const center = Math.floor(d.size / 2);
         for (let i = 0; i < this._particles.length; i++) {
             const p = this._particles[i];
+            if (!p.visible) continue;
             const cell = d.grid[p.userData.gridY][p.userData.gridX];
             const hasItem = cell && ((cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) || (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) || (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked));
             if (!hasItem) { p.visible = false; continue; }
-            p.visible = true;
-            p.position.y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.phase) * 0.15;
-            p.position.x = p.userData.gridX - center + p.userData.offsetX + Math.sin(time * 0.5 + p.userData.phase) * 0.08;
-            p.position.z = p.userData.gridY - center + p.userData.offsetZ + Math.cos(time * 0.5 + p.userData.phase) * 0.08;
+            p.position.y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.phase) * 0.12;
+            p.position.x = p.userData.gridX - center + p.userData.offsetX + Math.sin(time * 0.4 + p.userData.phase) * 0.06;
+            p.position.z = p.userData.gridY - center + p.userData.offsetZ + Math.cos(time * 0.4 + p.userData.phase) * 0.06;
         }
     },
 
@@ -508,10 +593,10 @@ Sherwood.Dungeon2D5 = {
                 if ((row + col) % 3 !== 0) continue;
                 let offsetX = 0, offsetZ = 0, found = false;
                 const dirs = [
-                    { dx: -1, dy: 0, ox: 0.4, oz: 0.2 },
-                    { dx: 1, dy: 0, ox: -0.4, oz: -0.2 },
-                    { dx: 0, dy: -1, ox: 0.2, oz: 0.4 },
-                    { dx: 0, dy: 1, ox: -0.2, oz: -0.4 }
+                    { dx: -1, dy: 0, ox: 0.35, oz: 0.15 },
+                    { dx: 1, dy: 0, ox: -0.35, oz: -0.15 },
+                    { dx: 0, dy: -1, ox: 0.15, oz: 0.35 },
+                    { dx: 0, dy: 1, ox: -0.15, oz: -0.35 }
                 ];
                 for (let i = 0; i < dirs.length; i++) {
                     const nx = col + dirs[i].dx, ny = row + dirs[i].dy;
@@ -522,8 +607,8 @@ Sherwood.Dungeon2D5 = {
                 }
                 if (!found) continue;
                 const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._brazierTexture, transparent: true, depthWrite: false }));
-                sprite.position.set(col - center + offsetX, 0.12, row - center + offsetZ);
-                sprite.scale.set(0.2, 0.2, 1);
+                sprite.position.set(col - center + offsetX, 0.1, row - center + offsetZ);
+                sprite.scale.set(0.18, 0.18, 1);
                 this._group.add(sprite);
             }
         }
@@ -534,91 +619,74 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         while (this._group.children.length > 0) this._group.remove(this._group.children[0]);
         this._particles = [];
+        
         const size = d.size, wallHeight = 1.2, cellSize = 1, center = Math.floor(size / 2);
-        const ceilMat = new THREE.MeshStandardMaterial({ map: this._ceilings[0], roughness: 0.9 });
-        const wallMats = this._walls.map(tex => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 }));
+        
+        // Кешируем материалы
+        if (!this._cachedMats.ceil) {
+            this._cachedMats.ceil = new THREE.MeshStandardMaterial({ map: this._ceilings[0], roughness: 0.9 });
+        }
+        if (!this._cachedMats.floorMats) {
+            this._cachedMats.floorMats = this._floors.map(tex => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+        }
+        if (!this._cachedMats.wallMats) {
+            this._cachedMats.wallMats = this._walls.map(tex => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 }));
+        }
+        if (!this._cachedMats.openableMat) {
+            this._cachedMats.openableMat = new THREE.MeshStandardMaterial({ map: this._images.wall_openable, roughness: 0.7 });
+        }
+        
+        const floorGeo = new THREE.PlaneGeometry(cellSize, cellSize);
+        const ceilGeo = new THREE.PlaneGeometry(cellSize, cellSize);
+        const wallGeo = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
+        
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const x = col - center, z = row - center;
                 const cell = d.grid[row][col];
-                const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), new THREE.MeshStandardMaterial({ map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length], roughness: 0.9 }));
+                
+                const floor = new THREE.Mesh(floorGeo, this._cachedMats.floorMats[Math.abs(col * 3 + row * 5) % this._floors.length]);
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(x, 0, z);
                 this._group.add(floor);
-                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                
+                const ceil = new THREE.Mesh(ceilGeo, this._cachedMats.ceil);
                 ceil.rotation.x = Math.PI / 2;
                 ceil.position.set(x, wallHeight, z);
                 this._group.add(ceil);
+                
                 if (cell && !cell.open && !cell.isPath) {
-                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMats[Math.abs(col * 7 + row * 13) % wallMats.length]);
+                    const wall = new THREE.Mesh(wallGeo, this._cachedMats.wallMats[Math.abs(col * 7 + row * 13) % this._walls.length]);
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: false, gridX: col, gridY: row };
                     this._group.add(wall);
                 }
+                
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), new THREE.MeshStandardMaterial({ map: this._images.wall_openable, roughness: 0.7 }));
+                    const wall = new THREE.Mesh(wallGeo, this._cachedMats.openableMat);
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: true, gridX: col, gridY: row };
                     this._group.add(wall);
                 }
             }
         }
-        this._addObjectSprites();
+        
+        // Добавляем объекты
+        this._addAllObjectSprites();
         this._addBraziers();
         this._createParticles();
     },
 
-    _addObjectSprites: function() {
+    _addAllObjectSprites: function() {
         const d = this._dungeon;
         if (!d) return;
         const size = d.size, center = Math.floor(size / 2);
-        let offsetObjX = 0, offsetObjZ = 0;
-        if (this._dir === 0) offsetObjZ = -0.3;
-        else if (this._dir === 1) offsetObjX = 0.3;
-        else if (this._dir === 2) offsetObjZ = 0.3;
-        else offsetObjX = -0.3;
+        
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const cell = d.grid[row][col];
-                if (!cell) continue;
-                if (!cell.open && !cell.isPath) continue;
-                if (!cell.open && cell.isPath && !this._isAdjacentToOpen(d, col, row)) continue;
-                let tex = null;
-                if (cell.monster) {
-                    const id = cell.monsterId || 'plague_crow.png';
-                    if (!this._monsterImages[id]) {
-                        const loader = new THREE.TextureLoader();
-                        this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
-                    }
-                    tex = this._monsterImages[id];
-                } else if (cell.lootCollected && cell.lootBag !== undefined) tex = this._images.loot_bag_empty;
-                else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
-                else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
-                else if (cell.chest && cell.looted) tex = this._images.chest_open;
-                else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
-                else if (cell.altar && cell.altarCollected) tex = this._images.altar;
-                else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
-                else if (cell.cauldron && cell.cauldronCollected) tex = this._images.cauldron;
-                else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
-                else if (cell.exit && cell.locked) tex = this._images.exit_locked;
-                else if (cell.exit && !cell.locked) tex = this._images.exit;
-                if (tex && tex.image) {
-                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-                    let scale = 0.5, sy = 0.15;
-                    if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; }
-                    else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; }
-                    else if (cell.monster) { scale = 0.7; sy = 0.35; }
-                    else if (cell.chest) { scale = 0.4; sy = 0.12; }
-                    else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
-                    else if (cell.potion) { scale = 0.25; sy = 0.1; }
-                    else if (cell.altar) { scale = 0.4; sy = 0.18; }
-                    else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
-                    const objX = col - center + offsetObjX;
-                    const objZ = row - center + offsetObjZ;
-                    sprite.position.set(objX, sy, objZ);
-                    sprite.scale.set(scale, scale, 1);
-                    this._group.add(sprite);
-                }
+                if (!cell || !cell.open) continue;
+                this._addObjectSprite(col, row);
             }
         }
     },
@@ -658,7 +726,10 @@ Sherwood.Dungeon2D5 = {
         if (!this._dungeon) return;
         if (!this._scene) this.init();
         
-        this._loadDungeonTextures(this._dungeon.id);
+        if (!this._currentDungeonId || this._currentDungeonId !== this._dungeon.id) {
+            this._currentDungeonId = this._dungeon.id;
+            this._loadDungeonTextures(this._dungeon.id);
+        }
         
         if (this._renderer.domElement.parentNode !== SherwoodUI._screenLayer) {
             SherwoodUI._screenLayer.innerHTML = '';
@@ -723,7 +794,6 @@ Sherwood.Dungeon2D5 = {
                             setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
                             return;
                         }
-                        self._buildMesh();
                         self._updateCamera();
                         self._checkInteract();
                         self._updateMinimap();
@@ -753,6 +823,8 @@ Sherwood.Dungeon2D5 = {
         this._isMoving = false;
         this._dir = 0;
         this._particles = [];
+        this._cachedMats = {};
+        this._currentDungeonId = null;
     }
 };
 
