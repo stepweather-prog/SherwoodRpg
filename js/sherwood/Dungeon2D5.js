@@ -349,11 +349,6 @@ Sherwood.Dungeon2D5 = {
         else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
         else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
         else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
-        else if (cell.exit && !cell.locked) {
-            // Выход — без кнопки, завершаем при входе
-            type = 'exit';
-            icon = this._images.exit;
-        }
         if (type && icon && icon.image) {
             this._interactType = type;
             this._interactBtnImg.src = icon.image.src;
@@ -523,8 +518,6 @@ Sherwood.Dungeon2D5 = {
         if (!d) return;
         const size = d.size, center = Math.floor(size / 2);
         
-        // Определяем направление от игрока
-        const dirIndex = ((Math.round(this._dir * Math.PI / 2 / (Math.PI / 2)) % 4) + 4) % 4;
         let offsetObjX = 0, offsetObjZ = 0;
         if (this._dir === 0) offsetObjZ = -0.3;
         else if (this._dir === 1) offsetObjX = 0.3;
@@ -559,14 +552,14 @@ Sherwood.Dungeon2D5 = {
                 if (tex && tex.image) {
                     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
                     let scale = 0.5, sy = 0.15;
-                    if (cell.exit) { scale = 1.2; sy = 0.4; }
+                    if (cell.exit) { scale = 1.6; sy = 0.55; }
+                    else if (cell.monster) { scale = 0.7; sy = 0.35; }
                     else if (cell.chest) { scale = 0.4; sy = 0.12; }
                     else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
                     else if (cell.potion) { scale = 0.25; sy = 0.1; }
-                    else if (cell.altar) { scale = 0.4; sy = 0.12; }
+                    else if (cell.altar) { scale = 0.4; sy = 0.18; }
                     else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
                     
-                    // Смещение на дальний край клетки от игрока
                     const objX = col - center + offsetObjX;
                     const objZ = row - center + offsetObjZ;
                     
@@ -659,7 +652,6 @@ Sherwood.Dungeon2D5 = {
                         d.py = self._toY;
                         const cell = d.grid[d.py][d.px];
                         
-                        // Проверяем выход — завершаем уровень без кнопки
                         if (cell && cell.exit && !cell.locked) {
                             const reward = Sherwood.Dungeon.complete();
                             SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1));
