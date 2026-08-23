@@ -117,6 +117,7 @@ Sherwood.Dungeon = {
             Sherwood.saveGame();
         }
 
+        if (!this._progress) this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
         var progress = this._progress[dungeonId] || { level: 1, cups: {} };
         var cupIndex = this._getCurrentCupIndex(dungeonId, level);
 
@@ -142,7 +143,10 @@ Sherwood.Dungeon = {
     },
 
     _getCurrentCupIndex: function(dungeonId, level) {
-        var cupData = this._progress[dungeonId] ? this._progress[dungeonId].cups[level] : null;
+        if (!this._progress) return 0;
+        if (!this._progress[dungeonId]) return 0;
+        if (!this._progress[dungeonId].cups) return 0;
+        var cupData = this._progress[dungeonId].cups[level];
         if (!cupData) return 0;
         return Math.min(cupData.count || 0, 2);
     },
@@ -181,6 +185,9 @@ Sherwood.Dungeon = {
     },
 
     _addCup: function(dungeonId, level) {
+        if (!this._progress) {
+            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
+        }
         if (!this._progress[dungeonId]) this._progress[dungeonId] = { level: 1, cups: {} };
         if (!this._progress[dungeonId].cups) this._progress[dungeonId].cups = {};
         if (!this._progress[dungeonId].cups[level]) {
@@ -196,6 +203,9 @@ Sherwood.Dungeon = {
     },
 
     getAvailable: function() {
+        if (!this._progress) {
+            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
+        }
         var list = {};
         var duns = {
             forest: { name: 'Проклятая чаща', bg: 'assets/backgrounds/underground_1_floor_1.jpg', tiles: 'dungeon1', ext: '.jpeg', requiredDungeon: null, requiredCups: 0 },
@@ -279,7 +289,6 @@ Sherwood.Dungeon = {
         var startX = 1, startY = 1;
         carve(startX, startY);
 
-        // Помечаем все клетки лабиринта как isPath, но закрываем
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
                 if (grid[y][x].type === self.TILE.EMPTY) {
@@ -290,7 +299,6 @@ Sherwood.Dungeon = {
             }
         }
 
-        // Собираем isPath клетки
         var empties = [];
         for (var y = 1; y < size-1; y++) {
             for (var x = 1; x < size-1; x++) {
@@ -498,6 +506,12 @@ Sherwood.Dungeon = {
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
+
+        if (!this._progress) {
+            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
+        }
+        if (!this._progress[d.id]) this._progress[d.id] = { level: 1, cups: {} };
+        if (!this._progress[d.id].cups) this._progress[d.id].cups = {};
 
         var cupIndex = this._getCurrentCupIndex(d.id, d.level);
 
