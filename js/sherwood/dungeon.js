@@ -118,19 +118,23 @@ Sherwood.Dungeon = {
         }
 
         if (!this._progress) this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
-        var progress = this._progress[dungeonId] || { level: 1, cups: {} };
         var cupIndex = this._getCurrentCupIndex(dungeonId, level);
+
+        var gold = 0, silver = 0, exp = 0;
 
         if (cupIndex < 3) {
             var reward = this._getCupReward(dungeonId, level, cupIndex);
-            Sherwood.addResource('gold', reward.gold);
-            Sherwood.addResource('silver', reward.silver);
-            Sherwood.addExp(reward.exp);
+            gold = reward.gold;
+            silver = reward.silver;
+            exp = reward.exp;
+            Sherwood.addResource('gold', gold);
+            Sherwood.addResource('silver', silver);
+            Sherwood.addExp(exp);
             this._addCup(dungeonId, level);
         } else {
-            var gold = 1 + Math.floor(Math.random() * 3);
-            var silver = 20 + Math.floor(Math.random() * 50);
-            var exp = 50 + Math.floor(Math.random() * 50);
+            gold = 1 + Math.floor(Math.random() * 3);
+            silver = 20 + Math.floor(Math.random() * 50);
+            exp = 50 + Math.floor(Math.random() * 50);
             Sherwood.addResource('gold', gold);
             Sherwood.addResource('silver', silver);
             Sherwood.addExp(exp);
@@ -166,9 +170,7 @@ Sherwood.Dungeon = {
         var baseExp = 300 + (level * 200);
         var baseSilver = 50 + (level * 50);
         var baseGold = 10 + (level * 5);
-
         var cupMult = 1 + (cupIndex * 0.5);
-
         return {
             exp: Math.floor(baseExp * cupMult),
             silver: Math.floor(baseSilver * cupMult),
@@ -248,8 +250,35 @@ Sherwood.Dungeon = {
 
     generate: function(dungeonId, level) {
         var p = Sherwood.getPlayer();
-        if (!p || !p.dungeon || p.dungeon.tickets <= 0) return null;
-        p.dungeon.tickets--;
+        if (!p) return null;
+        
+        // Проверяем билеты в сумке
+        var bagTickets = 0;
+        try {
+            bagTickets = Sherwood.Bag.getResource('entranceTickets') || 0;
+        } catch(e) {
+            bagTickets = 0;
+        }
+        
+        var dungeonTickets = (p.dungeon && p.dungeon.tickets) ? p.dungeon.tickets : 0;
+        
+        if (bagTickets <= 0 && dungeonTickets <= 0) return null;
+        
+        // Списываем билет
+        if (bagTickets > 0) {
+            try {
+                Sherwood.Bag.spendResource('entranceTickets', 1);
+            } catch(e) {
+                if (dungeonTickets > 0) {
+                    p.dungeon.tickets--;
+                } else {
+                    return null;
+                }
+            }
+        } else {
+            p.dungeon.tickets--;
+        }
+        
         Sherwood.saveGame();
 
         var size = 14;
