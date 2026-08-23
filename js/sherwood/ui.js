@@ -189,7 +189,7 @@ const SherwoodUI = {
     h += '<div style="position:relative;display:inline-block;">';
     h += '<img src="assets/interface/vertical_slab_victory.png" style="width:400px;height:auto;display:block;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
-    if (rewards.dungeonId && rewards.dungeonLevel) { h += '<div style="margin:8px 0;"><img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:48px;height:48px;object-fit:contain;"><div style="color:#ffd700;font-size:1em;font-weight:bold;">+1 Кубок</div></div>'; }
+    if (rewards.cupEarned) { h += '<div style="margin:8px 0;"><img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:48px;height:48px;object-fit:contain;"><div style="color:#ffd700;font-size:1em;font-weight:bold;">+1 Кубок (' + (rewards.cupIndex || 1) + '/' + (rewards.totalCups || 3) + ')</div></div>'; }
     if (rewards.exp) h += '<div style="color:#fff;font-size:1.2em;margin:3px 0;">+ ' + rewards.exp + ' Опыта</div>';
     if (rewards.gold) h += '<div style="color:#ffd700;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_gold.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.gold + ' Золота</div>';
     if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_silver.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.silver + ' Серебра</div>';
@@ -232,7 +232,18 @@ _showDefeatScreen: function(rewards) {
     this._openScreen('Поражение', 'dungeon_fight', h);
 },
 
-    _claimReward: function() { this._pendingRewards = null; if (this._afterRewardAction) { var cb = this._afterRewardAction; this._afterRewardAction = null; cb(); } },
+   _claimReward: function() { 
+    this._pendingRewards = null; 
+    // Перезагружаем прогресс подземки чтобы кубки обновились
+    if (Sherwood.Dungeon && Sherwood.Dungeon.init) {
+        Sherwood.Dungeon.init();
+    }
+    if (this._afterRewardAction) { 
+        var cb = this._afterRewardAction; 
+        this._afterRewardAction = null; 
+        cb(); 
+    } 
+},
 
     hearth: function() {
         this._playSound('click');
