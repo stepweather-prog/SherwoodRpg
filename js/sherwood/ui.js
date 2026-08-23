@@ -688,13 +688,13 @@ _showInteractButton: function(type) {
             requestAnimationFrame(processBlood);
         }
         
-        var bloodLeft = document.createElement('div'); 
-        bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left - 80) + 'px; width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+       var bloodLeft = document.createElement('div'); 
+        bloodLeft.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top + cardRect.height * 0.1) + 'px;left:' + (cardRect.left - containerRect.left - 50) + 'px;width:100px;height:' + (cardRect.height * 0.8) + 'px;z-index:999;pointer-events:none;';
         bloodLeft.appendChild(this._bloodCanvas);
         this._screenLayer.appendChild(bloodLeft);
         
         var bloodRight = document.createElement('div'); 
-        bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.right - containerRect.left - 70) + 'px;width:160px;height:' + cardRect.height + 'px;z-index:999;pointer-events:none;';
+        bloodRight.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top + cardRect.height * 0.1) + 'px;left:' + (cardRect.right - containerRect.left - 50) + 'px;width:100px;height:' + (cardRect.height * 0.8) + 'px;z-index:999;pointer-events:none;';
         var bloodCanvasRight = document.createElement('canvas');
         bloodCanvasRight.width = 256;
         bloodCanvasRight.height = 256;
