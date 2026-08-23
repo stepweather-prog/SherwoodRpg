@@ -705,56 +705,63 @@ Sherwood.Dungeon2D5 = {
     },
 
     _startLoop: function() {
-        const self = this;
-        let lastTime = performance.now();
-        function loop(time) {
-            self._renderLoop = requestAnimationFrame(loop);
-            const dt = Math.min((time - lastTime) / 1000, 0.1);
-            lastTime = time;
-            if (self._isMoving) {
-                self._moveT += dt * 2.5;
-                if (self._moveT >= 1) {
-                    self._moveT = 1;
-                    self._isMoving = false;
-                    const d = self._dungeon;
-                    if (d) {
-                        d.px = self._toX;
-                        d.py = self._toY;
-                        const cell = d.grid[d.py][d.px];
-                        if (cell && cell.exit && !cell.locked) {
-                            const reward = Sherwood.Dungeon.complete();
-                            SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1));
-                            SherwoodUI.updateDisplay();
-                            SherwoodUI._afterRewardAction = function() {
-                                SherwoodUI._playMusic('main_theme');
-                                SherwoodUI.showDungeon();
-                            };
-                            SherwoodUI._showVictoryScreen(reward);
-                            return;
-                        }
-                        if (cell && cell.monster) {
-                            self._updateCamera();
-                            self._updateMinimap();
-                            self._renderer.render(self._scene, self._camera);
-                            Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
-                            setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
-                            return;
-                        }
-                        self._buildMesh();
-                        self._updateCamera();
-                        self._checkInteract();
-                        self._updateMinimap();
+    const self = this;
+    let lastTime = performance.now();
+    function loop(time) {
+        self._renderLoop = requestAnimationFrame(loop);
+        const dt = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
+        if (self._isMoving) {
+            self._moveT += dt * 2.5;
+            // Переключаем анимацию ходьбы
+            if (Math.floor(self._moveT * 10) % 2 === 0) {
+                if (self._joystickImg) self._joystickImg.src = 'assets/animation/step_up.png';
+            } else {
+                if (self._joystickImg) self._joystickImg.src = 'assets/animation/step_down.png';
+            }
+            if (self._moveT >= 1) {
+                self._moveT = 1;
+                self._isMoving = false;
+                if (self._joystickImg) self._joystickImg.src = 'assets/animation/step_up.png';
+                const d = self._dungeon;
+                if (d) {
+                    d.px = self._toX;
+                    d.py = self._toY;
+                    const cell = d.grid[d.py][d.px];
+                    if (cell && cell.exit && !cell.locked) {
+                        const reward = Sherwood.Dungeon.complete();
+                        SherwoodUI._addWalletSilver(Math.floor((reward.silver || 0) * 0.1));
+                        SherwoodUI.updateDisplay();
+                        SherwoodUI._afterRewardAction = function() {
+                            SherwoodUI._playMusic('main_theme');
+                            SherwoodUI.showDungeon();
+                        };
+                        SherwoodUI._showVictoryScreen(reward);
+                        return;
                     }
+                    if (cell && cell.monster) {
+                        self._updateCamera();
+                        self._updateMinimap();
+                        self._renderer.render(self._scene, self._camera);
+                        Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
+                        setTimeout(function() { SherwoodUI._showCombatScreen(); }, 400);
+                        return;
+                    }
+                    self._buildMesh();
+                    self._updateCamera();
+                    self._checkInteract();
+                    self._updateMinimap();
                 }
             }
-            self._updateCamera();
-            self._updateHP();
-            self._updateMinimap();
-            self._updateParticles(time / 1000);
-            self._renderer.render(self._scene, self._camera);
         }
-        this._renderLoop = requestAnimationFrame(loop);
-    },
+        self._updateCamera();
+        self._updateHP();
+        self._updateMinimap();
+        self._updateParticles(time / 1000);
+        self._renderer.render(self._scene, self._camera);
+    }
+    this._renderLoop = requestAnimationFrame(loop);
+},
 
     destroy: function() {
         if (this._renderLoop) { cancelAnimationFrame(this._renderLoop); this._renderLoop = null; }
