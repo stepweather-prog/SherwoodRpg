@@ -672,26 +672,40 @@ _showInteractButton: function(type) {
         var h = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;padding:4px 8px;overflow:hidden;">';
         h += '<div style="display:flex;align-items:center;gap:8px;width:100%;margin-bottom:2px;"><span style="color:#e0c080;font-size:0.8em;flex:1;text-align:center;">' + (modeTitle || '') + '</span></div>';
         h += '<div style="color:#f44336;font-weight:bold;font-size:0.9em;text-align:center;">' + e.name + '</div>';
-        h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=&quot;none&quot;"></div><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;"></div></div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span></div></div>';
+        
+        // HP бар врага БЕЗ аватара
+        h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;"></div></div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span></div></div>';
+        
         h += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:2px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">HP ' + e.hp + '</span></div>';
-        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:450px;height:450px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
+        
+        // Карта врага с оверлеями
+        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:400px;height:400px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
+        
+        // Стрелка переключения на арене
+        if (mode === 'arena') {
+            h += '<button id="arena-switch-btn" onclick="SherwoodUI._arenaSwitchTarget()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:transparent;border:none;cursor:pointer;z-index:20;"><img src="assets/interface/arrow_arena.png" style="width:100%;height:100%;object-fit:contain;"></button>';
+        }
+        
         var chargedSkillLeft = null, chargedSkillRight = null;
         if (Sherwood.Combat && Sherwood.Combat._battle) { var battle = Sherwood.Combat._battle; if (battle.chargedSkills && battle.chargedSkills.length > 0) { chargedSkillLeft = battle.chargedSkills[0] || null; chargedSkillRight = battle.chargedSkills[1] || null; } }
         var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
+        
         h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0;">';
         h += chargedSkillLeft && skills[chargedSkillLeft] ? '<button onclick="SherwoodUI._useSkill(\'' + chargedSkillLeft + '\')" style="width:44px;height:44px;border-radius:50%;border:2px solid #ffd700;overflow:hidden;padding:0;background:rgba(201,168,76,0.3);"><img src="' + skills[chargedSkillLeft].icon + '" style="width:100%;height:100%;object-fit:contain;"></button>' : '<div style="width:44px;height:44px;"></div>';
         h += '<button onclick="' + onAttack + '" style="background:url(assets/skills/skill_shot_normal.png) center/contain no-repeat;width:56px;height:56px;border:3px solid #c9a040;border-radius:50%;cursor:pointer;flex-shrink:0;position:relative;overflow:hidden;">';
-h += '<div id="attack-cooldown-overlay" style="position:absolute;top:0;left:0;width:100%;height:0%;background:rgba(0,0,0,0.6);border-radius:0 0 50% 50%;pointer-events:none;"></div>';
-h += '</button>';
+        h += '<div id="attack-cooldown-overlay" style="position:absolute;top:0;left:0;width:100%;height:0%;background:rgba(0,0,0,0.6);border-radius:0 0 50% 50%;pointer-events:none;"></div>';
+        h += '</button>';
         h += chargedSkillRight && skills[chargedSkillRight] ? '<button onclick="SherwoodUI._useSkill(\'' + chargedSkillRight + '\')" style="width:44px;height:44px;border-radius:50%;border:2px solid #ffd700;overflow:hidden;padding:0;background:rgba(201,168,76,0.3);"><img src="' + skills[chargedSkillRight].icon + '" style="width:100%;height:100%;object-fit:contain;"></button>' : '<div style="width:44px;height:44px;"></div>';
         h += '</div>';
-        h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="width:48px;height:48px;border-radius:50%;border:2px solid #c9a040;overflow:hidden;flex-shrink:0;position:relative;"><img src="assets/hero_skins/' + activeSkin + '.png" style="width:100%;height:100%;object-fit:cover;"><div id="player-hit-anim" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:none;"></div></div><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;"></div></div><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + p.stats.hp + '</span></div></div>';
+        
+        // HP бар героя БЕЗ аватара
+        h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="player-hp-bar" style="background:url(assets/interface/life_interface_asset_horizontal_progress_bar.jpeg) left/auto 100%;height:100%;width:' + php + '%;"></div></div><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + p.stats.hp + '</span></div></div>';
+        
         h += '<div style="display:flex;gap:10px;justify-content:center;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">АТК ' + p.stats.attack + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">ЗЩТ ' + p.stats.defense + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">HP ' + p.stats.hp + '</span></div>';
         h += '<div id="battle-dialog" style="width:90%;background:rgba(0,0,0,0.75);border:1px solid #555;border-radius:8px;padding:4px;margin-top:2px;min-height:32px;color:#aaa;font-size:0.65em;text-align:left;overflow:hidden;"></div>';
         h += '</div>';
         this._openScreen('', customBg || 'dungeon_fight', h);
     },
-
     _useSkill: function(skillId) { if (!Sherwood.Combat) return; this._playHitSounds(); var r = Sherwood.Combat.useSkill(skillId); if (!r) return; if (r.error) { this._showDialog(r.error, '#ff9800'); return; } this._handleCombat(r); },
 
     _showDialog: function(msg, color) { var dlg = document.getElementById('battle-dialog'); if (dlg) { dlg.innerHTML += '<div style="color:' + (color||'#fff') + ';margin:1px 0;">' + msg + '</div>'; dlg.scrollTop = dlg.scrollHeight; } },
@@ -1236,80 +1250,137 @@ this._screenLayer.appendChild(bloodOverlay);
     },
 
     _showArenaBattle: function() { 
-        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
-            if (!this._arenaVictoryShown) {
-                this._arenaVictory(); 
-            }
-            return; 
-        } 
-        var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
-        var skinFile = opp.skin || 'assets/hero_skins/skin1_01.png'; 
-        this._showBattleScreen({ name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp, attack: opp.stats.attack, defense: opp.stats.defense }, 'arena', 'Арена - ' + opp.name, '', 'SherwoodUI._arenaAttack()', 'SherwoodUI._arenaFlee()');
-        
+    if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
+        if (!this._arenaVictoryShown) this._arenaVictory(); 
+        return; 
+    } 
+    var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
+    var skinFile = opp.skin || 'assets/hero_skins/skin1_01.png'; 
+    this._showBattleScreen({ name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp, attack: opp.stats.attack, defense: opp.stats.defense }, 'arena', 'Арена - ' + opp.name, '', 'SherwoodUI._arenaAttack()', 'SherwoodUI._arenaFlee()', 'assets/backgrounds/duel_arena.png');
+    
+    // Добавляем стрелку переключения после отрисовки
+    setTimeout(function() {
+        var arrowBtn = document.getElementById('arena-switch-btn');
+        if (!arrowBtn) {
+            var btn = document.createElement('button');
+            btn.id = 'arena-switch-btn';
+            btn.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:transparent;border:none;cursor:pointer;z-index:20;';
+            btn.innerHTML = '<img src="assets/interface/arrow_arena.png" style="width:100%;height:100%;object-fit:contain;">';
+            btn.addEventListener('click', function() { SherwoodUI._arenaSwitchTarget(); });
+            var screenLayer = document.getElementById('screen-layer');
+            if (screenLayer) screenLayer.appendChild(btn);
+        }
+    }, 100);
+    
+    var self = this;
+    if (this._arenaCooldownInterval) clearInterval(this._arenaCooldownInterval);
+    this._arenaCooldownInterval = setInterval(function() {
+        self._updateArenaCooldown();
+    }, 100);
+},
+
+_arenaSwitchTarget: function() {
+    if (!this._currentArenaOpponents || !Sherwood.Arena.isInMatch()) return;
+    
+    var aliveBots = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
+    if (aliveBots.length <= 1) return;
+    
+    var currentIdx = this._currentArenaOpponentIndex;
+    var nextIdx = currentIdx;
+    
+    for (var i = 1; i <= this._currentArenaOpponents.length; i++) {
+        var checkIdx = (currentIdx + i) % this._currentArenaOpponents.length;
+        if (this._currentArenaOpponents[checkIdx].stats.hp > 0) {
+            nextIdx = checkIdx;
+            break;
+        }
+    }
+    
+    if (nextIdx !== currentIdx) {
+        this._currentArenaOpponentIndex = nextIdx;
+        this._showArenaBattle();
+        this._showDialog('Цель переключена', '#ff9800');
+    }
+},
+
+_arenaAttack: function() {
+    this._playHitSounds();
+    if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
+        if (!this._arenaVictoryShown) this._arenaVictory(); 
+        return; 
+    }
+    
+    var attackPower = Sherwood.Arena.getAttackPower();
+    if (attackPower === 0) {
+        this._showDialog('Атака не готова!', '#ff9800');
+        return;
+    }
+    
+    var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
+    var player = Sherwood.getPlayer();
+    
+    var damage = Math.max(1, Math.floor((player.stats.attack * player.stats.attack) / (player.stats.attack + opp.stats.defense) + Math.random() * 5));
+    damage = Math.floor(damage * attackPower);
+    
+    Sherwood.Arena._lastPlayerAttack = Date.now();
+    
+    opp.stats.hp -= damage;
+    this._hitEnemyCard(); 
+    this._updateEnemyHP(Math.max(0, opp.stats.hp), opp.stats.maxHp); 
+    this._showDialog('Урон: ' + damage + (attackPower < 1 ? ' (слабый удар)' : ''), attackPower < 1 ? '#ff9800' : '#fff');
+    
+    if (opp.stats.hp <= 0) { 
+        this._showDialog(opp.name + ' повержен!', '#4caf50'); 
+        if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1); 
+        this._currentArenaOpponentIndex++; 
+        var self = this; 
+        setTimeout(function() { 
+            if (self._currentArenaOpponentIndex >= self._currentArenaOpponents.length) { 
+                if (!self._arenaVictoryShown) self._arenaVictory(); 
+            } else { 
+                self._showArenaBattle(); 
+            } 
+        }, 1000); 
+        return; 
+    }
+    
+    // Боты бьют случайные цели
+    var botsResult = Sherwood.Arena._botsFight();
+    
+    if (botsResult.playerDead) {
         var self = this;
-        if (this._arenaCooldownInterval) clearInterval(this._arenaCooldownInterval);
-        this._arenaCooldownInterval = setInterval(function() {
-            self._updateArenaCooldown();
-        }, 100);
-    },
-
-    _updateArenaCooldown: function() {
-        var overlay = document.getElementById('attack-cooldown-overlay');
-        if (!overlay) return;
-        
-        if (!Sherwood.Arena || !Sherwood.Arena.isInMatch()) {
-            overlay.style.height = '0%';
-            return;
+        setTimeout(function() {
+            if (!self._arenaDefeatShown) self._arenaDefeat();
+        }, 700);
+        return;
+    }
+    
+    if (botsResult.allBotsDead) {
+        var self = this;
+        setTimeout(function() {
+            if (!self._arenaVictoryShown) self._arenaVictory();
+        }, 700);
+        return;
+    }
+    
+    // Боты могут переключить цель
+    if (Math.random() < 0.3 && this._currentArenaOpponents.some(function(o) { return o.stats.hp > 0; })) {
+        var aliveBots = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
+        if (aliveBots.length > 1) {
+            var newTarget = aliveBots[Math.floor(Math.random() * aliveBots.length)];
+            var newIdx = this._currentArenaOpponents.indexOf(newTarget);
+            if (newIdx !== this._currentArenaOpponentIndex) {
+                this._currentArenaOpponentIndex = newIdx;
+                this._showDialog('Боты переключили цель!', '#ff9800');
+            }
         }
-        
-        var lastAttack = Sherwood.Arena._lastPlayerAttack || 0;
-        var cooldown = Sherwood.Arena._playerAttackCooldown || 3000;
-        var timeSince = Date.now() - lastAttack;
-        var remainingPct = Math.max(0, 1 - timeSince / cooldown);
-        
-        overlay.style.height = (remainingPct * 100) + '%';
-    },
-
-    _arenaAttack: function() {
-        this._playHitSounds();
-        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
-            if (!this._arenaVictoryShown) this._arenaVictory(); 
-            return; 
-        }
-        
-        var attackPower = Sherwood.Arena.getAttackPower();
-        if (attackPower === 0) {
-            this._showDialog('Атака не готова!', '#ff9800');
-            return;
-        }
-        
-        var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
-        var player = Sherwood.getPlayer();
-        
-        var damage = Math.max(1, Math.floor((player.stats.attack * player.stats.attack) / (player.stats.attack + opp.stats.defense) + Math.random() * 5));
-        damage = Math.floor(damage * attackPower);
-        
-        Sherwood.Arena._lastPlayerAttack = Date.now();
-        
-        opp.stats.hp -= damage;
-        this._hitEnemyCard(); 
-        this._updateEnemyHP(Math.max(0, opp.stats.hp), opp.stats.maxHp); 
-        this._showDialog('Урон: ' + damage + (attackPower < 1 ? ' (слабый удар)' : ''), attackPower < 1 ? '#ff9800' : '#fff');
-        
-        if (opp.stats.hp <= 0) { 
-            this._showDialog(opp.name + ' повержен!', '#4caf50'); 
-            if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1); 
-            this._currentArenaOpponentIndex++; 
-            var self = this; 
-            setTimeout(function() { 
-                if (self._currentArenaOpponentIndex >= self._currentArenaOpponents.length) { 
-                    if (!self._arenaVictoryShown) self._arenaVictory(); 
-                } else { 
-                    self._showArenaBattle(); 
-                } 
-            }, 1000); 
-            return; 
-        }
+    }
+    
+    var self = this;
+    setTimeout(function() {
+        self._showArenaBattle();
+    }, 700);
+},
         
         var oppDamage = Math.max(1, Math.floor((opp.stats.attack * opp.stats.attack) / (opp.stats.attack + player.stats.defense) + Math.random() * 3));
         player.stats.hp = Math.max(0, player.stats.hp - oppDamage);
