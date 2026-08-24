@@ -1278,6 +1278,23 @@ this._screenLayer.appendChild(bloodOverlay);
         }, 100);
     },
 
+    _updateArenaCooldown: function() {
+        var overlay = document.getElementById('attack-cooldown-overlay');
+        if (!overlay) return;
+        
+        if (!Sherwood.Arena || !Sherwood.Arena.isInMatch()) {
+            overlay.style.height = '0%';
+            return;
+        }
+        
+        var lastAttack = Sherwood.Arena._lastPlayerAttack || 0;
+        var cooldown = Sherwood.Arena._playerAttackCooldown || 3000;
+        var timeSince = Date.now() - lastAttack;
+        var remainingPct = Math.max(0, 1 - timeSince / cooldown);
+        
+        overlay.style.height = (remainingPct * 100) + '%';
+    },
+
     _arenaSwitchTarget: function() {
         if (!this._currentArenaOpponents || !Sherwood.Arena.isInMatch()) return;
         
