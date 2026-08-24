@@ -590,6 +590,10 @@ _showInteractButton: function(type) {
     },
         // ========== БОЙ ==========
         _showBattleScreen: function(enemyData, mode, modeTitle, extraInfo, onAttack, onFlee, customBg) {
+        // Скрываем верхнюю панель подземки на время боя
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._topPanel) {
+            Sherwood.Dungeon2D5._topPanel.style.display = 'none';
+        }
         var e = enemyData, p = Sherwood.getPlayer();
         var ehp = e.maxHp > 0 ? Math.round((e.hp / e.maxHp) * 100) : 100;
         var php = p.stats.maxHp > 0 ? Math.round((p.stats.hp / p.stats.maxHp) * 100) : 100;
@@ -715,6 +719,9 @@ this._screenLayer.appendChild(bloodOverlay);
     _showCombatScreen: function() { 
         var b = Sherwood.Combat.getState(); 
         if (!b) { 
+            if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._topPanel) {
+                Sherwood.Dungeon2D5._topPanel.style.display = 'flex';
+            }
             if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._dungeon) {
                 Sherwood.Dungeon2D5.render();
             } else {
@@ -722,6 +729,9 @@ this._screenLayer.appendChild(bloodOverlay);
             }
             return; 
         } 
+        if (Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5._topPanel) {
+            Sherwood.Dungeon2D5._topPanel.style.display = 'none';
+        }
         this._showBattleScreen({ name: b.enemyName, image: b.enemyImage, hp: b.enemyHp, maxHp: b.enemyMaxHp, attack: b.enemyAttack, defense: b.enemyDefense }, "dungeon", (b.isBoss ? "БОСС: " : "") + b.enemyName, "", "SherwoodUI._combatAttack()", "SherwoodUI._combatFlee"); 
     },
     
