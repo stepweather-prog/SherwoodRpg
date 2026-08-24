@@ -1225,7 +1225,9 @@ this._screenLayer.appendChild(bloodOverlay);
     },
 
     _startArenaBattle: function() { 
-        this._stopMusic(); 
+        this._stopMusic();
+        this._arenaDefeatShown = false;
+        this._arenaVictoryShown = false;
         var result = Sherwood.Arena.startMatch();
         if (!result.success) { this._showToast(result.reason); return; }
         this._currentArenaOpponents = result.opponents; 
@@ -1234,7 +1236,12 @@ this._screenLayer.appendChild(bloodOverlay);
     },
 
     _showArenaBattle: function() { 
-        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { this._arenaVictory(); return; } 
+        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
+            if (!this._arenaVictoryShown) {
+                this._arenaVictory(); 
+            }
+            return; 
+        } 
         var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
         var skinFile = opp.skin || 'assets/hero_skins/skin1_01.png'; 
         this._showBattleScreen({ name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp, attack: opp.stats.attack, defense: opp.stats.defense }, 'arena', 'Арена - ' + opp.name, '', 'SherwoodUI._arenaAttack()', 'SherwoodUI._arenaFlee()');
@@ -1265,7 +1272,10 @@ this._screenLayer.appendChild(bloodOverlay);
 
     _arenaAttack: function() {
         this._playHitSounds();
-        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { this._arenaVictory(); return; }
+        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
+            if (!this._arenaVictoryShown) this._arenaVictory(); 
+            return; 
+        }
         
         var attackPower = Sherwood.Arena.getAttackPower();
         if (attackPower === 0) {
@@ -1293,7 +1303,7 @@ this._screenLayer.appendChild(bloodOverlay);
             var self = this; 
             setTimeout(function() { 
                 if (self._currentArenaOpponentIndex >= self._currentArenaOpponents.length) { 
-                    self._arenaVictory(); 
+                    if (!self._arenaVictoryShown) self._arenaVictory(); 
                 } else { 
                     self._showArenaBattle(); 
                 } 
@@ -1308,12 +1318,14 @@ this._screenLayer.appendChild(bloodOverlay);
             self._showDialog(opp.name + ': ' + oppDamage + ' урона', '#f44336'); 
             SherwoodUI.updateDisplay(); 
             if (player.stats.hp <= 0) { 
-                self._arenaDefeat(); 
+                if (!self._arenaDefeatShown) self._arenaDefeat(); 
             } 
         }, 700);
     },
 
     _arenaVictory: function() { 
+        if (this._arenaVictoryShown) return;
+        this._arenaVictoryShown = true;
         if (this._arenaCooldownInterval) clearInterval(this._arenaCooldownInterval);
         this._stopMusic(); 
         Sherwood.Arena._wins++; 
@@ -1327,6 +1339,7 @@ this._screenLayer.appendChild(bloodOverlay);
         this._currentArenaOpponents = null; 
         this._pendingRewards = { exp: exp, gold: gold, silver: silver }; 
         this._afterRewardAction = function() { 
+            SherwoodUI._arenaVictoryShown = false;
             SherwoodUI._playMusic('main_theme'); 
             SherwoodUI.arena(); 
         }; 
@@ -1334,6 +1347,8 @@ this._screenLayer.appendChild(bloodOverlay);
     },
     
     _arenaDefeat: function() { 
+        if (this._arenaDefeatShown) return;
+        this._arenaDefeatShown = true;
         if (this._arenaCooldownInterval) clearInterval(this._arenaCooldownInterval);
         this._stopMusic(); 
         Sherwood.Arena._losses++; 
@@ -1344,6 +1359,7 @@ this._screenLayer.appendChild(bloodOverlay);
         this._currentArenaOpponents = null; 
         this._pendingRewards = { exp: 20, silver: 50 }; 
         this._afterRewardAction = function() { 
+            SherwoodUI._arenaDefeatShown = false;
             SherwoodUI._playMusic('main_theme'); 
             SherwoodUI.arena(); 
         }; 
