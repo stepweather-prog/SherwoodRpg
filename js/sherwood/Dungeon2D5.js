@@ -109,7 +109,11 @@ Sherwood.Dungeon2D5 = {
             this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + wallPrefix + 'wall_' + i + '.png'));
         }
         for (let i = 1; i <= 6; i++) {
-            this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/' + floorPrefix + 'tiles_' + i + '.png'));
+            if (dungeonId === 'forest') {
+    this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/' + floorPrefix + 'tiles_' + i + '.png'));
+} else {
+    this._floors.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + floorPrefix + 'tiles_' + i + '.png'));
+}
         }
         for (let i = 1; i <= 6; i++) {
             this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + ceilPrefix + 'ceiling_dungeon_' + i + '.png'));
