@@ -18,7 +18,7 @@ Sherwood.Raid = {
         {
             id: 'primordial_dread',
             name: 'Изначальный Ужас — Спящий в Корнях',
-            image: 'the_primordial_core.png',
+            image: 'original_horror.png',
             hp: 50000, maxHp: 50000,
             attack: 350, defense: 180,
             exp: 10000, gold: 8000,
@@ -34,7 +34,7 @@ Sherwood.Raid = {
                     { name: 'Скверный Король', image: 'blight_king.png', hp: 8000, maxHp: 8000, attack: 220, defense: 110 }
                 ]},
                 { name: 'Изначальный Ужас', enemies: [
-                    { name: 'Изначальный Ужас', image: 'the_primordial_core.png', hp: 50000, maxHp: 50000, attack: 350, defense: 180, isRaidBoss: true }
+                    { name: 'Изначальный Ужас', image: 'original_horror.png', hp: 50000, maxHp: 50000, attack: 350, defense: 180, isRaidBoss: true }
                 ]}
             ]
         }
