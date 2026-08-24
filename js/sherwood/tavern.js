@@ -1,6 +1,6 @@
 /**
  * Sherwood Tavern — Таверна «Весёлый Разбойник»
- * Полная боевая логика + Таланты
+ * Контракты с таймером + Таланты
  */
 
 Sherwood.Tavern = {
@@ -10,19 +10,26 @@ Sherwood.Tavern = {
     _maxDailyQuests: 20,
     _totalQuests: 100,
     _cooldownEnd: 0,
-    _cooldownMinutes: 20,
+    _cooldownMinutes: 15, // 15 минут на выполнение контракта
+    _contractStartTime: 0,
+    _contractEndTime: 0,
+    _contractResult: null, // 'reward' или 'battle'
     _secretQuestUnlocked: false,
-    _tab: 1, // 1 - Контракты, 2 - Таланты
+    _tab: 1,
+    _contractTimerInterval: null,
 
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
-        if (!p.tavern) p.tavern = { questsCompleted: 0, dailyQuestsDone: 0, cooldownEnd: 0, secretUnlocked: false, currentQuest: null };
+        if (!p.tavern) p.tavern = { questsCompleted: 0, dailyQuestsDone: 0, cooldownEnd: 0, secretUnlocked: false, currentQuest: null, contractStartTime: 0, contractEndTime: 0, contractResult: null };
         
         this._completedQuests = p.tavern.questsCompleted ? this._generateQuestIds(p.tavern.questsCompleted) : [];
         this._dailyQuestsDone = p.tavern.dailyQuestsDone || 0;
         this._cooldownEnd = p.tavern.cooldownEnd || 0;
         this._secretQuestUnlocked = p.tavern.secretUnlocked || false;
+        this._contractStartTime = p.tavern.contractStartTime || 0;
+        this._contractEndTime = p.tavern.contractEndTime || 0;
+        this._contractResult = p.tavern.contractResult || null;
         
         var today = new Date().toDateString();
         if (p.tavern.lastDate !== today) {
@@ -34,6 +41,12 @@ Sherwood.Tavern = {
         
         if (p.tavern.currentQuest) {
             this._currentQuest = p.tavern.currentQuest;
+        }
+        
+        // Если контракт уже истёк — определяем результат
+        if (this._currentQuest && this._contractEndTime > 0 && Date.now() >= this._contractEndTime && !this._contractResult) {
+            this._contractResult = Math.random() < 0.5 ? 'reward' : 'battle';
+            this._saveCurrentQuest();
         }
     },
 
@@ -70,21 +83,34 @@ Sherwood.Tavern = {
     },
 
     getAvailableRows: function() {
-        return [{ id: 1, name: 'Контракты', npc: 'Егерь', quests: [] }];
+        return [{ id: 1, name: 'Контракты', npc: 'Бармен', quests: [] }];
     },
 
     getCurrentQuest: function() {
         if (!this._currentQuest) return null;
-        return { quest: this._currentQuest, row: { npc: 'Егерь' } };
+        return { quest: this._currentQuest, row: { npc: 'Бармен' } };
+    },
+
+    getContractTimeRemaining: function() {
+        if (!this._currentQuest || this._contractEndTime === 0) return 0;
+        return Math.max(0, Math.ceil((this._contractEndTime - Date.now()) / 1000));
+    },
+
+    isContractReady: function() {
+        if (!this._currentQuest || this._contractEndTime === 0) return false;
+        return Date.now() >= this._contractEndTime;
+    },
+
+    getContractResult: function() {
+        return this._contractResult;
     },
 
     startQuest: function() {
         if (this._dailyQuestsDone >= this._maxDailyQuests) {
             return { success: false, reason: 'Лимит на сегодня (' + this._maxDailyQuests + ')' };
         }
-        if (Date.now() < this._cooldownEnd) {
-            var remain = Math.ceil((this._cooldownEnd - Date.now()) / 60000);
-            return { success: false, reason: 'Перезарядка ' + remain + ' мин.' };
+        if (this._currentQuest && !this.isContractReady()) {
+            return { success: false, reason: 'Контракт выполняется' };
         }
         if (this._completedQuests.length >= this._totalQuests) {
             return { success: false, reason: 'Все квесты выполнены' };
@@ -94,6 +120,9 @@ Sherwood.Tavern = {
         var quest = this._getQuestById(nextQuestId);
         
         this._currentQuest = quest;
+        this._contractStartTime = Date.now();
+        this._contractEndTime = Date.now() + this._cooldownMinutes * 60 * 1000;
+        this._contractResult = null;
         this._saveCurrentQuest();
         
         // Обновляем прогресс ежедневного задания
@@ -101,7 +130,25 @@ Sherwood.Tavern = {
             Sherwood.Daily.updateProgress('tavern_contracts', 1);
         }
         
-        return { success: true, quest: quest, mode: 'battle', enemy: quest.enemy };
+        return { success: true, quest: quest, endTime: this._contractEndTime };
+    },
+
+    claimContractReward: function() {
+        if (!this._currentQuest || !this.isContractReady()) {
+            return { success: false, reason: 'Контракт ещё не готов' };
+        }
+        
+        if (!this._contractResult) {
+            this._contractResult = Math.random() < 0.5 ? 'reward' : 'battle';
+            this._saveCurrentQuest();
+        }
+        
+        if (this._contractResult === 'battle') {
+            return { success: true, mode: 'battle', quest: this._currentQuest };
+        }
+        
+        // Просто награда без боя
+        return this._completeQuest();
     },
 
     attackQuest: function() {
@@ -133,10 +180,8 @@ Sherwood.Tavern = {
             var r = this._completeQuest();
             result.win = true;
             result.rewards = r.reward;
-            
             p.stats.hp = p.stats.maxHp;
             Sherwood.saveGame();
-            
             return result;
         }
         
@@ -147,7 +192,12 @@ Sherwood.Tavern = {
         
         if (p.stats.hp <= 0) {
             result.playerDead = true;
+            result.lose = true;
+            // Проиграли — предлагаем следующий контракт без награды
             this._currentQuest = null;
+            this._contractStartTime = 0;
+            this._contractEndTime = 0;
+            this._contractResult = null;
             this._saveCurrentQuest();
             p.stats.hp = 1;
             Sherwood.saveGame();
@@ -159,28 +209,6 @@ Sherwood.Tavern = {
         return result;
     },
 
-    autoBattle: function() {
-        if (!this._currentQuest) return { completed: false, failed: true };
-        
-        var p = Sherwood.getPlayer();
-        var quest = this._currentQuest;
-        var enemy = quest.enemy;
-        
-        var win = this._completedQuests.indexOf(quest.id) !== -1 ? true : Math.random() < 0.7 + (p.stats.attack / 200);
-        
-        if (win) {
-            var r = this._completeQuest();
-            p.stats.hp = p.stats.maxHp;
-            Sherwood.saveGame();
-            return { completed: true, reward: r.reward };
-        }
-        
-        var damage = Math.floor((enemy.atk || 20) * (1 + Math.random() * 0.5));
-        p.stats.hp = Math.max(1, p.stats.hp - damage);
-        Sherwood.saveGame();
-        return { completed: false, failed: true, damage: damage };
-    },
-
     _completeQuest: function() {
         var quest = this._currentQuest;
         var p = Sherwood.getPlayer();
@@ -190,12 +218,12 @@ Sherwood.Tavern = {
         }
         
         this._currentQuest = null;
+        this._contractStartTime = 0;
+        this._contractEndTime = 0;
+        this._contractResult = null;
         this._dailyQuestsDone++;
         p.tavern.questsCompleted = this._completedQuests.length;
         p.tavern.dailyQuestsDone = this._dailyQuestsDone;
-        
-        this._cooldownEnd = Date.now() + this._cooldownMinutes * 60 * 1000;
-        p.tavern.cooldownEnd = this._cooldownEnd;
         
         Sherwood.addExp(quest.reward.exp);
         Sherwood.addResource('silver', quest.reward.silver || 0);
@@ -222,20 +250,31 @@ Sherwood.Tavern = {
 
     failQuest: function() { 
         this._currentQuest = null; 
+        this._contractStartTime = 0;
+        this._contractEndTime = 0;
+        this._contractResult = null;
         this._saveCurrentQuest();
     },
     
     cancelQuest: function() { 
         this._currentQuest = null; 
+        this._contractStartTime = 0;
+        this._contractEndTime = 0;
+        this._contractResult = null;
         this._saveCurrentQuest();
     },
 
     getCompletedCount: function() { return this._completedQuests.length; },
-    isOnCooldown: function() { return Date.now() < this._cooldownEnd; },
+    isOnCooldown: function() { 
+        if (this._currentQuest && !this.isContractReady()) return true;
+        return false; 
+    },
     
     getCooldownRemaining: function() {
-        var r = this._cooldownEnd - Date.now();
-        return r <= 0 ? 0 : Math.ceil(r / 60000);
+        if (this._currentQuest && !this.isContractReady()) {
+            return this.getContractTimeRemaining();
+        }
+        return 0;
     },
     
     getBattleMode: function() { return this._currentQuest ? true : false; },
@@ -264,6 +303,9 @@ Sherwood.Tavern = {
         if (!p) return;
         if (!p.tavern) p.tavern = {};
         p.tavern.currentQuest = this._currentQuest ? JSON.parse(JSON.stringify(this._currentQuest)) : null;
+        p.tavern.contractStartTime = this._contractStartTime;
+        p.tavern.contractEndTime = this._contractEndTime;
+        p.tavern.contractResult = this._contractResult;
         Sherwood.saveGame();
     }
 };
