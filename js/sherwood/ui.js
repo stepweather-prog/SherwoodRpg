@@ -185,7 +185,7 @@ const SherwoodUI = {
 
     _showPlaceholder: function(title, bgKey, backAction) { this._playSound('click'); this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">&#128679;</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">'+title+'</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction); },
      _showVictoryScreen: function(rewards) {
-    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;background:url(\'assets/interface/vertical_slab_victory.png\') center/cover no-repeat;position:relative;">';
+    var h = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:url(\'assets/interface/vertical_slab_victory.png\') center/100% 100% no-repeat;z-index:100;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
     var rewardItems = [];
@@ -238,11 +238,15 @@ const SherwoodUI = {
     h += '</div>';
     h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
     h += '</div>';
-    this._openScreen('Победа', 'dungeon_fight', h);
+    
+    if (this._screenLayer) {
+        this._screenLayer.innerHTML = h;
+        this._screenLayer.style.display = 'block';
+    }
 },
 
 _showDefeatScreen: function(rewards) {
-    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;background:url(\'assets/interface/vertical_slab_defeat.png\') center/cover no-repeat;position:relative;">';
+    var h = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:url(\'assets/interface/vertical_slab_defeat.png\') center/100% 100% no-repeat;z-index:100;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
     var rewardItems = [];
@@ -292,9 +296,12 @@ _showDefeatScreen: function(rewards) {
     h += '</div>';
     h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
     h += '</div>';
-    this._openScreen('Поражение', 'dungeon_fight', h);
+    
+    if (this._screenLayer) {
+        this._screenLayer.innerHTML = h;
+        this._screenLayer.style.display = 'block';
+    }
 },
-
    _claimReward: function() { 
     this._pendingRewards = null; 
     // Перезагружаем прогресс подземки чтобы кубки обновились
