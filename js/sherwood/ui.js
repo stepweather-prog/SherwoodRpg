@@ -184,24 +184,61 @@ const SherwoodUI = {
     },
 
     _showPlaceholder: function(title, bgKey, backAction) { this._playSound('click'); this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">&#128679;</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">'+title+'</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction); },
-        _showVictoryScreen: function(rewards) {
+     _showVictoryScreen: function(rewards) {
     var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;">';
     h += '<div style="position:relative;display:inline-block;">';
     h += '<img src="assets/interface/vertical_slab_victory.png" style="width:400px;height:auto;display:block;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
-    if (rewards.cupEarned) { h += '<div style="margin:8px 0;"><img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:48px;height:48px;object-fit:contain;"><div style="color:#ffd700;font-size:1em;font-weight:bold;">+1 Кубок (' + (rewards.cupIndex || 1) + '/' + (rewards.totalCups || 3) + ')</div></div>'; }
-    if (rewards.exp) h += '<div style="color:#fff;font-size:1.2em;margin:3px 0;">+ ' + rewards.exp + ' Опыта</div>';
-    if (rewards.gold) h += '<div style="color:#ffd700;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_gold.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.gold + ' Золота</div>';
-    if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_silver.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.silver + ' Серебра</div>';
-    if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1.2em;margin:3px 0;">+ ' + rewards.scrolls + ' Скрижалей</div>';
+    
+    // Собираем награды в массив
+    var rewardItems = [];
+    
+    if (rewards.cupEarned) {
+        rewardItems.push({ icon: 'assets/interface/resource_cup_for_completed_tasks.png', quantity: 1, label: 'Кубок' });
+    }
+    if (rewards.exp) {
+        rewardItems.push({ icon: 'assets/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' });
+    }
+    if (rewards.gold) {
+        rewardItems.push({ icon: 'assets/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' });
+    }
+    if (rewards.silver) {
+        rewardItems.push({ icon: 'assets/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' });
+    }
+    if (rewards.scrolls) {
+        rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' });
+    }
     if (rewards.items && rewards.items.length > 0) {
         var lootMap = {};
-        for (var i = 0; i < rewards.items.length; i++) { var item = rewards.items[i]; var key = item.icon + '|' + item.name; if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 }; lootMap[key].quantity += item.quantity || 1; }
+        for (var i = 0; i < rewards.items.length; i++) {
+            var item = rewards.items[i];
+            var key = item.icon + '|' + item.name;
+            if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 };
+            lootMap[key].quantity += item.quantity || 1;
+        }
         var lootKeys = Object.keys(lootMap);
-        h += '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:250px;margin-left:auto;margin-right:auto;">';
-        for (var k = 0; k < lootKeys.length; k++) { var li = lootMap[lootKeys[k]]; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:4px;text-align:center;"><img src="' + li.icon + '" style="width:36px;height:36px;object-fit:contain;"><div style="color:#fff;font-size:0.7em;">' + li.name + '</div><div style="color:#aaa;font-size:0.6em;">x' + li.quantity + '</div></div>'; }
+        for (var k = 0; k < lootKeys.length; k++) {
+            var li = lootMap[lootKeys[k]];
+            rewardItems.push({ icon: li.icon, quantity: li.quantity, label: li.name });
+        }
+    }
+    
+    // Ячейки по 3 в ряд
+    if (rewardItems.length > 0) {
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:250px;margin:0 auto;">';
+        for (var ri = 0; ri < rewardItems.length; ri++) {
+            var rw = rewardItems[ri];
+            h += '<div style="text-align:center;">';
+            h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;">' + rw.quantity + '</div>';
+            h += '<div style="background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
+            h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '</div>';
+            h += '<div style="color:#aaa;font-size:0.6em;margin-top:2px;">' + rw.label + '</div>';
+            h += '</div>';
+        }
         h += '</div>';
     }
+    
     h += '</div>';
     h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
     h += '</div></div>';
@@ -213,19 +250,51 @@ _showDefeatScreen: function(rewards) {
     h += '<div style="position:relative;display:inline-block;">';
     h += '<img src="assets/interface/vertical_slab_defeat.png" style="width:400px;height:auto;display:block;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
-    h += '<div style="color:#f44336;font-size:1.2em;font-weight:bold;margin-bottom:8px;">&#128128; ПОРАЖЕНИЕ</div>';
-    if (rewards.exp) h += '<div style="color:#fff;font-size:1.2em;margin:3px 0;">+ ' + rewards.exp + ' Опыта</div>';
-    if (rewards.gold) h += '<div style="color:#ffd700;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_gold.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.gold + ' Золота</div>';
-    if (rewards.silver) h += '<div style="color:#c0c0c0;font-size:1.2em;margin:3px 0;"><img src="assets/interface/resource_silver.png" style="width:24px;height:24px;vertical-align:middle;"> + ' + rewards.silver + ' Серебра</div>';
-    if (rewards.scrolls) h += '<div style="color:#9c27b0;font-size:1.2em;margin:3px 0;">+ ' + rewards.scrolls + ' Скрижалей</div>';
+    
+    var rewardItems = [];
+    
+    if (rewards.exp) {
+        rewardItems.push({ icon: 'assets/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' });
+    }
+    if (rewards.gold) {
+        rewardItems.push({ icon: 'assets/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' });
+    }
+    if (rewards.silver) {
+        rewardItems.push({ icon: 'assets/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' });
+    }
+    if (rewards.scrolls) {
+        rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' });
+    }
     if (rewards.items && rewards.items.length > 0) {
         var lootMap = {};
-        for (var i = 0; i < rewards.items.length; i++) { var item = rewards.items[i]; var key = item.icon + '|' + item.name; if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 }; lootMap[key].quantity += item.quantity || 1; }
+        for (var i = 0; i < rewards.items.length; i++) {
+            var item = rewards.items[i];
+            var key = item.icon + '|' + item.name;
+            if (!lootMap[key]) lootMap[key] = { icon: item.icon, name: item.name, quantity: 0 };
+            lootMap[key].quantity += item.quantity || 1;
+        }
         var lootKeys = Object.keys(lootMap);
-        h += '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:250px;margin-left:auto;margin-right:auto;">';
-        for (var k = 0; k < lootKeys.length; k++) { var li = lootMap[lootKeys[k]]; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:4px;text-align:center;"><img src="' + li.icon + '" style="width:36px;height:36px;object-fit:contain;"><div style="color:#fff;font-size:0.7em;">' + li.name + '</div><div style="color:#aaa;font-size:0.6em;">x' + li.quantity + '</div></div>'; }
+        for (var k = 0; k < lootKeys.length; k++) {
+            var li = lootMap[lootKeys[k]];
+            rewardItems.push({ icon: li.icon, quantity: li.quantity, label: li.name });
+        }
+    }
+    
+    if (rewardItems.length > 0) {
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:250px;margin:0 auto;">';
+        for (var ri = 0; ri < rewardItems.length; ri++) {
+            var rw = rewardItems[ri];
+            h += '<div style="text-align:center;">';
+            h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;">' + rw.quantity + '</div>';
+            h += '<div style="background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
+            h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '</div>';
+            h += '<div style="color:#aaa;font-size:0.6em;margin-top:2px;">' + rw.label + '</div>';
+            h += '</div>';
+        }
         h += '</div>';
     }
+    
     h += '</div>';
     h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
     h += '</div></div>';
