@@ -96,6 +96,11 @@ Sherwood.Tavern = {
         this._currentQuest = quest;
         this._saveCurrentQuest();
         
+        // Обновляем прогресс ежедневного задания
+        if (typeof Sherwood.Daily !== 'undefined') {
+            Sherwood.Daily.updateProgress('tavern_contracts', 1);
+        }
+        
         return { success: true, quest: quest, mode: 'battle', enemy: quest.enemy };
     },
 
@@ -201,6 +206,11 @@ Sherwood.Tavern = {
         this._saveCurrentQuest();
         Sherwood.saveGame();
         this._checkSecretQuest();
+        
+        // Обновляем прогресс ежедневного задания
+        if (typeof Sherwood.Daily !== 'undefined') {
+            Sherwood.Daily.updateProgress('tavern_complete', 1);
+        }
         
         return { success: true, reward: quest.reward };
     },
