@@ -896,7 +896,7 @@ this._screenLayer.appendChild(bloodOverlay);
     _tavernBattleAttack: function() { this._playHitSounds(); var active = Sherwood.Tavern.getCurrentQuest ? Sherwood.Tavern.getCurrentQuest() : null; if (!active || !active.quest || !active.quest.enemy) { this.tavern(); return; } var p = Sherwood.getPlayer(); var e = active.quest.enemy; if (!e.maxHp) e.maxHp = e.hp || 100; var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + (e.def || 5)))); var crit = Math.random() * 100 < 15; if (crit) dmg = Math.floor(dmg * 1.8); e.hp -= dmg; if (e.hp <= 0) { var r = Sherwood.Tavern.completeQuest(); if (Sherwood.Daily) Sherwood.Daily.updateProgress('tavern_complete', 1); this._showDialog('Победа! +' + r.reward.exp + 'XP +' + r.reward.gold + 'G', '#ffd700'); this._stopMusic(); SherwoodUI.updateDisplay(); var self = this; setTimeout(function() { self.tavern(); }, 1500); } else { var edmg = Math.max(1, Math.floor((e.atk * e.atk) / (e.atk + p.stats.defense))); p.stats.hp = Math.max(0, p.stats.hp - edmg); this._hitEnemyCard(); this._updateEnemyHP(e.hp, e.maxHp); this._showDialog((crit ? 'КРИТ! ' : '') + 'Вы: ' + dmg + ' урона', crit ? '#ff6a00' : '#fff'); if (p.stats.hp <= 0) { var self = this; setTimeout(function() { self._showDialog('Поражение...', '#f44336'); }, 700); Sherwood.Tavern.failQuest(); p.stats.hp = 1; this._stopMusic(); setTimeout(function() { self.tavern(); }, 1500); } else { var self = this; setTimeout(function() { self._showDialog('Враг: ' + edmg + ' урона', '#f44336'); }, 700); setTimeout(function() { self._showTavernBattle(); }, 1200); } } SherwoodUI.updateDisplay(); },
     _tavernAuto: function() { var r = Sherwood.Tavern.autoBattle ? Sherwood.Tavern.autoBattle() : { completed: false }; if (r.completed) { if (Sherwood.Daily) Sherwood.Daily.updateProgress('tavern_complete', 1); SherwoodUI.updateDisplay(); } var self = this; setTimeout(function() { self.tavern(); }, 800); },
     _tavernCancel: function() { this._stopMusic(); if (Sherwood.Tavern.cancelQuest) Sherwood.Tavern.cancelQuest(); this.tavern(); },
-        // ===== ЕЖЕДНЕВНЫЕ =====
+       // ===== ЕЖЕДНЕВНЫЕ =====
     daily: function() { 
         this._playSound('click'); if (!Sherwood.Daily) { this._showPlaceholder('Задания','daily'); return; }
         Sherwood.Daily.init();
@@ -918,27 +918,56 @@ this._screenLayer.appendChild(bloodOverlay);
         html += '<div style="display:flex;flex-direction:column;align-items:center;">';
         if (quests.length === 0) { html += '<div style="color:#e0c080;font-weight:bold;font-size:1em;padding:20px;">Нет заданий</div>'; }
         for (var i = 0; i < quests.length; i++) {
-            var q = quests[i]; var claimed = completed.indexOf(q.id) !== -1;
-            var progressPct = Math.round((q.progress || 0) / q.target * 100);
-            html += '<div style="position:relative;width:90%;max-width:400px;height:110px;overflow:hidden;margin-bottom:4px;"><img src="' + frameImage + '" style="position:absolute;left:0;width:100%;height:auto;top:50%;transform:translateY(-50%);">';
-            if (isDaily) { html += '<div style="position:absolute;top:8px;left:20px;right:20px;bottom:8px;background:rgba(0,0,0,0.75);border-radius:8px;z-index:0;"></div>'; }
-            html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 28px;box-sizing:border-box;z-index:1;">';
-            if (isDaily) { html += '<div style="color:#fff;font-weight:900;font-size:0.8em;text-shadow:0 1px 3px #000, 0 0 8px rgba(0,0,0,0.8);margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div><div style="color:#ddd;font-weight:700;font-size:0.6em;text-shadow:0 1px 2px #000;margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>'; }
-            else { html += '<div style="color:#fff;font-weight:900;font-size:0.8em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:1px;text-align:center;line-height:1.2;">' + q.name + '</div><div style="color:#fff;font-weight:700;font-size:0.6em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:2px;text-align:center;line-height:1.2;">' + q.desc + '</div>'; }
-            html += '<div style="width:75%;background:rgba(0,0,0,0.7);border-radius:4px;height:8px;margin:2px 0;overflow:hidden;border:1px solid rgba(255,255,255,0.4);"><div style="background:' + (q.completed ? '#00ff00' : '#ffaa00') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;box-shadow:0 0 6px ' + (q.completed ? 'rgba(0,255,0,0.6)' : 'rgba(255,170,0,0.6)') + ';"></div></div>';
-            if (isDaily) { html += '<div style="color:#fff;font-weight:700;font-size:0.55em;text-shadow:0 1px 2px #000;margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | <span style="color:#ffd700;">+' + q.reward.gold + ' зол.</span> <span style="color:#ffaa00;">+' + q.reward.exp + ' XP</span></div>'; }
-            else { html += '<div style="color:#fff;font-weight:700;font-size:0.55em;text-shadow:0 0 4px rgba(0,0,0,0.9);margin-bottom:2px;text-align:center;">' + (q.progress || 0) + '/' + q.target + ' | +' + q.reward.gold + ' зол. +' + q.reward.exp + ' XP</div>'; }
-            if (q.completed && !claimed) { html += '<button onclick="'; if (isDaily) { html += 'SherwoodUI._claimDaily(' + i + ')'; } else { html += 'SherwoodUI._claimChapter(' + currentChapter + ',' + i + ')'; } html += '" style="background:#00c853;border:2px solid #fff;border-radius:20px;padding:4px 22px;color:#fff;font-weight:900;cursor:pointer;font-size:0.65em;letter-spacing:1px;text-shadow:0 1px 2px rgba(0,0,0,0.5);box-shadow:0 2px 8px rgba(0,0,0,0.5), 0 0 10px rgba(0,200,83,0.4);">ГОТОВО</button>'; }
-            else if (claimed) { html += '<div style="color:#00ff00;font-weight:900;font-size:0.6em;text-shadow:0 0 6px rgba(0,255,0,0.5), 0 1px 2px #000;">✓ ПОЛУЧЕНО</div>'; }
-            html += '</div></div>';
-        }
+    var q = quests[i]; var claimed = completed.indexOf(q.id) !== -1;
+    var progressPct = Math.round((q.progress || 0) / q.target * 100);
+    
+    // Рамочка без обрезки — полная картинка
+    html += '<div style="position:relative;width:100%;max-width:400px;margin-bottom:8px;">';
+    html += '<img src="' + frameImage + '" style="width:100%;height:auto;display:block;">';
+    
+    // Текст поверх рамочки, чёрный шрифт для обоих вкладок
+    html += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px;box-sizing:border-box;z-index:1;">';
+    
+    // Название — чёрный
+    html += '<div style="color:#000;font-weight:900;font-size:0.8em;text-align:center;margin-bottom:2px;line-height:1.2;">' + q.name + '</div>';
+    
+    // Описание — чёрный
+    html += '<div style="color:#000;font-weight:700;font-size:0.6em;text-align:center;margin-bottom:4px;line-height:1.2;">' + q.desc + '</div>';
+    
+    // Прогресс-бар
+    html += '<div style="width:80%;background:rgba(255,255,255,0.7);border-radius:4px;height:8px;margin-bottom:2px;overflow:hidden;border:1px solid #000;"><div style="background:' + (q.completed ? '#00a000' : '#ff8800') + ';height:100%;width:' + progressPct + '%;transition:width 0.5s;"></div></div>';
+    
+    // Счётчик — чёрный
+    html += '<div style="color:#000;font-weight:900;font-size:0.6em;text-align:center;">' + (q.progress || 0) + '/' + q.target + '</div>';
+    
+    if (q.completed && !claimed) { 
+        html += '<button onclick="';
+        if (isDaily) { html += 'SherwoodUI._claimDaily(' + i + ')'; } 
+        else { html += 'SherwoodUI._claimChapter(' + currentChapter + ',' + i + ')'; }
+        html += '" style="background:#00c853;border:2px solid #000;border-radius:16px;padding:4px 18px;color:#000;font-weight:900;cursor:pointer;font-size:0.65em;margin-top:2px;">ГОТОВО</button>'; 
+    }
+    else if (claimed) { 
+        html += '<div style="color:#000;font-weight:900;font-size:0.6em;margin-top:2px;">✓ ПОЛУЧЕНО</div>'; 
+    }
+    
+    html += '</div></div>';
+}
         html += '</div><div id="daily-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:4px;"></div>';
         this._openScreenScrollable('Задания', 'daily', html);
     },
 
     _openScreenScrollable: function(title, bgKey, html, backFn) { try { if (this._mainElements) this._mainElements.forEach(function(sel) { document.querySelectorAll(sel).forEach(function(el) { el.style.display = 'none'; }); }); } catch(e) {} try { this.container.style.background = "url('" + (this._bg[bgKey] || bgKey) + "') center/cover no-repeat"; } catch(e) {} var goBack = backFn || 'SherwoodUI.loadHome()'; try { if (this._screenLayer) { this._screenLayer.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">' + title + '</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px 20px 12px;-webkit-overflow-scrolling:touch;">' + html + '</div></div>'; this._screenLayer.style.display = 'block'; } } catch(e) {} },
 
-    _claimDaily: function(i) { var r = Sherwood.Daily.claimDailyReward(i); var log = document.getElementById('daily-log'); if (r.success) { if (log) log.textContent = 'Награда получена!'; this.updateDisplay(); this._playSound('loot_fly'); } else { if (log) log.textContent = r.reason; } var self = this; setTimeout(function() { self.daily(); }, 600); },
+    _claimDaily: function(i) { 
+    var quests = Sherwood.Daily.getDailyQuests();
+    var quest = quests[i];
+    if (!quest) return;
+    var r = Sherwood.Daily.claimDailyReward(quest.id); 
+    var log = document.getElementById('daily-log'); 
+    if (r.success) { if (log) log.textContent = 'Награда получена!'; this.updateDisplay(); this._playSound('loot_fly'); } 
+    else { if (log) log.textContent = r.reason; } 
+    var self = this; setTimeout(function() { self.daily(); }, 600); 
+},
     _claimChapter: function(ch, i) { var r = Sherwood.Daily.claimChapterReward(ch, i); var log = document.getElementById('daily-log'); if (r.success) { if (log) log.textContent = 'Награда получена!'; this.updateDisplay(); this._playSound('loot_fly'); } else { if (log) log.textContent = r.reason; } var self = this; setTimeout(function() { self.daily(); }, 600); },
         // ===== ПОРТАЛЫ =====
     portal: function() {
