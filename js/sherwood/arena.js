@@ -13,7 +13,7 @@ Sherwood.Arena = {
     _losses: 0,
     _rank: 'Новичок',
     _lastPlayerAttack: 0,
-    _playerAttackCooldown: 3000, // 3 секунды
+    _playerAttackCooldown: 3000,
 
     init: function() {
         var p = Sherwood.getPlayer();
@@ -61,10 +61,6 @@ Sherwood.Arena = {
                 attack = Math.floor(attack * 1.25);
                 defense = Math.floor(defense * 0.8);
                 hp = Math.floor(hp * 0.85);
-            } else {
-                attack = Math.floor(attack * 1.0);
-                defense = Math.floor(defense * 1.0);
-                hp = Math.floor(hp * 1.0);
             }
 
             var skins = ['skin1_01', 'skin1_02', 'skin1_03', 'skin2_01', 'skin2_02'];
@@ -99,7 +95,6 @@ Sherwood.Arena = {
         player.stats.hp = player.stats.maxHp;
         Sherwood.saveGame();
 
-        // Обновляем прогресс ежедневного задания
         if (typeof Sherwood.Daily !== 'undefined') {
             Sherwood.Daily.updateProgress('arena_fights', 1);
         }
@@ -117,18 +112,14 @@ Sherwood.Arena = {
 
     canPlayerAttack: function() {
         var timeSinceLast = Date.now() - this._lastPlayerAttack;
-        return timeSinceLast >= 1500; // Можно бить через 1.5 секунды
+        return timeSinceLast >= 1500;
     },
 
     getAttackPower: function() {
         var timeSinceLast = Date.now() - this._lastPlayerAttack;
-        if (timeSinceLast >= this._playerAttackCooldown) {
-            return 1; // Полная сила
-        }
-        if (timeSinceLast >= 1500) {
-            return 0.5; // Половина силы
-        }
-        return 0; // Нельзя бить
+        if (timeSinceLast >= this._playerAttackCooldown) return 1;
+        if (timeSinceLast >= 1500) return 0.5;
+        return 0;
     },
 
     startCharge: function() {
@@ -149,6 +140,18 @@ Sherwood.Arena = {
         }
     },
 
+    switchTarget: function() {
+        var aliveBots = this._opponents.filter(function(o) { return o.stats.hp > 0; });
+        if (aliveBots.length === 0) {
+            this._inMatch = false;
+            this._currentOpponent = null;
+            this.stopCharge();
+            return { win: true, rewards: this._getWinRewards() };
+        }
+        this._currentOpponent = aliveBots[0];
+        return { success: true, nextEnemy: aliveBots[0] };
+    },
+
     playerAttack: function() {
         if (!this._inMatch || !this._currentOpponent) return { error: 'Нет боя' };
         
@@ -162,25 +165,16 @@ Sherwood.Arena = {
             return this.switchTarget();
         }
 
-        var chargePercent = this._chargePercent;
-        if (chargePercent < 0.05) chargePercent = 0.05;
-
-        var rawDamage = Math.max(1, Math.floor((player.stats.attack - opp.stats.defense) * 0.4 + player.stats.attack * 0.1));
-        var chargeMultiplier = 0.7 + (chargePercent * 0.8);
-        var damage = Math.floor(rawDamage * chargeMultiplier * attackPower);
-
-        var critChance = chargePercent >= 1 ? 30 : 5;
-        var crit = Math.random() * 100 < critChance;
-        if (crit) damage = Math.floor(damage * 2.0);
+        var damage = Math.max(1, Math.floor((player.stats.attack * player.stats.attack) / (player.stats.attack + opp.stats.defense) + Math.random() * 5));
+        damage = Math.floor(damage * attackPower);
+        
+        this._lastPlayerAttack = Date.now();
 
         opp.stats.hp -= damage;
         if (opp.stats.hp < 0) opp.stats.hp = 0;
 
-        this._lastPlayerAttack = Date.now();
-
         var result = {
             damage: damage,
-            crit: crit,
             attackPower: attackPower,
             enemyHp: opp.stats.hp,
             enemyMaxHp: opp.stats.maxHp,
@@ -190,7 +184,7 @@ Sherwood.Arena = {
 
         if (opp.stats.hp <= 0) {
             var aliveBots = this._opponents.filter(function(o) { return o.stats.hp > 0; });
-
+            
             if (aliveBots.length === 0) {
                 result.win = true;
                 result.rewards = this._getWinRewards();
@@ -200,18 +194,19 @@ Sherwood.Arena = {
                 player.stats.hp = player.stats.maxHp;
                 Sherwood.saveGame();
                 this._inMatch = false;
+                this._currentOpponent = null;
                 this.stopCharge();
                 return result;
             }
-
+            
             this._currentOpponent = aliveBots[0];
             result.nextEnemy = aliveBots[0];
-            Sherwood.saveGame();
-            return result;
+            result.targetSwitched = true;
         }
-
+        
+        // Боты дерутся между собой и с игроком
         var botsResult = this._botsFight();
-
+        
         if (botsResult.playerDead) {
             result.playerDead = true;
             result.rewards = { exp: 20, silver: 50 };
@@ -220,10 +215,11 @@ Sherwood.Arena = {
             player.stats.hp = Math.max(1, Math.floor(player.stats.maxHp * 0.2));
             Sherwood.saveGame();
             this._inMatch = false;
+            this._currentOpponent = null;
             this.stopCharge();
             return result;
         }
-
+        
         if (botsResult.allBotsDead) {
             result.win = true;
             result.rewards = this._getWinRewards();
@@ -233,24 +229,26 @@ Sherwood.Arena = {
             player.stats.hp = player.stats.maxHp;
             Sherwood.saveGame();
             this._inMatch = false;
+            this._currentOpponent = null;
             this.stopCharge();
             return result;
         }
-
+        
+        // Боты могут переключить цель
+        if (Math.random() < 0.3) {
+            var aliveBotsAfter = this._opponents.filter(function(o) { return o.stats.hp > 0; });
+            if (aliveBotsAfter.length > 1) {
+                var newTarget = aliveBotsAfter[Math.floor(Math.random() * aliveBotsAfter.length)];
+                if (newTarget !== this._currentOpponent) {
+                    this._currentOpponent = newTarget;
+                    result.targetSwitched = true;
+                }
+            }
+        }
+        
         this._chargePercent = 0;
         Sherwood.saveGame();
         return result;
-    },
-
-    switchTarget: function() {
-        var aliveBots = this._opponents.filter(function(o) { return o.stats.hp > 0; });
-        if (aliveBots.length === 0) {
-            this._inMatch = false;
-            this.stopCharge();
-            return { win: true, rewards: this._getWinRewards() };
-        }
-        this._currentOpponent = aliveBots[0];
-        return { success: true, nextEnemy: aliveBots[0] };
     },
 
     _botsFight: function() {
@@ -258,7 +256,6 @@ Sherwood.Arena = {
         var allBots = this._opponents.slice();
         var playerHp = this._playerBattleHp;
 
-        // Перемешиваем ботов для случайного порядка
         for (var i = allBots.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
             var temp = allBots[i];
@@ -266,21 +263,18 @@ Sherwood.Arena = {
             allBots[j] = temp;
         }
 
-        // Каждый бот атакует случайную цель (бот или игрок)
         for (var bi = 0; bi < allBots.length; bi++) {
             var attacker = allBots[bi];
             if (!attacker || attacker.stats.hp <= 0) continue;
 
             var possibleTargets = [];
 
-            // Другие боты
             for (var tj = 0; tj < allBots.length; tj++) {
                 if (tj !== bi && allBots[tj].stats.hp > 0) {
                     possibleTargets.push({ type: 'bot', bot: allBots[tj] });
                 }
             }
 
-            // Игрок
             if (playerHp > 0) {
                 possibleTargets.push({ type: 'player' });
             }
@@ -319,7 +313,6 @@ Sherwood.Arena = {
     },
 
     _updateRank: function() {
-        var total = this._wins + this._losses;
         if (this._wins >= 50) this._rank = 'Легенда';
         else if (this._wins >= 25) this._rank = 'Ветеран';
         else if (this._wins >= 10) this._rank = 'Боец';
@@ -339,6 +332,7 @@ Sherwood.Arena = {
 
     flee: function() {
         this._inMatch = false;
+        this._currentOpponent = null;
         this.stopCharge();
         this._losses++;
         this._saveStats();
