@@ -1250,137 +1250,98 @@ this._screenLayer.appendChild(bloodOverlay);
     },
 
     _showArenaBattle: function() { 
-    if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
-        if (!this._arenaVictoryShown) this._arenaVictory(); 
-        return; 
-    } 
-    var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
-    var skinFile = opp.skin || 'assets/hero_skins/skin1_01.png'; 
-    this._showBattleScreen({ name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp, attack: opp.stats.attack, defense: opp.stats.defense }, 'arena', 'Арена - ' + opp.name, '', 'SherwoodUI._arenaAttack()', 'SherwoodUI._arenaFlee()', 'assets/backgrounds/duel_arena.png');
-    
-    // Добавляем стрелку переключения после отрисовки
-    setTimeout(function() {
-        var arrowBtn = document.getElementById('arena-switch-btn');
-        if (!arrowBtn) {
-            var btn = document.createElement('button');
-            btn.id = 'arena-switch-btn';
-            btn.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:transparent;border:none;cursor:pointer;z-index:20;';
-            btn.innerHTML = '<img src="assets/interface/arrow_arena.png" style="width:100%;height:100%;object-fit:contain;">';
-            btn.addEventListener('click', function() { SherwoodUI._arenaSwitchTarget(); });
-            var screenLayer = document.getElementById('screen-layer');
-            if (screenLayer) screenLayer.appendChild(btn);
-        }
-    }, 100);
-    
-    var self = this;
-    if (this._arenaCooldownInterval) clearInterval(this._arenaCooldownInterval);
-    this._arenaCooldownInterval = setInterval(function() {
-        self._updateArenaCooldown();
-    }, 100);
-},
-
-_arenaSwitchTarget: function() {
-    if (!this._currentArenaOpponents || !Sherwood.Arena.isInMatch()) return;
-    
-    var aliveBots = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
-    if (aliveBots.length <= 1) return;
-    
-    var currentIdx = this._currentArenaOpponentIndex;
-    var nextIdx = currentIdx;
-    
-    for (var i = 1; i <= this._currentArenaOpponents.length; i++) {
-        var checkIdx = (currentIdx + i) % this._currentArenaOpponents.length;
-        if (this._currentArenaOpponents[checkIdx].stats.hp > 0) {
-            nextIdx = checkIdx;
-            break;
-        }
-    }
-    
-    if (nextIdx !== currentIdx) {
-        this._currentArenaOpponentIndex = nextIdx;
-        this._showArenaBattle();
-        this._showDialog('Цель переключена', '#ff9800');
-    }
-},
-
-_arenaAttack: function() {
-    this._playHitSounds();
-    if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
-        if (!this._arenaVictoryShown) this._arenaVictory(); 
-        return; 
-    }
-    
-    var attackPower = Sherwood.Arena.getAttackPower();
-    if (attackPower === 0) {
-        this._showDialog('Атака не готова!', '#ff9800');
-        return;
-    }
-    
-    var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
-    var player = Sherwood.getPlayer();
-    
-    var damage = Math.max(1, Math.floor((player.stats.attack * player.stats.attack) / (player.stats.attack + opp.stats.defense) + Math.random() * 5));
-    damage = Math.floor(damage * attackPower);
-    
-    Sherwood.Arena._lastPlayerAttack = Date.now();
-    
-    opp.stats.hp -= damage;
-    this._hitEnemyCard(); 
-    this._updateEnemyHP(Math.max(0, opp.stats.hp), opp.stats.maxHp); 
-    this._showDialog('Урон: ' + damage + (attackPower < 1 ? ' (слабый удар)' : ''), attackPower < 1 ? '#ff9800' : '#fff');
-    
-    if (opp.stats.hp <= 0) { 
-        this._showDialog(opp.name + ' повержен!', '#4caf50'); 
-        if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1); 
-        this._currentArenaOpponentIndex++; 
-        var self = this; 
-        setTimeout(function() { 
-            if (self._currentArenaOpponentIndex >= self._currentArenaOpponents.length) { 
-                if (!self._arenaVictoryShown) self._arenaVictory(); 
-            } else { 
-                self._showArenaBattle(); 
-            } 
-        }, 1000); 
-        return; 
-    }
-    
-    // Боты бьют случайные цели
-    var botsResult = Sherwood.Arena._botsFight();
-    
-    if (botsResult.playerDead) {
-        var self = this;
+        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
+            if (!this._arenaVictoryShown) this._arenaVictory(); 
+            return; 
+        } 
+        var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
+        var skinFile = opp.skin || 'assets/hero_skins/skin1_01.png'; 
+        this._showBattleScreen({ name: opp.name, image: skinFile, hp: opp.stats.hp, maxHp: opp.stats.maxHp, attack: opp.stats.attack, defense: opp.stats.defense }, 'arena', 'Арена - ' + opp.name, '', 'SherwoodUI._arenaAttack()', 'SherwoodUI._arenaFlee()', 'assets/backgrounds/duel_arena.png');
+        
         setTimeout(function() {
-            if (!self._arenaDefeatShown) self._arenaDefeat();
-        }, 700);
-        return;
-    }
-    
-    if (botsResult.allBotsDead) {
+            var arrowBtn = document.getElementById('arena-switch-btn');
+            if (!arrowBtn) {
+                var btn = document.createElement('button');
+                btn.id = 'arena-switch-btn';
+                btn.style.cssText = 'position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;background:transparent;border:none;cursor:pointer;z-index:20;';
+                btn.innerHTML = '<img src="assets/interface/arrow_arena.png" style="width:100%;height:100%;object-fit:contain;">';
+                btn.addEventListener('click', function() { SherwoodUI._arenaSwitchTarget(); });
+                var screenLayer = document.getElementById('screen-layer');
+                if (screenLayer) screenLayer.appendChild(btn);
+            }
+        }, 100);
+        
         var self = this;
-        setTimeout(function() {
-            if (!self._arenaVictoryShown) self._arenaVictory();
-        }, 700);
-        return;
-    }
-    
-    // Боты могут переключить цель
-    if (Math.random() < 0.3 && this._currentArenaOpponents.some(function(o) { return o.stats.hp > 0; })) {
+        if (this._arenaCooldownInterval) clearInterval(this._arenaCooldownInterval);
+        this._arenaCooldownInterval = setInterval(function() {
+            self._updateArenaCooldown();
+        }, 100);
+    },
+
+    _arenaSwitchTarget: function() {
+        if (!this._currentArenaOpponents || !Sherwood.Arena.isInMatch()) return;
+        
         var aliveBots = this._currentArenaOpponents.filter(function(o) { return o.stats.hp > 0; });
-        if (aliveBots.length > 1) {
-            var newTarget = aliveBots[Math.floor(Math.random() * aliveBots.length)];
-            var newIdx = this._currentArenaOpponents.indexOf(newTarget);
-            if (newIdx !== this._currentArenaOpponentIndex) {
-                this._currentArenaOpponentIndex = newIdx;
-                this._showDialog('Боты переключили цель!', '#ff9800');
+        if (aliveBots.length <= 1) return;
+        
+        var currentIdx = this._currentArenaOpponentIndex;
+        var nextIdx = currentIdx;
+        
+        for (var i = 1; i <= this._currentArenaOpponents.length; i++) {
+            var checkIdx = (currentIdx + i) % this._currentArenaOpponents.length;
+            if (this._currentArenaOpponents[checkIdx].stats.hp > 0) {
+                nextIdx = checkIdx;
+                break;
             }
         }
-    }
-    
-    var self = this;
-    setTimeout(function() {
-        self._showArenaBattle();
-    }, 700);
-},
+        
+        if (nextIdx !== currentIdx) {
+            this._currentArenaOpponentIndex = nextIdx;
+            this._showArenaBattle();
+            this._showDialog('Цель переключена', '#ff9800');
+        }
+    },
+
+    _arenaAttack: function() {
+        this._playHitSounds();
+        if (!this._currentArenaOpponents || this._currentArenaOpponentIndex >= this._currentArenaOpponents.length) { 
+            if (!this._arenaVictoryShown) this._arenaVictory(); 
+            return; 
+        }
+        
+        var attackPower = Sherwood.Arena.getAttackPower();
+        if (attackPower === 0) {
+            this._showDialog('Атака не готова!', '#ff9800');
+            return;
+        }
+        
+        var opp = this._currentArenaOpponents[this._currentArenaOpponentIndex]; 
+        var player = Sherwood.getPlayer();
+        
+        var damage = Math.max(1, Math.floor((player.stats.attack * player.stats.attack) / (player.stats.attack + opp.stats.defense) + Math.random() * 5));
+        damage = Math.floor(damage * attackPower);
+        
+        Sherwood.Arena._lastPlayerAttack = Date.now();
+        
+        opp.stats.hp -= damage;
+        this._hitEnemyCard(); 
+        this._updateEnemyHP(Math.max(0, opp.stats.hp), opp.stats.maxHp); 
+        this._showDialog('Урон: ' + damage + (attackPower < 1 ? ' (слабый удар)' : ''), attackPower < 1 ? '#ff9800' : '#fff');
+        
+        if (opp.stats.hp <= 0) { 
+            this._showDialog(opp.name + ' повержен!', '#4caf50'); 
+            if (Sherwood.Daily) Sherwood.Daily.updateProgress('arena_wins', 1); 
+            this._currentArenaOpponentIndex++; 
+            var self = this; 
+            setTimeout(function() { 
+                if (self._currentArenaOpponentIndex >= self._currentArenaOpponents.length) { 
+                    if (!self._arenaVictoryShown) self._arenaVictory(); 
+                } else { 
+                    self._showArenaBattle(); 
+                } 
+            }, 1000); 
+            return; 
+        }
         
         var oppDamage = Math.max(1, Math.floor((opp.stats.attack * opp.stats.attack) / (opp.stats.attack + player.stats.defense) + Math.random() * 3));
         player.stats.hp = Math.max(0, player.stats.hp - oppDamage);
@@ -1390,7 +1351,7 @@ _arenaAttack: function() {
             SherwoodUI.updateDisplay(); 
             if (player.stats.hp <= 0) { 
                 if (!self._arenaDefeatShown) self._arenaDefeat(); 
-            } 
+            }
         }, 700);
     },
 
