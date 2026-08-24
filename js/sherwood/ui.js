@@ -600,7 +600,7 @@ _showInteractButton: function(type) {
         h += '<div style="color:#f44336;font-weight:bold;font-size:0.9em;text-align:center;">' + e.name + '</div>';
         h += '<div style="display:flex;align-items:center;gap:4px;width:100%;margin-bottom:2px;"><div style="width:48px;height:48px;border-radius:50%;border:2px solid #f44336;overflow:hidden;flex-shrink:0;"><img src="' + imgPath + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=&quot;none&quot;"></div><div style="flex:1;position:relative;height:50px;"><img src="assets/interface/life_scale.png" style="width:100%;height:50px;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:10px;left:28px;right:28px;bottom:10px;overflow:hidden;z-index:1;"><div id="enemy-hp-bar" style="background:url(assets/interface/filling_the_poisoned_health_bar.jpeg) left/auto 100%;height:100%;width:' + ehp + '%;"></div></div><span id="enemy-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.7em;z-index:2;font-weight:bold;text-shadow:0 0 4px #000;">' + e.hp + '</span></div></div>';
         h += '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:2px;"><span style="color:#fff;font-size:0.75em;font-weight:bold;">АТК ' + (e.attack || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">ЗЩТ ' + (e.defense || 0) + '</span><span style="color:#fff;font-size:0.75em;font-weight:bold;">HP ' + e.hp + '</span></div>';
-        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:350px;height:350px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
+        h += '<div style="position:relative;display:inline-block;" id="enemy-card-area"><img src="' + imgPath + '" id="enemy-card" style="width:500px;height:500px;object-fit:contain;position:relative;z-index:1;" onerror="this.style.display=&quot;none&quot;"><div id="enemy-hit-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;"></div><div id="damage-numbers" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;"></div></div>';
         var chargedSkillLeft = null, chargedSkillRight = null;
         if (Sherwood.Combat && Sherwood.Combat._battle) { var battle = Sherwood.Combat._battle; if (battle.chargedSkills && battle.chargedSkills.length > 0) { chargedSkillLeft = battle.chargedSkills[0] || null; chargedSkillRight = battle.chargedSkills[1] || null; } }
         var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
@@ -687,11 +687,16 @@ _showInteractButton: function(type) {
             requestAnimationFrame(processBlood);
         }
         
-        // Кровь по центру карты врага, с прозрачностью
-        var bloodOverlay = document.createElement('div'); 
-        bloodOverlay.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top) + 'px;left:' + (cardRect.left - containerRect.left) + 'px;width:' + cardRect.width + 'px;height:' + cardRect.height + 'px;z-index:998;pointer-events:none;opacity:0.7;';
-        bloodOverlay.appendChild(this._bloodCanvas);
-        this._screenLayer.appendChild(bloodOverlay);
+        /// Рандомное смещение внутри карты врага
+var randX = Math.random() * cardRect.width * 0.4 - cardRect.width * 0.2;
+var randY = Math.random() * cardRect.height * 0.4 - cardRect.height * 0.2;
+
+var bloodSize = Math.min(cardRect.width, cardRect.height) * 0.2; // В 2 раза меньше карты
+
+var bloodOverlay = document.createElement('div'); 
+bloodOverlay.style.cssText = 'position:absolute;top:' + (cardRect.top - containerRect.top + cardRect.height / 2 - bloodSize / 2 + randY) + 'px;left:' + (cardRect.left - containerRect.left + cardRect.width / 2 - bloodSize / 2 + randX) + 'px;width:' + bloodSize + 'px;height:' + bloodSize + 'px;z-index:998;pointer-events:none;opacity:0.7;';
+bloodOverlay.appendChild(this._bloodCanvas);
+this._screenLayer.appendChild(bloodOverlay);
         
         this._bloodVideo.play().catch(function() {});
         processBlood();
