@@ -185,12 +185,9 @@ const SherwoodUI = {
 
     _showPlaceholder: function(title, bgKey, backAction) { this._playSound('click'); this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">&#128679;</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">'+title+'</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction); },
      _showVictoryScreen: function(rewards) {
-    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;">';
-    h += '<div style="position:relative;display:inline-block;">';
-    h += '<img src="assets/interface/vertical_slab_victory.png" style="width:400px;height:auto;display:block;">';
+    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;background:url(\'assets/interface/vertical_slab_victory.png\') center/cover no-repeat;position:relative;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
-    // Собираем награды в массив
     var rewardItems = [];
     
     if (rewards.cupEarned) {
@@ -223,32 +220,29 @@ const SherwoodUI = {
         }
     }
     
-    // Ячейки по 3 в ряд
     if (rewardItems.length > 0) {
         h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:250px;margin:0 auto;">';
         for (var ri = 0; ri < rewardItems.length; ri++) {
             var rw = rewardItems[ri];
             h += '<div style="text-align:center;">';
-            h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;">' + rw.quantity + '</div>';
+            h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;text-shadow:0 0 4px #000;">' + rw.quantity + '</div>';
             h += '<div style="background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
             h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
             h += '</div>';
-            h += '<div style="color:#aaa;font-size:0.6em;margin-top:2px;">' + rw.label + '</div>';
+            h += '<div style="color:#ddd;font-size:0.6em;margin-top:2px;text-shadow:0 0 4px #000;">' + rw.label + '</div>';
             h += '</div>';
         }
         h += '</div>';
     }
     
     h += '</div>';
-    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
-    h += '</div></div>';
+    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
+    h += '</div>';
     this._openScreen('Победа', 'dungeon_fight', h);
 },
 
 _showDefeatScreen: function(rewards) {
-    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;">';
-    h += '<div style="position:relative;display:inline-block;">';
-    h += '<img src="assets/interface/vertical_slab_defeat.png" style="width:400px;height:auto;display:block;">';
+    var h = '<div style="display:flex;align-items:center;justify-content:center;min-height:100%;padding:10px;background:url(\'assets/interface/vertical_slab_defeat.png\') center/cover no-repeat;position:relative;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
     var rewardItems = [];
@@ -285,19 +279,19 @@ _showDefeatScreen: function(rewards) {
         for (var ri = 0; ri < rewardItems.length; ri++) {
             var rw = rewardItems[ri];
             h += '<div style="text-align:center;">';
-            h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;">' + rw.quantity + '</div>';
+            h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;text-shadow:0 0 4px #000;">' + rw.quantity + '</div>';
             h += '<div style="background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
             h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
             h += '</div>';
-            h += '<div style="color:#aaa;font-size:0.6em;margin-top:2px;">' + rw.label + '</div>';
+            h += '<div style="color:#ddd;font-size:0.6em;margin-top:2px;text-shadow:0 0 4px #000;">' + rw.label + '</div>';
             h += '</div>';
         }
         h += '</div>';
     }
     
     h += '</div>';
-    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
-    h += '</div></div>';
+    h += '<button onclick="SherwoodUI._claimReward()" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#c9a040;border:none;border-radius:10px;padding:12px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;z-index:2;">Забрать</button>';
+    h += '</div>';
     this._openScreen('Поражение', 'dungeon_fight', h);
 },
 
