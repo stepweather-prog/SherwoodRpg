@@ -12,6 +12,8 @@ Sherwood.Arena = {
     _wins: 0,
     _losses: 0,
     _rank: 'Новичок',
+    _lastPlayerAttack: 0,
+    _playerAttackCooldown: 3000, // 3 секунды
 
     init: function() {
         var p = Sherwood.getPlayer();
@@ -92,9 +94,15 @@ Sherwood.Arena = {
         this._playerBattleHp = player.stats.maxHp;
         this._inMatch = true;
         this._chargePercent = 0;
+        this._lastPlayerAttack = 0;
 
         player.stats.hp = player.stats.maxHp;
         Sherwood.saveGame();
+
+        // Обновляем прогресс ежедневного задания
+        if (typeof Sherwood.Daily !== 'undefined') {
+            Sherwood.Daily.updateProgress('arena_fights', 1);
+        }
 
         return { success: true, opponents: this._opponents };
     },
@@ -105,6 +113,22 @@ Sherwood.Arena = {
 
     getChargePercent: function() {
         return this._chargePercent;
+    },
+
+    canPlayerAttack: function() {
+        var timeSinceLast = Date.now() - this._lastPlayerAttack;
+        return timeSinceLast >= 1500; // Можно бить через 1.5 секунды
+    },
+
+    getAttackPower: function() {
+        var timeSinceLast = Date.now() - this._lastPlayerAttack;
+        if (timeSinceLast >= this._playerAttackCooldown) {
+            return 1; // Полная сила
+        }
+        if (timeSinceLast >= 1500) {
+            return 0.5; // Половина силы
+        }
+        return 0; // Нельзя бить
     },
 
     startCharge: function() {
@@ -127,6 +151,10 @@ Sherwood.Arena = {
 
     playerAttack: function() {
         if (!this._inMatch || !this._currentOpponent) return { error: 'Нет боя' };
+        
+        var attackPower = this.getAttackPower();
+        if (attackPower === 0) return { error: 'Атака не готова' };
+        
         var player = Sherwood.getPlayer();
         var opp = this._currentOpponent;
 
@@ -139,7 +167,7 @@ Sherwood.Arena = {
 
         var rawDamage = Math.max(1, Math.floor((player.stats.attack - opp.stats.defense) * 0.4 + player.stats.attack * 0.1));
         var chargeMultiplier = 0.7 + (chargePercent * 0.8);
-        var damage = Math.floor(rawDamage * chargeMultiplier);
+        var damage = Math.floor(rawDamage * chargeMultiplier * attackPower);
 
         var critChance = chargePercent >= 1 ? 30 : 5;
         var crit = Math.random() * 100 < critChance;
@@ -148,9 +176,12 @@ Sherwood.Arena = {
         opp.stats.hp -= damage;
         if (opp.stats.hp < 0) opp.stats.hp = 0;
 
+        this._lastPlayerAttack = Date.now();
+
         var result = {
             damage: damage,
             crit: crit,
+            attackPower: attackPower,
             enemyHp: opp.stats.hp,
             enemyMaxHp: opp.stats.maxHp,
             enemyName: opp.name,
@@ -206,26 +237,6 @@ Sherwood.Arena = {
             return result;
         }
 
-        if (this._currentOpponent && this._currentOpponent.stats.hp > 0) {
-            var oppDamage = Math.max(1, Math.floor((this._currentOpponent.stats.attack - player.stats.defense) * 0.3 + this._currentOpponent.stats.attack * 0.05));
-            this._playerBattleHp -= oppDamage;
-            player.stats.hp = Math.max(0, this._playerBattleHp);
-            result.enemyDamage = oppDamage;
-            result.playerHp = player.stats.hp;
-
-            if (player.stats.hp <= 0) {
-                result.playerDead = true;
-                result.rewards = { exp: 20, silver: 50 };
-                this._losses++;
-                this._saveStats();
-                player.stats.hp = Math.max(1, Math.floor(player.stats.maxHp * 0.2));
-                Sherwood.saveGame();
-                this._inMatch = false;
-                this.stopCharge();
-                return result;
-            }
-        }
-
         this._chargePercent = 0;
         Sherwood.saveGame();
         return result;
@@ -244,37 +255,52 @@ Sherwood.Arena = {
 
     _botsFight: function() {
         var player = Sherwood.getPlayer();
+        var allBots = this._opponents.slice();
+        var playerHp = this._playerBattleHp;
 
-        for (var i = 0; i < this._opponents.length; i++) {
-            var attacker = this._opponents[i];
+        // Перемешиваем ботов для случайного порядка
+        for (var i = allBots.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = allBots[i];
+            allBots[i] = allBots[j];
+            allBots[j] = temp;
+        }
+
+        // Каждый бот атакует случайную цель (бот или игрок)
+        for (var bi = 0; bi < allBots.length; bi++) {
+            var attacker = allBots[bi];
             if (!attacker || attacker.stats.hp <= 0) continue;
 
-            var targets = [];
+            var possibleTargets = [];
 
-            for (var j = 0; j < this._opponents.length; j++) {
-                if (i !== j && this._opponents[j].stats.hp > 0) {
-                    targets.push({ type: 'bot', index: j });
+            // Другие боты
+            for (var tj = 0; tj < allBots.length; tj++) {
+                if (tj !== bi && allBots[tj].stats.hp > 0) {
+                    possibleTargets.push({ type: 'bot', bot: allBots[tj] });
                 }
             }
 
-            if (player.stats.hp > 0) {
-                targets.push({ type: 'player' });
+            // Игрок
+            if (playerHp > 0) {
+                possibleTargets.push({ type: 'player' });
             }
 
-            if (targets.length === 0) continue;
+            if (possibleTargets.length === 0) continue;
 
-            var target = targets[Math.floor(Math.random() * targets.length)];
+            var target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
 
             if (target.type === 'bot') {
-                var targetBot = this._opponents[target.index];
+                var targetBot = target.bot;
                 var botDamage = Math.max(1, Math.floor((attacker.stats.attack - targetBot.stats.defense) * 0.35 + attacker.stats.attack * 0.08));
                 targetBot.stats.hp = Math.max(0, targetBot.stats.hp - botDamage);
-            } else if (target.type === 'player') {
+            } else {
                 var playerDamage = Math.max(1, Math.floor((attacker.stats.attack - player.stats.defense) * 0.3 + attacker.stats.attack * 0.05));
-                this._playerBattleHp -= playerDamage;
-                player.stats.hp = Math.max(0, this._playerBattleHp);
+                playerHp -= playerDamage;
             }
         }
+
+        this._playerBattleHp = Math.max(0, playerHp);
+        player.stats.hp = this._playerBattleHp;
 
         if (player.stats.hp <= 0) {
             return { playerDead: true };
