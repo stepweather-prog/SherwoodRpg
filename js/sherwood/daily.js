@@ -5,7 +5,7 @@
 Sherwood.Daily = (function() {
     'use strict';
 
-    var DAILY_QUESTS_PER_DAY = 4;
+    var DAILY_QUESTS_PER_DAY = 8;
 
     var CHAPTER_REQUIREMENTS = {};
     for (var i = 1; i <= 15; i++) {
@@ -15,17 +15,16 @@ Sherwood.Daily = (function() {
         };
     }
 
+    // Новые ежедневные задания
     var DAILY_TEMPLATES = [
-        { id: 'dq_kill_beasts',    name: 'Истребитель',         desc: 'Убить {t} бестий',          target: 50, type: 'kill_beasts',      reward: { gold: 10, silver: 500, exp: 100 } },
-        { id: 'dq_dungeon_floors', name: 'Подземный герой',     desc: 'Пройти {t} этажей подземок', target: 3,  type: 'dungeon_floors',   reward: { gold: 15, silver: 400, exp: 120 } },
-        { id: 'dq_quest_fights',   name: 'Квестовый боец',      desc: 'Сразиться {t} раз в квестах', target: 5, type: 'quest_fights',    reward: { gold: 15, silver: 300, exp: 120 } },
-        { id: 'dq_open_chests',    name: 'Кладоискатель',        desc: 'Открыть {t} сундуков',       target: 5,  type: 'open_chests',     reward: { gold: 10, silver: 350, exp: 90 } },
-        { id: 'dq_collect_loot',   name: 'Собиратель',           desc: 'Собрать {t} предметов лута', target: 20, type: 'collect_loot',    reward: { gold: 20, silver: 600, exp: 150 } },
-        { id: 'dq_tavern',         name: 'Завсегдатай',          desc: 'Выполнить задание таверны',  target: 1,  type: 'tavern_complete',  reward: { gold: 20, silver: 500, exp: 150 } },
-        { id: 'dq_arena_wins',     name: 'Гладиатор',            desc: 'Победить на арене {t} раз',  target: 3,  type: 'arena_wins',      reward: { gold: 25, silver: 700, exp: 200 } },
-        { id: 'dq_craft_items',    name: 'Кузнец',               desc: 'Скрафтить {t} предметов',    target: 3,  type: 'craft_items',     reward: { gold: 15, silver: 450, exp: 130 } },
-        { id: 'dq_sell_items',     name: 'Торговец',             desc: 'Продать {t} предметов',      target: 10, type: 'sell_items',      reward: { gold: 25, silver: 300, exp: 110 } },
-        { id: 'dq_use_potions',    name: 'Травник',              desc: 'Использовать {t} зелий',     target: 5,  type: 'use_potions',     reward: { gold: 10, silver: 400, exp: 100 } }
+        { id: 'dq_tavern_contracts', name: 'Контрактник', desc: 'Взять {t} контрактов в таверне', target: 10, type: 'tavern_contracts', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_arena_fights', name: 'Гладиатор', desc: 'Сразиться {t} раз на арене', target: 10, type: 'arena_fights', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_quest_fights', name: 'Квестовый боец', desc: 'Сразиться {t} раз в квесте', target: 6, type: 'quest_fights', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_raid_fights', name: 'Рейдер', desc: 'Сразиться {t} раз в рейде', target: 1, type: 'raid_fights', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_dungeon_kills', name: 'Истребитель', desc: 'Убить {t} врагов в подземелье', target: 50, type: 'dungeon_kills', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_dungeon_loot', name: 'Собиратель', desc: 'Собрать {t} раз лут в подземке', target: 50, type: 'dungeon_loot', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_dungeon_floors', name: 'Подземный герой', desc: 'Пройти {t} этажей подземелья', target: 5, type: 'dungeon_floors', reward: { gold: 5, silver: 0, exp: 50, parts: true } },
+        { id: 'dq_use_potions', name: 'Травник', desc: 'Выпить {t} зелий лечения', target: 15, type: 'use_potions', reward: { gold: 5, silver: 0, exp: 50, parts: true } }
     ];
 
     var CHAPTER_TEMPLATES = [];
@@ -119,17 +118,60 @@ Sherwood.Daily = (function() {
         };
     }
 
-    function _generateDailyQuests() {
-        var pool = DAILY_TEMPLATES.slice();
-        var selected = [];
-        var count = Math.min(DAILY_QUESTS_PER_DAY, pool.length);
+    // Генерация случайных частей стрелы
+    function _generateArrowParts() {
+        var parts = [];
+        var partTypes = ['bone', 'branch', 'feather'];
+        var count = _randomInt(1, 5);
+        
+        var type = partTypes[_randomInt(0, partTypes.length - 1)];
+        parts.push({ type: type, quantity: count });
+        
+        return parts;
+    }
 
-        for (var i = 0; i < count && pool.length > 0; i++) {
-            var idx = _randomInt(0, pool.length - 1);
-            selected.push(_instantiateQuest(pool[idx]));
-            pool.splice(idx, 1);
+    // Проверка: все ли ежедневные задания были выполнены вчера
+    function _wereAllDailyCompletedYesterday() {
+        var p = _getPlayer();
+        if (!p || !p.daily) return false;
+        
+        var yesterdayStr = '';
+        var yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterdayStr = yesterday.toDateString();
+        
+        // Проверяем сохранённый флаг
+        if (p.daily.allCompletedYesterday === yesterdayStr) {
+            return true;
         }
+        
+        return false;
+    }
 
+    // Сохраняем флаг выполнения всех заданий
+    function _saveAllCompletedFlag() {
+        var p = _getPlayer();
+        if (!p || !p.daily) return;
+        
+        var allCompleted = true;
+        for (var i = 0; i < _dailyQuests.length; i++) {
+            if (!_dailyQuests[i].completed) {
+                allCompleted = false;
+                break;
+            }
+        }
+        
+        if (allCompleted) {
+            var today = _getTodayString();
+            p.daily.allCompletedYesterday = today;
+        }
+    }
+
+    function _generateDailyQuests() {
+        var selected = [];
+        for (var i = 0; i < DAILY_TEMPLATES.length; i++) {
+            selected.push(_instantiateQuest(DAILY_TEMPLATES[i]));
+        }
         return selected;
     }
 
@@ -146,7 +188,6 @@ Sherwood.Daily = (function() {
             var prevQuests = p.daily.chapterQuests[req.requiredChapter];
             if (!prevQuests || prevQuests.length === 0) return false;
             
-            // Глава считается пройденной, если ВСЕ задания выполнены
             var allCompleted = true;
             for (var i = 0; i < prevQuests.length; i++) {
                 if (!prevQuests[i].completed) {
@@ -156,7 +197,6 @@ Sherwood.Daily = (function() {
             }
             if (!allCompleted) return false;
             
-            // Дополнительно: босс предыдущей главы должен быть убит в квестах
             var prevChapterId = req.requiredChapter;
             var questProgress = p.questProgress;
             if (questProgress && questProgress.completed) {
@@ -374,6 +414,7 @@ Sherwood.Daily = (function() {
 
             if (updated) {
                 _saveDaily();
+                _saveAllCompletedFlag();
             }
 
             return { updated: updated, completedQuests: completedQuests };
@@ -391,16 +432,59 @@ Sherwood.Daily = (function() {
 
             _dailyClaimed.push(questId);
 
-            if (Sherwood.addExp) Sherwood.addExp(quest.reward.exp);
-            if (Sherwood.addResource) {
-                Sherwood.addResource('gold', quest.reward.gold);
-                if (quest.reward.silver) Sherwood.addResource('silver', quest.reward.silver);
+            // Проверяем множитель x2
+            var multiplier = _wereAllDailyCompletedYesterday() ? 2 : 1;
+
+            // Награда: части стрелы (1-5 штук), серебро (100-300), 5 золота
+            var parts = _generateArrowParts();
+            var silver = _randomInt(100, 300) * multiplier;
+            var gold = 5 * multiplier;
+
+            // Добавляем части стрелы
+            if (Sherwood.Bag && Sherwood.Bag.addItem) {
+                for (var pIdx = 0; pIdx < parts.length; pIdx++) {
+                    var part = parts[pIdx];
+                    var itemId = part.type;
+                    var itemName = '';
+                    if (part.type === 'bone') itemName = 'Кость';
+                    else if (part.type === 'branch') itemName = 'Ветвь';
+                    else if (part.type === 'feather') itemName = 'Перо';
+                    
+                    Sherwood.Bag.addItem({
+                        id: itemId,
+                        name: itemName,
+                        quantity: part.quantity * multiplier,
+                        icon: 'assets/interface/arrow_part_' + part.type + '.png'
+                    });
+                }
+            } else {
+                // Если Bag недоступен — добавляем через ресурсы
+                for (var pIdx2 = 0; pIdx2 < parts.length; pIdx2++) {
+                    var part2 = parts[pIdx2];
+                    Sherwood.addResource(part2.type, part2.quantity * multiplier);
+                }
             }
+
+            // Добавляем ресурсы
+            if (Sherwood.addResource) {
+                Sherwood.addResource('gold', gold);
+                Sherwood.addResource('silver', silver);
+            }
+            
+            if (Sherwood.addExp) Sherwood.addExp(quest.reward.exp * multiplier);
 
             _saveDaily();
 
-            var result = { success: true, reward: quest.reward, quest: quest };
-            _emit('rewardClaimed', { source: 'daily', questId: questId, reward: quest.reward });
+            var reward = {
+                gold: gold,
+                silver: silver,
+                exp: quest.reward.exp * multiplier,
+                parts: parts.map(function(p) { return { type: p.type, quantity: p.quantity * multiplier }; }),
+                multiplier: multiplier
+            };
+
+            var result = { success: true, reward: reward, quest: quest };
+            _emit('rewardClaimed', { source: 'daily', questId: questId, reward: reward });
 
             return result;
         },
