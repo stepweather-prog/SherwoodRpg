@@ -1645,12 +1645,28 @@ _arenaAttack: function() {
     _showAllTrophies: function() {
         var trophies = Sherwood.getPlayer().trophies || [];
         var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Трофеи (' + trophies.length + ')</div>';
-        if (trophies.length === 0) h += '<div style="color:#aaa;">Нет трофеев</div>';
-        for (var i = 0; i < trophies.length; i++) { var t = trophies[i]; h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;"><div style="position:relative;width:80px;height:80px;flex-shrink:0;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;"><img src="' + (t.icon || 'assets/interface/trophy_stand.png') + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;object-fit:contain;z-index:1;border-radius:8px;"></div><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + t.name + '</div>'; if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (t.bonus.attack||0) + ' | ЗЩТ +' + (t.bonus.defense||0) + ' | HP +' + (t.bonus.hp||0) + '</div>'; h += '</div></div>'; }
+        
+        if (trophies.length === 0) {
+            h += '<div style="text-align:center;padding:20px;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="width:180px;height:180px;object-fit:contain;"><div style="color:#aaa;margin-top:8px;">Нет трофеев</div></div>';
+        }
+        
+        for (var i = 0; i < trophies.length; i++) { 
+            var t = trophies[i]; 
+            h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
+            
+            if (t.icon && t.icon.indexOf('bonds_of_eternity') !== -1) {
+                h += '<img src="' + t.icon + '" style="width:80px;height:80px;object-fit:contain;flex-shrink:0;">';
+            } else {
+                h += '<div style="position:relative;width:80px;height:80px;flex-shrink:0;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;"><img src="' + (t.icon || 'assets/interface/trophy_stand.png') + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;object-fit:contain;z-index:1;border-radius:8px;"></div>';
+            }
+            
+            h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + t.name + '</div>'; 
+            if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (t.bonus.attack||0) + ' | ЗЩТ +' + (t.bonus.defense||0) + ' | HP +' + (t.bonus.hp||0) + '</div>'; 
+            h += '</div></div>'; 
+        }
         h += '</div>';
         this._openScreen('Трофеи', 'profile', h, 'SherwoodUI.profile()');
     },
-
     _showAllRings: function() {
         var equipment = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {}; var ring = equipment.ring;
         var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца</div>';
@@ -1727,7 +1743,7 @@ _arenaAttack: function() {
     _buyAmuletFromMarket: function(amuletId) { var r = Sherwood.BlackMarket.buyJewelry('amulet', amuletId); if (r.success) { this._showToast('Амулет выкован!'); } else { this._showToast(r.reason || 'Ошибка'); } var self = this; setTimeout(function() { self._showAmuletCrafting(); }, 800); },
     _craftSkin: function(skinId) { var r = Sherwood.Forge.craftSkin(skinId); if (r.success) { this._showToast('Облик выкован!'); } else { this._showToast(r.reason || 'Ошибка'); } var self = this; setTimeout(function() { self._showSkinCrafting(); }, 800); },
     _enhanceItem: function(idx) { var r = Sherwood.Forge.enhanceItem(idx); var log = document.getElementById('forge-log'); if (r.enhanced) { if (log) log.textContent = 'Улучшено! +' + r.newLevel; } else if (r.broken) { if (log) log.textContent = 'Сломано!'; } else if (r.failed) { if (log) log.textContent = 'Неудача'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
-        bestiary: function() { 
+       bestiary: function() { 
         var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
         if(!Sherwood.Bestiary) { this._showPlaceholder('Бестиарий','bestiary',gb); return; } 
         var progress=Sherwood.Bestiary.getDiscoveryProgress();
@@ -1736,14 +1752,42 @@ _arenaAttack: function() {
         var h = '<div style="text-align:center;margin-bottom:8px;color:#aaa;">Открыто: '+progress.discovered+'/'+progress.total+' ('+progress.percent+'%)</div>';
         h += '<div style="background:rgba(0,0,0,0.3);border-radius:6px;height:10px;margin-bottom:8px;overflow:hidden;"><div style="background:#c9a040;height:100%;width:'+progress.percent+'%;"></div></div>';
         h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
-        for (var t=0; t<tabs.length; t++) { var active = (this._bestiaryTab === t) ? '#c9a040' : 'rgba(255,255,255,0.1)'; var color = (this._bestiaryTab === t) ? '#000' : '#fff'; h += '<button onclick="SherwoodUI._bestiaryTab='+t+';SherwoodUI.bestiary();" style="background:'+active+';border:1px solid #555;border-radius:6px;padding:4px 10px;color:'+color+';cursor:pointer;font-size:0.7em;">'+tabs[t]+'</button>'; }
+        for (var t=0; t<tabs.length; t++) { 
+            var active = (this._bestiaryTab === t) ? '#c9a040' : 'rgba(255,255,255,0.1)'; 
+            var color = (this._bestiaryTab === t) ? '#000' : '#fff'; 
+            h += '<button onclick="SherwoodUI._bestiaryTab='+t+';SherwoodUI.bestiary();" style="background:'+active+';border:1px solid #555;border-radius:6px;padding:4px 10px;color:'+color+';cursor:pointer;font-size:0.7em;">'+tabs[t]+'</button>'; 
+        }
         h += '</div>';
         var beasts = Sherwood.Bestiary.getBeastsByZone(tabs[this._bestiaryTab]);
         if (beasts.length === 0) { h += '<div style="color:#aaa;text-align:center;">Нет бестий</div>'; }
-        for (var i=0; i<beasts.length; i++) { var b = beasts[i], disc = b.kills > 0; h += '<div onclick="SherwoodUI._showBeastInfo(\''+b.id+'\')" style="background:rgba(0,0,0,0.5);border:1px solid '+(disc?'#4caf50':'#555')+';border-radius:10px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;">'; var beastImgPath = 'assets/all_beasts/' + b.id; if (b.zone === 'Квест') beastImgPath = 'assets/beast_quest/' + b.id; if (b.zone === 'Портал') beastImgPath = 'assets/portal_beasts/' + b.id; h += '<img src="' + beastImgPath + '" style="width:60px;height:60px;object-fit:contain;border-radius:8px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">'; h += '<div style="flex:1;"><div style="color:'+(disc?'#fff':'#888')+';">'+(disc?b.name:'???')+'</div><div style="color:#aaa;font-size:0.6em;">'+b.floor+' | '+b.type+'</div><div style="color:#aaa;font-size:0.6em;">Убито: '+b.kills+'</div></div>'; if (disc && !b.rewardClaimed) h += '<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="background:#ff9800;border:none;border-radius:4px;padding:4px 10px;color:#fff;cursor:pointer;font-size:0.6em;">+'+b.reward+' Сер.</button>'; if (disc && b.rewardClaimed) h += '<span style="color:#4caf50;font-size:0.6em;">Получено</span>'; h += '</div>'; }
+        
+        // Иконки по 3 в ряд
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:350px;margin:0 auto;">';
+        
+        for (var i=0; i<beasts.length; i++) { 
+            var b = beasts[i], disc = b.kills > 0; 
+            var beastImgPath = 'assets/all_beasts/' + b.id; 
+            if (b.zone === 'Квест') beastImgPath = 'assets/beast_quest/' + b.id; 
+            if (b.zone === 'Портал') beastImgPath = 'assets/portal_beasts/' + b.id; 
+            
+            h += '<div onclick="SherwoodUI._showBeastInfo(\''+b.id+'\')" style="background:rgba(0,0,0,0.5);border:1px solid '+(disc?'#4caf50':'#555')+';border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;cursor:pointer;">';
+            h += '<img src="' + beastImgPath + '" style="width:80px;height:80px;object-fit:contain;border-radius:4px;'+(disc?'':'filter:grayscale(1);opacity:0.5;')+'" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="color:'+(disc?'#fff':'#888')+';font-size:0.6em;text-align:center;margin-top:4px;">'+(disc?b.name:'???')+'</div>';
+            h += '<div style="color:#aaa;font-size:0.5em;">Убито: '+b.kills+'</div>';
+            
+            if (disc && !b.rewardClaimed) {
+                h += '<button onclick="event.stopPropagation();SherwoodUI._claimBestiaryReward(\''+b.id+'\')" style="background:#ff9800;border:none;border-radius:4px;padding:2px 8px;color:#fff;cursor:pointer;font-size:0.5em;margin-top:2px;">+'+b.reward+' Сер.</button>';
+            }
+            if (disc && b.rewardClaimed) {
+                h += '<span style="color:#4caf50;font-size:0.5em;margin-top:2px;">✓</span>';
+            }
+            
+            h += '</div>'; 
+        }
+        h += '</div>';
+        
         this._openScreen('Бестиарий','bestiary',h,gb); 
     },
-
     _showBeastInfo: function(beastId) { 
         var b = Sherwood.Bestiary.getBeast(beastId); if (!b) return; var disc = b.kills > 0;
         var beastImgPath = 'assets/all_beasts/' + beastId; if (b.zone === 'Квест') beastImgPath = 'assets/beast_quest/' + beastId; if (b.zone === 'Портал') beastImgPath = 'assets/portal_beasts/' + beastId;
