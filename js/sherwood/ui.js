@@ -869,7 +869,7 @@ this._screenLayer.appendChild(bloodOverlay);
         var tab = Sherwood.Tavern._tab || 1;
         var h = '';
         h += '<div style="display:flex;flex-direction:column;align-items:center;padding:20px;">';
-        h += '<div style="position:relative;width:240px;height:240px;margin-bottom:16px;"><img src="assets/interface/old_huntsman_bertram.png" style="width:100%;height:100%;object-fit:contain;"></div>';
+        
         h += '<div style="display:flex;gap:8px;margin-bottom:16px;"><button onclick="Sherwood.Tavern._tab=1;SherwoodUI.tavern();" style="background:' + (tab === 1 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:8px;padding:10px 24px;color:' + (tab === 1 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.85em;font-weight:bold;">Контракты</button><button onclick="Sherwood.Tavern._tab=2;SherwoodUI.tavern();" style="background:' + (tab === 2 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:8px;padding:10px 24px;color:' + (tab === 2 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.85em;font-weight:bold;">Таланты</button></div>';
         if (tab === 1) {
             var completedCount = Sherwood.Tavern.getCompletedCount();
