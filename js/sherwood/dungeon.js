@@ -523,6 +523,11 @@ Sherwood.Dungeon = {
             }
         }
 
+        // Обновляем прогресс ежедневного задания
+        if (typeof Sherwood.Daily !== 'undefined') {
+            Sherwood.Daily.updateProgress('dungeon_kills', 1);
+        }
+
         if (d.monstersKilled >= d.minToKill) {
             for (var y = 0; y < d.size; y++) {
                 for (var x = 0; x < d.size; x++) {
@@ -535,7 +540,7 @@ Sherwood.Dungeon = {
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
-
+        if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
         if (!this._progress) {
             this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
         }
