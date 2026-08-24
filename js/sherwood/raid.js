@@ -67,7 +67,10 @@ Sherwood.Raid = {
     canJoinRaid: function() {
         var p = Sherwood.getPlayer();
         if (!p) return { can: false, reason: 'Игрок не найден' };
-
+        // Обновляем прогресс ежедневного задания
+    if (typeof Sherwood.Daily !== 'undefined') {
+        Sherwood.Daily.updateProgress('raid_fights', 1);
+    }
         var today = new Date().toDateString();
         if (p.raid.lastRaidDate !== today) {
             p.raid.raidsToday = 0;
