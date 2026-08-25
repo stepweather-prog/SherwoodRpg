@@ -522,21 +522,48 @@
     var GAME_WIDTH = 480;
     var GAME_HEIGHT = 800;
     
+    function isMobile() {
+        return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+            || window.innerWidth <= 768;
+    }
+    
     function scaleGame() {
         var vw = window.innerWidth;
         var vh = window.innerHeight;
         
-        var scale = Math.max(vw / GAME_WIDTH, vh / GAME_HEIGHT);
-        
-        container.style.transform = 'scale(' + scale + ')';
-        container.style.transformOrigin = 'center center';
-        container.style.position = 'fixed';
-        container.style.left = '50%';
-        container.style.top = '50%';
-        container.style.width = GAME_WIDTH + 'px';
-        container.style.height = GAME_HEIGHT + 'px';
-        container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
-        container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
+        if (isMobile()) {
+            // Мобилка — заполняем весь экран
+            var scale = Math.max(vw / GAME_WIDTH, vh / GAME_HEIGHT);
+            scale = scale * 0.97;
+            
+            container.style.transform = 'scale(' + scale + ')';
+            container.style.transformOrigin = 'center center';
+            container.style.position = 'fixed';
+            container.style.left = '50%';
+            container.style.top = '50%';
+            container.style.width = GAME_WIDTH + 'px';
+            container.style.height = GAME_HEIGHT + 'px';
+            container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
+            container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
+        } else {
+            // ПК — масштабируем по высоте, статуи по бокам
+            var scaleY = vh / GAME_HEIGHT;
+            var scaleX = vw / GAME_WIDTH;
+            var scale = scaleY;
+            
+            if (scaleX < scale) scale = scaleX;
+            if (scale > 1.5) scale = 1.5;
+            
+            container.style.transform = 'scale(' + scale + ')';
+            container.style.transformOrigin = 'center center';
+            container.style.position = 'fixed';
+            container.style.left = '50%';
+            container.style.top = '50%';
+            container.style.width = GAME_WIDTH + 'px';
+            container.style.height = GAME_HEIGHT + 'px';
+            container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
+            container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
+        }
     }
     
     scaleGame();
