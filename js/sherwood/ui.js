@@ -1823,7 +1823,36 @@ _doTraining: function(stat) {
         h += '<div onclick="SherwoodUI._showAmuletCrafting()" style="cursor:pointer;position:relative;width:70px;height:70px;background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><img src="assets/interface/amulet_crafting_tablet_resource.png" style="width:44px;height:44px;object-fit:contain;"><span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + amuletTablets + '</span></div>';
         h += '<div onclick="SherwoodUI._craftArrowFromForge()" style="cursor:pointer;position:relative;width:70px;height:70px;background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><img src="assets/interface/sherwood_hollow_arrow.png" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'"><span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + arrowCount + '</span></div>';
         h += '</div>';
-        var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
+
+// Кнопки заточки экипировки
+var ring = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.ring : null;
+var amulet = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.amulet : null;
+var ringLevel = Sherwood.Forge.getEnhanceLevel('ring');
+var ringCost = Sherwood.Forge.getEnhanceCost('ring');
+var amuletLevel = Sherwood.Forge.getEnhanceLevel('amulet');
+var amuletCost = Sherwood.Forge.getEnhanceCost('amulet');
+var skinLevel = Sherwood.Forge.getEnhanceLevel('skin');
+var skinCost = Sherwood.Forge.getEnhanceCost('skin');
+
+h += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;align-items:center;width:100%;">';
+
+if (ring) {
+    h += '<button onclick="SherwoodUI._enhanceEquipped(\'ring\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:0.85em;width:80%;max-width:300px;">Заточить кольцо (+' + ringLevel + ') — ' + ringCost + ' сер.</button>';
+} else {
+    h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px 20px;color:#888;font-size:0.85em;width:80%;max-width:300px;text-align:center;">Нет кольца</div>';
+}
+
+if (amulet) {
+    h += '<button onclick="SherwoodUI._enhanceEquipped(\'amulet\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:0.85em;width:80%;max-width:300px;">Заточить амулет (+' + amuletLevel + ') — ' + amuletCost + ' сер.</button>';
+} else {
+    h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px 20px;color:#888;font-size:0.85em;width:80%;max-width:300px;text-align:center;">Нет амулета</div>';
+}
+
+h += '<button onclick="SherwoodUI._enhanceEquipped(\'skin\')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:0.85em;width:80%;max-width:300px;">Заточить скин (+' + skinLevel + ') — ' + skinCost + ' сер.</button>';
+
+h += '</div>';
+
+var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
         var enhanceItems = items.filter(function(i) { return i.part && i.part !== 'ring' && i.part !== 'amulet'; });
         h += '<div style="margin-bottom:12px;"><div style="color:#e0c080;margin-bottom:4px;">Заточка</div>';
         if (enhanceItems.length > 0) { for (var i = 0; i < enhanceItems.length; i++) { var item = enhanceItems[i], idx = items.indexOf(item), lvl = item.enhancement || 0; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><div><div style="color:#e0c080;font-size:0.8em;">' + item.name + '</div><div style="color:#aaa;font-size:0.6em;">Заточка: +' + lvl + '</div></div><button onclick="SherwoodUI._enhanceItem(' + idx + ')" style="background:#c9a040;border:none;border-radius:4px;padding:4px 10px;color:#000;cursor:pointer;font-size:0.7em;">Точить</button></div>'; } }
@@ -1864,6 +1893,7 @@ _doTraining: function(stat) {
     _buyAmuletFromMarket: function(amuletId) { var r = Sherwood.BlackMarket.buyJewelry('amulet', amuletId); if (r.success) { this._showToast('Амулет выкован!'); } else { this._showToast(r.reason || 'Ошибка'); } var self = this; setTimeout(function() { self._showAmuletCrafting(); }, 800); },
     _craftSkin: function(skinId) { var r = Sherwood.Forge.craftSkin(skinId); if (r.success) { this._showToast('Облик выкован!'); } else { this._showToast(r.reason || 'Ошибка'); } var self = this; setTimeout(function() { self._showSkinCrafting(); }, 800); },
     _enhanceItem: function(idx) { var r = Sherwood.Forge.enhanceItem(idx); var log = document.getElementById('forge-log'); if (r.enhanced) { if (log) log.textContent = 'Улучшено! +' + r.newLevel; } else if (r.broken) { if (log) log.textContent = 'Сломано!'; } else if (r.failed) { if (log) log.textContent = 'Неудача'; } else { if (log) log.textContent = (r.reason || 'Ошибка'); } this.updateDisplay(); var self = this; setTimeout(function() { self.forge(); }, 800); },
+    _enhanceEquipped: function(type) { var r = Sherwood.Forge.enhanceEquipped(type); if (r.success) { this._playSound('forge'); this._showToast('Улучшено!'); this.updateDisplay(); this.forge(); } else { this._showToast(r.reason || 'Ошибка'); } },
        bestiary: function() { 
         var gb=this._previousScreen==='profile'?'SherwoodUI.profile()':'SherwoodUI.loadHome()'; this._previousScreen=null; this._playSound('click'); 
         if(!Sherwood.Bestiary) { this._showPlaceholder('Бестиарий','bestiary',gb); return; } 
