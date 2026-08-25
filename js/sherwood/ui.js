@@ -956,8 +956,7 @@ this._screenLayer.appendChild(bloodOverlay);
         var h = '';
         h += '<div style="display:flex;flex-direction:column;align-items:center;padding:20px;min-height:100%;justify-content:flex-end;padding-bottom:60px;">';
         
-        // Барная стойка сверху
-        h += '<div style="width:100%;height:120px;background:url(\'assets/interface/bar_counter.png\') center/contain no-repeat;margin-bottom:20px;"></div>';
+        
         
         h += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
         h += '<button onclick="Sherwood.Tavern._tab=1;SherwoodUI.tavern();" style="background:' + (tab === 1 ? '#c9a040' : 'rgba(255,255,255,0.1)') + ';border:1px solid #555;border-radius:8px;padding:10px 24px;color:' + (tab === 1 ? '#000' : '#fff') + ';cursor:pointer;font-size:0.85em;font-weight:bold;">Контракты</button>';
