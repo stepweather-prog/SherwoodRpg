@@ -98,6 +98,7 @@ const SherwoodUI = {
     _initSounds: function() {
         for (var k in this._audioFiles) { try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {} }
         try { this._sounds['main_theme_2'].loop = true; this._sounds['main_theme_2'].volume = 0.5; } catch(e) {}
+        try { this._sounds['main_theme_3'].loop = true; this._sounds['main_theme_3'].volume = 0.5; } catch(e) {}
         try { this._sounds['dungeon_1'].loop = true; this._sounds['dungeon_1'].volume = 0.4; } catch(e) {}
         try { this._sounds['dungeon_2'].loop = true; this._sounds['dungeon_2'].volume = 0.4; } catch(e) {}
         try { this._sounds['dungeon_3'].loop = true; this._sounds['dungeon_3'].volume = 0.4; } catch(e) {}
@@ -118,8 +119,8 @@ const SherwoodUI = {
                 m.play().catch(function() {});
                 this._currentMusic = m; this._currentMusicKey = k;
                 if (k === 'main_theme') { m.loop = false; var self = this; m.onended = function() { self._playMusic('main_theme_2'); }; }
-                if (k === 'main_theme_2') { m.loop = true; }
-                if (k.indexOf('dungeon_') === 0) { m.loop = true; }
+                if (k === 'main_theme_2') { m.loop = false; var self = this; m.onended = function() { self._playMusic('main_theme_3'); }; }
+                if (k === 'main_theme_3') { m.loop = false; var self = this; m.onended = function() { self._playMusic('main_theme'); }; }
             }
         } catch(e) {}
     },
@@ -345,7 +346,7 @@ _showDefeatScreen: function(rewards) {
     showDungeon: function() {
     this._playSound('click');
     if (this._currentMusicKey === 'main_theme' || this._currentMusicKey === 'main_theme_2') { this._mainThemeWasPlaying = true; this._mainThemeKey = this._currentMusicKey; this._mainThemeTime = this._currentMusic ? this._currentMusic.currentTime : 0; }
-    this._playMusic('dungeon_1');
+    this._playMusic('dungeon_3');
     var dungeons = Sherwood.Dungeon ? Sherwood.Dungeon.getAvailable() : {};
     var dungeonList = [{ id: 'forest', name: 'Проклятая чаща', icon: 'the_cursed_thicket.png' }, { id: 'swamp', name: 'Первородное болото', icon: 'primordial_swamp.png' }, { id: 'cave', name: 'Базальтовый грот', icon: 'basalt_grotto.png' }];
        var h = '';
@@ -468,7 +469,8 @@ _showDefeatScreen: function(rewards) {
     _startDungeon: function(id, level) { 
     if (!Sherwood.Dungeon || !Sherwood.Dungeon.generate) return; 
     var d = Sherwood.Dungeon.generate(id, level); 
-    if (!d) { this._showToast('Нет билетов!'); return; } 
+    if (!d) { this._showToast('Нет билетов!'); return; }
+        this._playMusic('dungeon_3');
     Sherwood.Dungeon2D5.render(d);
 },
 
