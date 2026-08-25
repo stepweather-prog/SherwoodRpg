@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+а сколько сука раз еще показать весь файл <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -29,49 +29,45 @@
         
         /* --- НАСТРОЙКА БОКОВЫХ СТАТУЙ ДЛЯ ПК --- */
         .statue-left, .statue-right {
-            display: block;
+            display: block; /* Включаем их по умолчанию для ПК */
             position: absolute;
             top: 0;
             bottom: 0;
-            width: calc((100vw - 480px) / 2);
+            width: calc((100vw - 480px) / 2); /* Автоматом занимают ВСЁ свободное место справа и слева от центра */
             height: 100vh;
             background-size: contain;
             background-repeat: no-repeat;
             z-index: 5;
-            pointer-events: none;
+            pointer-events: none; /* Чтобы мышки не мешали кликать по игре */
         }
         
         .statue-left {
             left: 0;
-            background-image: url('assets/interface/statue_left.png');
-            background-position: right center;
+            background-image: url('assets/interface/statue_left.png'); /* Путь к картинке левого лучника */
+            background-position: right center; /* Лучник вплотную прижимается к игровому экрану */
         }
         
         .statue-right {
             right: 0;
-            background-image: url('assets/interface/statue_right.png');
-            background-position: left center;
+            background-image: url('assets/interface/statue_right.png'); /* Путь к картинке правого лучника */
+            background-position: left center; /* Лучник вплотную прижимается к игровому экрану */
         }
 
         .divider-left, .divider-right {
-            display: block;
-            position: fixed;
-            top: 0;
-            width: 80px;
-            height: 100vh;
-            z-index: 10000;
-            pointer-events: none;
-            background: url('assets/interface/vertical_screen_divider.png') center/contain no-repeat;
-            background-size: 100% 100%;
-        }
-        
-        .divider-left {
-            left: calc(50% - 260px);
-        }
-        
-        .divider-right {
-            right: calc(50% - 260px);
-        }
+    display: block;
+    position: fixed;
+    top: 0;
+    width: 80px;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+}
+.divider-left {
+    left: calc(50% - 320px);
+}
+.divider-right {
+    right: calc(50% - 320px);
+}
         
         /* --- ЦЕНТРАЛЬНЫЙ ИГРОВОЙ ЭКРАН --- */
         #game-container {
@@ -84,30 +80,22 @@
             box-shadow: 0 0 60px rgba(0,0,0,0.9);
             z-index: 10;
             transform-origin: center center;
-            flex-shrink: 0;
+            flex-shrink: 0; /* ЗАПРЕЩАЕТ сжимать игру боковым панелям при открытии консоли */
         }
         
-        /* --- АДАПТИВНОСТЬ ДЛЯ СМАРТФОНОВ --- */
+        /* --- АДАПТИВНОСТЬ ДЛЯ СМАРТФОНОВ И ОТКРЫТОЙ КОНСОЛИ --- */
         @media (max-width: 1100px) {
+            /* Как только окно становится узким, полностью вырезаем статуи */
             .statue-left, .statue-right {
                 display: none !important;
             }
             
+            /* Игра разворачивается на всю ширину мобильного экрана без полос */
             #game-container {
                 width: 100vw;
                 height: 100dvh;
                 border: none;
                 box-shadow: none;
-            }
-            
-            .divider-left {
-                left: 0 !important;
-                width: 80px !important;
-            }
-            
-            .divider-right {
-                right: 0 !important;
-                width: 80px !important;
             }
         }
 
@@ -556,6 +544,7 @@
         var vh = window.innerHeight;
         
         if (isMobile()) {
+            // Мобилка — заполняем весь экран
             var scale = Math.max(vw / GAME_WIDTH, vh / GAME_HEIGHT);
             scale = scale * 0.97;
             
@@ -569,6 +558,7 @@
             container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
             container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
         } else {
+            // ПК — масштабируем по высоте, статуи по бокам
             var scaleY = vh / GAME_HEIGHT;
             var scaleX = vw / GAME_WIDTH;
             var scale = scaleY;
