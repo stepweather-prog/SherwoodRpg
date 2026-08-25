@@ -10,215 +10,199 @@ Sherwood.Quests = {
     CHAPTERS: [
         {
             id: 1, name: 'Кровь Великого Дуба',
-            lore: 'Шервуд не всегда был могильником. В его сердце стоял Древний Дуб — щит, веками сдерживающий то, что спит под землей.',
+            lore: 'Шервуд не всегда был могильником. В его сердце стоял Древний Дуб — не просто дерево, а щит, веками сдерживающий то, что спит под землей. Королевские Охотники пришли не за лесом. Они хотели сломить дух Шервуда, осквернив Дуб. Они развесили на его ветвях тела казненных егерей и друидов. Кровь стекала по коре, пропитывая корни. Дерево, веками хранившее равновесие, не смогло вместить в себя столько чужой смерти. Сердце Дуба почернело и сгнило изнутри. Щит пал. Тьма вырвалась на свободу.',
             boss: { name: 'Лесничий-Отступник', image: 'fallen_forester.png', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 },
-            stages: 6, rewards: { exp: 200, gold: 50, silver: 500 },
+            stages: 5, rewards: { exp: 200, gold: 50, silver: 500 },
             enemies: [
                 { name: 'Чумной Ворон', image: 'plague_crow.png', hp: 1000, atk: 400, def: 200, exp: 30, gold: 15 },
-                { name: 'Костяной Стервятник', image: 'bone_vulture.png', hp: 1500, atk: 500, def: 250, exp: 35, gold: 18 },
-                { name: 'Ворон-Палач', image: 'executioner_crow.png', hp: 2000, atk: 550, def: 300, exp: 40, gold: 20 },
-                { name: 'Чумная Пикси', image: 'plague_pixie.png', hp: 2500, atk: 600, def: 400, exp: 45, gold: 22 },
-                { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 3000, atk: 600, def: 500, exp: 50, gold: 25 }
-            ]
+                { name: 'Болотный Капкан', image: 'bog_trapper.png', hp: 1200, atk: 450, def: 250, exp: 32, gold: 16 },
+                { name: 'Базальтовый Пожиратель', image: 'basalt_devourer.png', hp: 1500, atk: 500, def: 300, exp: 35, gold: 18 }
+            ],
+            guardBoss: { name: 'Лесной Душегуб', image: 'forest_strangler.png', hp: 5000, atk: 600, def: 500, exp: 50, gold: 25 }
         },
         {
             id: 2, name: 'Кара Скверны',
-            lore: 'Древний Дуб был выращен магией друидов над разломом. Когда дерево пало, разлом открылся.',
+            lore: 'Древний Дуб не просто рос в Шервуде. Он был выращен магией друидов над разломом, из которого сочилась безграничная сила, о которой прознал Король. Он натравил Охотников на Дуб, чтобы добраться до неё. Когда дерево пало, разлом открылся. Скверна полезла из-под земли, отравляя воду и сам воздух. Лесная жизнь исказилась, слившись с порчей в нечто, чему нет названия. Тьма расползается за пределы Шервуда, неся смерть соседним землям. Остановить её нужно сейчас. Иначе завтра не наступит.',
             boss: { name: 'Вожак Искаженной Стаи', image: 'blight_alpha_stag.png', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 },
-            stages: 6, rewards: { exp: 400, gold: 100, silver: 1000 },
+            stages: 5, rewards: { exp: 400, gold: 100, silver: 1000 },
             enemies: [
                 { name: 'Искажённый Бес', image: 'warped_imp.png', hp: 4000, atk: 1200, def: 800, exp: 40, gold: 20 },
-                { name: 'Шипастый Секач', image: 'bristle_boar.png', hp: 5500, atk: 1400, def: 900, exp: 45, gold: 22 },
-                { name: 'Кристальный Иглобрюх', image: 'quill_beast.png', hp: 7000, atk: 1600, def: 1000, exp: 50, gold: 25 },
-                { name: 'Личинка Короеда', image: 'grave_borer.png', hp: 9000, atk: 1800, def: 1200, exp: 55, gold: 28 },
-                { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 12000, atk: 2000, def: 1500, exp: 60, gold: 30 }
-            ]
+                { name: 'Скверноплюй', image: 'blight_spitter.png', hp: 4500, atk: 1250, def: 850, exp: 42, gold: 21 },
+                { name: 'Громила Грота', image: 'grotto_brute.png', hp: 5000, atk: 1300, def: 900, exp: 45, gold: 22 }
+            ],
+            guardBoss: { name: 'Шервудский Дикобраз', image: 'shard_back.png', hp: 20000, atk: 2000, def: 1500, exp: 60, gold: 30 }
         },
         {
             id: 3, name: 'Старый Егерь',
-            lore: 'Ты должен спуститься под корни. Но ход преграждён.',
+            lore: 'Я был егерем в Шервуде всю свою жизнь. Знаю каждую тропу, каждый ручей. Когда Охотники пришли осквернять Дуб, я ничего не сделал. Дряхлый старик, у которого уже не было сил поднять топор. Просто стоял и смотрел, как они вешают мёртвых на ветви. Когда скверна полезла из-под земли, бежать было поздно. Лес закрылся, и я застрял на окраине. Ты должен спуститься под корни. Но ход преграждён. Когда-то это был долгие годы преданный мне пёс. Сейчас это мутировавшая тварь, которая жрёт трупы Охотников, что пытались сбежать вниз. Она не пропустит никого живого. Упокой её. Если все еще хочешь положить конец этой скверны.',
             boss: { name: 'Альфа-Гончая Егеря', image: 'huntsman_alpha_hound.png', hp: 90000, atk: 4500, def: 3500, exp: 250, gold: 160 },
-            stages: 6, rewards: { exp: 600, gold: 150, silver: 1500 },
+            stages: 5, rewards: { exp: 600, gold: 150, silver: 1500 },
             enemies: [
                 { name: 'Костяной Короед-Трупоед', image: 'bone_borer.png', hp: 9000, atk: 2500, def: 1800, exp: 50, gold: 25 },
-                { name: 'Жук-Короед', image: 'bark_beetle.png', hp: 12000, atk: 2800, def: 2000, exp: 55, gold: 28 },
-                { name: 'Чумной Короед-Страж', image: 'blight_beetle_warden.png', hp: 16000, atk: 3100, def: 2300, exp: 60, gold: 30 },
-                { name: 'Бронированный Короед', image: 'armored_beetle.png', hp: 22000, atk: 3400, def: 2700, exp: 65, gold: 32 },
-                { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 30000, atk: 3500, def: 3000, exp: 70, gold: 35 }
-            ]
+                { name: 'Болотный Паук', image: 'swamp_spider.png', hp: 9500, atk: 2600, def: 1900, exp: 52, gold: 26 },
+                { name: 'Пещерный Наблюдатель', image: 'cave_watcher.png', hp: 10000, atk: 2700, def: 2000, exp: 55, gold: 28 }
+            ],
+            guardBoss: { name: 'Повелитель Гнили', image: 'blight_lord_beetle.png', hp: 50000, atk: 3500, def: 3000, exp: 70, gold: 35 }
         },
         {
             id: 4, name: 'Спуск в Шервудскую Чащобу',
-            lore: 'Первым на твоём пути встаёт Падший Друид.',
+            lore: 'Под корнями Шервуда — сеть пещер и затопленных туннелей. Корни мёртвого Дуба проросли сквозь камень, отравляя всё вокруг. Скверна здесь сгустилась до предела. Воздух гниёт. Вода черна. Первым на твоём пути встаёт Падший Друид. Один из последних хранителей Дуба. Он спустился вниз, чтобы остановить заразу, но скверна поглотила его. Тело срослось с мхом и камнем. Разум сломался. Он думает, что всё ещё защищает лес. От таких, как ты.',
             boss: { name: 'Падший Друид', image: 'fallen_druid.png', hp: 180000, atk: 7000, def: 5500, exp: 300, gold: 200 },
-            stages: 6, rewards: { exp: 800, gold: 200, silver: 2000 },
+            stages: 5, rewards: { exp: 800, gold: 200, silver: 2000 },
             enemies: [
                 { name: 'Альфа-Скверноискатель', image: 'blight_alpha.png', hp: 16000, atk: 4000, def: 3000, exp: 60, gold: 30 },
-                { name: 'Волк Тисовой Скверны', image: 'yew_blight_wolf.png', hp: 21000, atk: 4300, def: 3300, exp: 65, gold: 32 },
-                { name: 'Болотный Слизнерот', image: 'swamp_slugmouth.png', hp: 28000, atk: 4700, def: 3700, exp: 70, gold: 35 },
-                { name: 'Скверножаб', image: 'swamp_gorgymouth.png', hp: 38000, atk: 5100, def: 4200, exp: 75, gold: 38 },
-                { name: 'Корневой Палач', image: 'root_executioner.png', hp: 55000, atk: 5500, def: 4500, exp: 80, gold: 40 }
-            ]
+                { name: 'Окулярный Арахнид', image: 'ocular_arachnid.png', hp: 17000, atk: 4100, def: 3100, exp: 62, gold: 31 },
+                { name: 'Рунический Страж', image: 'runic_sentinel.png', hp: 18000, atk: 4200, def: 3200, exp: 65, gold: 32 }
+            ],
+            guardBoss: { name: 'Корневой Палач', image: 'root_executioner.png', hp: 80000, atk: 5500, def: 4500, exp: 80, gold: 40 }
         },
         {
             id: 5, name: 'Искажённая Экосистема',
-            lore: 'Чем глубже, тем хуже. Твари здесь уже не похожи на зверей.',
+            lore: 'Чем глубже, тем хуже. Твари здесь уже не похожи на зверей. Скверна переплавила их во что-то новое. Голод Чащи — бесформенный ком лоз, костей и пастей. Без глаз, но чувствует каждый твой шаг. В туннелях нет безопасных троп. Каждый вдох — яд. Каждый поворот — смерть.',
             boss: { name: 'Голод Чащи', image: 'thicket_hunger.png', hp: 300000, atk: 9500, def: 7500, exp: 350, gold: 250 },
-            stages: 6, rewards: { exp: 1000, gold: 250, silver: 2500 },
+            stages: 5, rewards: { exp: 1000, gold: 250, silver: 2500 },
             enemies: [
                 { name: 'Голем Дуба', image: 'oak_golem.png', hp: 25000, atk: 5500, def: 4200, exp: 70, gold: 35 },
-                { name: 'Голем Скверного Дуба', image: 'blighted_oak_golem.png', hp: 33000, atk: 5900, def: 4600, exp: 75, gold: 38 },
-                { name: 'Хворост', image: 'twigtangle.png', hp: 44000, atk: 6400, def: 5100, exp: 80, gold: 40 },
-                { name: 'Древесный Ужас', image: 'woodland_terror.png', hp: 60000, atk: 6900, def: 5600, exp: 85, gold: 42 },
-                { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 90000, atk: 7500, def: 6000, exp: 90, gold: 45 }
-            ]
+                { name: 'Водная Баба', image: 'water_hag.png', hp: 27000, atk: 5600, def: 4300, exp: 72, gold: 36 },
+                { name: 'Огр Скверного Мха', image: 'blight_moss_ogre.png', hp: 29000, atk: 5700, def: 4400, exp: 75, gold: 38 }
+            ],
+            guardBoss: { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 120000, atk: 7500, def: 6000, exp: 90, gold: 45 }
         },
         {
             id: 6, name: 'Слепая Ярость Духов',
-            lore: 'Глубже, где корни пробивают каменные своды, правит Леший.',
+            lore: 'Глубже, где корни пробивают каменные своды, правит Леший. Вековой хранитель ослеп от ярости. Тело срослось с чёрной корой и камнями. Он стал мстительным колоссом. Рядом бродит Лесное лихо — костлявый одноглазый дух с руками-серпами. Они убивают всё, что не принадлежит лесу. Древний Владыка — последний страж первого яруса. За ним — спуск глубже.',
             boss: { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 450000, atk: 12000, def: 9500, exp: 400, gold: 300 },
-            stages: 6, rewards: { exp: 1500, gold: 350, silver: 3500 },
+            stages: 5, rewards: { exp: 1500, gold: 350, silver: 3500 },
             enemies: [
                 { name: 'Слуга Лешего', image: 'leshy_servant.png', hp: 35000, atk: 7000, def: 5500, exp: 80, gold: 40 },
-                { name: 'Призрачный Олень', image: 'spectral_stag.png', hp: 46000, atk: 7500, def: 6000, exp: 85, gold: 42 },
-                { name: 'Лесное Лихо', image: 'forest_blight_cyclops.png', hp: 62000, atk: 8100, def: 6600, exp: 90, gold: 45 },
-                { name: 'Лихо-Троглодит', image: 'blight_troglodyte.png', hp: 84000, atk: 8800, def: 7300, exp: 95, gold: 48 },
-                { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 130000, atk: 9500, def: 7500, exp: 100, gold: 50 }
-            ]
+                { name: 'Болотная Ведунья', image: 'marsh_witch.png', hp: 37000, atk: 7100, def: 5600, exp: 82, gold: 41 },
+                { name: 'Искажённый Червь', image: 'warped_worm.png', hp: 39000, atk: 7200, def: 5700, exp: 85, gold: 42 }
+            ],
+            guardBoss: { name: 'Выжигающий Арахнид', image: 'searing_arachnid.png', hp: 180000, atk: 9500, def: 7500, exp: 100, gold: 50 }
         },
         {
             id: 7, name: 'Эхо Прошлых Поражений',
-            lore: 'Подземка забирает не только плоть. Погибшие не нашли покоя.',
+            lore: 'Подземка забирает не только плоть. Погибшие здесь охотники и разбойники не нашли покоя. Скверна сплела их души воедино, создав Пожирателя Эха. Сгусток чёрного дыма, сотен глаз и призрачных клинков. Он кричит голосами мертвецов. Питается страхом живых. Тех, кого он убивает, становятся его частью.',
             boss: { name: 'Пожиратель Эха', image: 'echo_devourer.png', hp: 650000, atk: 14500, def: 11500, exp: 450, gold: 350 },
-            stages: 6, rewards: { exp: 2000, gold: 500, silver: 5000 },
+            stages: 5, rewards: { exp: 2000, gold: 500, silver: 5000 },
             enemies: [
                 { name: 'Торфяной Владыка', image: 'peat_lord.png', hp: 48000, atk: 8500, def: 6800, exp: 90, gold: 45 },
-                { name: 'Заблудшая Дева', image: 'lost_maiden.png', hp: 64000, atk: 9100, def: 7400, exp: 100, gold: 50 },
-                { name: 'Болотная Ведьма', image: 'bog_witch.png', hp: 86000, atk: 9800, def: 8100, exp: 110, gold: 55 },
-                { name: 'Болотная Кикимора', image: 'swamp_kikimora.png', hp: 116000, atk: 10600, def: 8900, exp: 120, gold: 60 },
-                { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 180000, atk: 11500, def: 9000, exp: 130, gold: 65 }
-            ]
+                { name: 'Улитка Скверны', image: 'blight_snail.png', hp: 50000, atk: 8600, def: 6900, exp: 92, gold: 46 },
+                { name: 'Гротный Слизень', image: 'grotto_slug.png', hp: 52000, atk: 8700, def: 7000, exp: 95, gold: 48 }
+            ],
+            guardBoss: { name: 'Шервудский Ящер', image: 'sherwood_lizard.png', hp: 250000, atk: 11500, def: 9000, exp: 130, gold: 65 }
         },
         {
             id: 8, name: 'Ужас Болотных Недр',
-            lore: 'В самых тёмных гротах обитает Повелительница Топей.',
+            lore: 'В самых тёмных гротах, покрытых слизью, обитает Повелительница Топей. Она родилась из самой гнили. Скверна, вода, мёртвая плоть — всё слилось в одно существо. Кислотные нарывы, длинные руки, хватка которой не разжать. Она топит заживо. Те, кто попал в её жижу, до сих пор кричат из-под поверхности.',
             boss: { name: 'Повелительница Топей', image: 'mistress_of_the_mires.png', hp: 900000, atk: 17000, def: 13500, exp: 500, gold: 400 },
-            stages: 6, rewards: { exp: 2500, gold: 650, silver: 6500 },
+            stages: 5, rewards: { exp: 2500, gold: 650, silver: 6500 },
             enemies: [
                 { name: 'Болотный Дракончик', image: 'swamp_drake.png', hp: 62000, atk: 10000, def: 8200, exp: 110, gold: 55 },
-                { name: 'Цербер Скверны', image: 'blight_cerberus.png', hp: 83000, atk: 10700, def: 8900, exp: 120, gold: 60 },
-                { name: 'Гниющий Волк', image: 'putrid_wolf.png', hp: 112000, atk: 11500, def: 9700, exp: 130, gold: 65 },
-                { name: 'Волк-Потрошитель', image: 'ripper_wolf.png', hp: 152000, atk: 12400, def: 10600, exp: 140, gold: 70 },
-                { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 240000, atk: 13500, def: 10500, exp: 150, gold: 75 }
-            ]
+                { name: 'Древняя Улитка Скверны', image: 'ancient_blight_snail.png', hp: 65000, atk: 10100, def: 8300, exp: 112, gold: 56 },
+                { name: 'Подземный Ужас', image: 'underground_terror.png', hp: 68000, atk: 10200, def: 8400, exp: 115, gold: 58 }
+            ],
+            guardBoss: { name: 'Водяной Скверны', image: 'swamp_vodyanoy.png', hp: 320000, atk: 13500, def: 10500, exp: 150, gold: 75 }
         },
         {
             id: 9, name: 'Разломы Безумия',
-            lore: 'Три разлома. Пока Страж жив, врата не закрыть.',
+            lore: 'Скверна переполнила Чащобу и прожгла реальность. Три разлома. Три врат в места, где законы мира больше не работают. Портал Нашествия. Портал Искажения. Портал Безумия. Их охраняет Страж Разломов — левитирующая тварь из вывернутой породы и десятков глаз. Пока он жив, врата не закрыть.',
             boss: { name: 'Страж Разломов', image: 'rift_warden.png', hp: 1200000, atk: 19500, def: 15500, exp: 550, gold: 450 },
-            stages: 6, rewards: { exp: 3000, gold: 800, silver: 8000 },
+            stages: 5, rewards: { exp: 3000, gold: 800, silver: 8000 },
             enemies: [
-                { name: 'Базальтовый Пожиратель', image: 'basalt_devourer.png', hp: 78000, atk: 11500, def: 9500, exp: 130, gold: 65 },
-                { name: 'Громила Грота', image: 'grotto_brute.png', hp: 105000, atk: 12300, def: 10300, exp: 140, gold: 70 },
-                { name: 'Пещерный Наблюдатель', image: 'cave_watcher.png', hp: 142000, atk: 13200, def: 11200, exp: 150, gold: 75 },
-                { name: 'Рунический Страж', image: 'runic_sentinel.png', hp: 192000, atk: 14200, def: 12200, exp: 160, gold: 80 },
-                { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 310000, atk: 15500, def: 12000, exp: 170, gold: 85 }
-            ]
+                { name: 'Цербер Скверны', image: 'blight_cerberus.png', hp: 78000, atk: 11500, def: 9500, exp: 130, gold: 65 },
+                { name: 'Гниющий Волк', image: 'putrid_wolf.png', hp: 81000, atk: 11600, def: 9600, exp: 132, gold: 66 },
+                { name: 'Дочь Корней', image: 'root_daughter.png', hp: 84000, atk: 11700, def: 9700, exp: 135, gold: 68 }
+            ],
+            guardBoss: { name: 'Повелитель Стаи', image: 'fox_pack_lord.png', hp: 400000, atk: 15500, def: 12000, exp: 170, gold: 85 }
         },
         {
             id: 10, name: 'Портал Нашествия — Улей Плоти',
-            lore: 'Первый разлом — гнездо. В центре улья — Матка.',
+            lore: 'Первый разлом — гнездо. Из врат хлынул поток насекомых, пожирающих всё живое. В центре улья — Матка. Колоссальная, с панцирем, усыпанным моргающими глазами. Её защищает Хитиновый страж. Ослепи стража. Порази матку. Иначе рой захлестнёт Шервуд.',
             boss: { name: 'Матка Лесных Короедов', image: 'the_hive_mother.png', hp: 1600000, atk: 22000, def: 17500, exp: 600, gold: 500 },
-            stages: 6, rewards: { exp: 4000, gold: 1000, silver: 10000 },
+            stages: 5, rewards: { exp: 4000, gold: 1000, silver: 10000 },
             enemies: [
-                { name: 'Огр Скверного Мха', image: 'blight_moss_ogre.png', hp: 95000, atk: 13000, def: 11000, exp: 150, gold: 75 },
-                { name: 'Искажённый Червь', image: 'warped_worm.png', hp: 128000, atk: 13900, def: 11900, exp: 160, gold: 80 },
-                { name: 'Гротный Слизень', image: 'grotto_slug.png', hp: 174000, atk: 14900, def: 12900, exp: 170, gold: 85 },
-                { name: 'Подземный Ужас', image: 'underground_terror.png', hp: 236000, atk: 16000, def: 14000, exp: 180, gold: 90 },
-                { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 390000, atk: 17500, def: 13500, exp: 190, gold: 95 }
-            ]
+                { name: 'Волк-Потрошитель', image: 'ripper_wolf.png', hp: 95000, atk: 13000, def: 11000, exp: 150, gold: 75 },
+                { name: 'Гнилостная Лиса', image: 'blight_fox.png', hp: 98000, atk: 13100, def: 11100, exp: 152, gold: 76 },
+                { name: 'Костяной Арахнид', image: 'bone_arachnid.png', hp: 101000, atk: 13200, def: 11200, exp: 155, gold: 78 }
+            ],
+            guardBoss: { name: 'Чумная Летучая Мышь', image: 'plague_bat.png', hp: 500000, atk: 17500, def: 13500, exp: 190, gold: 95 }
         },
         {
             id: 11, name: 'Портал Искажения — Костяной Трон',
-            lore: 'Проклятый Король Разбойников умоляет об одном — убить его.',
+            lore: 'Второй разлом — склеп, где реальность вывернута наизнанку. Стены дышат. Пол течёт. В центре зала — Проклятый Король Разбойников. Он хотел завладеть безграничной силой, скрытой в недрах под Шервудом. От неё лес оберегал древний дуб, выращенный над разломом магией друидов. Король натравил Охотников на дерево, чтобы добраться до этой мощи. Но тьма обманула его. Скверна выворачивает его наизнанку, не давая умереть. Он цепляется за остатки разума и умоляет об одном — убить его. Но к трону не подобраться. Искажённый палач — не защитник, а вечный мучитель. Мутант с головой-мешком, утыканной иглами, не даёт Королю умереть. Одолей палача. Прерви его страдания.',
             boss: { name: 'Проклятый Король Разбойников', image: 'the_cursed_outlaw_king.png', hp: 2100000, atk: 24500, def: 19500, exp: 700, gold: 600 },
-            stages: 6, rewards: { exp: 5000, gold: 1500, silver: 15000 },
+            stages: 5, rewards: { exp: 5000, gold: 1500, silver: 15000 },
             enemies: [
-                { name: 'Дочь Корней', image: 'root_daughter.png', hp: 115000, atk: 14500, def: 12500, exp: 170, gold: 85 },
-                { name: 'Костяной Арахнид', image: 'bone_arachnid.png', hp: 156000, atk: 15500, def: 13500, exp: 180, gold: 90 },
-                { name: 'Арахнид-Некромант', image: 'necromantic_arachnid.png', hp: 212000, atk: 16600, def: 14600, exp: 190, gold: 95 },
-                { name: 'Оживший Тис', image: 'animated_yew.png', hp: 288000, atk: 17800, def: 15800, exp: 200, gold: 100 },
-                { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 480000, atk: 19500, def: 15000, exp: 210, gold: 105 }
-            ]
+                { name: 'Болотная Гадюка', image: 'swamp_viper.png', hp: 115000, atk: 14500, def: 12500, exp: 170, gold: 85 },
+                { name: 'Арахнид-Некромант', image: 'necromantic_arachnid.png', hp: 118000, atk: 14600, def: 12600, exp: 172, gold: 86 },
+                { name: 'Оживший Тис', image: 'animated_yew.png', hp: 121000, atk: 14700, def: 12700, exp: 175, gold: 88 }
+            ],
+            guardBoss: { name: 'Пропавший Кладоискатель', image: 'lost_treasure_hunter.png', hp: 550000, atk: 19500, def: 15000, exp: 210, gold: 105 }
         },
         {
             id: 12, name: 'Портал Безумия — Кровоточащий Кап',
-            lore: 'Третий портал. Древний Хранитель Склепа. Последнее испытание.',
+            lore: 'Третий портал — капище, где деревья кровоточат, а из коры растут человеческие глаза. Там ждёт Древний Хранитель Склепа. Титан из чёрного дуба и камня с пульсирующей опухолью вместо сердца. Его охраняет Осквернённое чудовище корней. Тварь с воронкой вместо челюсти. Это последнее испытание перед спуском к Сердцу Шервуда.',
             boss: { name: 'Древний Хранитель Склепа', image: 'ancient_crypt_warden.png', hp: 2700000, atk: 27000, def: 21500, exp: 800, gold: 700 },
-            stages: 6, rewards: { exp: 6000, gold: 2000, silver: 20000 },
+            stages: 5, rewards: { exp: 6000, gold: 2000, silver: 20000 },
             enemies: [
-                { name: 'Истязатель', image: 'tormentor.png', hp: 135000, atk: 16000, def: 14000, exp: 190, gold: 95 },
-                { name: 'Могильный Лучник', image: 'grave_archer.png', hp: 184000, atk: 17100, def: 15100, exp: 200, gold: 100 },
-                { name: 'Ржавый Страх', image: 'rusty_dread.png', hp: 250000, atk: 18300, def: 16300, exp: 210, gold: 105 },
-                { name: 'Мечник Хаоса', image: 'chaos_swordsman.png', hp: 340000, atk: 19600, def: 17600, exp: 220, gold: 110 },
-                { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 580000, atk: 21500, def: 16500, exp: 230, gold: 115 }
-            ]
+                { name: 'Светляк-Угнетатель', image: 'oppressor_firefly.png', hp: 135000, atk: 16000, def: 14000, exp: 190, gold: 95 },
+                { name: 'Ржавый Страх', image: 'rusty_dread.png', hp: 138000, atk: 16100, def: 14100, exp: 192, gold: 96 },
+                { name: 'Мечник Хаоса', image: 'chaos_swordsman.png', hp: 141000, atk: 16200, def: 14200, exp: 195, gold: 98 }
+            ],
+            guardBoss: { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 650000, atk: 21500, def: 16500, exp: 230, gold: 115 }
         },
         {
             id: 13, name: 'Триумвират Зла',
-            lore: 'Три разлома закрыты. Но их энергия слилась воедино.',
+            lore: 'Три разлома закрыты. Но их энергия не исчезла. Она слилась в Осквернённом Сердце Шервуда. Сила нашествия, искажения и безумия сплелась в одну сущность — Эхо Трёх Порталов. Она не живая и не мёртвая. Чистое искажение, принявшее форму. Убить её — значит разорвать связь между разломами навсегда.',
             boss: { name: 'Эхо Трех Порталов', image: 'echo_of_the_triumvirate.png', hp: 3400000, atk: 29500, def: 23500, exp: 900, gold: 800 },
-            stages: 6, rewards: { exp: 7500, gold: 2500, silver: 25000 },
+            stages: 5, rewards: { exp: 7500, gold: 2500, silver: 25000 },
             enemies: [
                 { name: 'Гарпия Хаоса', image: 'chaos_harpy.png', hp: 160000, atk: 17500, def: 15500, exp: 210, gold: 105 },
-                { name: 'Коршун Скверны', image: 'blight_kite.png', hp: 218000, atk: 18700, def: 16700, exp: 220, gold: 110 },
-                { name: 'Вождь Гарпий', image: 'harpy_chieftain.png', hp: 296000, atk: 20000, def: 18000, exp: 230, gold: 115 },
-                { name: 'Гарпия-Ведьма', image: 'harpy_witch.png', hp: 400000, atk: 21400, def: 19400, exp: 240, gold: 120 },
-                { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 700000, atk: 23500, def: 18000, exp: 250, gold: 125 }
-            ]
+                { name: 'Терновый Мотыль', image: 'thorn_moth.png', hp: 163000, atk: 17600, def: 15600, exp: 212, gold: 106 },
+                { name: 'Пещерный Терзатель', image: 'cave_tormentor.png', hp: 166000, atk: 17700, def: 15700, exp: 215, gold: 108 }
+            ],
+            guardBoss: { name: 'Повелительница корней', image: 'mistress_of_the_roots.png', hp: 800000, atk: 23500, def: 18000, exp: 250, gold: 125 }
         },
         {
             id: 14, name: 'Сломанная Печать',
-            lore: 'Перед Сердцем — последний страж. Палач Священного Древа.',
+            lore: 'Перед Сердцем — последний страж. Капитан Охотников. Тот, кто отдал приказ осквернить Дуб. Он не успел сбежать. Корни догнали его, проросли сквозь плоть, распяли на камне. Он стал Палачом Священного Древа. Ржавые латы, чёрное дерево, гнилая плоть — всё слилось воедино. Он не чувствует боли. Он не помнит, кем был. Он просто убивает.',
             boss: { name: 'Палач Священного Древа', image: 'sacred_tree_executioner.png', hp: 4200000, atk: 32000, def: 25500, exp: 1000, gold: 900 },
-            stages: 6, rewards: { exp: 9000, gold: 3000, silver: 30000 },
+            stages: 5, rewards: { exp: 9000, gold: 3000, silver: 30000 },
             enemies: [
-                { name: 'Пещерный Терзатель', image: 'cave_tormentor.png', hp: 185000, atk: 19000, def: 17000, exp: 230, gold: 115 },
-                { name: 'Хранитель Скверны', image: 'blight_keeper.png', hp: 252000, atk: 20300, def: 18300, exp: 240, gold: 120 },
-                { name: 'Скверный Король', image: 'blight_king.png', hp: 342000, atk: 21700, def: 19700, exp: 250, gold: 125 },
-                { name: 'Страж Преисподней', image: 'underworld_guardian.png', hp: 460000, atk: 23200, def: 21200, exp: 260, gold: 130 },
-                { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 830000, atk: 25500, def: 19500, exp: 270, gold: 135 }
-            ]
+                { name: 'Коршун Скверны', image: 'blight_kite.png', hp: 185000, atk: 19000, def: 17000, exp: 230, gold: 115 },
+                { name: 'Слепой Терзатель', image: 'blind_render.png', hp: 188000, atk: 19100, def: 17100, exp: 232, gold: 116 },
+                { name: 'Хранитель Скверны', image: 'blight_keeper.png', hp: 191000, atk: 19200, def: 17200, exp: 235, gold: 118 }
+            ],
+            guardBoss: { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 950000, atk: 25500, def: 19500, exp: 270, gold: 135 }
         },
         {
             id: 15, name: 'Последний Выстрел',
-            lore: 'Палач повержен. Из бездны поднимается Шервудское Отродье.',
+            lore: 'Палач повержен. Сердце открыто. Из бездны поднимается Шервудское Отродье. Многорукий исполин из базальта и гнилой древесины. У него одно уязвимое место — ядро на месте, где когда-то билось сердце Великого Дуба. Натяни тетиву. Пронзи ядро. Другого шанса не будет.',
             boss: { name: 'Шервудское Отродье', image: 'sherwood_abomination.png', hp: 5200000, atk: 34500, def: 27500, exp: 1500, gold: 1200 },
-            stages: 6, rewards: { exp: 12000, gold: 5000, silver: 50000 },
+            stages: 5, rewards: { exp: 12000, gold: 5000, silver: 50000 },
             enemies: [
-                { name: 'Гарпия-Ведьма', image: 'harpy_witch.png', hp: 210000, atk: 20500, def: 18500, exp: 260, gold: 130 },
-                { name: 'Птенец Гарпии', image: 'harpy_hatchling.png', hp: 286000, atk: 21900, def: 19900, exp: 270, gold: 135 },
-                { name: 'Слепой Терзатель', image: 'blind_render.png', hp: 388000, atk: 23400, def: 21400, exp: 280, gold: 140 },
-                { name: 'Енот Порчи', image: 'corruption_raccoon.png', hp: 520000, atk: 25000, def: 23000, exp: 290, gold: 145 },
-                { name: 'Хозяин Пернатых', image: 'lord_of_the_feathered.png', hp: 980000, atk: 27500, def: 21000, exp: 300, gold: 150 }
-            ]
+                { name: 'Скверный Король', image: 'blight_king.png', hp: 210000, atk: 20500, def: 18500, exp: 260, gold: 130 },
+                { name: 'Енот Порчи', image: 'corruption_raccoon.png', hp: 213000, atk: 20600, def: 18600, exp: 262, gold: 131 },
+                { name: 'Хозяин Пернатых', image: 'lord_of_the_feathered.png', hp: 216000, atk: 20700, def: 18700, exp: 265, gold: 132 }
+            ],
+            guardBoss: { name: 'Хозяин Пернатых', image: 'lord_of_the_feathered.png', hp: 1100000, atk: 27500, def: 21000, exp: 300, gold: 150 }
+        },
+        {
+            id: 16, name: 'Шрам, который не заживёт',
+            lore: 'Отродье пало. Но скверна не исчезла. Я видел это своими глазами. На месте гибели Отродья зияет воронка, из которой сочится тьма. Я расскажу тебе, как туда спуститься. На самом дне — Изначальный Стержень. Не существо. Не растение. Глаз того, кто спит под Шервудом с начала времён. Сфера из жидкого обсидиана. Он ломает гравитацию, сводит с ума, выворачивает реальность. Убить его нельзя. Но можно заставить закрыться. Твоя стрела с остатками чистой магии Дуба — единственное, что его ранит. Он уйдёт вглубь. Но он вернётся. Война только начинается.',
+            boss: { name: 'Изначальный Стержень', image: 'the_primordial_core.png', hp: 1500000, atk: 30000, def: 25000, exp: 1000, gold: 300 },
+            stages: 5, rewards: { exp: 2000, gold: 500, silver: 1500 },
+            enemies: [
+                { name: 'Рыцарь Хаоса', image: 'chaos_knight.png', hp: 240000, atk: 22000, def: 20000, exp: 200, gold: 50 },
+                { name: 'Владыка Пепла', image: 'ash_overlord.png', hp: 245000, atk: 22200, def: 20200, exp: 210, gold: 55 },
+                { name: 'Страж Преисподней', image: 'underworld_guardian.png', hp: 250000, atk: 22400, def: 20400, exp: 220, gold: 60 }
+            ],
+            guardBoss: { name: 'Енот Порчи', image: 'corruption_raccoon.png', hp: 1000000, atk: 30000, def: 28000, exp: 800, gold: 250 }
         }
     ],
 
-    SECRET_CHAPTER: {
-        id: 'secret', name: 'Шрам, который не заживёт',
-        lore: 'Отродье пало. Но скверна не исчезла.',
-        boss: { name: 'Изначальный Стержень', image: 'the_primordial_core.png', hp: 1500000, atk: 30000, def: 25000, exp: 1000, gold: 300 },
-        stages: 6, rewards: { exp: 2000, gold: 500, silver: 1500 },
-        enemies: [
-            { name: 'Рыцарь Хаоса', image: 'chaos_knight.png', hp: 240000, atk: 22000, def: 20000, exp: 200, gold: 50 },
-            { name: 'Владыка Пепла', image: 'ash_overlord.png', hp: 350000, atk: 24000, def: 22000, exp: 250, gold: 60 },
-            { name: 'Корневой Палач', image: 'root_executioner.png', hp: 500000, atk: 26000, def: 24000, exp: 300, gold: 70 },
-            { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 700000, atk: 28000, def: 26000, exp: 400, gold: 80 },
-            { name: 'Енот Порчи', image: 'corruption_raccoon.png', hp: 1000000, atk: 30000, def: 28000, exp: 800, gold: 250 }
-        ],
-        trophy: { attack: 300, defense: 200, hp: 2500, name: 'Лук Жнеца Душ', icon: 'assets/all_trophies/soul_reaper\'s_bow_trophy.png' }
-    },
+    SECRET_CHAPTER: null,
 
     TROPHY_DATA: {
         1: { attack: 7, defense: 7, hp: 70, name: 'Сломанный Охотничий Рог', icon: 'assets/all_trophies/trophies_chapters/chapter_1_broken_hunting_horn_of_the_league.png' },
@@ -235,7 +219,8 @@ Sherwood.Quests = {
         12: { attack: 112, defense: 112, hp: 1120, name: 'Наконечник Скипетра Власти', icon: 'assets/all_trophies/trophies_chapters/chapter_12_tip_of_the_scepter_of_power.png' },
         13: { attack: 135, defense: 135, hp: 1350, name: 'Кубок Оскверненного Грааля', icon: 'assets/all_trophies/trophies_chapters/chapter_13_cup_of_the_defiled_grail.png' },
         14: { attack: 165, defense: 165, hp: 1650, name: 'Наконечник Знамени Командора', icon: 'assets/all_trophies/trophies_chapters/chapter_14_the_commander\'s_banner\'s_tip.png' },
-        15: { attack: 225, defense: 225, hp: 2250, name: 'Живое Око Бездны', icon: 'assets/all_trophies/trophies_chapters/chapter_15_Living_eye_of_the_abyss.png' }
+        15: { attack: 225, defense: 225, hp: 2250, name: 'Живое Око Бездны', icon: 'assets/all_trophies/trophies_chapters/chapter_15_Living_eye_of_the_abyss.png' },
+        16: { attack: 300, defense: 200, hp: 2500, name: 'Лук Жнеца Душ', icon: 'assets/all_trophies/soul_reaper\'s_bow_trophy.png' }
     },
 
     init: function() {
@@ -250,7 +235,6 @@ Sherwood.Quests = {
     },
 
     getChapter: function(id) {
-        if (id === 'secret') return this.SECRET_CHAPTER;
         for (var i = 0; i < this.CHAPTERS.length; i++) { if (this.CHAPTERS[i].id === id) return this.CHAPTERS[i]; }
         return null;
     },
@@ -342,36 +326,46 @@ Sherwood.Quests = {
             if (this._attemptsToday <= 4) Sherwood.addResource('gold', e.gold);
             if (Math.random() < 0.15) Sherwood.addResource('scrolls', 1);
             
-            // Обновляем прогресс ежедневного задания
             if (typeof Sherwood.Daily !== 'undefined') {
                 Sherwood.Daily.updateProgress('quest_fights', 1);
             }
             
-            this._currentStage++; var ch = this._currentChapter;
-            if (this._currentStage >= ch.stages) {
-                this._inBattle = false; r.chapterComplete = true; r.rewards = ch.rewards;
-                var p2 = Sherwood.getPlayer();
-                if (p2.questProgress.completed.indexOf(ch.id) === -1) {
-                    p2.questProgress.completed.push(ch.id);
-                    if (ch.id < 15) p2.questProgress.currentChapter = ch.id + 1;
-                    var td = this.TROPHY_DATA[ch.id];
-                    if (td && typeof Sherwood.addTrophy === 'function') { Sherwood.addTrophy('chapter_' + ch.id, td.name, { attack: td.attack, defense: td.defense, hp: td.hp }, td.icon, 'chapter'); }
-                    if (ch.id === 15 && !p2.questProgress.secretCompleted) { p2.questProgress.secretCompleted = false; }
-                }
-                this._currentChapter = null; this._currentEnemy = null; this._currentStage = 0;
-            } else if (this._currentStage < ch.enemies.length) {
+            this._currentStage++; 
+            var ch = this._currentChapter;
+            
+            if (this._currentStage < 3) {
                 var nextEnemy = ch.enemies[this._currentStage];
                 this._currentEnemy = { name: nextEnemy.name, image: nextEnemy.image, hp: nextEnemy.hp, maxHp: nextEnemy.hp, atk: nextEnemy.atk, def: nextEnemy.def, exp: nextEnemy.exp, gold: nextEnemy.gold, isBoss: false };
                 r.stageComplete = true;
-            } else {
+            } else if (this._currentStage === 3 && ch.guardBoss) {
+                var guard = ch.guardBoss;
+                this._currentEnemy = { name: guard.name, image: guard.image, hp: guard.hp, maxHp: guard.hp, atk: guard.atk, def: guard.def, exp: guard.exp, gold: guard.gold, isBoss: true, isGuard: true };
+                r.stageComplete = true;
+            } else if (this._currentStage === 4) {
                 var bossEnemy = ch.boss;
                 this._currentEnemy = { name: bossEnemy.name, image: bossEnemy.image, hp: bossEnemy.hp, maxHp: bossEnemy.hp, atk: bossEnemy.atk, def: bossEnemy.def, exp: bossEnemy.exp, gold: bossEnemy.gold, isBoss: true };
                 r.stageComplete = true;
+            } else {
+                this._inBattle = false; 
+                r.chapterComplete = true; 
+                r.rewards = ch.rewards;
+                var p2 = Sherwood.getPlayer();
+                if (p2.questProgress.completed.indexOf(ch.id) === -1) {
+                    p2.questProgress.completed.push(ch.id);
+                    if (ch.id < 16) p2.questProgress.currentChapter = ch.id + 1;
+                    var td = this.TROPHY_DATA[ch.id];
+                    if (td && typeof Sherwood.addTrophy === 'function') { Sherwood.addTrophy('chapter_' + ch.id, td.name, { attack: td.attack, defense: td.defense, hp: td.hp }, td.icon, 'chapter'); }
+                }
+                this._currentChapter = null; 
+                this._currentEnemy = null; 
+                this._currentStage = 0;
             }
         } else {
             var enemyDamage = Math.max(1, Math.floor((e.atk - p.stats.defense) * 0.3 + e.atk * 0.05));
             p.stats.hp = Math.max(0, p.stats.hp - enemyDamage);
-            r.enemyDamage = enemyDamage; r.playerHp = p.stats.hp; r.playerDead = p.stats.hp <= 0;
+            r.enemyDamage = enemyDamage; 
+            r.playerHp = p.stats.hp; 
+            r.playerDead = p.stats.hp <= 0;
             if (p.stats.hp <= 0) { this._inBattle = false; r.lose = true; }
         }
         Sherwood.saveGame();
