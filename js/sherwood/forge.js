@@ -80,6 +80,112 @@ Sherwood.Forge = {
         }
     },
 
+    // ========== ЗАТОЧКА ЭКИПИРОВКИ ==========
+
+    enhanceEquipped: function(type) {
+        var p = Sherwood.getPlayer();
+        if (!p) return { success: false, reason: 'Игрок не найден' };
+        
+        if (type === 'ring') {
+            var ring = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.ring : null;
+            if (!ring) return { success: false, reason: 'Нет кольца' };
+            
+            var currentLevel = ring.enhancement || 0;
+            var cost = Math.round(50 * Math.pow(1.3, currentLevel));
+            
+            if ((p.resources.silver || 0) < cost) {
+                return { success: false, reason: 'Нужно ' + cost + ' серебра' };
+            }
+            
+            p.resources.silver -= cost;
+            ring.enhancement = currentLevel + 1;
+            if (!ring.stats) ring.stats = {};
+            ring.stats.attack = (ring.stats.attack || 0) + 2;
+            ring.stats.defense = (ring.stats.defense || 0) + 2;
+            Sherwood.Bag._save();
+            
+        } else if (type === 'amulet') {
+            var amulet = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.amulet : null;
+            if (!amulet) return { success: false, reason: 'Нет амулета' };
+            
+            var currentLevel = amulet.enhancement || 0;
+            var cost = Math.round(50 * Math.pow(1.3, currentLevel));
+            
+            if ((p.resources.silver || 0) < cost) {
+                return { success: false, reason: 'Нужно ' + cost + ' серебра' };
+            }
+            
+            p.resources.silver -= cost;
+            amulet.enhancement = currentLevel + 1;
+            if (!amulet.stats) amulet.stats = {};
+            amulet.stats.hp = (amulet.stats.hp || 0) + 5;
+            amulet.stats.defense = (amulet.stats.defense || 0) + 2;
+            Sherwood.Bag._save();
+            
+        } else if (type === 'skin') {
+            var activeSkin = this.getActiveSkin ? this.getActiveSkin() : null;
+            if (!activeSkin) return { success: false, reason: 'Нет скина' };
+            
+            if (!p.activeSkinLevels) p.activeSkinLevels = {};
+            var currentLevel = p.activeSkinLevels[activeSkin] || 0;
+            var cost = Math.round(50 * Math.pow(1.3, currentLevel));
+            
+            if ((p.resources.silver || 0) < cost) {
+                return { success: false, reason: 'Нужно ' + cost + ' серебра' };
+            }
+            
+            p.resources.silver -= cost;
+            p.activeSkinLevels[activeSkin] = currentLevel + 1;
+        } else {
+            return { success: false, reason: 'Неизвестный тип' };
+        }
+        
+        if (Sherwood._recalcStats) Sherwood._recalcStats();
+        if (Sherwood.saveGame) Sherwood.saveGame();
+        
+        return { success: true };
+    },
+
+    getEnhanceCost: function(type) {
+        var p = Sherwood.getPlayer();
+        if (!p) return 0;
+        
+        if (type === 'ring') {
+            var ring = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.ring : null;
+            if (!ring) return 0;
+            return Math.round(50 * Math.pow(1.3, ring.enhancement || 0));
+        } else if (type === 'amulet') {
+            var amulet = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.amulet : null;
+            if (!amulet) return 0;
+            return Math.round(50 * Math.pow(1.3, amulet.enhancement || 0));
+        } else if (type === 'skin') {
+            var activeSkin = this.getActiveSkin ? this.getActiveSkin() : null;
+            if (!activeSkin) return 0;
+            if (!p.activeSkinLevels) p.activeSkinLevels = {};
+            return Math.round(50 * Math.pow(1.3, p.activeSkinLevels[activeSkin] || 0));
+        }
+        return 0;
+    },
+
+    getEnhanceLevel: function(type) {
+        var p = Sherwood.getPlayer();
+        if (!p) return 0;
+        
+        if (type === 'ring') {
+            var ring = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.ring : null;
+            return ring ? (ring.enhancement || 0) : 0;
+        } else if (type === 'amulet') {
+            var amulet = Sherwood.Bag && Sherwood.Bag._equipment ? Sherwood.Bag._equipment.amulet : null;
+            return amulet ? (amulet.enhancement || 0) : 0;
+        } else if (type === 'skin') {
+            var activeSkin = this.getActiveSkin ? this.getActiveSkin() : null;
+            if (!activeSkin) return 0;
+            if (!p.activeSkinLevels) p.activeSkinLevels = {};
+            return p.activeSkinLevels[activeSkin] || 0;
+        }
+        return 0;
+    },
+
     getArrowCraftInfo: function() {
         var bag = Sherwood.Bag;
         var items = bag.getItems();
