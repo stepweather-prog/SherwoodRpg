@@ -37,6 +37,7 @@ const SherwoodUI = {
         if (typeof Sherwood !== 'undefined') { try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {} try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {} }
         try { this._loadAudioSettings(); } catch(e) {}
         try { this._scaleGame(); } catch(e) {}
+        try { this._checkForUpdates(); } catch(e) {}
         window.addEventListener('resize', function() { SherwoodUI._scaleGame(); });
     },
 
@@ -1433,6 +1434,7 @@ this._screenLayer.appendChild(bloodOverlay);
         h += '<div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div>';
         h += '<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">Звуки</span><button onclick="SherwoodUI._toggleSound(' + !this._soundEnabled + ')" style="width:60px;height:30px;background:' + (this._soundEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;' + (this._soundEnabled ? 'right:3px;' : 'left:3px;') + 'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">Музыка</span><button onclick="SherwoodUI._toggleMusic(' + !this._musicEnabled + ')" style="width:60px;height:30px;background:' + (this._musicEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;' + (this._musicEnabled ? 'right:3px;' : 'left:3px;') + 'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div></div>';
         h += '<button onclick="SherwoodUI._saveProgress()" style="width:100%;background:#4caf50;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Сохранить прогресс</button>';
+        h += '<button onclick="SherwoodUI._updateApp()" style="width:100%;background:#2196f3;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Обновить игру</button>';
         h += '<button onclick="SherwoodUI._resetCharacter()" style="width:100%;background:#ff9800;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Сбросить персонажа (5000 золота)</button>';
         h += '<button onclick="SherwoodUI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">Выйти</button>';
         this._openScreen('Настройки','settings',h);
@@ -1449,6 +1451,48 @@ this._screenLayer.appendChild(bloodOverlay);
     },
 
     _saveProgress: function() { if (Sherwood.saveGameNow) { Sherwood.saveGameNow(); this._saveAudioSettings(); this._showToast('Прогресс сохранён!'); } else if (Sherwood.saveGame) { Sherwood.saveGame(); this._saveAudioSettings(); this._showToast('Прогресс сохранён!'); } },
+    _updateApp: function() {
+    this._playSound('click');
+    this._showToast('Проверка обновлений...');
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+                registrations[i].unregister();
+            }
+        });
+    }
+    
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (var i = 0; i < names.length; i++) {
+                caches.delete(names[i]);
+            }
+        });
+    }
+    
+    setTimeout(function() {
+        window.location.reload(true);
+    }, 1500);
+},
+
+_checkForUpdates: function() {
+    var currentVersion = '1.0.0';
+    var savedVersion = localStorage.getItem('sherwood_version');
+    
+    if (savedVersion && savedVersion !== currentVersion) {
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (var i = 0; i < names.length; i++) {
+                    caches.delete(names[i]);
+                }
+            });
+        }
+        localStorage.setItem('sherwood_version', currentVersion);
+    } else if (!savedVersion) {
+        localStorage.setItem('sherwood_version', currentVersion);
+    }
+},
 
     _resetCharacter: function() {
         var p = Sherwood.getPlayer(); if (!p) return;
