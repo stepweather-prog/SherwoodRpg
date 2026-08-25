@@ -54,8 +54,20 @@
         }
 
         .divider-left, .divider-right {
-            display: none; /* Если это разделительные рамки, пока гасим */
-        }
+    display: block;
+    position: fixed;
+    top: 0;
+    width: 80px;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+}
+.divider-left {
+    left: calc(50% - 320px);
+}
+.divider-right {
+    right: calc(50% - 320px);
+}
         
         /* --- ЦЕНТРАЛЬНЫЙ ИГРОВОЙ ЭКРАН --- */
         #game-container {
