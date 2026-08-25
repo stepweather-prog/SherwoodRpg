@@ -523,30 +523,21 @@
         var GAME_HEIGHT = 800;
         
         function scaleGame() {
-            var vw = window.innerWidth;
-            var vh = window.innerHeight;
-            
-            var scaleX = vw / GAME_WIDTH;
-            var scaleY = vh / GAME_HEIGHT;
-            var scale = Math.min(scaleX, scaleY);
-            
-            if (scale > 1) scale = 1;
-            
-            container.style.transform = 'scale(' + scale + ')';
-            container.style.transformOrigin = 'top left';
-            container.style.position = 'absolute';
-            container.style.left = '0';
-            container.style.top = '0';
-            
-            var scaledWidth = GAME_WIDTH * scale;
-            var scaledHeight = GAME_HEIGHT * scale;
-            
-            var leftOffset = (vw - scaledWidth) / 2;
-            var topOffset = (vh - scaledHeight) / 2;
-            
-            container.style.marginLeft = leftOffset + 'px';
-            container.style.marginTop = topOffset + 'px';
-        }
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    
+    var scaleX = vw / GAME_WIDTH;
+    var scaleY = vh / GAME_HEIGHT;
+    var scale = Math.max(scaleX, scaleY); // Заливаем весь экран
+    
+    container.style.transform = 'scale(' + scale + ')';
+    container.style.transformOrigin = 'center center';
+    container.style.position = 'fixed';
+    container.style.left = '50%';
+    container.style.top = '50%';
+    container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
+    container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
+}
         
         scaleGame();
         window.addEventListener('resize', scaleGame);
