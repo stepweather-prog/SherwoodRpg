@@ -466,7 +466,7 @@ else if (newLevel >= 20) ringIcon = 'assets/interface/ring_chapter_six.png';
 else if (newLevel >= 15) ringIcon = 'assets/interface/ring_fifth_level.png';
 else if (newLevel >= 12) ringIcon = 'assets/interface/ring_fourth_level.png';
 else if (newLevel >= 8) ringIcon = 'assets/interface/ring_third_level.png';
-else if (newLevel >= 4) ringIcon = 'assets/interface/ring_second_level.png';
+else if (newLevel >= 4) ringIcon = 'assets/interface/the_ring_chapter_fourteen.png';
         Sherwood.Bag._equipment.ring = {
             name: 'Кольцо силы ' + newLevel,
             icon: ringIcon,
