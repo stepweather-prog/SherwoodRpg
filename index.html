@@ -516,47 +516,34 @@
     
     <script>
     (function() {
-        var container = document.getElementById('game-container');
-        if (!container) return;
+    var container = document.getElementById('game-container');
+    if (!container) return;
+    
+    var GAME_WIDTH = 480;
+    var GAME_HEIGHT = 800;
+    
+    function scaleGame() {
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
         
-        var GAME_WIDTH = 480;
-        var GAME_HEIGHT = 800;
+        var scale = Math.max(vw / GAME_WIDTH, vh / GAME_HEIGHT);
         
-        function scaleGame() {
-    var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    
-    var scaleX = vw / GAME_WIDTH;
-    var scaleY = vh / GAME_HEIGHT;
-    
-    // Сначала пытаемся заполнить по высоте
-    var scale = scaleY;
-    
-    // Если по ширине выходит слишком много — ограничиваем
-    // чтобы игра была по центру и статуи обрезались
-    if (scaleX < scale) {
-        scale = scaleX;
+        container.style.transform = 'scale(' + scale + ')';
+        container.style.transformOrigin = 'center center';
+        container.style.position = 'fixed';
+        container.style.left = '50%';
+        container.style.top = '50%';
+        container.style.width = GAME_WIDTH + 'px';
+        container.style.height = GAME_HEIGHT + 'px';
+        container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
+        container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
     }
     
-    // Если ширина экрана больше чем нужно — растягиваем по высоте
-    if (scaleX > scaleY) {
-        scale = scaleY;
-    }
-    
-    container.style.transform = 'scale(' + scale + ')';
-    container.style.transformOrigin = 'center center';
-    container.style.position = 'fixed';
-    container.style.left = '50%';
-    container.style.top = '50%';
-    container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
-    container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
-}
-        
-        scaleGame();
-        window.addEventListener('resize', scaleGame);
-        window.addEventListener('orientationchange', scaleGame);
-        document.addEventListener('DOMContentLoaded', scaleGame);
-    })();
+    scaleGame();
+    window.addEventListener('resize', scaleGame);
+    window.addEventListener('orientationchange', scaleGame);
+    document.addEventListener('DOMContentLoaded', scaleGame);
+})();
     </script>
 </body>
 </html>
