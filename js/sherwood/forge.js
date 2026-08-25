@@ -457,10 +457,19 @@ Sherwood.Forge = {
                     newLevel >= 30 ? 'epic' :
                     newLevel >= 20 ? 'rare' :
                     newLevel >= 10 ? 'uncommon' : 'common';
-
+var ringIcon = 'assets/interface/ring_first_level.png';
+if (newLevel >= 60) ringIcon = 'assets/interface/the_ring_chapter_fourteen.png';
+else if (newLevel >= 50) ringIcon = 'assets/interface/ring_chapter_twelve.png';
+else if (newLevel >= 40) ringIcon = 'assets/interface/ring_chapter_ten.png';
+else if (newLevel >= 30) ringIcon = 'assets/interface/ring_chapter_eight.png';
+else if (newLevel >= 20) ringIcon = 'assets/interface/ring_chapter_six.png';
+else if (newLevel >= 15) ringIcon = 'assets/interface/ring_fifth_level.png';
+else if (newLevel >= 12) ringIcon = 'assets/interface/ring_fourth_level.png';
+else if (newLevel >= 8) ringIcon = 'assets/interface/ring_third_level.png';
+else if (newLevel >= 4) ringIcon = 'assets/interface/ring_second_level.png';
         Sherwood.Bag._equipment.ring = {
             name: 'Кольцо силы ' + newLevel,
-            icon: 'assets/interface/ring_first_level.png',
+            icon: ringIcon,
             part: 'ring',
             grade: grade,
             level: newLevel,
@@ -523,9 +532,15 @@ Sherwood.Forge = {
                     newLevel >= 20 ? 'rare' :
                     newLevel >= 10 ? 'uncommon' : 'common';
 
+        var amuletIcon = 'assets/interface/sherwood_amulet_level_one.png';
+        if (newLevel >= 40) amuletIcon = 'assets/interface/sherwood_amulet_level_five.png';
+        else if (newLevel >= 30) amuletIcon = 'assets/interface/sherwood_amulet_level_four.png';
+        else if (newLevel >= 20) amuletIcon = 'assets/interface/sherwood_amulet_level_three.png';
+        else if (newLevel >= 10) amuletIcon = 'assets/interface/sherwood_amulet_level_two.png';
+
         Sherwood.Bag._equipment.amulet = {
             name: 'Амулет защиты ' + newLevel,
-            icon: 'assets/interface/sherwood_amulet_level_one.png',
+            icon: amuletIcon,
             part: 'amulet',
             grade: grade,
             level: newLevel,
