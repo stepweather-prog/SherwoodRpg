@@ -1816,7 +1816,7 @@ _doTraining: function(stat) {
         var skinDrawings = resources.skinTablets || 0; var ringTablets = resources.ringTablets || 0; var amuletTablets = resources.amuletTablets || 0;
         var arrowCount = Sherwood.Forge.getArrowCount ? Sherwood.Forge.getArrowCount() : 0;
         var h = '';
-        h += '<div style="text-align:center;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:16px;">Кузница</div>';
+        
         h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">';
         h += '<div onclick="SherwoodUI._showSkinCrafting()" style="cursor:pointer;position:relative;width:70px;height:70px;background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><img src="assets/interface/skin_drawing.png" style="width:44px;height:44px;object-fit:contain;"><span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + skinDrawings + '</span></div>';
         h += '<div onclick="SherwoodUI._showRingCrafting()" style="cursor:pointer;position:relative;width:70px;height:70px;background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid #c9a040;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><img src="assets/interface/ring_crafting_tablet_resource.png" style="width:44px;height:44px;object-fit:contain;"><span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + ringTablets + '</span></div>';
@@ -1854,9 +1854,9 @@ h += '</div>';
 
 var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
         var enhanceItems = items.filter(function(i) { return i.part && i.part !== 'ring' && i.part !== 'amulet'; });
-        h += '<div style="margin-bottom:12px;"><div style="color:#e0c080;margin-bottom:4px;">Заточка</div>';
+       
         if (enhanceItems.length > 0) { for (var i = 0; i < enhanceItems.length; i++) { var item = enhanceItems[i], idx = items.indexOf(item), lvl = item.enhancement || 0; h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:6px;padding:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><div><div style="color:#e0c080;font-size:0.8em;">' + item.name + '</div><div style="color:#aaa;font-size:0.6em;">Заточка: +' + lvl + '</div></div><button onclick="SherwoodUI._enhanceItem(' + idx + ')" style="background:#c9a040;border:none;border-radius:4px;padding:4px 10px;color:#000;cursor:pointer;font-size:0.7em;">Точить</button></div>'; } }
-        else { h += '<div style="color:#aaa;font-size:0.7em;">Нет предметов для заточки</div>'; }
+        
         h += '</div><div id="forge-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:12px;min-height:24px;"></div>';
         this._openScreenScrollable('Кузница', 'forge', h, gb);
     },
