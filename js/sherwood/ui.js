@@ -33,6 +33,7 @@ const SherwoodUI = {
         try { this._initSounds(); } catch(e) {}
         try { var silverEl = document.getElementById('silver-display'); if (silverEl) { silverEl.parentElement.style.cursor = 'pointer'; silverEl.parentElement.onclick = function() { SherwoodUI._showExchangePanel(); }; } } catch(e) {}
         try { this._playMusic('main_theme'); } catch(e) {}
+        try { this._playVideoBackground(); } catch(e) {}
         try { this.updateDisplay(); } catch(e) {}
         if (typeof Sherwood !== 'undefined') { try { Sherwood.on('RESOURCE_CHANGED', function() { SherwoodUI.updateDisplay(); }); } catch(e) {} try { Sherwood.on('PLAYER_LEVEL_UP', function() { SherwoodUI._playSound('levelup'); SherwoodUI.updateDisplay(); }); } catch(e) {} }
         try { this._loadAudioSettings(); } catch(e) {}
@@ -137,16 +138,19 @@ const SherwoodUI = {
         try { var self = this; var btn = document.getElementById('playBtn'); if (btn) btn.addEventListener('click', function() { try { document.getElementById('loadingScreen').classList.add('hidden'); } catch(e) {} try { document.getElementById('mainInterface').classList.add('active'); } catch(e) {} try { self._playSound('click'); self._playMusic('main_theme'); } catch(e) {} }); } catch(e) {}
     },
         _playVideoBackground: function() {
-        var portalVideo = document.querySelector('.portal-video-bg');
-        if (portalVideo) {
-            portalVideo.style.display = 'block';
-            var video = portalVideo.querySelector('video');
-            if (video) {
-                video.muted = true;
-                video.play().catch(function() {});
-            }
+    var portalVideo = document.querySelector('.portal-video-bg');
+    if (portalVideo) {
+        portalVideo.style.display = 'block';
+        var video = portalVideo.querySelector('video');
+        if (video) {
+            video.muted = true;
+            video.play().catch(function() {});
+            video.onended = function() {
+                video.pause();
+            };
         }
-    },
+    }
+},
 
     loadHome: function() {
     try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
