@@ -131,9 +131,9 @@ Sherwood.Dungeon2D5 = {
         this._scene.background = new THREE.Color(0x1a0f08);
         this._camera = new THREE.PerspectiveCamera(70, this._w / this._h, 0.1, 30);
         this._camera.rotation.order = 'YXZ';
-        this._renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power' });
-        this._renderer.setSize(this._w, this._h);
-        this._renderer.setPixelRatio(1);
+        this._renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' });
+this._renderer.setSize(this._w, this._h);
+this._renderer.setPixelRatio(0.7);
         this._renderer.setClearColor(0x1a0f08, 1);
         this._scene.add(new THREE.AmbientLight(0x664422, 0.8));
         const mainLight = new THREE.DirectionalLight(0xffcc88, 0.9);
@@ -449,7 +449,7 @@ Sherwood.Dungeon2D5 = {
                 if (!cell || !cell.open) continue;
                 const hasItem = (cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) || (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) || (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked);
                 if (hasItem) {
-                    for (let i = 0; i < 5; i++) {
+                    for (let i = 0; i < 3; i++) {
                         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._particleTexture, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
                         sprite.position.set(col - center + (Math.random() - 0.5) * 0.4, 0.1 + Math.random() * 0.4, row - center + (Math.random() - 0.5) * 0.4);
                         sprite.scale.set(0.06, 0.06, 1);
@@ -519,7 +519,7 @@ Sherwood.Dungeon2D5 = {
                 if (!isPerimeter) continue;
                 const cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
-                if ((row + col) % 3 !== 0) continue;
+                if ((row + col) % 5 !== 0) continue;
                 let offsetX = 0.35, offsetZ = 0.35;
                 const dirs = [{ dx: -1, dy: 0, ox: 0.35, oz: 0 }, { dx: 1, dy: 0, ox: -0.35, oz: 0 }, { dx: 0, dy: -1, ox: 0, oz: 0.35 }, { dx: 0, dy: 1, ox: 0, oz: -0.35 }];
                 for (let i = 0; i < dirs.length; i++) {
@@ -713,12 +713,18 @@ Sherwood.Dungeon2D5 = {
     },
 
     _startLoop: function() {
-        const self = this;
-        let lastTime = performance.now();
-        function loop(time) {
-            self._renderLoop = requestAnimationFrame(loop);
-            const dt = Math.min((time - lastTime) / 1000, 0.1);
-            lastTime = time;
+    const self = this;
+    let lastTime = performance.now();
+    let frameSkip = 0;
+    function loop(time) {
+        self._renderLoop = requestAnimationFrame(loop);
+        
+        frameSkip++;
+        if (frameSkip < 2) return;
+        frameSkip = 0;
+        
+        const dt = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
             if (self._isMoving) {
                 self._moveT += dt * 2.5;
                 if (self._moveT >= 1) {
