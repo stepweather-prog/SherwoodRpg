@@ -523,21 +523,28 @@
         var GAME_HEIGHT = 800;
         
         function scaleGame() {
-    var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    
-    var scaleX = vw / GAME_WIDTH;
-    var scaleY = vh / GAME_HEIGHT;
-    var scale = Math.max(scaleX, scaleY); // Заливаем весь экран
-    
-    container.style.transform = 'scale(' + scale + ')';
-    container.style.transformOrigin = 'center center';
-    container.style.position = 'fixed';
-    container.style.left = '50%';
-    container.style.top = '50%';
-    container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
-    container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
-}
+            var vw = window.innerWidth;
+            var vh = window.innerHeight;
+            
+            var scaleX = vw / GAME_WIDTH;
+            var scaleY = vh / GAME_HEIGHT;
+            
+            // Масштабируем по ширине — обрезаем бока (статуи)
+            var scale = scaleX;
+            
+            // Если по высоте не влезает — подстраиваем под высоту
+            if (scaleY < scale) {
+                scale = scaleY;
+            }
+            
+            container.style.transform = 'scale(' + scale + ')';
+            container.style.transformOrigin = 'center center';
+            container.style.position = 'fixed';
+            container.style.left = '50%';
+            container.style.top = '50%';
+            container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
+            container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
+        }
         
         scaleGame();
         window.addEventListener('resize', scaleGame);
