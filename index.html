@@ -523,28 +523,34 @@
         var GAME_HEIGHT = 800;
         
         function scaleGame() {
-            var vw = window.innerWidth;
-            var vh = window.innerHeight;
-            
-            var scaleX = vw / GAME_WIDTH;
-            var scaleY = vh / GAME_HEIGHT;
-            
-            // Масштабируем по ширине — обрезаем бока (статуи)
-            var scale = scaleX;
-            
-            // Если по высоте не влезает — подстраиваем под высоту
-            if (scaleY < scale) {
-                scale = scaleY;
-            }
-            
-            container.style.transform = 'scale(' + scale + ')';
-            container.style.transformOrigin = 'center center';
-            container.style.position = 'fixed';
-            container.style.left = '50%';
-            container.style.top = '50%';
-            container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
-            container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
-        }
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    
+    var scaleX = vw / GAME_WIDTH;
+    var scaleY = vh / GAME_HEIGHT;
+    
+    // Сначала пытаемся заполнить по высоте
+    var scale = scaleY;
+    
+    // Если по ширине выходит слишком много — ограничиваем
+    // чтобы игра была по центру и статуи обрезались
+    if (scaleX < scale) {
+        scale = scaleX;
+    }
+    
+    // Если ширина экрана больше чем нужно — растягиваем по высоте
+    if (scaleX > scaleY) {
+        scale = scaleY;
+    }
+    
+    container.style.transform = 'scale(' + scale + ')';
+    container.style.transformOrigin = 'center center';
+    container.style.position = 'fixed';
+    container.style.left = '50%';
+    container.style.top = '50%';
+    container.style.marginLeft = -(GAME_WIDTH / 2) + 'px';
+    container.style.marginTop = -(GAME_HEIGHT / 2) + 'px';
+}
         
         scaleGame();
         window.addEventListener('resize', scaleGame);
