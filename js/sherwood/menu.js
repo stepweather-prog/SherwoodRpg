@@ -1,4 +1,4 @@
-// js/menu.js — Исправлено: подписи на панелях, разделители на своих местах
+// js/menu.js — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ (Без выпадающих элементов)
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -62,13 +62,13 @@ const Menu = {
         this.screen.appendChild(this.iconContainer);
         this.buildCarousel();
         
-        // Разделитель верхний (привязан к стене)
+        // Разделитель верхний (на 25%)
         const topSeam = document.createElement('img');
         topSeam.src = 'assets/assets2/game_details/seam_top.png';
         topSeam.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:auto;transform:translateY(-100%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(topSeam);
         
-        // Разделитель нижний (привязан к полу)
+        // Разделитель нижний (на 75%)
         const bottomSeam = document.createElement('img');
         bottomSeam.src = 'assets/assets2/game_details/seam_bottom.png';
         bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-100%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
@@ -115,17 +115,17 @@ const Menu = {
             const section = document.createElement('div');
             section.style.cssText = 'min-width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;';
             
-            // Иконка (верхний элемент)
+            // Иконка (сверху)
             const img = new Image();
             img.src = `assets/assets2/icons/${this.getIconFile(building.icon)}`;
-            img.style.cssText = 'width:45%;height:auto;max-height:45%;object-fit:contain;pointer-events:none;z-index:2;position:relative;';
+            img.style.cssText = 'width:45%;height:auto;max-height:45%;object-fit:contain;pointer-events:none;z-index:2;position:relative;margin-bottom:10px;';
             
-            // Панель (нижний элемент, широкая)
+            // Панель (строго под иконкой, без absolute)
             const panel = document.createElement('img');
             panel.src = 'assets/assets2/icons/all_stat.png';
-            panel.style.cssText = 'width:80%;height:60px;object-fit:contain;pointer-events:none;z-index:1;position:absolute;bottom:15%;';
+            panel.style.cssText = 'width:80%;height:60px;object-fit:contain;pointer-events:none;z-index:1;position:relative;';
             
-            // Подпись (привязана к низу панели, а не к иконке)
+            // Подпись (на панели)
             const label = document.createElement('div');
             label.textContent = building.name;
             label.style.cssText = 'position:absolute;bottom:15%;left:50%;transform:translateX(-50%);width:100%;max-width:120px;text-align:center;color:#ffa500;font-size:1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:2;';
