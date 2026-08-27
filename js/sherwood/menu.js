@@ -1,4 +1,4 @@
-// js/menu.js — полный с обновлёнными размерами
+// js/menu.js — Исправленные размеры (панели как на главной)
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -74,7 +74,7 @@ const Menu = {
         bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(bottomSeam);
         
-        // Анимация — в 2 раза больше
+        // Анимация
         this.stepVideo = document.createElement('video');
         this.stepVideo.src = 'assets/assets2/animation/step_up.webm';
         this.stepVideo.loop = false;
@@ -90,7 +90,7 @@ const Menu = {
         homeBtn.onclick = () => { if (typeof showHomeScreen === 'function') showHomeScreen(); };
         this.screen.appendChild(homeBtn);
         
-        // Стрелки — в 2 раза больше
+        // Стрелки
         const leftArrow = document.createElement('img');
         leftArrow.src = 'assets/assets2/icons/left.png';
         leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:100px;cursor:pointer;z-index:6;';
@@ -115,18 +115,20 @@ const Menu = {
             const section = document.createElement('div');
             section.style.cssText = 'min-width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;';
             
-            // Иконка ближе к табличке
+            // Иконка (уменьшена, чтобы не перекрывалась панелью)
             const img = new Image();
             img.src = `assets/assets2/icons/${this.getIconFile(building.icon)}`;
-            img.style.cssText = 'width:45%;height:auto;max-height:55%;object-fit:contain;pointer-events:none;margin-bottom:8px;';
+            img.style.cssText = 'width:45%;height:auto;max-height:50%;object-fit:contain;pointer-events:none;margin-bottom:-20px;z-index:2;position:relative;';
             
+            // Панель (теперь маленькая и по центру, как на главном экране)
             const panel = document.createElement('img');
             panel.src = 'assets/assets2/icons/all_stat.png';
-            panel.style.cssText = 'width:60%;height:auto;object-fit:contain;pointer-events:none;';
+            panel.style.cssText = 'width:clamp(100px, 15vw, 160px);height:60px;object-fit:contain;pointer-events:none;z-index:1;';
             
+            // Название здания (теперь сидит прямо внутри панели)
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:absolute;bottom:16%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
+            label.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);width:100%;max-width:140px;text-align:center;color:#ffa500;font-size:1.1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:3;';
             
             section.appendChild(img);
             section.appendChild(panel);
