@@ -1,4 +1,4 @@
-// js/textures.js — пути обновлены на assets/assets2/
+// js/textures.js
 const Textures = {
     floor: null,
     ceiling: null,
@@ -25,13 +25,13 @@ const Textures = {
         });
         
         // Пол
-        this.loadImage('assets/assets2/Sherwood_Square/floor_area_1.png', (img) => {
+        this.loadImage('assets/assets2/Sherwood_Square/floor1.png', (img) => {
             this.floor = img;
             this.checkLoaded(callback);
         });
         
         // Потолок
-        this.loadImage('assets/assets2/Sherwood_Square/area_ceiling_moon.png', (img) => {
+        this.loadImage('assets/assets2/Sherwood_Square/1area_ceiling_moon.png', (img) => {
             this.ceiling = img;
             this.checkLoaded(callback);
         });
