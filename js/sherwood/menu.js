@@ -1,4 +1,4 @@
-// js/menu.js 
+// js/menu.js — пути обновлены на assets/assets2/
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -36,69 +36,69 @@ const Menu = {
         this.screen.style.position = 'relative';
         this.screen.style.overflow = 'hidden';
         
-        // СЛОЙ 1: Потолок
+        // Потолок
         const ceiling = document.createElement('div');
-        ceiling.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:25%;background:url("assets/Sherwood_Square/area_ceiling_moon.png") center/cover no-repeat;z-index:1;';
+        ceiling.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:25%;background:url("assets/assets2/Sherwood_Square/1area_ceiling_moon.png") center/cover no-repeat;z-index:1;';
         this.screen.appendChild(ceiling);
         
-        // СЛОЙ 2: Стена
+        // Стена
         const wall = document.createElement('div');
-        wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
+        wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;background:url("assets/assets2/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
         this.screen.appendChild(wall);
         
-        // СЛОЙ 3: Пол
+        // Пол
         const floor = document.createElement('div');
         floor.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:25%;display:flex;z-index:1;';
         for (let i = 1; i <= 3; i++) {
             const tile = document.createElement('div');
-            tile.style.cssText = `width:33.33%;height:100%;background:url('assets/Sherwood_Square/floor${i}.png') center/cover no-repeat;`;
+            tile.style.cssText = `width:33.33%;height:100%;background:url('assets/assets2/Sherwood_Square/floor${i}.png') center/cover no-repeat;`;
             floor.appendChild(tile);
         }
         this.screen.appendChild(floor);
         
-        // СЛОЙ 4: Иконки — карусель
+        // Иконки
         this.iconContainer = document.createElement('div');
         this.iconContainer.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;overflow:hidden;z-index:3;';
         this.screen.appendChild(this.iconContainer);
         this.buildCarousel();
         
-        // СЛОЙ 5: Разделитель ВЕРХНИЙ
+        // Разделитель верхний
         const topSeam = document.createElement('img');
-        topSeam.src = 'assets/game_details/seam_top.png';
+        topSeam.src = 'assets/assets2/game_details/seam_top.png';
         topSeam.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:contain;';
         this.screen.appendChild(topSeam);
         
-        // СЛОЙ 6: Разделитель НИЖНИЙ
+        // Разделитель нижний
         const bottomSeam = document.createElement('img');
-        bottomSeam.src = 'assets/game_details/seam_bottom.png';
+        bottomSeam.src = 'assets/assets2/game_details/seam_bottom.png';
         bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:contain;';
         this.screen.appendChild(bottomSeam);
         
-        // СЛОЙ 7: Анимация
+        // Анимация
         this.stepVideo = document.createElement('video');
-        this.stepVideo.src = 'assets/animation/step_up.webm';
+        this.stepVideo.src = 'assets/assets2/animation/step_up.webm';
         this.stepVideo.loop = false;
         this.stepVideo.muted = true;
         this.stepVideo.playsInline = true;
         this.stepVideo.style.cssText = 'position:absolute;bottom:1%;left:50%;transform:translateX(-50%);width:20vw;max-width:120px;z-index:5;pointer-events:none;';
         this.screen.appendChild(this.stepVideo);
         
-        // СЛОЙ 8: Кнопка домой
+        // Кнопка домой
         const homeBtn = document.createElement('img');
-        homeBtn.src = 'assets/Sherwood_Square/oak_area.png';
+        homeBtn.src = 'assets/assets2/Sherwood_Square/oak_area.png';
         homeBtn.style.cssText = 'position:absolute;top:2%;left:2%;width:8vw;max-width:50px;cursor:pointer;z-index:6;';
         homeBtn.onclick = () => { if (typeof showHomeScreen === 'function') showHomeScreen(); };
         this.screen.appendChild(homeBtn);
         
-        // СЛОЙ 9: Стрелки
+        // Стрелки
         const leftArrow = document.createElement('img');
-        leftArrow.src = 'assets/icons/left.png';
+        leftArrow.src = 'assets/assets2/icons/left.png';
         leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:8vw;max-width:50px;cursor:pointer;z-index:6;';
         leftArrow.onclick = () => this.prev();
         this.screen.appendChild(leftArrow);
         
         const rightArrow = document.createElement('img');
-        rightArrow.src = 'assets/icons/right.png';
+        rightArrow.src = 'assets/assets2/icons/right.png';
         rightArrow.style.cssText = 'position:absolute;right:2%;top:50%;transform:translateY(-50%);width:8vw;max-width:50px;cursor:pointer;z-index:6;';
         rightArrow.onclick = () => this.next();
         this.screen.appendChild(rightArrow);
@@ -116,11 +116,11 @@ const Menu = {
             section.style.cssText = 'min-width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;';
             
             const img = new Image();
-            img.src = `assets/icons/${this.getIconFile(building.icon)}`;
+            img.src = `assets/assets2/icons/${this.getIconFile(building.icon)}`;
             img.style.cssText = 'width:45%;height:auto;max-height:60%;object-fit:contain;pointer-events:none;margin-bottom:2px;';
             
             const panel = document.createElement('img');
-            panel.src = 'assets/icons/all_stat.png';
+            panel.src = 'assets/assets2/icons/all_stat.png';
             panel.style.cssText = 'width:60%;height:auto;object-fit:contain;pointer-events:none;';
             
             const label = document.createElement('div');
