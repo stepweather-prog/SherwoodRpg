@@ -1,11 +1,11 @@
-// js/audio.js
+// js/audio.js — с проверкой Settings
 const AudioManager = {
     cityTracks: [
-        'assets/music/city_theme1.ogg',
-        'assets/music/city_theme2.ogg',
-        'assets/music/city_theme3.ogg',
-        'assets/music/city_theme4.ogg',
-        'assets/music/city_theme5.ogg',
+        'assets/assets2/music/city_theme1.ogg',
+        'assets/assets2/music/city_theme2.ogg',
+        'assets/assets2/music/city_theme3.ogg',
+        'assets/assets2/music/city_theme4.ogg',
+        'assets/assets2/music/city_theme5.ogg',
     ],
     currentTrackIndex: 0,
     currentMusic: null,
@@ -15,7 +15,7 @@ const AudioManager = {
     },
     
     playCityTheme() {
-        if (typeof Settings !== 'undefined' && !Settings.isMusicEnabled()) {
+        if (typeof Settings !== 'undefined' && Settings.isMusicEnabled && !Settings.isMusicEnabled()) {
             return;
         }
         
