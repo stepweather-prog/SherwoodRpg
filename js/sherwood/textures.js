@@ -1,4 +1,4 @@
-// js/textures.js
+// js/textures.js — пути обновлены на assets/assets2/
 const Textures = {
     floor: null,
     ceiling: null,
@@ -19,47 +19,47 @@ const Textures = {
         }
         
         // Стена
-        this.loadImage('assets/Sherwood_Square/wall_area_1.png', (img) => {
+        this.loadImage('assets/assets2/Sherwood_Square/wall_area_1.png', (img) => {
             this.wall = img;
             this.checkLoaded(callback);
         });
         
         // Пол
-        this.loadImage('assets/Sherwood_Square/floor_area_1.png', (img) => {
+        this.loadImage('assets/assets2/Sherwood_Square/floor_area_1.png', (img) => {
             this.floor = img;
             this.checkLoaded(callback);
         });
         
         // Потолок
-        this.loadImage('assets/Sherwood_Square/area_ceiling_moon.png', (img) => {
+        this.loadImage('assets/assets2/Sherwood_Square/area_ceiling_moon.png', (img) => {
             this.ceiling = img;
             this.checkLoaded(callback);
         });
         
         // Дуб
-        this.loadImage('assets/Sherwood_Square/oak_area.png', (img) => {
+        this.loadImage('assets/assets2/Sherwood_Square/oak_area.png', (img) => {
             this.oak = img;
             this.checkLoaded(callback);
         });
         
         // Швы
-        this.loadImage('assets/game_details/seam_bottom.png', (img) => {
+        this.loadImage('assets/assets2/game_details/seam_bottom.png', (img) => {
             this.seamBottom = img;
             this.checkLoaded(callback);
         });
         
-        this.loadImage('assets/game_details/seam_top.png', (img) => {
+        this.loadImage('assets/assets2/game_details/seam_top.png', (img) => {
             this.seamTop = img;
             this.checkLoaded(callback);
         });
         
         // Слоты
-        this.loadImage('assets/game_details/bag_cell.png', (img) => {
+        this.loadImage('assets/assets2/game_details/bag_cell.png', (img) => {
             this.buildings['bag_cell'] = img;
             this.checkLoaded(callback);
         });
         
-        this.loadImage('assets/game_details/2wallet_cell.png', (img) => {
+        this.loadImage('assets/assets2/game_details/2wallet_cell.png', (img) => {
             this.buildings['wallet_cell'] = img;
             this.checkLoaded(callback);
         });
@@ -92,7 +92,7 @@ const Textures = {
         this.totalTextures = 1 + 1 + 1 + 1 + 2 + 2 + Object.keys(buildingIcons).length;
         
         for (const [name, file] of Object.entries(buildingIcons)) {
-            this.loadImage(`assets/icons/${file}`, (img) => {
+            this.loadImage(`assets/assets2/icons/${file}`, (img) => {
                 this.buildings[name] = img;
                 this.checkLoaded(callback);
             });
