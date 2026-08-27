@@ -1,4 +1,4 @@
-// js/menu.js — все пути на assets/assets2/
+// js/menu.js — полный с обновлёнными размерами
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -74,13 +74,13 @@ const Menu = {
         bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(bottomSeam);
         
-        // Анимация
+        // Анимация — в 2 раза больше
         this.stepVideo = document.createElement('video');
         this.stepVideo.src = 'assets/assets2/animation/step_up.webm';
         this.stepVideo.loop = false;
         this.stepVideo.muted = true;
         this.stepVideo.playsInline = true;
-        this.stepVideo.style.cssText = 'position:absolute;bottom:1%;left:50%;transform:translateX(-50%);width:20vw;max-width:120px;z-index:5;pointer-events:none;';
+        this.stepVideo.style.cssText = 'position:absolute;bottom:1%;left:50%;transform:translateX(-50%);width:40vw;max-width:240px;z-index:5;pointer-events:none;';
         this.screen.appendChild(this.stepVideo);
         
         // Кнопка домой
@@ -90,16 +90,16 @@ const Menu = {
         homeBtn.onclick = () => { if (typeof showHomeScreen === 'function') showHomeScreen(); };
         this.screen.appendChild(homeBtn);
         
-        // Стрелки
+        // Стрелки — в 2 раза больше
         const leftArrow = document.createElement('img');
         leftArrow.src = 'assets/assets2/icons/left.png';
-        leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:8vw;max-width:50px;cursor:pointer;z-index:6;';
+        leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:100px;cursor:pointer;z-index:6;';
         leftArrow.onclick = () => this.prev();
         this.screen.appendChild(leftArrow);
         
         const rightArrow = document.createElement('img');
         rightArrow.src = 'assets/assets2/icons/right.png';
-        rightArrow.style.cssText = 'position:absolute;right:2%;top:50%;transform:translateY(-50%);width:8vw;max-width:50px;cursor:pointer;z-index:6;';
+        rightArrow.style.cssText = 'position:absolute;right:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:100px;cursor:pointer;z-index:6;';
         rightArrow.onclick = () => this.next();
         this.screen.appendChild(rightArrow);
     },
@@ -115,17 +115,18 @@ const Menu = {
             const section = document.createElement('div');
             section.style.cssText = 'min-width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;';
             
+            // Иконка ближе к табличке
             const img = new Image();
             img.src = `assets/assets2/icons/${this.getIconFile(building.icon)}`;
-            img.style.cssText = 'width:45%;height:auto;max-height:60%;object-fit:contain;pointer-events:none;margin-bottom:2px;';
+            img.style.cssText = 'width:45%;height:auto;max-height:55%;object-fit:contain;pointer-events:none;margin-bottom:8px;';
             
             const panel = document.createElement('img');
             panel.src = 'assets/assets2/icons/all_stat.png';
-            panel.style.cssText = 'width:12%;height:auto;object-fit:contain;pointer-events:none;';
+            panel.style.cssText = 'width:60%;height:auto;object-fit:contain;pointer-events:none;';
             
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:absolute;bottom:18%;left:50%;transform:translateX(-50%);width:12%;text-align:center;color:#ffa500;font-size:0.7em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
+            label.style.cssText = 'position:absolute;bottom:16%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
             
             section.appendChild(img);
             section.appendChild(panel);
