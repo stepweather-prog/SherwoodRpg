@@ -7,10 +7,41 @@ const menuScreen = document.getElementById('menuScreen');
 
 let currentScreen = 'loading';
 
+/* =========================================
+   ГЛОБАЛЬНЫЕ ДАННЫЕ ИГРОКА И ОБНОВЛЕНИЕ ПАНЕЛИ
+   ========================================= */
+let PlayerStats = {
+    exp: 1250,
+    damage: 150,
+    armor: 45,
+    hp: 100,
+    maxHp: 100,
+    gold: 50,
+    silver: 120
+};
+
+function updateTopBar() {
+    const expEl = document.getElementById('expVal');
+    const dmgEl = document.getElementById('dmgVal');
+    const armorEl = document.getElementById('armorVal');
+    const hpEl = document.getElementById('hpVal');
+    const goldEl = document.getElementById('goldVal');
+    const silverEl = document.getElementById('silverVal');
+
+    if (expEl) expEl.innerText = PlayerStats.exp;
+    if (dmgEl) dmgEl.innerText = PlayerStats.damage;
+    if (armorEl) armorEl.innerText = PlayerStats.armor;
+    if (hpEl) hpEl.innerText = `${PlayerStats.hp}/${PlayerStats.maxHp}`;
+    if (goldEl) goldEl.innerText = PlayerStats.gold;
+    if (silverEl) silverEl.innerText = PlayerStats.silver;
+}
+
 playButton.addEventListener('click', () => {
     loadingScreen.style.display = 'none';
     homeScreen.style.display = 'flex';
     currentScreen = 'home';
+    
+    updateTopBar(); // Обновляем панель при входе
 });
 
 hero.addEventListener('click', () => {
@@ -72,6 +103,8 @@ function showHomeScreen() {
     homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
     currentScreen = 'home';
+    
+    updateTopBar(); // Обновляем панель при возврате
 }
 
 function showSectionScreen(building) {
