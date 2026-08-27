@@ -1,4 +1,4 @@
-/* css/style.css — без обрезания и растяжения */
+/* css/style.css — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
     width: 100%;
@@ -99,7 +99,7 @@ body {
 }
 
 #gameZone {
-    position: relative; /* ВАЖНО: для корректного позиционирования #topBar */
+    position: relative;
     width: 50vw;
     height: 100vh;
     overflow: hidden;
@@ -167,7 +167,7 @@ body {
     overflow: hidden;
 }
 
-/* Фоны разделов — contain, без обрезания */
+/* Фоны разделов */
 #section-screen,
 #dungeon-screen,
 #tavern-screen,
@@ -179,7 +179,6 @@ body {
     background-color: #000 !important;
 }
 
-/* Оверлей загрузки */
 #loading-overlay {
     background-size: contain !important;
     background-position: center !important;
@@ -188,7 +187,7 @@ body {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (TOP BAR)
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК
    ========================================= */
 
 #topBar {
@@ -198,54 +197,51 @@ body {
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Выравниваем по верхнему краю иконок */
-    gap: clamp(10px, 2vw, 25px); /* Увеличенные отступы между блоками */
+    align-items: flex-end;
+    gap: 15px;
     z-index: 20;
     width: 100%;
-    max-width: 800px;
+    max-width: 700px;
     pointer-events: none;
 }
 
-/* Контейнер одной характеристики */
 .stat-box {
     display: flex;
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
-    margin-top: 10px;
 }
 
-/* Иконки (progress, power, и т.д.) — УВЕЛИЧЕНЫ В 2 РАЗА */
+/* Иконки: ПК (80px) */
 .stat-box .icon {
-    width: clamp(70px, 10vw, 100px); /* Было 35-50px, стало 70-100px */
-    height: clamp(70px, 10vw, 100px);
+    width: 80px;
+    height: 80px;
     object-fit: contain;
-    margin-bottom: -35px; /* Отрицательный отступ: иконка сильно наезжает на панель */
-    z-index: 2;
     position: relative;
-    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.9));
+    z-index: 2;
+    margin-bottom: -15px; /* Легкий наезд на панель */
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8));
 }
 
-/* Сама панелька под иконкой */
+/* Панель: ПК (120px x 40px) */
 .panel-bg {
-    width: clamp(80px, 12vw, 120px); /* Увеличенная ширина */
-    height: clamp(40px, 5vw, 55px); /* Увеличенная высота */
+    width: 120px;
+    height: 40px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* Прижимаем текст к низу панели */
+    align-items: flex-end;
+    padding-bottom: 6px;
     position: relative;
     z-index: 1;
-    padding-bottom: 8px; /* Отступ от низа для текста */
 }
 
-/* Текст внутри панельки */
 .stat-value {
     color: #fff;
     font-family: 'Times New Roman', serif;
-    font-size: clamp(14px, 2.2vw, 20px); /* Увеличенный текст */
+    font-size: 16px;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
@@ -254,7 +250,7 @@ body {
 }
 
 /* =========================================
-   АДАПТАЦИЯ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
+   МОБИЛЬНАЯ ВЕРСИЯ (до 768px)
    ========================================= */
 @media (max-width: 768px) {
     #leftStatue, #rightStatue {
@@ -271,30 +267,24 @@ body {
         bottom: 10%;
     }
 
-    /* Адаптация верхней панели */
     #topBar {
-        top: 0;
-        gap: 5px; /* Меньше отступы на мобилке */
-        max-width: 100%;
+        gap: 5px;
+        top: 1%;
     }
-    
-    .stat-box {
-        margin-top: 5px;
-    }
-    
+
     .stat-box .icon {
-        width: clamp(60px, 15vw, 80px); /* Крупные иконки даже на мобилке */
-        height: clamp(60px, 15vw, 80px);
-        margin-bottom: -25px;
+        width: 50px;
+        height: 50px;
+        margin-bottom: -10px;
     }
-    
+
     .panel-bg {
-        width: clamp(60px, 16vw, 80px);
-        height: 30px;
+        width: 80px;
+        height: 28px;
+        padding-bottom: 4px;
     }
-    
+
     .stat-value {
         font-size: 12px;
-        padding-bottom: 5px;
     }
 }
