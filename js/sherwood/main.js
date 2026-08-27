@@ -1,4 +1,4 @@
-// js/main.js — все пути обновлены на assets/assets2/
+// js/main.js — полный с обновлёнными путями
 const loadingScreen = document.getElementById('loadingScreen');
 const homeScreen = document.getElementById('homeScreen');
 const playButton = document.getElementById('playButton');
@@ -40,7 +40,7 @@ function showLoadingOverlay() {
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         z-index: 1000;
-        background: url('assets/assets2/backgrounds/loading_screen_with_logo.png') center/cover no-repeat;
+        background: url('assets/assets2/backgrounds/loading.png') center/cover no-repeat;
         display: flex; justify-content: center; align-items: center;
     `;
     
