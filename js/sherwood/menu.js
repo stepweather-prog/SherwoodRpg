@@ -1,4 +1,4 @@
-// js/menu.js — пути обновлены на assets/assets2/
+// js/menu.js — все пути на assets/assets2/
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -65,13 +65,13 @@ const Menu = {
         // Разделитель верхний
         const topSeam = document.createElement('img');
         topSeam.src = 'assets/assets2/game_details/seam_top.png';
-        topSeam.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:contain;';
+        topSeam.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(topSeam);
         
         // Разделитель нижний
         const bottomSeam = document.createElement('img');
         bottomSeam.src = 'assets/assets2/game_details/seam_bottom.png';
-        bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:contain;';
+        bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(bottomSeam);
         
         // Анимация
@@ -121,11 +121,11 @@ const Menu = {
             
             const panel = document.createElement('img');
             panel.src = 'assets/assets2/icons/all_stat.png';
-            panel.style.cssText = 'width:60%;height:auto;object-fit:contain;pointer-events:none;';
+            panel.style.cssText = 'width:12%;height:auto;object-fit:contain;pointer-events:none;';
             
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:absolute;bottom:18%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
+            label.style.cssText = 'position:absolute;bottom:18%;left:50%;transform:translateX(-50%);width:12%;text-align:center;color:#ffa500;font-size:0.7em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
             
             section.appendChild(img);
             section.appendChild(panel);
