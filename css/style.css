@@ -1,3 +1,4 @@
+/* css/style.css — обновлённый */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
     width: 100%;
@@ -164,20 +165,35 @@ body {
     overflow: hidden;
 }
 
-#section-screen button,
-#dungeon-screen button {
-    width: 60px !important;
-    height: 60px !important;
-    cursor: pointer;
-    pointer-events: auto;
+/* Разделы — фоны не растянуты */
+#section-screen,
+#dungeon-screen,
+#tavern-screen,
+#talents-screen,
+#settings-screen {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 
-#section-screen button img,
-#dungeon-screen button img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain;
-    pointer-events: none;
+/* Иконки меню ближе к табличкам */
+#menuScreen img[src*="icons/"] {
+    margin-bottom: 0 !important;
+}
+
+/* Стрелки перемотки в 2 раза больше */
+#menuScreen img[src*="left.png"],
+#menuScreen img[src*="right.png"] {
+    width: 16vw !important;
+    max-width: 100px !important;
+    height: auto !important;
+}
+
+/* Анимация внизу в 2 раза больше */
+#menuScreen video {
+    width: 40vw !important;
+    max-width: 240px !important;
+    height: auto !important;
 }
 
 @media (max-width: 768px) {
