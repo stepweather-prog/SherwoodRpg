@@ -1,4 +1,4 @@
-// js/main.js
+// js/main.js — все пути обновлены на assets/assets2/
 const loadingScreen = document.getElementById('loadingScreen');
 const homeScreen = document.getElementById('homeScreen');
 const playButton = document.getElementById('playButton');
@@ -40,7 +40,7 @@ function showLoadingOverlay() {
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         z-index: 1000;
-        background: url('assets/backgrounds/loading_screen_with_logo.png') center/cover no-repeat;
+        background: url('assets/assets2/backgrounds/loading_screen_with_logo.png') center/cover no-repeat;
         display: flex; justify-content: center; align-items: center;
     `;
     
@@ -81,20 +81,20 @@ function showSectionScreen(building) {
     if (building.icon === 'Настройки') { showSettingsScreen(); return; }
     
     const backgrounds = {
-        'Порталы': 'assets/backgrounds/portal.png',
-        'Чат': 'assets/backgrounds/chat_background.png',
-        'Рейд': 'assets/backgrounds/background_raid.png',
-        'Арена': 'assets/backgrounds/pvp_arena.png',
-        'Квесты': 'assets/backgrounds/quest.png',
-        'Ежедневные': 'assets/backgrounds/tasks_day.png',
-        'Кузница': 'assets/backgrounds/forge.png',
-        'Тренировка': 'assets/backgrounds/training.png',
-        'Бестиарий': 'assets/backgrounds/bestiary_visual.png',
-        'Очаг': 'assets/backgrounds/fireplace_visual.png',
-        'Профиль': 'assets/backgrounds/profile_visual.png',
-        'Сумка': 'assets/backgrounds/bag.png',
-        'Рынок': 'assets/backgrounds/market.png',
-        'Кошель': 'assets/backgrounds/wallet_vis.png',
+        'Порталы': 'assets/assets2/backgrounds/portal.png',
+        'Чат': 'assets/assets2/backgrounds/chat_background.png',
+        'Рейд': 'assets/assets2/backgrounds/background_raid.png',
+        'Арена': 'assets/assets2/backgrounds/pvp_arena.png',
+        'Квесты': 'assets/assets2/backgrounds/quest.png',
+        'Ежедневные': 'assets/assets2/backgrounds/tasks_day.png',
+        'Кузница': 'assets/assets2/backgrounds/forge.png',
+        'Тренировка': 'assets/assets2/backgrounds/training.png',
+        'Бестиарий': 'assets/assets2/backgrounds/bestiary_visual.png',
+        'Очаг': 'assets/assets2/backgrounds/fireplace_visual.png',
+        'Профиль': 'assets/assets2/backgrounds/profile_visual.png',
+        'Сумка': 'assets/assets2/backgrounds/bag.png',
+        'Рынок': 'assets/assets2/backgrounds/market.png',
+        'Кошель': 'assets/assets2/backgrounds/wallet_vis.png',
     };
     
     const bg = backgrounds[building.icon] || '';
@@ -103,7 +103,7 @@ function showSectionScreen(building) {
     <div id="section-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('${bg}') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
             <button onclick="closeSectionScreen()" style="background:transparent;border:none;cursor:pointer;padding:0;width:60px;height:60px;">
-                <img src="assets/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
             </button>
             <span style="color:#e0c080;font-size:1.2em;">${building.name}</span>
         </div>
@@ -120,25 +120,25 @@ function closeSectionScreen() {
 
 function showDungeonScreen() {
     const screenHTML = `
-    <div id="dungeon-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/backgrounds/sherwood_thicket.png') center/cover no-repeat;display:flex;flex-direction:column;">
+    <div id="dungeon-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/sherwood_thicket.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
             <button onclick="closeDungeonScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
             </button>
             <span style="color:#e0c080;font-size:1.2em;">Подземелья</span>
         </div>
         <div style="flex:1;overflow-y:auto;padding:20px;scrollbar-width:none;">
             <div style="display:flex;flex-direction:column;align-items:center;gap:30px;padding-bottom:40px;">
                 <div onclick="enterDungeon('forest')" style="text-align:center;cursor:pointer;">
-                    <img src="assets/icons/the_cursed_thicket.png" style="width:180px;height:180px;object-fit:contain;">
+                    <img src="assets/assets2/icons/the_cursed_thicket.png" style="width:180px;height:180px;object-fit:contain;">
                     <div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-top:8px;">Проклятая чаща</div>
                 </div>
                 <div onclick="enterDungeon('swamp')" style="text-align:center;cursor:pointer;">
-                    <img src="assets/icons/primordial_swamp.png" style="width:180px;height:180px;object-fit:contain;">
+                    <img src="assets/assets2/icons/primordial_swamp.png" style="width:180px;height:180px;object-fit:contain;">
                     <div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-top:8px;">Первородное болото</div>
                 </div>
                 <div onclick="enterDungeon('cave')" style="text-align:center;cursor:pointer;">
-                    <img src="assets/icons/basalt_grotto.png" style="width:180px;height:180px;object-fit:contain;">
+                    <img src="assets/assets2/icons/basalt_grotto.png" style="width:180px;height:180px;object-fit:contain;">
                     <div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-top:8px;">Базальтовый грот</div>
                 </div>
             </div>
@@ -158,15 +158,14 @@ function enterDungeon(dungeonId) {
     alert('Вход: ' + dungeonId);
 }
 
-// ТАВЕРНА
 function showTavernScreen() {
     if (typeof Sherwood !== 'undefined' && Sherwood.Tavern) Sherwood.Tavern.init();
     
     const screenHTML = `
-    <div id="tavern-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/backgrounds/section_tavern.png') center/cover no-repeat;display:flex;flex-direction:column;">
+    <div id="tavern-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/section_tavern.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
             <button onclick="closeTavernScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
             </button>
             <span style="color:#e0c080;font-size:1.2em;">Таверна</span>
         </div>
@@ -263,7 +262,7 @@ function renderTavernTalents() {
         
         html += `
         <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
-            <img src="assets/talents/${talent.icon}" style="width:150px;height:150px;object-fit:contain;margin-bottom:10px;">
+            <img src="assets/assets2/talents/${talent.icon}" style="width:150px;height:150px;object-fit:contain;margin-bottom:10px;">
             <div style="color:#ffd700;font-weight:bold;font-size:1.2em;">${talent.name}</div>
             <div style="color:#ccc;font-size:0.9em;">${talent.desc}</div>
             ${isLearned ? `<div style="color:#aaa;font-size:0.8em;">Уровень: ${level}/${talent.maxLevel}</div>` : ''}
@@ -297,7 +296,6 @@ function closeTavernScreen() {
     if (screen) screen.remove();
 }
 
-// ТАЛАНТЫ
 function showLearnedTalentsScreen() {
     let html = '<div style="display:flex;flex-direction:column;align-items:center;gap:40px;padding:20px 0 40px;">';
     
@@ -309,7 +307,7 @@ function showLearnedTalentsScreen() {
         
         html += `
         <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
-            <img src="assets/talents/${talent.icon}" style="width:150px;height:150px;object-fit:contain;margin-bottom:10px;">
+            <img src="assets/assets2/talents/${talent.icon}" style="width:150px;height:150px;object-fit:contain;margin-bottom:10px;">
             <div style="color:#ffd700;font-weight:bold;font-size:1.2em;">${talent.name}</div>
             <div style="color:#ccc;font-size:0.9em;">${talent.desc}</div>
             <div style="color:#aaa;font-size:0.8em;">Уровень: ${level}/${talent.maxLevel}</div>
@@ -320,10 +318,10 @@ function showLearnedTalentsScreen() {
     html += '</div>';
     
     const screenHTML = `
-    <div id="talents-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/backgrounds/visual_talents.png') center/cover no-repeat;display:flex;flex-direction:column;">
+    <div id="talents-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/visual_talents.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
             <button onclick="closeTalentsScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
             </button>
             <span style="color:#e0c080;font-size:1.2em;">Таланты</span>
         </div>
@@ -344,15 +342,14 @@ function toggleTalent(id) {
     showLearnedTalentsScreen();
 }
 
-// НАСТРОЙКИ
 function showSettingsScreen() {
     const musicEnabled = Settings.isMusicEnabled();
     
     const screenHTML = `
-    <div id="settings-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/backgrounds/settings_visual.png') center/cover no-repeat;display:flex;flex-direction:column;">
+    <div id="settings-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/settings_visual.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
             <button onclick="closeSettingsScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
             </button>
             <span style="color:#e0c080;font-size:1.2em;">Настройки</span>
         </div>
