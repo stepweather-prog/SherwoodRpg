@@ -99,7 +99,7 @@ body {
 }
 
 #gameZone {
-    position: relative;
+    position: relative; /* ВАЖНО: для корректного позиционирования #topBar */
     width: 50vw;
     height: 100vh;
     overflow: hidden;
@@ -187,6 +187,74 @@ body {
     background-color: #000 !important;
 }
 
+/* =========================================
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (TOP BAR)
+   ========================================= */
+
+#topBar {
+    position: absolute;
+    top: 2%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Выравниваем по нижнему краю панелек */
+    gap: clamp(5px, 1vw, 15px); /* Адаптивный отступ между блоками */
+    z-index: 20; /* Чтобы панель была поверх всех картинок */
+    width: 100%;
+    max-width: 600px; /* Чтобы панель не растягивалась слишком широко */
+    pointer-events: none; /* Чтобы панель не мешала кликать по герою */
+}
+
+/* Контейнер одной характеристики */
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto; /* Разрешаем клики по самим панелькам, если нужно */
+}
+
+/* Иконки (progress, power, и т.д.) */
+.stat-box .icon {
+    width: clamp(35px, 5vw, 50px); /* Адаптивный размер иконки */
+    height: clamp(35px, 5vw, 50px);
+    object-fit: contain;
+    margin-bottom: -8px; /* Иконка слегка "наезжает" на панель */
+    z-index: 2;
+    position: relative;
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
+}
+
+/* Сама панелька под иконкой */
+.panel-bg {
+    width: clamp(60px, 9vw, 90px); /* Адаптивная ширина панельки */
+    height: clamp(28px, 4vw, 40px); /* Адаптивная высота */
+    background-image: url('../assets/assets2/icons/main_panel.png');
+    background-size: 100% 100%; /* Растягиваем картинку ровно под размер блока */
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Текст внутри панельки */
+.stat-value {
+    color: #fff;
+    font-family: 'Times New Roman', serif; /* Ваш фэнтезийный шрифт */
+    font-size: clamp(12px, 1.8vw, 16px);
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
+    margin-top: 5px; /* Небольшой сдвиг вниз, чтобы текст не налезал на иконку */
+    white-space: nowrap; /* Чтобы цифры не переносились на новую строку */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================================
+   АДАПТАЦИЯ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
+   ========================================= */
 @media (max-width: 768px) {
     #leftStatue, #rightStatue {
         display: none !important;
@@ -200,5 +268,28 @@ body {
     #hero {
         width: 45%;
         bottom: 10%;
+    }
+
+    /* Адаптация верхней панели */
+    #topBar {
+        top: 1%;
+        gap: 4px; /* Уменьшаем отступы на мобилке */
+        max-width: 100%;
+    }
+    
+    .stat-box .icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: -5px;
+    }
+    
+    .panel-bg {
+        width: 50px;
+        height: 24px;
+    }
+    
+    .stat-value {
+        font-size: 10px;
+        margin-top: 3px;
     }
 }
