@@ -193,17 +193,17 @@ body {
 
 #topBar {
     position: absolute;
-    top: 2%;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* Выравниваем по нижнему краю панелек */
-    gap: clamp(5px, 1vw, 15px); /* Адаптивный отступ между блоками */
-    z-index: 20; /* Чтобы панель была поверх всех картинок */
+    align-items: flex-start; /* Выравниваем по верхнему краю иконок */
+    gap: clamp(10px, 2vw, 25px); /* Увеличенные отступы между блоками */
+    z-index: 20;
     width: 100%;
-    max-width: 600px; /* Чтобы панель не растягивалась слишком широко */
-    pointer-events: none; /* Чтобы панель не мешала кликать по герою */
+    max-width: 800px;
+    pointer-events: none;
 }
 
 /* Контейнер одной характеристики */
@@ -211,43 +211,44 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    pointer-events: auto; /* Разрешаем клики по самим панелькам, если нужно */
+    pointer-events: auto;
+    margin-top: 10px;
 }
 
-/* Иконки (progress, power, и т.д.) */
+/* Иконки (progress, power, и т.д.) — УВЕЛИЧЕНЫ В 2 РАЗА */
 .stat-box .icon {
-    width: clamp(35px, 5vw, 50px); /* Адаптивный размер иконки */
-    height: clamp(35px, 5vw, 50px);
+    width: clamp(70px, 10vw, 100px); /* Было 35-50px, стало 70-100px */
+    height: clamp(70px, 10vw, 100px);
     object-fit: contain;
-    margin-bottom: -8px; /* Иконка слегка "наезжает" на панель */
+    margin-bottom: -35px; /* Отрицательный отступ: иконка сильно наезжает на панель */
     z-index: 2;
     position: relative;
-    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.9));
 }
 
 /* Сама панелька под иконкой */
 .panel-bg {
-    width: clamp(60px, 9vw, 90px); /* Адаптивная ширина панельки */
-    height: clamp(28px, 4vw, 40px); /* Адаптивная высота */
+    width: clamp(80px, 12vw, 120px); /* Увеличенная ширина */
+    height: clamp(40px, 5vw, 55px); /* Увеличенная высота */
     background-image: url('../assets/assets2/icons/main_panel.png');
-    background-size: 100% 100%; /* Растягиваем картинку ровно под размер блока */
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-end; /* Прижимаем текст к низу панели */
     position: relative;
     z-index: 1;
+    padding-bottom: 8px; /* Отступ от низа для текста */
 }
 
 /* Текст внутри панельки */
 .stat-value {
     color: #fff;
-    font-family: 'Times New Roman', serif; /* Ваш фэнтезийный шрифт */
-    font-size: clamp(12px, 1.8vw, 16px);
+    font-family: 'Times New Roman', serif;
+    font-size: clamp(14px, 2.2vw, 20px); /* Увеличенный текст */
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
-    margin-top: 5px; /* Небольшой сдвиг вниз, чтобы текст не налезал на иконку */
-    white-space: nowrap; /* Чтобы цифры не переносились на новую строку */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -272,24 +273,28 @@ body {
 
     /* Адаптация верхней панели */
     #topBar {
-        top: 1%;
-        gap: 4px; /* Уменьшаем отступы на мобилке */
+        top: 0;
+        gap: 5px; /* Меньше отступы на мобилке */
         max-width: 100%;
     }
     
+    .stat-box {
+        margin-top: 5px;
+    }
+    
     .stat-box .icon {
-        width: 32px;
-        height: 32px;
-        margin-bottom: -5px;
+        width: clamp(60px, 15vw, 80px); /* Крупные иконки даже на мобилке */
+        height: clamp(60px, 15vw, 80px);
+        margin-bottom: -25px;
     }
     
     .panel-bg {
-        width: 50px;
-        height: 24px;
+        width: clamp(60px, 16vw, 80px);
+        height: 30px;
     }
     
     .stat-value {
-        font-size: 10px;
-        margin-top: 3px;
+        font-size: 12px;
+        padding-bottom: 5px;
     }
 }
