@@ -253,7 +253,7 @@ canvas {
     padding-bottom: 6px;
     position: relative;
     z-index: 2;
-    margin-top: 25px; /* Панель под иконкой */
+    margin-top: 80px; /* Панель под иконкой */
 }
 
 .stat-value {
@@ -289,4 +289,11 @@ canvas {
     .stat-value {
         font-size: 10px;
     }
+}
+/* УВЕЛИЧИВАЕМ ПЛАШКИ В МЕНЮ В 2 РАЗА */
+#menuScreen img[src*="all_stat"] {
+    width: 120% !important; /* Было 60%, стало 120% */
+    height: auto !important;
+    transform: scale(1.2); /* Дополнительное увеличение визуально */
+    transform-origin: center center;
 }
