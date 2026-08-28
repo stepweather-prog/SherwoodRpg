@@ -1,166 +1,259 @@
 /**
  * Sherwood Tavern — Таверна «Весёлый Разбойник»
- * Контракты с таймером + Таланты
+ * Егерь Гаррет выдаёт сюжетные квесты по главам
  */
 
 Sherwood.Tavern = {
-    _currentQuest: null,
-    _completedQuests: [],
-    _dailyQuestsDone: 0,
-    _maxDailyQuests: 20,
-    _totalQuests: 100,
-    _cooldownEnd: 0,
-    _cooldownMinutes: 15, // 15 минут на выполнение контракта
-    _contractStartTime: 0,
-    _contractEndTime: 0,
-    _contractResult: null, // 'reward' или 'battle'
-    _secretQuestUnlocked: false,
-    _tab: 1,
-    _contractTimerInterval: null,
+    // ---------- ДАННЫЕ КВЕСТОВ ПО ГЛАВАМ ----------
+    CHAPTERS: [
+        {
+            id: 1,
+            title: 'Кровь Великого Дуба',
+            quest: 'Останови осквернение леса, найди источник проклятия',
+            enemy: { name: 'Лесничий-Отступник', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 },
+            reward: { exp: 200, gold: 50, silver: 500 },
+            lore: 'Шервудский лес веками был щитом для королевства, а его сердце — Древний Шервудский Дуб. Дерево было не просто растением, а живым сосудом первородной магии. Но однажды в лес пришел Орден Королевских Охотников. Ослепленные жадностью, они решили высечь из исполина трон для тирана, не внемля крикам природы. Главный лесничий первым вонзил топор в живую кору. Дуб истек черной, кипящей смолой. Это было не просто убийство дерева — это было осквернение самого духа Шервуда. Земля содрогнулась, проклятие вырвалось наружу, и Зеленое Сердце леса остановилось навсегда.'
+        },
+        {
+            id: 2,
+            title: 'Кара Скверны',
+            quest: 'Очисти лес от искажённых тварей, уничтожь Вожака стаи',
+            enemy: { name: 'Вожак Искаженной Стаи', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 },
+            reward: { exp: 400, gold: 100, silver: 1000 },
+            lore: 'Смерть Дуба вызвала цепную реакцию. Скверна, подобно заразной болезни, проникла в корни и водоносные слои. Фауна леса мутировала в невиданных тварей: благородные олени обросли костяными шипами, волки обзавелись второй пастью, а птицы забыли, как летать, став наземными хищниками с железными перьями. Вожак искаженной стаи, некогда гордый олень, чьи рога превратились в костяную корону, возглавил полчища чудовищ.'
+        },
+        {
+            id: 3,
+            title: 'Старый Егерь',
+            quest: 'Найди слепого ветерана Гаррета, упокой Альфа-Гончую',
+            enemy: { name: 'Альфа-Гончая Егеря', hp: 90000, atk: 4500, def: 3500, exp: 250, gold: 160 },
+            reward: { exp: 600, gold: 150, silver: 1500 },
+            lore: 'На окраине гибнущего леса, в заброшенном домике егеря, влачит свои дни слепой ветеран по имени Гаррет. Бывший главный охотник короля, он отказался рубить Дуб и в наказание был растерзан своими же псами, которых уже коснулось безумие. Выживший, но покалеченный, Гаррет стал хранителем страшных тайн. Именно он встречает выживших и рассказывает им правду: Шервуд больше не лес, это чрево монстров.'
+        },
+        {
+            id: 4,
+            title: 'Спуск в Шервудскую Чащобу',
+            quest: 'Спустись в подземелье, победи Падшего Друида',
+            enemy: { name: 'Падший Друид', hp: 180000, atk: 7000, def: 5500, exp: 300, gold: 200 },
+            reward: { exp: 800, gold: 200, silver: 2000 },
+            lore: 'Чтобы остановить расползающееся зло, нужно ударить в его источник. Лучник, один из последних лесных следопытов, спускается в Подземку, известную как Шервудская чащоба. Это гигантская сеть затопленных пещер, подземных рек и переплетенных гигантских корней мертвого Дуба. Здесь, во мраке, скверна концентрируется сильнее всего.'
+        },
+        {
+            id: 5,
+            title: 'Искажённая Экосистема',
+            quest: 'Пробейся через туннели чащобы, уничтожь Голод Чащи',
+            enemy: { name: 'Голод Чащи', hp: 300000, atk: 9500, def: 7500, exp: 350, gold: 250 },
+            reward: { exp: 1000, gold: 250, silver: 2500 },
+            lore: 'Спуск в сырые туннели чащобы открывает первую волну кошмаров. Птицы-падальщики, жуки-мутанты и проклятые волки, чьи шкуры облезли, а сквозь мышцы пульсируют неоново-бирюзовые вены, охотятся стаями. Обычный поход за провизией здесь превращается в отчаянную битву за каждый вдох в токсичном воздухе.'
+        },
+        {
+            id: 6,
+            title: 'Слепая Ярость Духов',
+            quest: 'Пробейся к Древнему Владыке, одолей Лешего',
+            enemy: { name: 'Древний Владыка', hp: 450000, atk: 12000, def: 9500, exp: 400, gold: 300 },
+            reward: { exp: 1500, gold: 350, silver: 3500 },
+            lore: 'Спуск глубже приводит Лучника в каменные залы, где корни пробивают своды пещер. Здесь обитает Леший — вековой хранитель, ослепший от боли и ярости. Его тело срослось с потрескавшейся черной корой и острыми камнями, превратив духа в мстительного деревянного колосса.'
+        },
+        {
+            id: 7,
+            title: 'Эхо Прошлых Поражений',
+            quest: 'Уничтожь Пожирателя Эха в глубинах подземки',
+            enemy: { name: 'Пожиратель Эха', hp: 650000, atk: 14500, def: 11500, exp: 450, gold: 350 },
+            reward: { exp: 2000, gold: 500, silver: 5000 },
+            lore: 'Подземка поглощает не только плоть, но и души. Погибшие здесь отряды охотников и павшие разбойники не нашли покоя. Скверна сплела их остаточные души воедино, создав Пожирателя Эха — левитирующую массу из черного дыма, сотен безумных глаз и призрачных клинков. У него нет своего голоса: он кричит голосами всех, кто погиб во тьме Шервуда.'
+        },
+        {
+            id: 8,
+            title: 'Ужас Болотных Недр',
+            quest: 'Спустись в болотные гроты, убей Повелительницу Топей',
+            enemy: { name: 'Повелительница Топей', hp: 900000, atk: 17000, def: 13500, exp: 500, gold: 400 },
+            reward: { exp: 2500, gold: 650, silver: 6500 },
+            lore: 'В самых потайных, покрытых слизью гротах кроется Повелительница Топей — страшная метаморфоза Болотной Кикиморы и Водяного, вобравшая в себя всю злобу болотного яруса. Это гигантская полуженщина-полужаба, чье тело состоит из гниющей тины и кислотных нарывов.'
+        },
+        {
+            id: 9,
+            title: 'Разломы Безумия',
+            quest: 'Закрой три магических разлома, победи Стража Разломов',
+            enemy: { name: 'Страж Разломов', hp: 1200000, atk: 19500, def: 15500, exp: 550, gold: 450 },
+            reward: { exp: 3000, gold: 800, silver: 8000 },
+            lore: 'Скверна, переполнив чащобу, прожгла ткань реальности, открыв три гигантских магических разлома. Из этих врат хлынула чужеродная энергия, искажающая саму геометрию подземелий. Первый — Портал Нашествия. Второй — Портал Искажения. Третий — Портал Безумия.'
+        },
+        {
+            id: 10,
+            title: 'Портал Нашествия — Улей Плоти',
+            quest: 'Войди в Портал Нашествия, уничтожь Матку Лесных Короедов',
+            enemy: { name: 'Матка Лесных Короедов', hp: 1600000, atk: 22000, def: 17500, exp: 600, gold: 500 },
+            reward: { exp: 4000, gold: 1000, silver: 10000 },
+            lore: 'Первый разлом превратил пещеры в гнездо чумы. Из врат вышла Матка Лесных Короедов — колоссальная инсектоидная королева, чей панцирь усыпан моргающими глазами. Её охранял Хитиновый страж роя.'
+        },
+        {
+            id: 11,
+            title: 'Портал Искажения — Костяной Трон',
+            quest: 'Войди в Портал Искажения, убей Проклятого Короля Разбойников',
+            enemy: { name: 'Проклятый Король Разбойников', hp: 2100000, atk: 24500, def: 19500, exp: 700, gold: 600 },
+            reward: { exp: 5000, gold: 1500, silver: 15000 },
+            lore: 'Второй портал перенес Лучника в проклятый склеп, где реальность вывернулась наизнанку. В центре зала, объятого водопадом из кусков плоти, восседал Проклятый Король Разбойников. Когда-то он искал в пещерах богатства, но скверна поглотила его: вместо тела внутри ребер шевелился клубок из сотен склизких языков.'
+        },
+        {
+            id: 12,
+            title: 'Портал Безумия — Кровоточащий Кап',
+            quest: 'Войди в Портал Безумия, победи Древнего Хранителя Склепа',
+            enemy: { name: 'Древний Хранитель Склепа', hp: 2700000, atk: 27000, def: 21500, exp: 800, gold: 700 },
+            reward: { exp: 6000, gold: 2000, silver: 20000 },
+            lore: 'Третий портал вел в хтоническое капище, где деревья кровоточили, а из их коры росли человеческие глаза. Здесь путника ждал Древний Хранитель Склепа — титан из черного дуба и камня, чье сердце было пульсирующей мясной опухолью.'
+        },
+        {
+            id: 13,
+            title: 'Триумвират Зла',
+            quest: 'Сразись с Эхом Трёх Порталов в Осквернённом Сердце',
+            enemy: { name: 'Эхо Трех Порталов', hp: 3400000, atk: 29500, def: 23500, exp: 900, gold: 800 },
+            reward: { exp: 7500, gold: 2500, silver: 25000 },
+            lore: 'Закрыв три разлома, Лучник думал, что победил. Но энергии Порталов никуда не исчезли — они слились воедино в самом глубоком разломе, именуемом Оскверненным Сердцем Шервуда. Реальность окончательно треснула. Энергия нашествия, искажения и безумия сплелась в единую сущность — Эхо Трех Порталов.'
+        },
+        {
+            id: 14,
+            title: 'Сломанная Печать',
+            quest: 'Уничтожь Палача Священного Древа — последнюю преграду',
+            enemy: { name: 'Палач Священного Древа', hp: 4200000, atk: 32000, def: 25500, exp: 1000, gold: 900 },
+            reward: { exp: 9000, gold: 3000, silver: 30000 },
+            lore: 'Слияние энергий Порталов пробудило кое-что древнее. Тот самый капитан Королевских Охотников, что воткнул первый топор в Великий Дуб, был погребен под обломками. Выжившие корни мертвого дерева, впитав силу разломов, проросли сквозь его плоть, распяв его на гигантском каменном пне. Он стал Палачом Священного Древа.'
+        },
+        {
+            id: 15,
+            title: 'Последний Выстрел',
+            quest: 'Порази ядро Шервудского Отродья, запечатай Сердце',
+            enemy: { name: 'Шервудское Отродье', hp: 5200000, atk: 34500, def: 27500, exp: 1500, gold: 1200 },
+            reward: { exp: 12000, gold: 5000, silver: 50000 },
+            lore: 'Поглотив энергию мертвого Палача, Оскверненное Сердце пробудилось. Из недр разлома поднялся ультимативный бог хаоса — Шервудское Отродье. Это колоссальный, многорукий темный исполин, облаченный в растрескавшийся базальт. Дух Великого Дуба, искаженный до предела, призвал к себе остатки всех павших монстров, чтобы они стали его живым щитом.'
+        },
+        {
+            id: 16,
+            title: 'Шрам, который не заживёт (Секретная глава)',
+            quest: 'Спустись в воронку и запечатай Изначальный Стержень',
+            enemy: { name: 'Изначальный Стержень', hp: 1500000, atk: 30000, def: 25000, exp: 1000, gold: 300 },
+            reward: { exp: 2000, gold: 500, silver: 1500 },
+            isSecret: true,
+            lore: 'После победы над Отродьем на поверхности леса зияет огромная воронка. Старый егерь Гаррет открывает путь к секретному спуску. На самом дне осталась лишь пульсирующая тьма. Изначальный Стержень — не физическое существо, а «глаз» истинного зла, Того, кто Спит в Камне. Это локальный аватар хтонического божества, выглядящий как парящая сфера из жидкого фиолетового обсидиана. Он меняет гравитацию, создает черные дыры и насылает видения. Его невозможно убить обычным оружием.'
+        }
+    ],
 
+    // ---------- СОСТОЯНИЕ ----------
+    _currentQuest: null,
+    _completedChapters: [],
+    _currentChapterIndex: 0,
+    _isInBattle: false,
+    _battleEnemy: null,
+
+    // ---------- ИНИЦИАЛИЗАЦИЯ ----------
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
-        if (!p.tavern) p.tavern = { questsCompleted: 0, dailyQuestsDone: 0, cooldownEnd: 0, secretUnlocked: false, currentQuest: null, contractStartTime: 0, contractEndTime: 0, contractResult: null };
         
-        this._completedQuests = p.tavern.questsCompleted ? this._generateQuestIds(p.tavern.questsCompleted) : [];
-        this._dailyQuestsDone = p.tavern.dailyQuestsDone || 0;
-        this._cooldownEnd = p.tavern.cooldownEnd || 0;
-        this._secretQuestUnlocked = p.tavern.secretUnlocked || false;
-        this._contractStartTime = p.tavern.contractStartTime || 0;
-        this._contractEndTime = p.tavern.contractEndTime || 0;
-        this._contractResult = p.tavern.contractResult || null;
-        
-        var today = new Date().toDateString();
-        if (p.tavern.lastDate !== today) {
-            p.tavern.dailyQuestsDone = 0;
-            p.tavern.lastDate = today;
-            this._dailyQuestsDone = 0;
-            Sherwood.saveGame();
+        if (!p.tavern) {
+            p.tavern = {
+                completedChapters: [],
+                currentChapter: 0,
+                isInBattle: false
+            };
         }
         
-        if (p.tavern.currentQuest) {
-            this._currentQuest = p.tavern.currentQuest;
+        this._completedChapters = p.tavern.completedChapters || [];
+        this._currentChapterIndex = p.tavern.currentChapter || 0;
+        this._isInBattle = p.tavern.isInBattle || false;
+        
+        // Если есть текущий бой - восстанавливаем
+        if (this._isInBattle && p.tavern.battleEnemy) {
+            this._battleEnemy = p.tavern.battleEnemy;
+            this._currentQuest = this.getCurrentChapter();
         }
         
-        // Если контракт уже истёк — определяем результат
-        if (this._currentQuest && this._contractEndTime > 0 && Date.now() >= this._contractEndTime && !this._contractResult) {
-            this._contractResult = Math.random() < 0.5 ? 'reward' : 'battle';
-            this._saveCurrentQuest();
-        }
+        console.log('🍺 Таверна инициализирована');
+        console.log('📖 Глав пройдено:', this._completedChapters.length);
+        console.log('📚 Всего глав:', this.CHAPTERS.length);
     },
 
-    _generateQuestIds: function(count) {
-        var ids = [];
-        for (var i = 1; i <= count; i++) ids.push('tavern_' + i);
-        return ids;
+    // ---------- ПОЛУЧЕНИЕ ГЛАВ ----------
+    getAllChapters: function() {
+        return this.CHAPTERS;
     },
 
-    _getQuestById: function(id) {
-        var questNum = parseInt(id.replace('tavern_', ''));
-        var chapter = Math.ceil(questNum / 7);
-        if (chapter > 15) chapter = 15;
-        var enemyIndex = (questNum % 7) + 1;
+    getCurrentChapter: function() {
+        if (this._currentChapterIndex < this.CHAPTERS.length) {
+            return this.CHAPTERS[this._currentChapterIndex];
+        }
+        return null;
+    },
+
+    getNextChapter: function() {
+        var nextIndex = this._currentChapterIndex + 1;
+        if (nextIndex < this.CHAPTERS.length) {
+            return this.CHAPTERS[nextIndex];
+        }
+        return null;
+    },
+
+    isChapterCompleted: function(chapterId) {
+        return this._completedChapters.indexOf(chapterId) !== -1;
+    },
+
+    // ---------- НАЧАЛО КВЕСТА ----------
+    startQuest: function() {
+        // Проверяем, все ли главы пройдены
+        if (this._completedChapters.length >= this.CHAPTERS.length) {
+            return { success: false, reason: 'Все главы пройдены! Ты спас Шервуд!' };
+        }
         
-        var enemies = [
-            { name: 'Лесная тварь', image: 'forest_strangler.png', hp: 100 + chapter * 50, atk: 15 + chapter * 10, def: 5 + chapter * 5 },
-            { name: 'Болотный упырь', image: 'searing_arachnid.png', hp: 120 + chapter * 50, atk: 18 + chapter * 10, def: 8 + chapter * 5 },
-            { name: 'Древесный голем', image: 'blight_lord_beetle.png', hp: 150 + chapter * 60, atk: 20 + chapter * 12, def: 12 + chapter * 6 },
-            { name: 'Костяной гигант', image: 'root_executioner.png', hp: 180 + chapter * 70, atk: 25 + chapter * 15, def: 15 + chapter * 8 },
-            { name: 'Проклятый титан', image: 'blight_lord_leshy.png', hp: 220 + chapter * 80, atk: 30 + chapter * 18, def: 20 + chapter * 10 },
-            { name: 'Кислотный кошмар', image: 'ash_overlord.png', hp: 280 + chapter * 100, atk: 38 + chapter * 22, def: 28 + chapter * 14 },
-            { name: 'Владыка портала', image: 'chaos_lord.png', hp: 350 + chapter * 120, atk: 45 + chapter * 28, def: 35 + chapter * 18, isBoss: true }
-        ];
+        // Проверяем, есть ли текущий квест
+        if (this._currentQuest && this._isInBattle) {
+            return { success: false, reason: 'У тебя уже есть активный квест!' };
+        }
         
-        var enemy = enemies[enemyIndex - 1];
+        var chapter = this.getCurrentChapter();
+        if (!chapter) {
+            return { success: false, reason: 'Нет доступных глав' };
+        }
+        
+        // Проверяем, не пройдена ли уже эта глава
+        if (this.isChapterCompleted(chapter.id)) {
+            // Переходим к следующей
+            this._currentChapterIndex++;
+            return this.startQuest();
+        }
+        
+        this._currentQuest = chapter;
+        this._isInBattle = true;
+        this._battleEnemy = {
+            name: chapter.enemy.name,
+            hp: chapter.enemy.hp,
+            maxHp: chapter.enemy.hp,
+            atk: chapter.enemy.atk,
+            def: chapter.enemy.def,
+            exp: chapter.enemy.exp,
+            gold: chapter.enemy.gold
+        };
+        
+        this._saveState();
+        
         return {
-            id: id,
-            name: 'Контракт #' + questNum,
-            desc: 'Охота на ' + enemy.name + ' (Глава ' + chapter + ')',
-            enemy: enemy,
-            reward: { exp: 50 + chapter * 30, gold: 10 + chapter * 5, silver: 100 + chapter * 50 }
+            success: true,
+            chapter: chapter,
+            enemy: this._battleEnemy,
+            isSecret: chapter.isSecret || false
         };
     },
 
-    getAvailableRows: function() {
-        return [{ id: 1, name: 'Контракты', npc: 'Бармен', quests: [] }];
-    },
-
-    getCurrentQuest: function() {
-        if (!this._currentQuest) return null;
-        return { quest: this._currentQuest, row: { npc: 'Бармен' } };
-    },
-
-    getContractTimeRemaining: function() {
-        if (!this._currentQuest || this._contractEndTime === 0) return 0;
-        return Math.max(0, Math.ceil((this._contractEndTime - Date.now()) / 1000));
-    },
-
-    isContractReady: function() {
-        if (!this._currentQuest || this._contractEndTime === 0) return false;
-        return Date.now() >= this._contractEndTime;
-    },
-
-    getContractResult: function() {
-        return this._contractResult;
-    },
-
-    startQuest: function() {
-        if (this._dailyQuestsDone >= this._maxDailyQuests) {
-            return { success: false, reason: 'Лимит на сегодня (' + this._maxDailyQuests + ')' };
+    // ---------- БОЙ ----------
+    attack: function() {
+        if (!this._isInBattle || !this._battleEnemy) {
+            return { error: 'Нет активного боя' };
         }
-        if (this._currentQuest && !this.isContractReady()) {
-            return { success: false, reason: 'Контракт выполняется' };
-        }
-        if (this._completedQuests.length >= this._totalQuests) {
-            return { success: false, reason: 'Все квесты выполнены' };
-        }
-        
-        var nextQuestId = 'tavern_' + (this._completedQuests.length + 1);
-        var quest = this._getQuestById(nextQuestId);
-        
-        this._currentQuest = quest;
-        this._contractStartTime = Date.now();
-        this._contractEndTime = Date.now() + this._cooldownMinutes * 60 * 1000;
-        this._contractResult = null;
-        this._saveCurrentQuest();
-        
-        // Обновляем прогресс ежедневного задания
-        if (typeof Sherwood.Daily !== 'undefined') {
-            Sherwood.Daily.updateProgress('tavern_contracts', 1);
-        }
-        
-        return { success: true, quest: quest, endTime: this._contractEndTime };
-    },
-
-    claimContractReward: function() {
-        if (!this._currentQuest || !this.isContractReady()) {
-            return { success: false, reason: 'Контракт ещё не готов' };
-        }
-        
-        if (!this._contractResult) {
-            this._contractResult = Math.random() < 0.5 ? 'reward' : 'battle';
-            this._saveCurrentQuest();
-        }
-        
-        if (this._contractResult === 'battle') {
-            return { success: true, mode: 'battle', quest: this._currentQuest };
-        }
-        
-        // Просто награда без боя
-        return this._completeQuest();
-    },
-
-    attackQuest: function() {
-        if (!this._currentQuest) return { error: 'Нет квеста' };
         
         var p = Sherwood.getPlayer();
-        var quest = this._currentQuest;
-        var enemy = quest.enemy;
+        var enemy = this._battleEnemy;
+        var chapter = this._currentQuest;
         
-        if (!enemy.maxHp) enemy.maxHp = enemy.hp;
-        
-        var dmg = Sherwood.calculateDamage(p.stats.attack, enemy.def || 5);
+        // Урон игрока
+        var dmg = this._calculateDamage(p.stats.attack, enemy.def);
         var crit = Math.random() * 100 < 15;
         if (crit) dmg = Math.floor(dmg * 1.8);
         
@@ -176,136 +269,320 @@ Sherwood.Tavern = {
             enemyDead: enemy.hp <= 0
         };
         
+        // Проверка победы
         if (enemy.hp <= 0) {
-            var r = this._completeQuest();
-            result.win = true;
-            result.rewards = r.reward;
-            p.stats.hp = p.stats.maxHp;
-            Sherwood.saveGame();
-            return result;
+            return this._completeChapter(result);
         }
         
-        var edmg = Sherwood.calculateDamage(enemy.atk || 20, p.stats.defense);
+        // Атака врага
+        var edmg = this._calculateDamage(enemy.atk, p.stats.defense);
         p.stats.hp = Math.max(0, p.stats.hp - edmg);
         result.enemyDamage = edmg;
         result.playerHp = p.stats.hp;
         
+        // Проверка смерти игрока
         if (p.stats.hp <= 0) {
             result.playerDead = true;
             result.lose = true;
-            // Проиграли — предлагаем следующий контракт без награды
+            this._isInBattle = false;
+            this._battleEnemy = null;
             this._currentQuest = null;
-            this._contractStartTime = 0;
-            this._contractEndTime = 0;
-            this._contractResult = null;
-            this._saveCurrentQuest();
+            this._saveState();
             p.stats.hp = 1;
             Sherwood.saveGame();
             return result;
         }
         
-        this._saveCurrentQuest();
+        this._saveState();
         Sherwood.saveGame();
         return result;
     },
 
-    _completeQuest: function() {
-        var quest = this._currentQuest;
+    _completeChapter: function(result) {
+        var chapter = this._currentQuest;
         var p = Sherwood.getPlayer();
         
-        if (this._completedQuests.indexOf(quest.id) === -1) {
-            this._completedQuests.push(quest.id);
+        // Отмечаем главу как пройденную
+        if (this._completedChapters.indexOf(chapter.id) === -1) {
+            this._completedChapters.push(chapter.id);
         }
         
+        // Награда
+        var reward = chapter.reward;
+        Sherwood.addExp(reward.exp);
+        Sherwood.addResource('silver', reward.silver || 0);
+        if (reward.gold) Sherwood.addResource('gold', reward.gold);
+        
+        // Сбрасываем бой
+        this._isInBattle = false;
+        this._battleEnemy = null;
         this._currentQuest = null;
-        this._contractStartTime = 0;
-        this._contractEndTime = 0;
-        this._contractResult = null;
-        this._dailyQuestsDone++;
-        p.tavern.questsCompleted = this._completedQuests.length;
-        p.tavern.dailyQuestsDone = this._dailyQuestsDone;
         
-        Sherwood.addExp(quest.reward.exp);
-        Sherwood.addResource('silver', quest.reward.silver || 0);
-        if (quest.reward.gold) Sherwood.addResource('gold', quest.reward.gold);
+        // Переходим к следующей главе
+        this._currentChapterIndex++;
         
-        if (Math.random() < 0.10) Sherwood.addResource('scrolls', 1);
+        // Проверка на секретную главу
+        if (this._completedChapters.length >= 15 && !this._isSecretUnlocked) {
+            this._isSecretUnlocked = true;
+            result.secretUnlocked = true;
+        }
         
-        this._saveCurrentQuest();
+        this._saveState();
         Sherwood.saveGame();
-        this._checkSecretQuest();
         
-        // Обновляем прогресс ежедневного задания
-        if (typeof Sherwood.Daily !== 'undefined') {
-            Sherwood.Daily.updateProgress('tavern_complete', 1);
-        }
+        result.win = true;
+        result.reward = reward;
+        result.chapterComplete = true;
+        result.nextChapter = this.getCurrentChapter();
+        result.allComplete = this._completedChapters.length >= this.CHAPTERS.length;
         
-        return { success: true, reward: quest.reward };
+        return result;
     },
 
-    completeQuest: function() {
+    _calculateDamage: function(attack, defense) {
+        var base = attack - Math.floor(defense / 2);
+        if (base < 1) base = 1;
+        var variance = 0.8 + Math.random() * 0.4;
+        return Math.floor(base * variance);
+    },
+
+    // ---------- ПОЛУЧЕНИЕ ИНФОРМАЦИИ ----------
+    getCurrentQuest: function() {
         if (!this._currentQuest) return null;
-        return this._completeQuest();
+        return {
+            chapter: this._currentQuest,
+            enemy: this._battleEnemy,
+            isInBattle: this._isInBattle
+        };
     },
 
-    failQuest: function() { 
-        this._currentQuest = null; 
-        this._contractStartTime = 0;
-        this._contractEndTime = 0;
-        this._contractResult = null;
-        this._saveCurrentQuest();
-    },
-    
-    cancelQuest: function() { 
-        this._currentQuest = null; 
-        this._contractStartTime = 0;
-        this._contractEndTime = 0;
-        this._contractResult = null;
-        this._saveCurrentQuest();
+    getCompletedCount: function() {
+        return this._completedChapters.length;
     },
 
-    getCompletedCount: function() { return this._completedQuests.length; },
-    isOnCooldown: function() { 
-        if (this._currentQuest && !this.isContractReady()) return true;
-        return false; 
+    getTotalChapters: function() {
+        return this.CHAPTERS.length;
     },
-    
+
+    isOnCooldown: function() {
+        return false; // Сюжетные квесты без перезарядки
+    },
+
     getCooldownRemaining: function() {
-        if (this._currentQuest && !this.isContractReady()) {
-            return this.getContractTimeRemaining();
-        }
         return 0;
     },
-    
-    getBattleMode: function() { return this._currentQuest ? true : false; },
-    
-    _checkSecretQuest: function() {
-        if (this._completedQuests.length >= 100 && !this._secretQuestUnlocked) {
-            this._secretQuestUnlocked = true;
-            var p = Sherwood.getPlayer();
-            p.tavern.secretUnlocked = true;
-            Sherwood.saveGame();
-        }
+
+    getBattleMode: function() {
+        return this._isInBattle;
     },
 
-    checkSecretQuest: function() { return this._secretQuestUnlocked; },
-    getDailyQuestsDone: function() { return this._dailyQuestsDone; },
-    getMaxDailyQuests: function() { return this._maxDailyQuests; },
-    
-    // ========== ТАЛАНТЫ ==========
-    
-    getTalents: function() {
-        return Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
+    // ---------- ОТКАЗ ОТ КВЕСТА ----------
+    cancelQuest: function() {
+        this._isInBattle = false;
+        this._battleEnemy = null;
+        this._currentQuest = null;
+        this._saveState();
     },
 
-    _saveCurrentQuest: function() {
+    // ---------- СОХРАНЕНИЕ ----------
+    _saveState: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
         if (!p.tavern) p.tavern = {};
-        p.tavern.currentQuest = this._currentQuest ? JSON.parse(JSON.stringify(this._currentQuest)) : null;
-        p.tavern.contractStartTime = this._contractStartTime;
-        p.tavern.contractEndTime = this._contractEndTime;
-        p.tavern.contractResult = this._contractResult;
+        
+        p.tavern.completedChapters = this._completedChapters;
+        p.tavern.currentChapter = this._currentChapterIndex;
+        p.tavern.isInBattle = this._isInBattle;
+        p.tavern.battleEnemy = this._battleEnemy;
+        p.tavern.secretUnlocked = this._isSecretUnlocked || false;
+        
         Sherwood.saveGame();
+    },
+
+    // ---------- UI — ПОКАЗ ТАВЕРНЫ ----------
+    showUI: function() {
+        if (typeof window.showTavernScreen === 'function') {
+            window.showTavernScreen();
+            return;
+        }
+        this._renderTavernUI();
+    },
+
+    _renderTavernUI: function() {
+        var old = document.getElementById('tavern-screen');
+        if (old) old.remove();
+        
+        var current = this.getCurrentChapter();
+        var completed = this.getCompletedCount();
+        var total = this.getTotalChapters();
+        var isInBattle = this._isInBattle;
+        var enemy = this._battleEnemy;
+        
+        var screenHTML = `
+        <div id="tavern-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/section_tavern.png') center/cover no-repeat;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);">
+                <button onclick="Sherwood.Tavern.closeUI()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
+                    <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                </button>
+                <span style="color:#e0c080;font-size:1.2em;">🍺 Таверна «Весёлый Разбойник»</span>
+                <span style="color:#888;font-size:12px;margin-left:auto;">
+                    📖 ${completed}/${total} глав
+                </span>
+            </div>
+            
+            <div style="flex:1;overflow-y:auto;padding:20px;color:#fff;font-family:monospace;">
+                <div style="max-width:600px;margin:0 auto;">
+                    ${this._renderContent()}
+                </div>
+            </div>
+        </div>`;
+        
+        document.body.insertAdjacentHTML('beforeend', screenHTML);
+    },
+
+    _renderContent: function() {
+        var current = this.getCurrentChapter();
+        var completed = this.getCompletedCount();
+        var total = this.getTotalChapters();
+        var isInBattle = this._isInBattle;
+        var enemy = this._battleEnemy;
+        
+        // Если все главы пройдены
+        if (completed >= total) {
+            return `
+            <div style="text-align:center;padding:40px 20px;">
+                <div style="font-size:64px;margin-bottom:20px;">🏆</div>
+                <div style="font-size:24px;color:#ffd700;font-weight:bold;">Шервуд спасён!</div>
+                <div style="color:#888;margin-top:10px;">Ты прошёл все главы и запечатал зло.</div>
+                <div style="color:#aaa;margin-top:20px;font-size:14px;font-style:italic;">«Шрам остался, но лес начинает оживать...»</div>
+            </div>`;
+        }
+        
+        if (!current) {
+            return `
+            <div style="text-align:center;padding:40px 20px;">
+                <div style="font-size:48px;margin-bottom:20px;">📖</div>
+                <div style="color:#888;">Нет доступных глав</div>
+                <button onclick="Sherwood.Tavern.startQuest()" class="btn btn-gold" style="margin-top:15px;padding:12px 40px;">
+                    Начать следующую главу
+                </button>
+            </div>`;
+        }
+        
+        var isCompleted = this.isChapterCompleted(current.id);
+        var isSecret = current.isSecret || false;
+        
+        var html = '';
+        
+        // Лор главы
+        html += `
+        <div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;border-left:4px solid ${isSecret ? '#9b59b6' : '#ffa500'};margin-bottom:15px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#ffa500;font-weight:bold;font-size:18px;">
+                    ${isSecret ? '🔮 ' : ''}Глава ${current.id}: ${current.title}
+                </span>
+                ${isSecret ? '<span style="color:#9b59b6;font-size:12px;">🔮 Секретная глава</span>' : ''}
+            </div>
+            <div style="color:#aaa;font-size:13px;margin-top:8px;line-height:1.6;max-height:120px;overflow-y:auto;">
+                ${current.lore}
+            </div>
+            <div style="color:#888;font-size:12px;margin-top:8px;">
+                🎯 Квест: ${current.quest}
+            </div>
+            <div style="color:#ffd700;font-size:12px;margin-top:4px;">
+                🏆 Награда: +${current.reward.exp} опыта, +${current.reward.gold} золота, +${current.reward.silver} серебра
+            </div>
+        </div>`;
+        
+        // Босс
+        if (isInBattle && enemy) {
+            html += `
+            <div style="background:rgba(255,0,0,0.1);border:2px solid #ff6b6b;border-radius:8px;padding:15px;margin-bottom:15px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="color:#ff6b6b;font-weight:bold;">⚔️ БИТВА!</div>
+                        <div style="font-size:18px;color:#fff;">${enemy.name}</div>
+                        <div style="color:#aaa;font-size:13px;">❤️ ${enemy.hp}/${enemy.maxHp}</div>
+                        <div style="width:200px;height:8px;background:#333;border-radius:4px;overflow:hidden;margin-top:4px;">
+                            <div style="width:${(enemy.hp/enemy.maxHp)*100}%;height:100%;background:linear-gradient(90deg,#ff0000,#ff4444);"></div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <button onclick="Sherwood.Tavern.attackAndUpdate()" class="btn btn-danger" style="padding:12px 30px;font-size:16px;">⚔️ АТАКА</button>
+                        <button onclick="Sherwood.Tavern.cancelQuest()" class="btn" style="padding:4px 15px;font-size:11px;margin-top:4px;">✖ Отступить</button>
+                    </div>
+                </div>
+            </div>`;
+        } else if (!isCompleted) {
+            html += `
+            <button onclick="Sherwood.Tavern.startQuest()" class="btn btn-gold" style="width:100%;padding:15px;font-size:18px;font-weight:bold;">
+                ⚔️ Начать главу
+            </button>`;
+        } else {
+            html += `
+            <div style="text-align:center;padding:10px;background:rgba(82,183,136,0.1);border:1px solid #52b788;border-radius:6px;">
+                <span style="color:#52b788;">✅ Глава пройдена!</span>
+                <button onclick="Sherwood.Tavern.skipToNext()" class="btn" style="margin-left:10px;padding:4px 15px;font-size:12px;">➡️ Следующая</button>
+            </div>`;
+        }
+        
+        // Прогресс
+        html += `
+        <div style="margin-top:15px;padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;">
+            <div style="color:#888;font-size:12px;">Прогресс: ${completed}/${total} глав</div>
+            <div style="width:100%;height:4px;background:#222;border-radius:2px;overflow:hidden;margin-top:4px;">
+                <div style="width:${(completed/total)*100}%;height:100%;background:linear-gradient(90deg,#ffa500,#ffd700);"></div>
+            </div>
+        </div>`;
+        
+        return html;
+    },
+
+    attackAndUpdate: function() {
+        var result = this.attack();
+        if (result.error) {
+            alert(result.error);
+            return;
+        }
+        
+        // Обновляем UI
+        this._renderTavernUI();
+        
+        // Показываем результат
+        if (result.win) {
+            if (result.allComplete) {
+                alert('🏆 ПОБЕДА! Ты спас Шервуд!');
+            } else if (result.secretUnlocked) {
+                alert('🔮 Открыта секретная глава!');
+            } else {
+                alert('⚔️ Победа! Глава пройдена!');
+            }
+        } else if (result.lose) {
+            alert('💀 Ты погиб... Но егерь вытащил тебя. Отдохни и попробуй снова.');
+        }
+        
+        // Обновляем сохранения
+        saveGameData();
+    },
+
+    skipToNext: function() {
+        this._currentChapterIndex++;
+        this._saveState();
+        this._renderTavernUI();
+    },
+
+    closeUI: function() {
+        var screen = document.getElementById('tavern-screen');
+        if (screen) screen.remove();
+        if (typeof Menu !== 'undefined' && Menu.show) {
+            Menu.show();
+        }
     }
 };
+
+// ---------- ЭКСПОРТ ----------
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.Tavern = Sherwood.Tavern;
+
+console.log('🍺 Таверна с сюжетными квестами загружена!');
+console.log('📖 Всего глав:', Sherwood.Tavern.CHAPTERS.length);
