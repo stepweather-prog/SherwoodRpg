@@ -1,4 +1,4 @@
-// js/menu.js — полный с обновлёнными размерами
+// js/menu.js — НОВАЯ РАБОЧАЯ ВЕРСИЯ (БЕЗ СТАРОГО UI)
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -74,7 +74,7 @@ const Menu = {
         bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(bottomSeam);
         
-        // Анимация — в 2 раза больше
+        // Анимация
         this.stepVideo = document.createElement('video');
         this.stepVideo.src = 'assets/assets2/animation/step_up.webm';
         this.stepVideo.loop = false;
@@ -90,7 +90,7 @@ const Menu = {
         homeBtn.onclick = () => { if (typeof showHomeScreen === 'function') showHomeScreen(); };
         this.screen.appendChild(homeBtn);
         
-        // Стрелки — в 2 раза больше
+        // Стрелки
         const leftArrow = document.createElement('img');
         leftArrow.src = 'assets/assets2/icons/left.png';
         leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:100px;cursor:pointer;z-index:6;';
@@ -115,18 +115,20 @@ const Menu = {
             const section = document.createElement('div');
             section.style.cssText = 'min-width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;';
             
-            // Иконка ближе к табличке
+            // Иконка
             const img = new Image();
             img.src = `assets/assets2/icons/${this.getIconFile(building.icon)}`;
-            img.style.cssText = 'width:45%;height:auto;max-height:55%;object-fit:contain;pointer-events:none;margin-bottom:8px;';
+            img.style.cssText = 'width:45%;height:auto;max-height:45%;object-fit:contain;pointer-events:none;z-index:2;position:relative;margin-bottom:10px;';
             
+            // Панель
             const panel = document.createElement('img');
             panel.src = 'assets/assets2/icons/all_stat.png';
-            panel.style.cssText = 'width:60%;height:auto;object-fit:contain;pointer-events:none;';
+            panel.style.cssText = 'width:80%;height:50px;object-fit:contain;pointer-events:none;z-index:1;position:relative;';
             
+            // Подпись (на панели)
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:absolute;bottom:16%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
+            label.style.cssText = 'position:relative;bottom:30px;left:0;transform:none;width:80%;text-align:center;color:#ffa500;font-size:1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:2;';
             
             section.appendChild(img);
             section.appendChild(panel);
@@ -200,7 +202,28 @@ const Menu = {
     interact(building) {
         if (building.icon === 'Подземка') {
             if (typeof showDungeonScreen === 'function') showDungeonScreen();
-        } else {
+        } 
+        else if (building.icon === 'Квесты') {
+            // Создаём экран квестов
+            const screenHTML = `
+            <div id="quests-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/quest.png') center/cover no-repeat;display:flex;flex-direction:column;">
+                <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
+                    <button onclick="closeQuestsScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
+                        <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                    </button>
+                    <span style="color:#e0c080;font-size:1.2em;">Квесты</span>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:20px;" id="quests-content"></div>
+            </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', screenHTML);
+            
+            // Запускаем модуль квестов
+            if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
+                Sherwood.Quests.init();
+            }
+        } 
+        else {
             if (typeof showSectionScreen === 'function') showSectionScreen(building);
         }
     },
