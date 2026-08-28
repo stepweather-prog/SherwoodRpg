@@ -223,7 +223,7 @@ canvas {
     padding-bottom: 6px;
     position: relative;
     z-index: 2;
-    margin-top: 5px; /* Панель НЕ касается иконки (под ней) */
+    margin-top: 20px; /* Панель опущена ниже иконки */
 }
 
 .stat-value {
@@ -276,7 +276,7 @@ canvas {
         width: 70px;
         height: 25px;
         padding-bottom: 4px;
-        margin-top: 4px;
+        margin-top: 15px; /* Панель опущена ниже иконки на мобилке */
     }
 
     .stat-value {
