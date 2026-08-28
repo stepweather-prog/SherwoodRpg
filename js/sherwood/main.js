@@ -1,6 +1,4 @@
-// ============================================================
-//  js/main.js — ПОЛНАЯ ВЕРСИЯ С ИНТЕГРАЦИЕЙ ВСЕХ МОДУЛЕЙ
-// ============================================================
+// js/main.js — ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕННЫМИ КВЕСТАМИ
 
 // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
 const loadingScreen = document.getElementById('loadingScreen');
@@ -287,7 +285,442 @@ function closeSectionScreen() {
 }
 
 // ============================================================
-//  ЭКРАНЫ РЕЖИМОВ
+//  КВЕСТЫ - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// ============================================================
+
+function showQuestsScreen() {
+    // Закрываем предыдущий экран если есть
+    closeQuestsScreen();
+    
+    // Получаем данные из Sherwood.Quests
+    let chapters = [];
+    let progress = { completed: [], currentChapter: 1 };
+    let attemptsToday = 0;
+    let isOnCooldown = false;
+    let cooldownRemain = 0;
+    
+    if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
+        try {
+            // Получаем все главы
+            if (typeof Sherwood.Quests.getAllChapters === 'function') {
+                chapters = Sherwood.Quests.getAllChapters();
+            } else if (Sherwood.Quests.CHAPTERS) {
+                chapters = Sherwood.Quests.CHAPTERS;
+            }
+            
+            // Получаем прогресс
+            if (typeof Sherwood.Quests.getProgress === 'function') {
+                progress = Sherwood.Quests.getProgress();
+            }
+            
+            // Получаем попытки
+            if (typeof Sherwood.Quests.getAttemptsToday === 'function') {
+                attemptsToday = Sherwood.Quests.getAttemptsToday();
+            }
+            
+            // Проверяем перезарядку
+            if (typeof Sherwood.Quests.isOnCooldown === 'function') {
+                isOnCooldown = Sherwood.Quests.isOnCooldown();
+            }
+            if (typeof Sherwood.Quests.getCooldownRemaining === 'function') {
+                cooldownRemain = Sherwood.Quests.getCooldownRemaining();
+            }
+            
+            console.log('📋 Данные квестов загружены:', { chapters: chapters.length, progress });
+        } catch(e) {
+            console.error('❌ Ошибка загрузки данных квестов:', e);
+        }
+    }
+    
+    // Если глав нет - создаём тестовые
+    if (chapters.length === 0) {
+        chapters = [
+            { id: 1, name: 'Кровь Великого Дуба', boss: { name: 'Лесничий-Отступник' }, stages: 5, rewards: { exp: 200, gold: 50 } },
+            { id: 2, name: 'Кара Скверны', boss: { name: 'Вожак Искаженной Стаи' }, stages: 5, rewards: { exp: 400, gold: 100 } },
+            { id: 3, name: 'Старый Егерь', boss: { name: 'Альфа-Гончая Егеря' }, stages: 5, rewards: { exp: 600, gold: 150 } },
+            { id: 4, name: 'Спуск в Чащобу', boss: { name: 'Падший Друид' }, stages: 5, rewards: { exp: 800, gold: 200 } },
+            { id: 5, name: 'Искажённая Экосистема', boss: { name: 'Голод Чащи' }, stages: 5, rewards: { exp: 1000, gold: 250 } }
+        ];
+        progress.completed = [];
+        progress.currentChapter = 1;
+    }
+    
+    const completed = progress.completed || [];
+    const currentChapter = progress.currentChapter || 1;
+    
+    // Создаём экран
+    const screenHTML = `
+    <div id="quests-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/quest.png') center/cover no-repeat;display:flex;flex-direction:column;">
+        <!-- Верхняя панель -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);">
+            <button onclick="closeQuestsScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+            </button>
+            <span style="color:#e0c080;font-size:1.2em;">📋 Квесты</span>
+            <span style="color:#888;font-size:12px;margin-left:auto;">
+                ⚔️ ${attemptsToday}/5 сегодня
+                ${isOnCooldown ? `⏳ ${cooldownRemain} мин` : '✅ готов'}
+            </span>
+        </div>
+        
+        <!-- Контент -->
+        <div style="flex:1;overflow-y:auto;padding:20px;scrollbar-width:none;color:#fff;font-family:monospace;">
+            <div style="max-width:600px;margin:0 auto;">
+                <div style="text-align:center;margin-bottom:15px;">
+                    <div style="color:#ffa500;font-size:16px;">🏆 Пройдено: ${completed.length}/${chapters.length}</div>
+                    <div style="color:#888;font-size:12px;">Текущая глава: ${currentChapter}</div>
+                </div>
+                
+                <div id="quests-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+                
+                ${isOnCooldown ? `
+                <div style="text-align:center;margin-top:15px;padding:10px;background:rgba(255,165,0,0.1);border:1px solid #ffa500;border-radius:6px;">
+                    <div style="color:#ffa500;">⏳ Перезарядка: ${cooldownRemain} минут</div>
+                    <button onclick="accelerateQuest()" class="btn btn-gold" style="margin-top:8px;padding:6px 20px;font-size:12px;">⏩ Ускорить</button>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', screenHTML);
+    
+    // Заполняем список квестов
+    renderQuestsList(chapters, completed, currentChapter);
+}
+
+function renderQuestsList(chapters, completed, currentChapter) {
+    const container = document.getElementById('quests-list');
+    if (!container) return;
+    
+    container.innerHTML = chapters.map(ch => {
+        const isCompleted = completed.includes(ch.id);
+        const isCurrent = ch.id === currentChapter;
+        const isLocked = ch.id > currentChapter && !isCompleted;
+        
+        let statusText = '';
+        let statusColor = '#888';
+        let statusIcon = '📋';
+        let canStart = false;
+        
+        if (isCompleted) {
+            statusText = '✅ Пройдена';
+            statusColor = '#52b788';
+            statusIcon = '✅';
+            canStart = false;
+        } else if (isLocked) {
+            statusText = '🔒 Закрыта';
+            statusColor = '#555';
+            statusIcon = '🔒';
+            canStart = false;
+        } else if (isCurrent) {
+            statusText = '⚔️ Текущая';
+            statusColor = '#ffd700';
+            statusIcon = '⚔️';
+            canStart = true;
+        } else {
+            statusText = '📖 Доступна';
+            statusColor = '#ffa500';
+            statusIcon = '📖';
+            canStart = true;
+        }
+        
+        // Проверяем, есть ли активный бой
+        let hasActiveBattle = false;
+        if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
+            try {
+                const battle = Sherwood.Quests.getBattle ? Sherwood.Quests.getBattle() : null;
+                hasActiveBattle = battle !== null && battle.chapter && battle.chapter.id === ch.id;
+            } catch(e) {}
+        }
+        
+        return `
+        <div style="background:rgba(255,255,255,0.05);padding:12px 16px;border-radius:8px;border-left:4px solid ${statusColor};transition:all 0.3s;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="flex:1;">
+                    <div style="font-weight:bold;color:${statusColor};">
+                        ${statusIcon} ${ch.id}. ${ch.name}
+                    </div>
+                    <div style="color:#aaa;font-size:12px;margin-top:2px;">
+                        Босс: ${ch.boss ? ch.boss.name : 'Неизвестен'} 
+                        ${ch.stages ? `| Этапов: ${ch.stages}` : ''}
+                    </div>
+                    ${ch.rewards ? `
+                    <div style="color:#ffd700;font-size:11px;margin-top:2px;">
+                        Награда: +${ch.rewards.exp} опыта, +${ch.rewards.gold} золота
+                    </div>
+                    ` : ''}
+                </div>
+                <div style="text-align:right;min-width:80px;">
+                    <div style="font-size:12px;color:${statusColor};">${statusText}</div>
+                    ${canStart ? `
+                        ${hasActiveBattle ? 
+                            `<button class="btn btn-danger" style="margin-top:4px;padding:4px 12px;font-size:11px;" onclick="continueQuestBattle(${ch.id})">⚔️ Продолжить</button>` :
+                            `<button class="btn btn-success" style="margin-top:4px;padding:4px 12px;font-size:11px;" onclick="startQuestChapter(${ch.id})">Начать</button>`
+                        }
+                    ` : ''}
+                    ${isCompleted ? `<div style="color:#52b788;font-size:20px;margin-top:4px;">🏆</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `}).join('');
+    
+    // Добавляем информацию о текущем бое, если есть
+    if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
+        try {
+            const battle = Sherwood.Quests.getBattle ? Sherwood.Quests.getBattle() : null;
+            if (battle && battle.enemy) {
+                const battleHtml = `
+                <div style="margin-top:15px;padding:12px;background:rgba(255,0,0,0.1);border:2px solid #ff6b6b;border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="color:#ff6b6b;font-weight:bold;">⚔️ ТЕКУЩИЙ БОЙ</div>
+                            <div style="color:#fff;">${battle.enemy.name}</div>
+                            <div style="color:#888;font-size:12px;">Этап ${battle.stage}/${battle.total}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="continueQuestBattle(${battle.chapter.id})">⚔️ В бой!</button>
+                    </div>
+                </div>
+                `;
+                container.insertAdjacentHTML('beforeend', battleHtml);
+            }
+        } catch(e) {}
+    }
+}
+
+function startQuestChapter(chapterId) {
+    if (typeof Sherwood === 'undefined' || !Sherwood.Quests) {
+        alert('⚔️ Квестовая система не загружена. Проверь подключение quests.js');
+        return;
+    }
+    
+    try {
+        const result = Sherwood.Quests.startChapter(chapterId);
+        
+        if (result && result.success) {
+            // Закрываем экран квестов
+            closeQuestsScreen();
+            
+            // Показываем экран битвы
+            if (typeof Sherwood.Quests.showBattleUI === 'function') {
+                Sherwood.Quests.showBattleUI();
+            } else {
+                // Создаём простой экран битвы
+                showSimpleBattleUI(result);
+            }
+        } else {
+            alert(result?.reason || '❌ Не удалось начать главу');
+        }
+    } catch(e) {
+        console.error('❌ Ошибка старта главы:', e);
+        alert('❌ Ошибка: ' + e.message);
+    }
+}
+
+function continueQuestBattle(chapterId) {
+    closeQuestsScreen();
+    
+    if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
+        if (typeof Sherwood.Quests.showBattleUI === 'function') {
+            Sherwood.Quests.showBattleUI();
+        } else {
+            // Пытаемся получить текущий бой
+            const battle = Sherwood.Quests.getBattle ? Sherwood.Quests.getBattle() : null;
+            if (battle) {
+                showSimpleBattleUI({ chapter: battle.chapter, enemy: battle.enemy, stage: battle.stage, total: battle.total });
+            } else {
+                alert('❌ Нет активного боя');
+            }
+        }
+    }
+}
+
+function showSimpleBattleUI(data) {
+    const enemy = data.enemy || { name: 'Враг', hp: 100, maxHp: 100 };
+    const chapter = data.chapter || { id: 1, name: 'Глава' };
+    const stage = data.stage || 1;
+    const total = data.total || 5;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'battle-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 400;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Courier New', monospace;
+        color: #fff;
+    `;
+    
+    overlay.innerHTML = `
+        <div style="background:linear-gradient(180deg,#1a0f08,#2d1a10);border:3px solid #8B4513;border-radius:12px;padding:30px;max-width:500px;width:90%;">
+            <div style="text-align:center;margin-bottom:15px;">
+                <div style="color:#ffa500;font-size:20px;font-weight:bold;">⚔️ БИТВА</div>
+                <div style="color:#888;font-size:14px;">${chapter.name} - Этап ${stage}/${total}</div>
+            </div>
+            
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                <div>
+                    <div style="color:#ff6b6b;">👾 ${enemy.name}</div>
+                    <div style="font-size:24px;font-weight:bold;">❤️ ${enemy.hp}</div>
+                    <div style="width:150px;height:8px;background:#333;border-radius:4px;overflow:hidden;">
+                        <div style="width:${(enemy.hp/enemy.maxHp)*100}%;height:100%;background:linear-gradient(90deg,#ff0000,#ff4444);"></div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="color:#4ecdc4;">🧙 Герой</div>
+                    <div style="font-size:24px;font-weight:bold;">❤️ ${PlayerStats.hp}</div>
+                    <div style="width:150px;height:8px;background:#333;border-radius:4px;overflow:hidden;margin-left:auto;">
+                        <div style="width:${(PlayerStats.hp/PlayerStats.maxHp)*100}%;height:100%;background:linear-gradient(90deg,#00ff00,#44ff44);"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px;">
+                <button onclick="simpleBattleAttack()" style="padding:12px;background:#6a2d2d;border:2px solid #ff6b6b;border-radius:6px;color:#fff;cursor:pointer;font-size:16px;font-weight:bold;">⚔️ АТАКА</button>
+                <button onclick="simpleBattleSkip()" style="padding:12px;background:#4a4a4a;border:1px solid #666;border-radius:6px;color:#aaa;cursor:pointer;font-size:14px;">💤 Отдых</button>
+            </div>
+            
+            <div id="battle-log" style="margin-top:10px;padding:8px;background:rgba(0,0,0,0.5);border-radius:4px;height:60px;overflow-y:auto;font-size:12px;color:#888;"></div>
+            
+            <button onclick="document.getElementById('battle-overlay').remove()" style="margin-top:10px;padding:6px 20px;background:#333;border:none;border-radius:4px;color:#888;cursor:pointer;">✖ Выход</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Сохраняем данные боя
+    window._simpleBattle = {
+        enemy: enemy,
+        chapter: chapter,
+        stage: stage,
+        total: total
+    };
+}
+
+function simpleBattleAttack() {
+    const battle = window._simpleBattle;
+    if (!battle) return;
+    
+    const enemy = battle.enemy;
+    
+    // Урон игрока
+    let damage = PlayerStats.damage + Math.floor(Math.random() * 5) - 2;
+    damage = Math.max(1, damage - Math.floor((enemy.def || 0) / 2));
+    
+    // Крит
+    let isCrit = Math.random() * 100 < 15;
+    if (isCrit) damage *= 2;
+    
+    enemy.hp -= damage;
+    if (enemy.hp < 0) enemy.hp = 0;
+    
+    addBattleLog(`💢 ${isCrit ? '💥 КРИТ! ' : ''}${damage} урона! (${enemy.hp}/${enemy.maxHp})`);
+    
+    if (enemy.hp <= 0) {
+        addBattleLog('🏆 Враг повержен!');
+        // Награда
+        const expReward = 20 + PlayerStats.level * 5;
+        const goldReward = 10 + PlayerStats.level * 3;
+        PlayerStats.exp += expReward;
+        PlayerStats.gold += goldReward;
+        addBattleLog(`✨ +${expReward} опыта, +${goldReward} золота`);
+        updateTopBar();
+        saveGameData();
+        return;
+    }
+    
+    // Атака врага
+    let enemyDamage = Math.floor((enemy.atk || 10) * (0.7 + Math.random() * 0.6));
+    enemyDamage = Math.max(1, enemyDamage - Math.floor(PlayerStats.armor / 3));
+    PlayerStats.hp -= enemyDamage;
+    if (PlayerStats.hp < 0) PlayerStats.hp = 0;
+    
+    addBattleLog(`💢 Враг нанёс ${enemyDamage} урона! (${PlayerStats.hp}/${PlayerStats.maxHp})`);
+    updateTopBar();
+    
+    if (PlayerStats.hp <= 0) {
+        addBattleLog('💀 Ты погиб!');
+        PlayerStats.gold = Math.floor(PlayerStats.gold * 0.8);
+        PlayerStats.hp = Math.floor(PlayerStats.maxHp * 0.3);
+        saveGameData();
+        updateTopBar();
+    }
+    
+    // Обновляем UI
+    updateBattleUI();
+}
+
+function simpleBattleSkip() {
+    const heal = Math.floor(PlayerStats.maxHp * 0.08);
+    PlayerStats.hp = Math.min(PlayerStats.maxHp, PlayerStats.hp + heal);
+    addBattleLog(`💤 Отдых: +${heal} HP`);
+    updateTopBar();
+    updateBattleUI();
+}
+
+function addBattleLog(msg) {
+    const log = document.getElementById('battle-log');
+    if (log) {
+        log.innerHTML += `<div>${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
+    }
+}
+
+function updateBattleUI() {
+    const battle = window._simpleBattle;
+    if (!battle) return;
+    
+    const enemy = battle.enemy;
+    
+    // Обновляем HP игрока и врага
+    const allDivs = document.querySelectorAll('#battle-overlay [style*="font-size:24px"][style*="font-weight:bold;"]');
+    if (allDivs.length >= 2) {
+        allDivs[0].textContent = `❤️ ${enemy.hp}`;
+        allDivs[1].textContent = `❤️ ${PlayerStats.hp}`;
+    }
+    
+    // Обновляем полоски
+    const bars = document.querySelectorAll('#battle-overlay [style*="height:8px;background:#333;border-radius:4px;overflow:hidden;"] > div');
+    if (bars.length >= 2) {
+        bars[0].style.width = (enemy.hp / enemy.maxHp * 100) + '%';
+        bars[1].style.width = (PlayerStats.hp / PlayerStats.maxHp * 100) + '%';
+    }
+}
+
+function accelerateQuest() {
+    if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
+        if (typeof Sherwood.Quests.accelerate === 'function') {
+            const result = Sherwood.Quests.accelerate();
+            if (result && result.success) {
+                alert('✅ Перезарядка сброшена!');
+                closeQuestsScreen();
+                setTimeout(() => showQuestsScreen(), 300);
+            } else {
+                alert(result?.reason || '❌ Не удалось ускорить');
+            }
+        } else {
+            alert('⏳ Ускорение пока недоступно');
+        }
+    }
+}
+
+function closeQuestsScreen() {
+    const screen = document.getElementById('quests-screen');
+    if (screen) screen.remove();
+    
+    // Закрываем также экран битвы если есть
+    const battle = document.getElementById('battle-overlay');
+    if (battle) battle.remove();
+}
+
+// ============================================================
+//  ОСТАЛЬНЫЕ ЭКРАНЫ
 // ============================================================
 
 // ---------- ПОДЗЕМКА ----------
@@ -339,75 +772,15 @@ function enterDungeon(dungeonId) {
     closeDungeonScreen();
     
     if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon2D5) {
-        // Используем существующий Dungeon2D5
         console.log('🏚️ Вход в подземелье:', dungeonId);
-        // Тут можно установить ID данжена
         Sherwood.Dungeon2D5.render();
     } else {
         alert('🚧 Подземелье "' + dungeonId + '" в разработке');
     }
 }
 
-// ---------- КВЕСТЫ ----------
-function showQuestsScreen() {
-    if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
-        Sherwood.Quests.showQuestsUI();
-        return;
-    }
-    
-    const screenHTML = `
-    <div id="quests-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/quest.png') center/cover no-repeat;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
-            <button onclick="closeQuestsScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-            </button>
-            <span style="color:#e0c080;font-size:1.2em;">Квесты</span>
-        </div>
-        <div style="flex:1;overflow-y:auto;padding:20px;color:#fff;font-family:monospace;">
-            <div style="text-align:center;font-size:18px;color:#ffa500;margin-bottom:20px;">📋 Доступные квесты</div>
-            <div id="quests-list"></div>
-        </div>
-    </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', screenHTML);
-    renderQuestsList();
-}
-
-function closeQuestsScreen() {
-    const screen = document.getElementById('quests-screen');
-    if (screen) screen.remove();
-}
-
-function renderQuestsList() {
-    const container = document.getElementById('quests-list');
-    if (!container) return;
-    
-    // Заглушка
-    const quests = [
-        { name: 'Первое испытание', desc: 'Убей 5 гоблинов', progress: '2/5', reward: '+50 опыта' },
-        { name: 'Собиратель', desc: 'Найди 3 сундука', progress: '1/3', reward: '+30 золота' },
-        { name: 'Боец', desc: 'Победи босса', progress: '0/1', reward: '+100 опыта' }
-    ];
-    
-    container.innerHTML = quests.map(q => `
-        <div style="background:rgba(255,255,255,0.05);padding:12px;margin:8px 0;border-radius:6px;border-left:3px solid #ffa500;">
-            <div style="font-weight:bold;color:#ffd700;">${q.name}</div>
-            <div style="color:#aaa;font-size:13px;">${q.desc}</div>
-            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
-                <span style="color:#888;">Прогресс: ${q.progress}</span>
-                <span style="color:#52b788;">${q.reward}</span>
-            </div>
-        </div>
-    `).join('');
-}
-
 // ---------- ПОРТАЛЫ ----------
 function showPortalsScreen() {
-    if (typeof Sherwood !== 'undefined' && Sherwood.Portal) {
-        Sherwood.Portal.showPortalsUI();
-        return;
-    }
-    
     const screenHTML = `
     <div id="portals-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/portal.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
@@ -440,11 +813,6 @@ function closePortalsScreen() {
 
 // ---------- РЕЙД ----------
 function showRaidScreen() {
-    if (typeof Sherwood !== 'undefined' && Sherwood.Raid) {
-        Sherwood.Raid.showRaidUI();
-        return;
-    }
-    
     const screenHTML = `
     <div id="raid-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/background_raid.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
@@ -477,11 +845,6 @@ function closeRaidScreen() {
 
 // ---------- ТАЛАНТЫ ----------
 function showTalentsScreen() {
-    if (typeof Talents !== 'undefined' && Talents.showUI) {
-        Talents.showUI();
-        return;
-    }
-    
     const screenHTML = `
     <div id="talents-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/visual_talents.png') center/cover no-repeat;display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
@@ -810,6 +1173,11 @@ window.closeDungeonScreen = closeDungeonScreen;
 window.enterDungeon = enterDungeon;
 window.showQuestsScreen = showQuestsScreen;
 window.closeQuestsScreen = closeQuestsScreen;
+window.startQuestChapter = startQuestChapter;
+window.continueQuestBattle = continueQuestBattle;
+window.accelerateQuest = accelerateQuest;
+window.simpleBattleAttack = simpleBattleAttack;
+window.simpleBattleSkip = simpleBattleSkip;
 window.showPortalsScreen = showPortalsScreen;
 window.closePortalsScreen = closePortalsScreen;
 window.showRaidScreen = showRaidScreen;
@@ -843,7 +1211,7 @@ window.loadGameData = loadGameData;
 window.showLoadingOverlay = showLoadingOverlay;
 window.hideLoadingOverlay = hideLoadingOverlay;
 
-// ---------- АВТОЗАГРУЗКА ПРИ СТАРТЕ ----------
+// ---------- АВТОЗАГРУЗКА ----------
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
