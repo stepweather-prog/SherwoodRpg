@@ -292,7 +292,7 @@ canvas {
 }
 /* УВЕЛИЧИВАЕМ ПЛАШКИ В МЕНЮ В 2 РАЗА */
 #menuScreen img[src*="all_stat"] {
-    width: 80% !important; /* Было 60%, стало 120% */
+    width: 30% !important; /* Было 60%, стало 120% */
     height: auto !important;
     transform: scale(1.2); /* Дополнительное увеличение визуально */
     transform-origin: center center;
