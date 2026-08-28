@@ -199,13 +199,20 @@ canvas {
     display: none;
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50vw; /* Центрируем меню до 50% ширины экрана */
     height: 100%;
     z-index: 200;
     overflow: hidden;
 }
-
+@media (max-width: 768px) {
+    #menuScreen {
+        left: 0;
+        transform: none;
+        width: 100vw; /* На мобилке меню занимает весь экран */
+    }
+}
 /* =========================================
    ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ГЛАВНАЯ)
    ========================================= */
@@ -290,10 +297,12 @@ canvas {
         font-size: 10px;
     }
 }
-/* УВЕЛИЧИВАЕМ ПЛАШКИ В МЕНЮ В 2 РАЗА */
+/* УВЕЛИЧИВАЕМ ПЛАШКИ В МЕНЮ (НЕМНОГО, БЕЗ РАЗДУВАНИЯ) */
 #menuScreen img[src*="all_stat"] {
-    width: 120% !important; /* Было 60%, стало 120% */
+    width: 70% !important; /* Было 60%, стало просто 70% */
     height: auto !important;
-    transform: scale(1.2); /* Дополнительное увеличение визуально */
-    transform-origin: center center;
+}
+
+#menuScreen div[style*="bottom:18%"] {
+    font-size: 1.1em !important; /* Текст чуть крупнее */
 }
