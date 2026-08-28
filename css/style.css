@@ -14,6 +14,11 @@ body {
     justify-content: center;
     align-items: center;
 }
+canvas { 
+    width: 100% !important;
+    height: 100% !important;
+    image-rendering: pixelated; 
+}
 
 #loadingScreen {
     position: fixed;
@@ -142,7 +147,7 @@ body {
     bottom: 8%;
     left: 50%;
     transform: translateX(-50%);
-    width: 40%; /* Было 30% */
+    width: 40%;
     height: auto;
     object-fit: contain;
     z-index: 5;
@@ -172,7 +177,7 @@ body {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ДОБАВЛЕНА)
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК
    ========================================= */
 
 #topBar {
@@ -183,10 +188,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
     z-index: 20;
     width: 100%;
-    max-width: 700px;
+    max-width: 650px;
     pointer-events: none;
 }
 
@@ -198,8 +203,8 @@ body {
 }
 
 .stat-box .icon {
-    width: 65px;
-    height: 65px;
+    width: 60px;
+    height: 60px;
     object-fit: contain;
     position: relative;
     z-index: 1;
@@ -207,24 +212,24 @@ body {
 }
 
 .panel-bg {
-    width: 120px;
-    height: 40px;
+    width: 100px;
+    height: 35px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
     position: relative;
     z-index: 2;
-    margin-top: -10px; /* Панель слегка касается иконки */
+    margin-top: 5px; /* Панель НЕ касается иконки (под ней) */
 }
 
 .stat-value {
     color: #fff;
     font-family: 'Times New Roman', serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
@@ -233,7 +238,7 @@ body {
 }
 
 /* =========================================
-   АДАПТАЦИЯ ПРИ УМЕНЬШЕНИИ ЭКРАНА
+   МОБИЛЬНАЯ ВЕРСИЯ (до 768px)
    ========================================= */
 @media (max-width: 768px) {
     #leftStatue, #rightStatue {
@@ -245,14 +250,13 @@ body {
         height: 100vh;
     }
 
-    /* ГЕРОЙ НЕ УМЕНЬШАЕТСЯ! Размер зависит от высоты экрана */
+    /* ГЕРОЙ НЕ УМЕНЬШАЕТСЯ! Используем высоту экрана */
     #hero {
         width: auto;
-        height: 45vh; /* Берем 45% от высоты экрана. На телефоне герой останется большим */
+        height: 45vh; /* Герой останется большим даже на телефоне */
         bottom: 10%;
     }
 
-    /* Панель при уменьшении экрана */
     #topBar {
         gap: 3px;
         top: 0;
@@ -260,18 +264,18 @@ body {
     }
 
     .stat-box .icon {
-        width: 42px;
-        height: 42px;
+        width: 40px;
+        height: 40px;
     }
 
     .panel-bg {
-        width: 72px;
-        height: 26px;
+        width: 70px;
+        height: 25px;
         padding-bottom: 4px;
-        margin-top: -8px;
+        margin-top: 4px;
     }
 
     .stat-value {
-        font-size: 11px;
+        font-size: 10px;
     }
 }
