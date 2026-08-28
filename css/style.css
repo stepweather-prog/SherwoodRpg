@@ -125,7 +125,7 @@ canvas {
 }
 
 #leftDivider {
-    left: 25%; /* Сдвигаем наружу, к статуям */
+    left: -10%; /* Отрицательное значение — выдвигаем разделитель наружу, к статуе */
     top: 0;
     height: 100%;
     width: auto;
@@ -134,7 +134,7 @@ canvas {
 }
 
 #rightDivider {
-    right: 25%; /* Сдвигаем наружу, к статуям */
+    right: -10%; /* Отрицательное значение — выдвигаем разделитель наружу, к статуе */
     top: 0;
     height: 100%;
     width: auto;
@@ -223,7 +223,7 @@ canvas {
     padding-bottom: 6px;
     position: relative;
     z-index: 2;
-    margin-top: 35px; /* Панель опущена еще ниже */
+    margin-top: 35px; /* Панель опущена ниже иконки */
 }
 
 .stat-value {
@@ -276,7 +276,7 @@ canvas {
         width: 70px;
         height: 25px;
         padding-bottom: 4px;
-        margin-top: 25px; /* Панель опущена еще ниже на мобилке */
+        margin-top: 25px; /* Панель опущена ниже иконки на мобилке */
     }
 
     .stat-value {
