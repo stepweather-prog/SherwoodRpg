@@ -1,3 +1,12 @@
+// js/sherwood/quests.js — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ
+// Сначала создаём объект, иначе будет ошибка
+if (typeof Sherwood === 'undefined') {
+    window.Sherwood = {};
+}
+if (!Sherwood.Quests) {
+    Sherwood.Quests = {};
+}
+
 // ===== ОБНОВЛЯЕМ Sherwood.Quests - БЕЗ ПОБЕГА =====
 
 // Переопределяем flee - теперь это "пропустить ход" или просто убираем
@@ -72,9 +81,7 @@ Sherwood.Quests.showBattleUI = function() {
     let html = `
         <div style="background:linear-gradient(180deg,#1a0f08,#2d1a10);border:3px solid ${isBoss ? '#ff6b35' : '#8B4513'};border-radius:12px;padding:20px;max-width:500px;width:90%;color:#fff;font-family:monospace;">
             <div style="text-align:center;margin-bottom:10px;">
-                <div style="font-size:20px;font-weight:bold;color:${isBoss ? '#ff6b35' : '#ffa500'};">
-                    ${isBoss ? '👑 БОСС' : '⚔️ БИТВА'}
-                </div>
+                <div style="font-size:20px;font-weight:bold;color:${isBoss ? '#ff6b35' : '#ffa500'};">${isBoss ? '👑 БОСС' : '⚔️ БИТВА'}</div>
                 <div style="font-size:14px;">${battle.enemy.name}</div>
                 <div style="font-size:12px;color:#888;">Глава ${battle.chapter.id}: ${battle.chapter.name}</div>
             </div>
