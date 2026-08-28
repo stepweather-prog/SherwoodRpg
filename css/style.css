@@ -125,7 +125,7 @@ canvas {
 }
 
 #leftDivider {
-    left: 0;
+    left: 10%; /* Отодвигаем от арки */
     top: 0;
     height: 100%;
     width: auto;
@@ -134,7 +134,7 @@ canvas {
 }
 
 #rightDivider {
-    right: 0;
+    right: 10%; /* Отодвигаем от арки */
     top: 0;
     height: 100%;
     width: auto;
@@ -242,6 +242,11 @@ canvas {
    ========================================= */
 @media (max-width: 768px) {
     #leftStatue, #rightStatue {
+        display: none !important;
+    }
+    
+    /* Скрываем и разделители на мобильных */
+    #leftDivider, #rightDivider {
         display: none !important;
     }
     
