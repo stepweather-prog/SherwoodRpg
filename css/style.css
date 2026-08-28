@@ -280,11 +280,11 @@ canvas {
     }
 
     .panel-bg {
-        width: 70px;
-        height: 27px;
-        margin-top: 18px;
-        padding-bottom: 4px;
-    }
+    width: 80px;
+    height: 30px;
+    margin-top: 25px;
+    padding-bottom: 4px;
+}
 
     .stat-value {
         font-size: 10px;
