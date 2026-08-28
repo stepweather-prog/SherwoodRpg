@@ -1,4 +1,4 @@
-// js/menu.js — ИСПРАВЛЕННЫЙ (БЕЗ ЧЕРНОГО ФОНА)
+// js/menu.js — РАБОЧАЯ ВЕРСИЯ ПО ТВОЕЙ ЛОГИКЕ
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
@@ -120,12 +120,12 @@ const Menu = {
             img.src = `assets/assets2/icons/${this.getIconFile(building.icon)}`;
             img.style.cssText = 'width:45%;height:auto;max-height:45%;object-fit:contain;pointer-events:none;z-index:2;position:relative;margin-bottom:10px;';
             
-            // Панель (обычная, под иконкой)
+            // Панель (строго под иконкой)
             const panel = document.createElement('img');
             panel.src = 'assets/assets2/icons/all_stat.png';
             panel.style.cssText = 'width:80%;height:50px;object-fit:contain;pointer-events:none;z-index:1;position:relative;';
             
-            // Подпись (на панели, СТРОГО ПОД ИКОНКОЙ)
+            // Подпись (на панели)
             const label = document.createElement('div');
             label.textContent = building.name;
             label.style.cssText = 'position:relative;bottom:30px;left:0;transform:none;width:80%;text-align:center;color:#ffa500;font-size:1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:2;';
