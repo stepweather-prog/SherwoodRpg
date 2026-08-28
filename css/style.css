@@ -253,7 +253,7 @@ canvas {
     padding-bottom: 6px;
     position: relative;
     z-index: 2;
-    margin-top: 25px; /* Панель под иконкой, без наезда */
+    margin-top: 25px; /* Панель под иконкой */
 }
 
 .stat-value {
@@ -280,11 +280,11 @@ canvas {
     }
 
     .panel-bg {
-    width: 80px;
-    height: 30px;
-    margin-top: 25px;
-    padding-bottom: 4px;
-}
+        width: 70px;
+        height: 27px;
+        margin-top: 25px;
+        padding-bottom: 4px;
+    }
 
     .stat-value {
         font-size: 10px;
