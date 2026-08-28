@@ -297,12 +297,10 @@ canvas {
         font-size: 10px;
     }
 }
-/* УВЕЛИЧИВАЕМ ПЛАШКИ В МЕНЮ (НЕМНОГО, БЕЗ РАЗДУВАНИЯ) */
 #menuScreen img[src*="all_stat"] {
-    width: 70% !important; /* Было 60%, стало просто 70% */
+    width: 80% !important;
     height: auto !important;
 }
-
 #menuScreen div[style*="bottom:18%"] {
     font-size: 1.1em !important; /* Текст чуть крупнее */
 }
