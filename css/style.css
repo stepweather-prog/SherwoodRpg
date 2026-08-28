@@ -188,10 +188,10 @@ canvas {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 10px;
+    gap: 6px;
     z-index: 20;
     width: 100%;
-    max-width: 650px;
+    max-width: 600px;
     pointer-events: none;
 }
 
@@ -203,33 +203,33 @@ canvas {
 }
 
 .stat-box .icon {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     object-fit: contain;
     position: relative;
     z-index: 1;
     filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8));
+    margin-bottom: 5px;
 }
 
 .panel-bg {
-    width: 100px;
-    height: 35px;
+    width: 90px;
+    height: 30px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    padding-bottom: 6px;
+    padding-bottom: 5px;
     position: relative;
     z-index: 2;
-    margin-top: 5px; /* Панель НЕ касается иконки (под ней) */
 }
 
 .stat-value {
     color: #fff;
     font-family: 'Times New Roman', serif;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
@@ -250,29 +250,28 @@ canvas {
         height: 100vh;
     }
 
-    /* ГЕРОЙ НЕ УМЕНЬШАЕТСЯ! Используем высоту экрана */
     #hero {
         width: auto;
-        height: 45vh; /* Герой останется большим даже на телефоне */
+        height: 45vh;
         bottom: 10%;
     }
 
     #topBar {
-        gap: 3px;
+        gap: 2px;
         top: 0;
         max-width: 100%;
     }
 
     .stat-box .icon {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
+        margin-bottom: 3px;
     }
 
     .panel-bg {
-        width: 70px;
-        height: 25px;
-        padding-bottom: 4px;
-        margin-top: 4px;
+        width: 62px;
+        height: 22px;
+        padding-bottom: 3px;
     }
 
     .stat-value {
