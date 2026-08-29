@@ -17,15 +17,26 @@
 </div>
 
 <div id="homeScreen">
+    <!-- Левая статуя за пределами игровой зоны -->
     <img id="leftStatue" src="assets/assets2/game_details/left_statue_of_the_main_screen.png" alt="Left Statue">
     
-   <!-- Элементы карусели (все полотна 1024х1024) -->
-<img id="sectionIcon" src="assets/assets2/icons/player_profile.png" alt="Section Icon">
-<div id="sectionName">Профиль</div>
-<img id="carouselLeftArrow" src="assets/assets2/icons/left.png" alt="Left">
-<img id="carouselRightArrow" src="assets/assets2/icons/right.png" alt="Right">
+    <!-- ЦЕНТРАЛЬНАЯ ИГРОВАЯ ЗОНА (Все элементы должны быть внутри нее) -->
+    <div id="gameZone">
+        <!-- Фоны и декорации -->
+        <img id="arch" src="assets/assets2/game_details/staircase_with_an_arch.png" alt="Arch">
+        <img id="leftDivider" src="assets/assets2/game_details/left_divider.png" alt="Left Divider">
+        <img id="rightDivider" src="assets/assets2/game_details/divider_right.png" alt="Right Divider">
+        
+        <!-- Главный герой -->
+        <img id="hero" src="assets/hero_skins/skin1_01.png" alt="Hero">
 
+        <!-- Элементы карусели меню (полотна 1024х1024 ложатся друг на друга) -->
+        <img id="sectionIcon" src="assets/assets2/icons/player_profile.png" alt="Section Icon">
+        <div id="sectionName">Профиль</div>
+        <img id="carouselLeftArrow" src="assets/assets2/icons/left.png" alt="Left">
+        <img id="carouselRightArrow" src="assets/assets2/icons/right.png" alt="Right">
 
+        <!-- Верхняя панель характеристик -->
         <div id="topBar">
             <div class="stat-box">
                 <img src="assets/assets2/icons/progress.png" alt="Опыт" class="icon">
@@ -69,13 +80,15 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> <!-- Конец #gameZone -->
     
+    <!-- Правая статуя за пределами игровой зоны -->
     <img id="rightStatue" src="assets/assets2/game_details/right_statue_of_the_main_screen.png" alt="Right Statue">
 </div>
 
 <div id="menuScreen" style="display:none;"></div>
 
+<!-- Скрипты -->
 <script src="js/sherwood/core.js"></script>
 <script src="js/sherwood/models.js"></script>
 <script src="js/sherwood/textures.js"></script>
@@ -92,11 +105,9 @@
 <script src="js/sherwood/quests.js"></script>
 <script src="js/sherwood/raid.js"></script>
 <script src="js/sherwood/blackmarket.js"></script>
-<script src="js/sherwood/arena.js"></script>
 <script src="js/sherwood/forge.js"></script>
 <script src="js/sherwood/combat.js"></script>
 <script src="js/sherwood/hearth.js"></script>
-<script src="js/sherwood/menu.js"></script>
 <script src="js/sherwood/main.js"></script>
 </body>
 </html>
