@@ -1,6 +1,5 @@
 /**
  * Sherwood Settings — Настройки игры
- * Совмещённый модуль без зависимости от SherwoodUI
  */
 
 if (typeof Settings === 'undefined') {
@@ -10,7 +9,7 @@ if (typeof Settings === 'undefined') {
             soundEnabled: true,
             nameChanges: 0,
         },
-        
+
         init: function() {
             var saved = localStorage.getItem('sherwood_settings');
             if (saved) {
@@ -21,155 +20,200 @@ if (typeof Settings === 'undefined') {
                 }
             }
             console.log('⚙️ Настройки загружены');
-            console.log('🎵 Музыка:', this.data.musicEnabled ? 'вкл' : 'выкл');
-            console.log('🔊 Звук:', this.data.soundEnabled ? 'вкл' : 'выкл');
         },
-        
+
         save: function() {
             localStorage.setItem('sherwood_settings', JSON.stringify(this.data));
         },
-        
+
         get: function(key) {
             return this.data[key];
         },
-        
+
         set: function(key, value) {
             this.data[key] = value;
             this.save();
         },
-        
+
         toggleMusic: function() {
             this.data.musicEnabled = !this.data.musicEnabled;
             this.save();
             return this.data.musicEnabled;
         },
-        
+
         toggleSound: function() {
             this.data.soundEnabled = !this.data.soundEnabled;
             this.save();
             return this.data.soundEnabled;
         },
-        
+
         isMusicEnabled: function() {
             return this.data.musicEnabled;
         },
-        
+
         isSoundEnabled: function() {
             return this.data.soundEnabled;
         },
-        
-        // ============================================================
-        //  UI — ПОКАЗ НАСТРОЕК
-        // ============================================================
-        
+
+        // ========== UI ==========
+
         showUI: function() {
-            if (typeof window.showSettingsScreen === 'function') {
-                window.showSettingsScreen();
+            if (typeof UI === 'undefined') {
+                if (typeof showGenericScreen === 'function') {
+                    showGenericScreen('Настройки', '⚙️');
+                }
                 return;
             }
-            this._renderSettingsUI();
-        },
-        
-        _renderSettingsUI: function() {
-            var old = document.getElementById('settings-screen');
-            if (old) old.remove();
-            
+            UI._playSound('click');
+
+            var p = Sherwood.getPlayer();
+            var nm = p ? p.name : 'Охотник';
+            var nameChanges = p ? (p.nameChanges || 0) : 0;
             var musicEnabled = this.isMusicEnabled();
             var soundEnabled = this.isSoundEnabled();
-            
-            var screenHTML = `
-            <div id="settings-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/settings_visual.png') center/cover no-repeat;display:flex;flex-direction:column;">
-                <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);">
-                    <button onclick="Settings.closeUI()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                        <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-                    </button>
-                    <span style="color:#e0c080;font-size:1.2em;">⚙️ Настройки</span>
-                </div>
-                
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:#fff;font-family:monospace;">
-                    <div style="background:rgba(0,0,0,0.7);border:2px solid #8B4513;border-radius:12px;padding:30px;max-width:400px;width:100%;">
-                        
-                        <div style="margin-bottom:15px;">
-                            <button onclick="Settings.toggleMusicFromUI()" class="btn ${musicEnabled ? 'btn-gold' : ''}" style="width:100%;padding:12px;font-size:16px;">
-                                ${musicEnabled ? '🔊 Музыка: Включена' : '🔇 Музыка: Выключена'}
-                            </button>
-                        </div>
-                        
-                        <div style="margin-bottom:20px;">
-                            <button onclick="Settings.toggleSoundFromUI()" class="btn ${soundEnabled ? 'btn-gold' : ''}" style="width:100%;padding:12px;font-size:16px;">
-                                ${soundEnabled ? '🔊 Звук: Включён' : '🔇 Звук: Выключён'}
-                            </button>
-                        </div>
-                        
-                        <hr style="border-color:#333;margin:10px 0;">
-                        
-                        <button onclick="Settings.resetFromUI()" class="btn btn-danger" style="width:100%;padding:12px;font-size:14px;">
-                            🔄 Сбросить прогресс
-                        </button>
-                        
-                        <div style="color:#555;font-size:11px;margin-top:15px;text-align:center;">
-                            Имя игрока: ${Sherwood.getPlayer ? Sherwood.getPlayer().name || 'Охотник' : 'Охотник'}
-                            <br>Уровень: ${Sherwood.getPlayer ? Sherwood.getPlayer().level || 1 : 1}
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-            
-            document.body.insertAdjacentHTML('beforeend', screenHTML);
-        },
-        
-        // ============================================================
-        //  UI ХЭНДЛЕРЫ
-        // ============================================================
-        
-        toggleMusicFromUI: function() {
-            var enabled = this.toggleMusic();
-            
-            // Обновляем музыку в main.js
-            if (typeof window.toggleMusicSetting === 'function') {
-                window.toggleMusicSetting();
+
+            var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
+
+            // Имя
+            h += '<div style="background:rgba(0,0,0,0.5);border-radius:8px;padding:12px;margin-bottom:10px;">';
+            h += '<div style="color:#e0c080;font-weight:bold;margin-bottom:6px;">👤 Имя</div>';
+            h += '<div style="display:flex;gap:8px;">';
+            h += '<input id="settings-name-input" value="' + nm + '" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.9em;">';
+            h += '<button onclick="Settings._changeNameFromUI()" class="btn" style="padding:4px 14px;font-size:0.8em;">Сохранить</button>';
+            h += '</div>';
+            if (nameChanges === 0) {
+                h += '<div style="color:#4caf50;font-size:0.65em;margin-top:4px;">✅ Первая смена имени — бесплатно</div>';
             } else {
-                // Если функция не определена, просто обновляем UI
-                this._renderSettingsUI();
+                h += '<div style="color:#ffd700;font-size:0.65em;margin-top:4px;">💰 Смена имени: 500 золота</div>';
             }
-            
-            this._renderSettingsUI();
+            h += '<div id="settings-name-status" style="color:#aaa;font-size:0.65em;margin-top:4px;"></div>';
+            h += '</div>';
+
+            // Звук и музыка
+            h += '<div style="background:rgba(0,0,0,0.5);border-radius:8px;padding:12px;margin-bottom:10px;">';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+            h += '<span style="color:#e0c080;">🔊 Звуки</span>';
+            h += '<button onclick="Settings._toggleSoundFromUI()" style="width:50px;height:26px;background:' + (soundEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:13px;cursor:pointer;position:relative;">';
+            h += '<span style="position:absolute;top:3px;' + (soundEnabled ? 'right:3px;' : 'left:3px;') + 'width:20px;height:20px;background:#fff;border-radius:50%;transition:0.2s;"></span>';
+            h += '</button>';
+            h += '</div>';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            h += '<span style="color:#e0c080;">🎵 Музыка</span>';
+            h += '<button onclick="Settings._toggleMusicFromUI()" style="width:50px;height:26px;background:' + (musicEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:13px;cursor:pointer;position:relative;">';
+            h += '<span style="position:absolute;top:3px;' + (musicEnabled ? 'right:3px;' : 'left:3px;') + 'width:20px;height:20px;background:#fff;border-radius:50%;transition:0.2s;"></span>';
+            h += '</button>';
+            h += '</div>';
+            h += '</div>';
+
+            // Кнопки
+            h += '<button onclick="Settings._saveProgressFromUI()" class="btn btn-success" style="width:100%;padding:8px;margin-bottom:6px;font-size:0.9em;">💾 Сохранить прогресс</button>';
+            h += '<button onclick="Settings._resetFromUI()" class="btn btn-danger" style="width:100%;padding:8px;font-size:0.9em;">🔄 Сбросить персонажа (5000 золота)</button>';
+            h += '</div>';
+
+            UI._openScreenScrollable('⚙️ Настройки', 'settings', h);
         },
-        
-        toggleSoundFromUI: function() {
+
+        _changeNameFromUI: function() {
+            var inp = document.getElementById('settings-name-input');
+            var st = document.getElementById('settings-name-status');
+            if (!inp || !st) return;
+
+            var nm = inp.value.trim();
+            if (!nm) {
+                st.textContent = '❌ Пустое имя';
+                st.style.color = '#f44336';
+                return;
+            }
+
+            var p = Sherwood.getPlayer();
+            if (!p) return;
+
+            if (!p.nameChanges) p.nameChanges = 0;
+
+            if (p.nameChanges === 0) {
+                p.name = nm;
+                p.nameChanges = 1;
+                Sherwood.saveGame();
+                st.textContent = '✅ Имя изменено бесплатно!';
+                st.style.color = '#4caf50';
+            } else {
+                if ((p.resources.gold || 0) < 500) {
+                    st.textContent = '❌ Нужно 500 золота для смены имени';
+                    st.style.color = '#f44336';
+                    return;
+                }
+                Sherwood.spendResource('gold', 500);
+                p.name = nm;
+                p.nameChanges++;
+                Sherwood.saveGame();
+                st.textContent = '✅ Имя изменено за 500 золота!';
+                st.style.color = '#4caf50';
+            }
+
+            UI.updateDisplay();
+            this.showUI();
+        },
+
+        _toggleSoundFromUI: function() {
             this.toggleSound();
-            this._renderSettingsUI();
+            this.showUI();
         },
-        
-        resetFromUI: function() {
-            if (confirm('⚠️ Точно сбросить весь прогресс? Это действие необратимо!')) {
-                localStorage.removeItem('sherwood_save');
-                localStorage.removeItem('sherwood_settings');
-                localStorage.removeItem('sherwood_dungeon_progress');
-                localStorage.removeItem('sherwood_save_data');
-                location.reload();
+
+        _toggleMusicFromUI: function() {
+            this.toggleMusic();
+            if (typeof UI !== 'undefined') {
+                if (this.isMusicEnabled()) {
+                    UI._playMusic('main_theme');
+                } else {
+                    UI._stopMusic();
+                }
+            }
+            this.showUI();
+        },
+
+        _saveProgressFromUI: function() {
+            if (Sherwood.saveGameNow) {
+                Sherwood.saveGameNow();
+                UI._showToast('💾 Прогресс сохранён!');
+            } else if (Sherwood.saveGame) {
+                Sherwood.saveGame();
+                UI._showToast('💾 Прогресс сохранён!');
             }
         },
-        
-        // ============================================================
-        //  ЗАКРЫТИЕ
-        // ============================================================
-        
-        closeUI: function() {
-            var screen = document.getElementById('settings-screen');
-            if (screen) screen.remove();
-            
-            if (typeof window.showHomeScreen === 'function') {
-                window.showHomeScreen();
+
+        _resetFromUI: function() {
+            var p = Sherwood.getPlayer();
+            if (!p) return;
+
+            if ((p.resources.gold || 0) < 5000) {
+                UI._showToast('❌ Нужно 5000 золота для сброса');
+                return;
+            }
+
+            if (!confirm('⚠️ Сбросить персонажа за 5000 золота? Весь прогресс будет удалён!')) return;
+
+            var remainingGold = (p.resources.gold || 0) - 5000;
+            var remainingSilver = p.resources.silver || 0;
+
+            Sherwood._createNewPlayer();
+            p = Sherwood.getPlayer();
+            p.resources.gold = remainingGold;
+            p.resources.silver = remainingSilver;
+            p.nameChanges = 0;
+
+            Sherwood._recalcStats();
+            Sherwood.saveGameNow();
+
+            UI._showToast('🔄 Персонаж сброшен!');
+            if (typeof UI !== 'undefined' && UI.loadHome) {
+                UI.loadHome();
             }
         }
     };
 }
 
-// ---------- ИНИЦИАЛИЗАЦИЯ ----------
 Settings.init();
 
-// ---------- ЭКСПОРТ В ГЛОБАЛЬНЫЙ ОБЪЕКТ ----------
 window.Settings = Settings;
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Settings = Settings;
