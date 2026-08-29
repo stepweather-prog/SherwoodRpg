@@ -66,7 +66,7 @@
 
 <!-- ========== СКРИПТЫ ========== -->
 
-<!-- 0. СОЗДАЁМ ОБЪЕКТ Sherwood (для всех модулей) -->
+<!-- 0. СОЗДАЁМ ОБЪЕКТ Sherwood -->
 <script>
     if (typeof Sherwood === 'undefined') {
         window.Sherwood = {};
@@ -87,7 +87,10 @@
 <script src="js/sherwood/quests.js"></script>
 <script src="js/sherwood/tavern.js"></script>
 <script src="js/sherwood/dungeon.js"></script>
-<script src="https://unpkg.com"></script>
+
+<!-- THREE.JS для 3D подземки -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <script src="js/sherwood/Dungeon2D5.js"></script>
 <script src="js/sherwood/portal.js"></script>
 <script src="js/sherwood/raid.js"></script>
@@ -100,7 +103,10 @@
 <script src="js/sherwood/hearth.js"></script>
 <script src="js/sherwood/daily.js"></script>
 
-<!-- 5. Главный файл -->
+<!-- 5. UI экраны (ВСТАВЛЯЙ СЮДА!) -->
+<script src="js/sherwood/ui_screens.js"></script>
+
+<!-- 6. Главный файл -->
 <script src="js/sherwood/main.js"></script>
 
 </body>
