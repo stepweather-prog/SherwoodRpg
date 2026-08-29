@@ -30,7 +30,6 @@ Sherwood.Raid = {
         defense: 180,
         exp: 10000,
         gold: 8000,
-        // Требуется пройти все 16 глав
         requiredChapters: 16,
         stages: [{
             name: 'Пробуждение Корней',
@@ -92,7 +91,6 @@ Sherwood.Raid = {
                 isRaidBoss: true
             }]
         }],
-        // Награда за прохождение
         rewards: {
             exp: 15000,
             gold: 10000,
@@ -137,7 +135,6 @@ Sherwood.Raid = {
         this._participants = p.raid.participants || [];
         this._isUnlocked = this._checkUnlock();
         
-        // Восстановление активного рейда
         if (p.raid.activeRaid) {
             this._raidBoss = p.raid.activeRaid;
             this._raidActive = true;
@@ -155,7 +152,6 @@ Sherwood.Raid = {
     // ============================================================
 
     _checkUnlock: function() {
-        // Проверяем, пройдены ли все 16 глав
         if (typeof Sherwood.Tavern !== 'undefined' && Sherwood.Tavern.getCompletedCount) {
             var completed = Sherwood.Tavern.getCompletedCount();
             var required = this.RAID_BOSSES[0].requiredChapters || 16;
@@ -180,27 +176,22 @@ Sherwood.Raid = {
         var p = Sherwood.getPlayer();
         if (!p) return { can: false, reason: 'Игрок не найден' };
         
-        // Проверка открытия
         if (!this._isUnlocked) {
             return { can: false, reason: 'Рейд запечатан. Пройди все 16 глав.' };
         }
         
-        // Проверка лимита на день
         if ((p.raid.raidsToday || 0) >= this._maxRaidsPerDay) {
             return { can: false, reason: 'Лимит рейдов на сегодня (3/3)' };
         }
         
-        // Проверка активного рейда
         if (this._raidActive) {
             return { can: false, reason: 'Рейд уже идёт' };
         }
         
-        // Проверка HP игрока
         if (!p.stats || p.stats.hp <= 0) {
             return { can: false, reason: 'Игрок мёртв' };
         }
         
-        // Проверка, не пройден ли уже рейд
         if (p.raid.completed) {
             return { can: false, reason: 'Рейд уже пройден. Жди обновления.' };
         }
@@ -321,7 +312,6 @@ Sherwood.Raid = {
         var p = Sherwood.getPlayer();
         if (!p) return { error: 'Игрок не найден' };
 
-        // Урон игрока
         var dmg = Math.max(1, Math.floor((p.stats.attack * p.stats.attack) / (p.stats.attack + (enemy.defense || 10))));
         var crit = Math.random() * 100 < 15;
         if (crit) dmg = Math.floor(dmg * 1.8);
@@ -343,7 +333,6 @@ Sherwood.Raid = {
             enemyDead: enemy.hp <= 0
         };
 
-        // Проверка смерти врага
         if (enemy.hp <= 0) {
             var stage = this._raidBoss.stages[this._currentStage];
             var allDead = stage.enemies.every(function(e) { return e.hp <= 0; });
@@ -364,7 +353,6 @@ Sherwood.Raid = {
             return result;
         }
 
-        // Атака врага
         var edmg = Math.max(1, Math.floor((enemy.attack * enemy.attack) / (enemy.attack + p.stats.defense)));
         var armorReduction = Math.min(p.stats.defense * 0.2, edmg * 0.3);
         edmg = Math.max(1, edmg - armorReduction);
@@ -401,23 +389,19 @@ Sherwood.Raid = {
         var aliveCount = this._playerAlive ? 1 : 0;
         var p = Sherwood.getPlayer();
 
-        // Награда только если выжил
         if (this._playerAlive) {
             Sherwood.addExp(totalExp);
             Sherwood.addResource('gold', totalGold);
             Sherwood.addResource('silver', totalSilver);
             
-            // Отмечаем рейд как пройденный
             if (p && p.raid) {
                 p.raid.completed = true;
             }
             
-            // Узы Вечности — перманентный бонус
             if (!p.eternityBonds) p.eternityBonds = { count: 0, bonus: 0 };
             p.eternityBonds.count++;
             p.eternityBonds.bonus = p.eternityBonds.count * 5;
             
-            // Трофей
             if (rewards.trophy && typeof Sherwood.addTrophy === 'function') {
                 Sherwood.addTrophy(
                     rewards.trophy.id,
@@ -507,10 +491,6 @@ Sherwood.Raid = {
     // ============================================================
 
     showUI: function() {
-        if (typeof window.showRaidScreen === 'function') {
-            window.showRaidScreen();
-            return;
-        }
         this._renderRaidUI();
     },
 
@@ -575,7 +555,6 @@ Sherwood.Raid = {
             return this._renderActiveRaid(status);
         }
         
-        // Рейд доступен, но не активен
         return `
         <div style="background:rgba(255,255,255,0.05);padding:20px;border-radius:8px;border:2px solid #ff6b35;margin-bottom:15px;">
             <div style="text-align:center;">
@@ -688,7 +667,6 @@ Sherwood.Raid = {
             log.scrollTop = log.scrollHeight;
         }
         
-        // Обновляем UI
         setTimeout(function() {
             this._renderRaidUI();
             if (result.raidComplete && result.won) {
@@ -708,11 +686,16 @@ Sherwood.Raid = {
         }
     },
 
+    // ============================================================
+    //  closeUI — ВОЗВРАТ НА ГЛАВНУЮ
+    // ============================================================
     closeUI: function() {
         var screen = document.getElementById('raid-screen');
         if (screen) screen.remove();
-        if (typeof Menu !== 'undefined' && Menu.show) {
-            Menu.show();
+        
+        // === ИСПРАВЛЕНИЕ: вместо Menu.show() ===
+        if (typeof window.showHomeScreen === 'function') {
+            window.showHomeScreen();
         }
     }
 };
