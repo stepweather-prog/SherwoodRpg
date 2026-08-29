@@ -637,10 +637,6 @@ Sherwood.Bestiary = {
     // ============================================================
 
     showUI: function() {
-        if (typeof window.showBestiaryScreen === 'function') {
-            window.showBestiaryScreen();
-            return;
-        }
         this._renderBestiaryUI();
     },
 
@@ -735,7 +731,6 @@ Sherwood.Bestiary = {
             return true;
         }, this);
         
-        // Сортируем: сначала непойманные, потом пойманные
         filtered.sort(function(a, b) {
             var aDiscovered = a.kills > 0 ? 1 : 0;
             var bDiscovered = b.kills > 0 ? 1 : 0;
@@ -791,11 +786,16 @@ Sherwood.Bestiary = {
         }
     },
 
+    // ============================================================
+    //  closeUI — ВОЗВРАТ НА ГЛАВНУЮ
+    // ============================================================
     closeUI: function() {
         var screen = document.getElementById('bestiary-screen');
         if (screen) screen.remove();
-        if (typeof Menu !== 'undefined' && Menu.show) {
-            Menu.show();
+        
+        // === ИСПРАВЛЕНИЕ: вместо Menu.show() ===
+        if (typeof window.showHomeScreen === 'function') {
+            window.showHomeScreen();
         }
     }
 };
