@@ -1,7 +1,13 @@
+/**
+ * Sherwood Dungeon — Генерация подземелий
+ * Исправленная версия с единым сохранением через Sherwood
+ */
+
+if (typeof Sherwood === 'undefined') { var Sherwood = {}; }
+
 Sherwood.Dungeon = {
     TILE: { WALL: 0, EMPTY: 1, MONSTER: 2, CHEST: 3, BOSS: 4, SPAWN: 5, EXIT: 6, ALTAR: 7, CAULDRON: 8, POTION: 9 },
     _dungeon: null,
-    _progress: null,
     _ticketTimer: null,
     _autoFightTimer: null,
     _autoFightActive: false,
@@ -9,62 +15,79 @@ Sherwood.Dungeon = {
     _autoFightDungeonId: null,
     _autoFightLevel: 0,
 
+    // ============================================================
+    //  ДАННЫЕ МОНСТРОВ
+    // ============================================================
+
     BEASTS: {
-    forest: {
-        1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png', stats: { atk: 3500, def: 2500, hp: 6000 } },
-        2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png', stats: { atk: 4200, def: 3200, hp: 10000 } },
-        3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png', stats: { atk: 5000, def: 4000, hp: 15000 } },
-        4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png','bog_brute.png'], boss: null, stats: { atk: 6000, def: 5000, hp: 22000 } },
-        5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png', stats: { atk: 7000, def: 6000, hp: 30000 } },
-        6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png', stats: { atk: 8000, def: 7000, hp: 40000 } }
+        forest: {
+            1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png', stats: { atk: 3500, def: 2500, hp: 6000 } },
+            2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png', stats: { atk: 4200, def: 3200, hp: 10000 } },
+            3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png', stats: { atk: 5000, def: 4000, hp: 15000 } },
+            4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png','bog_brute.png'], boss: null, stats: { atk: 6000, def: 5000, hp: 22000 } },
+            5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png', stats: { atk: 7000, def: 6000, hp: 30000 } },
+            6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png', stats: { atk: 8000, def: 7000, hp: 40000 } }
+        },
+        swamp: {
+            1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png', stats: { atk: 8500, def: 7000, hp: 50000 } },
+            2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png', stats: { atk: 9500, def: 8000, hp: 70000 } },
+            3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png', stats: { atk: 10500, def: 9000, hp: 95000 } },
+            4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png', stats: { atk: 11500, def: 10000, hp: 125000 } },
+            5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png', stats: { atk: 12500, def: 11000, hp: 160000 } },
+            6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png', stats: { atk: 13500, def: 12000, hp: 200000 } }
+        },
+        cave: {
+            1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png', stats: { atk: 15000, def: 13000, hp: 150000 } },
+            2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png', stats: { atk: 17000, def: 15000, hp: 250000 } },
+            3: { normal: ['root_daughter.png','bone_arachnid.png','necromantic_arachnid.png','animated_yew.png','rusty_servant.png'], boss: 'mistress_of_the_roots.png', stats: { atk: 19000, def: 17000, hp: 400000 } },
+            4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png', stats: { atk: 21000, def: 19000, hp: 600000 } },
+            5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_chieftain.png','harpy_witch.png','harpy_hatchling.png'], boss: 'lord_of_the_feathered.png', stats: { atk: 23000, def: 21000, hp: 850000 } },
+            6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underworld_guardian.png','blind_render.png'], boss: 'corruption_raccoon.png', stats: { atk: 25000, def: 23000, hp: 1200000 } }
+        }
     },
-    swamp: {
-        1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png', stats: { atk: 8500, def: 7000, hp: 50000 } },
-        2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png', stats: { atk: 9500, def: 8000, hp: 70000 } },
-        3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png', stats: { atk: 10500, def: 9000, hp: 95000 } },
-        4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png', stats: { atk: 11500, def: 10000, hp: 125000 } },
-        5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png', stats: { atk: 12500, def: 11000, hp: 160000 } },
-        6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png', stats: { atk: 13500, def: 12000, hp: 200000 } }
-    },
-    cave: {
-        1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png', stats: { atk: 15000, def: 13000, hp: 150000 } },
-        2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png', stats: { atk: 17000, def: 15000, hp: 250000 } },
-        3: { normal: ['root_daughter.png','bone_arachnid.png','necromantic_arachnid.png','animated_yew.png','rusty_servant.png'], boss: 'mistress_of_the_roots.png', stats: { atk: 19000, def: 17000, hp: 400000 } },
-        4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png', stats: { atk: 21000, def: 19000, hp: 600000 } },
-        5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_chieftain.png','harpy_witch.png','harpy_hatchling.png'], boss: 'lord_of_the_feathered.png', stats: { atk: 23000, def: 21000, hp: 850000 } },
-        6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underworld_guardian.png','blind_render.png'], boss: 'corruption_raccoon.png', stats: { atk: 25000, def: 23000, hp: 1200000 } }
-    }
-},
+
+    // ============================================================
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
 
     init: function() {
-        var saved = localStorage.getItem('sherwood_dungeon_progress');
-        if (saved) {
-            this._progress = JSON.parse(saved);
-        } else {
-            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+
+        // Инициализируем прогресс подземки
+        if (!p.dungeonProgress) {
+            p.dungeonProgress = {
+                forest: { level: 1, cups: {} },
+                swamp: { level: 1, cups: {} },
+                cave: { level: 1, cups: {} }
+            };
         }
 
-        for (var id in this._progress) {
-            if (!this._progress[id].cups) this._progress[id].cups = {};
-            for (var lvl in this._progress[id].cups) {
-                if (typeof this._progress[id].cups[lvl] === 'number') {
-                    var count = this._progress[id].cups[lvl];
-                    this._progress[id].cups[lvl] = { count: count, rewardsClaimed: [false, false, false] };
+        // Нормализуем структуру cups
+        for (var id in p.dungeonProgress) {
+            if (!p.dungeonProgress[id].cups) p.dungeonProgress[id].cups = {};
+            for (var lvl in p.dungeonProgress[id].cups) {
+                if (typeof p.dungeonProgress[id].cups[lvl] === 'number') {
+                    var count = p.dungeonProgress[id].cups[lvl];
+                    p.dungeonProgress[id].cups[lvl] = { count: count, rewardsClaimed: [false, false, false] };
                 }
             }
         }
 
-        var p = Sherwood.getPlayer();
-        if (p && p.dungeon) {
-            if (!p.dungeon.maxTickets) p.dungeon.maxTickets = 20;
-            if (!p.dungeon.ticketTimer) p.dungeon.ticketTimer = 3600;
+        // Инициализируем билеты
+        if (!p.dungeon) {
+            p.dungeon = { tickets: 15, maxTickets: 20, ticketTimer: 3600 };
         }
+        if (!p.dungeon.maxTickets) p.dungeon.maxTickets = 20;
+        if (!p.dungeon.ticketTimer) p.dungeon.ticketTimer = 3600;
+
+        Sherwood.saveGame();
 
         this._startTicketRegeneration();
 
-        var p2 = Sherwood.getPlayer();
-        if (p2 && p2.dungeon && p2.dungeon.autoFight) {
-            var af = p2.dungeon.autoFight;
+        // Восстанавливаем автобой
+        if (p.dungeon && p.dungeon.autoFight) {
+            var af = p.dungeon.autoFight;
             if (af.active && af.endTime > Date.now()) {
                 this._autoFightActive = true;
                 this._autoFightEndTime = af.endTime;
@@ -75,7 +98,13 @@ Sherwood.Dungeon = {
                 this._completeAutoFight(af.dungeonId, af.level);
             }
         }
+
+        console.log('🏚️ Dungeon инициализирован');
     },
+
+    // ============================================================
+    //  БИЛЕТЫ
+    // ============================================================
 
     _startTicketRegeneration: function() {
         var self = this;
@@ -96,61 +125,46 @@ Sherwood.Dungeon = {
         }, 1000);
     },
 
-    _startAutoFightTimer: function() {
-        var self = this;
-        if (this._autoFightTimer) clearInterval(this._autoFightTimer);
-        this._autoFightTimer = setInterval(function() {
-            if (self._autoFightActive && Date.now() >= self._autoFightEndTime) {
-                self._completeAutoFight(self._autoFightDungeonId, self._autoFightLevel);
-            }
-        }, 1000);
+    getTickets: function() {
+        var p = Sherwood.getPlayer();
+        if (!p || !p.dungeon) return 0;
+        return p.dungeon.tickets || 0;
     },
 
-    _completeAutoFight: function(dungeonId, level) {
-        this._autoFightActive = false;
-        this._autoFightEndTime = 0;
-        if (this._autoFightTimer) clearInterval(this._autoFightTimer);
-
+    getMaxTickets: function() {
         var p = Sherwood.getPlayer();
-        if (p && p.dungeon) {
-            p.dungeon.autoFight = { active: false, endTime: 0, dungeonId: null, level: 0 };
+        if (!p || !p.dungeon) return 20;
+        return p.dungeon.maxTickets || 20;
+    },
+
+    // ============================================================
+    //  ПРОГРЕСС
+    // ============================================================
+
+    _getProgress: function() {
+        var p = Sherwood.getPlayer();
+        if (!p) return null;
+        if (!p.dungeonProgress) {
+            p.dungeonProgress = {
+                forest: { level: 1, cups: {} },
+                swamp: { level: 1, cups: {} },
+                cave: { level: 1, cups: {} }
+            };
             Sherwood.saveGame();
         }
+        return p.dungeonProgress;
+    },
 
-        if (!this._progress) this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
-        var cupIndex = this._getCurrentCupIndex(dungeonId, level);
-
-        var gold = 0, silver = 0, exp = 0;
-
-        if (cupIndex < 3) {
-            var reward = this._getCupReward(dungeonId, level, cupIndex);
-            gold = reward.gold;
-            silver = reward.silver;
-            exp = reward.exp;
-            Sherwood.addResource('gold', gold);
-            Sherwood.addResource('silver', silver);
-            Sherwood.addExp(exp);
-            this._addCup(dungeonId, level);
-        } else {
-            gold = 1 + Math.floor(Math.random() * 3);
-            silver = 20 + Math.floor(Math.random() * 50);
-            exp = 50 + Math.floor(Math.random() * 50);
-            Sherwood.addResource('gold', gold);
-            Sherwood.addResource('silver', silver);
-            Sherwood.addExp(exp);
-        }
-
-        Sherwood.dispatch({
-            type: 'AUTO_FIGHT_COMPLETE',
-            payload: { dungeonId: dungeonId, level: level, rewards: { gold: gold, silver: silver, exp: exp } }
-        });
+    _saveProgress: function() {
+        Sherwood.saveGame();
     },
 
     _getCurrentCupIndex: function(dungeonId, level) {
-        if (!this._progress) return 0;
-        if (!this._progress[dungeonId]) return 0;
-        if (!this._progress[dungeonId].cups) return 0;
-        var cupData = this._progress[dungeonId].cups[level];
+        var progress = this._getProgress();
+        if (!progress) return 0;
+        if (!progress[dungeonId]) return 0;
+        if (!progress[dungeonId].cups) return 0;
+        var cupData = progress[dungeonId].cups[level];
         if (!cupData) return 0;
         return Math.min(cupData.count || 0, 2);
     },
@@ -187,27 +201,35 @@ Sherwood.Dungeon = {
     },
 
     _addCup: function(dungeonId, level) {
-        if (!this._progress) {
-            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
+        var progress = this._getProgress();
+        if (!progress) return;
+
+        if (!progress[dungeonId]) {
+            progress[dungeonId] = { level: 1, cups: {} };
         }
-        if (!this._progress[dungeonId]) this._progress[dungeonId] = { level: 1, cups: {} };
-        if (!this._progress[dungeonId].cups) this._progress[dungeonId].cups = {};
-        if (!this._progress[dungeonId].cups[level]) {
-            this._progress[dungeonId].cups[level] = { count: 0, rewardsClaimed: [false, false, false] };
+        if (!progress[dungeonId].cups) {
+            progress[dungeonId].cups = {};
+        }
+        if (!progress[dungeonId].cups[level]) {
+            progress[dungeonId].cups[level] = { count: 0, rewardsClaimed: [false, false, false] };
         }
 
-        var cupData = this._progress[dungeonId].cups[level];
+        var cupData = progress[dungeonId].cups[level];
         if (cupData.count < 3) {
             cupData.count++;
             cupData.rewardsClaimed[cupData.count - 1] = true;
-            localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
+            this._saveProgress();
         }
     },
 
+    // ============================================================
+    //  ДОСТУПНЫЕ ПОДЗЕМКИ
+    // ============================================================
+
     getAvailable: function() {
-        if (!this._progress) {
-            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
-        }
+        var progress = this._getProgress();
+        if (!progress) return {};
+
         var list = {};
         var duns = {
             forest: { name: 'Проклятая чаща', bg: 'assets/backgrounds/underground_1_floor_1.jpg', tiles: 'dungeon1', ext: '.jpeg', requiredDungeon: null, requiredCups: 0 },
@@ -217,11 +239,11 @@ Sherwood.Dungeon = {
 
         for (var id in duns) {
             var dd = duns[id];
-            var prog = this._progress[id] || { level: 1, cups: {} };
+            var prog = progress[id] || { level: 1, cups: {} };
             var isUnlocked = true;
 
             if (dd.requiredDungeon) {
-                var reqProg = this._progress[dd.requiredDungeon] || { level: 1, cups: {} };
+                var reqProg = progress[dd.requiredDungeon] || { level: 1, cups: {} };
                 var lastLevel = reqProg.level > 1 ? reqProg.level - 1 : 1;
                 var lastCups = reqProg.cups[lastLevel] ? (reqProg.cups[lastLevel].count || 0) : 0;
                 if (lastLevel < 6 || lastCups < dd.requiredCups) {
@@ -248,10 +270,14 @@ Sherwood.Dungeon = {
         return this._dungeon;
     },
 
+    // ============================================================
+    //  ГЕНЕРАЦИЯ ПОДЗЕМКИ
+    // ============================================================
+
     generate: function(dungeonId, level) {
         var p = Sherwood.getPlayer();
         if (!p) return null;
-        
+
         // Проверяем билеты в сумке
         var bagTickets = 0;
         try {
@@ -259,11 +285,13 @@ Sherwood.Dungeon = {
         } catch(e) {
             bagTickets = 0;
         }
-        
+
         var dungeonTickets = (p.dungeon && p.dungeon.tickets) ? p.dungeon.tickets : 0;
-        
-        if (bagTickets <= 0 && dungeonTickets <= 0) return null;
-        
+
+        if (bagTickets <= 0 && dungeonTickets <= 0) {
+            return null;
+        }
+
         // Списываем билет
         if (bagTickets > 0) {
             try {
@@ -278,7 +306,7 @@ Sherwood.Dungeon = {
         } else {
             p.dungeon.tickets--;
         }
-        
+
         Sherwood.saveGame();
 
         var size = 14;
@@ -294,7 +322,7 @@ Sherwood.Dungeon = {
 
         function carve(x, y) {
             grid[y][x].type = self.TILE.EMPTY;
-            
+
             var dirs = [[0,-2],[0,2],[-2,0],[2,0]];
             for (var i = dirs.length - 1; i > 0; i--) {
                 var j = Math.floor(Math.random() * (i + 1));
@@ -302,11 +330,11 @@ Sherwood.Dungeon = {
                 dirs[i] = dirs[j];
                 dirs[j] = temp;
             }
-            
+
             for (var i = 0; i < dirs.length; i++) {
                 var nx = x + dirs[i][0];
                 var ny = y + dirs[i][1];
-                
+
                 if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && grid[ny][nx].type === self.TILE.WALL) {
                     grid[ny][nx].type = self.TILE.EMPTY;
                     grid[y + dirs[i][1]/2][x + dirs[i][0]/2].type = self.TILE.EMPTY;
@@ -384,34 +412,36 @@ Sherwood.Dungeon = {
                 placedMonsters++;
             }
         }
-// Размещаем босса этажа
-if (bossImage) {
-    var farthestCell = null;
-    var maxDist = 0;
-    
-    for (var bi = 0; bi < empties.length; bi++) {
-        var bCell = empties[bi];
-        if (bCell.used) continue;
-        var bDist = Math.abs(bCell.x - spawnX) + Math.abs(bCell.y - spawnY);
-        if (bDist > maxDist) {
-            maxDist = bDist;
-            farthestCell = bCell;
+
+        // Босс этажа
+        if (bossImage) {
+            var farthestCell = null;
+            var maxDist = 0;
+
+            for (var bi = 0; bi < empties.length; bi++) {
+                var bCell = empties[bi];
+                if (bCell.used) continue;
+                var bDist = Math.abs(bCell.x - spawnX) + Math.abs(bCell.y - spawnY);
+                if (bDist > maxDist) {
+                    maxDist = bDist;
+                    farthestCell = bCell;
+                }
+            }
+
+            if (farthestCell) {
+                grid[farthestCell.y][farthestCell.x].type = self.TILE.BOSS;
+                grid[farthestCell.y][farthestCell.x].monster = true;
+                grid[farthestCell.y][farthestCell.x].monsterId = bossImage;
+                grid[farthestCell.y][farthestCell.x].isBoss = true;
+                grid[farthestCell.y][farthestCell.x].monsterStats = {
+                    atk: monsterStats.atk * 1.5,
+                    def: monsterStats.def * 1.5,
+                    hp: monsterStats.hp * 2
+                };
+                farthestCell.used = true;
+            }
         }
-    }
-    
-    if (farthestCell) {
-        grid[farthestCell.y][farthestCell.x].type = self.TILE.BOSS;
-        grid[farthestCell.y][farthestCell.x].monster = true;
-        grid[farthestCell.y][farthestCell.x].monsterId = bossImage;
-        grid[farthestCell.y][farthestCell.x].isBoss = true;
-        grid[farthestCell.y][farthestCell.x].monsterStats = {
-            atk: monsterStats.atk * 1.5,
-            def: monsterStats.def * 1.5,
-            hp: monsterStats.hp * 2
-        };
-        farthestCell.used = true;
-    }
-}
+
         var specials = [
             { type: self.TILE.POTION, count: difficulty.potionCount, prop: 'potion' },
             { type: self.TILE.CAULDRON, count: difficulty.cauldronCount, prop: 'cauldron' },
@@ -432,6 +462,7 @@ if (bossImage) {
             }
         }
 
+        // Выход
         var exitCell = null;
         var maxDist = 0;
         for (var i = 0; i < empties.length; i++) {
@@ -471,6 +502,10 @@ if (bossImage) {
 
         return this._dungeon;
     },
+
+    // ============================================================
+    //  ДВИЖЕНИЕ И ВЗАИМОДЕЙСТВИЕ
+    // ============================================================
 
     move: function(tx, ty) {
         var d = this._dungeon;
@@ -534,7 +569,7 @@ if (bossImage) {
 
         if (cell && cell.monster) {
             var wasBoss = cell.isBoss;
-            
+
             cell.monster = false;
             cell.monsterId = null;
             cell.isBoss = false;
@@ -550,7 +585,6 @@ if (bossImage) {
             }
         }
 
-        // Обновляем прогресс ежедневного задания
         if (typeof Sherwood.Daily !== 'undefined') {
             Sherwood.Daily.updateProgress('dungeon_kills', 1);
         }
@@ -564,15 +598,28 @@ if (bossImage) {
         }
     },
 
+    // ============================================================
+    //  ЗАВЕРШЕНИЕ ПОДЗЕМКИ
+    // ============================================================
+
     complete: function() {
         var d = this._dungeon;
         if (!d) return { gold: 0, exp: 0 };
-        if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
-        if (!this._progress) {
-            this._progress = { forest: { level: 1, cups: {} }, swamp: { level: 1, cups: {} }, cave: { level: 1, cups: {} } };
+
+        if (typeof Sherwood.Daily !== 'undefined') {
+            Sherwood.Daily.updateProgress('dungeon_floors', 1);
         }
-        if (!this._progress[d.id]) this._progress[d.id] = { level: 1, cups: {} };
-        if (!this._progress[d.id].cups) this._progress[d.id].cups = {};
+
+        var progress = this._getProgress();
+        if (!progress) {
+            progress = {
+                forest: { level: 1, cups: {} },
+                swamp: { level: 1, cups: {} },
+                cave: { level: 1, cups: {} }
+            };
+        }
+        if (!progress[d.id]) progress[d.id] = { level: 1, cups: {} };
+        if (!progress[d.id].cups) progress[d.id].cups = {};
 
         var cupIndex = this._getCurrentCupIndex(d.id, d.level);
 
@@ -586,15 +633,17 @@ if (bossImage) {
 
             var items = d.collectedLoot ? d.collectedLoot.slice() : [];
 
-            var prog = this._progress[d.id];
+            var prog = progress[d.id];
             var cups = prog.cups[d.level] ? (prog.cups[d.level].count || 0) : 0;
 
             if (cups >= 3 && d.level >= prog.level) {
                 prog.level = Math.min(7, d.level + 1);
-                localStorage.setItem('sherwood_dungeon_progress', JSON.stringify(this._progress));
+                this._saveProgress();
             }
 
-            if (typeof Sherwood.Daily !== 'undefined') Sherwood.Daily.updateProgress('dungeon_floors', 1);
+            if (typeof Sherwood.Daily !== 'undefined') {
+                Sherwood.Daily.updateProgress('dungeon_floors', 1);
+            }
 
             var dungeonId = d.id;
             var dungeonLevel = d.level;
@@ -639,6 +688,10 @@ if (bossImage) {
         this._dungeon = null;
     },
 
+    // ============================================================
+    //  АВТОБОЙ
+    // ============================================================
+
     isAutoFightActive: function() {
         return this._autoFightActive;
     },
@@ -648,12 +701,77 @@ if (bossImage) {
         return Math.max(0, Math.ceil((this._autoFightEndTime - Date.now()) / 1000 / 60));
     },
 
+    _startAutoFightTimer: function() {
+        var self = this;
+        if (this._autoFightTimer) clearInterval(this._autoFightTimer);
+        this._autoFightTimer = setInterval(function() {
+            if (self._autoFightActive && Date.now() >= self._autoFightEndTime) {
+                self._completeAutoFight(self._autoFightDungeonId, self._autoFightLevel);
+            }
+        }, 1000);
+    },
+
+    _completeAutoFight: function(dungeonId, level) {
+        this._autoFightActive = false;
+        this._autoFightEndTime = 0;
+        if (this._autoFightTimer) clearInterval(this._autoFightTimer);
+
+        var p = Sherwood.getPlayer();
+        if (p && p.dungeon) {
+            p.dungeon.autoFight = { active: false, endTime: 0, dungeonId: null, level: 0 };
+            Sherwood.saveGame();
+        }
+
+        if (!this._getProgress()) {
+            this._progress = {
+                forest: { level: 1, cups: {} },
+                swamp: { level: 1, cups: {} },
+                cave: { level: 1, cups: {} }
+            };
+        }
+
+        var cupIndex = this._getCurrentCupIndex(dungeonId, level);
+        var gold = 0, silver = 0, exp = 0;
+
+        if (cupIndex < 3) {
+            var reward = this._getCupReward(dungeonId, level, cupIndex);
+            gold = reward.gold;
+            silver = reward.silver;
+            exp = reward.exp;
+            Sherwood.addResource('gold', gold);
+            Sherwood.addResource('silver', silver);
+            Sherwood.addExp(exp);
+            this._addCup(dungeonId, level);
+        } else {
+            gold = 1 + Math.floor(Math.random() * 3);
+            silver = 20 + Math.floor(Math.random() * 50);
+            exp = 50 + Math.floor(Math.random() * 50);
+            Sherwood.addResource('gold', gold);
+            Sherwood.addResource('silver', silver);
+            Sherwood.addExp(exp);
+        }
+
+        Sherwood.dispatch({
+            type: 'AUTO_FIGHT_COMPLETE',
+            payload: {
+                dungeonId: dungeonId,
+                level: level,
+                rewards: { gold: gold, silver: silver, exp: exp }
+            }
+        });
+    },
+
     startAutoFight: function(dungeonId, level, instant) {
         var p = Sherwood.getPlayer();
         if (!p) return { success: false, reason: 'Игрок не найден' };
 
         if (instant) {
-            var tickets = Sherwood.Bag.getResource('autoFightTickets');
+            var tickets = 0;
+            try {
+                tickets = Sherwood.Bag.getResource('autoFightTickets') || 0;
+            } catch(e) {
+                tickets = 0;
+            }
             if (tickets <= 0) return { success: false, reason: 'Нет тикетов автобоя' };
             Sherwood.Bag.spendResource('autoFightTickets', 1);
             this._completeAutoFight(dungeonId, level);
@@ -677,3 +795,9 @@ if (bossImage) {
         }
     }
 };
+
+// ---------- ЭКСПОРТ ----------
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.Dungeon = Sherwood.Dungeon;
+
+console.log('🏚️ Dungeon загружен!');
