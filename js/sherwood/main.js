@@ -1,5 +1,5 @@
 // ============================================================
-//  js/main.js — ПОЛНАЯ ВЕРСИЯ
+//  js/main.js — ЧИСТОВАЯ ВЕРСИЯ (ТОЛЬКО НАВИГАЦИЯ)
 // ============================================================
 
 // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
@@ -37,10 +37,6 @@ const PlayerStats = {
 // ---------- МУЗЫКА ----------
 const musicPlaylist = [
     'assets/assets2/music/city_theme1.ogg',
-    'assets/assets2/music/city_theme2.ogg',
-    'assets/assets2/music/city_theme3.ogg',
-    'assets/assets2/music/city_theme4.ogg',
-    'assets/assets2/music/city_theme5.ogg',
     'assets/assets2/music/main_theme_6.ogg'
 ];
 let currentMusicIndex = 0;
@@ -183,108 +179,25 @@ function prevSection() {
 function enterSection() {
     const section = sections[currentSectionIndex];
     if (!section) return;
-    closeAllScreens();
     console.log(`🚪 Вход в раздел: ${section.name}`);
 
+    // ВСЕ ЭКРАНЫ ВЫНЕСЕНЫ В ui_screens.js
     switch(section.name) {
-        case 'Подземка':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon2D5) {
-                if (typeof Sherwood.Dungeon2D5.render === 'function') {
-                    stopMainMusic();
-                    Sherwood.Dungeon2D5.render();
-                    return;
-                }
-            }
-            showGenericScreen('Подземка', '🏚️');
-            break;
-
-        case 'Квесты':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Quests) {
-                if (typeof Sherwood.Quests.showUI === 'function') {
-                    Sherwood.Quests.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Квесты', '📋');
-            break;
-
-        case 'Таверна':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Tavern) {
-                if (typeof Sherwood.Tavern.showUI === 'function') {
-                    Sherwood.Tavern.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Таверна', '🍺');
-            break;
-
-        case 'Порталы':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Portal) {
-                if (typeof Sherwood.Portal.showUI === 'function') {
-                    Sherwood.Portal.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Порталы', '🌀');
-            break;
-
-        case 'Рейд':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Raid) {
-                if (typeof Sherwood.Raid.showUI === 'function') {
-                    Sherwood.Raid.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Рейд', '⚔️');
-            break;
-
-        case 'Бестиарий':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Bestiary) {
-                if (typeof Sherwood.Bestiary.showUI === 'function') {
-                    Sherwood.Bestiary.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Бестиарий', '📖');
-            break;
-
-        case 'Кузница':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Forge) {
-                if (typeof Sherwood.Forge.showUI === 'function') {
-                    Sherwood.Forge.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Кузница', '🔧');
-            break;
-
-        case 'Рынок':
-            if (typeof Sherwood !== 'undefined' && Sherwood.BlackMarket) {
-                if (typeof Sherwood.BlackMarket.showUI === 'function') {
-                    Sherwood.BlackMarket.showUI();
-                    return;
-                }
-            }
-            showGenericScreen('Рынок', '🏪');
-            break;
-
-        case 'Профиль':
-            showProfileScreen();
-            break;
-
-        case 'Настройки':
-            showSettingsScreen();
-            break;
-
-        default:
-            showGenericScreen(section.name, '📌');
+        case 'Подземка':   showDungeonScreen(); break;
+        case 'Квесты':     showQuestsScreen(); break;
+        case 'Таверна':    showTavernScreen(); break;
+        case 'Порталы':    showPortalsScreen(); break;
+        case 'Рейд':       showRaidScreen(); break;
+        case 'Бестиарий':  showBestiaryScreen(); break;
+        case 'Кузница':    showForgeScreen(); break;
+        case 'Рынок':      showMarketScreen(); break;
+        case 'Профиль':    showProfileScreen(); break;
+        case 'Настройки':  showSettingsScreen(); break;
+        default:           showGenericScreen(section.name, '📌');
     }
 }
 
-// ============================================================
-//  ВОЗВРАТ НА ГЛАВНУЮ
-// ============================================================
-
+// ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
 function showHomeScreen() {
     closeAllScreens();
     homeScreen.style.display = 'flex';
@@ -311,255 +224,7 @@ function closeAllScreens() {
     });
 }
 
-// ---------- УНИВЕРСАЛЬНЫЙ ЭКРАН ----------
-function showGenericScreen(title, icon) {
-    closeAllScreens();
-    const screenHTML = `
-    <div id="generic-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
-            <button onclick="closeGenericScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-            </button>
-            <span style="color:#e0c080;font-size:1.2em;">${title}</span>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;padding:20px;">
-            <div style="font-size:64px;margin-bottom:20px;">${icon}</div>
-            <div style="font-size:24px;color:#ffa500;">${title}</div>
-            <div style="color:#888;font-size:14px;margin-top:10px;">В разработке</div>
-            <button onclick="closeGenericScreen()" class="btn" style="margin-top:20px;padding:10px 30px;">Назад</button>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', screenHTML);
-}
-
-function closeGenericScreen() {
-    const screen = document.getElementById('generic-screen');
-    if (screen) screen.remove();
-}
-
-// ============================================================
-//  ПРОФИЛЬ С ТАЛАНТАМИ
-// ============================================================
-
-function showProfileScreen() {
-    closeAllScreens();
-    
-    const allTalents = typeof Talents !== 'undefined' ? Talents.list : [];
-    const learned = typeof Talents !== 'undefined' ? Talents.getLearned() : {};
-    const player = PlayerStats;
-    const learnedCount = Object.keys(learned).filter(id => learned[id] && learned[id].level > 0).length;
-
-    const screenHTML = `
-    <div id="profile-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/profile_visual.png') center/cover no-repeat;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);">
-            <button onclick="closeProfileScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-            </button>
-            <span style="color:#e0c080;font-size:1.2em;">👤 Профиль</span>
-            <span style="color:#888;font-size:12px;margin-left:auto;">⭐ Талантов: ${learnedCount}</span>
-        </div>
-        <div style="flex:1;overflow-y:auto;padding:20px;color:#fff;font-family:monospace;">
-            <div style="max-width:800px;margin:0 auto;">
-                <!-- Статистика -->
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
-                    <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;text-align:center;">
-                        <div style="color:#ff6b6b;font-size:12px;">❤️ HP</div>
-                        <div style="font-size:18px;font-weight:bold;">${player.hp}/${player.maxHp}</div>
-                    </div>
-                    <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;text-align:center;">
-                        <div style="color:#4ecdc4;font-size:12px;">⚔️ Атака</div>
-                        <div style="font-size:18px;font-weight:bold;">${player.damage}</div>
-                    </div>
-                    <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;text-align:center;">
-                        <div style="color:#a8d8ea;font-size:12px;">🛡️ Защита</div>
-                        <div style="font-size:18px;font-weight:bold;">${player.armor}</div>
-                    </div>
-                    <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;text-align:center;">
-                        <div style="color:#ffd700;font-size:12px;">📊 Уровень</div>
-                        <div style="font-size:18px;font-weight:bold;">${player.level}</div>
-                    </div>
-                </div>
-
-                <!-- Скрижаль опыта -->
-                <div style="background:rgba(255,215,0,0.05);border:1px solid #ffd700;border-radius:8px;padding:12px;margin-bottom:20px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <img src="assets/assets2/icons/tablet_of_experience.png" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none'">
-                        <div style="flex:1;">
-                            <div style="color:#ffd700;font-weight:bold;">📜 Скрижаль опыта</div>
-                            <div style="color:#aaa;font-size:12px;">
-                                Очков опыта: <span style="color:#ffd700;font-weight:bold;">${player.skillPoints || 0}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Таланты -->
-                <div style="color:#ffa500;font-weight:bold;font-size:16px;margin-bottom:10px;">⭐ Изученные таланты</div>
-                ${learnedCount === 0 ? `
-                    <div style="text-align:center;color:#888;padding:30px;background:rgba(255,255,255,0.03);border-radius:8px;">
-                        <div style="font-size:40px;margin-bottom:10px;">📖</div>
-                        <div>Нет изученных талантов</div>
-                        <div style="font-size:12px;color:#555;margin-top:5px;">Изучи их в Таверне у Егеря</div>
-                    </div>
-                ` : `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                        ${allTalents.map(talent => {
-                            const data = learned[talent.id];
-                            if (!data || data.level === 0) return '';
-                            const level = data.level;
-                            const isMax = level >= talent.maxLevel;
-                            const isEnabled = data.enabled !== false;
-                            return `
-                            <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:6px;border:1px solid ${isEnabled ? '#52b788' : '#555'};">
-                                <div style="display:flex;align-items:center;gap:8px;">
-                                    <img src="assets/assets2/talents/${talent.icon}" style="width:32px;height:32px;object-fit:contain;" onerror="this.style.display='none'">
-                                    <div style="flex:1;">
-                                        <div style="color:${isEnabled ? '#ffd700' : '#666'};font-weight:bold;font-size:13px;">
-                                            ${talent.name} ${isMax ? '✅ MAX' : `(${level}/${talent.maxLevel})`}
-                                        </div>
-                                        <div style="color:#888;font-size:10px;">${talent.desc}</div>
-                                    </div>
-                                </div>
-                                <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;">
-                                    ${!isMax ? `
-                                        <button onclick="upgradeTalentFromProfile('${talent.id}')" class="btn btn-gold" style="padding:3px 10px;font-size:10px;">
-                                            ⬆ Прокачать (${player.skillPoints || 0} опыта)
-                                        </button>
-                                    ` : ''}
-                                    <button onclick="toggleTalentFromProfile('${talent.id}')" class="btn ${isEnabled ? 'btn-success' : 'btn-danger'}" style="padding:3px 10px;font-size:10px;">
-                                        ${isEnabled ? '✅ Вкл' : '❌ Выкл'}
-                                    </button>
-                                </div>
-                            </div>
-                        `}).join('')}
-                    </div>
-                `}
-            </div>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', screenHTML);
-}
-
-function closeProfileScreen() {
-    const screen = document.getElementById('profile-screen');
-    if (screen) screen.remove();
-}
-
-function upgradeTalentFromProfile(id) {
-    if (typeof Talents === 'undefined') {
-        alert('❌ Система талантов не загружена');
-        return;
-    }
-    const player = PlayerStats;
-    if (!player.skillPoints || player.skillPoints <= 0) {
-        alert('❌ Нет очков опыта для прокачки!');
-        return;
-    }
-    const talent = Talents.list.find(t => t.id === id);
-    if (!talent) { alert('❌ Талант не найден'); return; }
-    const current = Talents.getLearned()[id];
-    if (!current || current.level === 0) { alert('❌ Талант не изучен'); return; }
-    if (current.level >= talent.maxLevel) { alert('❌ Максимальный уровень!'); return; }
-    
-    player.skillPoints--;
-    const result = Talents.upgrade(id);
-    if (result.success) {
-        updateTopBar();
-        saveGameData();
-        showProfileScreen();
-    } else {
-        player.skillPoints++;
-        alert('❌ ' + result.reason);
-    }
-}
-
-function toggleTalentFromProfile(id) {
-    if (typeof Talents === 'undefined') return;
-    const result = Talents.toggle(id);
-    if (result.success) showProfileScreen();
-}
-
-// ---------- НАСТРОЙКИ ----------
-function showSettingsScreen() {
-    closeAllScreens();
-    const musicEnabled = typeof Settings !== 'undefined' ? Settings.isMusicEnabled() : true;
-    const screenHTML = `
-    <div id="settings-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/settings_visual.png') center/cover no-repeat;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
-            <button onclick="closeSettingsScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-            </button>
-            <span style="color:#e0c080;font-size:1.2em;">⚙️ Настройки</span>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px;">
-            <button onclick="toggleMusicSetting()" style="background:#c9a040;border:none;border-radius:8px;padding:15px 40px;color:#000;font-weight:bold;cursor:pointer;font-size:1.1em;">
-                ${musicEnabled ? '🔊 Музыка: Включена' : '🔇 Музыка: Выключена'}
-            </button>
-            <button onclick="resetGameData()" style="background:#6a2d2d;border:none;border-radius:8px;padding:15px 40px;color:#fff;font-weight:bold;cursor:pointer;font-size:1.1em;">
-                🔄 Сбросить прогресс
-            </button>
-            <button onclick="closeSettingsScreen()" class="btn" style="padding:10px 30px;">↩️ Назад</button>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', screenHTML);
-}
-
-function closeSettingsScreen() {
-    const screen = document.getElementById('settings-screen');
-    if (screen) screen.remove();
-}
-
-function toggleMusicSetting() {
-    if (typeof Settings !== 'undefined' && Settings.toggleMusic) {
-        Settings.toggleMusic();
-        if (!Settings.isMusicEnabled()) stopMainMusic();
-        else startMainMusic();
-    } else {
-        isMusicPlaying = !isMusicPlaying;
-        if (isMusicPlaying) startMainMusic();
-        else stopMainMusic();
-    }
-    closeSettingsScreen();
-    showSettingsScreen();
-}
-
-function resetGameData() {
-    if (confirm('⚠️ Точно сбросить весь прогресс?')) {
-        localStorage.removeItem('sherwood_save');
-        location.reload();
-    }
-}
-
-// ---------- ЕЖЕДНЕВНЫЕ ----------
-function showDailyScreen() {
-    closeAllScreens();
-    const screenHTML = `
-    <div id="daily-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/tasks_day.png') center/cover no-repeat;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
-            <button onclick="closeDailyScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-            </button>
-            <span style="color:#e0c080;font-size:1.2em;">📅 Ежедневные</span>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;padding:20px;">
-            <div style="font-size:48px;margin-bottom:20px;">📅</div>
-            <div style="font-size:20px;color:#ffd93d;">Ежедневные задания</div>
-            <div style="color:#888;font-size:14px;text-align:center;max-width:400px;margin-top:10px;">Выполняй ежедневные задания и получай награды.</div>
-            <button onclick="closeDailyScreen()" class="btn" style="margin-top:20px;padding:10px 30px;">Назад</button>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', screenHTML);
-}
-
-function closeDailyScreen() {
-    const screen = document.getElementById('daily-screen');
-    if (screen) screen.remove();
-}
-
-// ============================================================
-//  СМЕНА СКИНА
-// ============================================================
-
+// ---------- СМЕНА СКИНА ----------
 function cycleSkin() {
     const skins = [
         'skin1_01.png',
@@ -603,43 +268,33 @@ function loadSavedSkin() {
     } catch(e) {}
 }
 
-// ============================================================
-//  КЛИКИ: ИКОНКА → ВХОД, ГЕРОЙ → СКИН
-// ============================================================
-
+// ---------- КЛИКИ ----------
 (function setupClicks() {
     setTimeout(function() {
         console.log('🔧 Настройка кликов...');
         
-        // Иконка раздела → вход
         const sectionIcon = document.getElementById('sectionIcon');
         if (sectionIcon) {
             sectionIcon.style.cursor = 'pointer';
             sectionIcon.addEventListener('click', function(e) {
                 e.stopPropagation();
                 console.log('🖱️ Клик по иконке раздела!');
-                if (typeof enterSection === 'function') {
-                    enterSection();
-                }
+                enterSection();
             });
             console.log('✅ Иконка раздела: вход');
         }
         
-        // Название раздела → вход
         const sectionName = document.getElementById('sectionName');
         if (sectionName) {
             sectionName.style.cursor = 'pointer';
             sectionName.addEventListener('click', function(e) {
                 e.stopPropagation();
                 console.log('🖱️ Клик по названию раздела!');
-                if (typeof enterSection === 'function') {
-                    enterSection();
-                }
+                enterSection();
             });
             console.log('✅ Название раздела: вход');
         }
         
-        // Герой → смена скина
         const heroEl = document.getElementById('hero');
         if (heroEl) {
             heroEl.style.cursor = 'pointer';
@@ -686,18 +341,6 @@ window.updateTopBar = updateTopBar;
 window.showHomeScreen = showHomeScreen;
 window.enterSection = enterSection;
 window.closeAllScreens = closeAllScreens;
-window.showGenericScreen = showGenericScreen;
-window.closeGenericScreen = closeGenericScreen;
-window.showProfileScreen = showProfileScreen;
-window.closeProfileScreen = closeProfileScreen;
-window.upgradeTalentFromProfile = upgradeTalentFromProfile;
-window.toggleTalentFromProfile = toggleTalentFromProfile;
-window.showSettingsScreen = showSettingsScreen;
-window.closeSettingsScreen = closeSettingsScreen;
-window.showDailyScreen = showDailyScreen;
-window.closeDailyScreen = closeDailyScreen;
-window.toggleMusicSetting = toggleMusicSetting;
-window.resetGameData = resetGameData;
 window.saveGameData = saveGameData;
 window.loadGameData = loadGameData;
 window.startMainMusic = startMainMusic;
@@ -705,7 +348,6 @@ window.stopMainMusic = stopMainMusic;
 window.cycleSkin = cycleSkin;
 window.loadSavedSkin = loadSavedSkin;
 
-// ---------- АВТОЗАГРУЗКА ----------
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
