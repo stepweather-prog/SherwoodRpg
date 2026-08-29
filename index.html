@@ -65,6 +65,14 @@
 <div id="menuScreen" style="display:none;"></div>
 
 <!-- ========== СКРИПТЫ ========== -->
+
+<!-- 0. СОЗДАЁМ ОБЪЕКТ Sherwood (для всех модулей) -->
+<script>
+    if (typeof Sherwood === 'undefined') {
+        window.Sherwood = {};
+    }
+</script>
+
 <!-- 1. Модели и ядро -->
 <script src="js/sherwood/models.js"></script>
 <script src="js/sherwood/core.js"></script>
@@ -73,6 +81,7 @@
 <script src="js/sherwood/audio.js"></script>
 <script src="js/sherwood/bag.js"></script>
 <script src="js/sherwood/talents.js"></script>
+<script src="js/sherwood/settings.js"></script>
 
 <!-- 3. Игровые режимы -->
 <script src="js/sherwood/quests.js"></script>
