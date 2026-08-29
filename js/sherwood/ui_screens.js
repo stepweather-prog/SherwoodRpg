@@ -21,28 +21,28 @@ var UI = {
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _mainThemeWasPlaying: false, _mainThemeKey: null, _mainThemeTime: 0,
     _audioFiles: {
-    'main_theme': 'assets/assets2/tune/main_theme.ogg',
-    'main_theme_2': 'assets/assets2/tune/main_theme_2.ogg',
-    'dungeon_1': 'assets/assets2/tune/dungeon_1.ogg',
-    'dungeon_2': 'assets/assets2/tune/dungeon_2.ogg',
-    'dungeon_3': 'assets/assets2/tune/dungeon_3.ogg',
-    'click': 'assets/assets2/tune/click.wav',
-    'hit': 'assets/assets2/tune/hit.wav',
-    'chest_open': 'assets/assets2/tune/chest_open.wav',
-    'altar': 'assets/assets2/tune/altar.wav',
-    'cauldron': 'assets/assets2/tune/cauldron.wav',
-    'potion': 'assets/assets2/tune/potion.wav',
-    'loot_fly': 'assets/assets2/tune/loot_fly.wav',
-    'trap': 'assets/assets2/tune/trap.wav',
-    'tile_open': 'assets/assets2/tune/tile_open.wav',
-    'steps': 'assets/assets2/tune/steps.wav',
-    'bag_drop': 'assets/assets2/tune/bag_drop.wav',
-    'defeat': 'assets/assets2/tune/defeat.wav',
-    'levelup': 'assets/assets2/tune/levelup.wav',
-    'forge': 'assets/assets2/tune/forge.wav',
-    'heal': 'assets/assets2/tune/heal.wav',
-    'victory': 'assets/assets2/tune/victory.wav'
-},
+        'main_theme': 'assets/assets2/tune/main_theme.ogg',
+        'main_theme_2': 'assets/assets2/tune/main_theme_2.ogg',
+        'dungeon_1': 'assets/assets2/tune/dungeon_1.ogg',
+        'dungeon_2': 'assets/assets2/tune/dungeon_2.ogg',
+        'dungeon_3': 'assets/assets2/tune/dungeon_3.ogg',
+        'click': 'assets/assets2/tune/click.wav',
+        'hit': 'assets/assets2/tune/hit.wav',
+        'chest_open': 'assets/assets2/tune/chest_open.wav',
+        'altar': 'assets/assets2/tune/altar.wav',
+        'cauldron': 'assets/assets2/tune/cauldron.wav',
+        'potion': 'assets/assets2/tune/potion.wav',
+        'loot_fly': 'assets/assets2/tune/loot_fly.wav',
+        'trap': 'assets/assets2/tune/trap.wav',
+        'tile_open': 'assets/assets2/tune/tile_open.wav',
+        'steps': 'assets/assets2/tune/steps.wav',
+        'bag_drop': 'assets/assets2/tune/bag_drop.wav',
+        'defeat': 'assets/assets2/tune/defeat.wav',
+        'levelup': 'assets/assets2/tune/levelup.wav',
+        'forge': 'assets/assets2/tune/forge.wav',
+        'heal': 'assets/assets2/tune/heal.wav',
+        'victory': 'assets/assets2/tune/victory.wav'
+    },
     _previousScreen: null, _dailyTab: 1, _pendingRewards: null, _afterRewardAction: null,
     _screenLayer: null, _ticketDisplayInterval: null, _bestiaryTab: 0,
     _arenaDefeatShown: false, _arenaVictoryShown: false,
@@ -52,7 +52,7 @@ var UI = {
     init: function() {
         this._screenLayer = document.createElement('div');
         this._screenLayer.id = 'ui-screen-layer';
-        this._screenLayer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;display:none;background:rgba(0,0,0,0.7);';
+        this._screenLayer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:none;background:rgba(0,0,0,0.85);';
         document.body.appendChild(this._screenLayer);
         try { this._initSounds(); } catch(e) {}
         try { this._loadAudioSettings(); } catch(e) {}
@@ -141,10 +141,17 @@ var UI = {
     },
 
     loadHome: function() {
-        try { if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; } } catch(e) {}
-        if (this._ticketDisplayInterval) { clearInterval(this._ticketDisplayInterval); this._ticketDisplayInterval = null; }
+        // Просто скрываем слой, БЕЗ вызова showHomeScreen
+        if (this._screenLayer) {
+            this._screenLayer.style.display = 'none';
+            this._screenLayer.innerHTML = '';
+        }
+        if (this._ticketDisplayInterval) {
+            clearInterval(this._ticketDisplayInterval);
+            this._ticketDisplayInterval = null;
+        }
         try { this.updateDisplay(); } catch(e) {}
-        if (typeof showHomeScreen === 'function') { showHomeScreen(); }
+        console.log('🏠 UI слой скрыт');
     },
 
     _showToast: function(msg) {
@@ -245,6 +252,10 @@ var UI = {
         if (Sherwood.Dungeon && Sherwood.Dungeon.init) { Sherwood.Dungeon.init(); }
         if (this._afterRewardAction) { var cb = this._afterRewardAction; this._afterRewardAction = null; cb(); }
     },
+
+    // ============================================================
+    //  ПРОФИЛЬ
+    // ============================================================
 
     profile: function() {
         this._playSound('click');
@@ -918,7 +929,7 @@ var UI = {
     },
 
     // ============================================================
-    //  ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ-ЗАГЛУШКИ
+    //  ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ
     // ============================================================
 
     quests: function() { this._showPlaceholder('Квесты', 'quests'); },
@@ -939,6 +950,19 @@ var UI = {
             Sherwood.Dungeon2D5.render();
         } else {
             this._showPlaceholder('Подземка', 'dungeon_forest');
+        }
+    },
+
+    // ============================================================
+    //  РЫНОК
+    // ============================================================
+
+    market: function() {
+        this._playSound('click');
+        if (typeof Sherwood.BlackMarket !== 'undefined' && Sherwood.BlackMarket.showUI) {
+            Sherwood.BlackMarket.showUI();
+        } else {
+            this._showPlaceholder('Рынок', 'market');
         }
     },
 
@@ -966,26 +990,23 @@ window.Sherwood = window.Sherwood || {};
 window.Sherwood.UI = UI;
 
 console.log('🖥️ UI экраны полностью загружены!');
+
 // ============================================================
-//  ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА - ЕСЛИ НЕТ КОНТЕНТА
+//  ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА
 // ============================================================
 
 (function ensureUIScreens() {
     console.log('🔧 Проверка UI экранов...');
-    
-    // Проверяем, что profile создаёт HTML
     if (typeof UI !== 'undefined' && UI.profile) {
         console.log('✅ UI.profile существует');
     }
-    
-    // Проверяем _openScreen
     if (typeof UI !== 'undefined' && UI._openScreen) {
         console.log('✅ UI._openScreen существует');
     }
-    
-    // Принудительно показываем тестовый экран
     setTimeout(function() {
-        console.log('🧪 Тестовый экран...');
-        UI._openScreen('Тест', 'profile', '<div style="color:#fff;padding:20px;text-align:center;font-size:24px;">🔧 РАБОТАЕТ!</div>');
-    }, 5000);
+        console.log('🧪 UI слой готов к отображению');
+        if (UI._screenLayer) {
+            UI._screenLayer.style.display = 'none';
+        }
+    }, 1000);
 })();
