@@ -31,7 +31,49 @@ const PlayerStats = {
         shield: false
     }
 };
+// ---------- МУЗЫКА НА ГЛАВНОЙ (ПЛЕЙЛИСТ) ----------
+const musicPlaylist = [
+    'assets/assets2/music/city_theme1.ogg',
+    'assets/assets2/music/city_theme2.ogg',
+    'assets/assets2/music/city_theme3.ogg',
+    'assets/assets2/music/city_theme4.ogg',
+    'assets/assets2/music/city_theme5.ogg',
+    'assets/assets2/music/main_theme_6.ogg'
+];
+let currentMusicIndex = 0;
+let isMusicPlaying = false;
+let audioPlayer = null;
 
+function playNextMusic() {
+    if (!isMusicPlaying) return;
+    
+    if (!audioPlayer) {
+        audioPlayer = new Audio();
+        audioPlayer.loop = false;
+        audioPlayer.addEventListener('ended', playNextMusic);
+    }
+    
+    audioPlayer.src = musicPlaylist[currentMusicIndex];
+    audioPlayer.play().catch(() => {});
+    
+    currentMusicIndex++;
+    if (currentMusicIndex >= musicPlaylist.length) {
+        currentMusicIndex = 0;
+    }
+}
+
+function startMainMusic() {
+    isMusicPlaying = true;
+    playNextMusic();
+}
+
+function stopMainMusic() {
+    isMusicPlaying = false;
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+    }
+}
 // ---------- ОБНОВЛЕНИЕ HUD ----------
 function updateTopBar() {
     const expEl = document.getElementById('expVal');
@@ -57,6 +99,8 @@ playButton.addEventListener('click', () => {
     homeScreen.style.display = 'flex';
     currentScreen = 'home';
     updateTopBar();
+    initMainCarousel(); // Запускаем карусель
+    startMainMusic();   // Запускаем музыку
 });
 
 // ---------- КАРУСЕЛЬ РАЗДЕЛОВ НА ГЛАВНОЙ ----------
