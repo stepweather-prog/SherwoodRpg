@@ -223,6 +223,7 @@ Sherwood.BlackMarket = (function() {
             }
 
             _emit('init', { shopItems: _shopItems });
+            console.log('🏪 Чёрный рынок инициализирован');
         },
 
         getShopItems: function() {
@@ -431,7 +432,194 @@ Sherwood.BlackMarket = (function() {
         off: function(event, callback) {
             if (!_listeners[event]) return;
             _listeners[event] = _listeners[event].filter(function(cb) { return cb !== callback; });
+        },
+
+        // ============================================================
+        //  UI — ПОКАЗ ЧЁРНОГО РЫНКА
+        // ============================================================
+
+        showUI: function() {
+            this._renderMarketUI();
+        },
+
+        _renderMarketUI: function() {
+            var old = document.getElementById('market-screen');
+            if (old) old.remove();
+
+            var p = _getPlayer();
+            var gold = p.resources ? p.resources.gold || 0 : 0;
+            var silver = p.resources ? p.resources.silver || 0 : 0;
+            var shopItems = this.getShopItems();
+            var canRefresh = this.canRefresh();
+            var rings = this.getAvailableRings();
+            var amulets = this.getAvailableAmulets();
+
+            var screenHTML = `
+            <div id="market-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/market.png') center/cover no-repeat;display:flex;flex-direction:column;">
+                <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);">
+                    <button onclick="Sherwood.BlackMarket.closeUI()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
+                        <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                    </button>
+                    <span style="color:#e0c080;font-size:1.2em;">🏪 Чёрный рынок</span>
+                    <span style="color:#888;font-size:12px;margin-left:auto;">
+                        💰 ${gold} | 🥈 ${silver}
+                    </span>
+                </div>
+
+                <div style="flex:1;overflow-y:auto;padding:20px;color:#fff;font-family:monospace;">
+                    <div style="max-width:700px;margin:0 auto;">
+
+                        <!-- Вкладки -->
+                        <div style="display:flex;gap:6px;margin-bottom:15px;">
+                            <button onclick="Sherwood.BlackMarket._switchTab(1)" class="btn btn-gold" id="market-tab-1" style="flex:1;padding:8px;font-size:13px;">📦 Товары</button>
+                            <button onclick="Sherwood.BlackMarket._switchTab(2)" class="btn" id="market-tab-2" style="flex:1;padding:8px;font-size:13px;">💍 Кольца</button>
+                            <button onclick="Sherwood.BlackMarket._switchTab(3)" class="btn" id="market-tab-3" style="flex:1;padding:8px;font-size:13px;">📿 Амулеты</button>
+                        </div>
+
+                        <!-- Контент -->
+                        <div id="market-content">
+                            ${this._renderShopTab(shopItems, canRefresh)}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', screenHTML);
+            this._currentTab = 1;
+        },
+
+        _renderShopTab: function(shopItems, canRefresh) {
+            var html = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="color:#888;font-size:12px;">🔄 Обновлений сегодня: ${_refreshCountToday}/${MAX_REFRESHES_PER_DAY}</span>
+                ${canRefresh ? `<button onclick="Sherwood.BlackMarket.refreshMarket()" class="btn btn-gold" style="padding:4px 15px;font-size:11px;">🔄 Обновить (150💰)</button>` : '<span style="color:#555;font-size:12px;">⏳ Лимит исчерпан</span>'}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+
+            for (var i = 0; i < shopItems.length; i++) {
+                var item = shopItems[i];
+                var purchased = this.isPurchased(item.id);
+                var currencyIcon = item.currency === 'gold' ? '💰' : '🥈';
+                var canBuy = !purchased && (item.currency === 'gold' ? gold : silver) >= item.price;
+
+                html += `
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:6px;border:1px solid ${purchased ? '#333' : '#555'};${purchased ? 'opacity:0.5;' : ''}">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <img src="${item.icon}" style="width:32px;height:32px;object-fit:contain;" onerror="this.style.display='none'">
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:bold;color:${purchased ? '#555' : '#ffd700'};">${item.name}</div>
+                            <div style="font-size:11px;color:#888;">${item.desc || ''}</div>
+                            <div style="font-size:11px;color:#aaa;">${currencyIcon} ${item.price}</div>
+                        </div>
+                    </div>
+                    ${!purchased ? `<button onclick="Sherwood.BlackMarket.buyMarketItem('${item.id}')" class="btn btn-success" style="width:100%;margin-top:6px;padding:4px;font-size:11px;">Купить</button>` : '<div style="color:#52b788;font-size:12px;text-align:center;margin-top:6px;">✅ Куплено</div>'}
+                </div>`;
+            }
+
+            html += '</div>';
+            return html;
+        },
+
+        _renderJewelryTab: function(type, items) {
+            var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var owned = this.isJewelryOwned(type, item.id);
+                var p = _getPlayer();
+                var silver = p.resources ? p.resources.silver || 0 : 0;
+
+                html += `
+                <div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:6px;border:1px solid ${owned ? '#52b788' : '#555'};${owned ? 'border-color:#52b788;' : ''}">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <img src="${item.icon}" style="width:32px;height:32px;object-fit:contain;" onerror="this.style.display='none'">
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:bold;color:${owned ? '#52b788' : '#ffd700'};">${item.name}</div>
+                            <div style="font-size:11px;color:#888;">
+                                ⚔️ +${item.stats.attack || 0} | 🛡️ +${item.stats.defense || 0} | ❤️ +${item.stats.hp || 0}
+                            </div>
+                            <div style="font-size:11px;color:#aaa;">🥈 ${item.price}</div>
+                        </div>
+                    </div>
+                    ${!owned ? `<button onclick="Sherwood.BlackMarket.buyJewelryFromUI('${type}','${item.id}')" class="btn btn-success" style="width:100%;margin-top:6px;padding:4px;font-size:11px;">Купить</button>` : '<div style="color:#52b788;font-size:12px;text-align:center;margin-top:6px;">✅ Владеете</div>'}
+                </div>`;
+            }
+
+            html += '</div>';
+            return html;
+        },
+
+        _switchTab: function(tab) {
+            this._currentTab = tab;
+            var content = document.getElementById('market-content');
+            if (!content) return;
+
+            // Обновляем стили вкладок
+            for (var i = 1; i <= 3; i++) {
+                var btn = document.getElementById('market-tab-' + i);
+                if (btn) {
+                    btn.className = 'btn' + (i === tab ? ' btn-gold' : '');
+                }
+            }
+
+            var shopItems = this.getShopItems();
+            var canRefresh = this.canRefresh();
+            var rings = this.getAvailableRings();
+            var amulets = this.getAvailableAmulets();
+
+            if (tab === 1) {
+                content.innerHTML = this._renderShopTab(shopItems, canRefresh);
+            } else if (tab === 2) {
+                content.innerHTML = this._renderJewelryTab('ring', rings);
+            } else if (tab === 3) {
+                content.innerHTML = this._renderJewelryTab('amulet', amulets);
+            }
+        },
+
+        refreshMarket: function() {
+            var result = this.refresh();
+            if (result.success) {
+                this._renderMarketUI();
+            } else {
+                alert('❌ ' + result.reason);
+            }
+        },
+
+        buyMarketItem: function(itemId) {
+            var result = this.buyItem(itemId);
+            if (result.success) {
+                this._renderMarketUI();
+            } else {
+                alert('❌ ' + result.reason);
+            }
+        },
+
+        buyJewelryFromUI: function(type, jewelryId) {
+            var result = this.buyJewelry(type, jewelryId);
+            if (result.success) {
+                this._renderMarketUI();
+            } else {
+                alert('❌ ' + result.reason);
+            }
+        },
+
+        // ============================================================
+        //  closeUI — ВОЗВРАТ НА ГЛАВНУЮ
+        // ============================================================
+        closeUI: function() {
+            var screen = document.getElementById('market-screen');
+            if (screen) screen.remove();
+
+            if (typeof window.showHomeScreen === 'function') {
+                window.showHomeScreen();
+            }
         }
     };
 
 })();
+
+// ---------- ЭКСПОРТ ----------
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.BlackMarket = Sherwood.BlackMarket;
+
+console.log('🏪 Чёрный рынок загружен!');
