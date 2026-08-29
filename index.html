@@ -36,37 +36,26 @@
         <img id="carouselLeftArrow" src="assets/assets2/icons/left.png" alt="Left">
         <img id="carouselRightArrow" src="assets/assets2/icons/right.png" alt="Right">
 
-        <!-- Верхняя панель характеристик -->
+        <!-- Верхняя панель характеристик (Абсолютная сборка под новую плиту) -->
         <div id="topBar">
-            <div class="stat-box">
-                <img src="assets/assets2/icons/progress.png" alt="Опыт" class="icon">
-                <div class="panel-bg"><span class="stat-value" id="expVal">0</span></div>
-            </div>
+            <!-- Сплошная фоновая плита с корягами -->
+            <div class="main-stone-panel"></div>
 
-            <div class="stat-box">
-                <img src="assets/assets2/icons/power.png" alt="Урон" class="icon">
-                <div class="panel-bg"><span class="stat-value" id="dmgVal">0</span></div>
-            </div>
+            <!-- Иконки (Ряд 1) -->
+            <img src="assets/assets2/icons/progress.png" alt="Опыт" class="top-icon cell-1">
+            <img src="assets/assets2/icons/power.png" alt="Урон" class="top-icon cell-2">
+            <img src="assets/assets2/icons/armor.png" alt="Броня" class="top-icon cell-3">
+            <img src="assets/assets2/icons/life.png" alt="Жизнь" class="top-icon cell-4">
+            <img src="assets/assets2/icons/resource_gold.png" alt="Золото" class="top-icon cell-5">
+            <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="top-icon cell-6">
 
-            <div class="stat-box">
-                <img src="assets/assets2/icons/armor.png" alt="Броня" class="icon">
-                <div class="panel-bg"><span class="stat-value" id="armorVal">0</span></div>
-            </div>
-
-            <div class="stat-box">
-                <img src="assets/assets2/icons/life.png" alt="Жизнь" class="icon">
-                <div class="panel-bg"><span class="stat-value" id="hpVal">0</span></div>
-            </div>
-
-            <div class="stat-box">
-                <img src="assets/assets2/icons/resource_gold.png" alt="Золото" class="icon">
-                <div class="panel-bg"><span class="stat-value" id="goldVal">0</span></div>
-            </div>
-
-            <div class="stat-box">
-                <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="icon">
-                <div class="panel-bg"><span class="stat-value" id="silverVal">0</span></div>
-            </div>
+            <!-- Цифры (Ряд 2) -->
+            <span class="stat-value val-1" id="expVal">0</span>
+            <span class="stat-value val-2" id="dmgVal">0</span>
+            <span class="stat-value val-3" id="armorVal">0</span>
+            <span class="stat-value val-4" id="hpVal">0</span>
+            <span class="stat-value val-5" id="goldVal">0</span>
+            <span class="stat-value val-6" id="silverVal">0</span>
         </div>
     </div> <!-- Конец #gameZone -->
     
@@ -76,7 +65,7 @@
 
 <div id="menuScreen" style="display:none;"></div>
 
-<!-- Скрипты (Без menu.js, arena.js и chat.js) -->
+<!-- Скрипты -->
 <script src="js/sherwood/core.js"></script>
 <script src="js/sherwood/models.js"></script>
 <script src="js/sherwood/textures.js"></script>
