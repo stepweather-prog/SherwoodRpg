@@ -74,6 +74,37 @@ function stopMainMusic() {
         audioPlayer.currentTime = 0;
     }
 }
+// ---------- СОХРАНЕНИЕ/ЗАГРУЗКА ----------
+function saveGameData() {
+    try {
+        const data = {
+            player: PlayerStats,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('sherwood_save', JSON.stringify(data));
+        console.log('💾 Игра сохранена');
+    } catch(e) {
+        console.error('❌ Ошибка сохранения:', e);
+    }
+}
+
+function loadGameData() {
+    try {
+        const raw = localStorage.getItem('sherwood_save');
+        if (raw) {
+            const data = JSON.parse(raw);
+            if (data.player) {
+                Object.assign(PlayerStats, data.player);
+                console.log('📂 Загружено сохранение');
+                updateTopBar();
+                return true;
+            }
+        }
+    } catch(e) {
+        console.error('❌ Ошибка загрузки:', e);
+    }
+    return false;
+}
 // ---------- ОБНОВЛЕНИЕ HUD ----------
 function updateTopBar() {
     const expEl = document.getElementById('expVal');
