@@ -20,7 +20,7 @@
     <!-- Левая статуя за пределами игровой зоны -->
     <img id="leftStatue" src="assets/assets2/game_details/left_statue_of_the_main_screen.png" alt="Left Statue">
     
-    <!-- ЦЕНТРАЛЬНАЯ ИГРОВАЯ ЗОНА (Все элементы должны быть внутри нее) -->
+    <!-- ЦЕНТРАЛЬНАЯ ИГРОВАЯ ЗОНА -->
     <div id="gameZone">
         <!-- Фоны и декорации -->
         <img id="arch" src="assets/assets2/game_details/staircase_with_an_arch.png" alt="Arch">
@@ -30,7 +30,7 @@
         <!-- Главный герой -->
         <img id="hero" src="assets/hero_skins/skin1_01.png" alt="Hero">
 
-        <!-- Элементы карусели меню (полотна 1024х1024 ложатся друг на друга) -->
+        <!-- Элементы карусели меню -->
         <img id="sectionIcon" src="assets/assets2/icons/player_profile.png" alt="Section Icon">
         <div id="sectionName">Профиль</div>
         <img id="carouselLeftArrow" src="assets/assets2/icons/left.png" alt="Left">
@@ -38,46 +38,24 @@
 
         <!-- Верхняя панель характеристик -->
         <div id="topBar">
-            <div class="stat-box">
+            <!-- Первый ряд: строго все иконки -->
+            <div class="icons-row">
                 <img src="assets/assets2/icons/progress.png" alt="Опыт" class="icon">
-                <div class="panel-bg">
-                    <span class="stat-value" id="expVal">0</span>
-                </div>
-            </div>
-
-            <div class="stat-box">
                 <img src="assets/assets2/icons/power.png" alt="Урон" class="icon">
-                <div class="panel-bg">
-                    <span class="stat-value" id="dmgVal">0</span>
-                </div>
-            </div>
-
-            <div class="stat-box">
                 <img src="assets/assets2/icons/armor.png" alt="Броня" class="icon">
-                <div class="panel-bg">
-                    <span class="stat-value" id="armorVal">0</span>
-                </div>
-            </div>
-
-            <div class="stat-box">
                 <img src="assets/assets2/icons/life.png" alt="Жизнь" class="icon">
-                <div class="panel-bg">
-                    <span class="stat-value" id="hpVal">0</span>
-                </div>
-            </div>
-
-            <div class="stat-box">
                 <img src="assets/assets2/icons/resource_gold.png" alt="Золото" class="icon">
-                <div class="panel-bg">
-                    <span class="stat-value" id="goldVal">0</span>
-                </div>
+                <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="icon">
             </div>
 
-            <div class="stat-box">
-                <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="icon">
-                <div class="panel-bg">
-                    <span class="stat-value" id="silverVal">0</span>
-                </div>
+            <!-- Второй ряд: строго все плашки под ними -->
+            <div class="panels-row">
+                <div class="panel-bg"><span class="stat-value" id="expVal">0</span></div>
+                <div class="panel-bg"><span class="stat-value" id="dmgVal">0</span></div>
+                <div class="panel-bg"><span class="stat-value" id="armorVal">0</span></div>
+                <div class="panel-bg"><span class="stat-value" id="hpVal">0</span></div>
+                <div class="panel-bg"><span class="stat-value" id="goldVal">0</span></div>
+                <div class="panel-bg"><span class="stat-value" id="silverVal">0</span></div>
             </div>
         </div>
     </div> <!-- Конец #gameZone -->
@@ -88,7 +66,7 @@
 
 <div id="menuScreen" style="display:none;"></div>
 
-<!-- Скрипты -->
+<!-- Скрипты (Вернули на место!) -->
 <script src="js/sherwood/core.js"></script>
 <script src="js/sherwood/models.js"></script>
 <script src="js/sherwood/textures.js"></script>
@@ -99,7 +77,7 @@
 <script src="js/sherwood/portal.js"></script>
 <script src="js/sherwood/bestiary.js"></script>
 <script src="js/sherwood/dungeon.js"></script>
-<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com"></script>
 <script src="js/sherwood/Dungeon2D5.js"></script>
 <script src="js/sherwood/daily.js"></script>
 <script src="js/sherwood/quests.js"></script>
