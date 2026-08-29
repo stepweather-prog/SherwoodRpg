@@ -604,6 +604,126 @@ window.startMainMusic = startMainMusic;
 window.stopMainMusic = stopMainMusic;
 
 // ---------- АВТОЗАГРУЗКА ----------
+// ============================================================
+//  ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ЗАГРУЗКИ
+// ============================================================
+
+// 1. Проверяем, что элементы существуют
+function checkElements() {
+    const hero = document.getElementById('hero');
+    const leftArrow = document.getElementById('carouselLeftArrow');
+    const rightArrow = document.getElementById('carouselRightArrow');
+    const sectionName = document.getElementById('sectionName');
+    const sectionIcon = document.getElementById('sectionIcon');
+    
+    console.log('🔍 Проверка элементов:');
+    console.log('  hero:', hero ? '✅' : '❌');
+    console.log('  leftArrow:', leftArrow ? '✅' : '❌');
+    console.log('  rightArrow:', rightArrow ? '✅' : '❌');
+    console.log('  sectionName:', sectionName ? '✅' : '❌');
+    console.log('  sectionIcon:', sectionIcon ? '✅' : '❌');
+    
+    return hero && leftArrow && rightArrow && sectionName && sectionIcon;
+}
+
+// 2. Если элементы есть, но карусель не работает — переинициализируем
+function forceInitCarousel() {
+    if (typeof initMainCarousel === 'function') {
+        console.log('🔄 Принудительная инициализация карусели...');
+        initMainCarousel();
+        return true;
+    }
+    return false;
+}
+
+// 3. Вешаем обработчики напрямую (если карусель не сработала)
+function forceBindEvents() {
+    const hero = document.getElementById('hero');
+    const leftArrow = document.getElementById('carouselLeftArrow');
+    const rightArrow = document.getElementById('carouselRightArrow');
+    
+    if (hero && !hero._bound) {
+        hero._bound = true;
+        hero.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('🖱️ Клик по герою!');
+            if (typeof enterSection === 'function') {
+                enterSection();
+            } else {
+                alert('❌ Функция enterSection не определена');
+            }
+        });
+        console.log('✅ Обработчик на hero добавлен');
+    }
+    
+    if (leftArrow && !leftArrow._bound) {
+        leftArrow._bound = true;
+        leftArrow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('⬅️ Стрелка влево');
+            if (typeof prevSection === 'function') {
+                prevSection();
+            }
+        });
+        console.log('✅ Обработчик на leftArrow добавлен');
+    }
+    
+    if (rightArrow && !rightArrow._bound) {
+        rightArrow._bound = true;
+        rightArrow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('➡️ Стрелка вправо');
+            if (typeof nextSection === 'function') {
+                nextSection();
+            }
+        });
+        console.log('✅ Обработчик на rightArrow добавлен');
+    }
+}
+
+// 4. Запускаем всё после полной загрузки
+(function ensureInteraction() {
+    // Ждём, пока DOM загрузится
+    if (document.readyState === 'complete') {
+        setTimeout(function() {
+            console.log('🔄 Проверка интерактивности...');
+            checkElements();
+            forceInitCarousel();
+            forceBindEvents();
+            
+            // Проверяем текущий раздел
+            const sectionName = document.getElementById('sectionName');
+            if (sectionName) {
+                console.log('📋 Текущий раздел:', sectionName.textContent);
+            }
+        }, 500);
+    } else {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                console.log('🔄 Проверка интерактивности (DOMContentLoaded)...');
+                checkElements();
+                forceInitCarousel();
+                forceBindEvents();
+            }, 500);
+        });
+    }
+})();
+
+// 5. Добавляем глобальный обработчик для отладки
+document.addEventListener('click', function(e) {
+    const target = e.target;
+    if (target.id === 'hero') {
+        console.log('🖱️ Клик по hero (глобальный)');
+    }
+    if (target.id === 'carouselLeftArrow') {
+        console.log('⬅️ Клик по leftArrow (глобальный)');
+    }
+    if (target.id === 'carouselRightArrow') {
+        console.log('➡️ Клик по rightArrow (глобальный)');
+    }
+});
+
+console.log('🔧 Система принудительной инициализации запущена!');
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
