@@ -1,11 +1,8 @@
-// js/audio.js — ОБНОВЛЁННЫЙ ПЛЕЙЛИСТ (6 ТРЕКОВ, ПО ПОРЯДКУ)
+// js/audio.js — ОБНОВЛЁННЫЙ ПЛЕЙЛИСТ (2 ТРЕКА, ПО ПОРЯДКУ)
 const AudioManager = {
     cityTracks: [
         'assets/assets2/music/city_theme1.ogg',
-        'assets/assets2/music/city_theme2.ogg',
-        'assets/assets2/music/city_theme3.ogg',
-        'assets/assets2/music/city_theme4.ogg',
-        'assets/assets2/music/city_theme5.ogg',
+        
         'assets/assets2/music/main_theme_6.ogg'
     ],
     currentTrackIndex: 0,
