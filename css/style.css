@@ -193,7 +193,7 @@ canvas {
 }
 
 /* =========================================
-   #menuScreen — ОБЯЗАТЕЛЬНО!
+   #menuScreen
    ========================================= */
 #menuScreen {
     display: none;
@@ -207,110 +207,102 @@ canvas {
 }
 
 /* =========================================
-   ПЛАШКИ В МЕНЮ (ДЕРЕВЯННАЯ ПАНЕЛЬ)
+   ИСПРАВЛЕННАЯ КАРУСЕЛЬ В GAMEZONE (ИКОНКА, ПЛАШКА, СТРЕЛКИ)
    ========================================= */
 
-#menuScreen img[src*="all_stat"] {
+/* Иконка-медальон над плашкой */
+#sectionIcon {
     position: absolute;
-    top: 21%; /* Высота над головой героя (подгоните под макет) */
+    top: 20%;
     left: 50%;
     transform: translateX(-50%);
-    
-    /* Ограничиваем плашку, чтобы она была компактной и не перекрывала стрелки */
-    width: 320px !important; 
-    height: 55px !important;
-    object-fit: fill !important;
-    
-    z-index: 15; /* Лежит под стрелками и текстом */
+    /* Масштабируем от ширины gameZone (которая 50vw) */
+    width: 22%; 
+    max-width: 110px;
+    min-width: 70px;
+    height: auto;
+    object-fit: contain;
+    z-index: 15;
 }
 
-/* Контейнер для текста и стрелочек, который садится ровно поверх плашки */
-.menu-controls {
+/* Деревянная плашка */
+#sectionName {
     position: absolute;
-    top: 21%; /* Должен строго совпадать с top плашки */
+    top: 33%;
     left: 50%;
     transform: translateX(-50%);
-    
-    /* Размеры один в один как у деревянной плашки */
-    width: 320px; 
-    height: 55px;
-    
-    display: flex;
-    /* Разносит левую стрелку, текст и правую стрелку по краям плашки */
-    justify-content: space-between; 
-    align-items: center;
-    
-    /* Паддинги, чтобы стрелочки красиво сидели чуть внутри деревяшки, а не вываливались */
-    padding: 0 10px; 
-    
-    z-index: 25; /* Выше плашки, чтобы всё отлично кликалось */
-}
-
-/* Ваши кнопки-стрелочки для листания */
-.menu-arrow {
-    width: 45px;
-    height: 45px;
-    cursor: pointer;
-    pointer-events: auto; /* Разрешаем клики */
+    width: 55%; /* Идеальный размер внутри арки */
+    max-width: 260px;
+    min-width: 170px;
+    height: 6%;
+    max-height: 52px;
+    min-height: 38px;
+    background: url('../assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
     display: flex;
     justify-content: center;
     align-items: center;
+    color: #ffa500;
+    font-family: 'Times New Roman', serif;
+    font-size: clamp(13px, 2vw, 19px);
+    font-weight: bold;
+    text-shadow: 0 2px 4px #000;
+    z-index: 16;
+}
+
+/* Кнопки-стрелочки: привязаны жестко к краям деревянной плашки */
+#carouselLeftArrow,
+#carouselRightArrow {
+    position: absolute;
+    top: 36%; /* Ровно по центру плашки по вертикали */
+    transform: translateY(-50%);
+    width: 9%;
+    max-width: 45px;
+    min-width: 28px;
+    height: auto;
+    object-fit: contain;
+    cursor: pointer;
+    z-index: 17;
     transition: transform 0.1s;
 }
 
-.menu-arrow:active {
-    transform: scale(0.9);
+/* Левая стрелка отступает влево от центра на половину ширины плашки */
+#carouselLeftArrow {
+    left: calc(50% - 31%); 
 }
 
-.menu-arrow img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+/* Правая стрелка отступает вправо от центра */
+#carouselRightArrow {
+    left: calc(50% + 22%); 
 }
 
-/* Меняющийся текст меню (Профиль, Инвентарь и т.д.) */
-.menu-title-text {
-    color: #ffd700; /* Золотой фэнтези цвет */
-    font-family: 'Times New Roman', serif;
-    font-size: 18px;
-    font-weight: bold;
-    text-shadow: 2px 2px 3px #000;
-    user-select: none;
-    white-space: nowrap;
-}
+#carouselLeftArrow:active { transform: translateY(-50%) scale(0.85); }
+#carouselRightArrow:active { transform: translateY(-50%) scale(0.85); }
 
 /* =========================================
-   АДАПТИВ ПОД МОБИЛКИ
+   АДАПТИВНОСТЬ ПОД МОБИЛЬНЫЕ ЭКРАНЫ
    ========================================= */
 @media (max-width: 768px) {
-    #menuScreen img[src*="all_stat"] {
-        width: 240px !important;
-        height: 42px !important;
-        top: 19%;
+    #sectionIcon {
+        top: 18%;
+        width: 25%;
     }
 
-    .menu-controls {
-        width: 240px;
-        height: 42px;
-        top: 19%;
-        padding: 0 6px;
+    #sectionName {
+        top: 31%;
+        width: 65%;
     }
 
-    .menu-arrow {
-        width: 35px;
-        height: 35px;
+    #carouselLeftArrow,
+    #carouselRightArrow {
+        top: 34%;
+        width: 11%;
     }
 
-    .menu-title-text {
-        font-size: 14px;
+    #carouselLeftArrow {
+        left: calc(50% - 37%);
     }
-}
 
-
-/* =========================================
-   ПЛАШКИ В МЕНЮ
-   ========================================= */
-#menuScreen img[src*="all_stat"] {
-    width: 60% !important;
-    height: auto !important;
+    #carouselRightArrow {
+        left: calc(50% + 26%);
+    }
 }
