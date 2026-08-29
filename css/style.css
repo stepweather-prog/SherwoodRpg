@@ -178,55 +178,57 @@ canvas {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ГЛАВНАЯ)
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ДВА РЯДА)
    ========================================= */
 #topBar {
     position: absolute;
-    top: 1.5%; /* Небольшой отступ от верха */
+    top: 1.5%; /* Отступ от самого верха */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    max-width: 460px; /* Сузили ряд для плотной стыковки плашек */
-    z-index: 30; /* Строго над всеми элементами карусели */
-    pointer-events: none;
-    gap: 0; 
-}
-
-.stat-box {
-    display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Разделяет иконки и плашки на две строки */
     align-items: center;
-    pointer-events: auto;
-    margin: 0 -3px; /* Сдвиг боксов друг к другу, чтобы убрать щели панелей */
-    position: relative;
+    width: 100%;
+    max-width: 480px;
+    z-index: 30; /* Строго поверх карусели */
+    pointer-events: none;
 }
 
-/* Круглые иконки — перекрывают верхний край каменной подложки */
-.stat-box .icon {
-    width: 60px; 
+/* Ряд иконок (Первая строка) */
+.icons-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px; /* Расстояние между круглыми иконками */
+    width: 100%;
+}
+
+.icons-row .icon {
+    width: 60px;
     height: 60px;
     object-fit: contain;
-    position: relative;
-    z-index: 32; /* Выше подложки */
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+    pointer-events: auto;
 }
 
-/* Каменные подложки под цифры — прячутся под иконки */
+/* Ряд каменных плашек под иконками (Вторая строка) */
+.panels-row {
+    display: flex;
+    justify-content: center;
+    gap: -2px; /* Смыкает плашки боками без щелей */
+    width: 100%;
+    margin-top: -12px; /* Наплыв плашек вверх, прямо под круглые иконки */
+}
+
 .panel-bg {
-    width: 78px; 
+    width: 78px;
     height: 30px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
-    align-items: center; 
-    margin-top: -14px; /* Заезд под круглую иконку */
-    position: relative;
-    z-index: 31; /* Ниже круглой иконки */
+    align-items: center;
+    pointer-events: auto;
 }
 
 /* Текст цифр внутри панелей */
@@ -237,9 +239,6 @@ canvas {
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-top: 2px;
 }
 
 /* =========================================
@@ -374,19 +373,23 @@ canvas {
         top: 1%;
     }
 
-    .stat-box {
-        margin: 0 -2px;
+    .icons-row {
+        gap: 10px;
     }
 
-    .stat-box .icon {
+    .icons-row .icon {
         width: 44px;
         height: 44px;
+    }
+
+    .panels-row {
+        margin-top: -8px;
+        gap: -1px;
     }
 
     .panel-bg {
         width: 56px;
         height: 22px;
-        margin-top: -8px;
     }
 
     .stat-value {
