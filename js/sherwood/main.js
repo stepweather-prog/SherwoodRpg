@@ -1,5 +1,5 @@
 // ============================================================
-//  js/main.js — ЧИСТОВАЯ ВЕРСИЯ (ТОЛЬКО НАВИГАЦИЯ)
+//  js/main.js — ПОЛНАЯ ВЕРСИЯ ПОД НОВУЮ АРХИТЕКТУРУ
 // ============================================================
 
 // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
@@ -181,24 +181,106 @@ function enterSection() {
     if (!section) return;
     console.log(`🚪 Вход в раздел: ${section.name}`);
 
-    // ВСЕ ЭКРАНЫ ВЫНЕСЕНЫ В ui_screens.js
     switch(section.name) {
-        case 'Подземка':   showDungeonScreen(); break;
-        case 'Квесты':     showQuestsScreen(); break;
-        case 'Таверна':    showTavernScreen(); break;
-        case 'Порталы':    showPortalsScreen(); break;
-        case 'Рейд':       showRaidScreen(); break;
-        case 'Бестиарий':  showBestiaryScreen(); break;
-        case 'Кузница':    showForgeScreen(); break;
-        case 'Рынок':      showMarketScreen(); break;
-        case 'Профиль':    showProfileScreen(); break;
-        case 'Настройки':  showSettingsScreen(); break;
-        default:           showGenericScreen(section.name, '📌');
+        case 'Профиль':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Profile && Sherwood.Profile.showUI) {
+                Sherwood.Profile.showUI();
+            } else if (typeof UI !== 'undefined' && UI.profile) {
+                UI.profile();
+            } else {
+                showGenericScreen('Профиль', '👤');
+            }
+            break;
+
+        case 'Квесты':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Quests && Sherwood.Quests.showUI) {
+                Sherwood.Quests.showUI();
+            } else {
+                showGenericScreen('Квесты', '📋');
+            }
+            break;
+
+        case 'Таверна':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Tavern && Sherwood.Tavern.showUI) {
+                Sherwood.Tavern.showUI();
+            } else {
+                showGenericScreen('Таверна', '🍺');
+            }
+            break;
+
+        case 'Порталы':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Portal && Sherwood.Portal.showUI) {
+                Sherwood.Portal.showUI();
+            } else {
+                showGenericScreen('Порталы', '🌀');
+            }
+            break;
+
+        case 'Подземка':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon && Sherwood.Dungeon.showUI) {
+                Sherwood.Dungeon.showUI();
+            } else if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5.render) {
+                stopMainMusic();
+                Sherwood.Dungeon2D5.render();
+            } else {
+                showGenericScreen('Подземка', '🏚️');
+            }
+            break;
+
+        case 'Рынок':
+            if (typeof Sherwood !== 'undefined' && Sherwood.BlackMarket && Sherwood.BlackMarket.showUI) {
+                Sherwood.BlackMarket.showUI();
+            } else {
+                showGenericScreen('Рынок', '🏪');
+            }
+            break;
+
+        case 'Кузница':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Forge && Sherwood.Forge.showUI) {
+                Sherwood.Forge.showUI();
+            } else {
+                showGenericScreen('Кузница', '🔧');
+            }
+            break;
+
+        case 'Бестиарий':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Bestiary && Sherwood.Bestiary.showUI) {
+                Sherwood.Bestiary.showUI();
+            } else {
+                showGenericScreen('Бестиарий', '📖');
+            }
+            break;
+
+        case 'Рейд':
+            if (typeof Sherwood !== 'undefined' && Sherwood.Raid && Sherwood.Raid.showUI) {
+                Sherwood.Raid.showUI();
+            } else {
+                showGenericScreen('Рейд', '⚔️');
+            }
+            break;
+
+        case 'Настройки':
+            if (typeof Settings !== 'undefined' && Settings.showUI) {
+                Settings.showUI();
+            } else if (typeof UI !== 'undefined' && UI.settings) {
+                UI.settings();
+            } else {
+                showGenericScreen('Настройки', '⚙️');
+            }
+            break;
+
+        default:
+            showGenericScreen(section.name, '📌');
     }
 }
 
 // ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
 function showHomeScreen() {
+    // Закрываем все экраны через UI если есть
+    if (typeof UI !== 'undefined' && UI.loadHome) {
+        UI.loadHome();
+        return;
+    }
     closeAllScreens();
     homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
@@ -216,12 +298,46 @@ function closeAllScreens() {
         'portals-screen', 'raid-screen', 'bestiary-screen',
         'profile-screen', 'settings-screen', 'daily-screen',
         'talents-screen', 'generic-screen', 'section-screen',
-        'battle-overlay', 'portal-battle-overlay', 'raid-battle-overlay'
+        'battle-overlay', 'portal-battle-overlay', 'raid-battle-overlay',
+        'combat-overlay', 'dungeon2d5-container', 'ui-screen-layer'
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.remove();
+        if (el) {
+            if (id === 'dungeon2d5-container') {
+                el.style.display = 'none';
+            } else {
+                el.remove();
+            }
+        }
     });
+}
+
+// ---------- УНИВЕРСАЛЬНЫЙ ЭКРАН-ЗАГЛУШКА ----------
+function showGenericScreen(title, icon) {
+    closeAllScreens();
+    const screenHTML = `
+    <div id="generic-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
+            <button onclick="closeGenericScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+            </button>
+            <span style="color:#e0c080;font-size:1.2em;">${title}</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;padding:20px;">
+            <div style="font-size:64px;margin-bottom:20px;">${icon}</div>
+            <div style="font-size:24px;color:#ffa500;">${title}</div>
+            <div style="color:#888;font-size:14px;margin-top:10px;">В разработке</div>
+            <button onclick="closeGenericScreen()" class="btn" style="margin-top:20px;padding:10px 30px;">Назад</button>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', screenHTML);
+}
+
+function closeGenericScreen() {
+    const screen = document.getElementById('generic-screen');
+    if (screen) screen.remove();
+    if (typeof showHomeScreen === 'function') showHomeScreen();
 }
 
 // ---------- СМЕНА СКИНА ----------
@@ -234,22 +350,22 @@ function cycleSkin() {
         'skin2_02.png',
         'skin2_03.png'
     ];
-    
+
     const heroEl = document.getElementById('hero');
     if (!heroEl) return;
-    
+
     const currentSrc = heroEl.src;
     const currentSkin = currentSrc.split('/').pop();
-    
+
     let currentIndex = skins.indexOf(currentSkin);
     if (currentIndex === -1) currentIndex = 0;
-    
+
     const nextIndex = (currentIndex + 1) % skins.length;
     const nextSkin = skins[nextIndex];
-    
+
     heroEl.src = 'assets/hero_skins/' + nextSkin;
     console.log('🎭 Скин изменён:', nextSkin);
-    
+
     try {
         localStorage.setItem('active_skin', nextSkin);
     } catch(e) {}
@@ -258,7 +374,7 @@ function cycleSkin() {
 function loadSavedSkin() {
     const heroEl = document.getElementById('hero');
     if (!heroEl) return;
-    
+
     try {
         const savedSkin = localStorage.getItem('active_skin');
         if (savedSkin) {
@@ -272,7 +388,8 @@ function loadSavedSkin() {
 (function setupClicks() {
     setTimeout(function() {
         console.log('🔧 Настройка кликов...');
-        
+
+        // Иконка раздела → вход
         const sectionIcon = document.getElementById('sectionIcon');
         if (sectionIcon) {
             sectionIcon.style.cursor = 'pointer';
@@ -283,7 +400,8 @@ function loadSavedSkin() {
             });
             console.log('✅ Иконка раздела: вход');
         }
-        
+
+        // Название раздела → вход
         const sectionName = document.getElementById('sectionName');
         if (sectionName) {
             sectionName.style.cursor = 'pointer';
@@ -294,7 +412,8 @@ function loadSavedSkin() {
             });
             console.log('✅ Название раздела: вход');
         }
-        
+
+        // Герой → смена скина
         const heroEl = document.getElementById('hero');
         if (heroEl) {
             heroEl.style.cursor = 'pointer';
@@ -305,7 +424,7 @@ function loadSavedSkin() {
             });
             console.log('✅ Герой: смена скина');
         }
-        
+
         console.log('🔧 Клики настроены!');
     }, 1000);
 })();
@@ -319,9 +438,14 @@ playButton.addEventListener('click', () => {
     initMainCarousel();
     startMainMusic();
     loadSavedSkin();
-    
+
+    // Инициализация Sherwood
     if (typeof Sherwood !== 'undefined') {
-        const modules = ['Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary', 'Dungeon2D5', 'Forge', 'BlackMarket'];
+        const modules = [
+            'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
+            'Dungeon', 'Dungeon2D5', 'Forge', 'BlackMarket',
+            'Bag', 'Wallet', 'Training', 'Hearth', 'Combat'
+        ];
         modules.forEach(name => {
             if (Sherwood[name] && typeof Sherwood[name].init === 'function') {
                 try {
@@ -333,6 +457,16 @@ playButton.addEventListener('click', () => {
             }
         });
     }
+
+    // Инициализация UI
+    if (typeof UI !== 'undefined' && UI.init) {
+        UI.init();
+    }
+
+    // Инициализация настроек
+    if (typeof Settings !== 'undefined' && Settings.init) {
+        Settings.init();
+    }
 });
 
 // ---------- ЭКСПОРТ ----------
@@ -341,12 +475,14 @@ window.updateTopBar = updateTopBar;
 window.showHomeScreen = showHomeScreen;
 window.enterSection = enterSection;
 window.closeAllScreens = closeAllScreens;
+window.showGenericScreen = showGenericScreen;
+window.closeGenericScreen = closeGenericScreen;
+window.cycleSkin = cycleSkin;
+window.loadSavedSkin = loadSavedSkin;
 window.saveGameData = saveGameData;
 window.loadGameData = loadGameData;
 window.startMainMusic = startMainMusic;
 window.stopMainMusic = stopMainMusic;
-window.cycleSkin = cycleSkin;
-window.loadSavedSkin = loadSavedSkin;
 
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
