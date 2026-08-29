@@ -143,6 +143,7 @@ Sherwood.Tavern = {
     _currentChapterIndex: 0,
     _isInBattle: false,
     _battleEnemy: null,
+    _isSecretUnlocked: false,
 
     // ---------- ИНИЦИАЛИЗАЦИЯ ----------
     init: function() {
@@ -160,6 +161,7 @@ Sherwood.Tavern = {
         this._completedChapters = p.tavern.completedChapters || [];
         this._currentChapterIndex = p.tavern.currentChapter || 0;
         this._isInBattle = p.tavern.isInBattle || false;
+        this._isSecretUnlocked = p.tavern.secretUnlocked || false;
         
         // Если есть текущий бой - восстанавливаем
         if (this._isInBattle && p.tavern.battleEnemy) {
@@ -365,7 +367,7 @@ Sherwood.Tavern = {
     },
 
     isOnCooldown: function() {
-        return false; // Сюжетные квесты без перезарядки
+        return false;
     },
 
     getCooldownRemaining: function() {
@@ -401,10 +403,6 @@ Sherwood.Tavern = {
 
     // ---------- UI — ПОКАЗ ТАВЕРНЫ ----------
     showUI: function() {
-        if (typeof window.showTavernScreen === 'function') {
-            window.showTavernScreen();
-            return;
-        }
         this._renderTavernUI();
     },
 
@@ -447,7 +445,6 @@ Sherwood.Tavern = {
         var isInBattle = this._isInBattle;
         var enemy = this._battleEnemy;
         
-        // Если все главы пройдены
         if (completed >= total) {
             return `
             <div style="text-align:center;padding:40px 20px;">
@@ -474,7 +471,6 @@ Sherwood.Tavern = {
         
         var html = '';
         
-        // Лор главы
         html += `
         <div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;border-left:4px solid ${isSecret ? '#9b59b6' : '#ffa500'};margin-bottom:15px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -494,7 +490,6 @@ Sherwood.Tavern = {
             </div>
         </div>`;
         
-        // Босс
         if (isInBattle && enemy) {
             html += `
             <div style="background:rgba(255,0,0,0.1);border:2px solid #ff6b6b;border-radius:8px;padding:15px;margin-bottom:15px;">
@@ -526,7 +521,6 @@ Sherwood.Tavern = {
             </div>`;
         }
         
-        // Прогресс
         html += `
         <div style="margin-top:15px;padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;">
             <div style="color:#888;font-size:12px;">Прогресс: ${completed}/${total} глав</div>
@@ -545,10 +539,8 @@ Sherwood.Tavern = {
             return;
         }
         
-        // Обновляем UI
         this._renderTavernUI();
         
-        // Показываем результат
         if (result.win) {
             if (result.allComplete) {
                 alert('🏆 ПОБЕДА! Ты спас Шервуд!');
@@ -561,7 +553,6 @@ Sherwood.Tavern = {
             alert('💀 Ты погиб... Но егерь вытащил тебя. Отдохни и попробуй снова.');
         }
         
-        // Обновляем сохранения
         saveGameData();
     },
 
@@ -571,18 +562,11 @@ Sherwood.Tavern = {
         this._renderTavernUI();
     },
 
+    // ============================================================
+    //  closeUI — ВОЗВРАТ НА ГЛАВНУЮ
+    // ============================================================
     closeUI: function() {
         var screen = document.getElementById('tavern-screen');
         if (screen) screen.remove();
-        if (typeof Menu !== 'undefined' && Menu.show) {
-            Menu.show();
-        }
-    }
-};
-
-// ---------- ЭКСПОРТ ----------
-window.Sherwood = window.Sherwood || {};
-window.Sherwood.Tavern = Sherwood.Tavern;
-
-console.log('🍺 Таверна с сюжетными квестами загружена!');
-console.log('📖 Всего глав:', Sherwood.Tavern.CHAPTERS.length);
+        // === ИСПРАВЛЕНИЕ: вместо Menu.show() ===
+        if (typeof window.showHomeScreen === '
