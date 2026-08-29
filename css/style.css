@@ -1,5 +1,12 @@
-/* css/style.css */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* =========================================
+   БАЗОВЫЕ НАСТРОЙКИ ЭКРАНА И ХОЛСТА
+   ========================================= */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
 html, body {
     width: 100%;
     height: 100%;
@@ -9,17 +16,22 @@ html, body {
     -webkit-user-select: none;
     user-select: none;
 }
+
 body {
     display: flex;
     justify-content: center;
     align-items: center;
 }
+
 canvas { 
     width: 100% !important;
     height: 100% !important;
     image-rendering: pixelated; 
 }
 
+/* =========================================
+   ЭКРАН ЗАГРУЗКИ (LOADING SCREEN)
+   ========================================= */
 #loadingScreen {
     position: fixed;
     top: 0;
@@ -65,6 +77,9 @@ canvas {
     object-fit: contain;
 }
 
+/* =========================================
+   ГЛАВНЫЙ ИГРОВОЙ ЭКРАН И ЗОНА (GAME ZONE)
+   ========================================= */
 #homeScreen {
     position: fixed;
     top: 0;
@@ -79,6 +94,7 @@ canvas {
     z-index: 500;
 }
 
+/* Статуи по бокам экрана */
 #leftStatue {
     position: absolute;
     left: 0;
@@ -101,6 +117,7 @@ canvas {
     z-index: 4;
 }
 
+/* Центральный игровой квадрат */
 #gameZone {
     position: relative;
     width: 50vw;
@@ -114,13 +131,14 @@ canvas {
     position: absolute;
 }
 
+/* Фикс фонового свитка — держит пропорции contain, а не cover */
 #arch {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
+    transform: none;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     z-index: 3;
 }
 
@@ -142,7 +160,7 @@ canvas {
     z-index: 6;
 }
 
-/* Герой крупнее */
+/* Герой по центру */
 #hero {
     bottom: 8%;
     left: 50%;
@@ -159,7 +177,129 @@ canvas {
     transform: translateX(-50%) scale(0.95);
 }
 
-/* Кнопка назад в разделах крупнее и кликабельнее */
+/* =========================================
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ГЛАВНАЯ)
+   ========================================= */
+#topBar {
+    position: absolute;
+    top: 1.5%; /* Небольшой отступ от верха */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 460px; /* Сузили ряд для плотной стыковки плашек */
+    z-index: 30; /* Строго над всеми элементами карусели */
+    pointer-events: none;
+    gap: 0; 
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    margin: 0 -3px; /* Сдвиг боксов друг к другу, чтобы убрать щели панелей */
+    position: relative;
+}
+
+/* Круглые иконки — перекрывают верхний край каменной подложки */
+.stat-box .icon {
+    width: 60px; 
+    height: 60px;
+    object-fit: contain;
+    position: relative;
+    z-index: 32; /* Выше подложки */
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+}
+
+/* Каменные подложки под цифры — прячутся под иконки */
+.panel-bg {
+    width: 78px; 
+    height: 30px;
+    background-image: url('../assets/assets2/icons/main_panel.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    margin-top: -14px; /* Заезд под круглую иконку */
+    position: relative;
+    z-index: 31; /* Ниже круглой иконки */
+}
+
+/* Текст цифр внутри панелей */
+.stat-value {
+    color: #fff;
+    font-family: 'Times New Roman', serif;
+    font-size: 13px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-top: 2px;
+}
+
+/* =========================================
+   КАРУСЕЛЬ ЭЛЕМЕНТОВ (ПОЛОТНА 1024х1024)
+   ========================================= */
+
+/* Иконка раздела и стрелочки — это полные квадратные слои, ложатся 1 в 1 на арку */
+#sectionIcon,
+#carouselLeftArrow,
+#carouselRightArrow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important; /* Удерживает квадратный масштаб */
+    z-index: 15;
+}
+
+/* Принудительно возвращаем стрелкам кликабельность и поднимаем слой */
+#carouselLeftArrow,
+#carouselRightArrow {
+    z-index: 17;
+    pointer-events: auto;
+}
+
+/* Единственный вырезанный элемент — доска с надписью «Профиль» */
+#sectionName {
+    position: absolute;
+    top: 35.2%; /* Положение на свитке по вертикали */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32.5%; /* Четкий размер доски внутри арки */
+    height: 5.5%;
+    background: url('../assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffa500;
+    font-family: 'Times New Roman', serif;
+    font-size: clamp(12px, 1.8vw, 18px);
+    font-weight: bold;
+    text-shadow: 0 2px 4px #000;
+    z-index: 16; /* Под стрелками, но над иконкой */
+}
+
+/* =========================================
+   ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ И РАЗДЕЛЫ
+   ========================================= */
+#menuScreen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 200;
+    overflow: hidden;
+}
+
 #section-screen button,
 #dungeon-screen button {
     width: 60px !important;
@@ -176,6 +316,9 @@ canvas {
     pointer-events: none;
 }
 
+/* =========================================
+   АДАПТИВНОСТЬ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
+   ========================================= */
 @media (max-width: 768px) {
     #leftStatue, #rightStatue {
         display: none !important;
@@ -190,119 +333,29 @@ canvas {
         width: 45%;
         bottom: 10%;
     }
-}
 
-/* =========================================
-   #menuScreen
-   ========================================= */
-#menuScreen {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 200;
-    overflow: hidden;
-}
-
-/* =========================================
-   ИСПРАВЛЕННАЯ КАРУСЕЛЬ В GAMEZONE (ИКОНКА, ПЛАШКА, СТРЕЛКИ)
-   ========================================= */
-
-/* Иконка-медальон над плашкой */
-#sectionIcon {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    /* Масштабируем от ширины gameZone (которая 50vw) */
-    width: 22%; 
-    max-width: 110px;
-    min-width: 70px;
-    height: auto;
-    object-fit: contain;
-    z-index: 15;
-}
-
-/* Деревянная плашка */
-#sectionName {
-    position: absolute;
-    top: 33%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 55%; /* Идеальный размер внутри арки */
-    max-width: 260px;
-    min-width: 170px;
-    height: 6%;
-    max-height: 52px;
-    min-height: 38px;
-    background: url('../assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #ffa500;
-    font-family: 'Times New Roman', serif;
-    font-size: clamp(13px, 2vw, 19px);
-    font-weight: bold;
-    text-shadow: 0 2px 4px #000;
-    z-index: 16;
-}
-
-/* Кнопки-стрелочки: привязаны жестко к краям деревянной плашки */
-#carouselLeftArrow,
-#carouselRightArrow {
-    position: absolute;
-    top: 36%; /* Ровно по центру плашки по вертикали */
-    transform: translateY(-50%);
-    width: 9%;
-    max-width: 45px;
-    min-width: 28px;
-    height: auto;
-    object-fit: contain;
-    cursor: pointer;
-    z-index: 17;
-    transition: transform 0.1s;
-}
-
-/* Левая стрелка отступает влево от центра на половину ширины плашки */
-#carouselLeftArrow {
-    left: calc(50% - 31%); 
-}
-
-/* Правая стрелка отступает вправо от центра */
-#carouselRightArrow {
-    left: calc(50% + 22%); 
-}
-
-#carouselLeftArrow:active { transform: translateY(-50%) scale(0.85); }
-#carouselRightArrow:active { transform: translateY(-50%) scale(0.85); }
-
-/* =========================================
-   АДАПТИВНОСТЬ ПОД МОБИЛЬНЫЕ ЭКРАНЫ
-   ========================================= */
-@media (max-width: 768px) {
-    #sectionIcon {
-        top: 18%;
-        width: 25%;
+    /* Мобильный адаптив для верхней панели ресурсов */
+    #topBar {
+        max-width: 100%;
+        top: 1%;
     }
 
-    #sectionName {
-        top: 31%;
-        width: 65%;
+    .stat-box {
+        margin: 0 -2px;
     }
 
-    #carouselLeftArrow,
-    #carouselRightArrow {
-        top: 34%;
-        width: 11%;
+    .stat-box .icon {
+        width: 44px;
+        height: 44px;
     }
 
-    #carouselLeftArrow {
-        left: calc(50% - 37%);
+    .panel-bg {
+        width: 56px;
+        height: 22px;
+        margin-top: -8px;
     }
 
-    #carouselRightArrow {
-        left: calc(50% + 26%);
+    .stat-value {
+        font-size: 10px;
     }
 }
