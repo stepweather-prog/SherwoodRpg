@@ -3,6 +3,17 @@
  * Модели данных и константы
  */
 
+// ============================================================
+//  ПРОВЕРКА СУЩЕСТВОВАНИЯ Sherwood
+// ============================================================
+if (typeof Sherwood === 'undefined') {
+    window.Sherwood = {};
+}
+
+// ============================================================
+//  МОДЕЛИ
+// ============================================================
+
 Sherwood.Models = {
     // Типы предметов
     EquipmentPart: {
@@ -338,3 +349,5 @@ Sherwood.MAX_STAT_VALUE = Sherwood.Models.MAX_STAT_VALUE;
 Sherwood.DUNGEON_GOLD_PRICES = Sherwood.Models.DUNGEON_GOLD_PRICES;
 Sherwood.DUNGEON_TICKET_REGENERATION = Sherwood.Models.DUNGEON_TICKET_REGENERATION;
 Sherwood.DUNGEON_MAX_TICKETS = Sherwood.Models.DUNGEON_MAX_TICKETS;
+
+console.log('📦 Модели загружены!');
