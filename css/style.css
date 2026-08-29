@@ -207,21 +207,21 @@ canvas {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ГЛАВНАЯ)
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ГЛАВНАЯ) — ИКОНКИ + ПАНЕЛЬКИ В РЯД
    ========================================= */
 
 #topBar {
     position: absolute;
-    top: 1%;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    align-items: center; /* Центрируем по вертикали */
-    gap: 10px;
+    align-items: flex-start; /* Иконки на верху */
+    gap: 0; /* БЕЗ ПРОБЕЛОВ между панельками */
     z-index: 20;
     width: 100%;
-    max-width: 700px;
+    max-width: 450px;
     pointer-events: none;
 }
 
@@ -230,36 +230,41 @@ canvas {
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
+    margin: 0; /* Без отступов */
 }
 
+/* Иконки в ряду */
 .stat-box .icon {
-    width: 70px;
-    height: 70px;
+    width: 50px;
+    height: 50px;
     object-fit: contain;
     position: relative;
     z-index: 1;
     filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8));
 }
 
+/* Панельки В РЯД ПОД ИКОНКАМИ — без пробелов */
 .panel-bg {
-    width: 130px;
-    height: 45px;
+    width: 80px;
+    height: 30px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
     position: relative;
     z-index: 2;
-    margin-top: -15px; /* Иконка наезжает на панель (как свиток) */
+    margin-top: 0; /* Без отступов от иконки */
+    margin-left: -1px; /* Чтобы панельки стыковались без щелей */
 }
 
+/* Цифры внутри панелек */
 .stat-value {
     color: #fff;
     font-family: 'Times New Roman', serif;
-    font-size: 18px;
+    font-size: 13px;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
@@ -269,25 +274,24 @@ canvas {
 
 @media (max-width: 768px) {
     #topBar {
-        gap: 4px;
-        top: 0;
+        gap: 0;
         max-width: 100%;
     }
 
     .stat-box .icon {
-        width: 45px;
-        height: 45px;
+        width: 35px;
+        height: 35px;
     }
 
     .panel-bg {
-        width: 80px;
-        height: 30px;
-        margin-top: -8px;
-        padding-bottom: 4px;
+        width: 55px;
+        height: 22px;
+        margin-left: -1px;
+        padding-bottom: 2px;
     }
 
     .stat-value {
-        font-size: 12px;
+        font-size: 10px;
     }
 }
 /* =========================================
