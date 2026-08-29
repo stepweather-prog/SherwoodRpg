@@ -145,7 +145,7 @@ function initMainCarousel() {
 
     if (leftArrow) leftArrow.onclick = (e) => { e.stopPropagation(); prevSection(); };
     if (rightArrow) rightArrow.onclick = (e) => { e.stopPropagation(); nextSection(); };
-    if (hero) hero.onclick = () => enterSection();
+    if (hero) hero.onclick = () => cycleSkin();
 
     const gameZone = document.getElementById('gameZone');
     if (gameZone) {
@@ -556,6 +556,105 @@ function closeDailyScreen() {
     if (screen) screen.remove();
 }
 
+// ============================================================
+//  СМЕНА СКИНА
+// ============================================================
+
+function cycleSkin() {
+    const skins = [
+        'skin1_01.png',
+        'skin1_02.png',
+        'skin1_03.png',
+        'skin2_01.png',
+        'skin2_02.png',
+        'skin2_03.png'
+    ];
+    
+    const heroEl = document.getElementById('hero');
+    if (!heroEl) return;
+    
+    const currentSrc = heroEl.src;
+    const currentSkin = currentSrc.split('/').pop();
+    
+    let currentIndex = skins.indexOf(currentSkin);
+    if (currentIndex === -1) currentIndex = 0;
+    
+    const nextIndex = (currentIndex + 1) % skins.length;
+    const nextSkin = skins[nextIndex];
+    
+    heroEl.src = 'assets/hero_skins/' + nextSkin;
+    console.log('🎭 Скин изменён:', nextSkin);
+    
+    try {
+        localStorage.setItem('active_skin', nextSkin);
+    } catch(e) {}
+}
+
+function loadSavedSkin() {
+    const heroEl = document.getElementById('hero');
+    if (!heroEl) return;
+    
+    try {
+        const savedSkin = localStorage.getItem('active_skin');
+        if (savedSkin) {
+            heroEl.src = 'assets/hero_skins/' + savedSkin;
+            console.log('🎭 Загружен скин:', savedSkin);
+        }
+    } catch(e) {}
+}
+
+// ============================================================
+//  КЛИКИ: ИКОНКА → ВХОД, ГЕРОЙ → СКИН
+// ============================================================
+
+(function setupClicks() {
+    setTimeout(function() {
+        console.log('🔧 Настройка кликов...');
+        
+        // Иконка раздела → вход
+        const sectionIcon = document.getElementById('sectionIcon');
+        if (sectionIcon) {
+            sectionIcon.style.cursor = 'pointer';
+            sectionIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🖱️ Клик по иконке раздела!');
+                if (typeof enterSection === 'function') {
+                    enterSection();
+                }
+            });
+            console.log('✅ Иконка раздела: вход');
+        }
+        
+        // Название раздела → вход
+        const sectionName = document.getElementById('sectionName');
+        if (sectionName) {
+            sectionName.style.cursor = 'pointer';
+            sectionName.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🖱️ Клик по названию раздела!');
+                if (typeof enterSection === 'function') {
+                    enterSection();
+                }
+            });
+            console.log('✅ Название раздела: вход');
+        }
+        
+        // Герой → смена скина
+        const heroEl = document.getElementById('hero');
+        if (heroEl) {
+            heroEl.style.cursor = 'pointer';
+            heroEl.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🖱️ Клик по герою → смена скина!');
+                cycleSkin();
+            });
+            console.log('✅ Герой: смена скина');
+        }
+        
+        console.log('🔧 Клики настроены!');
+    }, 1000);
+})();
+
 // ---------- ЗАПУСК ----------
 playButton.addEventListener('click', () => {
     loadingScreen.style.display = 'none';
@@ -564,6 +663,7 @@ playButton.addEventListener('click', () => {
     updateTopBar();
     initMainCarousel();
     startMainMusic();
+    loadSavedSkin();
     
     if (typeof Sherwood !== 'undefined') {
         const modules = ['Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary', 'Dungeon2D5', 'Forge', 'BlackMarket'];
@@ -602,128 +702,10 @@ window.saveGameData = saveGameData;
 window.loadGameData = loadGameData;
 window.startMainMusic = startMainMusic;
 window.stopMainMusic = stopMainMusic;
+window.cycleSkin = cycleSkin;
+window.loadSavedSkin = loadSavedSkin;
 
 // ---------- АВТОЗАГРУЗКА ----------
-// ============================================================
-//  ПРИНУДИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ЗАГРУЗКИ
-// ============================================================
-
-// 1. Проверяем, что элементы существуют
-function checkElements() {
-    const hero = document.getElementById('hero');
-    const leftArrow = document.getElementById('carouselLeftArrow');
-    const rightArrow = document.getElementById('carouselRightArrow');
-    const sectionName = document.getElementById('sectionName');
-    const sectionIcon = document.getElementById('sectionIcon');
-    
-    console.log('🔍 Проверка элементов:');
-    console.log('  hero:', hero ? '✅' : '❌');
-    console.log('  leftArrow:', leftArrow ? '✅' : '❌');
-    console.log('  rightArrow:', rightArrow ? '✅' : '❌');
-    console.log('  sectionName:', sectionName ? '✅' : '❌');
-    console.log('  sectionIcon:', sectionIcon ? '✅' : '❌');
-    
-    return hero && leftArrow && rightArrow && sectionName && sectionIcon;
-}
-
-// 2. Если элементы есть, но карусель не работает — переинициализируем
-function forceInitCarousel() {
-    if (typeof initMainCarousel === 'function') {
-        console.log('🔄 Принудительная инициализация карусели...');
-        initMainCarousel();
-        return true;
-    }
-    return false;
-}
-
-// 3. Вешаем обработчики напрямую (если карусель не сработала)
-function forceBindEvents() {
-    const hero = document.getElementById('hero');
-    const leftArrow = document.getElementById('carouselLeftArrow');
-    const rightArrow = document.getElementById('carouselRightArrow');
-    
-    if (hero && !hero._bound) {
-        hero._bound = true;
-        hero.addEventListener('click', function(e) {
-            e.stopPropagation();
-            console.log('🖱️ Клик по герою!');
-            if (typeof enterSection === 'function') {
-                enterSection();
-            } else {
-                alert('❌ Функция enterSection не определена');
-            }
-        });
-        console.log('✅ Обработчик на hero добавлен');
-    }
-    
-    if (leftArrow && !leftArrow._bound) {
-        leftArrow._bound = true;
-        leftArrow.addEventListener('click', function(e) {
-            e.stopPropagation();
-            console.log('⬅️ Стрелка влево');
-            if (typeof prevSection === 'function') {
-                prevSection();
-            }
-        });
-        console.log('✅ Обработчик на leftArrow добавлен');
-    }
-    
-    if (rightArrow && !rightArrow._bound) {
-        rightArrow._bound = true;
-        rightArrow.addEventListener('click', function(e) {
-            e.stopPropagation();
-            console.log('➡️ Стрелка вправо');
-            if (typeof nextSection === 'function') {
-                nextSection();
-            }
-        });
-        console.log('✅ Обработчик на rightArrow добавлен');
-    }
-}
-
-// 4. Запускаем всё после полной загрузки
-(function ensureInteraction() {
-    // Ждём, пока DOM загрузится
-    if (document.readyState === 'complete') {
-        setTimeout(function() {
-            console.log('🔄 Проверка интерактивности...');
-            checkElements();
-            forceInitCarousel();
-            forceBindEvents();
-            
-            // Проверяем текущий раздел
-            const sectionName = document.getElementById('sectionName');
-            if (sectionName) {
-                console.log('📋 Текущий раздел:', sectionName.textContent);
-            }
-        }, 500);
-    } else {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                console.log('🔄 Проверка интерактивности (DOMContentLoaded)...');
-                checkElements();
-                forceInitCarousel();
-                forceBindEvents();
-            }, 500);
-        });
-    }
-})();
-
-// 5. Добавляем глобальный обработчик для отладки
-document.addEventListener('click', function(e) {
-    const target = e.target;
-    if (target.id === 'hero') {
-        console.log('🖱️ Клик по hero (глобальный)');
-    }
-    if (target.id === 'carouselLeftArrow') {
-        console.log('⬅️ Клик по leftArrow (глобальный)');
-    }
-    if (target.id === 'carouselRightArrow') {
-        console.log('➡️ Клик по rightArrow (глобальный)');
-    }
-});
-
-console.log('🔧 Система принудительной инициализации запущена!');
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
