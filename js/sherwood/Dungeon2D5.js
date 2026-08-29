@@ -1,7 +1,11 @@
-// ============================================================
-//  Sherwood.Dungeon2D5 — 3D Подземка
-//  Адаптирован под новую структуру без SherwoodUI
-// ============================================================
+/**
+ * Sherwood Dungeon2D5 — 3D Подземка
+ * Адаптирован под новую структуру без SherwoodUI
+ */
+
+if (typeof Sherwood === 'undefined') {
+    window.Sherwood = {};
+}
 
 Sherwood.Dungeon2D5 = {
     _scene: null,
@@ -46,23 +50,10 @@ Sherwood.Dungeon2D5 = {
     _h: 800,
     _container: null,
 
-    // ============================================================
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ============================================================
-
     init: function() {
-        // Создаём контейнер для подземки
         this._container = document.createElement('div');
         this._container.id = 'dungeon2d5-container';
-        this._container.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 300;
-            background: #0a0a0a;
-        `;
+        this._container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:#0a0a0a;';
         document.body.appendChild(this._container);
 
         this._w = window.innerWidth || 480;
@@ -71,16 +62,13 @@ Sherwood.Dungeon2D5 = {
         this._setupThree();
         this._setupControls();
         this._loadCommonTextures();
+        console.log('🏚️ Dungeon2D5 инициализирован');
     },
 
-    // ============================================================
-    //  ЗАГРУЗКА ТЕКСТУР
-    // ============================================================
-
     _loadCommonTextures: function() {
-        const loader = new THREE.TextureLoader();
+        var loader = new THREE.TextureLoader();
         function loadTex(src) {
-            const tex = loader.load(src);
+            var tex = loader.load(src);
             tex.wrapS = THREE.RepeatWrapping;
             tex.wrapT = THREE.RepeatWrapping;
             return tex;
@@ -102,9 +90,9 @@ Sherwood.Dungeon2D5 = {
     },
 
     _loadDungeonTextures: function(dungeonId) {
-        const loader = new THREE.TextureLoader();
+        var loader = new THREE.TextureLoader();
         function loadTex(src) {
-            const tex = loader.load(src);
+            var tex = loader.load(src);
             tex.wrapS = THREE.RepeatWrapping;
             tex.wrapT = THREE.RepeatWrapping;
             return tex;
@@ -115,14 +103,14 @@ Sherwood.Dungeon2D5 = {
         this._ceilings = [];
         this._cachedMats = {};
 
-        let wallPrefix = '';
-        let floorPrefix = '';
-        let ceilPrefix = '';
-        let altarFile = 'altar_of_the_first_dungeon.png';
-        let cauldronFile = 'cauldron_first_dungeon.png';
-        let chestLockedFile = 'locked_chest_first_dungeon.png';
-        let chestOpenFile = 'open_chest_first_dungeon.png';
-        let exitFile = 'exit_completion_dungeon.png';
+        var wallPrefix = '';
+        var floorPrefix = '';
+        var ceilPrefix = '';
+        var altarFile = 'altar_of_the_first_dungeon.png';
+        var cauldronFile = 'cauldron_first_dungeon.png';
+        var chestLockedFile = 'locked_chest_first_dungeon.png';
+        var chestOpenFile = 'open_chest_first_dungeon.png';
+        var exitFile = 'exit_completion_dungeon.png';
 
         if (dungeonId === 'swamp') {
             wallPrefix = 'swamp_';
@@ -144,17 +132,17 @@ Sherwood.Dungeon2D5 = {
             exitFile = 'completion_of_level_three_subway.png';
         }
 
-        for (let i = 1; i <= 6; i++) {
+        for (var i = 1; i <= 6; i++) {
             this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + wallPrefix + 'wall_' + i + '.png'));
         }
-        for (let i = 1; i <= 6; i++) {
+        for (var i = 1; i <= 6; i++) {
             if (dungeonId === 'forest') {
                 this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/' + floorPrefix + 'tiles_' + i + '.png'));
             } else {
                 this._floors.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + floorPrefix + 'tiles_' + i + '.png'));
             }
         }
-        for (let i = 1; i <= 6; i++) {
+        for (var i = 1; i <= 6; i++) {
             this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/' + ceilPrefix + 'ceiling_dungeon_' + i + '.png'));
         }
 
@@ -164,10 +152,6 @@ Sherwood.Dungeon2D5 = {
         this._images.chest_open = loadTex('assets/interface/' + chestOpenFile);
         this._images.exit = loadTex('assets/interface/' + exitFile);
     },
-
-    // ============================================================
-    //  THREE.JS НАСТРОЙКА
-    // ============================================================
 
     _setupThree: function() {
         this._scene = new THREE.Scene();
@@ -188,12 +172,11 @@ Sherwood.Dungeon2D5 = {
         }
 
         this._scene.add(new THREE.AmbientLight(0x664422, 0.8));
-
-        const mainLight = new THREE.DirectionalLight(0xffcc88, 0.9);
+        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.9);
         mainLight.position.set(5, 10, 5);
         this._scene.add(mainLight);
 
-        const fillLight = new THREE.DirectionalLight(0x996633, 0.4);
+        var fillLight = new THREE.DirectionalLight(0x996633, 0.4);
         fillLight.position.set(-5, 2, -5);
         this._scene.add(fillLight);
 
@@ -201,126 +184,57 @@ Sherwood.Dungeon2D5 = {
         this._scene.add(this._group);
     },
 
-    // ============================================================
-    //  УПРАВЛЕНИЕ
-    // ============================================================
-
     _setupControls: function() {
-        const self = this;
+        var self = this;
 
-        // Верхняя панель
         this._topPanel = document.createElement('div');
-        this._topPanel.style.cssText = `
-            position: absolute;
-            top: 10px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 10px;
-            z-index: 15;
-        `;
+        this._topPanel.style.cssText = 'position:absolute;top:10px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 10px;z-index:15;';
 
-        // Кнопка выхода
         this._exitBtn = document.createElement('button');
-        this._exitBtn.style.cssText = `
-            width: 40px;
-            height: 40px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-        `;
+        this._exitBtn.style.cssText = 'width:40px;height:40px;background:transparent;border:none;cursor:pointer;';
         this._exitBtn.innerHTML = '<img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">';
         this._exitBtn.addEventListener('click', function() {
             self.destroy();
-            // === ИСПРАВЛЕНИЕ: вместо SherwoodUI ===
-            if (typeof window.showHomeScreen === 'function') {
-                window.showHomeScreen();
+            if (typeof UI !== 'undefined' && UI.loadHome) {
+                UI.loadHome();
             }
         });
         this._topPanel.appendChild(this._exitBtn);
 
-        // Счётчик убийств
         this._killCounter = document.createElement('div');
-        this._killCounter.style.cssText = `
-            color: #e0c080;
-            font-size: 14px;
-            font-weight: bold;
-            text-shadow: 0 0 5px #000;
-        `;
+        this._killCounter.style.cssText = 'color:#e0c080;font-size:14px;font-weight:bold;text-shadow:0 0 5px #000;';
         this._killCounter.textContent = '0/0';
         this._topPanel.appendChild(this._killCounter);
 
-        // HP бар
         this._hpBar = document.createElement('div');
         this._hpBar.style.cssText = 'position:relative;width:150px;height:30px;';
-        this._hpBar.innerHTML = `
-            <img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;">
-            <div style="position:absolute;top:6px;left:15px;right:15px;bottom:6px;overflow:hidden;z-index:1;">
-                <div id="hp-fill-2d5" style="background:url('assets/interface/life_interface_asset_horizontal_progress_bar.jpeg') left/auto 100%;height:100%;width:100%;"></div>
-            </div>
-            <span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>
-        `;
+        this._hpBar.innerHTML = '<img src="assets/interface/life_scale.png" style="width:100%;height:100%;position:absolute;top:0;left:0;z-index:0;"><div style="position:absolute;top:6px;left:15px;right:15px;bottom:6px;overflow:hidden;z-index:1;"><div id="hp-fill-2d5" style="background:url(\'assets/interface/life_interface_asset_horizontal_progress_bar.jpeg\') left/auto 100%;height:100%;width:100%;"></div></div><span id="hp-text-2d5" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;z-index:2;font-weight:bold;"></span>';
         this._topPanel.appendChild(this._hpBar);
 
         if (this._container) {
             this._container.appendChild(this._topPanel);
         }
 
-        // Джойстик
         this._joystick = document.createElement('div');
-        this._joystick.style.cssText = `
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-            height: 300px;
-            z-index: 10;
-            background: url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;
-        `;
+        this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
 
         this._joystickVideo = document.createElement('video');
         this._joystickVideo.src = 'assets/animation/step_up.webm';
         this._joystickVideo.loop = true;
         this._joystickVideo.muted = true;
         this._joystickVideo.playsInline = true;
-        this._joystickVideo.style.cssText = `
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            pointer-events: none;
-            border-radius: 50%;
-        `;
+        this._joystickVideo.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;object-fit:contain;pointer-events:none;border-radius:50%;';
         this._joystick.appendChild(this._joystickVideo);
 
-        const arrowAreas = [
+        var arrowAreas = [
             { d: 'forward', top: '10%', left: '38%', width: '24%', height: '24%' },
             { d: 'left', top: '38%', left: '10%', width: '24%', height: '24%' },
             { d: 'right', top: '38%', left: '66%', width: '24%', height: '24%' }
         ];
 
         arrowAreas.forEach(function(a) {
-            const btn = document.createElement('button');
-            btn.style.cssText = `
-                position: absolute;
-                top: ${a.top};
-                left: ${a.left};
-                width: ${a.width};
-                height: ${a.height};
-                background: rgba(255,215,0,0.1);
-                border: none;
-                cursor: pointer;
-                z-index: 12;
-                transition: background 0.1s, transform 0.1s, box-shadow 0.1s;
-                border-radius: 50%;
-                box-shadow: 0 0 10px rgba(255,215,0,0.2);
-            `;
+            var btn = document.createElement('button');
+            btn.style.cssText = 'position:absolute;top:' + a.top + ';left:' + a.left + ';width:' + a.width + ';height:' + a.height + ';background:rgba(255,215,0,0.1);border:none;cursor:pointer;z-index:12;transition:background 0.1s, transform 0.1s, box-shadow 0.1s;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.2);';
 
             btn.addEventListener('mousedown', function(e) {
                 e.stopPropagation();
@@ -362,24 +276,8 @@ Sherwood.Dungeon2D5 = {
             this._container.appendChild(this._joystick);
         }
 
-        // Кнопка взаимодействия
         this._interactBtn = document.createElement('button');
-        this._interactBtn.style.cssText = `
-            position: absolute;
-            bottom: 350px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.85);
-            border: 3px solid #ffd700;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 11;
-        `;
+        this._interactBtn.style.cssText = 'position:absolute;bottom:350px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:11;';
         this._interactBtnImg = document.createElement('img');
         this._interactBtnImg.style.cssText = 'width:64px;height:64px;object-fit:contain;';
         this._interactBtn.appendChild(this._interactBtnImg);
@@ -389,10 +287,8 @@ Sherwood.Dungeon2D5 = {
             this._container.appendChild(this._interactBtn);
         }
 
-        // Миникарта
         this._setupMinimap();
 
-        // Клик по стенам
         this._renderer.domElement.addEventListener('click', function(e) { self._handleWallClick(e); });
         this._renderer.domElement.addEventListener('touchend', function(e) {
             if (e.changedTouches && e.changedTouches[0]) {
@@ -405,28 +301,12 @@ Sherwood.Dungeon2D5 = {
         this._minimap = document.createElement('canvas');
         this._minimap.width = 140;
         this._minimap.height = 140;
-        this._minimap.style.cssText = `
-            position: absolute;
-            top: 55px;
-            right: 10px;
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            z-index: 15;
-        `;
+        this._minimap.style.cssText = 'position:absolute;top:55px;right:10px;width:140px;height:140px;border-radius:50%;z-index:15;';
         this._minimapCtx = this._minimap.getContext('2d');
 
         this._minimapFrame = document.createElement('img');
         this._minimapFrame.src = 'assets/interface/visual_resource.png';
-        this._minimapFrame.style.cssText = `
-            position: absolute;
-            top: 50px;
-            right: 5px;
-            width: 150px;
-            height: 150px;
-            z-index: 16;
-            pointer-events: none;
-        `;
+        this._minimapFrame.style.cssText = 'position:absolute;top:50px;right:5px;width:150px;height:150px;z-index:16;pointer-events:none;';
 
         if (this._container) {
             this._container.appendChild(this._minimap);
@@ -434,15 +314,11 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
-    // ============================================================
-    //  ЛОГИКА ПОДЗЕМКИ
-    // ============================================================
-
     _isAdjacentToOpen: function(d, col, row) {
-        const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-        for (let i = 0; i < dirs.length; i++) {
-            const nx = col + dirs[i][0];
-            const ny = row + dirs[i][1];
+        var dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+        for (var i = 0; i < dirs.length; i++) {
+            var nx = col + dirs[i][0];
+            var ny = row + dirs[i][1];
             if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
                 if (d.grid[ny][nx] && d.grid[ny][nx].open) return true;
             }
@@ -452,12 +328,12 @@ Sherwood.Dungeon2D5 = {
 
     _updateMinimap: function() {
         if (!this._minimapCtx || !this._dungeon) return;
-        const ctx = this._minimapCtx;
-        const d = this._dungeon;
-        const mapSize = 140;
-        const center = mapSize / 2;
-        const radius = mapSize / 2 - 4;
-        const cellSize = (radius * 2) / d.size;
+        var ctx = this._minimapCtx;
+        var d = this._dungeon;
+        var mapSize = 140;
+        var center = mapSize / 2;
+        var radius = mapSize / 2 - 4;
+        var cellSize = (radius * 2) / d.size;
         ctx.clearRect(0, 0, mapSize, mapSize);
         ctx.save();
         ctx.beginPath();
@@ -465,13 +341,13 @@ Sherwood.Dungeon2D5 = {
         ctx.clip();
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, mapSize, mapSize);
-        const offsetX = center - (d.px * cellSize + cellSize / 2);
-        const offsetY = center - (d.py * cellSize + cellSize / 2);
-        for (let row = 0; row < d.size; row++) {
-            for (let col = 0; col < d.size; col++) {
-                const cell = d.grid[row][col];
-                const x = col * cellSize + offsetX;
-                const y = row * cellSize + offsetY;
+        var offsetX = center - (d.px * cellSize + cellSize / 2);
+        var offsetY = center - (d.py * cellSize + cellSize / 2);
+        for (var row = 0; row < d.size; row++) {
+            for (var col = 0; col < d.size; col++) {
+                var cell = d.grid[row][col];
+                var x = col * cellSize + offsetX;
+                var y = row * cellSize + offsetY;
                 if (x + cellSize < 0 || x > mapSize || y + cellSize < 0 || y > mapSize) continue;
                 if (cell && cell.open) {
                     ctx.fillStyle = '#4a4a4a';
@@ -494,18 +370,18 @@ Sherwood.Dungeon2D5 = {
 
     _handleWallClick: function(e) {
         if (this._isMoving) return;
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const rect = this._renderer.domElement.getBoundingClientRect();
-        const mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        const raycaster = new THREE.Raycaster();
+        var rect = this._renderer.domElement.getBoundingClientRect();
+        var mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        var mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        var raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this._camera);
-        const intersects = raycaster.intersectObjects(this._group.children, false);
-        for (let i = 0; i < intersects.length; i++) {
-            const obj = intersects[i].object;
+        var intersects = raycaster.intersectObjects(this._group.children, false);
+        for (var i = 0; i < intersects.length; i++) {
+            var obj = intersects[i].object;
             if (obj.userData && obj.userData.openable) {
-                const dist = Math.abs(obj.userData.gridX - d.px) + Math.abs(obj.userData.gridY - d.py);
+                var dist = Math.abs(obj.userData.gridX - d.px) + Math.abs(obj.userData.gridY - d.py);
                 if (dist === 1) this._openWall(obj.userData.gridX, obj.userData.gridY);
                 break;
             }
@@ -513,9 +389,9 @@ Sherwood.Dungeon2D5 = {
     },
 
     _openWall: function(gridX, gridY) {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[gridY][gridX];
+        var cell = d.grid[gridY][gridX];
         if (!cell || !cell.isPath) return;
         cell.open = true;
         cell.type = 1;
@@ -535,17 +411,17 @@ Sherwood.Dungeon2D5 = {
 
     _moveForward: function() {
         if (this._isMoving) return;
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        let dx = 0, dy = 0;
+        var dx = 0, dy = 0;
         if (this._dir === 0) dy = -1;
         else if (this._dir === 1) dx = 1;
         else if (this._dir === 2) dy = 1;
         else dx = -1;
-        const nx = d.px + dx;
-        const ny = d.py + dy;
+        var nx = d.px + dx;
+        var ny = d.py + dy;
         if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
-        const cell = d.grid[ny][nx];
+        var cell = d.grid[ny][nx];
         if (!cell || !cell.isPath) return;
         if (!cell.open) { cell.open = true; cell.type = 1; }
         this._fromX = d.px;
@@ -579,9 +455,9 @@ Sherwood.Dungeon2D5 = {
 
     _onInteract: function() {
         if (!this._interactType) return;
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell) return;
         switch(this._interactType) {
             case 'lootBag': if (cell.lootBag && !cell.lootCollected) this._collectLootBag(); break;
@@ -599,12 +475,11 @@ Sherwood.Dungeon2D5 = {
     },
 
     _collectLootBag: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell || !cell.lootBag || cell.lootCollected) return;
         cell.lootCollected = true;
-        // Добавляем награду в Bag
         if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addLoot) {
             Sherwood.Bag.addLoot({
                 silver: 50 + Math.floor(Math.random() * 100),
@@ -612,15 +487,15 @@ Sherwood.Dungeon2D5 = {
                 items: []
             });
         }
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('💰 Найден мешок с лутом!');
+        if (typeof UI !== 'undefined' && UI._showToast) {
+            UI._showToast('💰 Найден мешок с лутом!');
         }
     },
 
     _collectChest: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell || !cell.chest || cell.looted) return;
         cell.looted = true;
         if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addLoot) {
@@ -630,15 +505,15 @@ Sherwood.Dungeon2D5 = {
                 items: []
             });
         }
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('📦 Сундук открыт!');
+        if (typeof UI !== 'undefined' && UI._showToast) {
+            UI._showToast('📦 Сундук открыт!');
         }
     },
 
     _collectAltar: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell || !cell.altar || cell.altarCollected) return;
         cell.altarCollected = true;
         if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addLoot) {
@@ -647,15 +522,15 @@ Sherwood.Dungeon2D5 = {
                 exp: 50 + Math.floor(Math.random() * 100)
             });
         }
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('✨ Алтарь благословил тебя!');
+        if (typeof UI !== 'undefined' && UI._showToast) {
+            UI._showToast('✨ Алтарь благословил тебя!');
         }
     },
 
     _collectCauldron: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell || !cell.cauldron || cell.cauldronCollected) return;
         cell.cauldronCollected = true;
         if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addLoot) {
@@ -664,51 +539,50 @@ Sherwood.Dungeon2D5 = {
                 gold: 5 + Math.floor(Math.random() * 15)
             });
         }
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('🧪 Котёл с зельем!');
+        if (typeof UI !== 'undefined' && UI._showToast) {
+            UI._showToast('🧪 Котёл с зельем!');
         }
     },
 
     _collectPotion: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell || !cell.potion || cell.potionCollected) return;
         cell.potionCollected = true;
-        // Восстанавливаем HP
-        const p = Sherwood.getPlayer();
+        var p = Sherwood.getPlayer();
         if (p && p.stats) {
-            const heal = Math.floor(p.stats.maxHp * 0.2);
+            var heal = Math.floor(p.stats.maxHp * 0.2);
             p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
             Sherwood.saveGame();
         }
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('💚 Зелье восстановило HP!');
+        if (typeof UI !== 'undefined' && UI._showToast) {
+            UI._showToast('💚 Зелье восстановило HP!');
         }
     },
 
     _completeDungeon: function() {
         if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.complete) {
-            const reward = Sherwood.Dungeon.complete();
+            var reward = Sherwood.Dungeon.complete();
             if (typeof Sherwood.Bag !== 'undefined' && Sherwood.Bag.addLoot) {
                 Sherwood.Bag.addLoot(reward);
             }
         }
         this.destroy();
-        if (typeof window.showHomeScreen === 'function') {
-            window.showHomeScreen();
+        if (typeof UI !== 'undefined' && UI.loadHome) {
+            UI.loadHome();
         }
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('🏆 Подземка пройдена!');
+        if (typeof UI !== 'undefined' && UI._showToast) {
+            UI._showToast('🏆 Подземка пройдена!');
         }
     },
 
     _checkInteract: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const cell = d.grid[d.py][d.px];
+        var cell = d.grid[d.py][d.px];
         if (!cell) return;
-        let type = null, icon = null;
+        var type = null, icon = null;
         if (cell.lootBag && !cell.lootCollected) { type = 'lootBag'; icon = this._images.loot_bag; }
         else if (cell.chest && !cell.looted) { type = 'chest'; icon = this._images.chest_locked; }
         else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
@@ -725,21 +599,17 @@ Sherwood.Dungeon2D5 = {
         }
     },
 
-    // ============================================================
-    //  3D РЕНДЕРИНГ
-    // ============================================================
-
     _createParticles: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const center = Math.floor(d.size / 2);
+        var center = Math.floor(d.size / 2);
 
         if (!this._particleTexture) {
-            const particleCanvas = document.createElement('canvas');
+            var particleCanvas = document.createElement('canvas');
             particleCanvas.width = 32;
             particleCanvas.height = 32;
-            const pctx = particleCanvas.getContext('2d');
-            const gradient = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            var pctx = particleCanvas.getContext('2d');
+            var gradient = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
             gradient.addColorStop(0, 'rgba(255,255,200,1)');
             gradient.addColorStop(0.3, 'rgba(255,220,100,0.8)');
             gradient.addColorStop(1, 'rgba(255,200,50,0)');
@@ -748,16 +618,16 @@ Sherwood.Dungeon2D5 = {
             this._particleTexture = new THREE.CanvasTexture(particleCanvas);
         }
 
-        for (let row = 0; row < d.size; row++) {
-            for (let col = 0; col < d.size; col++) {
-                const cell = d.grid[row][col];
+        for (var row = 0; row < d.size; row++) {
+            for (var col = 0; col < d.size; col++) {
+                var cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
-                const hasItem = (cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) ||
+                var hasItem = (cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) ||
                     (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) ||
                     (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked);
                 if (hasItem) {
-                    for (let i = 0; i < 3; i++) {
-                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    for (var i = 0; i < 3; i++) {
+                        var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
                             map: this._particleTexture,
                             transparent: true,
                             opacity: 0.8,
@@ -788,14 +658,14 @@ Sherwood.Dungeon2D5 = {
     },
 
     _updateParticles: function(time) {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const center = Math.floor(d.size / 2);
-        for (let i = 0; i < this._particles.length; i++) {
-            const p = this._particles[i];
+        var center = Math.floor(d.size / 2);
+        for (var i = 0; i < this._particles.length; i++) {
+            var p = this._particles[i];
             if (!p.visible) continue;
-            const cell = d.grid[p.userData.gridY][p.userData.gridX];
-            const hasItem = cell && ((cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) ||
+            var cell = d.grid[p.userData.gridY][p.userData.gridX];
+            var hasItem = cell && ((cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) ||
                 (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) ||
                 (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked));
             if (!hasItem) { p.visible = false; continue; }
@@ -806,18 +676,16 @@ Sherwood.Dungeon2D5 = {
     },
 
     _processBrazierFrame: function() {
-        const self = this;
+        var self = this;
 
         function processFrame() {
             if (!self._brazierVideo || !self._brazierCtx) return;
             if (self._brazierVideo.readyState >= 2) {
                 self._brazierCtx.drawImage(self._brazierVideo, 0, 0, 256, 256);
-                const imageData = self._brazierCtx.getImageData(0, 0, 256, 256);
-                const data = imageData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i],
-                        g = data[i + 1],
-                        b = data[i + 2];
+                var imageData = self._brazierCtx.getImageData(0, 0, 256, 256);
+                var data = imageData.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var r = data[i], g = data[i + 1], b = data[i + 2];
                     if (g > 80 && g > r * 1.4 && g > b * 1.4) data[i + 3] = 0;
                 }
                 self._brazierCtx.putImageData(imageData, 0, 0);
@@ -829,9 +697,9 @@ Sherwood.Dungeon2D5 = {
     },
 
     _addBraziers: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const center = Math.floor(d.size / 2);
+        var center = Math.floor(d.size / 2);
         if (!this._brazierVideo) return;
         if (!this._brazierCanvas) {
             this._brazierCanvas = document.createElement('canvas');
@@ -843,26 +711,24 @@ Sherwood.Dungeon2D5 = {
             this._brazierTexture.magFilter = THREE.LinearFilter;
             this._processBrazierFrame();
         }
-        for (let row = 1; row < d.size - 1; row++) {
-            for (let col = 1; col < d.size - 1; col++) {
-                const isPerimeter = (row === 1 || row === d.size - 2 || col === 1 || col === d.size - 2);
+        for (var row = 1; row < d.size - 1; row++) {
+            for (var col = 1; col < d.size - 1; col++) {
+                var isPerimeter = (row === 1 || row === d.size - 2 || col === 1 || col === d.size - 2);
                 if (!isPerimeter) continue;
-                const cell = d.grid[row][col];
+                var cell = d.grid[row][col];
                 if (!cell || !cell.open) continue;
                 if ((row + col) % 5 !== 0) continue;
-                let offsetX = 0.35,
-                    offsetZ = 0.35;
-                const dirs = [
+                var offsetX = 0.35, offsetZ = 0.35;
+                var dirs = [
                     { dx: -1, dy: 0, ox: 0.35, oz: 0 },
                     { dx: 1, dy: 0, ox: -0.35, oz: 0 },
                     { dx: 0, dy: -1, ox: 0, oz: 0.35 },
                     { dx: 0, dy: 1, ox: 0, oz: -0.35 }
                 ];
-                for (let i = 0; i < dirs.length; i++) {
-                    const nx = col + dirs[i].dx,
-                        ny = row + dirs[i].dy;
+                for (var i = 0; i < dirs.length; i++) {
+                    var nx = col + dirs[i].dx, ny = row + dirs[i].dy;
                     if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
-                        const neighbor = d.grid[ny][nx];
+                        var neighbor = d.grid[ny][nx];
                         if (neighbor && !neighbor.open && !neighbor.isPath) {
                             offsetX = dirs[i].ox;
                             offsetZ = dirs[i].oz;
@@ -870,7 +736,7 @@ Sherwood.Dungeon2D5 = {
                         }
                     }
                 }
-                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
                     map: this._brazierTexture,
                     transparent: true,
                     depthWrite: false
@@ -883,15 +749,12 @@ Sherwood.Dungeon2D5 = {
     },
 
     _buildMesh: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
         while (this._group.children.length > 0) this._group.remove(this._group.children[0]);
         this._particles = [];
 
-        const size = d.size,
-            wallHeight = 1.2,
-            cellSize = 1,
-            center = Math.floor(size / 2);
+        var size = d.size, wallHeight = 1.2, cellSize = 1, center = Math.floor(size / 2);
 
         if (!this._cachedMats.ceil) {
             this._cachedMats.ceil = new THREE.MeshStandardMaterial({
@@ -900,16 +763,14 @@ Sherwood.Dungeon2D5 = {
             });
         }
         if (!this._cachedMats.floorMats) {
-            this._cachedMats.floorMats = this._floors.map(tex => new THREE.MeshStandardMaterial({
-                map: tex,
-                roughness: 0.9
-            }));
+            this._cachedMats.floorMats = this._floors.map(function(tex) {
+                return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 });
+            });
         }
         if (!this._cachedMats.wallMats) {
-            this._cachedMats.wallMats = this._walls.map(tex => new THREE.MeshStandardMaterial({
-                map: tex,
-                roughness: 0.7
-            }));
+            this._cachedMats.wallMats = this._walls.map(function(tex) {
+                return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 });
+            });
         }
         if (!this._cachedMats.openableMat) {
             this._cachedMats.openableMat = new THREE.MeshStandardMaterial({
@@ -918,35 +779,34 @@ Sherwood.Dungeon2D5 = {
             });
         }
 
-        const floorGeo = new THREE.PlaneGeometry(cellSize, cellSize);
-        const ceilGeo = new THREE.PlaneGeometry(cellSize, cellSize);
-        const wallGeo = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
+        var floorGeo = new THREE.PlaneGeometry(cellSize, cellSize);
+        var ceilGeo = new THREE.PlaneGeometry(cellSize, cellSize);
+        var wallGeo = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
 
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                const x = col - center,
-                    z = row - center;
-                const cell = d.grid[row][col];
+        for (var row = 0; row < size; row++) {
+            for (var col = 0; col < size; col++) {
+                var x = col - center, z = row - center;
+                var cell = d.grid[row][col];
 
-                const floor = new THREE.Mesh(floorGeo, this._cachedMats.floorMats[Math.abs(col * 3 + row * 5) % this._floors.length]);
+                var floor = new THREE.Mesh(floorGeo, this._cachedMats.floorMats[Math.abs(col * 3 + row * 5) % this._floors.length]);
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(x, 0, z);
                 this._group.add(floor);
 
-                const ceil = new THREE.Mesh(ceilGeo, this._cachedMats.ceil);
+                var ceil = new THREE.Mesh(ceilGeo, this._cachedMats.ceil);
                 ceil.rotation.x = Math.PI / 2;
                 ceil.position.set(x, wallHeight, z);
                 this._group.add(ceil);
 
                 if (cell && !cell.open && !cell.isPath) {
-                    const wall = new THREE.Mesh(wallGeo, this._cachedMats.wallMats[Math.abs(col * 7 + row * 13) % this._walls.length]);
+                    var wall = new THREE.Mesh(wallGeo, this._cachedMats.wallMats[Math.abs(col * 7 + row * 13) % this._walls.length]);
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: false, gridX: col, gridY: row };
                     this._group.add(wall);
                 }
 
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    const wall = new THREE.Mesh(wallGeo, this._cachedMats.openableMat);
+                    var wall = new THREE.Mesh(wallGeo, this._cachedMats.openableMat);
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: true, gridX: col, gridY: row };
                     this._group.add(wall);
@@ -960,25 +820,24 @@ Sherwood.Dungeon2D5 = {
     },
 
     _addObjectSprites: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const size = d.size,
-            center = Math.floor(size / 2);
+        var size = d.size, center = Math.floor(size / 2);
 
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                const cell = d.grid[row][col];
+        for (var row = 0; row < size; row++) {
+            for (var col = 0; col < size; col++) {
+                var cell = d.grid[row][col];
                 if (!cell) continue;
                 if (!cell.open && !cell.isPath) continue;
                 if (!cell.open && cell.isPath && !this._isAdjacentToOpen(d, col, row)) continue;
 
                 if (!cell.monster && !cell.lootBag && !cell.chest && !cell.altar && !cell.cauldron && !cell.potion && !cell.exit) continue;
 
-                let tex = null;
+                var tex = null;
                 if (cell.monster) {
-                    const id = cell.monsterId || 'plague_crow.png';
+                    var id = cell.monsterId || 'plague_crow.png';
                     if (!this._monsterImages[id]) {
-                        const loader = new THREE.TextureLoader();
+                        var loader = new THREE.TextureLoader();
                         this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
                     }
                     tex = this._monsterImages[id];
@@ -995,18 +854,16 @@ Sherwood.Dungeon2D5 = {
                 else if (cell.exit && !cell.locked) tex = this._images.exit;
 
                 if (tex && tex.image) {
-                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-                    let scale = 0.5,
-                        sy = 0.15;
-                    if (cell.exit && cell.locked) { scale = 0.5;
-                        sy = 0.15; } else if (cell.exit && !cell.locked) { scale = 1.6;
-                        sy = 0.55; } else if (cell.monster) { scale = 0.7;
-                        sy = 0.35; } else if (cell.chest) { scale = 0.4;
-                        sy = 0.12; } else if (cell.lootBag !== undefined) { scale = 0.35;
-                        sy = 0.1; } else if (cell.potion) { scale = 0.25;
-                        sy = 0.1; } else if (cell.altar) { scale = 0.4;
-                        sy = 0.18; } else if (cell.cauldron) { scale = 0.35;
-                        sy = 0.1; }
+                    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                    var scale = 0.5, sy = 0.15;
+                    if (cell.exit && cell.locked) { scale = 0.5; sy = 0.15; }
+                    else if (cell.exit && !cell.locked) { scale = 1.6; sy = 0.55; }
+                    else if (cell.monster) { scale = 0.7; sy = 0.35; }
+                    else if (cell.chest) { scale = 0.4; sy = 0.12; }
+                    else if (cell.lootBag !== undefined) { scale = 0.35; sy = 0.1; }
+                    else if (cell.potion) { scale = 0.25; sy = 0.1; }
+                    else if (cell.altar) { scale = 0.4; sy = 0.18; }
+                    else if (cell.cauldron) { scale = 0.35; sy = 0.1; }
 
                     sprite.position.set(col - center, sy, row - center);
                     sprite.scale.set(scale, scale, 1);
@@ -1017,13 +874,12 @@ Sherwood.Dungeon2D5 = {
     },
 
     _updateCamera: function() {
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (!d) return;
-        const center = Math.floor(d.size / 2);
-        let posX = d.px - center,
-            posZ = d.py - center;
+        var center = Math.floor(d.size / 2);
+        var posX = d.px - center, posZ = d.py - center;
         if (this._isMoving) {
-            const t = this._ease(this._moveT);
+            var t = this._ease(this._moveT);
             posX = (this._fromX - center) + ((this._toX - center) - (this._fromX - center)) * t;
             posZ = (this._fromY - center) + ((this._toY - center) - (this._fromY - center)) * t;
         }
@@ -1032,15 +888,14 @@ Sherwood.Dungeon2D5 = {
     },
 
     _updateHP: function() {
-        const p = Sherwood.getPlayer();
+        var p = Sherwood.getPlayer();
         if (!p) return;
-        const hp = p.stats.hp || 0,
-            maxHp = p.stats.maxHp || 100;
-        const fill = document.getElementById('hp-fill-2d5');
-        const text = document.getElementById('hp-text-2d5');
+        var hp = p.stats.hp || 0, maxHp = p.stats.maxHp || 100;
+        var fill = document.getElementById('hp-fill-2d5');
+        var text = document.getElementById('hp-text-2d5');
         if (fill) fill.style.width = Math.round((hp / maxHp) * 100) + '%';
         if (text) text.textContent = hp + '/' + maxHp;
-        const d = this._dungeon;
+        var d = this._dungeon;
         if (d && this._killCounter) {
             this._killCounter.textContent = (d.monstersKilled || 0) + '/' + (d.totalMonsters || 0);
         }
@@ -1048,12 +903,7 @@ Sherwood.Dungeon2D5 = {
 
     _ease: function(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; },
 
-    // ============================================================
-    //  RENDER — ОСНОВНОЙ МЕТОД
-    // ============================================================
-
     render: function() {
-        // Создаём контейнер если его нет
         if (!this._container) {
             this.init();
         }
@@ -1061,13 +911,13 @@ Sherwood.Dungeon2D5 = {
         this._dungeon = Sherwood.Dungeon.getDungeon();
         if (!this._dungeon) {
             console.warn('🏚️ Данжена нет, создаём новый');
-            if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.generateDungeon) {
-                this._dungeon = Sherwood.Dungeon.generateDungeon();
+            if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.generate) {
+                this._dungeon = Sherwood.Dungeon.generate('forest', 1);
             } else {
-                alert('❌ Ошибка генерации подземки');
+                UI._showToast('❌ Ошибка генерации подземки');
                 this.destroy();
-                if (typeof window.showHomeScreen === 'function') {
-                    window.showHomeScreen();
+                if (typeof UI !== 'undefined' && UI.loadHome) {
+                    UI.loadHome();
                 }
                 return;
             }
@@ -1080,7 +930,6 @@ Sherwood.Dungeon2D5 = {
             this._loadDungeonTextures(this._dungeon.id);
         }
 
-        // Показываем контейнер
         if (this._container) {
             this._container.style.display = 'block';
         }
@@ -1096,9 +945,9 @@ Sherwood.Dungeon2D5 = {
     },
 
     _startLoop: function() {
-        const self = this;
-        let lastTime = performance.now();
-        let frameSkip = 0;
+        var self = this;
+        var lastTime = performance.now();
+        var frameSkip = 0;
 
         function loop(time) {
             self._renderLoop = requestAnimationFrame(loop);
@@ -1107,7 +956,7 @@ Sherwood.Dungeon2D5 = {
             if (frameSkip < 2) return;
             frameSkip = 0;
 
-            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            var dt = Math.min((time - lastTime) / 1000, 0.1);
             lastTime = time;
 
             if (self._isMoving) {
@@ -1124,11 +973,11 @@ Sherwood.Dungeon2D5 = {
                         }, 1000);
                     }
 
-                    const d = self._dungeon;
+                    var d = self._dungeon;
                     if (d) {
                         d.px = self._toX;
                         d.py = self._toY;
-                        const cell = d.grid[d.py][d.px];
+                        var cell = d.grid[d.py][d.px];
                         if (cell && cell.exit && !cell.locked) {
                             self._completeDungeon();
                             return;
@@ -1158,10 +1007,6 @@ Sherwood.Dungeon2D5 = {
         this._renderLoop = requestAnimationFrame(loop);
     },
 
-    // ============================================================
-    //  DESTROY — ЗАКРЫТИЕ ПОДЗЕМКИ
-    // ============================================================
-
     destroy: function() {
         if (this._renderLoop) {
             cancelAnimationFrame(this._renderLoop);
@@ -1178,10 +1023,8 @@ Sherwood.Dungeon2D5 = {
 
         if (this._container) {
             this._container.style.display = 'none';
-            // Не удаляем, чтобы можно было переиспользовать
         }
 
-        // Очищаем сцену
         if (this._group) {
             while (this._group.children.length > 0) {
                 this._group.remove(this._group.children[0]);
@@ -1199,9 +1042,7 @@ Sherwood.Dungeon2D5 = {
     }
 };
 
-// ---------- ИНИЦИАЛИЗАЦИЯ ПРИ СТАРТЕ ----------
-if (typeof Sherwood === 'undefined') {
-    window.Sherwood = {};
-}
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.Dungeon2D5 = Sherwood.Dungeon2D5;
 
 console.log('🏚️ Dungeon2D5 загружен!');
