@@ -212,17 +212,20 @@ canvas {
 
 #topBar {
     position: absolute;
-    top: 0;
+    top: 2%; /* Задаем небольшой отступ от самого верха экрана */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Иконки на верху */
-    gap: 0; /* БЕЗ ПРОБЕЛОВ между панельками */
-    z-index: 20;
+    align-items: flex-start;
+    /* Увеличиваем max-width, чтобы 6 элементов по ~75-80px не сжимались */
     width: 100%;
-    max-width: 450px;
+    max-width: 500px; 
+    z-index: 20;
     pointer-events: none;
+    /* ОТРИЦАТЕЛЬНЫЙ GAP: сдвигает колонки ближе друг к другу, 
+       чтобы каменные панельки снизу перекрывали друг друга без щелей */
+    gap: -4px; 
 }
 
 .stat-box {
@@ -230,34 +233,33 @@ canvas {
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
-    margin: 0; /* Без отступов */
+    margin: 0;
 }
 
-/* Иконки в ряду */
+/* Иконки в ряду — на макете они крупные и заходят на панельки */
 .stat-box .icon {
-    width: 50px;
-    height: 50px;
+    width: 62px; /* Увеличено, чтобы соответствовать пропорциям макета */
+    height: 62px;
     object-fit: contain;
     position: relative;
-    z-index: 1;
-    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8));
+    z-index: 3; /* Иконка должна быть строго НАД панелькой */
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
 }
 
-/* Панельки В РЯД ПОД ИКОНКАМИ — без пробелов */
+/* Панельки под иконками — теперь они слегка накладываются боками */
 .panel-bg {
-    width: 80px;
-    height: 30px;
+    width: 82px; /* Панелька чуть шире, чтобы края заходили друг под друга */
+    height: 32px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     display: flex;
     justify-content: center;
-    align-items: flex-end;
-    padding-bottom: 4px;
+    align-items: center; /* Центрируем текст по вертикали, как на макете */
+    /* Сдвигаем панельку вверх, чтобы верхний край спрятался под круглую иконку */
+    margin-top: -12px; 
     position: relative;
     z-index: 2;
-    margin-top: 0; /* Без отступов от иконки */
-    margin-left: -1px; /* Чтобы панельки стыковались без щелей */
 }
 
 /* Цифры внутри панелек */
@@ -270,30 +272,34 @@ canvas {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Небольшой сдвиг вниз, если сама текстура панельки имеет рамку сверху */
+    padding-top: 2px; 
 }
 
+/* Адаптив под мобилки */
 @media (max-width: 768px) {
     #topBar {
-        gap: 0;
+        gap: -2px;
         max-width: 100%;
+        top: 1%;
     }
 
     .stat-box .icon {
-        width: 35px;
-        height: 35px;
+        width: 44px;
+        height: 44px;
     }
 
     .panel-bg {
-        width: 55px;
-        height: 22px;
-        margin-left: -1px;
-        padding-bottom: 2px;
+        width: 58px;
+        height: 24px;
+        margin-top: -8px;
     }
 
     .stat-value {
         font-size: 10px;
     }
 }
+
 /* =========================================
    ПЛАШКИ В МЕНЮ
    ========================================= */
