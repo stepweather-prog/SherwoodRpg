@@ -243,48 +243,50 @@ canvas {
 }
 
 /* =========================================
-   КАРУСЕЛЬ ЭЛЕМЕНТОВ (ПОЛОТНА 1024х1024)
+   ФИНАЛЬНАЯ КАРУСЕЛЬ ЭЛЕМЕНТОВ (ПОЛОТНА 1024х1024)
    ========================================= */
 
-/* Иконка раздела и стрелочки — это полные квадратные слои, ложатся 1 в 1 на арку */
+/* Иконка раздела и стрелочки растягиваются ровно на весь квадрат gameZone */
 #sectionIcon,
 #carouselLeftArrow,
 #carouselRightArrow {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
     object-fit: contain !important; /* Удерживает квадратный масштаб */
-    z-index: 15;
+    z-index: 15 !important;
+    display: block !important; /* Гарантирует, что JS не скрыл их по ошибке */
 }
 
-/* Принудительно возвращаем стрелкам кликабельность и поднимаем слой */
+/* Принудительно поднимаем стрелки на самый верхний слой, чтобы по ним можно было кликать */
 #carouselLeftArrow,
 #carouselRightArrow {
-    z-index: 17;
-    pointer-events: auto;
+    z-index: 25 !important;
+    pointer-events: auto !important; /* Фикс кликабельности для JS */
 }
 
-/* Единственный вырезанный элемент — доска с надписью «Профиль» */
+/* Доска с надписью «Профиль» — единственный вырезанный элемент */
 #sectionName {
-    position: absolute;
-    top: 35.2%; /* Положение на свитке по вертикали */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 32.5%; /* Четкий размер доски внутри арки */
-    height: 5.5%;
+    position: absolute !important;
+    top: 35.2% !important; /* Точное положение на свитке по вертикали */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 32.5% !important; /* Четкий размер доски внутри арки */
+    height: 5.5% !important;
     background: url('../assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat !important;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #ffa500;
-    font-family: 'Times New Roman', serif;
-    font-size: clamp(12px, 1.8vw, 18px);
-    font-weight: bold;
-    text-shadow: 0 2px 4px #000;
-    z-index: 16; /* Под стрелками, но над иконкой */
+    display: flex !important; /* Центрирует текст внутри доски */
+    justify-content: center !important;
+    align-items: center !important;
+    color: #ffa500 !important;
+    font-family: 'Times New Roman', serif !important;
+    font-size: clamp(12px, 1.8vw, 18px) !important;
+    font-weight: bold !important;
+    text-shadow: 0 2px 4px #000 !important;
+    z-index: 16 !important; /* Под стрелками, но над иконкой */
 }
+
 
 /* =========================================
    ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ И РАЗДЕЛЫ
