@@ -19,7 +19,7 @@ const PlayerStats = {
     hp: 100,
     maxHp: 100,
     gold: 150,
-    silver:150,
+    silver: 150,
     level: 1,
     skillPoints: 3,
     stats: {
@@ -279,6 +279,21 @@ function enterSection() {
         default:
             showGenericScreen(section.name, '📌');
     }
+}
+
+// ============================================================
+//  ВОЗВРАТ НА ГЛАВНУЮ
+// ============================================================
+
+function showHomeScreen() {
+    closeAllScreens();
+    homeScreen.style.display = 'flex';
+    menuScreen.style.display = 'none';
+    currentScreen = 'home';
+    updateTopBar();
+    initMainCarousel();
+    if (!isMusicPlaying) startMainMusic();
+    console.log('🏠 Возврат на главную');
 }
 
 // ---------- ЗАКРЫТИЕ ВСЕХ ЭКРАНОВ ----------
