@@ -1,8 +1,7 @@
-// js/menu.js — НОВАЯ РАБОЧАЯ ВЕРСИЯ (БЕЗ СТАРОГО UI)
+// js/menu.js 
 const Menu = {
     buildings: [
         { icon: 'Квесты', name: 'Квесты' },
-        { icon: 'Арена', name: 'Арена' },
         { icon: 'Рынок', name: 'Рынок' },
         { icon: 'Таверна', name: 'Таверна' },
         { icon: 'Кузница', name: 'Кузница' },
@@ -10,7 +9,6 @@ const Menu = {
         { icon: 'Бестиарий', name: 'Бестиарий' },
         { icon: 'Очаг', name: 'Очаг' },
         { icon: 'Порталы', name: 'Порталы' },
-        
         { icon: 'Профиль', name: 'Профиль' },
         { icon: 'Рейд', name: 'Рейд' },
         { icon: 'Подземка', name: 'Подземка' },
@@ -41,15 +39,24 @@ const Menu = {
         ceiling.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:25%;background:url("assets/assets2/Sherwood_Square/1area_ceiling_moon.png") center/cover no-repeat;z-index:1;';
         this.screen.appendChild(ceiling);
         
-       // СЛОЙ 2: Стена
-const wall = document.createElement('div');
-wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:75%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
-this.screen.appendChild(wall);
-       
+        // Стена
+        const wall = document.createElement('div');
+        wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;background:url("assets/assets2/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
+        this.screen.appendChild(wall);
+        
+        // Пол
+        const floor = document.createElement('div');
+        floor.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:25%;display:flex;z-index:1;';
+        for (let i = 1; i <= 3; i++) {
+            const tile = document.createElement('div');
+            tile.style.cssText = `width:33.33%;height:100%;background:url('assets/assets2/Sherwood_Square/floor${i}.png') center/cover no-repeat;`;
+            floor.appendChild(tile);
+        }
+        this.screen.appendChild(floor);
         
         // Иконки
         this.iconContainer = document.createElement('div');
-        this.iconContainer.style.cssText = 'position:absolute;top:15%;left:0;width:100%;height:50%;overflow:hidden;z-index:3;';
+        this.iconContainer.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;overflow:hidden;z-index:3;';
         this.screen.appendChild(this.iconContainer);
         this.buildCarousel();
         
@@ -59,7 +66,11 @@ this.screen.appendChild(wall);
         topSeam.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(topSeam);
         
-        
+        // Разделитель нижний
+        const bottomSeam = document.createElement('img');
+        bottomSeam.src = 'assets/assets2/game_details/seam_bottom.png';
+        bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
+        this.screen.appendChild(bottomSeam);
         
         // Анимация
         this.stepVideo = document.createElement('video');
@@ -131,7 +142,6 @@ this.screen.appendChild(wall);
     getIconFile(icon) {
         const map = {
             'Квесты': 'quest.png',
-            'Арена': 'arena.png',
             'Рынок': 'sherwood_market.png',
             'Таверна': 'tavern.png',
             'Кузница': 'forge.png',
@@ -139,7 +149,6 @@ this.screen.appendChild(wall);
             'Бестиарий': 'bestiary.png',
             'Очаг': 'button_hearth.png',
             'Порталы': 'portal.png',
-            'Чат': 'chat_button.png',
             'Профиль': 'player_profile.png',
             'Рейд': 'raid.png',
             'Подземка': 'subway.png',
