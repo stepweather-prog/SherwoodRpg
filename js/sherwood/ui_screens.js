@@ -116,24 +116,51 @@ var UI = {
     },
 
     _openScreen: function(title, bgKey, html, backFn) {
-        var goBack = backFn || 'UI.loadHome()';
-        try {
-            if (this._screenLayer) {
-                this._screenLayer.innerHTML = '<div style="min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-shrink:0;"><button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">' + title + '</span></div><div style="flex:1;overflow-y:auto;">' + html + '</div></div>';
-                this._screenLayer.style.display = 'block';
-            }
-        } catch(e) {}
-    },
-
+    var goBack = backFn || 'UI.loadHome()';
+    try {
+        if (this._screenLayer) {
+            // Убираем затемнение на весь экран, делаем прозрачный фон
+            this._screenLayer.style.background = 'rgba(0,0,0,0)';
+            this._screenLayer.style.pointerEvents = 'none';
+            
+            // Контент по центру, поверх арки
+            this._screenLayer.innerHTML = `
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:600px;max-height:85vh;background:rgba(10,10,20,0.92);border:3px solid #8B4513;border-radius:12px;padding:16px;box-shadow:0 0 60px rgba(0,0,0,0.9);pointer-events:auto;overflow-y:auto;z-index:10000;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0;border-bottom:1px solid #333;padding-bottom:8px;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
+                            <img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                        </button>
+                        <span style="color:#e0c080;font-size:1.1em;font-weight:bold;">${title}</span>
+                    </div>
+                    <div style="overflow-y:auto;max-height:calc(85vh - 80px);">${html}</div>
+                </div>
+            `;
+            this._screenLayer.style.display = 'block';
+        }
+    } catch(e) {}
+},
     _openScreenScrollable: function(title, bgKey, html, backFn) {
-        var goBack = backFn || 'UI.loadHome()';
-        try {
-            if (this._screenLayer) {
-                this._screenLayer.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;"><div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;"><button onclick="' + goBack + '" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;"><img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;"></button><span style="color:#e0c080;font-size:1.1em;">' + title + '</span></div><div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 12px 20px 12px;-webkit-overflow-scrolling:touch;">' + html + '</div></div>';
-                this._screenLayer.style.display = 'block';
-            }
-        } catch(e) {}
-    },
+    var goBack = backFn || 'UI.loadHome()';
+    try {
+        if (this._screenLayer) {
+            this._screenLayer.style.background = 'rgba(0,0,0,0)';
+            this._screenLayer.style.pointerEvents = 'none';
+            
+            this._screenLayer.innerHTML = `
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;max-width:650px;max-height:88vh;background:rgba(10,10,20,0.95);border:3px solid #8B4513;border-radius:12px;padding:16px;box-shadow:0 0 60px rgba(0,0,0,0.9);pointer-events:auto;overflow-y:auto;z-index:10000;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0;border-bottom:1px solid #333;padding-bottom:8px;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
+                            <img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                        </button>
+                        <span style="color:#e0c080;font-size:1.1em;font-weight:bold;">${title}</span>
+                    </div>
+                    <div style="overflow-y:auto;max-height:calc(88vh - 80px);">${html}</div>
+                </div>
+            `;
+            this._screenLayer.style.display = 'block';
+        }
+    } catch(e) {}
+},
 
     _showPlaceholder: function(title, bgKey, backAction) {
         this._playSound('click');
