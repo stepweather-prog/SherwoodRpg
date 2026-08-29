@@ -1,4 +1,5 @@
-// js/sherwood/quests.js — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ
+// js/sherwood/quests.js — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ (С ИСПРАВЛЕНИЕМ)
+
 // Сначала создаём объект, иначе будет ошибка
 if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
@@ -135,8 +136,9 @@ Sherwood.Quests.playerAttack = function() {
             this.addBattleLog('🏆 ГЛАВА ПРОЙДЕНА!');
             setTimeout(() => {
                 this.closeBattleUI();
-                if (typeof Menu !== 'undefined' && Menu.showQuestsScreen) {
-                    Menu.showQuestsScreen();
+                // === ИСПРАВЛЕНИЕ: вместо Menu.showQuestsScreen() ===
+                if (typeof window.showHomeScreen === 'function') {
+                    window.showHomeScreen();
                 }
                 if (result.rewards) {
                     alert(`🏆 Глава пройдена!\n+${result.rewards.exp} опыта\n+${result.rewards.gold} золота\n+${result.rewards.silver} серебра`);
@@ -155,8 +157,9 @@ Sherwood.Quests.playerAttack = function() {
         this.addBattleLog('💀 ТЫ ПАЛ В БОЮ!');
         setTimeout(() => {
             this.closeBattleUI();
-            if (typeof Menu !== 'undefined' && Menu.showQuestsScreen) {
-                Menu.showQuestsScreen();
+            // === ИСПРАВЛЕНИЕ: вместо Menu.showQuestsScreen() ===
+            if (typeof window.showHomeScreen === 'function') {
+                window.showHomeScreen();
             }
             alert('💀 Ты погиб в битве! Потеряно 20% золота.');
             // Штраф за смерть
@@ -313,8 +316,9 @@ Sherwood.Quests.enemyAttackAfterSkill = function() {
         this.addBattleLog('💀 ТЫ ПАЛ В БОЮ!');
         setTimeout(() => {
             this.closeBattleUI();
-            if (typeof Menu !== 'undefined' && Menu.showQuestsScreen) {
-                Menu.showQuestsScreen();
+            // === ИСПРАВЛЕНИЕ: вместо Menu.showQuestsScreen() ===
+            if (typeof window.showHomeScreen === 'function') {
+                window.showHomeScreen();
             }
         }, 1500);
     }
@@ -411,6 +415,10 @@ Sherwood.Quests.startChapter = function(id) {
     
     return result;
 };
+
+// ===== ЭКСПОРТ =====
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.Quests = Sherwood.Quests;
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 
