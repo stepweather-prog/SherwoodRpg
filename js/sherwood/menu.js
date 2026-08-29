@@ -43,8 +43,8 @@ const Menu = {
         
         // СЛОЙ 2: Стена
 const wall = document.createElement('div');
-wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:75%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
-        
+wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:100%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
+this.screen.appendChild(wall);
        
         
         // Иконки
@@ -115,7 +115,7 @@ wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:75%;bac
             // Подпись (на панели)
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:absolute;bottom:18%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
+            label.style.cssText = 'position:absolute;bottom:28%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
             
             section.appendChild(img);
             section.appendChild(panel);
