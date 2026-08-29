@@ -207,98 +207,105 @@ canvas {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ГЛАВНАЯ) — ИКОНКИ + ПАНЕЛЬКИ В РЯД
+   ПЛАШКИ В МЕНЮ (ДЕРЕВЯННАЯ ПАНЕЛЬ)
    ========================================= */
 
-#topBar {
+#menuScreen img[src*="all_stat"] {
     position: absolute;
-    top: 2%; /* Задаем небольшой отступ от самого верха экрана */
+    top: 21%; /* Высота над головой героя (подгоните под макет) */
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    /* Увеличиваем max-width, чтобы 6 элементов по ~75-80px не сжимались */
-    width: 100%;
-    max-width: 500px; 
-    z-index: 20;
-    pointer-events: none;
-    /* ОТРИЦАТЕЛЬНЫЙ GAP: сдвигает колонки ближе друг к другу, 
-       чтобы каменные панельки снизу перекрывали друг друга без щелей */
-    gap: -4px; 
+    
+    /* Ограничиваем плашку, чтобы она была компактной и не перекрывала стрелки */
+    width: 320px !important; 
+    height: 55px !important;
+    object-fit: fill !important;
+    
+    z-index: 15; /* Лежит под стрелками и текстом */
 }
 
-.stat-box {
+/* Контейнер для текста и стрелочек, который садится ровно поверх плашки */
+.menu-controls {
+    position: absolute;
+    top: 21%; /* Должен строго совпадать с top плашки */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Размеры один в один как у деревянной плашки */
+    width: 320px; 
+    height: 55px;
+    
     display: flex;
-    flex-direction: column;
+    /* Разносит левую стрелку, текст и правую стрелку по краям плашки */
+    justify-content: space-between; 
     align-items: center;
-    pointer-events: auto;
-    margin: 0;
+    
+    /* Паддинги, чтобы стрелочки красиво сидели чуть внутри деревяшки, а не вываливались */
+    padding: 0 10px; 
+    
+    z-index: 25; /* Выше плашки, чтобы всё отлично кликалось */
 }
 
-/* Иконки в ряду — на макете они крупные и заходят на панельки */
-.stat-box .icon {
-    width: 62px; /* Увеличено, чтобы соответствовать пропорциям макета */
-    height: 62px;
-    object-fit: contain;
-    position: relative;
-    z-index: 3; /* Иконка должна быть строго НАД панелькой */
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
-}
-
-/* Панельки под иконками — теперь они слегка накладываются боками */
-.panel-bg {
-    width: 82px; /* Панелька чуть шире, чтобы края заходили друг под друга */
-    height: 32px;
-    background-image: url('../assets/assets2/icons/main_panel.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+/* Ваши кнопки-стрелочки для листания */
+.menu-arrow {
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    pointer-events: auto; /* Разрешаем клики */
     display: flex;
     justify-content: center;
-    align-items: center; /* Центрируем текст по вертикали, как на макете */
-    /* Сдвигаем панельку вверх, чтобы верхний край спрятался под круглую иконку */
-    margin-top: -12px; 
-    position: relative;
-    z-index: 2;
+    align-items: center;
+    transition: transform 0.1s;
 }
 
-/* Цифры внутри панелек */
-.stat-value {
-    color: #fff;
+.menu-arrow:active {
+    transform: scale(0.9);
+}
+
+.menu-arrow img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Меняющийся текст меню (Профиль, Инвентарь и т.д.) */
+.menu-title-text {
+    color: #ffd700; /* Золотой фэнтези цвет */
     font-family: 'Times New Roman', serif;
-    font-size: 13px;
+    font-size: 18px;
     font-weight: bold;
-    text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
+    text-shadow: 2px 2px 3px #000;
+    user-select: none;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* Небольшой сдвиг вниз, если сама текстура панельки имеет рамку сверху */
-    padding-top: 2px; 
 }
 
-/* Адаптив под мобилки */
+/* =========================================
+   АДАПТИВ ПОД МОБИЛКИ
+   ========================================= */
 @media (max-width: 768px) {
-    #topBar {
-        gap: -2px;
-        max-width: 100%;
-        top: 1%;
+    #menuScreen img[src*="all_stat"] {
+        width: 240px !important;
+        height: 42px !important;
+        top: 19%;
     }
 
-    .stat-box .icon {
-        width: 44px;
-        height: 44px;
+    .menu-controls {
+        width: 240px;
+        height: 42px;
+        top: 19%;
+        padding: 0 6px;
     }
 
-    .panel-bg {
-        width: 58px;
-        height: 24px;
-        margin-top: -8px;
+    .menu-arrow {
+        width: 35px;
+        height: 35px;
     }
 
-    .stat-value {
-        font-size: 10px;
+    .menu-title-text {
+        font-size: 14px;
     }
 }
+
 
 /* =========================================
    ПЛАШКИ В МЕНЮ
