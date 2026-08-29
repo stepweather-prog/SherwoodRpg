@@ -41,9 +41,9 @@ const Menu = {
         ceiling.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:25%;background:url("assets/assets2/Sherwood_Square/1area_ceiling_moon.png") center/cover no-repeat;z-index:1;';
         this.screen.appendChild(ceiling);
         
-        // СЛОЙ 2: Стена
+       // СЛОЙ 2: Стена
 const wall = document.createElement('div');
-wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:100%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
+wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:75%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
 this.screen.appendChild(wall);
        
         
