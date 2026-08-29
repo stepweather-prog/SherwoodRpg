@@ -1,5 +1,5 @@
 // ============================================================
-//  js/main.js — ПОЛНАЯ ВЕРСИЯ ПОД НОВУЮ АРХИТЕКТУРУ
+//  js/main.js — ПОЛНАЯ ВЕРСИЯ
 // ============================================================
 
 // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
@@ -175,7 +175,10 @@ function prevSection() {
     updateSectionDisplay();
 }
 
-// ---------- ВХОД В РАЗДЕЛ ----------
+// ============================================================
+//  ВХОД В РАЗДЕЛ (ТОЛЬКО UI)
+// ============================================================
+
 function enterSection() {
     const section = sections[currentSectionIndex];
     if (!section) return;
@@ -183,92 +186,35 @@ function enterSection() {
 
     switch(section.name) {
         case 'Профиль':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Profile && Sherwood.Profile.showUI) {
-                Sherwood.Profile.showUI();
-            } else if (typeof UI !== 'undefined' && UI.profile) {
-                UI.profile();
-            } else {
-                showGenericScreen('Профиль', '👤');
-            }
+            UI.profile();
             break;
-
         case 'Квесты':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Quests && Sherwood.Quests.showUI) {
-                Sherwood.Quests.showUI();
-            } else {
-                showGenericScreen('Квесты', '📋');
-            }
+            UI.quests();
             break;
-
         case 'Таверна':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Tavern && Sherwood.Tavern.showUI) {
-                Sherwood.Tavern.showUI();
-            } else {
-                showGenericScreen('Таверна', '🍺');
-            }
+            UI.tavern();
             break;
-
         case 'Порталы':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Portal && Sherwood.Portal.showUI) {
-                Sherwood.Portal.showUI();
-            } else {
-                showGenericScreen('Порталы', '🌀');
-            }
+            UI.portals();
             break;
-
         case 'Подземка':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon && Sherwood.Dungeon.showUI) {
-                Sherwood.Dungeon.showUI();
-            } else if (typeof Sherwood !== 'undefined' && Sherwood.Dungeon2D5 && Sherwood.Dungeon2D5.render) {
-                stopMainMusic();
-                Sherwood.Dungeon2D5.render();
-            } else {
-                showGenericScreen('Подземка', '🏚️');
-            }
+            UI.dungeon();
             break;
-
         case 'Рынок':
-            if (typeof Sherwood !== 'undefined' && Sherwood.BlackMarket && Sherwood.BlackMarket.showUI) {
-                Sherwood.BlackMarket.showUI();
-            } else {
-                showGenericScreen('Рынок', '🏪');
-            }
+            UI.market();
             break;
-
         case 'Кузница':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Forge && Sherwood.Forge.showUI) {
-                Sherwood.Forge.showUI();
-            } else {
-                showGenericScreen('Кузница', '🔧');
-            }
+            UI.forge();
             break;
-
         case 'Бестиарий':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Bestiary && Sherwood.Bestiary.showUI) {
-                Sherwood.Bestiary.showUI();
-            } else {
-                showGenericScreen('Бестиарий', '📖');
-            }
+            UI.bestiary();
             break;
-
         case 'Рейд':
-            if (typeof Sherwood !== 'undefined' && Sherwood.Raid && Sherwood.Raid.showUI) {
-                Sherwood.Raid.showUI();
-            } else {
-                showGenericScreen('Рейд', '⚔️');
-            }
+            UI.raid();
             break;
-
         case 'Настройки':
-            if (typeof Settings !== 'undefined' && Settings.showUI) {
-                Settings.showUI();
-            } else if (typeof UI !== 'undefined' && UI.settings) {
-                UI.settings();
-            } else {
-                showGenericScreen('Настройки', '⚙️');
-            }
+            UI.settings();
             break;
-
         default:
             showGenericScreen(section.name, '📌');
     }
@@ -276,7 +222,6 @@ function enterSection() {
 
 // ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
 function showHomeScreen() {
-    // Закрываем все экраны через UI если есть
     if (typeof UI !== 'undefined' && UI.loadHome) {
         UI.loadHome();
         return;
@@ -389,7 +334,6 @@ function loadSavedSkin() {
     setTimeout(function() {
         console.log('🔧 Настройка кликов...');
 
-        // Иконка раздела → вход
         const sectionIcon = document.getElementById('sectionIcon');
         if (sectionIcon) {
             sectionIcon.style.cursor = 'pointer';
@@ -401,7 +345,6 @@ function loadSavedSkin() {
             console.log('✅ Иконка раздела: вход');
         }
 
-        // Название раздела → вход
         const sectionName = document.getElementById('sectionName');
         if (sectionName) {
             sectionName.style.cursor = 'pointer';
@@ -413,7 +356,6 @@ function loadSavedSkin() {
             console.log('✅ Название раздела: вход');
         }
 
-        // Герой → смена скина
         const heroEl = document.getElementById('hero');
         if (heroEl) {
             heroEl.style.cursor = 'pointer';
@@ -439,7 +381,6 @@ playButton.addEventListener('click', () => {
     startMainMusic();
     loadSavedSkin();
 
-    // Инициализация Sherwood
     if (typeof Sherwood !== 'undefined') {
         const modules = [
             'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
@@ -458,12 +399,10 @@ playButton.addEventListener('click', () => {
         });
     }
 
-    // Инициализация UI
     if (typeof UI !== 'undefined' && UI.init) {
         UI.init();
     }
 
-    // Инициализация настроек
     if (typeof Settings !== 'undefined' && Settings.init) {
         Settings.init();
     }
