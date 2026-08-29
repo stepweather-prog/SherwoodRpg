@@ -10,7 +10,7 @@ const Menu = {
         { icon: 'Бестиарий', name: 'Бестиарий' },
         { icon: 'Очаг', name: 'Очаг' },
         { icon: 'Порталы', name: 'Порталы' },
-        { icon: 'Чат', name: 'Чат' },
+        
         { icon: 'Профиль', name: 'Профиль' },
         { icon: 'Рейд', name: 'Рейд' },
         { icon: 'Подземка', name: 'Подземка' },
@@ -41,16 +41,15 @@ const Menu = {
         ceiling.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:25%;background:url("assets/assets2/Sherwood_Square/1area_ceiling_moon.png") center/cover no-repeat;z-index:1;';
         this.screen.appendChild(ceiling);
         
-        // Стена
-        const wall = document.createElement('div');
-        wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;background:url("assets/assets2/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
-        this.screen.appendChild(wall);
+        // СЛОЙ 2: Стена
+const wall = document.createElement('div');
+wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:75%;background:url("assets/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
         
        
         
         // Иконки
         this.iconContainer = document.createElement('div');
-        this.iconContainer.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;overflow:hidden;z-index:3;';
+        this.iconContainer.style.cssText = 'position:absolute;top:15%;left:0;width:100%;height:50%;overflow:hidden;z-index:3;';
         this.screen.appendChild(this.iconContainer);
         this.buildCarousel();
         
@@ -116,7 +115,7 @@ const Menu = {
             // Подпись (на панели)
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:relative;bottom:20px;left:0;transform:none;width:80%;text-align:center;color:#ffa500;font-size:1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:2;';
+            label.style.cssText = 'position:absolute;bottom:18%;left:50%;transform:translateX(-50%);width:60%;text-align:center;color:#ffa500;font-size:0.85em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:1;';
             
             section.appendChild(img);
             section.appendChild(panel);
