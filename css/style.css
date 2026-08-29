@@ -131,7 +131,7 @@ canvas {
     position: absolute;
 }
 
-/* Фикс фонового свитка — держит пропорции contain */
+/* Фикс фонового свитка — содержит пропорции contain */
 #arch {
     top: 0;
     left: 0;
@@ -178,103 +178,97 @@ canvas {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ИСПРАВЛЕННАЯ СЕТКА)
+   ЖЕСТКАЯ АБСОЛЮТНАЯ ВЕРСТКА ВЕРХНЕГО БАРА (920х200)
    ========================================= */
 #topBar {
     position: absolute;
-    top: 1.5%;
+    top: 0.5%; /* Чуть приподнимаем из-за высоты прозрачных полей */
     left: 50%;
     transform: translateX(-50%);
-    
-    /* Задаем жесткую сетку: 6 колонок шириной по 78px */
-    display: grid !important;
-    grid-template-columns: repeat(6, 78px) !important;
-    justify-content: center;
-    row-gap: 0; 
-    column-gap: 0;
-    
-    width: 100%;
-    max-width: 470px;
+    width: 94%;
+    max-width: 460px; /* Жестко держим базовую ширину */
+    height: 100px;
     z-index: 30;
     pointer-events: none;
 }
 
-/* Выводим иконку и плашку в общую сетку grid */
-.stat-box {
-    display: contents !important; 
-}
-
-/* Все 6 иконок встают в первый горизонтальный ряд */
-.stat-box .icon {
-    grid-row: 1 !important; /* Строго первая строка */
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    justify-self: center; /* Центрируем иконку внутри колонки */
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
-    pointer-events: auto;
-}
-
-/* Все 6 плашек встают во второй ряд точно под свои иконки */
-.panel-bg {
-    grid-row: 2 !important; /* Строго вторая строка */
-    width: 78px;
-    height: 30px;
-    background-image: url('../assets/assets2/icons/main_panel.png');
+/* Сплошная фоновая плита с корягами */
+.main-stone-panel {
+    position: absolute;
+    top: 15px; /* Сдвигаем, чтобы верхний край заехал под круглые иконки */
+    left: 0;
+    width: 100%;
+    height: 100px; /* Пропорционально сжимаем высоту холста 200px */
+    background-image: url('../assets/assets2/game_details/main_panel_stat1.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    justify-self: center; /* Центрируем плашку под иконкой */
-    margin-top: -12px; /* Наплыв вверх под круглую иконку */
+    z-index: 31;
+}
+
+/* Иконки верхнего ряда */
+.top-icon {
+    position: absolute;
+    top: 0;
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+    z-index: 33;
     pointer-events: auto;
 }
 
+/* Цифры нижнего ряда — садятся ровно внутрь твоих каменных секторов */
 .stat-value {
+    position: absolute;
+    top: 60px; /* Смещение вниз от верха контейнера, чтобы встать на текстуру камня */
+    transform: translateX(-50%);
     color: #fff;
     font-family: 'Times New Roman', serif;
     font-size: 13px;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
+    z-index: 34;
+    pointer-events: auto;
 }
+
+/* ФИКСИРОВАННЫЙ ШАГ ЦЕНТРОВ ДЛЯ ВСЕХ 6 СЕКТОРОВ ПАНЕЛИ */
+.cell-1, .val-1 { left: 8.33%; }
+.cell-2, .val-2 { left: 25.00%; }
+.cell-3, .val-3 { left: 41.66%; }
+.cell-4, .val-4 { left: 58.33%; }
+.cell-5, .val-5 { left: 75.00%; }
+.cell-6, .val-6 { left: 91.66%; }
 
 /* =========================================
    ТОЧНАЯ СБОРКА КАРУСЕЛИ ПО ЭТАЛОНУ
    ========================================= */
-
-/* Круглый медальон со шлемом */
 #sectionIcon {
     position: absolute !important;
-    top: 18.5% !important; /* Четко над деревянной доской */
+    top: 18.5% !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 22% !important; /* Реальный пропорциональный размер медальона */
+    width: 22% !important;
     max-width: 115px !important;
     height: auto !important;
     object-fit: contain !important;
     z-index: 15 !important;
 }
 
-/* Деревянная доска для текста */
 #sectionName {
     position: absolute !important;
-    top: 36% !important; /* Встает ровно под медальон */
+    top: 36% !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 34% !important; /* Ширина, чтобы встать ровно между стрелками */
+    width: 34% !important;
     max-width: 175px !important;
     height: 5.5% !important;
     max-height: 55px !important;
     background: url('../assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat !important;
-    
-    /* Центрируем текст «Профиль» строго по центру деревяшки */
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    
-    /* Стили текста */
     color: #ffa500 !important;
     font-family: 'Times New Roman', serif !important;
     font-size: clamp(13px, 1.6vw, 18px) !important;
@@ -283,12 +277,11 @@ canvas {
     z-index: 14 !important;
 }
 
-/* Левая стрелка-указатель (костяная рука) */
 #carouselLeftArrow {
     position: absolute !important;
-    top: 38.5% !important; /* Центрируем по вертикали относительно деревяшки */
+    top: 38.5% !important;
     transform: translateY(-50%) !important;
-    left: 23% !important; /* Встает впритык к левому краю доски */
+    left: 23% !important;
     width: 10% !important;
     max-width: 50px !important;
     height: auto !important;
@@ -299,12 +292,11 @@ canvas {
     transition: transform 0.1s !important;
 }
 
-/* Правая стрелка-указатель (костяная рука) */
 #carouselRightArrow {
     position: absolute !important;
-    top: 38.5% !important; /* Центрируем по вертикали относительно деревяшки */
+    top: 38.5% !important;
     transform: translateY(-50%) !important;
-    right: 23% !important; /* Встает впритык к правому краю доски */
+    right: 23% !important;
     width: 10% !important;
     max-width: 50px !important;
     height: auto !important;
@@ -315,7 +307,6 @@ canvas {
     transition: transform 0.1s !important;
 }
 
-/* Эффект клика по стрелкам */
 #carouselLeftArrow:active { transform: translateY(-50%) scale(0.85) !important; }
 #carouselRightArrow:active { transform: translateY(-50%) scale(0.85) !important; }
 
@@ -368,27 +359,26 @@ canvas {
     }
 
     #topBar {
-        max-width: 100%;
-        top: 1%;
-        grid-template-columns: repeat(6, 56px) !important;
+        max-width: 350px;
+        height: 75px;
+        top: 0.5%;
     }
 
-    .stat-box .icon {
+    .top-icon {
         width: 44px;
         height: 44px;
     }
 
-    .panel-bg {
-        width: 56px;
-        height: 22px;
-        margin-top: -8px;
+    .main-stone-panel {
+        height: 75px;
+        top: 10px;
     }
 
     .stat-value {
         font-size: 10px;
+        top: 45px;
     }
 
-    /* Коррекция карусели на мобилках */
     #sectionIcon {
         top: 16.5% !important;
         width: 20% !important;
