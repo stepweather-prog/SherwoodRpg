@@ -147,7 +147,7 @@ canvas {
     bottom: 8%;
     left: 50%;
     transform: translateX(-50%);
-    width: 40%; /* Было 30% */
+    width: 40%;
     height: auto;
     object-fit: contain;
     z-index: 5;
@@ -217,8 +217,8 @@ canvas {
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: flex-end;
+    gap: 15px;
     z-index: 20;
     width: 100%;
     max-width: 700px;
@@ -233,8 +233,8 @@ canvas {
 }
 
 .stat-box .icon {
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     object-fit: contain;
     position: relative;
     z-index: 1;
@@ -242,8 +242,8 @@ canvas {
 }
 
 .panel-bg {
-    width: 100px;
-    height: 38px;
+    width: 110px;
+    height: 40px;
     background-image: url('../assets/assets2/icons/main_panel.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
@@ -253,13 +253,13 @@ canvas {
     padding-bottom: 6px;
     position: relative;
     z-index: 2;
-    margin-top: 80px; /* Панель под иконкой */
+    margin-top: -10px; /* Иконка чуть наезжает на панель */
 }
 
 .stat-value {
     color: #fff;
     font-family: 'Times New Roman', serif;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000, 0 0 5px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
@@ -275,23 +275,26 @@ canvas {
     }
 
     .stat-box .icon {
-        width: 40px;
-        height: 40px;
+        width: 45px;
+        height: 45px;
     }
 
     .panel-bg {
-        width: 70px;
-        height: 27px;
-        margin-top: 25px;
+        width: 75px;
+        height: 28px;
+        margin-top: -8px;
         padding-bottom: 4px;
     }
 
     .stat-value {
-        font-size: 10px;
+        font-size: 11px;
     }
 }
-/* УВЕЛИЧИВАЕМ ПЛАШКИ В МЕНЮ В 2 РАЗА */
+
+/* =========================================
+   ПЛАШКИ В МЕНЮ
+   ========================================= */
 #menuScreen img[src*="all_stat"] {
-    width: 20% !important;
+    width: 60% !important;
     height: auto !important;
 }
