@@ -22,7 +22,6 @@ Sherwood.Portal = {
             name: 'Портал Нашествия',
             icon: '🌀',
             bg: 'assets/backgrounds/portal_1.jpeg',
-            // Открывается после главы 5
             requiredChapter: 5,
             boss: { 
                 name: 'Жнец-Полководец', 
@@ -266,7 +265,6 @@ Sherwood.Portal = {
         var portal = this.getPortal(portalId);
         if (!portal) return false;
         
-        // Проверяем, пройдена ли требуемая глава
         if (typeof Sherwood.Tavern !== 'undefined' && Sherwood.Tavern.getCompletedCount) {
             var completedChapters = Sherwood.Tavern.getCompletedCount();
             return completedChapters >= portal.requiredChapter;
@@ -317,7 +315,6 @@ Sherwood.Portal = {
             return { can: false, reason: 'Ты уже в портале!' };
         }
         
-        // Проверка стрел
         var requiredArrows = portalId * 150;
         if (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) {
             var arrowCount = Sherwood.Forge.getArrowCount();
@@ -345,7 +342,6 @@ Sherwood.Portal = {
         var portal = this.getPortal(portalId);
         if (!portal) return { success: false, reason: 'Портал не найден' };
         
-        // Списываем стрелы
         var requiredArrows = portalId * 150;
         if (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) {
             var bag = Sherwood.Bag;
@@ -373,7 +369,6 @@ Sherwood.Portal = {
         this._currentPortal = JSON.parse(JSON.stringify(portal));
         this._currentEnemies = [];
         
-        // Создаём врагов
         var guard = this._currentPortal.guard;
         if (guard) {
             var guardEnemy = {
@@ -409,7 +404,7 @@ Sherwood.Portal = {
         this._currentLevel = 0;
         this._inPortal = true;
         this._deathCount = 0;
-        this._timeRemaining = 10800; // 3 часа
+        this._timeRemaining = 10800;
         this._startTimer();
         
         return { 
@@ -462,7 +457,6 @@ Sherwood.Portal = {
         var player = Sherwood.getPlayer();
         var enemy = battle.enemy;
         
-        // Урон игрока
         var damage = Math.max(1, player.stats.attack - enemy.defense + Math.floor(Math.random() * 20));
         enemy.hp -= damage;
         
@@ -477,7 +471,6 @@ Sherwood.Portal = {
         
         if (!enemy.maxHp) enemy.maxHp = enemy.hp + damage;
         
-        // Проверка смерти врага
         if (enemy.hp <= 0) {
             if (Sherwood.Bestiary && enemy.image) {
                 Sherwood.Bestiary.registerKill(enemy.image);
@@ -491,7 +484,6 @@ Sherwood.Portal = {
             
             this._currentLevel++;
             
-            // Проверка завершения портала
             if (this._currentLevel >= this._currentEnemies.length) {
                 return this._completePortal();
             }
@@ -500,13 +492,11 @@ Sherwood.Portal = {
             return result;
         }
         
-        // Атака врага
         var enemyDamage = Math.max(1, enemy.attack - player.stats.defense + Math.floor(Math.random() * 15));
         player.stats.hp = Math.max(0, player.stats.hp - enemyDamage);
         result.enemyDamage = enemyDamage;
         result.playerHp = player.stats.hp;
         
-        // Проверка смерти игрока
         if (player.stats.hp <= 0) {
             return this._handleDeath();
         }
@@ -518,7 +508,6 @@ Sherwood.Portal = {
         this._deathCount++;
         var player = Sherwood.getPlayer();
         
-        // Слишком много смертей
         if (this._deathCount > 5) {
             this._exitPortal(false);
             return { 
@@ -528,7 +517,6 @@ Sherwood.Portal = {
             };
         }
         
-        // Стоимость воскрешения
         var cost;
         if (this._deathCount <= 2) {
             cost = { cost: this._deathCount * 2500, currency: 'silver' };
@@ -536,7 +524,6 @@ Sherwood.Portal = {
             cost = { cost: 50 + (this._deathCount - 2) * 50, currency: 'gold' };
         }
         
-        // Проверка ресурсов
         if (cost.cost > 0 && (player.resources[cost.currency] || 0) < cost.cost) {
             this._exitPortal(false);
             return { 
@@ -546,12 +533,10 @@ Sherwood.Portal = {
             };
         }
         
-        // Списываем ресурсы
         if (cost.cost > 0) {
             player.resources[cost.currency] -= cost.cost;
         }
         
-        // Воскрешение
         player.stats.hp = player.stats.maxHp;
         Sherwood.saveGame();
         
@@ -571,11 +556,9 @@ Sherwood.Portal = {
         var firstTime = timesCompleted === 0;
         var isHardMode = timesCompleted > 0 && timesCompleted % 2 === 0;
         
-        // Множитель награды
         var mult = firstTime ? 1 : (isHardMode ? 0.5 : 0.3);
         var difficultyMult = isHardMode ? 1.5 : 1;
         
-        // Награда
         var rewardGold = Math.floor(portal.rewards.gold * mult * difficultyMult);
         var rewardExp = Math.floor(portal.rewards.exp * mult * difficultyMult);
         var rewardSilver = Math.floor(portal.rewards.silver * mult * difficultyMult);
@@ -584,13 +567,11 @@ Sherwood.Portal = {
         Sherwood.addResource('gold', rewardGold);
         Sherwood.addResource('silver', rewardSilver);
         
-        // Отмечаем прохождение
         if (!player.portal.completed) player.portal.completed = [];
         if (player.portal.completed.indexOf(portal.id) === -1) {
             player.portal.completed.push(portal.id);
         }
         
-        // Трофей за первое прохождение
         if (firstTime && portal.trophy && typeof Sherwood.addTrophy === 'function') {
             Sherwood.addTrophy(
                 portal.trophy.id,
@@ -601,11 +582,9 @@ Sherwood.Portal = {
             );
         }
         
-        // Увеличиваем сложность
         if (!player.portal.difficulty) player.portal.difficulty = {};
         player.portal.difficulty[portal.id] = (player.portal.difficulty[portal.id] || 0) + 1;
         
-        // Останавливаем таймер
         if (this._timerInterval) clearInterval(this._timerInterval);
         this._inPortal = false;
         var completedPortal = this._currentPortal;
@@ -673,10 +652,6 @@ Sherwood.Portal = {
     // ============================================================
 
     showUI: function() {
-        if (typeof window.showPortalsScreen === 'function') {
-            window.showPortalsScreen();
-            return;
-        }
         this._renderPortalUI();
     },
 
@@ -765,10 +740,8 @@ Sherwood.Portal = {
             return;
         }
         
-        // Закрываем UI порталов
         this.closeUI();
         
-        // Показываем экран битвы
         var battle = this.getCurrentBattle();
         if (battle) {
             this._showBattleUI(battle);
@@ -776,13 +749,6 @@ Sherwood.Portal = {
     },
 
     _showBattleUI: function(battle) {
-        // Используем существующую функцию из main.js если есть
-        if (typeof window.showPortalBattleUI === 'function') {
-            window.showPortalBattleUI(battle);
-            return;
-        }
-        
-        // Простой UI боя
         var overlay = document.createElement('div');
         overlay.id = 'portal-battle-overlay';
         overlay.style.cssText = `
@@ -873,11 +839,9 @@ Sherwood.Portal = {
             log.scrollTop = log.scrollHeight;
         }
         
-        // Обновляем UI
         setTimeout(function() {
             var battle = this.getCurrentBattle();
             if (!battle || result.portalComplete || result.portalFailed) {
-                // Закрываем окно боя
                 var overlay = document.getElementById('portal-battle-overlay');
                 if (overlay) overlay.remove();
                 this.showUI();
@@ -901,14 +865,18 @@ Sherwood.Portal = {
         }
     },
 
+    // ============================================================
+    //  closeUI — ВОЗВРАТ НА ГЛАВНУЮ
+    // ============================================================
     closeUI: function() {
         var screen = document.getElementById('portals-screen');
         if (screen) screen.remove();
         var overlay = document.getElementById('portal-battle-overlay');
         if (overlay) overlay.remove();
         
-        if (typeof Menu !== 'undefined' && Menu.show) {
-            Menu.show();
+        // === ИСПРАВЛЕНИЕ: вместо Menu.show() ===
+        if (typeof window.showHomeScreen === 'function') {
+            window.showHomeScreen();
         }
     }
 };
