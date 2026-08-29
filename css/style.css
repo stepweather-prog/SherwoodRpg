@@ -131,7 +131,7 @@ canvas {
     position: absolute;
 }
 
-/* Фикс фонового свитка — держит пропорции contain, а не cover */
+/* Фикс фонового свитка — содержит пропорции contain */
 #arch {
     top: 0;
     left: 0;
@@ -178,31 +178,33 @@ canvas {
 }
 
 /* =========================================
-   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ДВА РЯДА)
+   ВЕРХНЯЯ ПАНЕЛЬ ХАРАКТЕРИСТИК (ФИНАЛЬНЫЙ ФИКС)
    ========================================= */
 #topBar {
     position: absolute;
-    top: 1.5%; /* Отступ от самого верха */
+    top: 1.5%;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    flex-direction: column; /* Разделяет иконки и плашки на две строки */
-    align-items: center;
+    justify-content: center;
+    align-items: flex-start;
+    gap: -2px; /* Стягивает плашки боками без щелей */
     width: 100%;
-    max-width: 480px;
-    z-index: 30; /* Строго поверх карусели */
+    max-width: 470px;
+    z-index: 30;
     pointer-events: none;
 }
 
-/* Ряд иконок (Первая строка) */
-.icons-row {
+.stat-box {
     display: flex;
-    justify-content: center;
-    gap: 16px; /* Расстояние между круглыми иконками */
-    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    width: 78px; /* Ширина равна плашке для соосной центровки иконки */
 }
 
-.icons-row .icon {
+/* Все иконки уходят в верхнюю строку */
+.stat-box .icon {
+    order: 1; /* Принудительный вывод наверх */
     width: 60px;
     height: 60px;
     object-fit: contain;
@@ -210,16 +212,9 @@ canvas {
     pointer-events: auto;
 }
 
-/* Ряд каменных плашек под иконками (Вторая строка) */
-.panels-row {
-    display: flex;
-    justify-content: center;
-    gap: -2px; /* Смыкает плашки боками без щелей */
-    width: 100%;
-    margin-top: -12px; /* Наплыв плашек вверх, прямо под круглые иконки */
-}
-
+/* Все плашки уходят в нижнюю строку строго под свои иконки */
 .panel-bg {
+    order: 2; /* Принудительно опускаем вниз */
     width: 78px;
     height: 30px;
     background-image: url('../assets/assets2/icons/main_panel.png');
@@ -228,10 +223,10 @@ canvas {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: -12px; /* Наплыв вверх под круглую иконку */
     pointer-events: auto;
 }
 
-/* Текст цифр внутри панелей */
 .stat-value {
     color: #fff;
     font-family: 'Times New Roman', serif;
@@ -373,23 +368,19 @@ canvas {
         top: 1%;
     }
 
-    .icons-row {
-        gap: 10px;
+    .stat-box {
+        width: 56px;
     }
 
-    .icons-row .icon {
+    .stat-box .icon {
         width: 44px;
         height: 44px;
-    }
-
-    .panels-row {
-        margin-top: -8px;
-        gap: -1px;
     }
 
     .panel-bg {
         width: 56px;
         height: 22px;
+        margin-top: -8px;
     }
 
     .stat-value {
