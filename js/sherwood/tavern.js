@@ -569,4 +569,15 @@ Sherwood.Tavern = {
         var screen = document.getElementById('tavern-screen');
         if (screen) screen.remove();
         // === ИСПРАВЛЕНИЕ: вместо Menu.show() ===
-        if (typeof window.showHomeScreen === '
+        if (typeof window.showHomeScreen === 'function') {
+            window.showHomeScreen();
+        }
+    }
+};
+
+// ---------- ЭКСПОРТ ----------
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.Tavern = Sherwood.Tavern;
+
+console.log('🍺 Таверна с сюжетными квестами загружена!');
+console.log('📖 Всего глав:', Sherwood.Tavern.CHAPTERS.length);
