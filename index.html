@@ -38,23 +38,33 @@
 
         <!-- Верхняя панель характеристик -->
         <div id="topBar">
-            <!-- Первый ряд: строго все иконки -->
-            <div class="icons-row">
+            <div class="stat-box">
                 <img src="assets/assets2/icons/progress.png" alt="Опыт" class="icon">
-                <img src="assets/assets2/icons/power.png" alt="Урон" class="icon">
-                <img src="assets/assets2/icons/armor.png" alt="Броня" class="icon">
-                <img src="assets/assets2/icons/life.png" alt="Жизнь" class="icon">
-                <img src="assets/assets2/icons/resource_gold.png" alt="Золото" class="icon">
-                <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="icon">
+                <div class="panel-bg"><span class="stat-value" id="expVal">0</span></div>
             </div>
 
-            <!-- Второй ряд: строго все плашки под ними -->
-            <div class="panels-row">
-                <div class="panel-bg"><span class="stat-value" id="expVal">0</span></div>
+            <div class="stat-box">
+                <img src="assets/assets2/icons/power.png" alt="Урон" class="icon">
                 <div class="panel-bg"><span class="stat-value" id="dmgVal">0</span></div>
+            </div>
+
+            <div class="stat-box">
+                <img src="assets/assets2/icons/armor.png" alt="Броня" class="icon">
                 <div class="panel-bg"><span class="stat-value" id="armorVal">0</span></div>
+            </div>
+
+            <div class="stat-box">
+                <img src="assets/assets2/icons/life.png" alt="Жизнь" class="icon">
                 <div class="panel-bg"><span class="stat-value" id="hpVal">0</span></div>
+            </div>
+
+            <div class="stat-box">
+                <img src="assets/assets2/icons/resource_gold.png" alt="Золото" class="icon">
                 <div class="panel-bg"><span class="stat-value" id="goldVal">0</span></div>
+            </div>
+
+            <div class="stat-box">
+                <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="icon">
                 <div class="panel-bg"><span class="stat-value" id="silverVal">0</span></div>
             </div>
         </div>
@@ -66,7 +76,7 @@
 
 <div id="menuScreen" style="display:none;"></div>
 
-<!-- Скрипты (Вернули на место!) -->
+<!-- Скрипты (Без menu.js, arena.js и chat.js) -->
 <script src="js/sherwood/core.js"></script>
 <script src="js/sherwood/models.js"></script>
 <script src="js/sherwood/textures.js"></script>
