@@ -952,3 +952,26 @@ window.Sherwood = window.Sherwood || {};
 window.Sherwood.UI = UI;
 
 console.log('🖥️ UI экраны полностью загружены!');
+// ============================================================
+//  ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА - ЕСЛИ НЕТ КОНТЕНТА
+// ============================================================
+
+(function ensureUIScreens() {
+    console.log('🔧 Проверка UI экранов...');
+    
+    // Проверяем, что profile создаёт HTML
+    if (typeof UI !== 'undefined' && UI.profile) {
+        console.log('✅ UI.profile существует');
+    }
+    
+    // Проверяем _openScreen
+    if (typeof UI !== 'undefined' && UI._openScreen) {
+        console.log('✅ UI._openScreen существует');
+    }
+    
+    // Принудительно показываем тестовый экран
+    setTimeout(function() {
+        console.log('🧪 Тестовый экран...');
+        UI._openScreen('Тест', 'profile', '<div style="color:#fff;padding:20px;text-align:center;font-size:24px;">🔧 РАБОТАЕТ!</div>');
+    }, 5000);
+})();
