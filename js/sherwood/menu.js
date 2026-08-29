@@ -46,15 +46,7 @@ const Menu = {
         wall.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:50%;background:url("assets/assets2/Sherwood_Square/wall_area_1.png") center/cover no-repeat;z-index:2;';
         this.screen.appendChild(wall);
         
-        // Пол
-        const floor = document.createElement('div');
-        floor.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:25%;display:flex;z-index:1;';
-        for (let i = 1; i <= 3; i++) {
-            const tile = document.createElement('div');
-            tile.style.cssText = `width:33.33%;height:100%;background:url('assets/assets2/Sherwood_Square/floor${i}.png') center/cover no-repeat;`;
-            floor.appendChild(tile);
-        }
-        this.screen.appendChild(floor);
+       
         
         // Иконки
         this.iconContainer = document.createElement('div');
@@ -68,11 +60,7 @@ const Menu = {
         topSeam.style.cssText = 'position:absolute;top:25%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
         this.screen.appendChild(topSeam);
         
-        // Разделитель нижний
-        const bottomSeam = document.createElement('img');
-        bottomSeam.src = 'assets/assets2/game_details/seam_bottom.png';
-        bottomSeam.style.cssText = 'position:absolute;top:75%;left:0;width:100%;height:auto;transform:translateY(-50%);z-index:4;pointer-events:none;object-fit:cover;display:block;';
-        this.screen.appendChild(bottomSeam);
+        
         
         // Анимация
         this.stepVideo = document.createElement('video');
@@ -86,20 +74,20 @@ const Menu = {
         // Кнопка домой
         const homeBtn = document.createElement('img');
         homeBtn.src = 'assets/assets2/Sherwood_Square/oak_area.png';
-        homeBtn.style.cssText = 'position:absolute;top:2%;left:2%;width:8vw;max-width:50px;cursor:pointer;z-index:6;';
+        homeBtn.style.cssText = 'position:absolute;top:2%;left:2%;width:8vw;max-width:80px;cursor:pointer;z-index:6;';
         homeBtn.onclick = () => { if (typeof showHomeScreen === 'function') showHomeScreen(); };
         this.screen.appendChild(homeBtn);
         
         // Стрелки
         const leftArrow = document.createElement('img');
         leftArrow.src = 'assets/assets2/icons/left.png';
-        leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:100px;cursor:pointer;z-index:6;';
+        leftArrow.style.cssText = 'position:absolute;left:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:120px;cursor:pointer;z-index:6;';
         leftArrow.onclick = () => this.prev();
         this.screen.appendChild(leftArrow);
         
         const rightArrow = document.createElement('img');
         rightArrow.src = 'assets/assets2/icons/right.png';
-        rightArrow.style.cssText = 'position:absolute;right:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:100px;cursor:pointer;z-index:6;';
+        rightArrow.style.cssText = 'position:absolute;right:2%;top:50%;transform:translateY(-50%);width:16vw;max-width:120px;cursor:pointer;z-index:6;';
         rightArrow.onclick = () => this.next();
         this.screen.appendChild(rightArrow);
     },
@@ -128,7 +116,7 @@ const Menu = {
             // Подпись (на панели)
             const label = document.createElement('div');
             label.textContent = building.name;
-            label.style.cssText = 'position:relative;bottom:30px;left:0;transform:none;width:80%;text-align:center;color:#ffa500;font-size:1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:2;';
+            label.style.cssText = 'position:relative;bottom:20px;left:0;transform:none;width:80%;text-align:center;color:#ffa500;font-size:1em;font-weight:bold;pointer-events:none;text-shadow:0 1px 3px #000;z-index:2;';
             
             section.appendChild(img);
             section.appendChild(panel);
