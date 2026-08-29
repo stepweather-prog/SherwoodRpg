@@ -176,13 +176,20 @@ function prevSection() {
 }
 
 // ============================================================
-//  ВХОД В РАЗДЕЛ (ТОЛЬКО UI)
+//  ВХОД В РАЗДЕЛ
 // ============================================================
 
 function enterSection() {
     const section = sections[currentSectionIndex];
     if (!section) return;
     console.log(`🚪 Вход в раздел: ${section.name}`);
+
+    // Принудительно показываем слой UI
+    const layer = document.getElementById('ui-screen-layer');
+    if (layer) {
+        layer.style.zIndex = '9999';
+        layer.style.display = 'block';
+    }
 
     switch(section.name) {
         case 'Профиль':
@@ -222,10 +229,10 @@ function enterSection() {
 
 // ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
 function showHomeScreen() {
-    if (typeof UI !== 'undefined' && UI.loadHome) {
-        UI.loadHome();
-        return;
-    }
+    // Просто скрываем слой, не вызывая UI.loadHome (чтобы избежать цикла)
+    const layer = document.getElementById('ui-screen-layer');
+    if (layer) layer.style.display = 'none';
+    
     closeAllScreens();
     homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
@@ -244,7 +251,7 @@ function closeAllScreens() {
         'profile-screen', 'settings-screen', 'daily-screen',
         'talents-screen', 'generic-screen', 'section-screen',
         'battle-overlay', 'portal-battle-overlay', 'raid-battle-overlay',
-        'combat-overlay', 'dungeon2d5-container', 'ui-screen-layer'
+        'combat-overlay', 'dungeon2d5-container'
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
@@ -282,7 +289,7 @@ function showGenericScreen(title, icon) {
 function closeGenericScreen() {
     const screen = document.getElementById('generic-screen');
     if (screen) screen.remove();
-    if (typeof showHomeScreen === 'function') showHomeScreen();
+    showHomeScreen();
 }
 
 // ---------- СМЕНА СКИНА ----------
