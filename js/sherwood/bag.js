@@ -1,9 +1,17 @@
+/**
+ * Sherwood Bag — Сумка
+ */
+
+if (typeof Sherwood === 'undefined') {
+    window.Sherwood = {};
+}
+
 Sherwood.Bag = {
     _inventory: [],
     _equipment: { head: null, torso: null, hands: null, legs: null, feet: null, weapon1: null, weapon2: null, belt: null, amulet: null, ring: null },
     _maxSlots: 10,
     _expansionLevel: 0,
-    
+
     _resources: {
         gold: 0,
         silver: 0,
@@ -43,13 +51,13 @@ Sherwood.Bag = {
         this._expansionLevel = player.bagExpansion || 0;
         this._maxSlots = 10 + this._expansionLevel * 10;
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
-        
+
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
             player.unlockedSkins = ['skin1_01'];
             player.activeSkin = 'skin1_01';
             Sherwood.saveGame();
         }
-        
+
         if (player.bagResources) {
             this._resources = player.bagResources;
             if (this._resources.gold === undefined) this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
@@ -57,17 +65,11 @@ Sherwood.Bag = {
             if (this._resources.portalToken1 === undefined) this._resources.portalToken1 = 0;
             if (this._resources.portalToken2 === undefined) this._resources.portalToken2 = 0;
             if (this._resources.portalToken3 === undefined) this._resources.portalToken3 = 0;
-            if (this._resources.skins === undefined) this._resources.skins = 0;
-            if (this._resources.entranceTickets === undefined) this._resources.entranceTickets = 0;
-            if (this._resources.autoFightTickets === undefined) this._resources.autoFightTickets = 0;
-            if (this._resources.amuletTablets === undefined) this._resources.amuletTablets = 0;
-            if (this._resources.ringTablets === undefined) this._resources.ringTablets = 0;
-            if (this._resources.skinTablets === undefined) this._resources.skinTablets = 0;
         } else {
             this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
             this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
         }
-        
+
         for (var i = this._inventory.length - 1; i >= 0; i--) {
             var item = this._inventory[i];
             var resKey = this._resourceIds[item.id];
@@ -76,17 +78,15 @@ Sherwood.Bag = {
                 this._inventory.splice(i, 1);
             }
         }
-        
+
         for (var i = 0; i < this._inventory.length; i++) {
             if (!this._inventory[i].maxStack || this._inventory[i].maxStack < 100) {
                 this._inventory[i].maxStack = 100;
             }
         }
-        
+
         this._save();
         console.log('🎒 Сумка инициализирована');
-        console.log('📦 Предметов:', this._inventory.length);
-        console.log('💰 Ресурсы:', this._resources);
     },
 
     getItems: function() { return this._inventory; },
@@ -94,18 +94,16 @@ Sherwood.Bag = {
     getMaxSlots: function() { return this._maxSlots; },
     getFreeSlots: function() { return this._maxSlots - this._inventory.length; },
     isFull: function() { return this._inventory.length >= this._maxSlots; },
-    
     getResources: function() { return this._resources; },
-    
     getResource: function(type) { return this._resources[type] || 0; },
-    
+
     addResource: function(type, amount) {
         if (!amount || amount <= 0) return;
         if (this._resources[type] === undefined) this._resources[type] = 0;
         this._resources[type] += amount;
         this._save();
     },
-    
+
     spendResource: function(type, amount) {
         if ((this._resources[type] || 0) < amount) return false;
         this._resources[type] -= amount;
@@ -129,24 +127,19 @@ Sherwood.Bag = {
     expandBag: function() {
         var info = this.getExpansionInfo();
         if (!info.canExpand) return { success: false, reason: 'Максимум 150 слотов' };
-
         if (this._resources.skins < info.costSkin) {
             return { success: false, reason: 'Нужно ' + info.costSkin + ' шкур (у вас ' + this._resources.skins + ')' };
         }
-
         if (this._resources.silver < info.costSilver) {
             return { success: false, reason: 'Нужно ' + info.costSilver + ' серебра' };
         }
-
         this._resources.silver -= info.costSilver;
         this._resources.skins -= info.costSkin;
-
         this._expansionLevel++;
         this._maxSlots = 10 + this._expansionLevel * 10;
         var player = Sherwood.getPlayer();
         player.bagSize = this._maxSlots;
         player.bagExpansion = this._expansionLevel;
-
         this._save();
         Sherwood.saveGame();
         return { success: true, newSlots: this._maxSlots, level: this._expansionLevel };
@@ -154,7 +147,6 @@ Sherwood.Bag = {
 
     addItem: function(item) {
         if (!item) return false;
-        
         var resKey = this._resourceIds[item.id];
         if (resKey) {
             this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
@@ -206,43 +198,14 @@ Sherwood.Bag = {
         if (index < 0 || index >= this._inventory.length) return false;
         var item = this._inventory[index];
         if (!item) return false;
-
         if (item.quantity && item.quantity > quantity) {
             item.quantity -= quantity;
             this._save();
             return true;
         }
-
         this._inventory.splice(index, 1);
         this._save();
         return true;
-    },
-
-    moveItem: function(sourceIndex, targetIndex) {
-        if (sourceIndex < 0 || sourceIndex >= this._inventory.length) return { success: false };
-        if (targetIndex < 0 || targetIndex >= this._maxSlots) return { success: false };
-        if (sourceIndex === targetIndex) return { success: true };
-        
-        var sourceItem = this._inventory[sourceIndex];
-        var targetItem = this._inventory[targetIndex];
-        
-        if (targetItem && sourceItem.id === targetItem.id && sourceItem.name === targetItem.name) {
-            var maxStack = sourceItem.maxStack || 100;
-            var totalQty = (sourceItem.quantity || 1) + (targetItem.quantity || 1);
-            if (totalQty <= maxStack) {
-                targetItem.quantity = totalQty;
-                this._inventory.splice(sourceIndex, 1);
-            } else {
-                targetItem.quantity = maxStack;
-                sourceItem.quantity = totalQty - maxStack;
-            }
-        } else {
-            this._inventory[sourceIndex] = targetItem;
-            this._inventory[targetIndex] = sourceItem;
-        }
-        
-        this._save();
-        return { success: true };
     },
 
     equipItem: function(index) {
@@ -252,6 +215,22 @@ Sherwood.Bag = {
 
         var part = item.part;
         var oldItem = this._equipment[part];
+
+        if (part === 'ring' || part === 'amulet') {
+            if (oldItem) {
+                if (this.isFull()) {
+                    Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
+                    return false;
+                }
+                this._inventory.push(oldItem);
+            }
+            this._equipment[part] = item;
+            this._inventory.splice(index, 1);
+            if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
+            Sherwood.dispatch({ type: 'ITEM_EQUIPPED', payload: { part: part, item: item } });
+            this._save();
+            return true;
+        }
 
         if (oldItem) {
             if (this.isFull()) {
@@ -272,12 +251,10 @@ Sherwood.Bag = {
     unequipItem: function(part) {
         if (!part || !this._equipment[part]) return false;
         var item = this._equipment[part];
-
         if (this.isFull()) {
             Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
             return false;
         }
-
         this._inventory.push(item);
         this._equipment[part] = null;
         if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
@@ -296,11 +273,9 @@ Sherwood.Bag = {
         if (index < 0 || index >= this._inventory.length) return false;
         var item = this._inventory[index];
         if (!item) return false;
-
         var price = item.sellPrice || 5;
         var qty = item.quantity || 1;
         var totalPrice = price * qty;
-
         this._resources.silver += totalPrice;
         this._inventory.splice(index, 1);
         this._save();
@@ -333,159 +308,164 @@ Sherwood.Bag = {
         return this._resources.skins;
     },
 
-    // ============================================================
-    //  UI — ПОКАЗ СУМКИ
-    // ============================================================
+    _save: function() {
+        var player = Sherwood.getPlayer();
+        if (!player) return;
+        player.inventory = this._inventory;
+        player.equipment = this._equipment;
+        player.bagSize = this._maxSlots;
+        player.bagExpansion = this._expansionLevel;
+        player.bagResources = this._resources;
+        if (player.resources) {
+            player.resources.gold = this._resources.gold;
+            player.resources.silver = this._resources.silver;
+        }
+        Sherwood.saveGame();
+    },
+
+    // ========== UI ==========
 
     showUI: function() {
-        this._renderBagUI();
-    },
+        if (typeof UI === 'undefined') {
+            if (typeof showGenericScreen === 'function') {
+                showGenericScreen('Сумка', '🎒');
+            }
+            return;
+        }
+        UI._playSound('click');
 
-    _renderBagUI: function() {
-        var old = document.getElementById('bag-screen');
-        if (old) old.remove();
-        
         var items = this._inventory;
+        var max = this._maxSlots;
         var resources = this._resources;
-        var maxSlots = this._maxSlots;
-        var freeSlots = this.getFreeSlots();
-        var equipment = this._equipment;
-        
-        var screenHTML = `
-        <div id="bag-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:url('assets/assets2/backgrounds/bag.png') center/cover no-repeat;display:flex;flex-direction:column;">
-            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(5px);">
-                <button onclick="Sherwood.Bag.closeUI()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
-                    <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
-                </button>
-                <span style="color:#e0c080;font-size:1.2em;">🎒 Сумка</span>
-                <span style="color:#888;font-size:12px;margin-left:auto;">
-                    📦 ${items.length}/${maxSlots}
-                </span>
-            </div>
-            
-            <div style="flex:1;overflow-y:auto;padding:20px;color:#fff;font-family:monospace;">
-                <div style="max-width:700px;margin:0 auto;">
-                    <!-- Ресурсы -->
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:15px;background:rgba(0,0,0,0.5);padding:10px;border-radius:8px;">
-                        <div style="text-align:center;">
-                            <div style="color:#ffd700;font-size:12px;">💰 Золото</div>
-                            <div style="font-weight:bold;">${resources.gold || 0}</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="color:#c0c0c0;font-size:12px;">🥈 Серебро</div>
-                            <div style="font-weight:bold;">${resources.silver || 0}</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="color:#8B4513;font-size:12px;">🪙 Шкуры</div>
-                            <div style="font-weight:bold;">${resources.skins || 0}</div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="color:#a8d8ea;font-size:12px;">🎫 Билеты</div>
-                            <div style="font-weight:bold;">${resources.entranceTickets || 0}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Слоты сумки -->
-                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
-                        ${Array.from({length: maxSlots}, function(_, i) {
-                            var item = items[i] || null;
-                            if (item) {
-                                return `
-                                <div style="background:rgba(255,255,255,0.05);padding:8px;border-radius:4px;border:1px solid #555;text-align:center;position:relative;">
-                                    <div style="font-size:20px;">${item.icon || '📦'}</div>
-                                    <div style="font-size:9px;color:#aaa;word-break:break-all;">${item.name || item.id || 'Предмет'}</div>
-                                    ${item.quantity > 1 ? `<div style="font-size:10px;color:#ffd700;">×${item.quantity}</div>` : ''}
-                                    ${item.part ? `<div style="font-size:8px;color:#4a8ab7;">${item.part}</div>` : ''}
-                                    <div style="display:flex;gap:2px;margin-top:4px;flex-wrap:wrap;justify-content:center;">
-                                        ${item.part ? `<button onclick="Sherwood.Bag.equipItem(${i})" style="padding:1px 6px;font-size:8px;background:#2d6a4f;border:none;border-radius:2px;color:#fff;cursor:pointer;">🔧</button>` : ''}
-                                        <button onclick="Sherwood.Bag.sellItemFromUI(${i})" style="padding:1px 6px;font-size:8px;background:#6a2d2d;border:none;border-radius:2px;color:#fff;cursor:pointer;">💰</button>
-                                        <button onclick="Sherwood.Bag.discardFromUI(${i})" style="padding:1px 6px;font-size:8px;background:#333;border:none;border-radius:2px;color:#888;cursor:pointer;">✖</button>
-                                    </div>
-                                </div>`;
-                            } else {
-                                return `
-                                <div style="background:rgba(255,255,255,0.02);padding:8px;border-radius:4px;border:1px dashed #333;text-align:center;">
-                                    <div style="font-size:12px;color:#333;">⬜</div>
-                                </div>`;
-                            }
-                        }).join('')}
-                    </div>
-                    
-                    <!-- Экипировка -->
-                    <div style="margin-top:15px;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                        <div style="color:#ffa500;font-weight:bold;font-size:14px;margin-bottom:6px;">🛡️ Экипировка</div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;font-size:11px;">
-                            ${Object.keys(equipment).map(function(part) {
-                                var item = equipment[part];
-                                return `
-                                <div style="background:rgba(255,255,255,0.03);padding:4px 8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
-                                    <span style="color:#888;">${part}:</span>
-                                    ${item ? 
-                                        `<span style="color:#4ecdc4;">${item.name || item.id} ${item.quantity > 1 ? '×'+item.quantity : ''}</span>` :
-                                        `<span style="color:#444;">пусто</span>`
-                                    }
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                    
-                    <!-- Расширение -->
-                    <div style="margin-top:10px;padding:8px 12px;background:rgba(255,215,0,0.05);border:1px solid #ffd700;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
-                        <div>
-                            <span style="color:#ffd700;">📦 Слотов: ${maxSlots}</span>
-                            ${maxSlots < 150 ? `<span style="color:#888;font-size:12px;margin-left:8px;">(${freeSlots} свободно)</span>` : ''}
-                        </div>
-                        ${maxSlots < 150 ? `
-                            <button onclick="Sherwood.Bag.expandFromUI()" class="btn btn-gold" style="padding:4px 15px;font-size:11px;">
-                                ⬆ Расширить
-                            </button>
-                        ` : `<span style="color:#52b788;">✅ MAX</span>`}
-                    </div>
-                </div>
-            </div>
-        </div>`;
-        
-        document.body.insertAdjacentHTML('beforeend', screenHTML);
-    },
+        var expInfo = this.getExpansionInfo();
 
-    expandFromUI: function() {
-        var result = this.expandBag();
-        if (result.success) {
-            alert('✅ Сумка расширена! Теперь ' + result.newSlots + ' слотов.');
-            this._renderBagUI();
+        var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
+
+        // Ресурсы
+        var resDefs = [
+            { key: 'gold', icon: 'assets/interface/resource_gold.png' },
+            { key: 'silver', icon: 'assets/interface/resource_silver.png' },
+            { key: 'skins', icon: 'assets/interface/skin_of_the_sherwood_creature.png' },
+            { key: 'entranceTickets', icon: 'assets/interface/resource_key_to_locked_levels.png' },
+            { key: 'autoFightTickets', icon: 'assets/interface/ticket_autofight.png' },
+            { key: 'amuletTablets', icon: 'assets/interface/amulet_crafting_tablet_resource.png' },
+            { key: 'ringTablets', icon: 'assets/interface/ring_crafting_tablet_resource.png' },
+            { key: 'skinTablets', icon: 'assets/interface/resource_appearance_crafting_tablet.png' },
+            { key: 'portalToken1', icon: 'assets/interface/resource_token_on_entrance_portal_1.png' },
+            { key: 'portalToken2', icon: 'assets/interface/resource_token_on_entrance_portal_2.png' },
+            { key: 'portalToken3', icon: 'assets/interface/resource_token_on_entrance_portal_3.png' }
+        ];
+
+        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;">';
+        for (var r = 0; r < resDefs.length; r++) {
+            var rd = resDefs[r];
+            var count = resources[rd.key] || 0;
+            h += '<div style="position:relative;width:50px;height:50px;"><img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;"><img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'"><span style="position:absolute;top:0;right:2px;color:#fff;font-size:0.5em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span></div>';
+        }
+        h += '</div>';
+
+        h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:6px;">📦 ' + items.length + '/' + max + ' ячеек</div>';
+
+        // Расширение
+        if (expInfo.canExpand) {
+            h += '<button onclick="Sherwood.Bag._expandFromUI()" class="btn btn-gold" style="width:100%;padding:6px;font-size:0.75em;margin-bottom:10px;">⬆ Расширить +10 (' + expInfo.costSilver + ' сер. + ' + expInfo.costSkin + ' шкур)</button>';
         } else {
-            alert('❌ ' + result.reason);
+            h += '<div style="color:#666;font-size:0.7em;text-align:center;margin-bottom:10px;">Максимум 150 слотов</div>';
+        }
+
+        // Сетка предметов
+        h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+        for (var i = 0; i < max; i++) {
+            var item = items[i];
+            if (item) {
+                var gc = Sherwood.GradeColors ? Sherwood.GradeColors[item.grade] : '#9d9d9d';
+                h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="Sherwood.Bag._dragStart(event,' + i + ')" ondragover="Sherwood.Bag._dragOver(event)" ondrop="Sherwood.Bag._drop(event,' + i + ')" onclick="Sherwood.Bag._action(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;">';
+                h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;">';
+                if (item.quantity > 1) {
+                    h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + item.quantity + '</span>';
+                }
+                h += '</div>';
+            } else {
+                h += '<div data-bag-index="' + i + '" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid #555;border-radius:8px;"></div>';
+            }
+        }
+        h += '</div>';
+
+        h += '<div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:12px;min-height:24px;">Нажми на предмет</div>';
+        h += '</div>';
+
+        UI._openScreenScrollable('🎒 Сумка', 'bag', h);
+    },
+
+    _dragStart: function(e, index) {
+        e.dataTransfer.setData('text/plain', index);
+        e.dataTransfer.effectAllowed = 'move';
+    },
+
+    _dragOver: function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    },
+
+    _drop: function(e, targetIndex) {
+        e.preventDefault();
+        var sourceIndex = parseInt(e.dataTransfer.getData('text/plain'));
+        if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+        var items = this._inventory;
+        if (sourceIndex >= items.length) return;
+        var sourceItem = items[sourceIndex];
+        var targetItem = items[targetIndex];
+
+        if (targetItem && sourceItem.id === targetItem.id && sourceItem.name === targetItem.name) {
+            var maxStack = sourceItem.maxStack || 100;
+            var totalQty = (sourceItem.quantity || 1) + (targetItem.quantity || 1);
+            if (totalQty <= maxStack) {
+                targetItem.quantity = totalQty;
+                items.splice(sourceIndex, 1);
+            } else {
+                targetItem.quantity = maxStack;
+                sourceItem.quantity = totalQty - maxStack;
+            }
+        } else {
+            items[sourceIndex] = targetItem;
+            items[targetIndex] = sourceItem;
+        }
+        this._save();
+        this.showUI();
+    },
+
+    _expandFromUI: function() {
+        var r = this.expandBag();
+        var info = document.getElementById('bag-info');
+        if (r.success) {
+            if (info) info.textContent = '✅ Сумка расширена до ' + r.newSlots + ' ячеек!';
+            UI.updateDisplay();
+            this.showUI();
+        } else {
+            if (info) info.textContent = '❌ ' + (r.reason || 'Ошибка');
+            UI._showToast(r.reason || 'Ошибка');
         }
     },
 
-    sellItemFromUI: function(index) {
-        var result = this.sellItem(index);
-        if (result.success) {
-            this._renderBagUI();
-        }
-    },
+    _action: function(i) {
+        var items = this._inventory;
+        if (i >= items.length) return;
+        var item = items[i];
+        if (!item) return;
+        var info = document.getElementById('bag-info');
+        if (!info) return;
 
-    discardFromUI: function(index) {
-        if (confirm('Точно выбросить предмет?')) {
-            this.discardItem(index);
-            this._renderBagUI();
+        var a = '';
+        if (item.part) {
+            a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');Sherwood.Bag.showUI();" style="background:#4caf50;border:none;border-radius:6px;padding:4px 12px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;font-size:0.7em;">🔧 Надеть</button>';
         }
-    },
+        a += '<button onclick="Sherwood.Bag.sellItem(' + i + ');Sherwood.Bag.showUI();" style="background:#ff9800;border:none;border-radius:6px;padding:4px 12px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;font-size:0.7em;">💰 Продать</button>';
+        a += '<button onclick="Sherwood.Bag.discardItem(' + i + ');Sherwood.Bag.showUI();" style="background:#f44336;border:none;border-radius:6px;padding:4px 12px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;font-size:0.7em;">🗑️ Выкинуть</button>';
 
-    // ============================================================
-    //  closeUI — ВОЗВРАТ НА ГЛАВНУЮ
-    // ============================================================
-    closeUI: function() {
-        var screen = document.getElementById('bag-screen');
-        if (screen) screen.remove();
-        
-        if (typeof window.showHomeScreen === 'function') {
-            window.showHomeScreen();
-        }
+        info.innerHTML = '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;">' + (item.name || 'Предмет') + '</div><div style="color:#aaa;font-size:0.7em;">' + (item.grade || 'обычный') + ' x' + (item.quantity || 1) + '</div><div style="margin-top:6px;">' + a + '</div>';
     }
 };
 
-// ---------- ЭКСПОРТ ----------
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Bag = Sherwood.Bag;
 
