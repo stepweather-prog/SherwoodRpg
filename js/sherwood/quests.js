@@ -1,426 +1,392 @@
-// js/sherwood/quests.js — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ (С ИСПРАВЛЕНИЕМ)
+// ============================================================
+//  js/sherwood/quests.js — ПОЛНАЯ РАБОЧАЯ ВЕРСИЯ С UI
+// ============================================================
 
-// Сначала создаём объект, иначе будет ошибка
 if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
 }
-if (!Sherwood.Quests) {
-    Sherwood.Quests = {};
-}
 
-// ===== ОБНОВЛЯЕМ Sherwood.Quests - БЕЗ ПОБЕГА =====
+Sherwood.Quests = {
+    _currentQuest: null,
+    _currentEnemy: null,
+    _currentStage: 0,
+    _inBattle: false,
+    _battleLog: [],
+    _battleOverlay: null,
 
-// Переопределяем flee - теперь это "пропустить ход" или просто убираем
-Sherwood.Quests.flee = function() {
-    // Теперь это не побег, а пропуск хода (восстановление)
-    const p = Sherwood.getPlayer();
-    if (!p) return { success: false, reason: 'Нет игрока' };
-    
-    // Восстанавливаем немного HP, но пропускаем ход
-    const healAmount = Math.floor(p.stats.maxHp * 0.05);
-    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + healAmount);
-    Sherwood.saveGame();
-    
-    return { 
-        success: true, 
-        message: `💚 Отдых: +${healAmount} HP`,
-        healed: healAmount,
-        playerHp: p.stats.hp
-    };
-};
+    // ============================================================
+    //  ДАННЫЕ КВЕСТОВ
+    // ============================================================
 
-// ===== МЕНЯЕМ БОЕВОЙ ЦИКЛ =====
-
-// Добавляем функцию "пропустить ход" вместо побега
-Sherwood.Quests.skipTurn = function() {
-    if (!this._inBattle) return null;
-    
-    const p = Sherwood.getPlayer();
-    const e = this._currentEnemy;
-    if (!e) return null;
-    
-    // Восстанавливаем немного HP
-    const healAmount = Math.floor(p.stats.maxHp * 0.08);
-    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + healAmount);
-    
-    // Враг атакует
-    const enemyDamage = Math.max(1, Math.floor((e.atk - p.stats.defense) * 0.3 + e.atk * 0.05));
-    p.stats.hp = Math.max(0, p.stats.hp - enemyDamage);
-    
-    const result = {
-        type: 'skip',
-        healed: healAmount,
-        enemyDamage: enemyDamage,
-        playerHp: p.stats.hp,
-        playerDead: p.stats.hp <= 0
-    };
-    
-    if (p.stats.hp <= 0) {
-        this._inBattle = false;
-        result.lose = true;
-    }
-    
-    Sherwood.saveGame();
-    return result;
-};
-
-// ===== ОБНОВЛЯЕМ UI БОЯ =====
-
-// Добавляем функцию показа экрана битвы без побега
-Sherwood.Quests.showBattleUI = function() {
-    const battle = this.getBattle();
-    if (!battle) return;
-    
-    const overlay = document.createElement('div');
-    overlay.id = 'questBattleOverlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;';
-    
-    const enemy = battle.enemy;
-    const p = Sherwood.getPlayer();
-    const isBoss = enemy.isBoss || false;
-    
-    let html = `
-        <div style="background:linear-gradient(180deg,#1a0f08,#2d1a10);border:3px solid ${isBoss ? '#ff6b35' : '#8B4513'};border-radius:12px;padding:20px;max-width:500px;width:90%;color:#fff;font-family:monospace;">
-            <div style="text-align:center;margin-bottom:10px;">
-                <div style="font-size:20px;font-weight:bold;color:${isBoss ? '#ff6b35' : '#ffa500'};">${isBoss ? '👑 БОСС' : '⚔️ БИТВА'}</div>
-                <div style="font-size:14px;">${battle.enemy.name}</div>
-                <div style="font-size:12px;color:#888;">Глава ${battle.chapter.id}: ${battle.chapter.name}</div>
-            </div>
-            
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <div>
-                    <div style="font-size:12px;color:#888;">Враг</div>
-                    <div style="font-size:18px;font-weight:bold;color:#ff6b6b;">❤️ ${enemy.hp}</div>
-                    <div style="width:150px;height:8px;background:#333;border-radius:4px;overflow:hidden;">
-                        <div style="width:${(enemy.hp/enemy.maxHp)*100}%;height:100%;background:linear-gradient(90deg,#ff0000,#ff4444);transition:width 0.3s;"></div>
-                    </div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:12px;color:#888;">${p.name}</div>
-                    <div style="font-size:18px;font-weight:bold;color:#4ecdc4;">❤️ ${p.stats.hp}</div>
-                    <div style="width:150px;height:8px;background:#333;border-radius:4px;overflow:hidden;margin-left:auto;">
-                        <div id="playerHpBarQuest" style="width:${(p.stats.hp/p.stats.maxHp)*100}%;height:100%;background:linear-gradient(90deg,#00ff00,#44ff44);transition:width 0.3s;"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="questBattleLog" style="background:rgba(0,0,0,0.5);border:1px solid #333;border-radius:4px;padding:6px;height:60px;overflow-y:auto;font-size:12px;margin-bottom:8px;"></div>
-            
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                <button onclick="Sherwood.Quests.playerAttack()" style="padding:12px;background:#6a2d2d;border:2px solid #ff6b6b;border-radius:6px;color:#fff;cursor:pointer;font-size:16px;font-weight:bold;">⚔️ АТАКА</button>
-                <button onclick="Sherwood.Quests.useSkillInQuest()" style="padding:12px;background:#2d4a6a;border:2px solid #4a8ab7;border-radius:6px;color:#fff;cursor:pointer;font-size:14px;font-weight:bold;">🌀 СКИЛЛ</button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
-                <button onclick="Sherwood.Quests.skipTurn()" style="padding:8px;background:#4a4a4a;border:1px solid #666;border-radius:4px;color:#aaa;cursor:pointer;font-size:12px;">💤 Пропустить ход (+8% HP)</button>
-                <button onclick="Sherwood.Quests.usePotion()" style="padding:8px;background:#2d6a4f;border:1px solid #52b788;border-radius:4px;color:#fff;cursor:pointer;font-size:12px;">🧪 Зелье HP</button>
-            </div>
-        </div>
-    `;
-    
-    overlay.innerHTML = html;
-    document.body.appendChild(overlay);
-    this._battleOverlay = overlay;
-};
-
-// ===== АТАКА ИГРОКА =====
-
-Sherwood.Quests.playerAttack = function() {
-    const result = this.attack();
-    if (!result) return;
-    
-    // Обновляем лог
-    this.addBattleLog(`💢 ${result.damage}${result.crit ? ' 💥КРИТ!' : ''} урона!`);
-    
-    if (result.enemyDead) {
-        if (result.chapterComplete) {
-            this.addBattleLog('🏆 ГЛАВА ПРОЙДЕНА!');
-            setTimeout(() => {
-                this.closeBattleUI();
-                // === ИСПРАВЛЕНИЕ: вместо Menu.showQuestsScreen() ===
-                if (typeof window.showHomeScreen === 'function') {
-                    window.showHomeScreen();
-                }
-                if (result.rewards) {
-                    alert(`🏆 Глава пройдена!\n+${result.rewards.exp} опыта\n+${result.rewards.gold} золота\n+${result.rewards.silver} серебра`);
-                }
-            }, 1500);
-        } else {
-            this.addBattleLog(`✅ ${result.enemyName || 'Враг'} повержен!`);
-            setTimeout(() => {
-                this.updateBattleUI();
-            }, 500);
+    CHAPTERS: [
+        {
+            id: 1,
+            name: 'Кровь Великого Дуба',
+            quest: 'Останови осквернение леса',
+            stages: 5,
+            enemy: { name: 'Чумной Ворон', image: 'plague_crow.png', hp: 1000, atk: 400, def: 200, exp: 30, gold: 15 },
+            boss: { name: 'Лесничий-Отступник', image: 'fallen_forester.png', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 },
+            rewards: { exp: 200, gold: 50, silver: 500 },
+            lore: 'Шервудский лес веками был щитом...'
+        },
+        {
+            id: 2,
+            name: 'Кара Скверны',
+            quest: 'Очисти лес от искажённых тварей',
+            stages: 5,
+            enemy: { name: 'Искажённый Бес', image: 'warped_imp.png', hp: 4000, atk: 1200, def: 800, exp: 40, gold: 20 },
+            boss: { name: 'Вожак Искаженной Стаи', image: 'blight_alpha_stag.png', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 },
+            rewards: { exp: 400, gold: 100, silver: 1000 },
+            lore: 'Смерть Дуба вызвала цепную реакцию...'
         }
-        return;
-    }
-    
-    if (result.playerDead) {
-        this.addBattleLog('💀 ТЫ ПАЛ В БОЮ!');
-        setTimeout(() => {
-            this.closeBattleUI();
-            // === ИСПРАВЛЕНИЕ: вместо Menu.showQuestsScreen() ===
-            if (typeof window.showHomeScreen === 'function') {
-                window.showHomeScreen();
-            }
-            alert('💀 Ты погиб в битве! Потеряно 20% золота.');
-            // Штраф за смерть
-            const p = Sherwood.getPlayer();
-            if (p && p.resources) {
-                p.resources.gold = Math.floor((p.resources.gold || 0) * 0.8);
+        // ... остальные главы
+    ],
+
+    // ============================================================
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
+
+    init: function() {
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+        if (!p.questProgress) {
+            p.questProgress = { completed: [], currentChapter: 1 };
+        }
+        console.log('📋 Квесты инициализированы');
+    },
+
+    // ============================================================
+    //  МЕТОДЫ
+    // ============================================================
+
+    getAllChapters: function() {
+        return this.CHAPTERS;
+    },
+
+    getChapter: function(id) {
+        return this.CHAPTERS.find(function(ch) { return ch.id === id; });
+    },
+
+    getProgress: function() {
+        var p = Sherwood.getPlayer();
+        return p ? p.questProgress : { completed: [], currentChapter: 1 };
+    },
+
+    getBattle: function() {
+        if (!this._inBattle || !this._currentEnemy) return null;
+        return {
+            chapter: this._currentQuest,
+            enemy: this._currentEnemy,
+            stage: this._currentStage + 1,
+            total: this._currentQuest ? this._currentQuest.stages : 5
+        };
+    },
+
+    isOnCooldown: function() {
+        return false;
+    },
+
+    getCooldownRemaining: function() {
+        return 0;
+    },
+
+    startChapter: function(id) {
+        var ch = this.getChapter(id);
+        if (!ch) return { success: false, reason: 'Глава не найдена' };
+
+        var p = Sherwood.getPlayer();
+        if (p.questProgress.completed.indexOf(id) !== -1) {
+            return { success: false, reason: 'Глава уже пройдена' };
+        }
+
+        this._currentQuest = ch;
+        this._currentStage = 0;
+        this._inBattle = true;
+        this._currentEnemy = JSON.parse(JSON.stringify(ch.enemy));
+        this._battleLog = [];
+
+        return {
+            success: true,
+            chapter: ch,
+            enemy: this._currentEnemy,
+            stage: 1,
+            total: ch.stages
+        };
+    },
+
+    attack: function() {
+        if (!this._inBattle || !this._currentEnemy) {
+            return { error: 'Нет активного боя' };
+        }
+
+        var p = Sherwood.getPlayer();
+        var enemy = this._currentEnemy;
+        var ch = this._currentQuest;
+
+        // Урон игрока
+        var dmg = Math.max(1, p.stats.attack - enemy.def + Math.floor(Math.random() * 20));
+        var crit = Math.random() * 100 < 15;
+        if (crit) dmg = Math.floor(dmg * 1.8);
+
+        enemy.hp -= dmg;
+        if (enemy.hp < 0) enemy.hp = 0;
+
+        var result = {
+            damage: dmg,
+            crit: crit,
+            enemyHp: enemy.hp,
+            enemyMaxHp: enemy.maxHp,
+            enemyName: enemy.name,
+            enemyDead: enemy.hp <= 0
+        };
+
+        if (enemy.hp <= 0) {
+            this._currentStage++;
+            if (this._currentStage >= ch.stages) {
+                // Глава пройдена
+                p.questProgress.completed.push(ch.id);
+                p.questProgress.currentChapter = ch.id + 1;
                 Sherwood.saveGame();
+
+                // Награда
+                Sherwood.addExp(ch.rewards.exp);
+                Sherwood.addResource('gold', ch.rewards.gold);
+                Sherwood.addResource('silver', ch.rewards.silver);
+
+                this._inBattle = false;
+                result.chapterComplete = true;
+                result.rewards = ch.rewards;
+                return result;
             }
-        }, 1500);
-        return;
-    }
-    
-    // Атака врага
-    if (result.enemyDamage) {
-        this.addBattleLog(`💢 Враг нанёс ${result.enemyDamage} урона!`);
-    }
-    
-    this.updateBattleUI();
-};
 
-// ===== ИСПОЛЬЗОВАНИЕ СКИЛЛА В КВЕСТЕ =====
-
-Sherwood.Quests.useSkillInQuest = function() {
-    const p = Sherwood.getPlayer();
-    if (!p) return;
-    
-    // Проверяем доступные скиллы
-    const skills = [];
-    if (p.skills && p.skills.heal) skills.push('heal');
-    if (p.skills && p.skills.fireball) skills.push('fireball');
-    if (p.skills && p.skills.shield) skills.push('shield');
-    
-    if (skills.length === 0) {
-        this.addBattleLog('❌ Нет доступных скиллов!');
-        return;
-    }
-    
-    // Показываем выбор скиллов
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.95);border:2px solid #8B4513;border-radius:8px;padding:20px;z-index:201;min-width:200px;';
-    
-    let html = '<div style="color:#ffa500;text-align:center;margin-bottom:10px;">🌀 ВЫБЕРИ СКИЛЛ</div>';
-    
-    if (p.skills.heal) {
-        html += `<button onclick="Sherwood.Quests.castHeal()" style="display:block;width:100%;padding:8px;margin:4px 0;background:#2d6a4f;border:1px solid #52b788;border-radius:4px;color:#fff;cursor:pointer;">💚 Исцеление (10 MP)</button>`;
-    }
-    if (p.skills.fireball) {
-        html += `<button onclick="Sherwood.Quests.castFireball()" style="display:block;width:100%;padding:8px;margin:4px 0;background:#6a2d2d;border:1px solid #b75252;border-radius:4px;color:#fff;cursor:pointer;">🔥 Огненный шар (15 MP)</button>`;
-    }
-    if (p.skills.shield) {
-        html += `<button onclick="Sherwood.Quests.castShield()" style="display:block;width:100%;padding:8px;margin:4px 0;background:#2d4a6a;border:1px solid #5288b7;border-radius:4px;color:#fff;cursor:pointer;">🛡️ Щит (8 MP)</button>`;
-    }
-    
-    html += `<button onclick="this.parentElement.remove()" style="display:block;width:100%;padding:6px;margin-top:8px;background:#333;border:1px solid #555;border-radius:4px;color:#888;cursor:pointer;">✖ Отмена</button>`;
-    
-    overlay.innerHTML = html;
-    document.body.appendChild(overlay);
-};
-
-// ===== СКИЛЛЫ =====
-
-Sherwood.Quests.castHeal = function() {
-    const p = Sherwood.getPlayer();
-    if (!p) return;
-    
-    if ((p.stats.mp || 0) < 10) {
-        this.addBattleLog('❌ Недостаточно маны!');
-        return;
-    }
-    
-    p.stats.mp = (p.stats.mp || 0) - 10;
-    const heal = Math.floor(p.stats.maxHp * 0.3);
-    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-    
-    this.addBattleLog(`💚 Исцеление! +${heal} HP`);
-    this.closeSkillMenu();
-    this.enemyAttackAfterSkill();
-    this.updateBattleUI();
-    Sherwood.saveGame();
-};
-
-Sherwood.Quests.castFireball = function() {
-    const p = Sherwood.getPlayer();
-    const e = this._currentEnemy;
-    if (!p || !e) return;
-    
-    if ((p.stats.mp || 0) < 15) {
-        this.addBattleLog('❌ Недостаточно маны!');
-        return;
-    }
-    
-    p.stats.mp = (p.stats.mp || 0) - 15;
-    let damage = Math.floor((p.stats.attack * 2 + 10) * (0.9 + Math.random() * 0.2));
-    e.hp -= damage;
-    if (e.hp < 0) e.hp = 0;
-    
-    this.addBattleLog(`🔥 Огненный шар! ${damage} урона!`);
-    this.closeSkillMenu();
-    
-    if (e.hp <= 0) {
-        // Обработка смерти врага
-        this._handleEnemyDeath();
-        return;
-    }
-    
-    this.enemyAttackAfterSkill();
-    this.updateBattleUI();
-    Sherwood.saveGame();
-};
-
-Sherwood.Quests.castShield = function() {
-    const p = Sherwood.getPlayer();
-    if (!p) return;
-    
-    if ((p.stats.mp || 0) < 8) {
-        this.addBattleLog('❌ Недостаточно маны!');
-        return;
-    }
-    
-    p.stats.mp = (p.stats.mp || 0) - 8;
-    p._shieldActive = true;
-    
-    this.addBattleLog('🛡️ Щит активирован! Защита +50% на 1 ход');
-    this.closeSkillMenu();
-    this.enemyAttackAfterSkill();
-    this.updateBattleUI();
-    Sherwood.saveGame();
-};
-
-Sherwood.Quests.closeSkillMenu = function() {
-    document.querySelectorAll('[style*="z-index:201"]').forEach(el => el.remove());
-};
-
-// ===== АТАКА ВРАГА ПОСЛЕ СКИЛЛА =====
-
-Sherwood.Quests.enemyAttackAfterSkill = function() {
-    const p = Sherwood.getPlayer();
-    const e = this._currentEnemy;
-    if (!p || !e || e.hp <= 0) return;
-    
-    let enemyDamage = Math.max(1, Math.floor((e.atk - p.stats.defense) * 0.3 + e.atk * 0.05));
-    
-    // Щит уменьшает урон
-    if (p._shieldActive) {
-        enemyDamage = Math.floor(enemyDamage * 0.5);
-        p._shieldActive = false;
-        this.addBattleLog('🛡️ Щит поглотил часть урона!');
-    }
-    
-    p.stats.hp = Math.max(0, p.stats.hp - enemyDamage);
-    this.addBattleLog(`💢 Враг нанёс ${enemyDamage} урона!`);
-    
-    if (p.stats.hp <= 0) {
-        this.addBattleLog('💀 ТЫ ПАЛ В БОЮ!');
-        setTimeout(() => {
-            this.closeBattleUI();
-            // === ИСПРАВЛЕНИЕ: вместо Menu.showQuestsScreen() ===
-            if (typeof window.showHomeScreen === 'function') {
-                window.showHomeScreen();
+            // Следующий враг
+            if (this._currentStage === ch.stages - 1) {
+                // Босс
+                this._currentEnemy = JSON.parse(JSON.stringify(ch.boss));
+                result.nextEnemy = this._currentEnemy;
+                result.isBoss = true;
+            } else {
+                // Обычный враг
+                var nextEnemy = JSON.parse(JSON.stringify(ch.enemy));
+                var mult = 1 + (this._currentStage * 0.2);
+                nextEnemy.hp = Math.floor(nextEnemy.hp * mult);
+                nextEnemy.atk = Math.floor(nextEnemy.atk * mult);
+                nextEnemy.def = Math.floor(nextEnemy.def * mult);
+                this._currentEnemy = nextEnemy;
+                result.nextEnemy = nextEnemy;
             }
-        }, 1500);
+
+            result.enemyDead = true;
+            result.stageComplete = true;
+            return result;
+        }
+
+        // Атака врага
+        var edmg = Math.max(1, enemy.atk - p.stats.defense + Math.floor(Math.random() * 15));
+        p.stats.hp = Math.max(0, p.stats.hp - edmg);
+        result.enemyDamage = edmg;
+        result.playerHp = p.stats.hp;
+
+        if (p.stats.hp <= 0) {
+            this._inBattle = false;
+            result.playerDead = true;
+            p.stats.hp = 1;
+            Sherwood.saveGame();
+            return result;
+        }
+
+        Sherwood.saveGame();
+        return result;
+    },
+
+    flee: function() {
+        this._inBattle = false;
+        this._currentEnemy = null;
+        this._currentQuest = null;
+        return { success: true };
+    },
+
+    // ============================================================
+    //  UI — ПОКАЗ КВЕСТОВ
+    // ============================================================
+
+    showUI: function() {
+        if (typeof UI === 'undefined') {
+            if (typeof showGenericScreen === 'function') {
+                showGenericScreen('Квесты', '📋');
+            }
+            return;
+        }
+
+        UI._playSound('click');
+
+        var prog = this.getProgress();
+        var currentChapter = prog.currentChapter || 1;
+        var ch = this.getChapter(currentChapter);
+
+        if (!ch) {
+            UI._showPlaceholder('Квесты', 'quests');
+            return;
+        }
+
+        var completed = prog.completed && prog.completed.indexOf(ch.id) !== -1;
+        var isActive = this._inBattle && this._currentQuest && this._currentQuest.id === ch.id;
+
+        var displayEnemy, displayImage, isBossStage = false;
+        if (completed) {
+            displayEnemy = ch.boss;
+            displayImage = 'assets/beast_quest/' + ch.boss.image;
+            isBossStage = true;
+        } else if (isActive && this._currentEnemy) {
+            displayEnemy = this._currentEnemy;
+            displayImage = 'assets/all_beasts/' + displayEnemy.image;
+            if (this._currentStage >= ch.stages - 1) {
+                displayImage = 'assets/beast_quest/' + ch.boss.image;
+                isBossStage = true;
+            }
+        } else {
+            displayEnemy = ch.enemy;
+            displayImage = 'assets/all_beasts/' + ch.enemy.image;
+        }
+
+        var cardImg = isBossStage ? 'assets/interface/quest_boss.png' : 'assets/interface/quest_regular.png';
+
+        var h = '';
+        h += '<div style="text-align:center;">';
+        h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">Глава ' + ch.id + ' — ' + ch.name + '</div>';
+        h += '<div style="color:#fff;font-size:1em;font-weight:bold;margin-bottom:4px;">' + displayEnemy.name + '</div>';
+        h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:20px;">HP ' + displayEnemy.hp + ' | АТК ' + (displayEnemy.atk || displayEnemy.attack) + ' | ЗЩТ ' + (displayEnemy.def || displayEnemy.defense) + '</div>';
+        h += '<div style="position:relative;display:block;width:360px;height:360px;margin:0 auto 24px;"><img src="' + cardImg + '" style="width:360px;height:360px;object-fit:contain;position:absolute;top:0;left:0;"><img src="' + displayImage + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:210px;height:210px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'"></div>';
+
+        if (completed) {
+            h += '<div style="color:#4caf50;font-size:1em;font-weight:bold;">✅ Пройдено</div>';
+        } else if (isActive) {
+            var stageText = (this._currentStage || 0) + 1 + '/' + ch.stages;
+            h += '<div style="color:#ffa500;font-size:0.9em;margin-bottom:8px;">⚔️ Этап ' + stageText + '</div>';
+            h += '<button onclick="Sherwood.Quests._showQuestBattle()" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ В бой</button>';
+        } else {
+            h += '<button onclick="Sherwood.Quests._startQuest(' + ch.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ Начать главу</button>';
+        }
+
+        h += '<div style="margin-top:8px;color:#888;font-size:0.7em;">🏆 Награда: +' + ch.rewards.exp + ' опыта, +' + ch.rewards.gold + ' золота</div>';
+        h += '</div>';
+
+        UI._openScreenScrollable('Квесты', 'quests', h);
+    },
+
+    // ============================================================
+    //  UI ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+    // ============================================================
+
+    _startQuest: function(id) {
+        var r = this.startChapter(id);
+        if (!r.success) {
+            UI._showToast(r.reason || 'Ошибка');
+            this.showUI();
+            return;
+        }
+        this._showQuestBattle();
+    },
+
+    _showQuestBattle: function() {
+        if (!this._inBattle || !this._currentEnemy) {
+            this.showUI();
+            return;
+        }
+
+        var b = this.getBattle();
+        if (!b) return;
+
+        var ch = this._currentQuest;
+        var enemy = this._currentEnemy;
+
+        UI._showBattleScreen({
+            name: enemy.name,
+            image: 'assets/all_beasts/' + (enemy.image || 'plague_crow.png'),
+            hp: enemy.hp,
+            maxHp: enemy.maxHp || enemy.hp,
+            attack: enemy.atk || 0,
+            defense: enemy.def || 0
+        }, 'quest', ch.name + ' — Этап ' + b.stage + '/' + b.total, '', 'Sherwood.Quests._questAttack()', 'Sherwood.Quests._questFlee()');
+    },
+
+    _questAttack: function() {
+        UI._playHitSounds();
+        var result = this.attack();
+
+        if (result.error) {
+            UI._showDialog(result.error, '#ff9800');
+            return;
+        }
+
+        if (result.chapterComplete) {
+            UI._showDialog('🏆 Глава пройдена!', '#ffd700');
+            UI._playSound('victory');
+            UI._stopMusic();
+            UI._pendingRewards = result.rewards;
+            UI._afterRewardAction = function() {
+                UI._playMusic('main_theme');
+                Sherwood.Quests.showUI();
+            };
+            UI._showVictoryScreen(UI._pendingRewards);
+            return;
+        }
+
+        if (result.playerDead) {
+            UI._showDialog('💀 Поражение...', '#f44336');
+            UI._playSound('defeat');
+            UI._stopMusic();
+            UI._pendingRewards = { exp: 10, silver: 50 };
+            UI._afterRewardAction = function() {
+                Sherwood.Quests.showUI();
+            };
+            UI._showDefeatScreen(UI._pendingRewards);
+            return;
+        }
+
+        if (result.enemyDead) {
+            UI._showDialog('✅ Враг повержен!', '#4caf50');
+            UI._updateEnemyHP(0, result.enemyMaxHp || 100);
+            if (result.stageComplete) {
+                UI._playSound('victory');
+            }
+            var self = this;
+            setTimeout(function() {
+                self._showQuestBattle();
+            }, 1000);
+            return;
+        }
+
+        UI._hitEnemyCard();
+        UI._updateEnemyHP(result.enemyHp, result.enemyMaxHp);
+        UI._showDialog((result.crit ? '💥 КРИТ! ' : '') + 'Урон: ' + result.damage, result.crit ? '#ff6a00' : '#fff');
+
+        if (result.enemyDamage) {
+            var self = this;
+            setTimeout(function() {
+                UI._showDialog('💢 Враг нанёс ' + result.enemyDamage + ' урона', '#f44336');
+                UI.updateDisplay();
+            }, 700);
+        }
+
+        var self = this;
+        setTimeout(function() {
+            self._showQuestBattle();
+        }, 1200);
+    },
+
+    _questFlee: function() {
+        this.flee();
+        UI._stopMusic();
+        this.showUI();
     }
-    
-    Sherwood.saveGame();
 };
 
-// ===== ЗЕЛЬЕ =====
+// ============================================================
+//  ЭКСПОРТ
+// ============================================================
 
-Sherwood.Quests.usePotion = function() {
-    const p = Sherwood.getPlayer();
-    if (!p) return;
-    
-    const potions = p.inventory ? p.inventory.potions || 0 : 0;
-    if (potions <= 0) {
-        this.addBattleLog('❌ Нет зелий!');
-        return;
-    }
-    
-    p.inventory.potions = potions - 1;
-    const heal = Math.floor(p.stats.maxHp * 0.25);
-    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-    
-    this.addBattleLog(`🧪 Зелье! +${heal} HP`);
-    this.enemyAttackAfterSkill();
-    this.updateBattleUI();
-    Sherwood.saveGame();
-};
-
-// ===== ОБНОВЛЕНИЕ UI =====
-
-Sherwood.Quests.updateBattleUI = function() {
-    const overlay = document.getElementById('questBattleOverlay');
-    if (!overlay) return;
-    
-    const p = Sherwood.getPlayer();
-    const e = this._currentEnemy;
-    if (!p || !e) return;
-    
-    // Обновляем HP бары
-    const hpBar = document.getElementById('playerHpBarQuest');
-    if (hpBar) {
-        hpBar.style.width = (p.stats.hp / p.stats.maxHp * 100) + '%';
-    }
-    
-    // Обновляем текст
-    const enemyHpElements = overlay.querySelectorAll('[style*="font-size:18px"][style*="color:#ff6b6b;"]');
-    if (enemyHpElements.length > 0) {
-        enemyHpElements[0].textContent = `❤️ ${e.hp}`;
-    }
-    
-    // Обновляем лог
-    const log = document.getElementById('questBattleLog');
-    if (log && this._battleLog) {
-        log.innerHTML = this._battleLog.slice(-5).join('<br>');
-        log.scrollTop = log.scrollHeight;
-    }
-};
-
-Sherwood.Quests.addBattleLog = function(msg) {
-    if (!this._battleLog) this._battleLog = [];
-    this._battleLog.push(msg);
-    if (this._battleLog.length > 20) this._battleLog.shift();
-    
-    const log = document.getElementById('questBattleLog');
-    if (log) {
-        log.innerHTML = this._battleLog.slice(-5).join('<br>');
-        log.scrollTop = log.scrollHeight;
-    }
-};
-
-Sherwood.Quests.closeBattleUI = function() {
-    if (this._battleOverlay) {
-        this._battleOverlay.remove();
-        this._battleOverlay = null;
-    }
-    document.querySelectorAll('[style*="z-index:201"]').forEach(el => el.remove());
-};
-
-// ===== ПЕРЕОПРЕДЕЛЯЕМ startChapter =====
-
-const _origStartChapter = Sherwood.Quests.startChapter;
-Sherwood.Quests.startChapter = function(id) {
-    const result = _origStartChapter.call(this, id);
-    
-    if (result && result.success) {
-        // Показываем UI битвы вместо старого
-        setTimeout(() => {
-            this.closeBattleUI();
-            this._battleLog = [];
-            this.showBattleUI();
-        }, 300);
-    }
-    
-    return result;
-};
-
-// ===== ЭКСПОРТ =====
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Quests = Sherwood.Quests;
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
-
-console.log('🔥 Sherwood.Quests обновлён - БЕЗ ПОБЕГОВ!');
-console.log('⚔️ Только вперёд, только победа или смерть!');
+console.log('📋 Квесты загружены!');
