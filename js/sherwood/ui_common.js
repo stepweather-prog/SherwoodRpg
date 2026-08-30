@@ -226,7 +226,7 @@ UI._openScreen = function(title, bgKey, html, backFn) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;';
             }
             UI._screenLayer.innerHTML = `
-                <div style="min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;${bgStyle}">
+                <div style="width:100%;min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-shrink:0;">
                         <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">
                             <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
@@ -253,19 +253,21 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;';
             }
             UI._screenLayer.innerHTML = `
-                <div style="min-height:100%;display:flex;flex-direction:column;${bgStyle}">
+                <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;position:sticky;top:0;background:rgba(0,0,0,0.8);z-index:10;">
                         <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
                             <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
                         <span style="color:#e0c080;font-size:1.1em;">${title}</span>
                     </div>
-                    <div style="flex:1;padding:8px 12px 20px 12px;">
+                    <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
                     </div>
                 </div>
             `;
             UI._screenLayer.style.display = 'block';
+            UI._screenLayer.style.width = '100%';
+            UI._screenLayer.style.height = '100%';
         }
     } catch(e) {}
 };
@@ -286,15 +288,9 @@ UI.loadHome = function() {
         if (UI._screenLayer) {
             UI._screenLayer.style.display = 'none';
             UI._screenLayer.innerHTML = '';
-            UI._screenLayer.style.zIndex = '0';
-            UI._screenLayer.style.background = 'transparent';
-            UI._screenLayer.style.pointerEvents = 'none';
         }
     } catch(e) {}
     try { UI.updateDisplay(); } catch(e) {}
-    if (typeof showHomeScreen === 'function') {
-        showHomeScreen();
-    }
 };
 
 // ============================================================
