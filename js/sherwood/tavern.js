@@ -211,7 +211,7 @@ Sherwood.Tavern = {
     },
 
     // ---------- UI ----------
-               showUI: function() {
+    showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
@@ -224,35 +224,27 @@ Sherwood.Tavern = {
 
         var h = '';
         
-        // Отступ сверху
-        h += '<div style="height:5vh;"></div>';
+        h += '<div style="height:3vh;"></div>';
         
-        // Контракт — крупная плашка
+        // Контракт
         h += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;padding:0 5px;">';
-        h += '<div style="width:100%;min-height:450px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:50px 15px;display:flex;flex-direction:column;justify-content:center;">';
+        h += '<div style="width:100%;min-height:500px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:60px 10px;display:flex;flex-direction:column;justify-content:center;">';
         
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null;
             
-            // Заголовок — как подписи вкладок
-            h += '<div style="text-align:center;color:#ffa500;font-size:clamp(16px, 2.5vw, 22px);font-weight:bold;margin-bottom:20px;text-shadow:0 2px 4px #000;">' + current.title + '</div>';
-            
-            // Лор — крупный, читаемый
-            h += '<div style="text-align:center;color:#fff;font-size:clamp(14px, 2vw, 18px);line-height:1.6;margin-bottom:20px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.lore + '</div>';
-            
-            // Цель
-            h += '<div style="text-align:center;color:#e0c080;font-size:clamp(13px, 1.8vw, 16px);margin-bottom:20px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.quest + '</div>';
-            
-            // Награда
-            h += '<div style="text-align:center;color:#ffd700;font-size:clamp(13px, 1.8vw, 16px);text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
+            h += '<div style="text-align:center;color:#ffa500;font-size:clamp(15px, 2.5vw, 22px);font-weight:bold;margin-bottom:25px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.title + '</div>';
+            h += '<div style="text-align:center;color:#fff;font-size:clamp(13px, 2vw, 18px);line-height:1.7;margin-bottom:25px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
+            h += '<div style="text-align:center;color:#e0c080;font-size:clamp(12px, 1.8vw, 16px);margin-bottom:25px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
+            h += '<div style="text-align:center;color:#ffd700;font-size:clamp(12px, 1.8vw, 16px);text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             
             if (isCompleted) {
-                h += '<div style="text-align:center;color:#52b788;margin-top:20px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Глава пройдена!</div>';
+                h += '<div style="text-align:center;color:#52b788;margin-top:25px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Глава пройдена!</div>';
             } else if (isAccepted) {
-                h += '<div style="text-align:center;color:#ffa500;margin-top:20px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Квест принят!</div>';
+                h += '<div style="text-align:center;color:#ffa500;margin-top:25px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Квест принят!</div>';
             } else {
-                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:25px;background:#5a3a00;border:none;border-radius:6px;padding:14px 40px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:clamp(14px, 2vw, 18px);width:80%;max-width:300px;margin-left:auto;margin-right:auto;">Принять квест</button>';
+                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:30px;background:#5a3a00;border:none;border-radius:6px;padding:16px 40px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:clamp(14px, 2vw, 18px);width:80%;max-width:300px;margin-left:auto;margin-right:auto;">Принять квест</button>';
             }
         } else if (completed >= total) {
             h += '<div style="text-align:center;color:#ffa500;font-size:clamp(16px, 2.5vw, 22px);font-weight:bold;text-shadow:0 2px 4px #000;">Шервуд спасён!</div>';
@@ -260,7 +252,7 @@ Sherwood.Tavern = {
         h += '</div>';
         h += '</div>';
         
-        // Вкладки Таланты и Тренировка — увеличены в 2 раза
+        // Вкладки
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:25px;">';
         
         h += '<div onclick="UI._showTalentsFromProfile()" style="width:280px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
@@ -273,7 +265,6 @@ Sherwood.Tavern = {
         
         h += '</div>';
         
-        // Прогресс
         h += '<div style="margin-top:30px;text-align:center;color:#ffa500;font-size:clamp(13px, 1.8vw, 16px);text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
         
         UI._openScreenScrollable('Таверна', 'tavern', h);
