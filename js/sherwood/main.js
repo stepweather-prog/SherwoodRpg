@@ -176,6 +176,34 @@ function prevSection() {
 }
 
 // ============================================================
+//  СКРЫТИЕ / ПОКАЗ ЭЛЕМЕНТОВ ГЛАВНОГО ЭКРАНА
+// ============================================================
+
+function hideHomeElements() {
+    const ids = [
+        'arch', 'hero', 'sectionIcon', 'sectionName',
+        'carouselLeftArrow', 'carouselRightArrow',
+        'leftDivider', 'rightDivider', 'topBar'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
+function showHomeElements() {
+    const ids = [
+        'arch', 'hero', 'sectionIcon', 'sectionName',
+        'carouselLeftArrow', 'carouselRightArrow',
+        'leftDivider', 'rightDivider', 'topBar'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = '';
+    });
+}
+
+// ============================================================
 //  ВХОД В РАЗДЕЛ
 // ============================================================
 
@@ -184,12 +212,8 @@ function enterSection() {
     if (!section) return;
     console.log(`🚪 Вход в раздел: ${section.name}`);
 
-    // Принудительно показываем слой UI
-    const layer = document.getElementById('ui-screen-layer');
-    if (layer) {
-        layer.style.zIndex = '9999';
-        layer.style.display = 'block';
-    }
+    // Скрываем элементы главного экрана
+    hideHomeElements();
 
     switch(section.name) {
         case 'Профиль':
@@ -235,6 +259,9 @@ function showHomeScreen() {
         layer.innerHTML = '';
     }
     
+    // Показываем элементы главного экрана
+    showHomeElements();
+    
     homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
     currentScreen = 'home';
@@ -270,7 +297,7 @@ function closeAllScreens() {
 function showGenericScreen(title, icon) {
     closeAllScreens();
     const screenHTML = `
-    <div id="generic-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;">
+    <div id="generic-screen" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:300;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
             <button onclick="closeGenericScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
                 <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
@@ -284,7 +311,7 @@ function showGenericScreen(title, icon) {
             <button onclick="closeGenericScreen()" class="btn" style="margin-top:20px;padding:10px 30px;">Назад</button>
         </div>
     </div>`;
-    document.body.insertAdjacentHTML('beforeend', screenHTML);
+    document.getElementById('gameZone').insertAdjacentHTML('beforeend', screenHTML);
 }
 
 function closeGenericScreen() {
@@ -430,6 +457,8 @@ window.saveGameData = saveGameData;
 window.loadGameData = loadGameData;
 window.startMainMusic = startMainMusic;
 window.stopMainMusic = stopMainMusic;
+window.hideHomeElements = hideHomeElements;
+window.showHomeElements = showHomeElements;
 
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
