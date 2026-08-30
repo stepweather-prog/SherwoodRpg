@@ -85,7 +85,7 @@ UI.init = function() {
         try { Sherwood.on('PLAYER_LEVEL_UP', function() { UI._playSound('levelup'); UI.updateDisplay(); }); } catch(e) {}
     }
     
-    console.log('🔊 UI Common загружен!');
+    console.log('UI Common загружен!');
 };
 
 // ============================================================
@@ -216,14 +216,16 @@ UI._openScreen = function(title, bgKey, html, backFn) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
             }
             UI._screenLayer.innerHTML = `
-                <div style="width:100%;min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;${bgStyle}">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-shrink:0;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
+                <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
                             <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
-                        <span style="color:#e0c080;font-size:1.1em;">${title}</span>
+                        <span style="color:#e0c080;font-size:1em;">${title}</span>
                     </div>
-                    <div style="flex:1;overflow-y:auto;">${html}</div>
+                    <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
+                        ${html}
+                    </div>
                 </div>
             `;
             UI._screenLayer.style.display = 'block';
@@ -247,11 +249,11 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;position:sticky;top:0;background:rgba(0,0,0,0.8);z-index:10;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
+                    <div style="display:flex;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
                             <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
-                        <span style="color:#e0c080;font-size:1.1em;">${title}</span>
+                        <span style="color:#e0c080;font-size:1em;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
@@ -426,4 +428,4 @@ window.UI = UI;
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.UI = UI;
 
-console.log('🔊 UI Common загружен!');
+console.log('UI Common загружен!');
