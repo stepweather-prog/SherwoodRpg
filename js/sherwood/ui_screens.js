@@ -168,18 +168,17 @@ var UI = {
     },
 
     loadHome: function() {
-        // Просто скрываем слой, БЕЗ вызова showHomeScreen
-        if (this._screenLayer) {
-            this._screenLayer.style.display = 'none';
-            this._screenLayer.innerHTML = '';
-        }
-        if (this._ticketDisplayInterval) {
-            clearInterval(this._ticketDisplayInterval);
-            this._ticketDisplayInterval = null;
-        }
-        try { this.updateDisplay(); } catch(e) {}
-        console.log('🏠 UI слой скрыт');
-    },
+    if (this._screenLayer) {
+        this._screenLayer.style.display = 'none';
+        this._screenLayer.innerHTML = '';
+    }
+    if (this._ticketDisplayInterval) {
+        clearInterval(this._ticketDisplayInterval);
+        this._ticketDisplayInterval = null;
+    }
+    try { this.updateDisplay(); } catch(e) {}
+    console.log('🏠 UI слой скрыт');
+},
 
     _showToast: function(msg) {
         var toast = document.createElement('div');
