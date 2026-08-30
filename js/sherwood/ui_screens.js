@@ -269,7 +269,7 @@ profile: function() {
     
     // Сумка
     h += '<div onclick="UI.bag()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-    h += '<img src="assets/assets2/icons/bag.png" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;" onerror="this.src=\'assets/interface/wallet.png\'">';
+    h += '<img src="assets/assets2/icons/hero_bag.png" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;" onerror="this.src=\'assets/interface/wallet.png\'">';
     h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">Сумка</div>';
     h += '</div>';
     
