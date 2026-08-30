@@ -960,11 +960,16 @@ var UI = {
     // ============================================================
 
     quests: function() { this._showPlaceholder('Квесты', 'quests'); },
-    tavern: function() { this._showPlaceholder('Таверна', 'tavern'); },
+    tavern: function() {
+    this._playSound('click');
+    if (typeof Sherwood !== 'undefined' && Sherwood.Tavern && Sherwood.Tavern.showUI) {
+        Sherwood.Tavern.showUI();
+    } else {
+        this._showPlaceholder('Таверна', 'tavern');
+    }
+},
     portals: function() { this._showPlaceholder('Порталы', 'portal'); },
     raid: function() { this._showPlaceholder('Рейд', 'raid'); },
-    arena: function() { this._showPlaceholder('Арена', 'arena'); },
-    chat: function() { this._showPlaceholder('Чат', 'chat'); },
     daily: function() { this._showPlaceholder('Ежедневные', 'daily'); },
 
     // ============================================================
