@@ -215,7 +215,7 @@ Object.assign(UI, {
     //  ПРОФИЛЬ
     // ============================================================
 
-               profile: function() {
+             profile: function() {
         this._playSound('click');
         var p = Sherwood.getPlayer();
         var eq = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
@@ -224,7 +224,7 @@ Object.assign(UI, {
         var h = '';
         
         // Верхняя панель стат
-        h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 30px;">';
+        h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 25px;">';
         h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
         h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
         h += '<img src="assets/assets2/icons/power.png" style="position:absolute;top:0;left:25%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
@@ -240,35 +240,41 @@ Object.assign(UI, {
         h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
         h += '</div>';
         
-        // Один блок = иконка + доска с подписью, вертикальный скролл
-        h += '<div style="overflow-y:auto;max-height:calc(100vh - 200px);scrollbar-width:none;-ms-overflow-style:none;padding:20px 0;">';
+        // Вертикальная карусель
+        h += '<div style="overflow-y:auto;max-height:calc(100vh - 150px);scrollbar-width:none;-ms-overflow-style:none;padding:0 0 30px 0;">';
         
-        h += '<div onclick="UI._showAllTrophies()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;cursor:pointer;">';
+        // Трофеи
+        h += '<div onclick="UI._showAllTrophies()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
         h += '<img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</div>';
         h += '</div>';
         
-        h += '<div onclick="UI._showAllRings()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;cursor:pointer;">';
+        // Кольца
+        h += '<div onclick="UI._showAllRings()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
         h += '<img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (ring ? ring.name : 'Кольца') + '</div>';
         h += '</div>';
         
-        h += '<div onclick="UI._showAllAmulets()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;cursor:pointer;">';
+        // Амулеты
+        h += '<div onclick="UI._showAllAmulets()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
         h += '<img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (amulet ? amulet.name : 'Амулеты') + '</div>';
         h += '</div>';
         
-        h += '<div onclick="UI.wallet()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;cursor:pointer;">';
+        // Кесет
+        h += '<div onclick="UI.wallet()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
         h += '<img src="assets/interface/wallet.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Кесет</div>';
         h += '</div>';
         
-        h += '<div onclick="UI.bag()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;cursor:pointer;">';
+        // Сумка
+        h += '<div onclick="UI.bag()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
         h += '<img src="assets/assets2/icons/bag.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;" onerror="this.src=\'assets/interface/wallet.png\'">';
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Сумка</div>';
         h += '</div>';
         
-        h += '<div onclick="UI._showTalentsFromProfile()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;cursor:pointer;">';
+        // Таланты
+        h += '<div onclick="UI._showTalentsFromProfile()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
         h += '<img src="assets/all_buttons/ranger_skills_button.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</div>';
         h += '</div>';
