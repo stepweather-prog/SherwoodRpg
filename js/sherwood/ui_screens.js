@@ -212,185 +212,156 @@ Object.assign(UI, {
     },
 
     // ============================================================
-    //  ПРОФИЛЬ
-    // ============================================================
+//  ПРОФИЛЬ
+// ============================================================
 
-             profile: function() {
-        this._playSound('click');
-        var p = Sherwood.getPlayer();
-        var eq = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
-        var ring = eq.ring, amulet = eq.amulet;
-        var trophies = p.trophies || [];
-        var h = '';
-        
-        // Верхняя панель стат
-        h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 25px;">';
-        h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
-        h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-        h += '<img src="assets/assets2/icons/power.png" style="position:absolute;top:0;left:25%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-        h += '<img src="assets/assets2/icons/armor.png" style="position:absolute;top:0;left:41.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-        h += '<img src="assets/assets2/icons/life.png" style="position:absolute;top:0;left:58.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-        h += '<img src="assets/assets2/icons/resource_gold.png" style="position:absolute;top:0;left:75%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-        h += '<img src="assets/assets2/icons/resource_silver.png" style="position:absolute;top:0;left:91.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-        h += '<span style="position:absolute;top:60px;left:8.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) + '%' : p.exp) + '</span>';
-        h += '<span style="position:absolute;top:60px;left:25%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.attack + '</span>';
-        h += '<span style="position:absolute;top:60px;left:41.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.defense + '</span>';
-        h += '<span style="position:absolute;top:60px;left:58.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.hp + '</span>';
-        h += '<span style="position:absolute;top:60px;left:75%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.gold || 0) + '</span>';
-        h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
+profile: function() {
+    this._playSound('click');
+    var p = Sherwood.getPlayer();
+    var eq = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
+    var ring = eq.ring, amulet = eq.amulet;
+    var trophies = p.trophies || [];
+    var h = '';
+    
+    // Верхняя панель стат
+    h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 25px;">';
+    h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
+    h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/power.png" style="position:absolute;top:0;left:25%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/armor.png" style="position:absolute;top:0;left:41.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/life.png" style="position:absolute;top:0;left:58.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/resource_gold.png" style="position:absolute;top:0;left:75%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/resource_silver.png" style="position:absolute;top:0;left:91.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<span style="position:absolute;top:60px;left:8.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) + '%' : p.exp) + '</span>';
+    h += '<span style="position:absolute;top:60px;left:25%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.attack + '</span>';
+    h += '<span style="position:absolute;top:60px;left:41.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.defense + '</span>';
+    h += '<span style="position:absolute;top:60px;left:58.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.hp + '</span>';
+    h += '<span style="position:absolute;top:60px;left:75%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.gold || 0) + '</span>';
+    h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
+    h += '</div>';
+    
+    // Вертикальная карусель - одна иконка по центру
+    h += '<div style="overflow-y:auto;max-height:calc(100vh - 150px);scrollbar-width:none;-ms-overflow-style:none;padding:0 0 30px 0;">';
+    
+    // Трофеи
+    h += '<div onclick="UI._showAllTrophies()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
+    h += '<img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</div>';
+    h += '</div>';
+    
+    // Кольца
+    h += '<div onclick="UI._showAllRings()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
+    h += '<img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (ring ? ring.name : 'Кольца') + '</div>';
+    h += '</div>';
+    
+    // Амулеты
+    h += '<div onclick="UI._showAllAmulets()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
+    h += '<img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (amulet ? amulet.name : 'Амулеты') + '</div>';
+    h += '</div>';
+    
+    // Кесет
+    h += '<div onclick="UI.wallet()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
+    h += '<img src="assets/interface/wallet.png" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">Кесет</div>';
+    h += '</div>';
+    
+    // Сумка
+    h += '<div onclick="UI.bag()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
+    h += '<img src="assets/assets2/icons/bag.png" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;" onerror="this.src=\'assets/interface/wallet.png\'">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">Сумка</div>';
+    h += '</div>';
+    
+    // Таланты (только изученные)
+    h += '<div onclick="UI._showTalentsFromProfile()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
+    h += '<img src="assets/all_buttons/ranger_skills_button.png" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</div>';
+    h += '</div>';
+    
+    h += '</div>';
+    this._openScreenScrollable('Профиль', 'profile', h, 'UI.main()');
+},
+
+_showTalentsFromProfile: function() {
+    var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
+    var player = Sherwood.getPlayer();
+    if (!player.activeSkills) player.activeSkills = {};
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-size:1.1em;font-weight:bold;text-align:center;margin-bottom:12px;">Мои таланты</div>';
+    var hasUnlocked = false;
+    for (var id in skills) {
+        var s = skills[id];
+        if (!s.unlocked) continue;
+        hasUnlocked = true;
+        var isActive = player.activeSkills[id] !== false;
+        h += '<div onclick="UI._toggleTalentFromProfile(\'' + id + '\')" style="cursor:pointer;background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#4caf50' : '#555') + ';border-radius:8px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
+        h += '<img src="' + s.icon + '" style="width:44px;height:44px;object-fit:contain;">';
+        h += '<div style="flex:1;"><div style="color:#e0c080;">' + s.name + '</div><div style="color:#aaa;font-size:0.7em;">' + s.description + '</div></div>';
+        if (isActive) { h += '<div style="color:#4caf50;font-size:0.7em;font-weight:bold;">Вкл</div>'; } else { h += '<div style="color:#888;font-size:0.7em;font-weight:bold;">Выкл</div>'; }
         h += '</div>';
-        
-        // Вертикальная карусель
-        h += '<div style="overflow-y:auto;max-height:calc(100vh - 150px);scrollbar-width:none;-ms-overflow-style:none;padding:0 0 30px 0;">';
-        
-        // Трофеи
-        h += '<div onclick="UI._showAllTrophies()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-        h += '<img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</div>';
-        h += '</div>';
-        
-        // Кольца
-        h += '<div onclick="UI._showAllRings()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-        h += '<img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (ring ? ring.name : 'Кольца') + '</div>';
-        h += '</div>';
-        
-        // Амулеты
-        h += '<div onclick="UI._showAllAmulets()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-        h += '<img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + (amulet ? amulet.name : 'Амулеты') + '</div>';
-        h += '</div>';
-        
-        // Кесет
-        h += '<div onclick="UI.wallet()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-        h += '<img src="assets/interface/wallet.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Кесет</div>';
-        h += '</div>';
-        
-        // Сумка
-        h += '<div onclick="UI.bag()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-        h += '<img src="assets/assets2/icons/bag.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;" onerror="this.src=\'assets/interface/wallet.png\'">';
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Сумка</div>';
-        h += '</div>';
-        
-        // Таланты
-        h += '<div onclick="UI._showTalentsFromProfile()" style="display:flex;flex-direction:column;align-items:center;margin-bottom:35px;cursor:pointer;">';
-        h += '<img src="assets/all_buttons/ranger_skills_button.png" style="width:100px;height:100px;object-fit:contain;margin-bottom:10px;">';
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:8px 40px;color:#ffa500;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</div>';
-        h += '</div>';
-        
-        h += '</div>';
-        this._openScreenScrollable('Профиль', 'profile', h);
-    },
-    _showTalentsFromProfile: function() {
-        var skills = Sherwood.Combat ? Sherwood.Combat.getSkills() : {};
-        var player = Sherwood.getPlayer();
-        if (!player.activeSkills) player.activeSkills = {};
-        var h = '<div style="padding:10px;"><div style="color:#e0c080;font-size:1.1em;font-weight:bold;text-align:center;margin-bottom:12px;">Мои таланты</div>';
-        var hasUnlocked = false;
-        for (var id in skills) {
-            var s = skills[id];
-            if (!s.unlocked) continue;
-            hasUnlocked = true;
-            var isActive = player.activeSkills[id] !== false;
-            h += '<div onclick="UI._toggleTalentFromProfile(\'' + id + '\')" style="cursor:pointer;background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#4caf50' : '#555') + ';border-radius:8px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">';
-            h += '<img src="' + s.icon + '" style="width:44px;height:44px;object-fit:contain;">';
-            h += '<div style="flex:1;"><div style="color:#e0c080;">' + s.name + '</div><div style="color:#aaa;font-size:0.7em;">' + s.description + '</div></div>';
-            if (isActive) { h += '<div style="color:#4caf50;font-size:0.7em;font-weight:bold;">Вкл</div>'; } else { h += '<div style="color:#888;font-size:0.7em;font-weight:bold;">Выкл</div>'; }
-            h += '</div>';
+    }
+    if (!hasUnlocked) { h += '<div style="color:#aaa;text-align:center;padding:20px;">Нет изученных талантов</div>'; }
+    h += '<div style="color:#aaa;font-size:0.65em;text-align:center;margin-top:8px;">Нажми на талант чтобы включить или выключить</div></div>';
+    this._openScreenScrollable('Таланты', 'talents', h, 'UI.profile()');
+},
+
+_toggleTalentFromProfile: function(id) {
+    var player = Sherwood.getPlayer();
+    if (!player.activeSkills) player.activeSkills = {};
+    if (player.activeSkills[id] === false) { player.activeSkills[id] = true; } else { player.activeSkills[id] = false; }
+    Sherwood.saveGame();
+    this._showTalentsFromProfile();
+},
+
+_showAllTrophies: function() {
+    var trophies = Sherwood.getPlayer().trophies || [];
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Трофеи (' + trophies.length + ')</div>';
+    if (trophies.length === 0) {
+        h += '<div style="text-align:center;padding:20px;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="width:100%;max-width:180px;height:auto;object-fit:contain;"><div style="color:#aaa;margin-top:8px;">Нет трофеев</div></div>';
+    }
+    for (var i = 0; i < trophies.length; i++) {
+        var t = trophies[i];
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
+        if (t.icon && t.icon.indexOf('bonds_of_eternity') !== -1) {
+            h += '<img src="' + t.icon + '" style="width:80px;height:80px;object-fit:contain;flex-shrink:0;">';
+        } else {
+            h += '<div style="position:relative;width:80px;height:80px;flex-shrink:0;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;"><img src="' + (t.icon || 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;object-fit:contain;z-index:1;border-radius:8px;"></div>';
         }
-        if (!hasUnlocked) { h += '<div style="color:#aaa;text-align:center;padding:20px;">Нет изученных талантов</div>'; }
-        h += '<div style="color:#aaa;font-size:0.65em;text-align:center;margin-top:8px;">Нажми на талант чтобы включить или выключить</div></div>';
-        this._openScreenScrollable('Таланты', 'talents', h, 'UI.profile()');
-    },
+        h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + t.name + '</div>';
+        if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (t.bonus.attack||0) + ' | ЗЩТ +' + (t.bonus.defense||0) + ' | HP +' + (t.bonus.hp||0) + '</div>';
+        h += '</div></div>';
+    }
+    h += '</div>';
+    this._openScreen('Трофеи', 'profile', h, 'UI.profile()');
+},
 
-    _toggleTalentFromProfile: function(id) {
-        var player = Sherwood.getPlayer();
-        if (!player.activeSkills) player.activeSkills = {};
-        if (player.activeSkills[id] === false) { player.activeSkills[id] = true; } else { player.activeSkills[id] = false; }
-        Sherwood.saveGame();
-        this._showTalentsFromProfile();
-    },
+_showAllRings: function() {
+    var equipment = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
+    var ring = equipment.ring;
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца</div>';
+    if (!ring) h += '<div style="color:#aaa;">Нет колец</div>';
+    else {
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;"><img src="' + (ring.icon || 'assets/interface/ring_first_level.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;"><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + ring.name + '</div>';
+        if (ring.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (ring.stats.attack||0) + ' | ЗЩТ +' + (ring.stats.defense||0) + '</div>';
+        h += '</div></div>';
+    }
+    h += '</div>';
+    this._openScreen('Кольца', 'profile', h, 'UI.profile()');
+},
 
-    _showSkinSelector: function() {
-        var player = Sherwood.getPlayer();
-        var unlockedSkins = player.unlockedSkins || ['skin1_01'];
-        var activeSkin = player.activeSkin || 'skin1_01';
-        var h = '<div style="text-align:center;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:12px;">Выбор облика</div><div style="display:flex;flex-direction:column;align-items:center;gap:8px;">';
-        for (var i = 0; i < unlockedSkins.length; i++) {
-            var sid = unlockedSkins[i];
-            var data = Sherwood.SKIN_BONUSES[sid];
-            var skinName = data ? data.name : sid;
-            var isActive = sid === activeSkin;
-            h += '<div onclick="' + (isActive ? '' : 'UI._selectSkin(\'' + sid + '\')') + '" style="cursor:' + (isActive ? 'default' : 'pointer') + ';background:rgba(0,0,0,0.5);border:2px solid ' + (isActive ? '#ffd700' : '#555') + ';border-radius:8px;padding:10px;width:90%;text-align:center;">';
-            h += '<img src="assets/hero_skins/' + sid + '.png" style="width:64px;height:64px;object-fit:contain;border-radius:4px;" onerror="this.src=\'assets/hero_skins/skin1_01.png\'">';
-            h += '<div style="color:' + (isActive ? '#ffd700' : '#e0c080') + ';font-size:0.75em;font-weight:bold;margin-top:4px;">' + skinName + '</div>';
-            if (isActive) { h += '<div style="color:#ffd700;font-size:0.6em;margin-top:2px;">Установлен</div>'; } else { h += '<div style="color:#4caf50;font-size:0.6em;margin-top:2px;">Нажми чтобы надеть</div>'; }
-            h += '</div>';
-        }
-        h += '</div>';
-        this._openScreenScrollable('Смена облика', 'profile', h, 'UI.profile()');
-    },
-
-    _selectSkin: function(skinId) {
-        var r = Sherwood.Forge ? Sherwood.Forge.equipSkin(skinId) : { success: false };
-        if (r.success) {
-            var heroImg = document.querySelector('.hero-layer img');
-            if (heroImg) heroImg.src = 'assets/hero_skins/' + skinId + '.png';
-            this._showToast('Облик установлен!');
-            this.profile();
-        } else { this._showToast(r.reason || 'Ошибка'); }
-    },
-
-    _showAllTrophies: function() {
-        var trophies = Sherwood.getPlayer().trophies || [];
-        var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Трофеи (' + trophies.length + ')</div>';
-        if (trophies.length === 0) {
-            h += '<div style="text-align:center;padding:20px;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="width:100%;max-width:180px;height:auto;object-fit:contain;"><div style="color:#aaa;margin-top:8px;">Нет трофеев</div></div>';
-        }
-        for (var i = 0; i < trophies.length; i++) {
-            var t = trophies[i];
-            h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;">';
-            if (t.icon && t.icon.indexOf('bonds_of_eternity') !== -1) {
-                h += '<img src="' + t.icon + '" style="width:80px;height:80px;object-fit:contain;flex-shrink:0;">';
-            } else {
-                h += '<div style="position:relative;width:80px;height:80px;flex-shrink:0;"><img src="assets/all_trophies/asset_isolated_on_a_solid.png" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;"><img src="' + (t.icon || 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;object-fit:contain;z-index:1;border-radius:8px;"></div>';
-            }
-            h += '<div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + t.name + '</div>';
-            if (t.bonus) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (t.bonus.attack||0) + ' | ЗЩТ +' + (t.bonus.defense||0) + ' | HP +' + (t.bonus.hp||0) + '</div>';
-            h += '</div></div>';
-        }
-        h += '</div>';
-        this._openScreen('Трофеи', 'profile', h, 'UI.profile()');
-    },
-
-    _showAllRings: function() {
-        var equipment = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
-        var ring = equipment.ring;
-        var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Кольца</div>';
-        if (!ring) h += '<div style="color:#aaa;">Нет колец</div>';
-        else {
-            h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;"><img src="' + (ring.icon || 'assets/interface/ring_first_level.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;"><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + ring.name + '</div>';
-            if (ring.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (ring.stats.attack||0) + ' | ЗЩТ +' + (ring.stats.defense||0) + '</div>';
-            h += '</div></div>';
-        }
-        h += '</div>';
-        this._openScreen('Кольца', 'profile', h, 'UI.profile()');
-    },
-
-    _showAllAmulets: function() {
-        var equipment = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
-        var amulet = equipment.amulet;
-        var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты</div>';
-        if (!amulet) h += '<div style="color:#aaa;">Нет амулетов</div>';
-        else {
-            h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;"><img src="' + (amulet.icon || 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;"><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + amulet.name + '</div>';
-            if (amulet.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (amulet.stats.hp||0) + ' | ЗЩТ +' + (amulet.stats.defense||0) + '</div>';
-            h += '</div></div>';
-        }
-        h += '</div>';
-        this._openScreen('Амулеты', 'profile', h, 'UI.profile()');
-    },
+_showAllAmulets: function() {
+    var equipment = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
+    var amulet = equipment.amulet;
+    var h = '<div style="padding:10px;"><div style="color:#e0c080;font-weight:bold;margin-bottom:8px;">Амулеты</div>';
+    if (!amulet) h += '<div style="color:#aaa;">Нет амулетов</div>';
+    else {
+        h += '<div style="display:flex;gap:12px;background:rgba(0,0,0,0.5);border:1px solid #c9a040;border-radius:10px;padding:10px;margin-bottom:8px;"><img src="' + (amulet.icon || 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:80px;height:80px;object-fit:contain;border-radius:8px;flex-shrink:0;"><div style="flex:1;"><div style="color:#e0c080;font-weight:bold;">' + amulet.name + '</div>';
+        if (amulet.stats) h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (amulet.stats.hp||0) + ' | ЗЩТ +' + (amulet.stats.defense||0) + '</div>';
+        h += '</div></div>';
+    }
+    h += '</div>';
+    this._openScreen('Амулеты', 'profile', h, 'UI.profile()');
+},
 
     // ============================================================
     //  КУЗНИЦА
