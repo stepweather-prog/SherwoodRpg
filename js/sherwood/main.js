@@ -212,8 +212,12 @@ function enterSection() {
     if (!section) return;
     console.log(`🚪 Вход в раздел: ${section.name}`);
 
-    // Скрываем элементы главного экрана
     hideHomeElements();
+
+    const layer = document.getElementById('ui-screen-layer');
+    if (layer) {
+        layer.style.display = 'block';
+    }
 
     switch(section.name) {
         case 'Профиль':
@@ -259,7 +263,6 @@ function showHomeScreen() {
         layer.innerHTML = '';
     }
     
-    // Показываем элементы главного экрана
     showHomeElements();
     
     homeScreen.style.display = 'flex';
