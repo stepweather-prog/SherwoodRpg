@@ -157,7 +157,7 @@ Sherwood.Tavern = {
         this._completedChapters = p.tavern.completedChapters || [];
         this._currentChapterIndex = p.tavern.currentChapter || 0;
         this._isSecretUnlocked = p.tavern.secretUnlocked || false;
-        console.log('🍺 Таверна инициализирована');
+        console.log('Таверна инициализирована');
     },
 
     // ---------- МЕТОДЫ ----------
@@ -213,7 +213,7 @@ Sherwood.Tavern = {
     // ---------- UI ----------
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
-            console.error('❌ UI не загружен!');
+            console.error('UI не загружен!');
             return;
         }
         
@@ -222,50 +222,52 @@ Sherwood.Tavern = {
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
 
-        var h = '<div style="border-radius:8px;padding:20px;margin-bottom:15px;min-height:180px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;">';
-        h += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.1));"></div>';
-        h += '<div style="position:relative;z-index:1;">';
-        h += '<div style="color:#ffd700;font-size:24px;font-weight:bold;text-shadow:2px 2px 4px #000;">🍺 Таверна «Весёлый Разбойник»</div>';
-        h += '</div></div>';
-
+        var h = '';
+        
+        // Контракт на каменной плите
+        h += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:30px;">';
+        h += '<div style="position:relative;width:90%;max-width:400px;min-height:200px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;">';
+        
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isSecret = current.isSecret || false;
             var isAccepted = this._currentQuest !== null;
             
-            h += '<div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;border-left:4px solid ' + (isSecret ? '#9b59b6' : '#ffa500') + ';margin-bottom:15px;text-align:left;">';
-            h += '<div style="color:#ffa500;font-weight:bold;font-size:18px;margin-bottom:8px;">' + (isSecret ? '🔮 ' : '') + 'Глава ' + current.id + ': ' + current.title + '</div>';
-            h += '<div style="color:#aaa;font-size:13px;line-height:1.6;">' + current.lore + '</div>';
-            h += '<div style="color:#888;font-size:12px;margin-top:8px;">🎯 ' + current.quest + '</div>';
-            h += '<div style="color:#ffd700;font-size:12px;margin-top:4px;">🏆 Награда: +' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
-            h += '</div>';
+            h += '<div style="text-align:center;color:#ffa500;font-size:1.1em;font-weight:bold;margin-bottom:10px;">' + current.title + '</div>';
+            h += '<div style="text-align:center;color:#ddd;font-size:0.8em;line-height:1.4;margin-bottom:10px;">' + current.lore + '</div>';
+            h += '<div style="text-align:center;color:#aaa;font-size:0.75em;margin-bottom:10px;">' + current.quest + '</div>';
+            h += '<div style="text-align:center;color:#ffd700;font-size:0.75em;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота</div>';
             
             if (isCompleted) {
-                h += '<div style="color:#52b788;margin-bottom:10px;text-align:center;font-size:16px;">✅ Глава пройдена!</div>';
-                h += '<button onclick="Sherwood.Tavern.nextFromUI()" style="width:100%;background:#555;border:none;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:14px;">➡️ Следующая глава</button>';
+                h += '<div style="text-align:center;color:#52b788;margin-top:10px;">Глава пройдена!</div>';
             } else if (isAccepted) {
-                h += '<div style="background:rgba(255,165,0,0.1);border:1px solid #ffa500;border-radius:8px;padding:12px;margin-bottom:15px;text-align:center;">';
-                h += '<div style="color:#ffa500;font-size:14px;">📜 Квест принят!</div>';
-                h += '<div style="color:#888;font-size:12px;margin-top:4px;">Отправляйся в раздел «Квесты» для выполнения</div>';
-                h += '</div>';
+                h += '<div style="text-align:center;color:#ffa500;margin-top:10px;">Квест принят!</div>';
             } else {
-                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="width:100%;background:linear-gradient(180deg,#ffa500,#cc8400);border:none;border-radius:8px;padding:15px;color:#000;font-weight:bold;cursor:pointer;font-size:18px;">📜 Принять квест</button>';
+                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:15px;background:#c9a040;border:none;border-radius:6px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Принять квест</button>';
             }
         } else if (completed >= total) {
-            h += '<div style="text-align:center;padding:20px;">';
-            h += '<div style="font-size:64px;margin-bottom:20px;">🏆</div>';
-            h += '<div style="font-size:24px;color:#ffd700;font-weight:bold;">Шервуд спасён!</div>';
-            h += '<div style="color:#888;margin-top:10px;">Ты прошёл все главы. Гаррет гордится тобой!</div>';
-            h += '</div>';
+            h += '<div style="text-align:center;color:#ffd700;font-size:1.2em;font-weight:bold;">Шервуд спасён!</div>';
         }
+        h += '</div>';
+        h += '</div>';
         
-        h += '<div style="margin-top:15px;padding:12px;background:rgba(255,255,255,0.03);border-radius:6px;">';
-        h += '<div style="color:#888;font-size:12px;margin-bottom:6px;">Прогресс сюжета: ' + completed + '/' + total + ' глав</div>';
-        h += '<div style="width:100%;height:8px;background:#333;border-radius:4px;overflow:hidden;">';
-        h += '<div style="width:' + (completed/total*100) + '%;height:100%;background:linear-gradient(90deg,#ffa500,#ffd700);transition:width 0.3s;"></div>';
-        h += '</div></div>';
+        // Вкладки Таланты и Тренировка
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;">';
         
-        UI._openScreenScrollable('🍺 Таверна', 'tavern', h);
+        h += '<div onclick="UI._showTalentsFromProfile()" style="position:relative;width:200px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#e0c080;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
+        h += '</div>';
+        
+        h += '<div onclick="UI.training()" style="position:relative;width:200px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#e0c080;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
+        h += '</div>';
+        
+        h += '</div>';
+        
+        // Прогресс
+        h += '<div style="margin-top:30px;text-align:center;color:#888;font-size:0.8em;">Прогресс: ' + completed + '/' + total + ' глав</div>';
+        
+        UI._openScreenScrollable('Таверна', 'tavern', h);
     },
 
     acceptFromUI: function() {
@@ -274,7 +276,7 @@ Sherwood.Tavern = {
             UI._showToast(r.reason || 'Ошибка');
             return;
         }
-        UI._showToast('📜 Квест принят: ' + r.chapter.title);
+        UI._showToast('Квест принят: ' + r.chapter.title);
         this.showUI();
     },
 
@@ -294,4 +296,4 @@ Sherwood.Tavern = {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Tavern = Sherwood.Tavern;
 
-console.log('🍺 Таверна загружена!');
+console.log('Таверна загружена!');
