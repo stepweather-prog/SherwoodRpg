@@ -66,7 +66,7 @@ UI._audioFiles = {
 UI.init = function() {
     UI._screenLayer = document.createElement('div');
     UI._screenLayer.id = 'ui-screen-layer';
-    UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:#000;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
+    UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:url(\'assets/assets2/Sherwood_Square/substrate.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
     
     var gameZone = document.getElementById('gameZone');
     if (gameZone) {
@@ -298,7 +298,7 @@ UI.loadHome = function() {
 
 UI._showToast = function(msg) {
     var toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:url('assets/assets2/Sherwood_Square/substrate.png') center/cover no-repeat;color:#f44336;padding:12px 24px;border-radius:8px;border:1px solid #f44336;font-size:0.9em;font-family:"Georgia",serif;pointer-events:none;';
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:url(\'assets/assets2/Sherwood_Square/substrate.png\') center/cover no-repeat;color:#f44336;padding:12px 24px;border-radius:8px;border:1px solid #f44336;font-size:0.9em;font-family:"Georgia",serif;pointer-events:none;';
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 2000);
