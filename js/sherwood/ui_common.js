@@ -17,7 +17,8 @@ UI._bg = {
     raid: 'assets/assets2/backgrounds/background_raid.png',
     settings: 'assets/assets2/backgrounds/settings_visual.png',
     portal: 'assets/assets2/backgrounds/portal.png',
-    talents: 'assets/assets2/backgrounds/visual_talents.png'
+    talents: 'assets/assets2/backgrounds/visual_talents.png',
+    dungeon: 'assets/assets2/backgrounds/visual_dungeon.png'
 };
 
 UI._statIcons = { 
