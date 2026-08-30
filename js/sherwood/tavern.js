@@ -222,7 +222,7 @@ Sherwood.Tavern = {
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
 
-        var h = '<div style="background-image:url(\'assets/assets2/backgrounds/section_tavern.png\');background-size:cover;background-position:center;background-repeat:no-repeat;border-radius:8px;padding:20px;margin-bottom:15px;min-height:180px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;">';
+        var h = '<div style="border-radius:8px;padding:20px;margin-bottom:15px;min-height:180px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;">';
         h += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.1));"></div>';
         h += '<div style="position:relative;z-index:1;">';
         h += '<div style="color:#ffd700;font-size:24px;font-weight:bold;text-shadow:2px 2px 4px #000;">🍺 Таверна «Весёлый Разбойник»</div>';
