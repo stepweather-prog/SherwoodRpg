@@ -6,29 +6,18 @@
 if (typeof UI === 'undefined') { var UI = {}; }
 
 UI._bg = {
-    main: 'assets/assets2/backgrounds/homepage_screen.jpeg', 
-    bag: 'assets/assets2/backgrounds/bag.jpeg', 
-    profile: 'assets/assets2/backgrounds/character_page.jpeg',
-    bestiary: 'assets/assets2/backgrounds/character_page.jpeg', 
-    quests: 'assets/assets2/backgrounds/skill_page.jpeg', 
-    training: 'assets/assets2/backgrounds/training.jpeg',
-    forge: 'assets/assets2/backgrounds/forge.jpeg', 
-    tavern: 'assets/assets2/backgrounds/section_tavern.png', 
-    market: 'assets/assets2/backgrounds/market.jpeg',
-    arena: 'assets/assets2/backgrounds/arena.jpeg', 
-    raid: 'assets/assets2/backgrounds/background_raid.png', 
-    settings: 'assets/assets2/backgrounds/settings_page.jpeg',
-    daily: 'assets/assets2/backgrounds/tasks.jpeg', 
-    portal: 'assets/assets2/backgrounds/portal_1.jpeg', 
-    chat: 'assets/assets2/backgrounds/chat_background.png',
-    dungeon_select: 'assets/assets2/backgrounds/underground_1_floor_1.jpg', 
-    dungeon_forest: 'assets/assets2/backgrounds/underground_1_floor_1.jpg',
-    dungeon_swamp: 'assets/assets2/backgrounds/underground_2_floor_1.jpeg', 
-    dungeon_cave: 'assets/assets2/backgrounds/underground_3_floor_1.jpeg',
-    dungeon_fight: 'assets/assets2/backgrounds/underground_1_floor_1.jpg', 
-    portal_3: 'assets/assets2/backgrounds/portal_3.png',
-    hearth: 'assets/assets2/backgrounds/background_hearth.jpeg', 
-    wallet: 'assets/assets2/interface/wallet_visual.png'
+    bag: 'assets/assets2/backgrounds/bag.png',
+    profile: 'assets/assets2/backgrounds/profile_visual.png',
+    bestiary: 'assets/assets2/backgrounds/bestiary_visual.png',
+    quests: 'assets/assets2/backgrounds/quest.png',
+    training: 'assets/assets2/backgrounds/training.png',
+    forge: 'assets/assets2/backgrounds/forge.png',
+    tavern: 'assets/assets2/backgrounds/section_tavern.png',
+    market: 'assets/assets2/backgrounds/market.png',
+    raid: 'assets/assets2/backgrounds/background_raid.png',
+    settings: 'assets/assets2/backgrounds/settings_visual.png',
+    portal: 'assets/assets2/backgrounds/portal.png',
+    talents: 'assets/assets2/backgrounds/visual_talents.png'
 };
 
 UI._statIcons = { 
@@ -309,7 +298,7 @@ UI.loadHome = function() {
 
 UI._showToast = function(msg) {
     var toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:#000;color:#f44336;padding:12px 24px;border-radius:8px;border:1px solid #f44336;font-size:0.9em;font-family:"Georgia",serif;pointer-events:none;';
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:url('assets/assets2/Sherwood_Square/substrate.png') center/cover no-repeat;color:#f44336;padding:12px 24px;border-radius:8px;border:1px solid #f44336;font-size:0.9em;font-family:"Georgia",serif;pointer-events:none;';
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 2000);
