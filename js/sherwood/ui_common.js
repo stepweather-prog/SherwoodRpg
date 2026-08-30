@@ -298,6 +298,9 @@ UI.loadHome = function() {
         }
     } catch(e) {}
     try { UI.updateDisplay(); } catch(e) {}
+    if (typeof showHomeScreen === 'function') {
+        showHomeScreen();
+    }
 };
 
 // ============================================================
