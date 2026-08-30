@@ -229,11 +229,12 @@ function enterSection() {
 
 // ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
 function showHomeScreen() {
-    // Просто скрываем слой, не вызывая UI.loadHome (чтобы избежать цикла)
     const layer = document.getElementById('ui-screen-layer');
-    if (layer) layer.style.display = 'none';
+    if (layer) {
+        layer.style.display = 'none';
+        layer.innerHTML = '';
+    }
     
-    closeAllScreens();
     homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
     currentScreen = 'home';
