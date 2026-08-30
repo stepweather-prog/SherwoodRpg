@@ -77,7 +77,7 @@ UI._audioFiles = {
 UI.init = function() {
     UI._screenLayer = document.createElement('div');
     UI._screenLayer.id = 'ui-screen-layer';
-    UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:rgba(0,0,0,0.9);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
+    UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:#000;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
     
     var gameZone = document.getElementById('gameZone');
     if (gameZone) {
