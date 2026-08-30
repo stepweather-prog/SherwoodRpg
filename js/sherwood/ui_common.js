@@ -221,8 +221,12 @@ UI._openScreen = function(title, bgKey, html, backFn) {
     var goBack = backFn || 'UI.loadHome()';
     try {
         if (UI._screenLayer) {
+            var bgStyle = '';
+            if (UI._bg && UI._bg[bgKey]) {
+                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;';
+            }
             UI._screenLayer.innerHTML = `
-                <div style="min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;">
+                <div style="min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-shrink:0;">
                         <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">
                             <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
@@ -244,8 +248,12 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
     var goBack = backFn || 'UI.loadHome()';
     try {
         if (UI._screenLayer) {
+            var bgStyle = '';
+            if (UI._bg && UI._bg[bgKey]) {
+                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;';
+            }
             UI._screenLayer.innerHTML = `
-                <div style="min-height:100%;display:flex;flex-direction:column;">
+                <div style="min-height:100%;display:flex;flex-direction:column;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;position:sticky;top:0;background:rgba(0,0,0,0.8);z-index:10;">
                         <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
                             <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
@@ -295,7 +303,7 @@ UI.loadHome = function() {
 
 UI._showToast = function(msg) {
     var toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(0,0,0,0.9);color:#f44336;padding:12px 24px;border-radius:8px;border:1px solid #f44336;font-size:0.9em;font-family:"Georgia",serif;pointer-events:none;';
+    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:#000;color:#f44336;padding:12px 24px;border-radius:8px;border:1px solid #f44336;font-size:0.9em;font-family:"Georgia",serif;pointer-events:none;';
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 2000);
