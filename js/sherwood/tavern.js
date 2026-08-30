@@ -211,7 +211,7 @@ Sherwood.Tavern = {
     },
 
     // ---------- UI ----------
-            showUI: function() {
+               showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
@@ -224,49 +224,57 @@ Sherwood.Tavern = {
 
         var h = '';
         
-        h += '<div style="height:10vh;"></div>';
+        // Отступ сверху
+        h += '<div style="height:5vh;"></div>';
         
-        // Контракт — широкая табличка
-        h += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:30px;padding:0 10px;">';
-        h += '<div style="width:100%;min-height:350px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:40px 20px;display:flex;flex-direction:column;justify-content:center;">';
+        // Контракт — крупная плашка
+        h += '<div style="display:flex;flex-direction:column;align-items:center;margin-bottom:40px;padding:0 5px;">';
+        h += '<div style="width:100%;min-height:450px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:50px 15px;display:flex;flex-direction:column;justify-content:center;">';
         
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
-            var isSecret = current.isSecret || false;
             var isAccepted = this._currentQuest !== null;
             
-            h += '<div style="text-align:center;color:#3d1f00;font-size:clamp(16px, 2.5vw, 22px);font-weight:bold;margin-bottom:15px;text-shadow:0 1px 2px rgba(255,255,255,0.5);">' + current.title + '</div>';
-            h += '<div style="text-align:center;color:#2d1500;font-size:clamp(14px, 2vw, 18px);line-height:1.5;margin-bottom:15px;font-weight:bold;text-shadow:0 1px 2px rgba(255,255,255,0.5);">' + current.lore + '</div>';
-            h += '<div style="text-align:center;color:#1a0d00;font-size:clamp(13px, 1.8vw, 16px);margin-bottom:15px;font-weight:bold;text-shadow:0 1px 2px rgba(255,255,255,0.5);">' + current.quest + '</div>';
-            h += '<div style="text-align:center;color:#8b5a00;font-size:clamp(13px, 1.8vw, 16px);font-weight:bold;text-shadow:0 1px 2px rgba(255,255,255,0.5);">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
+            // Заголовок — как подписи вкладок
+            h += '<div style="text-align:center;color:#ffa500;font-size:clamp(16px, 2.5vw, 22px);font-weight:bold;margin-bottom:20px;text-shadow:0 2px 4px #000;">' + current.title + '</div>';
+            
+            // Лор — крупный, читаемый
+            h += '<div style="text-align:center;color:#fff;font-size:clamp(14px, 2vw, 18px);line-height:1.6;margin-bottom:20px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.lore + '</div>';
+            
+            // Цель
+            h += '<div style="text-align:center;color:#e0c080;font-size:clamp(13px, 1.8vw, 16px);margin-bottom:20px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.quest + '</div>';
+            
+            // Награда
+            h += '<div style="text-align:center;color:#ffd700;font-size:clamp(13px, 1.8vw, 16px);text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             
             if (isCompleted) {
-                h += '<div style="text-align:center;color:#1a5c1a;margin-top:15px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Глава пройдена!</div>';
+                h += '<div style="text-align:center;color:#52b788;margin-top:20px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Глава пройдена!</div>';
             } else if (isAccepted) {
-                h += '<div style="text-align:center;color:#8b5a00;margin-top:15px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Квест принят!</div>';
+                h += '<div style="text-align:center;color:#ffa500;margin-top:20px;font-size:clamp(14px, 2vw, 18px);font-weight:bold;">Квест принят!</div>';
             } else {
-                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:20px;background:#5a3a00;border:none;border-radius:6px;padding:14px 40px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:clamp(14px, 2vw, 18px);width:80%;max-width:300px;margin-left:auto;margin-right:auto;">Принять квест</button>';
+                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:25px;background:#5a3a00;border:none;border-radius:6px;padding:14px 40px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:clamp(14px, 2vw, 18px);width:80%;max-width:300px;margin-left:auto;margin-right:auto;">Принять квест</button>';
             }
         } else if (completed >= total) {
-            h += '<div style="text-align:center;color:#3d1f00;font-size:clamp(16px, 2.5vw, 22px);font-weight:bold;text-shadow:0 1px 2px rgba(255,255,255,0.5);">Шервуд спасён!</div>';
+            h += '<div style="text-align:center;color:#ffa500;font-size:clamp(16px, 2.5vw, 22px);font-weight:bold;text-shadow:0 2px 4px #000;">Шервуд спасён!</div>';
         }
         h += '</div>';
         h += '</div>';
         
-        // Вкладки
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;">';
+        // Вкладки Таланты и Тренировка — увеличены в 2 раза
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:25px;">';
         
-        h += '<div onclick="UI._showTalentsFromProfile()" style="width:220px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:clamp(14px, 2vw, 18px);font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
+        h += '<div onclick="UI._showTalentsFromProfile()" style="width:280px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#ffa500;font-size:clamp(15px, 2.2vw, 20px);font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
         h += '</div>';
         
-        h += '<div onclick="UI.training()" style="width:220px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:clamp(14px, 2vw, 18px);font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
+        h += '<div onclick="UI.training()" style="width:280px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#ffa500;font-size:clamp(15px, 2.2vw, 20px);font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
         h += '</div>';
         
         h += '</div>';
         
-        h += '<div style="margin-top:30px;text-align:center;color:#e0c080;font-size:clamp(13px, 1.8vw, 16px);text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
+        // Прогресс
+        h += '<div style="margin-top:30px;text-align:center;color:#ffa500;font-size:clamp(13px, 1.8vw, 16px);text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
         
         UI._openScreenScrollable('Таверна', 'tavern', h);
     },
