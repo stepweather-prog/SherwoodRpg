@@ -218,7 +218,7 @@ UI._openScreen = function(title, bgKey, html, backFn) {
                 <div style="width:100%;min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-shrink:0;">
                         <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
-                            <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                            <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
                         <span style="color:#e0c080;font-size:1.1em;">${title}</span>
                     </div>
@@ -248,7 +248,7 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;padding:12px;flex-shrink:0;position:sticky;top:0;background:rgba(0,0,0,0.8);z-index:10;">
                         <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
-                            <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
+                            <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
                         <span style="color:#e0c080;font-size:1.1em;">${title}</span>
                     </div>
