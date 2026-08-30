@@ -223,12 +223,12 @@ UI._openScreen = function(title, bgKey, html, backFn) {
         if (UI._screenLayer) {
             var bgStyle = '';
             if (UI._bg && UI._bg[bgKey]) {
-                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;';
+                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;padding:16px;display:flex;flex-direction:column;overflow-y:auto;${bgStyle}">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-shrink:0;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
                             <img src="assets/assets2/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
                         <span style="color:#e0c080;font-size:1.1em;">${title}</span>
@@ -237,9 +237,12 @@ UI._openScreen = function(title, bgKey, html, backFn) {
                 </div>
             `;
             UI._screenLayer.style.display = 'block';
-UI._screenLayer.style.zIndex = '40';
-UI._screenLayer.style.background = 'rgba(0,0,0,0.9)';
-UI._screenLayer.style.pointerEvents = 'auto';
+            UI._screenLayer.style.width = '100%';
+            UI._screenLayer.style.height = '100%';
+            UI._screenLayer.style.position = 'absolute';
+            UI._screenLayer.style.top = '0';
+            UI._screenLayer.style.left = '0';
+            UI._screenLayer.style.zIndex = '40';
         }
     } catch(e) {}
 };
@@ -250,7 +253,7 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
         if (UI._screenLayer) {
             var bgStyle = '';
             if (UI._bg && UI._bg[bgKey]) {
-                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;';
+                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
@@ -268,6 +271,10 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             UI._screenLayer.style.display = 'block';
             UI._screenLayer.style.width = '100%';
             UI._screenLayer.style.height = '100%';
+            UI._screenLayer.style.position = 'absolute';
+            UI._screenLayer.style.top = '0';
+            UI._screenLayer.style.left = '0';
+            UI._screenLayer.style.zIndex = '40';
         }
     } catch(e) {}
 };
