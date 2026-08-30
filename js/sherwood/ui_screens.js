@@ -5,7 +5,10 @@
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
 
-var UI = {
+if (typeof UI === 'undefined') { var UI = {}; }
+
+// Расширяем существующий UI из ui_common.js
+Object.assign(UI, {
     _bg: {
         main: 'assets/backgrounds/homepage_screen.jpeg', bag: 'assets/backgrounds/bag.jpeg', profile: 'assets/backgrounds/character_page.jpeg',
         bestiary: 'assets/backgrounds/character_page.jpeg', quests: 'assets/backgrounds/skill_page.jpeg', training: 'assets/backgrounds/training.jpeg',
@@ -50,10 +53,16 @@ var UI = {
     _arenaCooldownInterval: null,
 
     init: function() {
-        this._screenLayer = document.createElement('div');
-        this._screenLayer.id = 'ui-screen-layer';
-        this._screenLayer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;display:none;background:rgba(0,0,0,0.85);';
+    this._screenLayer = document.createElement('div');
+    this._screenLayer.id = 'ui-screen-layer';
+    this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:#000;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
+    
+    var gameZone = document.getElementById('gameZone');
+    if (gameZone) {
+        gameZone.appendChild(this._screenLayer);
+    } else {
         document.body.appendChild(this._screenLayer);
+    }
         try { this._initSounds(); } catch(e) {}
         try { this._loadAudioSettings(); } catch(e) {}
         try { this.updateDisplay(); } catch(e) {}
@@ -115,53 +124,6 @@ var UI = {
         try { var stats = document.querySelectorAll('.stat-value'); if (stats.length >= 3) { stats[0].textContent = p.stats.attack; stats[1].textContent = p.stats.defense; stats[2].textContent = p.stats.hp; } } catch(e) {}
     },
 
-    _openScreen: function(title, bgKey, html, backFn) {
-    var goBack = backFn || 'UI.loadHome()';
-    try {
-        if (this._screenLayer) {
-            // Убираем затемнение на весь экран, делаем прозрачный фон
-            this._screenLayer.style.background = 'rgba(0,0,0,0)';
-            this._screenLayer.style.pointerEvents = 'none';
-            
-            // Контент по центру, поверх арки
-            this._screenLayer.innerHTML = `
-                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:600px;max-height:85vh;background:rgba(10,10,20,0.92);border:3px solid #8B4513;border-radius:12px;padding:16px;box-shadow:0 0 60px rgba(0,0,0,0.9);pointer-events:auto;overflow-y:auto;z-index:10000;">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0;border-bottom:1px solid #333;padding-bottom:8px;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
-                            <img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
-                        </button>
-                        <span style="color:#e0c080;font-size:1.1em;font-weight:bold;">${title}</span>
-                    </div>
-                    <div style="overflow-y:auto;max-height:calc(85vh - 80px);">${html}</div>
-                </div>
-            `;
-            this._screenLayer.style.display = 'block';
-        }
-    } catch(e) {}
-},
-    _openScreenScrollable: function(title, bgKey, html, backFn) {
-    var goBack = backFn || 'UI.loadHome()';
-    try {
-        if (this._screenLayer) {
-            this._screenLayer.style.background = 'rgba(0,0,0,0)';
-            this._screenLayer.style.pointerEvents = 'none';
-            
-            this._screenLayer.innerHTML = `
-                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;max-width:650px;max-height:88vh;background:rgba(10,10,20,0.95);border:3px solid #8B4513;border-radius:12px;padding:16px;box-shadow:0 0 60px rgba(0,0,0,0.9);pointer-events:auto;overflow-y:auto;z-index:10000;">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0;border-bottom:1px solid #333;padding-bottom:8px;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:40px;height:40px;">
-                            <img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">
-                        </button>
-                        <span style="color:#e0c080;font-size:1.1em;font-weight:bold;">${title}</span>
-                    </div>
-                    <div style="overflow-y:auto;max-height:calc(88vh - 80px);">${html}</div>
-                </div>
-            `;
-            this._screenLayer.style.display = 'block';
-        }
-    } catch(e) {}
-},
-
     _showPlaceholder: function(title, bgKey, backAction) {
         this._playSound('click');
         this._openScreen(title, bgKey, '<div style="text-align:center;padding:40px 0;"><div style="font-size:3em;margin-bottom:16px;">🚧</div><div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">' + title + '</div><div style="font-size:0.7em;color:#888;">В разработке</div></div>', backAction);
@@ -177,7 +139,9 @@ var UI = {
         this._ticketDisplayInterval = null;
     }
     try { this.updateDisplay(); } catch(e) {}
-    console.log('🏠 UI слой скрыт');
+    if (typeof showHomeScreen === 'function') {
+        showHomeScreen();
+    }
 },
 
     _showToast: function(msg) {
@@ -1001,16 +965,14 @@ var UI = {
     //  ЭКСПОРТ
     // ============================================================
 
-    showUI: function() {
+        showUI: function() {
         this.loadHome();
     }
-};
+});
 
 // ============================================================
-//  ИНИЦИАЛИЗАЦИЯ
+//  ИНИЦИАЛИЗАЦИЯ (уже вызван в ui_common.js)
 // ============================================================
-
-UI.init();
 
 // ============================================================
 //  ГЛОБАЛЬНЫЙ ЭКСПОРТ
