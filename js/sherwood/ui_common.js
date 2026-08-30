@@ -233,6 +233,9 @@ UI._openScreen = function(title, bgKey, html, backFn) {
                 </div>
             `;
             UI._screenLayer.style.display = 'block';
+UI._screenLayer.style.zIndex = '40';
+UI._screenLayer.style.background = 'rgba(0,0,0,0.9)';
+UI._screenLayer.style.pointerEvents = 'auto';
         }
     } catch(e) {}
 };
@@ -275,6 +278,9 @@ UI.loadHome = function() {
         if (UI._screenLayer) {
             UI._screenLayer.style.display = 'none';
             UI._screenLayer.innerHTML = '';
+            UI._screenLayer.style.zIndex = '0';
+            UI._screenLayer.style.background = 'transparent';
+            UI._screenLayer.style.pointerEvents = 'none';
         }
     } catch(e) {}
     try { UI.updateDisplay(); } catch(e) {}
