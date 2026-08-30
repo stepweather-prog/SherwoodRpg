@@ -1,13 +1,10 @@
 // ============================================================
 //  js/sherwood/ui_screens.js — ПОЛНОСТЬЮ РАБОЧИЙ UI
-//  Всё взято из старого SherwoodUI
 // ============================================================
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
-
 if (typeof UI === 'undefined') { var UI = {}; }
 
-// Расширяем существующий UI из ui_common.js
 Object.assign(UI, {
     _statIcons: { attack: 'assets/assets2/interface/icon_power.png', defense: 'assets/assets2/interface/icon_defense.png', hp: 'assets/assets2/interface/icon_health.png' },
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
@@ -45,13 +42,8 @@ Object.assign(UI, {
         this._screenLayer = document.createElement('div');
         this._screenLayer.id = 'ui-screen-layer';
         this._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:url(\'assets/assets2/Sherwood_Square/substrate.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
-        
         var gameZone = document.getElementById('gameZone');
-        if (gameZone) {
-            gameZone.appendChild(this._screenLayer);
-        } else {
-            document.body.appendChild(this._screenLayer);
-        }
+        if (gameZone) { gameZone.appendChild(this._screenLayer); } else { document.body.appendChild(this._screenLayer); }
         try { this._initSounds(); } catch(e) {}
         try { this._loadAudioSettings(); } catch(e) {}
         try { this.updateDisplay(); } catch(e) {}
@@ -64,12 +56,7 @@ Object.assign(UI, {
 
     _initSounds: function() {
         for (var k in this._audioFiles) {
-            try {
-                var a = new Audio(this._audioFiles[k]);
-                a.preload = 'auto';
-                a.volume = 0.5;
-                this._sounds[k] = a;
-            } catch(e) {}
+            try { var a = new Audio(this._audioFiles[k]); a.preload = 'auto'; a.volume = 0.5; this._sounds[k] = a; } catch(e) {}
         }
     },
 
@@ -119,18 +106,10 @@ Object.assign(UI, {
     },
 
     loadHome: function() {
-        if (this._screenLayer) {
-            this._screenLayer.style.display = 'none';
-            this._screenLayer.innerHTML = '';
-        }
-        if (this._ticketDisplayInterval) {
-            clearInterval(this._ticketDisplayInterval);
-            this._ticketDisplayInterval = null;
-        }
+        if (this._screenLayer) { this._screenLayer.style.display = 'none'; this._screenLayer.innerHTML = ''; }
+        if (this._ticketDisplayInterval) { clearInterval(this._ticketDisplayInterval); this._ticketDisplayInterval = null; }
         try { this.updateDisplay(); } catch(e) {}
-        if (typeof showHomeScreen === 'function') {
-            showHomeScreen();
-        }
+        if (typeof showHomeScreen === 'function') { showHomeScreen(); }
     },
 
     _showToast: function(msg) {
@@ -244,60 +223,64 @@ Object.assign(UI, {
         var trophies = p.trophies || [];
         var h = '';
         
-        // Верхняя панель стат
-        h += '<div style="display:flex;justify-content:space-around;align-items:center;margin-bottom:12px;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">';
-        h += '<div style="text-align:center;"><img src="assets/assets2/icons/power.png" style="width:40px;height:40px;object-fit:contain;"><div style="color:#fff;font-size:1.1em;font-weight:bold;">' + p.stats.attack + '</div></div>';
-        h += '<div style="text-align:center;"><img src="assets/assets2/icons/armor.png" style="width:40px;height:40px;object-fit:contain;"><div style="color:#fff;font-size:1.1em;font-weight:bold;">' + p.stats.defense + '</div></div>';
-        h += '<div style="text-align:center;"><img src="assets/assets2/icons/life.png" style="width:40px;height:40px;object-fit:contain;"><div style="color:#fff;font-size:1.1em;font-weight:bold;">' + p.stats.hp + '</div></div>';
-        h += '</div>';
-        
-        // Имя и уровень
-        h += '<div style="text-align:center;margin-bottom:12px;">';
-        h += '<div style="color:#e0c080;font-weight:bold;font-size:1.3em;">' + p.name + '</div>';
-        h += '<div style="color:#aaa;font-size:0.9em;">Уровень ' + p.level + '</div>';
+        // Верхняя панель стат (копия главной)
+        h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 10px;">';
+        h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
+        h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+        h += '<img src="assets/assets2/icons/power.png" style="position:absolute;top:0;left:25%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+        h += '<img src="assets/assets2/icons/armor.png" style="position:absolute;top:0;left:41.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+        h += '<img src="assets/assets2/icons/life.png" style="position:absolute;top:0;left:58.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+        h += '<img src="assets/assets2/icons/resource_gold.png" style="position:absolute;top:0;left:75%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+        h += '<img src="assets/assets2/icons/resource_silver.png" style="position:absolute;top:0;left:91.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+        h += '<span style="position:absolute;top:60px;left:8.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) + '%' : p.exp) + '</span>';
+        h += '<span style="position:absolute;top:60px;left:25%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.attack + '</span>';
+        h += '<span style="position:absolute;top:60px;left:41.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.defense + '</span>';
+        h += '<span style="position:absolute;top:60px;left:58.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.hp + '</span>';
+        h += '<span style="position:absolute;top:60px;left:75%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.gold || 0) + '</span>';
+        h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
         h += '</div>';
         
         // Крупные иконки 1 на строку с подписью
-        h += '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;overflow-y:auto;max-height:400px;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:10px;">';
+        h += '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;overflow-y:auto;max-height:calc(100vh - 180px);scrollbar-width:none;-ms-overflow-style:none;padding-bottom:10px;">';
         
-        h += '<div onclick="UI._showAllTrophies()" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</span>';
+        h += '<div onclick="UI._showAllTrophies()" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="' + (trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/all_trophies/asset_isolated_on_a_solid.png') + '" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">' + (trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи') + '</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._showAllRings()" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">' + (ring ? ring.name : 'Кольца') + '</span>';
+        h += '<div onclick="UI._showAllRings()" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="' + (ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png') + '" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">' + (ring ? ring.name : 'Кольца') + '</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._showAllAmulets()" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">' + (amulet ? amulet.name : 'Амулеты') + '</span>';
+        h += '<div onclick="UI._showAllAmulets()" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="' + (amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">' + (amulet ? amulet.name : 'Амулеты') + '</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._showTalentsFromProfile()" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="assets/all_buttons/ranger_skills_button.png" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">Таланты</span>';
+        h += '<div onclick="UI._showTalentsFromProfile()" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="assets/all_buttons/ranger_skills_button.png" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">Таланты</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._previousScreen=\'profile\';UI.training();" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="assets/all_buttons/training.png" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">Тренировка</span>';
+        h += '<div onclick="UI._previousScreen=\'profile\';UI.training();" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="assets/all_buttons/training.png" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">Тренировка</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._previousScreen=\'profile\';UI.forge();" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="assets/all_buttons/forge.png" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">Кузница</span>';
+        h += '<div onclick="UI._previousScreen=\'profile\';UI.forge();" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="assets/all_buttons/forge.png" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">Кузница</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._previousScreen=\'profile\';UI.wallet();" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="assets/interface/wallet.png" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">Кесет</span>';
+        h += '<div onclick="UI._previousScreen=\'profile\';UI.wallet();" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="assets/interface/wallet.png" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">Кесет</span>';
         h += '</div>';
         
-        h += '<div onclick="UI._previousScreen=\'profile\';UI.bestiary();" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:12px;width:85%;cursor:pointer;">';
-        h += '<img src="assets/all_buttons/bestiary.png" style="width:80px;height:80px;object-fit:contain;">';
-        h += '<span style="color:#e0c080;font-size:0.9em;">Бестиарий</span>';
+        h += '<div onclick="UI._previousScreen=\'profile\';UI.bestiary();" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;">';
+        h += '<img src="assets/all_buttons/bestiary.png" style="width:100px;height:100px;object-fit:contain;">';
+        h += '<span style="color:#e0c080;font-size:1em;">Бестиарий</span>';
         h += '</div>';
         
         h += '</div>';
@@ -414,7 +397,7 @@ Object.assign(UI, {
         this._openScreen('Амулеты', 'profile', h, 'UI.profile()');
     },
 
-        // ============================================================
+    // ============================================================
     //  КУЗНИЦА
     // ============================================================
 
@@ -572,8 +555,7 @@ Object.assign(UI, {
         if (r.success) { this._playSound('forge'); this._showToast('Улучшено!'); this.updateDisplay(); this.forge(); } else { this._showToast(r.reason || 'Ошибка'); }
     },
 
-   
-        // ============================================================
+    // ============================================================
     //  ТРЕНИРОВКА
     // ============================================================
 
@@ -754,7 +736,7 @@ Object.assign(UI, {
         this.wallet();
     },
 
-        _addWalletSilver: function(amount) {
+    _addWalletSilver: function(amount) {
         var p = Sherwood.getPlayer();
         if (!p.keset) p.keset = { cells: [], totalSilver: 0 };
         if (!p.keset.cells || p.keset.cells.length === 0) {
@@ -960,10 +942,6 @@ Object.assign(UI, {
     portals: function() { this._showPlaceholder('Порталы', 'portal'); },
     raid: function() { this._showPlaceholder('Рейд', 'raid'); },
 
-    // ============================================================
-    //  ПОДЗЕМКА (БАЗОВАЯ)
-    // ============================================================
-
     dungeon: function() {
         this._playSound('click');
         if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
@@ -972,10 +950,6 @@ Object.assign(UI, {
             this._showPlaceholder('Подземка', 'dungeon_forest');
         }
     },
-
-    // ============================================================
-    //  РЫНОК
-    // ============================================================
 
     market: function() {
         this._playSound('click');
@@ -986,45 +960,13 @@ Object.assign(UI, {
         }
     },
 
-    // ============================================================
-    //  ЭКСПОРТ
-    // ============================================================
-
     showUI: function() {
         this.loadHome();
     }
 });
-
-// ============================================================
-//  ИНИЦИАЛИЗАЦИЯ (уже вызван в ui_common.js)
-// ============================================================
-
-// ============================================================
-//  ГЛОБАЛЬНЫЙ ЭКСПОРТ
-// ============================================================
 
 window.UI = UI;
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.UI = UI;
 
 console.log('🖥️ UI экраны полностью загружены!');
-
-// ============================================================
-//  ПРИНУДИТЕЛЬНАЯ ПРОВЕРКА
-// ============================================================
-
-(function ensureUIScreens() {
-    console.log('🔧 Проверка UI экранов...');
-    if (typeof UI !== 'undefined' && UI.profile) {
-        console.log('✅ UI.profile существует');
-    }
-    if (typeof UI !== 'undefined' && UI._openScreen) {
-        console.log('✅ UI._openScreen существует');
-    }
-    setTimeout(function() {
-        console.log('🧪 UI слой готов к отображению');
-        if (UI._screenLayer) {
-            UI._screenLayer.style.display = 'none';
-        }
-    }, 1000);
-})();
