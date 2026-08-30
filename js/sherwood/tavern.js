@@ -1,7 +1,8 @@
-/**
- * Sherwood Tavern — Таверна «Весёлый Разбойник»
- * Егерь Гаррет выдаёт сюжетные квесты по главам
- */
+// ============================================================
+//  js/sherwood/tavern.js — Таверна «Весёлый Разбойник»
+//  Егерь Гаррет выдаёт сюжетные квесты по главам
+//  Бой происходит в разделе «Квесты»
+// ============================================================
 
 if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
@@ -144,125 +145,59 @@ Sherwood.Tavern = {
     _currentQuest: null,
     _completedChapters: [],
     _currentChapterIndex: 0,
-    _isInBattle: false,
-    _battleEnemy: null,
     _isSecretUnlocked: false,
-    _tab: 1,
 
     // ---------- ИНИЦИАЛИЗАЦИЯ ----------
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
         if (!p.tavern) {
-            p.tavern = { completedChapters: [], currentChapter: 0, isInBattle: false, secretUnlocked: false };
+            p.tavern = { completedChapters: [], currentChapter: 0, secretUnlocked: false };
         }
         this._completedChapters = p.tavern.completedChapters || [];
         this._currentChapterIndex = p.tavern.currentChapter || 0;
-        this._isInBattle = p.tavern.isInBattle || false;
         this._isSecretUnlocked = p.tavern.secretUnlocked || false;
-        if (this._isInBattle && p.tavern.battleEnemy) {
-            this._battleEnemy = p.tavern.battleEnemy;
-            this._currentQuest = this.getCurrentChapter();
-        }
         console.log('🍺 Таверна инициализирована');
     },
 
     // ---------- МЕТОДЫ ----------
     getAllChapters: function() { return this.CHAPTERS; },
+    
     getCurrentChapter: function() {
         if (this._currentChapterIndex < this.CHAPTERS.length) {
             return this.CHAPTERS[this._currentChapterIndex];
         }
         return null;
     },
+    
     getCompletedCount: function() { return this._completedChapters.length; },
     getTotalChapters: function() { return this.CHAPTERS.length; },
     isChapterCompleted: function(id) { return this._completedChapters.indexOf(id) !== -1; },
 
-    startQuest: function() {
-        if (this._completedChapters.length >= this.CHAPTERS.length) {
-            return { success: false, reason: 'Все главы пройдены!' };
-        }
-        if (this._currentQuest && this._isInBattle) {
-            return { success: false, reason: 'Уже есть активный квест!' };
-        }
+    acceptQuest: function() {
         var chapter = this.getCurrentChapter();
         if (!chapter) return { success: false, reason: 'Нет доступных глав' };
-        if (this.isChapterCompleted(chapter.id)) {
-            this._currentChapterIndex++;
-            return this.startQuest();
-        }
+        if (this.isChapterCompleted(chapter.id)) return { success: false, reason: 'Глава уже пройдена' };
+        if (this._currentQuest) return { success: false, reason: 'Уже есть активный квест' };
+        
         this._currentQuest = chapter;
-        this._isInBattle = true;
-        this._battleEnemy = {
-            name: chapter.enemy.name,
-            hp: chapter.enemy.hp,
-            maxHp: chapter.enemy.hp,
-            atk: chapter.enemy.atk,
-            def: chapter.enemy.def,
-            exp: chapter.enemy.exp,
-            gold: chapter.enemy.gold
-        };
         this._saveState();
-        return { success: true, chapter: chapter, enemy: this._battleEnemy };
+        return { success: true, chapter: chapter };
     },
 
-    attack: function() {
-        if (!this._isInBattle || !this._battleEnemy) return { error: 'Нет активного боя' };
-        var p = Sherwood.getPlayer();
-        var enemy = this._battleEnemy;
-        var dmg = Math.max(1, p.stats.attack - enemy.def + Math.floor(Math.random() * 20));
-        var crit = Math.random() * 100 < 15;
-        if (crit) dmg = Math.floor(dmg * 1.8);
-        enemy.hp -= dmg;
-        if (enemy.hp < 0) enemy.hp = 0;
-        var result = { damage: dmg, crit: crit, enemyHp: enemy.hp, enemyMaxHp: enemy.maxHp, enemyDead: enemy.hp <= 0 };
-        if (enemy.hp <= 0) return this._completeChapter(result);
-        var edmg = Math.max(1, enemy.atk - p.stats.defense + Math.floor(Math.random() * 15));
-        p.stats.hp = Math.max(0, p.stats.hp - edmg);
-        result.enemyDamage = edmg;
-        result.playerHp = p.stats.hp;
-        if (p.stats.hp <= 0) {
-            result.playerDead = true;
-            result.lose = true;
-            this._isInBattle = false;
-            this._battleEnemy = null;
-            this._currentQuest = null;
-            this._saveState();
-            p.stats.hp = 1;
-            Sherwood.saveGame();
-            return result;
-        }
-        this._saveState();
-        Sherwood.saveGame();
-        return result;
-    },
-
-    _completeChapter: function(result) {
+    completeQuest: function() {
+        if (!this._currentQuest) return { success: false, reason: 'Нет активного квеста' };
         var chapter = this._currentQuest;
-        var p = Sherwood.getPlayer();
         if (this._completedChapters.indexOf(chapter.id) === -1) {
             this._completedChapters.push(chapter.id);
         }
-        var reward = chapter.reward;
-        Sherwood.addExp(reward.exp);
-        Sherwood.addResource('silver', reward.silver || 0);
-        if (reward.gold) Sherwood.addResource('gold', reward.gold);
-        this._isInBattle = false;
-        this._battleEnemy = null;
         this._currentQuest = null;
         this._currentChapterIndex++;
         if (this._completedChapters.length >= 15 && !this._isSecretUnlocked) {
             this._isSecretUnlocked = true;
-            result.secretUnlocked = true;
         }
         this._saveState();
-        Sherwood.saveGame();
-        result.win = true;
-        result.reward = reward;
-        result.chapterComplete = true;
-        result.allComplete = this._completedChapters.length >= this.CHAPTERS.length;
-        return result;
+        return { success: true, chapter: chapter };
     },
 
     _saveState: function() {
@@ -271,87 +206,75 @@ Sherwood.Tavern = {
         if (!p.tavern) p.tavern = {};
         p.tavern.completedChapters = this._completedChapters;
         p.tavern.currentChapter = this._currentChapterIndex;
-        p.tavern.isInBattle = this._isInBattle;
-        p.tavern.battleEnemy = this._battleEnemy;
         p.tavern.secretUnlocked = this._isSecretUnlocked || false;
         Sherwood.saveGame();
     },
 
     // ---------- UI ----------
     showUI: function() {
-        if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') {
-                showGenericScreen('Таверна', '🍺');
-            }
+        if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
+            console.error('❌ UI не загружен!');
             return;
         }
+        
         UI._playSound('click');
         var current = this.getCurrentChapter();
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
-        var isInBattle = this._isInBattle;
-        var enemy = this._battleEnemy;
 
-        var h = '<div style="padding:10px;text-align:center;">';
+        var h = '<div style="background-image:url(\'assets/assets2/backgrounds/section_tavern.png\');background-size:cover;background-position:center;background-repeat:no-repeat;border-radius:8px;padding:20px;margin-bottom:15px;min-height:180px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;">';
+        h += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.1));"></div>';
+        h += '<div style="position:relative;z-index:1;">';
+        h += '<div style="color:#ffd700;font-size:24px;font-weight:bold;text-shadow:2px 2px 4px #000;">🍺 Таверна «Весёлый Разбойник»</div>';
+        h += '</div></div>';
+
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isSecret = current.isSecret || false;
+            var isAccepted = this._currentQuest !== null;
+            
             h += '<div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:8px;border-left:4px solid ' + (isSecret ? '#9b59b6' : '#ffa500') + ';margin-bottom:15px;text-align:left;">';
-            h += '<div style="color:#ffa500;font-weight:bold;font-size:18px;">' + (isSecret ? '🔮 ' : '') + 'Глава ' + current.id + ': ' + current.title + '</div>';
-            h += '<div style="color:#aaa;font-size:13px;margin-top:8px;line-height:1.6;">' + current.lore + '</div>';
+            h += '<div style="color:#ffa500;font-weight:bold;font-size:18px;margin-bottom:8px;">' + (isSecret ? '🔮 ' : '') + 'Глава ' + current.id + ': ' + current.title + '</div>';
+            h += '<div style="color:#aaa;font-size:13px;line-height:1.6;">' + current.lore + '</div>';
             h += '<div style="color:#888;font-size:12px;margin-top:8px;">🎯 ' + current.quest + '</div>';
-            h += '<div style="color:#ffd700;font-size:12px;">🏆 Награда: +' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота</div>';
+            h += '<div style="color:#ffd700;font-size:12px;margin-top:4px;">🏆 Награда: +' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             h += '</div>';
-            if (isInBattle && enemy) {
-                h += '<div style="background:rgba(255,0,0,0.1);border:2px solid #ff6b6b;border-radius:8px;padding:15px;margin-bottom:15px;">';
-                h += '<div style="color:#ff6b6b;font-weight:bold;">⚔️ БИТВА!</div>';
-                h += '<div style="font-size:18px;color:#fff;">' + enemy.name + '</div>';
-                h += '<div style="color:#aaa;font-size:13px;">❤️ ' + enemy.hp + '/' + enemy.maxHp + '</div>';
-                h += '<div style="width:200px;height:8px;background:#333;border-radius:4px;overflow:hidden;margin:4px auto;"><div style="width:' + (enemy.hp/enemy.maxHp*100) + '%;height:100%;background:linear-gradient(90deg,#ff0000,#ff4444);"></div></div>';
-                h += '<button onclick="Sherwood.Tavern.attackFromUI()" class="btn btn-danger" style="padding:10px 30px;font-size:16px;">⚔️ АТАКА</button>';
-                h += '<button onclick="Sherwood.Tavern.cancelFromUI()" class="btn" style="padding:4px 15px;font-size:11px;margin-left:8px;">✖ Отступить</button>';
+            
+            if (isCompleted) {
+                h += '<div style="color:#52b788;margin-bottom:10px;text-align:center;font-size:16px;">✅ Глава пройдена!</div>';
+                h += '<button onclick="Sherwood.Tavern.nextFromUI()" style="width:100%;background:#555;border:none;border-radius:8px;padding:12px;color:#fff;cursor:pointer;font-size:14px;">➡️ Следующая глава</button>';
+            } else if (isAccepted) {
+                h += '<div style="background:rgba(255,165,0,0.1);border:1px solid #ffa500;border-radius:8px;padding:12px;margin-bottom:15px;text-align:center;">';
+                h += '<div style="color:#ffa500;font-size:14px;">📜 Квест принят!</div>';
+                h += '<div style="color:#888;font-size:12px;margin-top:4px;">Отправляйся в раздел «Квесты» для выполнения</div>';
                 h += '</div>';
-            } else if (!isCompleted) {
-                h += '<button onclick="Sherwood.Tavern.startFromUI()" class="btn btn-gold" style="padding:15px 40px;font-size:18px;font-weight:bold;">⚔️ Начать главу</button>';
             } else {
-                h += '<div style="color:#52b788;">✅ Глава пройдена!</div>';
-                h += '<button onclick="Sherwood.Tavern.nextFromUI()" class="btn" style="margin-top:8px;padding:4px 20px;font-size:12px;">➡️ Следующая</button>';
+                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="width:100%;background:linear-gradient(180deg,#ffa500,#cc8400);border:none;border-radius:8px;padding:15px;color:#000;font-weight:bold;cursor:pointer;font-size:18px;">📜 Принять квест</button>';
             }
         } else if (completed >= total) {
+            h += '<div style="text-align:center;padding:20px;">';
             h += '<div style="font-size:64px;margin-bottom:20px;">🏆</div>';
             h += '<div style="font-size:24px;color:#ffd700;font-weight:bold;">Шервуд спасён!</div>';
-            h += '<div style="color:#888;margin-top:10px;">Ты прошёл все главы.</div>';
+            h += '<div style="color:#888;margin-top:10px;">Ты прошёл все главы. Гаррет гордится тобой!</div>';
+            h += '</div>';
         }
-        h += '<div style="margin-top:15px;padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:12px;color:#888;">Прогресс: ' + completed + '/' + total + '</div>';
-        h += '</div>';
+        
+        h += '<div style="margin-top:15px;padding:12px;background:rgba(255,255,255,0.03);border-radius:6px;">';
+        h += '<div style="color:#888;font-size:12px;margin-bottom:6px;">Прогресс сюжета: ' + completed + '/' + total + ' глав</div>';
+        h += '<div style="width:100%;height:8px;background:#333;border-radius:4px;overflow:hidden;">';
+        h += '<div style="width:' + (completed/total*100) + '%;height:100%;background:linear-gradient(90deg,#ffa500,#ffd700);transition:width 0.3s;"></div>';
+        h += '</div></div>';
+        
         UI._openScreenScrollable('🍺 Таверна', 'tavern', h);
     },
 
-    startFromUI: function() {
-        var r = this.startQuest();
-        if (!r.success) { UI._showToast(r.reason || 'Ошибка'); this.showUI(); return; }
-        this.showUI();
-    },
-
-    attackFromUI: function() {
-        var r = this.attack();
-        if (r.error) { UI._showToast(r.error); return; }
-        if (r.win) {
-            UI._showToast(r.allComplete ? '🏆 Шервуд спасён!' : '⚔️ Победа! Глава пройдена!');
-            this.showUI();
-        } else if (r.lose) {
-            UI._showToast('💀 Ты погиб...');
-            this.showUI();
-        } else {
-            this.showUI();
+    acceptFromUI: function() {
+        var r = this.acceptQuest();
+        if (!r.success) {
+            UI._showToast(r.reason || 'Ошибка');
+            return;
         }
-    },
-
-    cancelFromUI: function() {
-        this._isInBattle = false;
-        this._battleEnemy = null;
-        this._currentQuest = null;
-        this._saveState();
+        UI._showToast('📜 Квест принят: ' + r.chapter.title);
         this.showUI();
     },
 
@@ -362,11 +285,8 @@ Sherwood.Tavern = {
     },
 
     closeUI: function() {
-        if (typeof UI !== 'undefined' && UI._screenLayer) {
-            UI._screenLayer.style.display = 'none';
-        }
-        if (typeof showHomeScreen === 'function') {
-            showHomeScreen();
+        if (typeof UI !== 'undefined' && UI.loadHome) {
+            UI.loadHome();
         }
     }
 };
