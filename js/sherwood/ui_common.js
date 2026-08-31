@@ -66,7 +66,7 @@ UI._audioFiles = {
 UI.init = function() {
     UI._screenLayer = document.createElement('div');
     UI._screenLayer.id = 'ui-screen-layer';
-    UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:url(\'assets/assets2/Sherwood_Square/substrate.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
+    UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:transparent;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
     
     var gameZone = document.getElementById('gameZone');
     if (gameZone) {
