@@ -119,8 +119,8 @@ canvas {
 /* Центральный игровой квадрат */
 #gameZone {
     position: relative;
-    width: 50vw;
-    height: 100vh;
+    width: min(50vw, calc(100vh * 0.6));
+    height: min(100vh, calc(50vw * 1.667));
     overflow: hidden;
     z-index: 10;
     background: #111;
@@ -129,7 +129,6 @@ canvas {
 #gameZone img {
     position: absolute;
 }
-
 /* Фикс фонового свитка — содержит пропорции contain */
 #arch {
     top: 0;
