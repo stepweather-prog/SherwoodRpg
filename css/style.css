@@ -117,15 +117,14 @@ canvas {
 /* Центральный игровой квадрат */
 #gameZone {
     position: relative;
-    width: min(50vw, calc(100vh * 0.6));
-    height: min(100vh, calc(50vw * 1.667));
+    width: min(55vw, calc(100vh * 0.7));
+    height: min(100vh, calc(55vw * 1.2));
     min-width: 480px;
     min-height: 800px;
     overflow: hidden;
     z-index: 10;
     background: #111;
 }
-
 #gameZone img {
     position: absolute;
 }
