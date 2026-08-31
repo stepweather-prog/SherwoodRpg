@@ -183,7 +183,8 @@ function hideHomeElements() {
     const ids = [
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
-        'leftDivider', 'rightDivider', 'topBar'
+        'leftDivider', 'rightDivider', 'topBar',
+        'substrate' // ДОБАВИТЬ ЭТО
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
@@ -195,7 +196,8 @@ function showHomeElements() {
     const ids = [
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
-        'leftDivider', 'rightDivider', 'topBar'
+        'leftDivider', 'rightDivider', 'topBar',
+        'substrate' // ДОБАВИТЬ ЭТО
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
