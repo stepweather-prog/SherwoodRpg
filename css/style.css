@@ -33,18 +33,15 @@ canvas {
    ЭКРАН ЗАГРУЗКИ (LOADING SCREEN)
    ========================================= */
 #loadingScreen {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000;
+    z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    cursor: pointer;
-    overflow: hidden;
 }
 
 #loadingScreen img {
