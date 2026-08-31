@@ -411,10 +411,14 @@ function loadSavedSkin() {
 
 // ---------- ЗАПУСК ----------
 playButton.addEventListener('click', () => {
-    // Скрываем кнопку Play
     playButton.style.display = 'none';
     
-    // Создаём видео внутри gameZone
+    // Сначала показываем homeScreen и gameZone
+    homeScreen.style.display = 'flex';
+    
+    const gameZone = document.getElementById('gameZone');
+    
+    // Создаём видео
     const video = document.createElement('video');
     video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
     video.autoplay = true;
@@ -422,17 +426,11 @@ playButton.addEventListener('click', () => {
     video.playsInline = true;
     video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:100;';
     
-    const gameZone = document.getElementById('gameZone');
-    if (gameZone) {
-        gameZone.appendChild(video);
-    } else {
-        loadingScreen.appendChild(video);
-    }
+    gameZone.appendChild(video);
     
     video.onended = function() {
         video.remove();
         loadingScreen.style.display = 'none';
-        homeScreen.style.display = 'flex';
         currentScreen = 'home';
         updateTopBar();
         initMainCarousel();
@@ -441,16 +439,15 @@ playButton.addEventListener('click', () => {
     };
     
     video.onerror = function() {
-        // Если видео не загрузилось — сразу показываем главную
         video.remove();
         loadingScreen.style.display = 'none';
-        homeScreen.style.display = 'flex';
         currentScreen = 'home';
         updateTopBar();
         initMainCarousel();
         startMainMusic();
         loadSavedSkin();
     };
+});
 
     if (typeof Sherwood !== 'undefined') {
         const modules = [
