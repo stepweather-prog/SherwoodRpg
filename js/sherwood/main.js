@@ -436,6 +436,8 @@ playButton.addEventListener('click', () => {
         initMainCarousel();
         startMainMusic();
         loadSavedSkin();
+        
+        initGameModules();
     };
     
     video.onerror = function() {
@@ -446,9 +448,12 @@ playButton.addEventListener('click', () => {
         initMainCarousel();
         startMainMusic();
         loadSavedSkin();
+        
+        initGameModules();
     };
 });
 
+function initGameModules() {
     if (typeof Sherwood !== 'undefined') {
         const modules = [
             'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
@@ -459,9 +464,9 @@ playButton.addEventListener('click', () => {
             if (Sherwood[name] && typeof Sherwood[name].init === 'function') {
                 try {
                     Sherwood[name].init();
-                    console.log(`✅ ${name} инициализирован`);
+                    console.log(name + ' инициализирован');
                 } catch(e) {
-                    console.warn(`⚠️ Ошибка в ${name}:`, e);
+                    console.warn('Ошибка в ' + name + ':', e);
                 }
             }
         });
@@ -474,7 +479,7 @@ playButton.addEventListener('click', () => {
     if (typeof Settings !== 'undefined' && Settings.init) {
         Settings.init();
     }
-});
+}
 
 // ---------- ЭКСПОРТ ----------
 window.PlayerStats = PlayerStats;
