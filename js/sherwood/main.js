@@ -411,13 +411,30 @@ function loadSavedSkin() {
 
 // ---------- ЗАПУСК ----------
 playButton.addEventListener('click', () => {
-    loadingScreen.style.display = 'none';
-    homeScreen.style.display = 'flex';
-    currentScreen = 'home';
-    updateTopBar();
-    initMainCarousel();
-    startMainMusic();
-    loadSavedSkin();
+    // Скрываем кнопку Play и показываем анимацию
+    playButton.style.display = 'none';
+    
+    // Создаём видео
+    const video = document.createElement('video');
+    video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1002;';
+    
+    loadingScreen.appendChild(video);
+    
+    // Когда видео закончится — показать главную
+    video.onended = function() {
+        video.remove();
+        loadingScreen.style.display = 'none';
+        homeScreen.style.display = 'flex';
+        currentScreen = 'home';
+        updateTopBar();
+        initMainCarousel();
+        startMainMusic();
+        loadSavedSkin();
+    };
 
     if (typeof Sherwood !== 'undefined') {
         const modules = [
