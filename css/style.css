@@ -61,7 +61,7 @@ canvas {
     transition: transform 0.3s;
     background: none;
     border: none;
-    z-index: 1001;
+    z-index: 2001;
 }
 
 #playButton:active {
