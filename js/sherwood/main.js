@@ -411,21 +411,37 @@ function loadSavedSkin() {
 
 // ---------- ЗАПУСК ----------
 playButton.addEventListener('click', () => {
-    // Скрываем кнопку Play и показываем анимацию
+    // Скрываем кнопку Play
     playButton.style.display = 'none';
     
-    // Создаём видео
+    // Создаём видео внутри gameZone
     const video = document.createElement('video');
     video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
-    video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:1002;';
+    video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:100;';
     
-    loadingScreen.appendChild(video);
+    const gameZone = document.getElementById('gameZone');
+    if (gameZone) {
+        gameZone.appendChild(video);
+    } else {
+        loadingScreen.appendChild(video);
+    }
     
-    // Когда видео закончится — показать главную
     video.onended = function() {
+        video.remove();
+        loadingScreen.style.display = 'none';
+        homeScreen.style.display = 'flex';
+        currentScreen = 'home';
+        updateTopBar();
+        initMainCarousel();
+        startMainMusic();
+        loadSavedSkin();
+    };
+    
+    video.onerror = function() {
+        // Если видео не загрузилось — сразу показываем главную
         video.remove();
         loadingScreen.style.display = 'none';
         homeScreen.style.display = 'flex';
