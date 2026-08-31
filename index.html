@@ -9,12 +9,7 @@
 </head>
 <body>
 
-<div id="loadingScreen">
-    <img src="assets/assets2/backgrounds/loading_screen_with_logo.png" alt="Loading">
-    <button id="playButton">
-        <img src="assets/assets2/icons/play_button.png" alt="Play">
-    </button>
-</div>
+
 
 <div id="homeScreen">
     <!-- Левая статуя за пределами игровой зоны -->
@@ -22,6 +17,12 @@
     
     <!-- ЦЕНТРАЛЬНАЯ ИГРОВАЯ ЗОНА -->
     <div id="gameZone">
+        <div id="loadingScreen" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2000;">
+        <img src="assets/assets2/backgrounds/loading_screen_with_logo.png" alt="Loading" style="width:100%;height:100%;object-fit:cover;">
+        <button id="playButton" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:none;border:none;cursor:pointer;">
+            <img src="assets/assets2/icons/play_button.png" alt="Play">
+        </button>
+    </div>
         <!-- Фоны и декорации -->
         <img id="substrate" src="assets/assets2/Sherwood_Square/substrate.png" alt="Substrate">
         <img id="arch" src="assets/assets2/game_details/staircase_with_an_arch.png" alt="Arch">
