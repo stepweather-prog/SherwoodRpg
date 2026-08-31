@@ -10,11 +10,8 @@ Object.assign(UI, {
     _sounds: {}, _currentMusic: null, _currentMusicKey: null, _soundEnabled: true, _musicEnabled: true,
     _mainThemeWasPlaying: false, _mainThemeKey: null, _mainThemeTime: 0,
     _audioFiles: {
-        'main_theme': 'assets/assets2/tune/main_theme.ogg',
-        'main_theme_2': 'assets/assets2/tune/main_theme_2.ogg',
-        'dungeon_1': 'assets/assets2/tune/dungeon_1.ogg',
-        'dungeon_2': 'assets/assets2/tune/dungeon_2.ogg',
-        'dungeon_3': 'assets/assets2/tune/dungeon_3.ogg',
+        
+       
         'click': 'assets/assets2/tune/click.wav',
         'hit': 'assets/assets2/tune/hit.wav',
         'chest_open': 'assets/assets2/tune/chest_open.wav',
