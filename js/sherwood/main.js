@@ -413,7 +413,10 @@ function loadSavedSkin() {
 playButton.addEventListener('click', () => {
     playButton.style.display = 'none';
     
-    // Создаём видео ВНУТРИ gameZone
+    // Показываем homeScreen
+    homeScreen.style.display = 'flex';
+    
+    // Создаём видео внутри gameZone
     const video = document.createElement('video');
     video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
     video.autoplay = true;
@@ -427,7 +430,6 @@ playButton.addEventListener('click', () => {
     video.onended = function() {
         video.remove();
         loadingScreen.style.display = 'none';
-        homeScreen.style.display = 'flex';
         currentScreen = 'home';
         updateTopBar();
         initMainCarousel();
