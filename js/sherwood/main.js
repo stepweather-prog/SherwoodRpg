@@ -412,8 +412,6 @@ function loadSavedSkin() {
 // ---------- ЗАПУСК ----------
 playButton.addEventListener('click', () => {
     playButton.style.display = 'none';
-    
-    // Сразу скрываем загрузочный экран
     loadingScreen.style.display = 'none';
     
     const video = document.createElement('video');
@@ -421,9 +419,16 @@ playButton.addEventListener('click', () => {
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
-    video.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:50vw;height:100vh;object-fit:fill;z-index:3000;';
     
-    document.body.appendChild(video);
+    // Видео позиционируем внутри gameZone, а не на весь экран
+    const gameZone = document.getElementById('gameZone');
+    if (gameZone) {
+        video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;z-index:3000;';
+        gameZone.appendChild(video);
+    } else {
+        video.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:50vw;height:100vh;object-fit:fill;z-index:3000;';
+        document.body.appendChild(video);
+    }
     
     video.onended = function() {
         video.remove();
@@ -434,19 +439,6 @@ playButton.addEventListener('click', () => {
         startMainMusic();
         loadSavedSkin();
     };
-    
-    // Если видео не загрузилось — показываем главный экран через 3 секунды
-    setTimeout(function() {
-        if (document.body.contains(video)) {
-            video.remove();
-            homeScreen.style.display = 'flex';
-            currentScreen = 'home';
-            updateTopBar();
-            initMainCarousel();
-            startMainMusic();
-            loadSavedSkin();
-        }
-    }, 5000);
 });
 
 function initGameModules() {
