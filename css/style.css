@@ -1,4 +1,81 @@
 /* =========================================
+   БАЗОВЫЕ НАСТРОЙКИ ЭКРАНА И ХОЛСТА
+   ========================================= */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas { 
+    width: 100% !important;
+    height: 100% !important;
+    image-rendering: pixelated; 
+}
+
+/* =========================================
+   ЭКРАН ЗАГРУЗКИ (LOADING SCREEN)
+   ========================================= */
+#loadingScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+#loadingScreen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#playButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    background: none;
+    border: none;
+    z-index: 2001;
+}
+
+#playButton:active {
+    transform: translate(-50%, -50%) scale(0.9);
+}
+
+#playButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* =========================================
    ГЛАВНЫЙ ИГРОВОЙ ЭКРАН И ЗОНА (GAME ZONE)
    ========================================= */
 #homeScreen {
@@ -25,6 +102,7 @@
     object-fit: fill;
     object-position: right center;
     z-index: 4;
+    pointer-events: none;
 }
 
 #rightStatue {
@@ -36,69 +114,45 @@
     object-fit: fill;
     object-position: left center;
     z-index: 4;
+    pointer-events: none;
 }
 
 /* Центральный игровой квадрат */
 #gameZone {
     position: relative;
     width: 480px;
-    height: 800px;
+    height: 100vh;
+    max-height: 800px;
     overflow: hidden;
     z-index: 10;
     background: #111;
     flex-shrink: 0;
 }
 
-/* Для экранов меньше 480px - масштабируем */
-@media (max-width: 479px) {
-    #gameZone {
-        width: 100vw;
-        height: calc(100vw * 1.667); /* 480:800 = 1:1.667 */
-        min-width: auto;
-        min-height: auto;
-        transform-origin: top left;
-    }
-    
-    /* Масштабируем содержимое */
-    #gameZone img {
-        max-width: 100%;
-    }
-}
-
-/* Для экранов меньше по высоте */
-@media (max-height: 799px) and (min-width: 480px) {
-    #gameZone {
-        width: 480px;
-        height: 100vh;
-        transform-origin: center center;
-    }
-}
-
 #gameZone img {
     position: absolute;
 }
 
-/* Фикс фонового свитка — содержит пропорции contain */
-#arch {
-    top: auto;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    height: auto;
-    max-height: 100%;
-    object-fit: contain;
-    z-index: 3;
-}
-
+/* Подложка (фон) */
 #substrate {
-    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     z-index: 1;
+}
+
+/* Арка */
+#arch {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 3;
+    pointer-events: none;
 }
 
 /* Разделители — на границе статуй и игры */
@@ -166,6 +220,7 @@
     background-size: 100% 100%;
     background-repeat: no-repeat;
     z-index: 31;
+    pointer-events: none;
 }
 
 .top-icon {
@@ -214,6 +269,7 @@
     height: auto !important;
     object-fit: contain !important;
     z-index: 15 !important;
+    pointer-events: none !important;
 }
 
 #sectionName {
@@ -235,6 +291,7 @@
     font-weight: bold !important;
     text-shadow: 0 2px 4px #000 !important;
     z-index: 14 !important;
+    pointer-events: none !important;
 }
 
 #carouselLeftArrow {
@@ -282,6 +339,7 @@
     height: 100%;
     z-index: 200;
     overflow: hidden;
+    background: #000;
 }
 
 #section-screen button,
@@ -315,7 +373,6 @@
     #gameZone {
         width: 100vw;
         height: 100vh;
-        min-height: 100vh;
         position: fixed;
         top: 0;
         left: 0;
@@ -330,7 +387,7 @@
     #arch {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
     }
     
     #substrate {
@@ -385,5 +442,18 @@
         top: 35.5% !important;
         right: 17% !important;
         width: 12% !important;
+    }
+}
+
+/* Для экранов меньше 480px */
+@media (max-width: 479px) {
+    #gameZone {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    #hero {
+        width: 50%;
+        bottom: 10%;
     }
 }
