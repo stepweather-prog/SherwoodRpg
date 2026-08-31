@@ -10,8 +10,7 @@ const hero = document.getElementById('hero');
 const menuScreen = document.getElementById('menuScreen');
 
 let currentScreen = 'loading';
-// Сразу скрываем homeScreen при загрузке
-homeScreen.style.display = 'none';
+
 // ---------- ДАННЫЕ ИГРОКА ----------
 const PlayerStats = {
     exp: 0,
@@ -440,8 +439,9 @@ function loadSavedSkin() {
         btn.style.display = 'none';
         loadingScreen.style.display = 'none';
         
-        // Убеждаемся, что homeScreen скрыт
-        homeScreen.style.display = 'none';
+        // Скрываем ТОЛЬКО gameZone (арка, герой, topBar и т.д.)
+        // Статуи и разделители остаются видимыми
+        gameZone.style.display = 'none';
         
         // Создаем видео
         const video = document.createElement('video');
@@ -449,14 +449,37 @@ function loadSavedSkin() {
         video.autoplay = true;
         video.muted = true;
         video.playsInline = true;
-        video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;z-index:3000;';
         
-        gameZone.appendChild(video);
+        // ============================================================
+        // ВОТ ЗДЕСЬ ВСТАВЛЯЕМ MEDIA QUERY ДЛЯ РАЗМЕРА ВИДЕО
+        // ============================================================
+        
+        // Базовые стили для видео
+        let videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+        
+        // Проверяем ширину экрана и настраиваем размер
+        if (window.innerWidth < 480) {
+            // Мобильные — на весь экран
+            video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
+        } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
+            // Десктоп с низким экраном — 480px на 100vh
+            video.style.cssText = videoStyles + 'width:480px;height:100vh;';
+        } else {
+            // Десктоп — 480px на 800px (как gameZone)
+            video.style.cssText = videoStyles + 'width:480px;height:800px;';
+        }
+        
+        // ============================================================
+        // КОНЕЦ ВСТАВКИ MEDIA QUERY
+        // ============================================================
+        
+        // Добавляем видео в body
+        document.body.appendChild(video);
         
         video.onended = function() {
             video.remove();
-            // Показываем homeScreen только после окончания видео
-            homeScreen.style.display = 'flex';
+            // Показываем gameZone обратно
+            gameZone.style.display = 'block';
             currentScreen = 'home';
             updateTopBar();
             initMainCarousel();
@@ -467,8 +490,8 @@ function loadSavedSkin() {
         
         video.onerror = function() {
             video.remove();
-            // Если видео не загрузилось, показываем главную
-            homeScreen.style.display = 'flex';
+            // Показываем gameZone обратно
+            gameZone.style.display = 'block';
             currentScreen = 'home';
             updateTopBar();
             initMainCarousel();
@@ -478,8 +501,6 @@ function loadSavedSkin() {
         };
     });
 })();
-        
-        
 
 function initGameModules() {
     if (typeof Sherwood !== 'undefined') {
