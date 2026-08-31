@@ -55,8 +55,8 @@ canvas {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(200px, 40%);
-    height: min(200px, 40%);
+    width: 200px;
+    height: 200px;
     cursor: pointer;
     transition: transform 0.3s;
     background: none;
@@ -96,7 +96,7 @@ canvas {
     position: fixed;
     left: 0;
     top: 0;
-    width: calc((100vw - min(50vw, calc(100vh * 0.6))) / 2);
+    width: calc((100vw - 480px) / 2);
     height: 100vh;
     object-fit: fill;
     object-position: right center;
@@ -107,7 +107,7 @@ canvas {
     position: fixed;
     right: 0;
     top: 0;
-    width: calc((100vw - min(50vw, calc(100vh * 0.6))) / 2);
+    width: calc((100vw - 480px) / 2);
     height: 100vh;
     object-fit: fill;
     object-position: left center;
@@ -119,6 +119,8 @@ canvas {
     position: relative;
     width: min(50vw, calc(100vh * 0.6));
     height: min(100vh, calc(50vw * 1.667));
+    min-width: 480px;
+    min-height: 800px;
     overflow: hidden;
     z-index: 10;
     background: #111;
