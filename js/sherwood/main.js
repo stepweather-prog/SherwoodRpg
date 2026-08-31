@@ -10,7 +10,8 @@ const hero = document.getElementById('hero');
 const menuScreen = document.getElementById('menuScreen');
 
 let currentScreen = 'loading';
-
+// Сразу скрываем homeScreen при загрузке
+homeScreen.style.display = 'none';
 // ---------- ДАННЫЕ ИГРОКА ----------
 const PlayerStats = {
     exp: 0,
@@ -214,7 +215,14 @@ function enterSection() {
     if (!section) return;
     console.log(`🚪 Вход в раздел: ${section.name}`);
 
+    // Скрываем элементы главного экрана
     hideHomeElements();
+    
+    // Скрываем homeScreen полностью
+    homeScreen.style.display = 'none';
+    
+    // Показываем menuScreen
+    menuScreen.style.display = 'block';
 
     const layer = document.getElementById('ui-screen-layer');
     if (layer) {
@@ -265,8 +273,10 @@ function showHomeScreen() {
         layer.innerHTML = '';
     }
     
+    // Показываем элементы главного экрана
     showHomeElements();
     
+    // Показываем homeScreen
     homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
     currentScreen = 'home';
@@ -412,7 +422,6 @@ function loadSavedSkin() {
 })();
 
 // ---------- ЗАПУСК ----------
-// Создаём кнопку программно
 (function createPlayButton() {
     const gameZone = document.getElementById('gameZone');
     const loadingScreen = document.getElementById('loadingScreen');
@@ -427,9 +436,14 @@ function loadSavedSkin() {
     loadingScreen.appendChild(btn);
     
     btn.addEventListener('click', function() {
+        // Скрываем кнопку и загрузочный экран
         btn.style.display = 'none';
         loadingScreen.style.display = 'none';
         
+        // Убеждаемся, что homeScreen скрыт
+        homeScreen.style.display = 'none';
+        
+        // Создаем видео
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
         video.autoplay = true;
@@ -441,25 +455,31 @@ function loadSavedSkin() {
         
         video.onended = function() {
             video.remove();
+            // Показываем homeScreen только после окончания видео
             homeScreen.style.display = 'flex';
             currentScreen = 'home';
             updateTopBar();
             initMainCarousel();
             startMainMusic();
             loadSavedSkin();
+            console.log('🏠 Главная показана после видео');
         };
         
         video.onerror = function() {
             video.remove();
+            // Если видео не загрузилось, показываем главную
             homeScreen.style.display = 'flex';
             currentScreen = 'home';
             updateTopBar();
             initMainCarousel();
             startMainMusic();
             loadSavedSkin();
+            console.log('⚠️ Видео не загрузилось, показана главная');
         };
     });
 })();
+        
+        
 
 function initGameModules() {
     if (typeof Sherwood !== 'undefined') {
@@ -509,3 +529,8 @@ window.showHomeElements = showHomeElements;
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
+// Скрываем homeScreen при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    homeScreen.style.display = 'none';
+    console.log('🏠 homeScreen скрыт при загрузке');
+});
