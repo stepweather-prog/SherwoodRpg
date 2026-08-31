@@ -412,36 +412,54 @@ function loadSavedSkin() {
 })();
 
 // ---------- ЗАПУСК ----------
-playButton.addEventListener('click', () => {
-    playButton.style.display = 'none';
-    loadingScreen.style.display = 'none';
-    
-    const video = document.createElement('video');
-    video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
-    video.autoplay = true;
-    video.muted = true;
-    video.playsInline = true;
-    
-    // Видео позиционируем внутри gameZone, а не на весь экран
+// Создаём кнопку программно
+(function createPlayButton() {
     const gameZone = document.getElementById('gameZone');
-    if (gameZone) {
-        video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;z-index:3000;';
-        gameZone.appendChild(video);
-    } else {
-        video.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:50vw;height:100vh;object-fit:fill;z-index:3000;';
-        document.body.appendChild(video);
-    }
+    const loadingScreen = document.getElementById('loadingScreen');
     
-    video.onended = function() {
-        video.remove();
-        homeScreen.style.display = 'flex';
-        currentScreen = 'home';
-        updateTopBar();
-        initMainCarousel();
-        startMainMusic();
-        loadSavedSkin();
-    };
-});
+    if (!gameZone || !loadingScreen) return;
+    
+    const btn = document.createElement('button');
+    btn.id = 'playButton';
+    btn.textContent = 'ВОЙТИ';
+    btn.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:60px;background:#c9a040;border:none;border-radius:10px;color:#000;font-weight:bold;font-size:1.2em;cursor:pointer;z-index:2001;font-family:Georgia,serif;letter-spacing:2px;box-shadow:0 4px 15px rgba(0,0,0,0.5);';
+    
+    loadingScreen.appendChild(btn);
+    
+    btn.addEventListener('click', function() {
+        btn.style.display = 'none';
+        loadingScreen.style.display = 'none';
+        
+        const video = document.createElement('video');
+        video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;z-index:3000;';
+        
+        gameZone.appendChild(video);
+        
+        video.onended = function() {
+            video.remove();
+            homeScreen.style.display = 'flex';
+            currentScreen = 'home';
+            updateTopBar();
+            initMainCarousel();
+            startMainMusic();
+            loadSavedSkin();
+        };
+        
+        video.onerror = function() {
+            video.remove();
+            homeScreen.style.display = 'flex';
+            currentScreen = 'home';
+            updateTopBar();
+            initMainCarousel();
+            startMainMusic();
+            loadSavedSkin();
+        };
+    });
+})();
 
 function initGameModules() {
     if (typeof Sherwood !== 'undefined') {
