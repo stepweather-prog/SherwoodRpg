@@ -414,6 +414,7 @@ function loadSavedSkin() {
 
 // ---------- ЗАПУСК ----------
 (function createPlayButton() {
+    const gameZone = document.getElementById('gameZone');
     const loadingScreen = document.getElementById('loadingScreen');
     
     if (!gameZone || !loadingScreen) return;
@@ -469,7 +470,33 @@ function loadSavedSkin() {
     });
 })();
 
+// ============================================================
+//  ИНИЦИАЛИЗАЦИЯ МОДУЛЕЙ
+// ============================================================
+
 function initGameModules() {
+    // 1. Создаём ui-screen-layer, если его нет
+    if (!document.getElementById('ui-screen-layer')) {
+        var screenLayer = document.createElement('div');
+        screenLayer.id = 'ui-screen-layer';
+        screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:transparent;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
+        gameZone.appendChild(screenLayer);
+        console.log('✅ ui-screen-layer создан');
+    }
+    
+    // 2. Инициализируем UI
+    if (typeof UI !== 'undefined' && UI.init) {
+        UI.init();
+        console.log('✅ UI инициализирован');
+    }
+    
+    // 3. Инициализируем Settings
+    if (typeof Settings !== 'undefined' && Settings.init) {
+        Settings.init();
+        console.log('✅ Settings инициализирован');
+    }
+    
+    // 4. Инициализируем остальные модули
     if (typeof Sherwood !== 'undefined') {
         const modules = [
             'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
@@ -487,17 +514,19 @@ function initGameModules() {
             }
         });
     }
-
-    if (typeof UI !== 'undefined' && UI.init) {
-        UI.init();
-    }
-
-    if (typeof Settings !== 'undefined' && Settings.init) {
-        Settings.init();
-    }
 }
 
-// ---------- ЭКСПОРТ ----------
+// Вызываем инициализацию после полной загрузки DOM
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        initGameModules();
+    }, 100);
+});
+
+// ============================================================
+//  ЭКСПОРТ
+// ============================================================
+
 window.PlayerStats = PlayerStats;
 window.updateTopBar = updateTopBar;
 window.showHomeScreen = showHomeScreen;
@@ -513,6 +542,7 @@ window.startMainMusic = startMainMusic;
 window.stopMainMusic = stopMainMusic;
 window.hideHomeElements = hideHomeElements;
 window.showHomeElements = showHomeElements;
+window.initGameModules = initGameModules;
 
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
