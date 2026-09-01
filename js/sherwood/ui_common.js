@@ -34,6 +34,7 @@ UI._musicEnabled = true;
 UI._screenLayer = null;
 UI._pendingRewards = null;
 UI._afterRewardAction = null;
+UI._dungeonVideo = null;
 
 UI._audioFiles = {
     'main_theme': 'assets/assets2/tune/main_theme.ogg',
@@ -203,6 +204,65 @@ UI.updateDisplay = function() {
 };
 
 // ============================================================
+//  ВИДЕО-ФОН ДЛЯ ПОДЗЕМКИ
+// ============================================================
+
+UI._initDungeonVideo = function() {
+    if (!UI._dungeonVideo) {
+        UI._dungeonVideo = document.createElement('video');
+        UI._dungeonVideo.src = 'assets/assets2/animation/Loading_dangeon.mp4';
+        UI._dungeonVideo.muted = true;
+        UI._dungeonVideo.playsInline = true;
+        UI._dungeonVideo.loop = false;
+        UI._dungeonVideo.preload = 'auto';
+        UI._dungeonVideo.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;';
+        
+        UI._dungeonVideo.addEventListener('loadeddata', function() {
+            try {
+                UI._dungeonVideo.currentTime = 15;
+                UI._dungeonVideo.pause();
+            } catch(e) {}
+        });
+        
+        UI._dungeonVideo.addEventListener('canplay', function() {
+            try {
+                if (UI._dungeonVideo.currentTime < 15) {
+                    UI._dungeonVideo.currentTime = 15;
+                    UI._dungeonVideo.pause();
+                }
+            } catch(e) {}
+        });
+    }
+    return UI._dungeonVideo;
+};
+
+UI._showDungeonVideo = function() {
+    UI._initDungeonVideo();
+    
+    var screenLayer = UI._screenLayer;
+    if (!screenLayer) return;
+    
+    if (UI._dungeonVideo.parentNode) {
+        UI._dungeonVideo.parentNode.removeChild(UI._dungeonVideo);
+    }
+    
+    screenLayer.insertBefore(UI._dungeonVideo, screenLayer.firstChild);
+    
+    try {
+        UI._dungeonVideo.currentTime = 15;
+        UI._dungeonVideo.pause();
+    } catch(e) {}
+    
+    console.log('✅ Видео-фон подземки установлен на 15-й секунде');
+};
+
+UI._hideDungeonVideo = function() {
+    if (UI._dungeonVideo && UI._dungeonVideo.parentNode) {
+        UI._dungeonVideo.parentNode.removeChild(UI._dungeonVideo);
+    }
+};
+
+// ============================================================
 //  ЭКРАНЫ — СТРЕЛКА В ЛЕВОМ ВЕРХНЕМ УГЛУ, БЕЗ ЧЁРНОЙ ПОДЛОЖКИ
 // ============================================================
 
@@ -210,9 +270,9 @@ UI._openScreen = function(title, bgKey, html, backFn) {
     var goBack = backFn || 'UI.loadHome()';
     try {
         if (UI._screenLayer) {
-            var bgStyle = '';
+            var bgStyle = 'background:transparent;';
             if (UI._bg && UI._bg[bgKey]) {
-                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
+                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
@@ -234,6 +294,7 @@ UI._openScreen = function(title, bgKey, html, backFn) {
             UI._screenLayer.style.top = '0';
             UI._screenLayer.style.left = '0';
             UI._screenLayer.style.zIndex = '40';
+            UI._screenLayer.style.background = 'transparent';
         }
     } catch(e) {}
 };
@@ -242,9 +303,9 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
     var goBack = backFn || 'UI.loadHome()';
     try {
         if (UI._screenLayer) {
-            var bgStyle = '';
+            var bgStyle = 'background:transparent;';
             if (UI._bg && UI._bg[bgKey]) {
-                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
+                bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
@@ -266,6 +327,7 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             UI._screenLayer.style.top = '0';
             UI._screenLayer.style.left = '0';
             UI._screenLayer.style.zIndex = '40';
+            UI._screenLayer.style.background = 'transparent';
         }
     } catch(e) {}
 };
@@ -282,6 +344,8 @@ UI._showPlaceholder = function(title, bgKey, backAction) {
 };
 
 UI.loadHome = function() {
+    UI._hideDungeonVideo();
+    
     try {
         if (UI._screenLayer) {
             UI._screenLayer.style.display = 'none';
