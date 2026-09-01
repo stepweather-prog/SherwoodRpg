@@ -907,48 +907,58 @@ Sherwood.Dungeon2D5 = {
     _ease: function(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; },
 
     render: function() {
-        if (!this._container) {
-            this.init();
-        }
-// Показываем видео-фон
+    // Убираем все фоны, чтобы видеть только подземку
+    document.getElementById('gameZone').style.background = 'transparent';
+    document.getElementById('menuScreen').style.background = 'transparent';
+    if (UI._screenLayer) {
+        UI._screenLayer.style.background = 'transparent';
+        UI._screenLayer.style.backgroundImage = 'none';
+    }
+    
+    if (!this._container) {
+        this.init();
+    }
+    
+    // Показываем видео-фон
     if (typeof UI !== 'undefined' && UI._showDungeonVideo) {
         UI._showDungeonVideo();
     }
-        this._dungeon = Sherwood.Dungeon.getDungeon();
-        if (!this._dungeon) {
-            console.warn('🏚️ Данжена нет, создаём новый');
-            if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.generate) {
-                this._dungeon = Sherwood.Dungeon.generate('forest', 1);
-            } else {
-                UI._showToast('❌ Ошибка генерации подземки');
-                this.destroy();
-                if (typeof UI !== 'undefined' && UI.loadHome) {
-                    UI.loadHome();
-                }
-                return;
+    
+    this._dungeon = Sherwood.Dungeon.getDungeon();
+    if (!this._dungeon) {
+        console.warn('🏚️ Данжена нет, создаём новый');
+        if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.generate) {
+            this._dungeon = Sherwood.Dungeon.generate('forest', 1);
+        } else {
+            UI._showToast('❌ Ошибка генерации подземки');
+            this.destroy();
+            if (typeof UI !== 'undefined' && UI.loadHome) {
+                UI.loadHome();
             }
+            return;
         }
+    }
 
-        if (!this._scene) this.init();
+    if (!this._scene) this.init();
 
-        if (!this._currentDungeonId || this._currentDungeonId !== this._dungeon.id) {
-            this._currentDungeonId = this._dungeon.id;
-            this._loadDungeonTextures(this._dungeon.id);
-        }
+    if (!this._currentDungeonId || this._currentDungeonId !== this._dungeon.id) {
+        this._currentDungeonId = this._dungeon.id;
+        this._loadDungeonTextures(this._dungeon.id);
+    }
 
-        if (this._container) {
-            this._container.style.display = 'block';
-        }
+    if (this._container) {
+        this._container.style.display = 'block';
+    }
 
-        this._isMoving = false;
-        this._buildMesh();
-        this._updateCamera();
-        this._updateHP();
-        this._updateMinimap();
-        this._checkInteract();
-        if (this._renderLoop) cancelAnimationFrame(this._renderLoop);
-        this._startLoop();
-    },
+    this._isMoving = false;
+    this._buildMesh();
+    this._updateCamera();
+    this._updateHP();
+    this._updateMinimap();
+    this._checkInteract();
+    if (this._renderLoop) cancelAnimationFrame(this._renderLoop);
+    this._startLoop();
+},
 
     _startLoop: function() {
         var self = this;
