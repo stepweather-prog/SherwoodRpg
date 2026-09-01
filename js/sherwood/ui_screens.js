@@ -897,13 +897,22 @@ Object.assign(UI, {
     raid: function() { this._showPlaceholder('Рейд', 'raid'); },
 
     dungeon: function() {
-        this._playSound('click');
-        if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
-            Sherwood.Dungeon2D5.render();
-        } else {
-            this._showPlaceholder('Подземка', 'dungeon_forest');
-        }
-    },
+    this._playSound('click');
+    
+    // Показываем видео-фон подземки
+    UI._showDungeonVideo();
+    
+    if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
+        Sherwood.Dungeon2D5.render();
+    } else {
+        this._showPlaceholder('Подземка', 'dungeon');
+    }
+    
+    // Показываем видео-фон после создания экрана
+    setTimeout(function() {
+        UI._showDungeonVideo();
+    }, 100);
+},
 
     market: function() {
         this._playSound('click');
