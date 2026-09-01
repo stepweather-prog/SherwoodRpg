@@ -899,14 +899,12 @@ Object.assign(UI, {
     dungeon: function() {
     this._playSound('click');
     
-    // Показываем видео-фон подземки
-    UI._showDungeonVideo();
-    
-    if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
-        Sherwood.Dungeon2D5.render();
+    if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
+        Sherwood.Dungeon.showUI();
     } else {
         this._showPlaceholder('Подземка', 'dungeon');
     }
+},
     
     // Показываем видео-фон после создания экрана
     setTimeout(function() {
