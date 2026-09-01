@@ -896,21 +896,20 @@ Object.assign(UI, {
     portals: function() { this._showPlaceholder('Порталы', 'portal'); },
     raid: function() { this._showPlaceholder('Рейд', 'raid'); },
 
-    dungeon: function() {
-    this._playSound('click');
-    
-    if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
-        Sherwood.Dungeon.showUI();
-    } else {
-        this._showPlaceholder('Подземка', 'dungeon');
-    }
-},
-    
-    // Показываем видео-фон после создания экрана
-    setTimeout(function() {
-        UI._showDungeonVideo();
-    }, 100);
-},
+       dungeon: function() {
+        this._playSound('click');
+        
+        if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
+            Sherwood.Dungeon.showUI();
+        } else {
+            this._showPlaceholder('Подземка', 'dungeon');
+        }
+        
+        // Показываем видео-фон после создания экрана
+        setTimeout(function() {
+            UI._showDungeonVideo();
+        }, 100);
+    },
 
     market: function() {
         this._playSound('click');
