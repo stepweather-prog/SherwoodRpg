@@ -183,7 +183,7 @@ function hideHomeElements() {
     const ids = [
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
-        'leftDivider', 'rightDivider', 'topBar',
+         'topBar',
         'substrate'
     ];
     ids.forEach(id => {
@@ -196,7 +196,7 @@ function showHomeElements() {
     const ids = [
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
-        'leftDivider', 'rightDivider', 'topBar',
+        'topBar',
         'substrate'
     ];
     ids.forEach(id => {
