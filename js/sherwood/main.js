@@ -8,6 +8,7 @@ const homeScreen = document.getElementById('homeScreen');
 const playButton = document.getElementById('playButton');
 const hero = document.getElementById('hero');
 const menuScreen = document.getElementById('menuScreen');
+const gameZone = document.getElementById('gameZone');
 
 let currentScreen = 'loading';
 
@@ -143,7 +144,6 @@ function initMainCarousel() {
     if (rightArrow) rightArrow.onclick = (e) => { e.stopPropagation(); nextSection(); };
     if (hero) hero.onclick = () => cycleSkin();
 
-    const gameZone = document.getElementById('gameZone');
     if (gameZone) {
         let touchStartX = 0;
         gameZone.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
@@ -184,7 +184,7 @@ function hideHomeElements() {
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
         'leftDivider', 'rightDivider', 'topBar',
-        'substrate' // ДОБАВИТЬ ЭТО
+        'substrate'
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
@@ -197,7 +197,7 @@ function showHomeElements() {
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
         'leftDivider', 'rightDivider', 'topBar',
-        'substrate' // ДОБАВИТЬ ЭТО
+        'substrate'
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
@@ -214,13 +214,8 @@ function enterSection() {
     if (!section) return;
     console.log(`🚪 Вход в раздел: ${section.name}`);
 
-    // Скрываем элементы главного экрана
     hideHomeElements();
     
-    // Скрываем homeScreen полностью
-    homeScreen.style.display = 'none';
-    
-    // Показываем menuScreen
     menuScreen.style.display = 'block';
 
     const layer = document.getElementById('ui-screen-layer');
@@ -272,11 +267,8 @@ function showHomeScreen() {
         layer.innerHTML = '';
     }
     
-    // Показываем элементы главного экрана
     showHomeElements();
     
-    // Показываем homeScreen
-    homeScreen.style.display = 'flex';
     menuScreen.style.display = 'none';
     currentScreen = 'home';
     updateTopBar();
@@ -325,7 +317,7 @@ function showGenericScreen(title, icon) {
             <button onclick="closeGenericScreen()" class="btn" style="margin-top:20px;padding:10px 30px;">Назад</button>
         </div>
     </div>`;
-    document.getElementById('gameZone').insertAdjacentHTML('beforeend', screenHTML);
+    gameZone.insertAdjacentHTML('beforeend', screenHTML);
 }
 
 function closeGenericScreen() {
@@ -422,7 +414,6 @@ function loadSavedSkin() {
 
 // ---------- ЗАПУСК ----------
 (function createPlayButton() {
-    const gameZone = document.getElementById('gameZone');
     const loadingScreen = document.getElementById('loadingScreen');
     
     if (!gameZone || !loadingScreen) return;
@@ -435,51 +426,29 @@ function loadSavedSkin() {
     loadingScreen.appendChild(btn);
     
     btn.addEventListener('click', function() {
-        // Скрываем кнопку и загрузочный экран
         btn.style.display = 'none';
         loadingScreen.style.display = 'none';
         
-        // Скрываем ТОЛЬКО gameZone (арка, герой, topBar и т.д.)
-        // Статуи и разделители остаются видимыми
-        gameZone.style.display = 'none';
-        
-        // Создаем видео
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
         video.autoplay = true;
         video.muted = true;
         video.playsInline = true;
         
-        // ============================================================
-        // ВОТ ЗДЕСЬ ВСТАВЛЯЕМ MEDIA QUERY ДЛЯ РАЗМЕРА ВИДЕО
-        // ============================================================
-        
-        // Базовые стили для видео
         let videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
         
-        // Проверяем ширину экрана и настраиваем размер
         if (window.innerWidth < 480) {
-            // Мобильные — на весь экран
             video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
         } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
-            // Десктоп с низким экраном — 480px на 100vh
             video.style.cssText = videoStyles + 'width:480px;height:100vh;';
         } else {
-            // Десктоп — 480px на 800px (как gameZone)
             video.style.cssText = videoStyles + 'width:480px;height:800px;';
         }
         
-        // ============================================================
-        // КОНЕЦ ВСТАВКИ MEDIA QUERY
-        // ============================================================
-        
-        // Добавляем видео в body
         document.body.appendChild(video);
         
         video.onended = function() {
             video.remove();
-            // Показываем gameZone обратно
-            gameZone.style.display = 'block';
             currentScreen = 'home';
             updateTopBar();
             initMainCarousel();
@@ -490,8 +459,6 @@ function loadSavedSkin() {
         
         video.onerror = function() {
             video.remove();
-            // Показываем gameZone обратно
-            gameZone.style.display = 'block';
             currentScreen = 'home';
             updateTopBar();
             initMainCarousel();
@@ -550,8 +517,3 @@ window.showHomeElements = showHomeElements;
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
-// Скрываем homeScreen при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-    homeScreen.style.display = 'none';
-    console.log('🏠 homeScreen скрыт при загрузке');
-});
