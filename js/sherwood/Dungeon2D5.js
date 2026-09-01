@@ -51,20 +51,19 @@ Sherwood.Dungeon2D5 = {
     _container: null,
 
     init: function() {
-        this._container = document.createElement('div');
-        this._container.id = 'dungeon2d5-container';
-        this._container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:#0a0a0a;';
-        document.body.appendChild(this._container);
+    this._container = document.createElement('div');
+    this._container.id = 'dungeon2d5-container';
+    this._container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:300;background:transparent;';
+    document.body.appendChild(this._container);
 
-        this._w = window.innerWidth || 480;
-        this._h = window.innerHeight || 800;
+    this._w = window.innerWidth || 480;
+    this._h = window.innerHeight || 800;
 
-        this._setupThree();
-        this._setupControls();
-        this._loadCommonTextures();
-        console.log('🏚️ Dungeon2D5 инициализирован');
-    },
-
+    this._setupThree();
+    this._setupControls();
+    this._loadCommonTextures();
+    console.log('🏚️ Dungeon2D5 инициализирован');
+},
     _loadCommonTextures: function() {
         var loader = new THREE.TextureLoader();
         function loadTex(src) {
@@ -154,35 +153,39 @@ Sherwood.Dungeon2D5 = {
     },
 
     _setupThree: function() {
-        this._scene = new THREE.Scene();
-        this._scene.background = new THREE.Color(0x1a0f08);
-        this._camera = new THREE.PerspectiveCamera(70, this._w / this._h, 0.1, 30);
-        this._camera.rotation.order = 'YXZ';
+    this._scene = new THREE.Scene();
+    // Прозрачный фон сцены
+    this._scene.background = null;
+    
+    this._camera = new THREE.PerspectiveCamera(70, this._w / this._h, 0.1, 30);
+    this._camera.rotation.order = 'YXZ';
 
-        this._renderer = new THREE.WebGLRenderer({
-            antialias: false,
-            powerPreference: 'low-power'
-        });
-        this._renderer.setSize(this._w, this._h);
-        this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this._renderer.setClearColor(0x1a0f08, 1);
+    this._renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        powerPreference: 'low-power',
+        alpha: true
+    });
+    this._renderer.setSize(this._w, this._h);
+    this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Прозрачный фон рендерера
+    this._renderer.setClearColor(0x000000, 0);
 
-        if (this._container) {
-            this._container.appendChild(this._renderer.domElement);
-        }
+    if (this._container) {
+        this._container.appendChild(this._renderer.domElement);
+    }
 
-        this._scene.add(new THREE.AmbientLight(0x664422, 0.8));
-        var mainLight = new THREE.DirectionalLight(0xffcc88, 0.9);
-        mainLight.position.set(5, 10, 5);
-        this._scene.add(mainLight);
+    this._scene.add(new THREE.AmbientLight(0x664422, 0.8));
+    var mainLight = new THREE.DirectionalLight(0xffcc88, 0.9);
+    mainLight.position.set(5, 10, 5);
+    this._scene.add(mainLight);
 
-        var fillLight = new THREE.DirectionalLight(0x996633, 0.4);
-        fillLight.position.set(-5, 2, -5);
-        this._scene.add(fillLight);
+    var fillLight = new THREE.DirectionalLight(0x996633, 0.4);
+    fillLight.position.set(-5, 2, -5);
+    this._scene.add(fillLight);
 
-        this._group = new THREE.Group();
-        this._scene.add(this._group);
-    },
+    this._group = new THREE.Group();
+    this._scene.add(this._group);
+},
 
     _setupControls: function() {
         var self = this;
@@ -907,7 +910,10 @@ Sherwood.Dungeon2D5 = {
         if (!this._container) {
             this.init();
         }
-
+// Показываем видео-фон
+    if (typeof UI !== 'undefined' && UI._showDungeonVideo) {
+        UI._showDungeonVideo();
+    }
         this._dungeon = Sherwood.Dungeon.getDungeon();
         if (!this._dungeon) {
             console.warn('🏚️ Данжена нет, создаём новый');
