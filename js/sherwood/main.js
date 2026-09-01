@@ -183,12 +183,13 @@ function hideHomeElements() {
     const ids = [
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
-         'topBar',
-        'substrate'
+        'topBar', 'substrate'
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+        if (el) {
+            el.style.setProperty('display', 'none', 'important');
+        }
     });
 }
 
@@ -196,12 +197,19 @@ function showHomeElements() {
     const ids = [
         'arch', 'hero', 'sectionIcon', 'sectionName',
         'carouselLeftArrow', 'carouselRightArrow',
-        'topBar',
-        'substrate'
+        'topBar', 'substrate'
     ];
     ids.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.style.display = '';
+        if (el) {
+            if (id === 'sectionName') {
+                el.style.setProperty('display', 'flex', 'important');
+            } else if (el.tagName === 'IMG') {
+                el.style.setProperty('display', 'block', 'important');
+            } else {
+                el.style.setProperty('display', '', 'important');
+            }
+        }
     });
 }
 
