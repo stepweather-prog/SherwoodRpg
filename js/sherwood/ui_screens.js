@@ -503,7 +503,7 @@ UI.profile = function() {
         { name: amulet ? amulet.name : 'Амулеты', icon: amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png', action: 'UI._showAllAmulets()' },
         { name: 'Кесет', icon: 'assets/interface/wallet.png', action: 'UI.wallet()' },
         { name: 'Сумка', icon: 'assets/assets2/icons/hero_bag.png', action: 'UI.bag()' },
-        { name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', action: 'UI._showTalentsFromProfile()' }
+        { name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', action: 'Sherwood.Talents.showLearnedTalents()' }
     ];
     
     var h = '';
