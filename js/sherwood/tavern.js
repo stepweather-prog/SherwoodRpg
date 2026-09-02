@@ -116,15 +116,27 @@ Sherwood.Tavern = {
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
         h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:auto;scrollbar-width:none;">';
 
-        // 5. Панель с заданиями (растянута от края до края, опущена на 35vh)
-        h += '<div style="width:100%;margin-top:35vh;padding:0;">';
+        // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (на самом верху)
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:15px;">';
+        
+        h += '<div onclick="UI._showTalentsFromProfile()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
+        h += '</div>';
+        
+        h += '<div onclick="UI.training()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
+        h += '</div>';
+        
+        h += '</div>';
+
+        // 6. Панель с заданиями (каменная плита) — теперь СНИЗУ
+        h += '<div style="width:100%;margin-top:40px;padding:0;">';
         h += '<div style="width:100%;min-height:600px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:60px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
         
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null;
             
-            // Уменьшаем шрифт и увеличиваем межстрочный интервал, чтобы текст влезал
             h += '<div style="text-align:center;color:#ffa500;font-size:12px;font-weight:bold;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.8;">' + current.title + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:11px;line-height:1.8;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
             h += '<div style="text-align:center;color:#e0c080;font-size:11px;line-height:1.8;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
@@ -143,19 +155,7 @@ Sherwood.Tavern = {
         h += '</div>';
         h += '</div>';
         
-        // Вкладки по центру в столбик
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:35px;">';
-        
-        h += '<div onclick="UI._showTalentsFromProfile()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
-        h += '</div>';
-        
-        h += '<div onclick="UI.training()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
-        h += '</div>';
-        
-        h += '</div>';
-        
+        // 7. Прогресс (самый низ)
         h += '<div style="margin-top:30px;margin-bottom:30px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
         
         h += '</div>'; // Закрываем контент поверх видео
