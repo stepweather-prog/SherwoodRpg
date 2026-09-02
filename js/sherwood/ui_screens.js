@@ -207,9 +207,7 @@ Object.assign(UI, {
         if (Sherwood.Dungeon && Sherwood.Dungeon.init) { Sherwood.Dungeon.init(); }
         if (this._afterRewardAction) { var cb = this._afterRewardAction; this._afterRewardAction = null; cb(); }
     },
-
-    
-      profile: function() {
+profile: function() {
     this._playSound('click');
     var p = Sherwood.getPlayer();
     var eq = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
@@ -225,35 +223,67 @@ Object.assign(UI, {
         { name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', action: 'UI._showTalentsFromProfile()' }
     ];
     
-    if (typeof this._profileIndex === 'undefined') this._profileIndex = 0;
-    if (this._profileIndex >= sections.length) this._profileIndex = 0;
+    var h = '';
     
-    var section = sections[this._profileIndex];
+    // 1. Статы (без изменений)
+    h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 10px;">';
+    h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
+    h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/power.png" style="position:absolute;top:0;left:25%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/armor.png" style="position:absolute;top:0;left:41.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/life.png" style="position:absolute;top:0;left:58.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/resource_gold.png" style="position:absolute;top:0;left:75%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<img src="assets/assets2/icons/resource_silver.png" style="position:absolute;top:0;left:91.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
+    h += '<span style="position:absolute;top:60px;left:8.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) + '%' : p.exp) + '</span>';
+    h += '<span style="position:absolute;top:60px;left:25%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.attack + '</span>';
+    h += '<span style="position:absolute;top:60px;left:41.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.defense + '</span>';
+    h += '<span style="position:absolute;top:60px;left:58.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.hp + '</span>';
+    h += '<span style="position:absolute;top:60px;left:75%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.gold || 0) + '</span>';
+    h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
+    h += '</div>';
     
-    var h = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;cursor:pointer;" onclick="' + section.action + '">';
-    h += '<img src="' + section.icon + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:10px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + section.name + '</div>';
+    // 2. Карусель — один раздел на экран, листается свайпом/колесом
+    h += '<div id="profile-carousel" style="position:relative;height:400px;overflow:hidden;touch-action:pan-y;">';
+    
+    for (var i = 0; i < sections.length; i++) {
+        var section = sections[i];
+        var display = (i === 0) ? 'block' : 'none';
+        h += '<div class="profile-slide" data-index="' + i + '" onclick="' + section.action + '" style="display:' + display + ';cursor:pointer;text-align:center;padding-top:20px;">';
+        h += '<img src="' + section.icon + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 10px;display:block;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;">' + section.name + '</div>';
+        h += '</div>';
+    }
+    
     h += '</div>';
     
     this._openScreen('Профиль', 'profile', h);
     
-    // Обработка свайпов
+    // Инициализация свайпов
     var self = this;
-    var touchStartY = 0;
-    var screenLayer = UI._screenLayer;
-    if (screenLayer) {
-        screenLayer.addEventListener('touchstart', function(e) { touchStartY = e.touches[0].clientY; }, { passive: true });
-        screenLayer.addEventListener('touchend', function(e) {
-            var delta = e.changedTouches[0].clientY - touchStartY;
-            if (delta < -50) { self._profileIndex++; if (self._profileIndex >= sections.length) self._profileIndex = 0; self.profile(); }
-            else if (delta > 50) { self._profileIndex--; if (self._profileIndex < 0) self._profileIndex = sections.length - 1; self.profile(); }
-        }, { passive: true });
-        screenLayer.addEventListener('wheel', function(e) {
-            if (Math.abs(e.deltaY) > 30) {
-                if (e.deltaY > 0) { self._profileIndex++; if (self._profileIndex >= sections.length) self._profileIndex = 0; }
-                else { self._profileIndex--; if (self._profileIndex < 0) self._profileIndex = sections.length - 1; }
-                self.profile();
-            }
+    var carousel = document.getElementById('profile-carousel');
+    if (carousel) {
+        var startY = 0;
+        var currentIndex = 0;
+        
+        carousel.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (Math.abs(e.deltaY) < 20) return;
+            var slides = carousel.querySelectorAll('.profile-slide');
+            slides[currentIndex].style.display = 'none';
+            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'block';
+        }, { passive: false });
+        
+        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+        carousel.addEventListener('touchend', function(e) {
+            var delta = e.changedTouches[0].clientY - startY;
+            if (Math.abs(delta) < 50) return;
+            var slides = carousel.querySelectorAll('.profile-slide');
+            slides[currentIndex].style.display = 'none';
+            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'block';
         }, { passive: true });
     }
 },
