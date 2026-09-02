@@ -68,12 +68,22 @@ Sherwood.Talents = {
         if (!talent) return { success: false, reason: 'Талант не найден' };
         var lvl = this.getTalentLevel(id);
         if (lvl >= talent.maxLevel) return { success: false, reason: 'Максимальный уровень' };
-        this._talentLevels[id] = lvl + 1;
+        
+        // Тратим очки талантов
         var p = Sherwood.getPlayer();
-        if (p) {
-            p.talents = this._talentLevels;
-            Sherwood.saveGame();
+        if (!p) return { success: false, reason: 'Игрок не найден' };
+        if (!p.talentPoints) p.talentPoints = 0;
+        
+        var cost = 1; // Стоимость в очках талантов
+        if (p.talentPoints < cost) {
+            return { success: false, reason: 'Нужно ' + cost + ' очков талантов!' };
         }
+        
+        p.talentPoints -= cost;
+        this._talentLevels[id] = lvl + 1;
+        p.talents = this._talentLevels;
+        Sherwood.saveGame();
+        
         return { success: true, newLevel: lvl + 1 };
     },
 
@@ -94,8 +104,14 @@ Sherwood.Talents = {
             }
         }
 
+        var p = Sherwood.getPlayer();
+        var talentPoints = p ? (p.talentPoints || 0) : 0;
+
         var h = '<div style="text-align:center;padding:10px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
+
+        h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
 
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
@@ -127,9 +143,13 @@ Sherwood.Talents = {
 
         UI._playSound('click');
         var allTalents = this.getAllTalents();
+        var p = Sherwood.getPlayer();
+        var talentPoints = p ? (p.talentPoints || 0) : 0;
 
         var h = '<div style="text-align:center;padding:10px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
+        h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
 
         // Разбиваем по веткам
         var branches = ['damage', 'heal', 'passive'];
@@ -176,12 +196,16 @@ Sherwood.Talents = {
 
         var lvl = this.getTalentLevel(talent.id);
         var branch = this.BRANCHES[talent.branch];
+        var p = Sherwood.getPlayer();
+        var talentPoints = p ? (p.talentPoints || 0) : 0;
+
         var h = '<div style="text-align:center;padding:20px;">';
         h += '<img src="' + talent.icon + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:15px;">';
         h += '<div style="color:' + branch.color + ';font-size:16px;font-weight:bold;margin-bottom:10px;">Ветка: ' + branch.name + '</div>';
         h += '<div style="color:#ffa500;font-size:22px;font-weight:bold;">' + talent.name + '</div>';
         h += '<div style="color:#fff;font-size:14px;margin-top:10px;">' + talent.desc + '</div>';
         h += '<div style="color:#aaa;font-size:12px;margin-top:10px;">Уровень: ' + lvl + '/' + talent.maxLevel + '</div>';
+        h += '<div style="color:#aaa;font-size:12px;margin-top:10px;">Очки талантов: ' + talentPoints + '</div>';
 
         if (lvl < talent.maxLevel) {
             h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + talent.id + '\')" style="margin-top:20px;background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:16px;">Улучшить</button>';
