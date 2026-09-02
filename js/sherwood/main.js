@@ -478,12 +478,12 @@ function loadSavedSkin() {
 })();
 
 // ============================================================
-//  ВИДЕО ПРИ ВЫХОДЕ (добавлено)
+//  ВИДЕО ПРИ ВЫХОДЕ (исправлено)
 // ============================================================
 function playExitVideo(onComplete) {
-    // Создаем видео
+    // Используем видео из ПОДЗЕМКИ (Loading_dangeon.mp4)
     const video = document.createElement('video');
-    video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm'; // Используй тот же файл, что и при входе
+    video.src = 'assets/assets2/animation/Loading_dangeon.mp4';
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
@@ -514,7 +514,6 @@ function playExitVideo(onComplete) {
         if (onComplete) onComplete();
     };
 }
-
 // ============================================================
 //  ИНИЦИАЛИЗАЦИЯ МОДУЛЕЙ
 // ============================================================
