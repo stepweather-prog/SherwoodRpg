@@ -118,23 +118,24 @@ Sherwood.Tavern = {
 
         // 5. Панель с заданиями (растянута от края до края, опущена на 35vh)
         h += '<div style="width:100%;margin-top:35vh;padding:0;">';
-        h += '<div style="width:100%;min-height:500px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:60px 15px;display:flex;flex-direction:column;justify-content:center;">';
+        h += '<div style="width:100%;min-height:600px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:60px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
         
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null;
             
-            h += '<div style="text-align:center;color:#ffa500;font-size:14px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.8;">' + current.title + '</div>';
-            h += '<div style="text-align:center;color:#fff;font-size:13px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
-            h += '<div style="text-align:center;color:#e0c080;font-size:13px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
-            h += '<div style="text-align:center;color:#ffd700;font-size:13px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
+            // Уменьшаем шрифт и увеличиваем межстрочный интервал, чтобы текст влезал
+            h += '<div style="text-align:center;color:#ffa500;font-size:12px;font-weight:bold;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.8;">' + current.title + '</div>';
+            h += '<div style="text-align:center;color:#fff;font-size:11px;line-height:1.8;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
+            h += '<div style="text-align:center;color:#e0c080;font-size:11px;line-height:1.8;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
+            h += '<div style="text-align:center;color:#ffd700;font-size:11px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             
             if (isCompleted) {
-                h += '<div style="text-align:center;color:#52b788;margin-top:25px;font-size:18px;font-weight:bold;">Глава пройдена!</div>';
+                h += '<div style="text-align:center;color:#52b788;margin-top:20px;font-size:16px;font-weight:bold;">Глава пройдена!</div>';
             } else if (isAccepted) {
-                h += '<div style="text-align:center;color:#ffa500;margin-top:25px;font-size:18px;font-weight:bold;">Квест принят!</div>';
+                h += '<div style="text-align:center;color:#ffa500;margin-top:20px;font-size:16px;font-weight:bold;">Квест принят!</div>';
             } else {
-                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:30px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
+                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:25px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
             }
         } else if (completed >= total) {
             h += '<div style="text-align:center;color:#ffa500;font-size:22px;font-weight:bold;text-shadow:0 2px 4px #000;">Шервуд спасён!</div>';
