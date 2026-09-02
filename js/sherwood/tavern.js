@@ -100,7 +100,7 @@ Sherwood.Tavern = {
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
 
-        // 1. Скрываем прокрутку на уровне слоя (но НЕ на контенте)
+        // 1. Скрываем прокрутку на уровне слоя
         if (UI._screenLayer) {
             UI._screenLayer.style.overflow = 'hidden';
         }
@@ -108,25 +108,25 @@ Sherwood.Tavern = {
         // 2. Строим HTML с фоновым изображением и видео-анимацией
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;">';
 
-        // 3. Добавляем видео егеря (зациклено, стоит по центру и чуть правее)
-        h += '<div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:100%;height:100%;pointer-events:none;">';
+        // 3. Добавляем видео егеря (Зациклено, уменьшено до 60% и стоит по центру, чуть правее)
+        h += '<div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:60%;height:60%;pointer-events:none;">';
         h += '<video src="assets/assets2/animation/Garret.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>';
         h += '</div>';
 
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
-        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:auto;">';
-        
-        // Контракт на каменной плите
-        h += '<div style="width:100%;margin-top:15vh;padding:0 10px;">';
+        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:auto;scrollbar-width:none;">';
+
+        // 5. Панель с заданиями (опущена ниже на 25vh)
+        h += '<div style="width:100%;margin-top:25vh;padding:0 10px;">';
         h += '<div style="width:100%;min-height:500px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:60px 15px;display:flex;flex-direction:column;justify-content:center;">';
         
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null;
             
-            h += '<div style="text-align:center;color:#ffa500;font-size:22px;font-weight:bold;margin-bottom:25px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.title + '</div>';
-            h += '<div style="text-align:center;color:#fff;font-size:17px;line-height:1.6;margin-bottom:25px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
-            h += '<div style="text-align:center;color:#e0c080;font-size:16px;margin-bottom:25px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
+            h += '<div style="text-align:center;color:#ffa500;font-size:22px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;">' + current.title + '</div>';
+            h += '<div style="text-align:center;color:#fff;font-size:17px;line-height:1.6;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
+            h += '<div style="text-align:center;color:#e0c080;font-size:16px;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
             h += '<div style="text-align:center;color:#ffd700;font-size:16px;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             
             if (isCompleted) {
