@@ -1,5 +1,5 @@
 // ============================================================
-//  js/sherwood/talents.js — Таланты героя
+//  js/sherwood/talents.js — Таланты героя (Профиль + Таверна)
 // ============================================================
 
 if (typeof Sherwood === 'undefined') {
@@ -40,10 +40,7 @@ Sherwood.Talents = {
     },
 
     getAllTalents: function() { return this.TALENTS; },
-
-    getTalentLevel: function(id) {
-        return this._talentLevels[id] || 0;
-    },
+    getTalentLevel: function(id) { return this._talentLevels[id] || 0; },
 
     canUpgrade: function(talent) {
         var lvl = this.getTalentLevel(talent.id);
@@ -68,8 +65,48 @@ Sherwood.Talents = {
         return { success: true, newLevel: lvl + 1 };
     },
 
-    // ========== UI ==========
+    // ========== ЭКРАН ДЛЯ ПРОФИЛЯ (видно только изученные) ==========
+    showLearnedTalents: function() {
+        if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
+            console.error('UI не загружен!');
+            return;
+        }
 
+        UI._playSound('click');
+        var allTalents = this.getAllTalents();
+        var learnedTalents = [];
+        for (var i = 0; i < allTalents.length; i++) {
+            var lvl = this.getTalentLevel(allTalents[i].id);
+            if (lvl > 0) {
+                learnedTalents.push(allTalents[i]);
+            }
+        }
+
+        var h = '<div style="text-align:center;padding:10px;">';
+        h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
+
+        if (learnedTalents.length === 0) {
+            h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
+        } else {
+            h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto;">';
+            for (var i = 0; i < learnedTalents.length; i++) {
+                var t = learnedTalents[i];
+                var lvl = this.getTalentLevel(t.id);
+                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:8px;cursor:pointer;">';
+                h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<div style="color:#fff;font-size:10px;margin-top:4px;">' + t.name + '</div>';
+                h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+                h += '</div>';
+            }
+            h += '</div>';
+        }
+
+        h += '</div>';
+
+        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
+    },
+
+    // ========== ЭКРАН ДЛЯ ТАВЕРНЫ (все таланты, можно изучать) ==========
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
@@ -79,17 +116,12 @@ Sherwood.Talents = {
         UI._playSound('click');
         var allTalents = this.getAllTalents();
         var h = '<div style="text-align:center;padding:10px;">';
-        h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Таланты</div>';
+        h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
         h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto;">';
 
         for (var i = 0; i < allTalents.length; i++) {
             var t = allTalents[i];
             var lvl = this.getTalentLevel(t.id);
-            var icon = t.icon;
-            if (lvl > 0) {
-                icon = t.icon.replace('.png', '_upgraded.png'); // если есть апгрейд иконки
-            }
-
             h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:8px;cursor:pointer;">';
             h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
             h += '<div style="color:#fff;font-size:10px;margin-top:4px;">' + t.name + '</div>';
@@ -100,7 +132,7 @@ Sherwood.Talents = {
         h += '</div>';
         h += '</div>';
 
-        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
+        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
     },
 
     _showTalentInfo: function(id) {
