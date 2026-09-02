@@ -9,8 +9,6 @@
 </head>
 <body>
 
-
-
 <div id="homeScreen">
     <!-- Левая статуя за пределами игровой зоны -->
     <img id="leftStatue" src="assets/assets2/game_details/left_statue_of_the_main_screen.png" alt="Left Statue">
@@ -106,14 +104,14 @@
 <script src="js/sherwood/combat.js"></script>
 <script src="js/sherwood/hearth.js"></script>
 
-
-
-<!-- 5. UI (ОБЯЗАТЕЛЬНО ПОСЛЕ ВСЕХ МОДУЛЕЙ, ДО main.js) -->
-
+<!-- 5. UI (ОБЯЗАТЕЛЬНО ПОСЛЕ ВСЕХ МОДУЛЕЙ) -->
 <script src="js/sherwood/ui_screens.js"></script>
 
-<!-- 6. Главный файл -->
+<!-- 6. Главный файл (ВАЖНО: ИДЁТ ПОСЛЕ UI!) -->
 <script src="js/sherwood/main.js"></script>
+
+<!-- 7. РОУТЕР (ДОБАВЬ ЕГО В КОНЦЕ) -->
+<script src="js/sherwood/router.js"></script>
 
 </body>
 </html>
