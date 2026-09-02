@@ -366,84 +366,84 @@ Sherwood.Portal = {
 
     // ========== UI ==========
 
-    showUI: function() {
-        if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') {
-                showGenericScreen('Порталы', '🌀');
-            }
-            return;
+showUI: function() {
+    if (typeof UI === 'undefined') {
+        if (typeof showGenericScreen === 'function') {
+            showGenericScreen('Порталы', '🌀');
         }
-        UI._playSound('click');
-        if (this.isInPortal()) { this._showPortalBattle(); return; }
+        return;
+    }
+    UI._playSound('click');
+    if (this.isInPortal()) { this._showPortalBattle(); return; }
 
-        var allPortals = this.getAllPortals();
-        var arrowCount = (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) ? Sherwood.Forge.getArrowCount() : 0;
-        var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
+    var allPortals = this.getAllPortals();
+    var arrowCount = (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) ? Sherwood.Forge.getArrowCount() : 0;
+    var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
 
-        var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
+    var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
 
-        for (var i = 0; i < allPortals.length; i++) {
-            var portal = allPortals[i];
-            var iconFile = iconMap[portal.id] || 'invasion_portal.png';
-            var requiredArrows = portal.id * 150;
-            var canEnter = arrowCount >= requiredArrows;
-            var isCompleted = this.isPortalCompleted(portal.id);
-            var isUnlocked = this.isPortalUnlocked(portal.id);
-            var display = (i === 0) ? 'flex' : 'none';
+    for (var i = 0; i < allPortals.length; i++) {
+        var portal = allPortals[i];
+        var iconFile = iconMap[portal.id] || 'invasion_portal.png';
+        var requiredArrows = portal.id * 150;
+        var canEnter = arrowCount >= requiredArrows;
+        var isCompleted = this.isPortalCompleted(portal.id);
+        var isUnlocked = this.isPortalUnlocked(portal.id);
+        var display = (i === 0) ? 'flex' : 'none';
 
-            // ИСПРАВЛЕНИЕ: Используем Flexbox, чтобы всё было строго по центру
-            h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;height:100%;padding-top:20px;">';
-            
-            h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:15px;">' + portal.name + '</div>';
-            h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:160px;height:160px;object-fit:contain;margin:0 auto 20px;display:block;">';
-            
-            h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
+        // ИСПРАВЛЕНИЕ: Центрируем контент по вертикали и горизонтали
+        h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%;">';
+        
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:10px;">' + portal.name + '</div>';
+        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 15px;display:block;">';
+        
+        h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
 
-            if (isCompleted) {
-                h += '<div style="color:#52b788;font-weight:bold;margin-bottom:10px;">✅ Пройден</div>';
-            } else if (isUnlocked && canEnter) {
-                h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ В бой</button>';
-            } else if (isUnlocked && !canEnter) {
-                h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно стрел</div>';
-            } else {
-                h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
-            }
-
-            h += '</div>';
+        if (isCompleted) {
+            h += '<div style="color:#52b788;font-weight:bold;margin-bottom:10px;">✅ Пройден</div>';
+        } else if (isUnlocked && canEnter) {
+            h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ В бой</button>';
+        } else if (isUnlocked && !canEnter) {
+            h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно стрел</div>';
+        } else {
+            h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
         }
 
         h += '</div>';
+    }
 
-        UI._openScreen('🌀 Порталы', 'portal', h);
+    h += '</div>';
 
-        // Свайпы и колесо (ИСПРАВЛЕНО)
-        var carousel = document.getElementById('portal-carousel');
-        if (carousel) {
-            var startY = 0;
-            var currentIndex = 0;
+    UI._openScreen('🌀 Порталы', 'portal', h);
 
-            carousel.addEventListener('wheel', function(e) {
-                e.preventDefault();
-                if (Math.abs(e.deltaY) < 20) return;
-                var slides = carousel.querySelectorAll('.portal-slide');
-                slides[currentIndex].style.display = 'none';
-                if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
-                else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-                slides[currentIndex].style.display = 'flex'; // Меняем на flex!
-            }, { passive: false });
+    // Свайпы и колесо
+    var carousel = document.getElementById('portal-carousel');
+    if (carousel) {
+        var startY = 0;
+        var currentIndex = 0;
 
-            carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
-            carousel.addEventListener('touchend', function(e) {
-                var delta = e.changedTouches[0].clientY - startY;
-                if (Math.abs(delta) < 50) return;
-                var slides = carousel.querySelectorAll('.portal-slide');
-                slides[currentIndex].style.display = 'none';
-                if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
-                else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-                slides[currentIndex].style.display = 'flex'; // Меняем на flex!
-            }, { passive: true });
-        }
-    },
+        carousel.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (Math.abs(e.deltaY) < 20) return;
+            var slides = carousel.querySelectorAll('.portal-slide');
+            slides[currentIndex].style.display = 'none';
+            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'flex';
+        }, { passive: false });
+
+        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+        carousel.addEventListener('touchend', function(e) {
+            var delta = e.changedTouches[0].clientY - startY;
+            if (Math.abs(delta) < 50) return;
+            var slides = carousel.querySelectorAll('.portal-slide');
+            slides[currentIndex].style.display = 'none';
+            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'flex';
+        }, { passive: true });
+    }
+},
 
     _enterPortal: function(id) {
         var r = this.enterPortal(id);
