@@ -483,28 +483,19 @@ function loadSavedSkin() {
 // ============================================================
 
 function initGameModules() {
-    // 1. Создаём ui-screen-layer, если его нет
-    if (!document.getElementById('ui-screen-layer')) {
-        var screenLayer = document.createElement('div');
-        screenLayer.id = 'ui-screen-layer';
-        screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:40;display:none;background:transparent;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;';
-        gameZone.appendChild(screenLayer);
-        console.log('✅ ui-screen-layer создан');
-    }
-    
-    // 2. Инициализируем UI
+    // 1. Инициализируем UI (он сам создаст ui-screen-layer)
     if (typeof UI !== 'undefined' && UI.init) {
         UI.init();
         console.log('✅ UI инициализирован');
     }
     
-    // 3. Инициализируем Settings
+    // 2. Инициализируем Settings
     if (typeof Settings !== 'undefined' && Settings.init) {
         Settings.init();
         console.log('✅ Settings инициализирован');
     }
     
-    // 4. Инициализируем остальные модули
+    // 3. Инициализируем остальные модули
     if (typeof Sherwood !== 'undefined') {
         const modules = [
             'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
