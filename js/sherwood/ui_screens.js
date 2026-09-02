@@ -1147,47 +1147,11 @@ UI.raid = function() {
 
 UI.dungeon = function() {
     UI._playSound('click');
-    
-    // Создаём контейнер для видео
-    var videoHtml = '<div id="dungeon-video-container" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;background:#000;">';
-    videoHtml += '<video id="dungeon-intro-video" src="assets/assets2/animation/Loading_dangeon.mp4" muted playsinline autoplay style="width:100%;height:100%;object-fit:cover;"></video>';
-    videoHtml += '</div>';
-    
-    // Контент подземки (скрыт пока видео играет)
-    var contentHtml = '<div id="dungeon-content" style="display:none;position:relative;z-index:10;width:100%;height:100%;overflow-y:auto;">';
-    contentHtml += '<div id="dungeon-ui-placeholder"></div>';
-    contentHtml += '</div>';
-    
-    UI._openScreen('Подземка', 'dungeon', videoHtml + contentHtml);
-    
-    var video = document.getElementById('dungeon-intro-video');
-    
-    // Видео играет с начала
-    video.play().catch(function() {});
-    
-    // Когда видео достигает 15-й секунды — пауза и показ контента
-    video.addEventListener('timeupdate', function() {
-        if (video.currentTime >= 15) {
-            video.pause();
-            document.getElementById('dungeon-video-container').style.display = 'none';
-            document.getElementById('dungeon-content').style.display = 'block';
-            
-            if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
-                Sherwood.Dungeon.showUI();
-            } else {
-                document.getElementById('dungeon-ui-placeholder').innerHTML = '<div style="text-align:center;padding:40px;">🚧 В разработке</div>';
-            }
-        }
-    });
-    
-    // Если видео не загрузилось
-    video.addEventListener('error', function() {
-        document.getElementById('dungeon-video-container').style.display = 'none';
-        document.getElementById('dungeon-content').style.display = 'block';
-        if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
-            Sherwood.Dungeon.showUI();
-        }
-    });
+    if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
+        Sherwood.Dungeon.showUI();
+    } else {
+        UI._showPlaceholder('Подземка', 'dungeon');
+    }
 };
 
 UI.market = function() {
