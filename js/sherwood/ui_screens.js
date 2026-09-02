@@ -225,7 +225,7 @@ profile: function() {
     
     var h = '';
     
-    // 1. Статы (без изменений)
+    // Статы
     h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 10px;">';
     h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
     h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
@@ -242,7 +242,7 @@ profile: function() {
     h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
     h += '</div>';
     
-    // 2. Карусель — один раздел на экран, листается свайпом/колесом
+    // Карусель — один подраздел, всё по центру
     h += '<div id="profile-carousel" style="position:relative;height:400px;overflow:hidden;touch-action:pan-y;">';
     
     for (var i = 0; i < sections.length; i++) {
@@ -258,7 +258,7 @@ profile: function() {
     
     this._openScreen('Профиль', 'profile', h);
     
-    // Инициализация свайпов
+    // Свайпы
     var self = this;
     var carousel = document.getElementById('profile-carousel');
     if (carousel) {
