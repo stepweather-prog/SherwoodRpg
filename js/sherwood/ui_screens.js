@@ -243,8 +243,7 @@ profile: function() {
     h += '</div>';
     
     // Карусель — один подраздел, всё по центру
-    h += '<div id="profile-carousel" style="position:relative;height:400px;overflow:hidden;touch-action:pan-y;">';
-    
+    h += '<div id="profile-carousel" style="position:relative;height:400px;overflow:hidden;touch-action:pan-y;margin:0 -12px;">';
     for (var i = 0; i < sections.length; i++) {
         var section = sections[i];
         var display = (i === 0) ? 'block' : 'none';
