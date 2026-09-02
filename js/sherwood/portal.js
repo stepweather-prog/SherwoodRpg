@@ -366,6 +366,8 @@ Sherwood.Portal = {
 
     // ========== UI ==========
 
+// ========== UI ==========
+
 showUI: function() {
     if (typeof UI === 'undefined') {
         if (typeof showGenericScreen === 'function') {
@@ -391,12 +393,16 @@ showUI: function() {
         var isUnlocked = this.isPortalUnlocked(portal.id);
         var display = (i === 0) ? 'flex' : 'none';
 
-        // ИСПРАВЛЕНИЕ: Центрируем контент по вертикали и горизонтали
-        h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%;">';
+        // ИСПРАВЛЕНИЕ: Высота НЕ 100%, а min-height, и жесткие отступы через Flexbox
+        h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;">';
         
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:10px;">' + portal.name + '</div>';
-        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 15px;display:block;">';
+        // 1. ИКОНКА (сверху, с большим нижним отступом)
+        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;">';
         
+        // 2. НАЗВАНИЕ (снизу, с защитой от наложения)
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:15px;text-shadow:0 2px 4px #000;line-height:1.2;">' + portal.name + '</div>';
+        
+        // 3. Остальное
         h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
 
         if (isCompleted) {
