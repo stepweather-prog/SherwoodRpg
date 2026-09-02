@@ -37,8 +37,7 @@ const PlayerStats = {
 
 // ---------- МУЗЫКА ----------
 const musicPlaylist = [
-    'assets/assets2/music/city_theme1.ogg',
-    'assets/assets2/music/main_theme_6.ogg'
+    'assets/assets2/music/main_theme_6.ogg' // Оставь только существующий файл, если он есть. Если нет — удали этот массив или оставь пустым.
 ];
 let currentMusicIndex = 0;
 let isMusicPlaying = false;
@@ -420,7 +419,7 @@ function loadSavedSkin() {
     }, 1000);
 })();
 
-// ---------- ЗАПУСК ----------
+// ---------- ЗАПУСК (Видео при входе в игру) ----------
 (function createPlayButton() {
     const gameZone = document.getElementById('gameZone');
     const loadingScreen = document.getElementById('loadingScreen');
@@ -477,6 +476,44 @@ function loadSavedSkin() {
         };
     });
 })();
+
+// ============================================================
+//  ВИДЕО ПРИ ВЫХОДЕ (добавлено)
+// ============================================================
+function playExitVideo(onComplete) {
+    // Создаем видео
+    const video = document.createElement('video');
+    video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm'; // Используй тот же файл, что и при входе
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    
+    // Настраиваем размер точно как видео при входе
+    let videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+    
+    if (window.innerWidth < 480) {
+        video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
+    } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
+        video.style.cssText = videoStyles + 'width:480px;height:100vh;';
+    } else {
+        video.style.cssText = videoStyles + 'width:480px;height:800px;';
+    }
+    
+    // Показываем видео на весь экран
+    document.body.appendChild(video);
+    
+    // Когда видео закончилось - вызываем колбэк
+    video.onended = function() {
+        video.remove();
+        if (onComplete) onComplete();
+    };
+    
+    // Если видео не загрузилось или упало - просто перезагружаем
+    video.onerror = function() {
+        video.remove();
+        if (onComplete) onComplete();
+    };
+}
 
 // ============================================================
 //  ИНИЦИАЛИЗАЦИЯ МОДУЛЕЙ
@@ -542,6 +579,7 @@ window.stopMainMusic = stopMainMusic;
 window.hideHomeElements = hideHomeElements;
 window.showHomeElements = showHomeElements;
 window.initGameModules = initGameModules;
+window.playExitVideo = playExitVideo; // Экспортируем функцию для UI
 
 console.log('🌳 Sherwood RPG загружена!');
 console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
