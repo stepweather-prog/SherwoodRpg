@@ -1132,7 +1132,7 @@ Sherwood.Dungeon2D5 = {
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
 
         this._joystickVideo = document.createElement('video');
-        this._joystickVideo.src = 'assets/animation/step_up.webm';
+        this._joystickVideo.src = 'assets/assets2/animation/step_up.webm';
         this._joystickVideo.loop = true;
         this._joystickVideo.muted = true;
         this._joystickVideo.playsInline = true;
