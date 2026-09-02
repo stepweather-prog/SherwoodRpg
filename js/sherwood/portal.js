@@ -380,7 +380,7 @@ Sherwood.Portal = {
     var arrowCount = (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) ? Sherwood.Forge.getArrowCount() : 0;
     var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
 
-    var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;">';
+    var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
 
     for (var i = 0; i < allPortals.length; i++) {
         var portal = allPortals[i];
