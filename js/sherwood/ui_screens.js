@@ -1138,11 +1138,54 @@ UI.portals = function() {
 
 UI.raid = function() {
     UI._playSound('click');
-    if (typeof Sherwood.Raid !== 'undefined' && Sherwood.Raid.showUI) {
-        Sherwood.Raid.showUI();
-    } else {
+    
+    // Проверяем, есть ли видео
+    var videoSrc = 'assets/assets2/animation/raid_entrance.webm';
+    
+    // Если Raid модуль отсутствует, показываем заглушку
+    if (typeof Sherwood.Raid === 'undefined' || !Sherwood.Raid.showUI) {
         UI._showPlaceholder('Рейд', 'raid');
+        return;
     }
+    
+    // Создаем видео точно такого же размера, как при входе в игру
+    var video = document.createElement('video');
+    video.src = videoSrc;
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    
+    var videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+    
+    if (window.innerWidth < 480) {
+        video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
+    } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
+        video.style.cssText = videoStyles + 'width:480px;height:100vh;';
+    } else {
+        video.style.cssText = videoStyles + 'width:480px;height:800px;';
+    }
+    
+    document.body.appendChild(video);
+    
+    // Когда видео закончилось — открываем раздел Рейд
+    video.onended = function() {
+        video.remove();
+        Sherwood.Raid.showUI();
+    };
+    
+    // Если видео не загрузилось или упало — просто открываем раздел
+    video.onerror = function() {
+        video.remove();
+        Sherwood.Raid.showUI();
+    };
+    
+    // Таймер-предохранитель (если видео зависло, открываем через 5 секунд)
+    setTimeout(function() {
+        if (document.body.contains(video)) {
+            video.remove();
+            Sherwood.Raid.showUI();
+        }
+    }, 5000);
 };
 
 UI.dungeon = function() {
