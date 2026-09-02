@@ -61,6 +61,8 @@ Sherwood._ensureDefaults = function() {
     var defaults = {
         name: 'Охотник',
         level: 1, exp: 0, expToLevel: 500,
+        experiencePoints: 0,
+        talentPoints: 0,
         stats: { attack: 50, defense: 50, hp: 200, maxHp: 200 },
         resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
@@ -140,6 +142,8 @@ Sherwood._createNewPlayer = function() {
     this._player = {
         name: 'Охотник',
         level: 1, exp: 0, expToLevel: 500,
+        experiencePoints: 0,
+        talentPoints: 0,
         stats: { attack: 50, defense: 50, hp: 200, maxHp: 200 },
         resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
@@ -231,6 +235,11 @@ Sherwood.addExp = function(amount) {
     while (p.exp >= p.expToLevel && p.level < 100) {
         p.exp -= p.expToLevel;
         p.level++;
+        
+        // ⬇️ НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
+        p.experiencePoints = (p.experiencePoints || 0) + 5;
+        p.talentPoints = (p.talentPoints || 0) + 3;
+        
         p.expToLevel = Math.min(Math.floor(p.expToLevel * 1.3), 999999);
         this.dispatch({ type: 'PLAYER_LEVEL_UP', payload: { level: p.level } });
         this._recalcStats();
