@@ -106,7 +106,7 @@ Sherwood.Tavern = {
         }
 
         // 2. Строим HTML с фоновым изображением и видео-анимацией
-        var h = '<div style="position:relative;width:100%;height:100%;overflow:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;">';
+        var h = '<div style="position:relative;width:100%;height:100%;overflow:hidden;">';
 
         // 3. Добавляем видео егеря (зациклено, стоит по центру и чуть правее)
         h += '<div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:100%;height:100%;pointer-events:none;">';
@@ -158,10 +158,10 @@ Sherwood.Tavern = {
         h += '<div style="margin-top:30px;margin-bottom:30px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
         
         h += '</div>'; // Закрываем контент поверх видео
-        h += '</div>'; // Закрываем главный контейнер с фоном
+        h += '</div>'; // Закрываем главный контейнер
 
-        // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
-        UI._openScreenScrollable('Таверна', null, h);
+        // ВАЖНО: Возвращаем ключ 'tavern' для автоматического фона!
+        UI._openScreenScrollable('Таверна', 'tavern', h);
     },
 
     acceptFromUI: function() {
