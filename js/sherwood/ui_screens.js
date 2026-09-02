@@ -884,7 +884,14 @@ Object.assign(UI, {
     //  ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ
     // ============================================================
 
-    quests: function() { this._showPlaceholder('Квесты', 'quests'); },
+    quests: function() {
+    this._playSound('click');
+    if (typeof Sherwood.Quests !== 'undefined' && Sherwood.Quests.showUI) {
+        Sherwood.Quests.showUI();
+    } else {
+        this._showPlaceholder('Квесты', 'quests');
+    }
+},
     tavern: function() {
         this._playSound('click');
         if (typeof Sherwood !== 'undefined' && Sherwood.Tavern && Sherwood.Tavern.showUI) {
