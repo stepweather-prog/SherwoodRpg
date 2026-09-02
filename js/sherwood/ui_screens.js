@@ -50,11 +50,7 @@ UI._currentArenaOpponentIndex = 0;
 UI._arenaCooldownInterval = null;
 
 UI._audioFiles = {
-    'main_theme': 'assets/assets2/tune/main_theme.ogg',
-    'main_theme_2': 'assets/assets2/tune/main_theme_2.ogg',
-    'dungeon_1': 'assets/assets2/tune/dungeon_1.ogg',
-    'dungeon_2': 'assets/assets2/tune/dungeon_2.ogg',
-    'dungeon_3': 'assets/assets2/tune/dungeon_3.ogg',
+    
     'click': 'assets/assets2/tune/click.wav',
     'hit': 'assets/assets2/tune/hit.wav',
     'chest_open': 'assets/assets2/tune/chest_open.wav',
@@ -1008,9 +1004,18 @@ UI._exitGame = function() {
     if (confirm('Выйти в главное меню?')) {
         if (Sherwood.saveGameNow) Sherwood.saveGameNow();
         else if (Sherwood.saveGame) Sherwood.saveGame();
+        
         UI._stopMusic();
-        UI.loadHome();
-        location.reload();
+        
+        // Если функция playExitVideo существует, играем видео перед перезагрузкой
+        if (typeof playExitVideo === 'function') {
+            playExitVideo(function() {
+                location.reload();
+            });
+        } else {
+            // Если функция не найдена, просто перезагружаем
+            location.reload();
+        }
     }
 };
 
