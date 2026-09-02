@@ -6,7 +6,7 @@ if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
 if (typeof UI === 'undefined') { var UI = {}; }
 
 // ============================================================
-//  НАСТРОЙКИ И ПЕРЕМЕННЫЕ (из ui_common.js)
+//  НАСТРОЙКИ И ПЕРЕМЕННЫЕ
 // ============================================================
 UI._bg = {
     bag: 'assets/assets2/backgrounds/bag.png',
@@ -39,7 +39,6 @@ UI._screenLayer = null;
 UI._pendingRewards = null;
 UI._afterRewardAction = null;
 UI._dungeonVideo = null;
-UI._previousScreen = null; 
 UI._dailyTab = 1; 
 UI._ticketDisplayInterval = null;
 UI._bestiaryTab = 0;
@@ -50,7 +49,6 @@ UI._currentArenaOpponentIndex = 0;
 UI._arenaCooldownInterval = null;
 
 UI._audioFiles = {
-    
     'click': 'assets/assets2/tune/click.wav',
     'hit': 'assets/assets2/tune/hit.wav',
     'chest_open': 'assets/assets2/tune/chest_open.wav',
@@ -279,14 +277,15 @@ UI._openScreen = function(title, bgKey, html, backFn) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
             
-            // ИСПРАВЛЕНИЕ: justify-content:center, без order. Стрелка первая, текст второй.
+            if (bgKey === null) {
+                bgStyle = 'background:transparent;';
+            }
+            
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
-                            <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
-                        </button>
-                        <span style="color:#e0c080;font-size:1em;">${title}</span>
+                    <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:10px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Назад</button>
+                        <span style="color:#e0c080;font-size:18px;font-weight:bold;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
@@ -314,18 +313,15 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
             
-            // ВАЖНО: Если bgKey == null, фон остаётся прозрачным
             if (bgKey === null) {
                 bgStyle = 'background:transparent;';
             }
             
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
-                            <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
-                        </button>
-                        <span style="color:#e0c080;font-size:1em;">${title}</span>
+                    <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:10px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Назад</button>
+                        <span style="color:#e0c080;font-size:18px;font-weight:bold;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
@@ -583,8 +579,7 @@ UI.profile = function() {
 //  КУЗНИЦА
 // ============================================================
 UI.forge = function() {
-    var gb = UI._previousScreen === 'profile' ? 'UI.profile()' : 'UI.loadHome()';
-    UI._previousScreen = null;
+    var gb = 'UI.loadHome()';
     UI._playSound('click');
     if (!Sherwood.Forge) { UI._showPlaceholder('Кузница', 'forge', gb); return; }
     var player = Sherwood.getPlayer();
@@ -740,8 +735,7 @@ UI._enhanceEquipped = function(type) {
 //  ТРЕНИРОВКА
 // ============================================================
 UI.training = function() {
-    var gb = UI._previousScreen === 'profile' ? 'UI.profile()' : 'UI.loadHome()';
-    UI._previousScreen = null;
+    var gb = 'UI.loadHome()';
     UI._playSound('click');
     var p = Sherwood.getPlayer();
     if (!p.trainingLevels) p.trainingLevels = { attack: 0, defense: 0, hp: 0 };
@@ -806,8 +800,7 @@ UI._doTraining = function(stat) {
 //  БЕСТИАРИЙ
 // ============================================================
 UI.bestiary = function() {
-    var gb = UI._previousScreen === 'profile' ? 'UI.profile()' : 'UI.loadHome()';
-    UI._previousScreen = null;
+    var gb = 'UI.loadHome()';
     UI._playSound('click');
     if (!Sherwood.Bestiary) { UI._showPlaceholder('Бестиарий', 'bestiary', gb); return; }
     var progress = Sherwood.Bestiary.getDiscoveryProgress();
@@ -1012,13 +1005,11 @@ UI._exitGame = function() {
         
         UI._stopMusic();
         
-        // Если функция playExitVideo существует, играем видео перед перезагрузкой
         if (typeof playExitVideo === 'function') {
             playExitVideo(function() {
                 location.reload();
             });
         } else {
-            // Если функция не найдена, просто перезагружаем
             location.reload();
         }
     }
@@ -1144,19 +1135,16 @@ UI.portals = function() {
 UI.raid = function() {
     UI._playSound('click');
     
-    // Проверяем, есть ли Raid модуль
     if (typeof Sherwood.Raid === 'undefined' || !Sherwood.Raid.showUI) {
         UI._showPlaceholder('Рейд', 'raid');
         return;
     }
     
-    // Проверяем, активен ли уже рейд (если да - видео не нужно)
     if (Sherwood.Raid.isRaidActive && Sherwood.Raid.isRaidActive()) {
         Sherwood.Raid.showUI();
         return;
     }
     
-    // Создаем видео точно такого же размера, как при входе в игру
     var video = document.createElement('video');
     video.src = 'assets/assets2/animation/raid_entrance.webm';
     video.autoplay = true;
@@ -1175,19 +1163,16 @@ UI.raid = function() {
     
     document.body.appendChild(video);
     
-    // Когда видео закончилось — открываем раздел Рейд
     video.onended = function() {
         video.remove();
         Sherwood.Raid.showUI();
     };
     
-    // Если видео не загрузилось или упало — просто открываем раздел
     video.onerror = function() {
         video.remove();
         Sherwood.Raid.showUI();
     };
     
-    // Таймер-предохранитель (если видео зависло, открываем через 5 секунд)
     setTimeout(function() {
         if (document.body.contains(video)) {
             video.remove();
