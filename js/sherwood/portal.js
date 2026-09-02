@@ -367,46 +367,80 @@ Sherwood.Portal = {
     // ========== UI ==========
 
     showUI: function() {
-        if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') {
-                showGenericScreen('Порталы', '🌀');
-            }
-            return;
+    if (typeof UI === 'undefined') {
+        if (typeof showGenericScreen === 'function') {
+            showGenericScreen('Порталы', '🌀');
         }
-        UI._playSound('click');
-        if (this.isInPortal()) { this._showPortalBattle(); return; }
+        return;
+    }
+    UI._playSound('click');
+    if (this.isInPortal()) { this._showPortalBattle(); return; }
 
-        var allPortals = this.getAllPortals();
-        var arrowCount = (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) ? Sherwood.Forge.getArrowCount() : 0;
-        var h = '<div style="display:flex;flex-direction:column;align-items:center;padding:20px;">';
-        var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
+    var allPortals = this.getAllPortals();
+    var arrowCount = (typeof Sherwood.Forge !== 'undefined' && Sherwood.Forge.getArrowCount) ? Sherwood.Forge.getArrowCount() : 0;
+    var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
 
-        for (var i = 0; i < allPortals.length; i++) {
-            var portal = allPortals[i];
-            var iconFile = iconMap[portal.id] || 'invasion_portal.png';
-            var requiredArrows = portal.id * 150;
-            var canEnter = arrowCount >= requiredArrows;
-            var isCompleted = this.isPortalCompleted(portal.id);
-            var isUnlocked = this.isPortalUnlocked(portal.id);
+    var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;">';
 
-            h += '<div style="text-align:center;margin-bottom:24px;width:100%;max-width:300px;background:rgba(0,0,0,0.5);padding:15px;border-radius:10px;border:1px solid ' + (isCompleted ? '#52b788' : (isUnlocked ? '#c9a040' : '#555')) + ';">';
-            h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;">' + portal.name + '</div>';
-            h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:120px;height:120px;object-fit:contain;display:block;margin:0 auto 8px;">';
-            h += '<div style="color:#aaa;font-size:0.7em;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
-            if (isCompleted) {
-                h += '<div style="color:#52b788;font-weight:bold;">✅ Пройден</div>';
-            } else if (isUnlocked && canEnter) {
-                h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" class="btn btn-gold" style="padding:8px 24px;font-size:0.85em;">⚔️ В бой</button>';
-            } else if (isUnlocked && !canEnter) {
-                h += '<div style="color:#ff6b6b;font-size:0.7em;">❌ Недостаточно стрел</div>';
-            } else {
-                h += '<div style="color:#555;font-size:0.7em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
-            }
-            h += '</div>';
+    for (var i = 0; i < allPortals.length; i++) {
+        var portal = allPortals[i];
+        var iconFile = iconMap[portal.id] || 'invasion_portal.png';
+        var requiredArrows = portal.id * 150;
+        var canEnter = arrowCount >= requiredArrows;
+        var isCompleted = this.isPortalCompleted(portal.id);
+        var isUnlocked = this.isPortalUnlocked(portal.id);
+        var display = (i === 0) ? 'block' : 'none';
+
+        h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';text-align:center;padding-top:10px;">';
+        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:4px;">' + portal.name + '</div>';
+        h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 8px;display:block;">';
+        h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:4px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
+
+        if (isCompleted) {
+            h += '<div style="color:#52b788;font-weight:bold;">✅ Пройден</div>';
+        } else if (isUnlocked && canEnter) {
+            h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ В бой</button>';
+        } else if (isUnlocked && !canEnter) {
+            h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно стрел</div>';
+        } else {
+            h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
         }
+
         h += '</div>';
-        UI._openScreenScrollable('🌀 Порталы', 'portal', h);
-    },
+    }
+
+    h += '</div>';
+
+    UI._openScreen('🌀 Порталы', 'portal', h);
+
+    // Свайпы и колесо
+    var carousel = document.getElementById('portal-carousel');
+    if (carousel) {
+        var startY = 0;
+        var currentIndex = 0;
+
+        carousel.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (Math.abs(e.deltaY) < 20) return;
+            var slides = carousel.querySelectorAll('.portal-slide');
+            slides[currentIndex].style.display = 'none';
+            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'block';
+        }, { passive: false });
+
+        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+        carousel.addEventListener('touchend', function(e) {
+            var delta = e.changedTouches[0].clientY - startY;
+            if (Math.abs(delta) < 50) return;
+            var slides = carousel.querySelectorAll('.portal-slide');
+            slides[currentIndex].style.display = 'none';
+            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'block';
+        }, { passive: true });
+    }
+},
 
     _enterPortal: function(id) {
         var r = this.enterPortal(id);
