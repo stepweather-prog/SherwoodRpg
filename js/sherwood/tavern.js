@@ -160,7 +160,8 @@ Sherwood.Tavern = {
         h += '</div>'; // Закрываем контент поверх видео
         h += '</div>'; // Закрываем главный контейнер с фоном
 
-        UI._openScreenScrollable('Таверна', 'tavern', h);
+        // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
+        UI._openScreenScrollable('Таверна', null, h);
     },
 
     acceptFromUI: function() {
