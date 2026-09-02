@@ -119,7 +119,7 @@ Sherwood.Tavern = {
         // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (на самом верху)
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:15px;">';
         
-        h += '<div onclick="UI._showTalentsFromProfile()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
         h += '</div>';
         
