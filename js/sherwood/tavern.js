@@ -100,13 +100,13 @@ Sherwood.Tavern = {
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
 
-        // 1. Скрываем прокрутку на уровне слоя
+        // 1. Скрываем прокрутку на уровне слоя (но НЕ на контенте)
         if (UI._screenLayer) {
             UI._screenLayer.style.overflow = 'hidden';
         }
 
         // 2. Строим HTML с фоновым изображением и видео-анимацией
-        var h = '<div style="position:relative;width:100%;height:100%;overflow:hidden;">';
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;">';
 
         // 3. Добавляем видео егеря (зациклено, стоит по центру и чуть правее)
         h += '<div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:100%;height:100%;pointer-events:none;">';
@@ -160,8 +160,8 @@ Sherwood.Tavern = {
         h += '</div>'; // Закрываем контент поверх видео
         h += '</div>'; // Закрываем главный контейнер
 
-        // ВАЖНО: Возвращаем ключ 'tavern' для автоматического фона!
-        UI._openScreenScrollable('Таверна', 'tavern', h);
+        // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
+        UI._openScreenScrollable('Таверна', null, h);
     },
 
     acceptFromUI: function() {
