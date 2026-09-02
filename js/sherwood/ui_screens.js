@@ -527,21 +527,23 @@ UI.profile = function() {
     h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
     h += '</div>';
     
-    // Карусель — один подраздел, всё по центру (ИСПРАВЛЕНИЕ Flexbox)
+        // Карусель — один подраздел, всё по центру (ИСПРАВЛЕНИЕ)
     h += '<div id="profile-carousel" style="position:relative;height:400px;overflow:hidden;touch-action:pan-y;margin:0 -12px;">';
     for (var i = 0; i < sections.length; i++) {
         var section = sections[i];
-        var display = (i === 0) ? 'flex' : 'none'; 
+        var display = (i === 0) ? 'flex' : 'none';
         
-        h += '<div class="profile-slide" data-index="' + i + '" onclick="' + section.action + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;padding-top:20px;height:100%;">';
+        // ИСПРАВЛЕНИЕ: min-height вместо height, padding, и жесткие отступы
+        h += '<div class="profile-slide" data-index="' + i + '" onclick="' + section.action + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;cursor:pointer;">';
         
-        h += '<img src="' + section.icon + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 20px;display:block;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        // 1. ИКОНКА (сверху)
+        h += '<img src="' + section.icon + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 30px;display:block;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;">' + section.name + '</div>';
+        // 2. ПЛАШКА С НАЗВАНИЕМ (снизу, не налезает)
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-bottom:15px;">' + section.name + '</div>';
         
         h += '</div>';
     }
-    
     h += '</div>';
     
     UI._openScreen('Профиль', 'profile', h);
