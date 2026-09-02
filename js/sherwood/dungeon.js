@@ -889,7 +889,6 @@ Sherwood.Dungeon = {
         UI._stopMusic();
         UI._playMusic('dungeon_3');
 
-        // Проверяем, инициализирован ли Dungeon2D5, и если нет — создаем
         if (typeof Sherwood.Dungeon2D5 !== 'undefined') {
             if (!Sherwood.Dungeon2D5._container) {
                 Sherwood.Dungeon2D5.init();
@@ -1818,7 +1817,6 @@ Sherwood.Dungeon2D5 = {
     _ease: function(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; },
 
     render: function() {
-        // Убираем все фоны, чтобы видеть только подземку
         document.getElementById('gameZone').style.background = 'transparent';
         document.getElementById('menuScreen').style.background = 'transparent';
         if (UI && UI._screenLayer) {
@@ -1830,11 +1828,7 @@ Sherwood.Dungeon2D5 = {
             this.init();
         }
         
-        // Показываем видео-фон
-        if (typeof UI !== 'undefined' && UI._showDungeonVideo) {
-            UI._showDungeonVideo();
-        }
-        
+        // Показываем подземку (без видео)
         this._dungeon = Sherwood.Dungeon.getDungeon();
         if (!this._dungeon) {
             console.warn('🏚️ Данжена нет, создаём новый');
