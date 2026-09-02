@@ -313,6 +313,12 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             if (UI._bg && UI._bg[bgKey]) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
+            
+            // ВАЖНО: Если bgKey == null, фон остаётся прозрачным
+            if (bgKey === null) {
+                bgStyle = 'background:transparent;';
+            }
+            
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
                     <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
