@@ -1139,18 +1139,21 @@ UI.portals = function() {
 UI.raid = function() {
     UI._playSound('click');
     
-    // Проверяем, есть ли видео
-    var videoSrc = 'assets/assets2/animation/raid_entrance.webm';
-    
-    // Если Raid модуль отсутствует, показываем заглушку
+    // Проверяем, есть ли Raid модуль
     if (typeof Sherwood.Raid === 'undefined' || !Sherwood.Raid.showUI) {
         UI._showPlaceholder('Рейд', 'raid');
         return;
     }
     
+    // Проверяем, активен ли уже рейд (если да - видео не нужно)
+    if (Sherwood.Raid.isRaidActive && Sherwood.Raid.isRaidActive()) {
+        Sherwood.Raid.showUI();
+        return;
+    }
+    
     // Создаем видео точно такого же размера, как при входе в игру
     var video = document.createElement('video');
-    video.src = videoSrc;
+    video.src = 'assets/assets2/animation/raid_entrance.webm';
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
