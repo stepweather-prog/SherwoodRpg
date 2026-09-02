@@ -364,9 +364,7 @@ Sherwood.Portal = {
     getTimeRemaining: function() { return this._timeRemaining; },
     isInPortal: function() { return this._inPortal; },
 
-    // ========== UI ==========
-
-// ========== UI ==========
+ // ========== UI ==========
 
 showUI: function() {
     if (typeof UI === 'undefined') {
@@ -393,14 +391,14 @@ showUI: function() {
         var isUnlocked = this.isPortalUnlocked(portal.id);
         var display = (i === 0) ? 'flex' : 'none';
 
-        // ИСПРАВЛЕНИЕ: Высота НЕ 100%, а min-height, и жесткие отступы через Flexbox
+        // ИСПРАВЛЕНИЕ: Центрируем контент, используем плашку из профиля
         h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;">';
         
-        // 1. ИКОНКА (сверху, с большим нижним отступом)
+        // 1. ИКОНКА (сверху, с большим отступом)
         h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;">';
         
-        // 2. НАЗВАНИЕ (снизу, с защитой от наложения)
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:15px;text-shadow:0 2px 4px #000;line-height:1.2;">' + portal.name + '</div>';
+        // 2. ПЛАШКА С НАЗВАНИЕМ (точно такая же, как в профиле!)
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-bottom:15px;">' + portal.name + '</div>';
         
         // 3. Остальное
         h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
@@ -421,6 +419,35 @@ showUI: function() {
     h += '</div>';
 
     UI._openScreen('🌀 Порталы', 'portal', h);
+
+    // Свайпы и колесо
+    var carousel = document.getElementById('portal-carousel');
+    if (carousel) {
+        var startY = 0;
+        var currentIndex = 0;
+
+        carousel.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (Math.abs(e.deltaY) < 20) return;
+            var slides = carousel.querySelectorAll('.portal-slide');
+            slides[currentIndex].style.display = 'none';
+            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'flex';
+        }, { passive: false });
+
+        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+        carousel.addEventListener('touchend', function(e) {
+            var delta = e.changedTouches[0].clientY - startY;
+            if (Math.abs(delta) < 50) return;
+            var slides = carousel.querySelectorAll('.portal-slide');
+            slides[currentIndex].style.display = 'none';
+            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'flex';
+        }, { passive: true });
+    }
+},
 
     // Свайпы и колесо
     var carousel = document.getElementById('portal-carousel');
