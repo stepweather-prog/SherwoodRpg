@@ -536,7 +536,7 @@ UI.profile = function() {
         h += '<img src="' + section.icon + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 30px;display:block;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         
         // 2. ПЛАШКА С НАЗВАНИЕМ (снизу, с ЖЕСТКИМ ВЕРХНИМ ОТСТУПОМ)
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:120px;margin-bottom:15px;">' + section.name + '</div>';
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + section.name + '</div>';
         h += '</div>';
     }
     h += '</div>';
