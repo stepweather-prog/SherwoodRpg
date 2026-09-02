@@ -248,7 +248,7 @@ Sherwood.Portal = {
             h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;">';
             
             // 2. ПЛАШКА С НАЗВАНИЕМ (снизу, с ЖЕСТКИМ ВЕРХНИМ ОТСТУПОМ)
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:120px;margin-bottom:15px;">' + portal.name + '</div>';
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + portal.name + '</div>';
             
             // 3. Остальное
             h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Стрел: ' + arrowCount + ' / ' + requiredArrows + '</div>';
