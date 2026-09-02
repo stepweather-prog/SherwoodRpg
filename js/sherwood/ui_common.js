@@ -276,11 +276,11 @@ UI._openScreen = function(title, bgKey, html, backFn) {
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <span style="color:#e0c080;font-size:1em;order:2;">${title}</span>
-<button onclick="${goBack}" style="order:1;background:transparent;border:none;cursor:pointer;padding:0;width:44px;height:44px;flex-shrink:0;visibility:visible;opacity:1;">
-    <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;filter:brightness(1.5);">
-</button>
+                    <div style="display:flex;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
+                        <button onclick="${goBack}" style="order:2;background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
+                            <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
+                        </button>
+                        <span style="order:1;color:#e0c080;font-size:1em;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
@@ -309,11 +309,11 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             }
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
+                    <div style="display:flex;flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:8px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
+                        <button onclick="${goBack}" style="order:2;background:transparent;border:none;cursor:pointer;padding:0;width:30px;height:30px;flex-shrink:0;">
                             <img src="assets/assets2/icons/left.png" style="width:100%;height:100%;object-fit:contain;">
                         </button>
-                        <span style="color:#e0c080;font-size:1em;">${title}</span>
+                        <span style="order:1;color:#e0c080;font-size:1em;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
@@ -331,7 +331,6 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
         }
     } catch(e) {}
 };
-
 UI._showPlaceholder = function(title, bgKey, backAction) {
     UI._playSound('click');
     UI._openScreen(title, bgKey, `
