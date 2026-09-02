@@ -116,8 +116,8 @@ Sherwood.Tavern = {
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
         h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:auto;scrollbar-width:none;">';
 
-        // 5. Панель с заданиями (опущена ниже на 25vh)
-        h += '<div style="width:100%;margin-top:25vh;padding:0 10px;">';
+        // 5. Панель с заданиями (опущена ниже на 30vh и растянута от края до края)
+        h += '<div style="width:100%;margin-top:30vh;padding:0;">';
         h += '<div style="width:100%;min-height:500px;background:url(\'assets/interface/stone_slab_empty_plate.png\') center/100% 100% no-repeat;padding:60px 15px;display:flex;flex-direction:column;justify-content:center;">';
         
         if (current) {
@@ -134,7 +134,7 @@ Sherwood.Tavern = {
             } else if (isAccepted) {
                 h += '<div style="text-align:center;color:#ffa500;margin-top:25px;font-size:18px;font-weight:bold;">Квест принят!</div>';
             } else {
-                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:30px;background:#5a3a00;border:none;border-radius:6px;padding:16px 40px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:18px;width:80%;max-width:300px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
+                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:30px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
             }
         } else if (completed >= total) {
             h += '<div style="text-align:center;color:#ffa500;font-size:22px;font-weight:bold;text-shadow:0 2px 4px #000;">Шервуд спасён!</div>';
