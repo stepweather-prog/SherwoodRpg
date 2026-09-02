@@ -114,7 +114,7 @@ Sherwood.Tavern = {
         h += '</div>';
 
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
-        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:auto;scrollbar-width:none;">';
+        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;">';
 
         // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (на самом верху)
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:15px;">';
@@ -137,10 +137,11 @@ Sherwood.Tavern = {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null;
             
-            h += '<div style="text-align:center;color:#ffa500;font-size:12px;font-weight:bold;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.8;">' + current.title + '</div>';
-            h += '<div style="text-align:center;color:#fff;font-size:11px;line-height:1.8;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
-            h += '<div style="text-align:center;color:#e0c080;font-size:11px;line-height:1.8;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
-            h += '<div style="text-align:center;color:#ffd700;font-size:11px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
+            // Шрифт уменьшен, а line-height увеличен, чтобы текст ломался на 5 слов в строке
+            h += '<div style="text-align:center;color:#ffa500;font-size:12px;font-weight:bold;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:2.2;">' + current.title + '</div>';
+            h += '<div style="text-align:center;color:#fff;font-size:11px;line-height:2.2;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
+            h += '<div style="text-align:center;color:#e0c080;font-size:11px;line-height:2.2;margin-bottom:8px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
+            h += '<div style="text-align:center;color:#ffd700;font-size:11px;line-height:2.2;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             
             if (isCompleted) {
                 h += '<div style="text-align:center;color:#52b788;margin-top:20px;font-size:16px;font-weight:bold;">Глава пройдена!</div>';
