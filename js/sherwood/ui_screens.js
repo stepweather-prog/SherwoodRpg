@@ -900,8 +900,22 @@ Object.assign(UI, {
             this._showPlaceholder('Таверна', 'tavern');
         }
     },
-    portals: function() { this._showPlaceholder('Порталы', 'portal'); },
-    raid: function() { this._showPlaceholder('Рейд', 'raid'); },
+    portals: function() {
+    this._playSound('click');
+    if (typeof Sherwood.Portal !== 'undefined' && Sherwood.Portal.showUI) {
+        Sherwood.Portal.showUI();
+    } else {
+        this._showPlaceholder('Порталы', 'portal');
+    }
+},
+    raid: function() {
+    this._playSound('click');
+    if (typeof Sherwood.Raid !== 'undefined' && Sherwood.Raid.showUI) {
+        Sherwood.Raid.showUI();
+    } else {
+        this._showPlaceholder('Рейд', 'raid');
+    }
+},
 
            dungeon: function() {
         this._playSound('click');
