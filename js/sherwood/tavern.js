@@ -167,7 +167,7 @@ Sherwood.Tavern = {
         h += '</div>'; // Закрываем главный контейнер
 
         // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
-        UI._openScreenScrollable('Таверна', null, h);
+        UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
     },
 
     acceptFromUI: function() {
