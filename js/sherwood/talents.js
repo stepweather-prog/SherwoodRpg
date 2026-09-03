@@ -1,5 +1,5 @@
 // ============================================================
-//  js/sherwood/talents.js — Таланты (Таверна) + Профиль
+//  js/sherwood/talents.js — Таланты героя (Профиль + Таверна)
 // ============================================================
 
 if (typeof Sherwood === 'undefined') {
@@ -106,7 +106,7 @@ Sherwood.Talents = {
         var p = Sherwood.getPlayer();
         var talentPoints = p ? (p.talentPoints || 0) : 0;
 
-        var h = '<div style="text-align:center;padding:10px;">';
+        var h = '<div style="text-align:center;padding:20px;background:rgba(0,0,0,0.75);border-radius:12px;margin:10px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
@@ -143,14 +143,14 @@ Sherwood.Talents = {
         var allTalents = this.getAllTalents();
         var p = Sherwood.getPlayer();
         var talentPoints = p ? (p.talentPoints || 0) : 0;
-        var selectedBranch = this._selectedBranch; // 'damage', 'heal', 'passive'
+        var selectedBranch = this._selectedBranch;
 
-        var h = '<div style="text-align:center;padding:10px;">';
+        var h = '<div style="text-align:center;padding:20px;background:rgba(0,0,0,0.75);border-radius:12px;margin:10px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
 
-        // 1. Кнопки веток
+        // Кнопки веток
         h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;">';
         for (var b = 0; b < this.BRANCHES.length; b++) {
             var branch = this.BRANCHES[b];
@@ -159,7 +159,7 @@ Sherwood.Talents = {
         }
         h += '</div>';
 
-        // 2. Таланты выбранной ветки
+        // Таланты выбранной ветки
         var branchTalents = [];
         for (var i = 0; i < allTalents.length; i++) {
             if (allTalents[i].branch === selectedBranch) {
@@ -201,7 +201,7 @@ Sherwood.Talents = {
         var p = Sherwood.getPlayer();
         var talentPoints = p ? (p.talentPoints || 0) : 0;
 
-        var h = '<div style="text-align:center;padding:20px;">';
+        var h = '<div style="text-align:center;padding:20px;background:rgba(0,0,0,0.75);border-radius:12px;">';
         h += '<img src="' + talent.icon + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:15px;">';
         h += '<div style="color:' + branch.color + ';font-size:16px;font-weight:bold;margin-bottom:10px;">Ветка: ' + branch.name + '</div>';
         h += '<div style="color:#ffa500;font-size:22px;font-weight:bold;">' + talent.name + '</div>';
