@@ -147,7 +147,7 @@ Sherwood._createNewPlayer = function() {
         stats: { attack: 50, defense: 50, hp: 200, maxHp: 200 },
         resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
-        dungeon: { tickets: 15, maxTickets: 15, autoTickets: 3 },
+        dungeon: { tickets: 100, maxTickets: 100, autoTickets: 25 },
         bagSize: 10, bestiary: {},
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
