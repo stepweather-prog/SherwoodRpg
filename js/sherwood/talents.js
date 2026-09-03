@@ -7,7 +7,6 @@ if (typeof Sherwood === 'undefined') {
 }
 
 Sherwood.Talents = {
-    // Классификация талантов по веткам
     BRANCHES: {
         damage: { id: 'damage', name: 'Урон', color: '#f44336', icon: 'assets/assets2/talents/simple_attack.png' },
         heal: { id: 'heal', name: 'Хил', color: '#4caf50', icon: 'assets/assets2/talents/healing.png' },
@@ -15,7 +14,6 @@ Sherwood.Talents = {
     },
 
     TALENTS: [
-        // ВЕТКА УРОНА
         { id: 'simple_attack', name: 'Простая атака', branch: 'damage', icon: 'assets/assets2/talents/simple_attack.png', desc: 'Увеличивает базовый урон на 10%.', maxLevel: 5 },
         { id: 'poisoning', name: 'Отравление', branch: 'damage', icon: 'assets/assets2/talents/poisoning.png', desc: 'Каждая атака имеет шанс отравить врага.', maxLevel: 3 },
         { id: 'vampirism', name: 'Вампиризм', branch: 'damage', icon: 'assets/assets2/talents/vampirism.png', desc: 'Восстанавливает HP за каждый нанесённый удар.', maxLevel: 3 },
@@ -25,14 +23,12 @@ Sherwood.Talents = {
         { id: 'force_of_elements', name: 'Сила стихий', branch: 'damage', icon: 'assets/assets2/talents/force of the elements.png', desc: 'Добавляет стихийный урон к атакам.', maxLevel: 5 },
         { id: 'evil_eye', name: 'Злой глаз', branch: 'damage', icon: 'assets/assets2/talents/evil_eye.png', desc: 'Снижает удачу врага.', maxLevel: 2 },
 
-        // ВЕТКА ХИЛА
         { id: 'healing', name: 'Исцеление', branch: 'heal', icon: 'assets/assets2/talents/healing.png', desc: 'Увеличивает эффективность лечения на 15%.', maxLevel: 4 },
         { id: 'healer', name: 'Хилер', branch: 'heal', icon: 'assets/assets2/talents/Healer.png', desc: 'Увеличивает лечение союзников.', maxLevel: 3 },
         { id: 'funnel', name: 'Воронка', branch: 'heal', icon: 'assets/assets2/talents/funnel.png', desc: 'Притягивает врагов к центру.', maxLevel: 2 },
         { id: 'inspiration', name: 'Вдохновение', branch: 'heal', icon: 'assets/assets2/talents/inspiration.png', desc: 'Повышает урон всей команды.', maxLevel: 2 },
         { id: 'knot', name: 'Узел', branch: 'heal', icon: 'assets/assets2/talents/knot.png', desc: 'Связывает врагов, снижая их мобильность.', maxLevel: 2 },
 
-        // ВЕТКА ПАССИВА
         { id: 'blocking', name: 'Блокировка', branch: 'passive', icon: 'assets/assets2/talents/blocking.png', desc: 'Уменьшает получаемый урон на 8%.', maxLevel: 3 },
         { id: 'parry', name: 'Парирование', branch: 'passive', icon: 'assets/assets2/talents/parry.png', desc: 'Шанс полностью отразить атаку врага.', maxLevel: 2 },
         { id: 'silence', name: 'Тишина', branch: 'passive', icon: 'assets/assets2/talents/Silence.png', desc: 'Шанс запретить врагу использовать навыки.', maxLevel: 2 },
@@ -68,25 +64,20 @@ Sherwood.Talents = {
         if (!talent) return { success: false, reason: 'Талант не найден' };
         var lvl = this.getTalentLevel(id);
         if (lvl >= talent.maxLevel) return { success: false, reason: 'Максимальный уровень' };
-
         var p = Sherwood.getPlayer();
         if (!p) return { success: false, reason: 'Игрок не найден' };
         if (!p.talentPoints) p.talentPoints = 0;
-
         var cost = 1;
         if (p.talentPoints < cost) {
             return { success: false, reason: 'Нужно ' + cost + ' очков талантов!' };
         }
-
         p.talentPoints -= cost;
         this._talentLevels[id] = lvl + 1;
         p.talents = this._talentLevels;
         Sherwood.saveGame();
-
         return { success: true, newLevel: lvl + 1 };
     },
 
-    // ========== ЭКРАН ДЛЯ ПРОФИЛЯ (видно только изученные) ==========
     showLearnedTalents: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
@@ -102,15 +93,13 @@ Sherwood.Talents = {
                 learnedTalents.push(allTalents[i]);
             }
         }
-
         var p = Sherwood.getPlayer();
         var talentPoints = p ? (p.talentPoints || 0) : 0;
 
-        var h = '<div style="text-align:center;padding:20px;background:rgba(0,0,0,0.75);border-radius:12px;margin:10px;">';
+        var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
-
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
@@ -126,13 +115,10 @@ Sherwood.Talents = {
             }
             h += '</div>';
         }
-
         h += '</div>';
-
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
     },
 
-    // ========== ЭКРАН ДЛЯ ТАВЕРНЫ (все таланты, можно изучать) ==========
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
@@ -145,12 +131,10 @@ Sherwood.Talents = {
         var talentPoints = p ? (p.talentPoints || 0) : 0;
         var selectedBranch = this._selectedBranch;
 
-        var h = '<div style="text-align:center;padding:20px;background:rgba(0,0,0,0.75);border-radius:12px;margin:10px;">';
+        var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
-
-        // Кнопки веток
         h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;">';
         for (var b = 0; b < this.BRANCHES.length; b++) {
             var branch = this.BRANCHES[b];
@@ -158,15 +142,12 @@ Sherwood.Talents = {
             h += '<button onclick="Sherwood.Talents._selectBranch(\'' + branch.id + '\')" style="background:' + (active ? branch.color : 'rgba(0,0,0,0.5)') + ';border:2px solid ' + branch.color + ';border-radius:6px;padding:10px 20px;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;">' + branch.name + '</button>';
         }
         h += '</div>';
-
-        // Таланты выбранной ветки
         var branchTalents = [];
         for (var i = 0; i < allTalents.length; i++) {
             if (allTalents[i].branch === selectedBranch) {
                 branchTalents.push(allTalents[i]);
             }
         }
-
         h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:360px;margin:0 auto;">';
         for (var j = 0; j < branchTalents.length; j++) {
             var t = branchTalents[j];
@@ -178,9 +159,7 @@ Sherwood.Talents = {
             h += '</div>';
         }
         h += '</div>';
-
         h += '</div>';
-
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
     },
 
@@ -195,27 +174,23 @@ Sherwood.Talents = {
             if (this.TALENTS[i].id === id) { talent = this.TALENTS[i]; break; }
         }
         if (!talent) return;
-
         var lvl = this.getTalentLevel(talent.id);
         var branch = this.BRANCHES[talent.branch];
         var p = Sherwood.getPlayer();
         var talentPoints = p ? (p.talentPoints || 0) : 0;
-
-        var h = '<div style="text-align:center;padding:20px;background:rgba(0,0,0,0.75);border-radius:12px;">';
+        var h = '<div style="text-align:center;padding:20px;">';
         h += '<img src="' + talent.icon + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:15px;">';
         h += '<div style="color:' + branch.color + ';font-size:16px;font-weight:bold;margin-bottom:10px;">Ветка: ' + branch.name + '</div>';
         h += '<div style="color:#ffa500;font-size:22px;font-weight:bold;">' + talent.name + '</div>';
         h += '<div style="color:#fff;font-size:14px;margin-top:10px;">' + talent.desc + '</div>';
         h += '<div style="color:#aaa;font-size:12px;margin-top:10px;">Уровень: ' + lvl + '/' + talent.maxLevel + '</div>';
         h += '<div style="color:#aaa;font-size:12px;margin-top:10px;">Очки талантов: ' + talentPoints + '</div>';
-
         if (lvl < talent.maxLevel) {
             h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + talent.id + '\')" style="margin-top:20px;background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:16px;">Улучшить</button>';
         } else {
             h += '<div style="color:#4caf50;margin-top:20px;font-size:16px;font-weight:bold;">МАКСИМАЛЬНЫЙ УРОВЕНЬ</div>';
         }
         h += '</div>';
-
         UI._openScreen(talent.name, 'talents', h, 'Sherwood.Talents.showUI()');
     },
 
