@@ -1186,13 +1186,24 @@ UI.raid = function() {
 
 UI.dungeon = function() {
     UI._playSound('click');
+    
+    // Если внутри игры уже есть Dungeon, он не должен блокировать iframe
     if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
         Sherwood.Dungeon.showUI();
     } else {
-        UI._showPlaceholder('Подземка', 'dungeon');
+        // Просто загружаем твой iframe
+        var iframe = document.createElement('iframe');
+        iframe.src = 'dungeon.html';
+        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+        
+        // Внутри gameZone (или UI._screenLayer)
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.appendChild(iframe);
+            UI._screenLayer.style.display = 'block';
+        }
     }
 };
-
 UI.market = function() {
     UI._playSound('click');
     if (typeof Sherwood.BlackMarket !== 'undefined' && Sherwood.BlackMarket.showUI) {
