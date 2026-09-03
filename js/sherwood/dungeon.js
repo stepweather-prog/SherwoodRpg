@@ -369,26 +369,33 @@ Sherwood.Dungeon2D5 = {
     },
 
     _checkInteract: function() {
-        const d = this._dungeon;
-        if (!d) return;
-        const cell = d.grid[d.py][d.px];
-        if (!cell) return;
-        let type = null, icon = null;
-        if (cell.lootBag && !cell.lootCollected) { type = 'lootBag'; icon = this._images.loot_bag; }
-        else if (cell.chest && !cell.looted) { type = 'chest'; icon = this._images.chest_locked; }
-        else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
-        else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
-        else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
-        else if (cell.exit && !cell.locked) { type = 'exit'; icon = this._images.exit; }
-        if (type && icon && icon.image) {
-            this._interactType = type;
-            this._interactBtnImg.src = icon.image.src;
-            this._interactBtn.style.display = 'flex';
-        } else {
-            this._interactType = null;
-            this._interactBtn.style.display = 'none';
-        }
-    },
+    const d = this._dungeon;
+    if (!d) return;
+    const cell = d.grid[d.py][d.px];
+    if (!cell) return;
+    let type = null, icon = null;
+    if (cell.lootBag && !cell.lootCollected) { type = 'lootBag'; icon = this._images.loot_bag; }
+    else if (cell.chest && !cell.looted) { type = 'chest'; icon = this._images.chest_locked; }
+    else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
+    else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
+    else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
+    else if (cell.exit && !cell.locked) { type = 'exit'; icon = this._images.exit; }
+    
+    // Если кнопки взаимодействия нет, просто выходим
+    if (!this._interactBtn) {
+        this._interactType = null;
+        return;
+    }
+    
+    if (type && icon && icon.image) {
+        this._interactType = type;
+        if (this._interactBtnImg) this._interactBtnImg.src = icon.image.src;
+        this._interactBtn.style.display = 'flex';
+    } else {
+        this._interactType = null;
+        this._interactBtn.style.display = 'none';
+    }
+},
 
     _createParticles: function() {
         const d = this._dungeon;
