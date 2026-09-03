@@ -324,48 +324,270 @@ Sherwood.Dungeon2D5 = {
         this._updateMinimap();
     },
 
+    _isAdjacentToOpen: function(d, col, row) {
+        const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+        for (let i = 0; i < dirs.length; i++) {
+            const nx = col + dirs[i][0];
+            const ny = row + dirs[i][1];
+            if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+                if (d.grid[ny][nx] && d.grid[ny][nx].open) return true;
+            }
+        }
+        return false;
+    },
+
+    _updateMinimap: function() {
+        if (!this._minimapCtx || !this._dungeon) return;
+        const ctx = this._minimapCtx;
+        const d = this._dungeon;
+        const mapSize = 100;
+        const center = mapSize / 2;
+        const radius = mapSize / 2 - 2;
+        const cellSize = (radius * 2) / d.size;
+        ctx.clearRect(0, 0, mapSize, mapSize);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, mapSize, mapSize);
+        for (let row = 0; row < d.size; row++) {
+            for (let col = 0; col < d.size; col++) {
+                const cell = d.grid[row][col];
+                const x = col * cellSize;
+                const y = row * cellSize;
+                if (cell && cell.open) { ctx.fillStyle = '#4a4a4a'; ctx.fillRect(x, y, cellSize, cellSize); }
+                else if (cell && cell.isPath && this._isAdjacentToOpen(d, col, row)) { ctx.fillStyle = '#8b6914'; ctx.fillRect(x, y, cellSize, cellSize); }
+                else { ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x, y, cellSize, cellSize); }
+            }
+        }
+        ctx.fillStyle = '#ff4444';
+        ctx.beginPath();
+        ctx.arc(d.px * cellSize + cellSize / 2, d.py * cellSize + cellSize / 2, cellSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    },
+
+    _checkInteract: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        const cell = d.grid[d.py][d.px];
+        if (!cell) return;
+        let type = null, icon = null;
+        if (cell.lootBag && !cell.lootCollected) { type = 'lootBag'; icon = this._images.loot_bag; }
+        else if (cell.chest && !cell.looted) { type = 'chest'; icon = this._images.chest_locked; }
+        else if (cell.altar && !cell.altarCollected) { type = 'altar'; icon = this._images.altar; }
+        else if (cell.cauldron && !cell.cauldronCollected) { type = 'cauldron'; icon = this._images.cauldron; }
+        else if (cell.potion && !cell.potionCollected) { type = 'potion'; icon = this._images.potion; }
+        else if (cell.exit && !cell.locked) { type = 'exit'; icon = this._images.exit; }
+        if (type && icon && icon.image) {
+            this._interactType = type;
+            this._interactBtnImg.src = icon.image.src;
+            this._interactBtn.style.display = 'flex';
+        } else {
+            this._interactType = null;
+            this._interactBtn.style.display = 'none';
+        }
+    },
+
+    _createParticles: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        const center = Math.floor(d.size / 2);
+        const particleCanvas = document.createElement('canvas');
+        particleCanvas.width = 32;
+        particleCanvas.height = 32;
+        const pctx = particleCanvas.getContext('2d');
+        const gradient = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+        gradient.addColorStop(0, 'rgba(255,255,200,1)');
+        gradient.addColorStop(0.3, 'rgba(255,220,100,0.8)');
+        gradient.addColorStop(1, 'rgba(255,200,50,0)');
+        pctx.fillStyle = gradient;
+        pctx.fillRect(0, 0, 32, 32);
+        const particleTexture = new THREE.CanvasTexture(particleCanvas);
+        for (let row = 0; row < d.size; row++) {
+            for (let col = 0; col < d.size; col++) {
+                const cell = d.grid[row][col];
+                if (!cell || !cell.open) continue;
+                const hasItem = (cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) || (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) || (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked);
+                if (hasItem) {
+                    for (let i = 0; i < 8; i++) {
+                        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: particleTexture, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+                        sprite.position.set(col - center + (Math.random() - 0.5) * 0.5, 0.2 + Math.random() * 0.6, row - center + (Math.random() - 0.5) * 0.5);
+                        sprite.scale.set(0.08, 0.08, 1);
+                        sprite.userData = { baseY: 0.2 + Math.random() * 0.4, speed: 0.5 + Math.random() * 1, phase: Math.random() * Math.PI * 2, offsetX: (Math.random() - 0.5) * 0.5, offsetZ: (Math.random() - 0.5) * 0.5, gridX: col, gridY: row };
+                        this._group.add(sprite);
+                        this._particles.push(sprite);
+                    }
+                }
+            }
+        }
+    },
+
+    _updateParticles: function(time) {
+        const d = this._dungeon;
+        if (!d) return;
+        const center = Math.floor(d.size / 2);
+        for (let i = 0; i < this._particles.length; i++) {
+            const p = this._particles[i];
+            const cell = d.grid[p.userData.gridY][p.userData.gridX];
+            const hasItem = cell && ((cell.chest && !cell.looted) || (cell.lootBag && !cell.lootCollected) || (cell.altar && !cell.altarCollected) || (cell.cauldron && !cell.cauldronCollected) || (cell.potion && !cell.potionCollected) || (cell.exit && cell.locked));
+            if (!hasItem) { p.visible = false; continue; }
+            p.visible = true;
+            p.position.y = p.userData.baseY + Math.sin(time * p.userData.speed + p.userData.phase) * 0.2;
+            p.position.x = p.userData.gridX - center + p.userData.offsetX + Math.sin(time * 0.5 + p.userData.phase) * 0.1;
+            p.position.z = p.userData.gridY - center + p.userData.offsetZ + Math.cos(time * 0.5 + p.userData.phase) * 0.1;
+        }
+    },
+
     _buildMesh: function() {
-        var d = this._dungeon;
+        const d = this._dungeon;
         if (!d) return;
         while (this._group.children.length > 0) this._group.remove(this._group.children[0]);
-        var size = d.size, wallHeight = 1.2, cellSize = 1, center = Math.floor(size / 2);
-        var ceilMat = new THREE.MeshStandardMaterial({ map: this._ceilings[0], roughness: 0.9 });
-        var wallMats = this._walls.map(tex => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 }));
-        for (var row = 0; row < size; row++) {
-            for (var col = 0; col < size; col++) {
-                var x = col - center, z = row - center;
-                var cell = d.grid[row][col];
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), new THREE.MeshStandardMaterial({ map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length], roughness: 0.9 }));
+        this._particles = [];
+        const size = d.size, wallHeight = 1.2, cellSize = 1, center = Math.floor(size / 2);
+        const ceilMat = new THREE.MeshStandardMaterial({ map: this._ceilings[0], roughness: 0.9 });
+        const wallMats = this._walls.map(tex => new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 }));
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const x = col - center, z = row - center;
+                const cell = d.grid[row][col];
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), new THREE.MeshStandardMaterial({ map: this._floors[Math.abs(col * 3 + row * 5) % this._floors.length], roughness: 0.9 }));
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(x, 0, z);
                 this._group.add(floor);
-                var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
                 ceil.rotation.x = Math.PI / 2;
                 ceil.position.set(x, wallHeight, z);
                 this._group.add(ceil);
                 if (cell && !cell.open && !cell.isPath) {
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMats[Math.abs(col * 7 + row * 13) % wallMats.length]);
+                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMats[Math.abs(col * 7 + row * 13) % wallMats.length]);
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: false, gridX: col, gridY: row };
                     this._group.add(wall);
                 }
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), new THREE.MeshStandardMaterial({ map: this._images.wall_openable, roughness: 0.7 }));
+                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), new THREE.MeshStandardMaterial({ map: this._images.wall_openable, roughness: 0.7 }));
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: true, gridX: col, gridY: row };
                     this._group.add(wall);
                 }
             }
         }
+        this._addObjectSprites();
+        this._addBraziers();
+        this._createParticles();
+    },
+
+    _addObjectSprites: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        const size = d.size, center = Math.floor(size / 2);
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const cell = d.grid[row][col];
+                if (!cell) continue;
+                if (!cell.open && !cell.isPath) continue;
+                if (!cell.open && cell.isPath && !this._isAdjacentToOpen(d, col, row)) continue;
+                let tex = null;
+                if (cell.monster) {
+                    const id = cell.monsterId || 'plague_crow.png';
+                    if (!this._monsterImages[id]) {
+                        const loader = new THREE.TextureLoader();
+                        this._monsterImages[id] = loader.load('assets/all_beasts/' + id);
+                    }
+                    tex = this._monsterImages[id];
+                } else if (cell.lootCollected && cell.lootBag !== undefined) tex = this._images.loot_bag_empty;
+                else if (cell.lootBag && !cell.lootCollected) tex = this._images.loot_bag;
+                else if (cell.chest && !cell.looted) tex = this._images.chest_locked;
+                else if (cell.chest && cell.looted) tex = this._images.chest_open;
+                else if (cell.altar && !cell.altarCollected) tex = this._images.altar;
+                else if (cell.altar && cell.altarCollected) tex = this._images.altar;
+                else if (cell.cauldron && !cell.cauldronCollected) tex = this._images.cauldron;
+                else if (cell.cauldron && cell.cauldronCollected) tex = this._images.cauldron;
+                else if (cell.potion && !cell.potionCollected) tex = this._images.potion;
+                else if (cell.exit && cell.locked) tex = this._images.exit_locked;
+                else if (cell.exit && !cell.locked) tex = this._images.exit;
+                if (tex && tex.image) {
+                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                    let scale = 0.5, sy = 0.3;
+                    if (cell.exit) { scale = 0.8; sy = 0.5; }
+                    else if (cell.chest) { scale = 0.45; sy = 0.2; }
+                    else if (cell.lootBag !== undefined) { scale = 0.4; sy = 0.15; }
+                    sprite.position.set(col - center, sy, row - center);
+                    sprite.scale.set(scale, scale, 1);
+                    this._group.add(sprite);
+                }
+            }
+        }
+    },
+
+    _addBraziers: function() {
+        const d = this._dungeon;
+        if (!d) return;
+        const center = Math.floor(d.size / 2);
+        if (!this._brazierVideo) return;
+        if (!this._brazierCanvas) {
+            this._brazierCanvas = document.createElement('canvas');
+            this._brazierCanvas.width = 256;
+            this._brazierCanvas.height = 256;
+            this._brazierCtx = this._brazierCanvas.getContext('2d', { willReadFrequently: true });
+            this._brazierTexture = new THREE.CanvasTexture(this._brazierCanvas);
+            this._brazierTexture.minFilter = THREE.LinearFilter;
+            this._brazierTexture.magFilter = THREE.LinearFilter;
+            this._processBrazierFrame();
+        }
+        for (let row = 1; row < d.size - 1; row++) {
+            for (let col = 1; col < d.size - 1; col++) {
+                const isPerimeter = (row === 1 || row === d.size - 2 || col === 1 || col === d.size - 2);
+                if (!isPerimeter) continue;
+                const cell = d.grid[row][col];
+                if (!cell || !cell.open) continue;
+                if ((row + col) % 3 !== 0) continue;
+                let offsetX = 0.35, offsetZ = 0.35;
+                const dirs = [{ dx: -1, dy: 0, ox: 0.35, oz: 0 }, { dx: 1, dy: 0, ox: -0.35, oz: 0 }, { dx: 0, dy: -1, ox: 0, oz: 0.35 }, { dx: 0, dy: 1, ox: 0, oz: -0.35 }];
+                for (let i = 0; i < dirs.length; i++) {
+                    const nx = col + dirs[i].dx, ny = row + dirs[i].dy;
+                    if (nx >= 0 && nx < d.size && ny >= 0 && ny < d.size) {
+                        const neighbor = d.grid[ny][nx];
+                        if (neighbor && !neighbor.open && !neighbor.isPath) { offsetX = dirs[i].ox; offsetZ = dirs[i].oz; break; }
+                    }
+                }
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this._brazierTexture, transparent: true, depthWrite: false }));
+                sprite.position.set(col - center + offsetX, 0.25, row - center + offsetZ);
+                sprite.scale.set(0.3, 0.3, 1);
+                this._group.add(sprite);
+            }
+        }
+    },
+
+    _processBrazierFrame: function() {
+        const self = this;
+        function processFrame() {
+            if (!self._brazierVideo || !self._brazierCtx) return;
+            if (self._brazierVideo.readyState >= 2) {
+                self._brazierCtx.drawImage(self._brazierVideo, 0, 0, 256, 256);
+                const imageData = self._brazierCtx.getImageData(0, 0, 256, 256);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    if (g > 80 && g > r * 1.4 && g > b * 1.4) data[i+3] = 0;
+                }
+                self._brazierCtx.putImageData(imageData, 0, 0);
+                self._brazierTexture.needsUpdate = true;
+            }
+            requestAnimationFrame(processFrame);
+        }
+        processFrame();
     },
 
     _updateCamera: function() {
-        var d = this._dungeon;
+        const d = this._dungeon;
         if (!d) return;
-        var center = Math.floor(d.size / 2);
-        var posX = d.px - center, posZ = d.py - center;
+        const center = Math.floor(d.size / 2);
+        let posX = d.px - center, posZ = d.py - center;
         if (this._isMoving) {
-            var t = this._ease(this._moveT);
+            const t = this._ease(this._moveT);
             posX = (this._fromX - center) + ((this._toX - center) - (this._fromX - center)) * t;
             posZ = (this._fromY - center) + ((this._toY - center) - (this._fromY - center)) * t;
         }
