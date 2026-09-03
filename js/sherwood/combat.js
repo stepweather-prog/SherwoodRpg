@@ -1,5 +1,5 @@
 /**
- * Sherwood Combat — Боевая система (16 скиллов)
+ * Sherwood Combat — Боевая система 
  * Адаптирован под новую структуру с UI
  */
 
@@ -11,7 +11,6 @@ Sherwood.Combat = {
     _battle: null,
     _skills: {},
     _playerBuffs: {},
-    _battleOverlay: null,
     _battleLog: [],
 
     init: function() {
@@ -44,21 +43,16 @@ Sherwood.Combat = {
         console.log('⚔️ Combat инициализирован');
     },
 
-    getSkills: function() {
-        return this._skills;
-    },
+    getSkills: function() { return this._skills; },
 
     unlockSkill: function(id) {
         if (!this._skills[id]) return { success: false, reason: 'Скилл не найден' };
         if (this._skills[id].unlocked) return { success: false, reason: 'Уже открыт' };
-
         var p = Sherwood.getPlayer();
         if (!p) return { success: false, reason: 'Игрок не найден' };
-
         if ((p.resources.gold || 0) < this._skills[id].cost) {
             return { success: false, reason: 'Нужно ' + this._skills[id].cost + ' золота' };
         }
-
         p.resources.gold -= this._skills[id].cost;
         this._skills[id].unlocked = true;
         Sherwood.saveGame();
@@ -135,7 +129,6 @@ Sherwood.Combat = {
 
         this._battleLog = [];
         this._showBattleUI();
-
         return this._battle;
     },
 
@@ -187,31 +180,24 @@ Sherwood.Combat = {
 
     attack: function() {
         if (!this._battle) return { error: 'Нет боя' };
-
         var b = this._battle;
         var p = Sherwood.getPlayer();
-
         this._tickCooldowns();
-
         if (!b.attackCounter) b.attackCounter = 0;
         b.attackCounter++;
-
         if (b.attackCounter >= 2) {
             b.attackCounter = 0;
             b.chargedSkills = this._getRandomChargedSkills();
         }
 
         var rawDamage = this._calculateDamage(p.stats.attack, b.enemy.defense);
-
         var damageBonus = this._playerBuffs.double_damage.remainingTurns > 0 ? 1.0 : 0;
         rawDamage = Math.floor(rawDamage * (1 + damageBonus));
-
         var crit = Math.random() * 100 < 15;
         if (crit) rawDamage = Math.floor(rawDamage * 1.8);
 
         b.enemy.hp -= rawDamage;
         if (b.enemy.hp < 0) b.enemy.hp = 0;
-
         var result = {
             damage: rawDamage,
             crit: crit,
@@ -220,9 +206,7 @@ Sherwood.Combat = {
             enemyDead: b.enemy.hp <= 0,
             enemyImage: b.enemy.image
         };
-
         this.addBattleLog('💢 ' + (crit ? '💥 КРИТ! ' : '') + rawDamage + ' урона!');
-
         if (b.enemy.hp <= 0) {
             result.win = true;
             result.exp = Math.floor(b.enemy.maxHp * 0.3);
@@ -235,7 +219,6 @@ Sherwood.Combat = {
         }
 
         var enemyResult = this._enemyTurn();
-
         if (enemyResult.playerDead) {
             result.playerDead = true;
             result.exp = Math.floor(b.enemy.maxHp * 0.1);
@@ -250,11 +233,9 @@ Sherwood.Combat = {
         p.stats.hp = b.playerHp;
         result.playerHp = b.playerHp;
         result.enemyDamage = enemyResult.enemyDamage;
-
         if (enemyResult.enemyDamage > 0) {
             this.addBattleLog('💢 Враг нанёс ' + enemyResult.enemyDamage + ' урона! (' + b.playerHp + '/' + b.playerMaxHp + ')');
         }
-
         Sherwood.saveGame();
         this._updateBattleUI();
         return result;
@@ -262,14 +243,11 @@ Sherwood.Combat = {
 
     useSkill: function(skillId) {
         if (!this._battle) return { error: 'Нет боя' };
-
         var skill = this._skills[skillId];
         if (!skill) return { error: 'Скилл не найден' };
         if (!skill.unlocked) return { error: 'Скилл не открыт' };
-
         var b = this._battle;
         var p = Sherwood.getPlayer();
-
         this._tickCooldowns();
 
         var result = {
@@ -292,7 +270,6 @@ Sherwood.Combat = {
                 result.effects.push('+ ' + healAmount + ' HP');
                 this.addBattleLog('💚 Лечение! +' + healAmount + ' HP');
                 break;
-
             case 'defense':
                 if (skill.parry) {
                     this._playerBuffs.parry.remainingTurns = 1;
@@ -305,7 +282,6 @@ Sherwood.Combat = {
                     this.addBattleLog('🛡️ Защита удвоена на ' + skill.defenseDuration + ' хода!');
                 }
                 break;
-
             case 'buff':
                 if (skill.damageBoost) {
                     this._playerBuffs.double_damage.remainingTurns = skill.boostDuration;
@@ -313,32 +289,25 @@ Sherwood.Combat = {
                     this.addBattleLog('⚡ Урон удвоен на ' + skill.boostDuration + ' хода!');
                 }
                 break;
-
             default:
                 var totalDamage = 0;
                 var hits = skill.hits || 1;
                 var armorPierce = skill.armorPierce || 0;
                 var effectiveDefense = b.enemy.defense * (1 - armorPierce);
-
                 for (var h = 0; h < hits; h++) {
                     var hitDamage = this._calculateDamage(p.stats.attack * skill.damageMultiplier, effectiveDefense);
-
                     if (skill.critChance && Math.random() < skill.critChance) {
                         hitDamage = Math.floor(hitDamage * 1.8);
                         result.crit = true;
                     }
-
                     totalDamage += hitDamage;
                     b.enemy.hp -= hitDamage;
-
                     if (b.enemy.hp < 0) b.enemy.hp = 0;
                     if (b.enemy.hp <= 0) break;
                 }
-
                 result.damage = totalDamage;
                 result.hits = hits;
                 this.addBattleLog('💥 ' + skill.name + ': ' + totalDamage + ' урона!');
-
                 if (skill.ricochetDamage && b.enemy.hp > 0) {
                     var ricochetDamage = Math.floor(totalDamage * skill.ricochetDamage);
                     b.enemy.hp -= ricochetDamage;
@@ -346,20 +315,17 @@ Sherwood.Combat = {
                     result.effects.push('Рикошет: +' + ricochetDamage);
                     this.addBattleLog('🔄 Рикошет: +' + ricochetDamage + ' урона!');
                 }
-
                 if (skill.dotDamage && skill.dotDuration && b.enemy.hp > 0) {
                     b.enemy.dots.push({ damagePerTurn: skill.dotDamage, remainingTurns: skill.dotDuration, name: skill.name });
                     result.effects.push(skill.name + ' на ' + skill.dotDuration + ' хода');
                     this.addBattleLog('☠️ ' + skill.name + ' на ' + skill.dotDuration + ' хода!');
                 }
-
                 if (skill.slowPercent && skill.slowDuration && b.enemy.hp > 0) {
                     b.enemy.slowed.percent = skill.slowPercent;
                     b.enemy.slowed.remainingTurns = skill.slowDuration;
                     result.effects.push('Враг замедлен на ' + skill.slowDuration + ' хода');
                     this.addBattleLog('🐢 Враг замедлен на ' + skill.slowDuration + ' хода!');
                 }
-
                 if (skill.rootDamage && skill.rootDuration && b.enemy.hp > 0) {
                     b.enemy.rooted.damage = skill.rootDamage;
                     b.enemy.rooted.slow = skill.rootSlow;
@@ -367,13 +333,11 @@ Sherwood.Combat = {
                     result.effects.push('Корни на ' + skill.rootDuration + ' хода');
                     this.addBattleLog('🌿 Корни на ' + skill.rootDuration + ' хода!');
                 }
-
                 if (skill.stunDuration && b.enemy.hp > 0) {
                     b.enemy.stunned = skill.stunDuration;
                     result.effects.push('Враг оглушён на ' + skill.stunDuration + ' ход');
                     this.addBattleLog('😵 Враг оглушён на ' + skill.stunDuration + ' ход!');
                 }
-
                 if (skill.lifesteal && totalDamage > 0) {
                     var lifestealAmount = Math.floor(totalDamage * skill.lifesteal);
                     p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + lifestealAmount);
@@ -394,7 +358,6 @@ Sherwood.Combat = {
 
         result.enemyHp = b.enemy.hp;
         result.enemyMaxHp = b.enemy.maxHp;
-
         if (b.enemy.hp <= 0) {
             result.enemyDead = true;
             result.win = true;
@@ -413,7 +376,6 @@ Sherwood.Combat = {
             this.addBattleLog('😵 Враг оглушён и пропускает ход!');
         } else {
             var enemyResult = this._enemyTurn();
-
             if (enemyResult.playerDead) {
                 result.playerDead = true;
                 result.exp = Math.floor(b.enemy.maxHp * 0.1);
@@ -424,7 +386,6 @@ Sherwood.Combat = {
                 Sherwood.saveGame();
                 return result;
             }
-
             result.enemyDamage = enemyResult.enemyDamage;
             if (enemyResult.enemyDamage > 0) {
                 this.addBattleLog('💢 Враг нанёс ' + enemyResult.enemyDamage + ' урона!');
@@ -437,10 +398,8 @@ Sherwood.Combat = {
 
         if (b.enemy.slowed.remainingTurns > 0) b.enemy.slowed.remainingTurns--;
         if (b.enemy.rooted.remainingTurns > 0) b.enemy.rooted.remainingTurns--;
-
         p.stats.hp = b.playerHp;
         result.playerHp = b.playerHp;
-
         Sherwood.saveGame();
         this._updateBattleUI();
         return result;
@@ -448,81 +407,38 @@ Sherwood.Combat = {
 
     _enemyTurn: function() {
         if (!this._battle) return { playerDead: false };
-
         var b = this._battle;
         var p = Sherwood.getPlayer();
-
         if (this._playerBuffs.parry.remainingTurns > 0) {
             this._playerBuffs.parry.remainingTurns--;
             return { playerDead: false, enemyDamage: 0, parried: true };
         }
-
         var attackValue = b.enemy.attack;
-
         if (b.enemy.slowed.remainingTurns > 0) {
             attackValue = Math.floor(attackValue * (1 - b.enemy.slowed.percent));
         }
-
         if (b.enemy.rooted.remainingTurns > 0) {
             attackValue = Math.floor(attackValue * (1 - b.enemy.rooted.slow));
         }
-
         var defenseValue = p.stats.defense;
-
         if (this._playerBuffs.double_defense.remainingTurns > 0) {
             defenseValue *= 2;
         }
-
         var enemyDamage = this._calculateDamage(attackValue, defenseValue);
-
         var passiveBlock = this._skills.passive_block;
         if (passiveBlock && passiveBlock.unlocked && passiveBlock.blockChance) {
             if (Math.random() < passiveBlock.blockChance) {
                 enemyDamage = 0;
             }
         }
-
         b.playerHp -= enemyDamage;
         if (b.playerHp < 0) b.playerHp = 0;
         p.stats.hp = b.playerHp;
-
         return {
             playerDead: b.playerHp <= 0,
             enemyDamage: enemyDamage,
             playerHp: b.playerHp
         };
-    },
-
-    flee: function() {
-        if (!this._battle) return { success: true };
-
-        var b = this._battle;
-        var p = Sherwood.getPlayer();
-
-        if (Math.random() < 0.6) {
-            this.addBattleLog('🏃 Ты сбежал!');
-            this._battle = null;
-            this._closeBattleUI();
-            Sherwood.saveGame();
-            return { success: true };
-        }
-
-        var enemyDamage = Math.max(1, Math.floor(b.enemy.attack - p.stats.defense * 0.3));
-        p.stats.hp = Math.max(0, p.stats.hp - enemyDamage);
-        b.playerHp = p.stats.hp;
-
-        if (p.stats.hp <= 0) {
-            this.addBattleLog('💀 Ты погиб при попытке бегства!');
-            this._battle = null;
-            this._closeBattleUI();
-            Sherwood.saveGame();
-            return { lose: true, damage: enemyDamage };
-        }
-
-        this.addBattleLog('🏃 Побег не удался! Враг нанёс ' + enemyDamage + ' урона');
-        Sherwood.saveGame();
-        this._updateBattleUI();
-        return { success: false, damage: enemyDamage };
     },
 
     isInBattle: function() {
@@ -532,7 +448,6 @@ Sherwood.Combat = {
     addBattleLog: function(msg) {
         this._battleLog.push(msg);
         if (this._battleLog.length > 50) this._battleLog.shift();
-
         var logEl = document.getElementById('combat-log');
         if (logEl) {
             logEl.innerHTML += '<div>' + msg + '</div>';
@@ -540,18 +455,15 @@ Sherwood.Combat = {
         }
     },
 
-    // ========== UI ==========
-
+    // ========== НОВЫЙ UI: Через UI._showBattleScreen ==========
     _showBattleUI: function() {
         var b = this._battle;
         if (!b) return;
-
         var enemy = b.enemy;
         var p = Sherwood.getPlayer();
-
-        var overlay = document.createElement('div');
-        overlay.id = 'combat-overlay';
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"Courier New",monospace;color:#fff;';
+        var enemyImg = enemy.image ? 'assets/all_beasts/' + enemy.image : '';
+        if (enemy.mode === 'portal') enemyImg = 'assets/portal_beasts/' + enemy.image;
+        if (enemy.mode === 'quest') enemyImg = 'assets/beast_quest/' + enemy.image;
 
         var skillButtons = '';
         var skillKeys = Object.keys(this._skills);
@@ -566,72 +478,42 @@ Sherwood.Combat = {
             }
         }
 
-        var enemyImg = enemy.image ? 'assets/all_beasts/' + enemy.image : '';
-        if (enemy.mode === 'portal') enemyImg = 'assets/portal_beasts/' + enemy.image;
-        if (enemy.mode === 'quest') enemyImg = 'assets/beast_quest/' + enemy.image;
-
-        overlay.innerHTML = '<div style="background:linear-gradient(180deg,#1a0f08,#2d1a10);border:3px solid ' + (enemy.isBoss ? '#ff6b35' : '#8B4513') + ';border-radius:12px;padding:15px;max-width:480px;width:95%;">' +
-            '<div style="text-align:center;margin-bottom:6px;"><div style="color:' + (enemy.isBoss ? '#ff6b35' : '#ffa500') + ';font-size:16px;font-weight:bold;">' + (enemy.isBoss ? '👑 БОСС' : '⚔️ БИТВА') + '</div>' +
-            '<div style="font-size:14px;color:#fff;">' + enemy.name + '</div>' +
-            (enemyImg ? '<img src="' + enemyImg + '" style="width:50px;height:50px;object-fit:contain;margin:2px 0;" onerror="this.style.display=\'none\'">' : '') +
-            '</div>' +
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div><div style="font-size:10px;color:#888;">Враг</div>' +
-            '<div style="font-size:16px;font-weight:bold;color:#ff6b6b;">❤️ ' + enemy.hp + '</div>' +
-            '<div style="width:120px;height:5px;background:#333;border-radius:3px;overflow:hidden;"><div id="combat-enemy-hp" style="width:' + (enemy.hp / enemy.maxHp * 100) + '%;height:100%;background:linear-gradient(90deg,#ff0000,#ff4444);transition:width 0.3s;"></div></div></div>' +
-            '<div style="text-align:right;"><div style="font-size:10px;color:#888;">Герой</div>' +
-            '<div style="font-size:16px;font-weight:bold;color:#4ecdc4;">❤️ ' + b.playerHp + '</div>' +
-            '<div style="width:120px;height:5px;background:#333;border-radius:3px;overflow:hidden;margin-left:auto;"><div id="combat-player-hp" style="width:' + (b.playerHp / b.playerMaxHp * 100) + '%;height:100%;background:linear-gradient(90deg,#00ff00,#44ff44);transition:width 0.3s;"></div></div></div></div>' +
-            '<div id="combat-log" style="background:rgba(0,0,0,0.5);border:1px solid #333;border-radius:4px;padding:4px;height:60px;overflow-y:auto;font-size:11px;color:#888;margin-bottom:4px;"></div>' +
-            '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;">' + skillButtons + '</div>' +
-            '<div style="display:flex;gap:6px;"><button onclick="Sherwood.Combat.attackFromUI()" class="btn btn-danger" style="flex:2;padding:8px;font-size:14px;font-weight:bold;">⚔️ АТАКА</button>' +
-            '<button onclick="Sherwood.Combat.fleeFromUI()" class="btn" style="flex:1;padding:8px;font-size:12px;">🏃 Бежать</button></div></div>';
-
-        document.body.appendChild(overlay);
-        this._battleOverlay = overlay;
-
-        var logEl = document.getElementById('combat-log');
-        if (logEl && this._battleLog.length > 0) {
-            logEl.innerHTML = this._battleLog.slice(-20).join('<br>');
-            logEl.scrollTop = logEl.scrollHeight;
+        UI._showBattleScreen({
+            name: enemy.name,
+            image: enemyImg,
+            hp: enemy.hp,
+            maxHp: enemy.maxHp,
+            attack: enemy.attack,
+            defense: enemy.defense,
+            isBoss: enemy.isBoss,
+            mode: enemy.mode
+        }, enemy.mode || 'dungeon', enemy.name + (enemy.isBoss ? ' (БОСС)' : ''), '', 
+        'Sherwood.Combat.attackFromUI()', 'Sherwood.Combat.fleeFromUI()', null);
+        
+        if (UI._screenLayer) {
+            var skillContainer = document.createElement('div');
+            skillContainer.style.cssText = 'position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:90%;display:flex;flex-wrap:wrap;gap:4px;z-index:500;';
+            skillContainer.innerHTML = skillButtons;
+            document.body.appendChild(skillContainer);
         }
     },
 
     _updateBattleUI: function() {
-        if (!this._battleOverlay) return;
-        var b = this._battle;
-        if (!b) return;
-
-        var enemyHpBar = document.getElementById('combat-enemy-hp');
-        var playerHpBar = document.getElementById('combat-player-hp');
-
-        if (enemyHpBar) enemyHpBar.style.width = (b.enemy.hp / b.enemy.maxHp * 100) + '%';
-        if (playerHpBar) playerHpBar.style.width = (b.playerHp / b.playerMaxHp * 100) + '%';
-
-        var hpElements = this._battleOverlay.querySelectorAll('[style*="font-size:16px"][style*="font-weight:bold;color:#ff6b6b;"]');
-        if (hpElements.length > 0) hpElements[0].textContent = '❤️ ' + b.enemy.hp;
-        var playerHpElements = this._battleOverlay.querySelectorAll('[style*="font-size:16px"][style*="font-weight:bold;color:#4ecdc4;"]');
-        if (playerHpElements.length > 0) playerHpElements[0].textContent = '❤️ ' + b.playerHp;
-
-        var logEl = document.getElementById('combat-log');
-        if (logEl) {
-            var logs = this._battleLog.slice(-20);
-            logEl.innerHTML = logs.join('<br>');
-            logEl.scrollTop = logEl.scrollHeight;
+        if (this._battle) {
+            var enemyHpEl = document.querySelector('[data-enemy-hp]');
+            if (enemyHpEl) enemyHpEl.textContent = 'HP: ' + this._battle.enemy.hp + '/' + this._battle.enemy.maxHp;
         }
     },
 
     _closeBattleUI: function() {
-        if (this._battleOverlay) {
-            this._battleOverlay.remove();
-            this._battleOverlay = null;
-        }
+        var skillContainer = document.querySelector('[data-skill-container]');
+        if (skillContainer) skillContainer.remove();
         if (typeof UI !== 'undefined' && UI.loadHome) {
             setTimeout(function() { UI.loadHome(); }, 500);
         }
     },
 
     // ========== UI ХЭНДЛЕРЫ ==========
-
     attackFromUI: function() {
         var result = this.attack();
         if (result && result.error) {
@@ -675,16 +557,6 @@ Sherwood.Combat = {
             } else {
                 UI._showToast('💀 Ты погиб...');
             }
-        }
-    },
-
-    fleeFromUI: function() {
-        var result = this.flee();
-        if (result && result.success) {
-            this._closeBattleUI();
-        } else if (result && result.lose) {
-            this._closeBattleUI();
-            UI._showToast('💀 Ты погиб при попытке бегства!');
         }
     }
 };
