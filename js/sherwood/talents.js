@@ -120,7 +120,7 @@ Sherwood.Talents = {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
                 h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-                h += '<img src="' + t.icon + '" style="width:90px;height:90px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<img src="' + t.icon + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '<div style="color:#fff;font-size:11px;text-align:center;margin-bottom:4px;">' + t.name + '</div>';
                 h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
                 h += '</div>';
@@ -130,7 +130,14 @@ Sherwood.Talents = {
 
         h += '</div>';
 
-        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
+        // Устраняем прокрутку: видимой полосы нет!
+        if (UI._screenLayer) {
+            UI._screenLayer.style.overflowY = 'auto';
+            UI._screenLayer.style.scrollbarWidth = 'none';
+            UI._screenLayer.style.msOverflowStyle = 'none';
+        }
+
+        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
     },
 
     // ========== ЭКРАН ДЛЯ ТАВЕРНЫ (все таланты, можно изучать) ==========
@@ -171,7 +178,7 @@ Sherwood.Talents = {
                 var t = branchTalents[j];
                 var lvl = this.getTalentLevel(t.id);
                 h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-                h += '<img src="' + t.icon + '" style="width:90px;height:90px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<img src="' + t.icon + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '<div style="color:#fff;font-size:11px;text-align:center;margin-bottom:4px;">' + t.name + '</div>';
                 h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
                 h += '</div>';
@@ -182,6 +189,13 @@ Sherwood.Talents = {
         }
 
         h += '</div>';
+
+        // Устраняем прокрутку: видимой полосы нет!
+        if (UI._screenLayer) {
+            UI._screenLayer.style.overflowY = 'auto';
+            UI._screenLayer.style.scrollbarWidth = 'none';
+            UI._screenLayer.style.msOverflowStyle = 'none';
+        }
 
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
     },
