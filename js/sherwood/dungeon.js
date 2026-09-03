@@ -800,7 +800,7 @@ Sherwood.Dungeon = {
 
         h += '</div>';
 
-        UI._openScreenScrollable('🏚️ Подземка', 'dungeon_select', h);
+        UI._openScreenScrollable('🏚️ Подземка', null, h);
     },
 
     _showLevels: function(dungeonId) {
@@ -813,15 +813,22 @@ Sherwood.Dungeon = {
 
         var dungeonNames = { forest: 'Проклятая чаща', swamp: 'Первородное болото', cave: 'Базальтовый грот' };
         var dungeonIcons = { forest: 'the_cursed_thicket.png', swamp: 'primordial_swamp.png', cave: 'basalt_grotto.png' };
+        var tilePrefix = { forest: 'dungeon1', swamp: 'dungeon2', cave: 'dungeon3' };
 
         var h = '<div style="padding:10px;text-align:center;max-width:400px;margin:0 auto;">';
         h += '<img src="assets/dungeon_tiles/visual_dungeon/' + (dungeonIcons[dungeonId] || 'the_cursed_thicket.png') + '" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 8px;">';
         h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:10px;">' + (dungeonNames[dungeonId] || dungeonId) + '</div>';
 
-        h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:260px;margin:0 auto;">';
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:320px;margin:0 auto;">';
         for (var lvl = 1; lvl <= 6; lvl++) {
             var unlocked = lvl <= progress.level;
             var cupCount = cups[lvl] ? (cups[lvl].count || 0) : 0;
+            var tilePath = 'assets/dungeon_tiles/' + tilePrefix[dungeonId] + '/tiles_' + lvl + '.png';
+
+            var onClick = '';
+            if (unlocked) {
+                onClick = 'onclick="Sherwood.Dungeon._startDungeon(\'' + dungeonId + '\',' + lvl + ')"';
+            }
 
             h += '<div style="text-align:center;">';
             h += '<div style="display:flex;justify-content:center;gap:2px;margin-bottom:2px;min-height:20px;">';
@@ -833,52 +840,16 @@ Sherwood.Dungeon = {
                 }
             }
             h += '</div>';
-            h += '<div onclick="' + (unlocked ? 'Sherwood.Dungeon._showActions(\'' + dungeonId + '\',' + lvl + ')' : '') + '" style="width:80px;height:80px;background:rgba(0,0,0,0.5);border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto;">';
-            h += '<span style="font-size:1.5em;font-weight:bold;color:' + (unlocked ? '#c9a040' : '#555') + ';">' + lvl + '</span>';
+            h += '<div ' + onClick + ' style="width:80px;height:80px;background:rgba(0,0,0,0.5);border:2px solid ' + (unlocked ? '#c9a040' : '#555') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'default') + ';display:flex;align-items:center;justify-content:center;position:relative;margin:0 auto;">';
+            h += '<img src="' + tilePath + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:' + (unlocked ? 1 : 0.3) + ';" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<span style="position:relative;z-index:2;font-size:2em;font-weight:bold;color:' + (unlocked ? '#fff' : '#999') + ';text-shadow:0 2px 4px #000;">' + lvl + '</span>';
             h += '</div>';
             h += '</div>';
         }
         h += '</div>';
         h += '</div>';
 
-        UI._openScreenScrollable('🏚️ ' + (dungeonNames[dungeonId] || dungeonId), 'dungeon_select', h);
-    },
-
-    _showActions: function(dungeonId, level) {
-        var progress = this._getProgress()[dungeonId] || { level: 1, cups: {} };
-        var cups = progress.cups || {};
-        var cupCount = cups[level] ? (cups[level].count || 0) : 0;
-        var maxCups = 3;
-        var autoTickets = Sherwood.Bag ? Sherwood.Bag.getResource('autoFightTickets') : 0;
-
-        var h = '<div style="padding:20px;text-align:center;max-width:400px;margin:0 auto;">';
-        h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:8px;">Этаж ' + level + '</div>';
-
-        h += '<div style="margin-bottom:12px;">';
-        for (var c = 0; c < maxCups; c++) {
-            h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:32px;height:32px;object-fit:contain;margin:0 2px;' + (c >= cupCount ? 'opacity:0.3;' : '') + '">';
-        }
-        h += '<div style="color:#aaa;font-size:0.7em;">' + cupCount + '/' + maxCups + ' кубков</div>';
-        h += '</div>';
-
-        h += '<button onclick="Sherwood.Dungeon._startDungeon(\'' + dungeonId + '\',' + level + ')" class="btn btn-gold" style="padding:10px 30px;font-size:0.9em;width:100%;margin-bottom:6px;">⚔️ Войти вручную</button>';
-
-        if (cupCount >= 1 && cupCount < 3) {
-            if (this.isAutoFightActive()) {
-                h += '<div style="background:#555;border-radius:8px;padding:8px;color:#999;font-size:0.8em;">Автобой уже активен</div>';
-            } else {
-                h += '<button onclick="Sherwood.Dungeon._startAutoFight(\'' + dungeonId + '\',' + level + ',false)" class="btn" style="padding:8px;font-size:0.8em;width:100%;margin-bottom:4px;background:#ff9800;">⏳ Автобой (10 мин) — 50 золота</button>';
-                if (autoTickets > 0) {
-                    h += '<button onclick="Sherwood.Dungeon._startAutoFight(\'' + dungeonId + '\',' + level + ',true)" class="btn btn-success" style="padding:8px;font-size:0.8em;width:100%;">⚡ Мгновенный автобой — 1 тикет (' + autoTickets + ' шт.)</button>';
-                } else {
-                    h += '<div style="background:#555;border-radius:8px;padding:8px;color:#999;font-size:0.7em;">Мгновенный автобой — нет тикетов</div>';
-                }
-            }
-        }
-
-        h += '</div>';
-
-        UI._openScreenScrollable('🏚️ Этаж ' + level, 'dungeon_select', h);
+        UI._openScreenScrollable('🏚️ ' + (dungeonNames[dungeonId] || dungeonId), null, h);
     },
 
     _startDungeon: function(id, level) {
@@ -889,10 +860,7 @@ Sherwood.Dungeon = {
         UI._stopMusic();
         UI._playMusic('dungeon_3');
 
-        if (typeof Sherwood.Dungeon2D5 !== 'undefined') {
-            if (!Sherwood.Dungeon2D5._container) {
-                Sherwood.Dungeon2D5.init();
-            }
+        if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
             Sherwood.Dungeon2D5.render();
         } else {
             UI._showToast('🏚️ 3D подземка в разработке');
@@ -1132,7 +1100,7 @@ Sherwood.Dungeon2D5 = {
         this._joystick.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:300px;height:300px;z-index:10;background:url("assets/dungeon_tiles/visual_dungeon/joystick.png") center/contain no-repeat;';
 
         this._joystickVideo = document.createElement('video');
-        this._joystickVideo.src = 'assets/assets2/animation/step_up.webm';
+        this._joystickVideo.src = 'assets/animation/step_up.webm';
         this._joystickVideo.loop = true;
         this._joystickVideo.muted = true;
         this._joystickVideo.playsInline = true;
@@ -1828,7 +1796,6 @@ Sherwood.Dungeon2D5 = {
             this.init();
         }
         
-        // Показываем подземку (без видео)
         this._dungeon = Sherwood.Dungeon.getDungeon();
         if (!this._dungeon) {
             console.warn('🏚️ Данжена нет, создаём новый');
