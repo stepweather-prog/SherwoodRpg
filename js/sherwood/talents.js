@@ -15,7 +15,7 @@ Sherwood.Talents = {
     },
 
     TALENTS: [
-        // ВЕТКА УРОНА (Данные таланты увеличивают атаку, шанс крита, яд)
+        // ВЕТКА УРОНА
         { id: 'simple_attack', name: 'Простая атака', branch: 'damage', icon: 'assets/assets2/talents/simple_attack.png', desc: 'Увеличивает базовый урон на 10%.', maxLevel: 5 },
         { id: 'poisoning', name: 'Отравление', branch: 'damage', icon: 'assets/assets2/talents/poisoning.png', desc: 'Каждая атака имеет шанс отравить врага.', maxLevel: 3 },
         { id: 'vampirism', name: 'Вампиризм', branch: 'damage', icon: 'assets/assets2/talents/vampirism.png', desc: 'Восстанавливает HP за каждый нанесённый удар.', maxLevel: 3 },
@@ -25,14 +25,14 @@ Sherwood.Talents = {
         { id: 'force_of_elements', name: 'Сила стихий', branch: 'damage', icon: 'assets/assets2/talents/force of the elements.png', desc: 'Добавляет стихийный урон к атакам.', maxLevel: 5 },
         { id: 'evil_eye', name: 'Злой глаз', branch: 'damage', icon: 'assets/assets2/talents/evil_eye.png', desc: 'Снижает удачу врага.', maxLevel: 2 },
 
-        // ВЕТКА ХИЛА (Исцеление, восстановление HP, защита от урона)
+        // ВЕТКА ХИЛА
         { id: 'healing', name: 'Исцеление', branch: 'heal', icon: 'assets/assets2/talents/healing.png', desc: 'Увеличивает эффективность лечения на 15%.', maxLevel: 4 },
         { id: 'healer', name: 'Хилер', branch: 'heal', icon: 'assets/assets2/talents/Healer.png', desc: 'Увеличивает лечение союзников.', maxLevel: 3 },
         { id: 'funnel', name: 'Воронка', branch: 'heal', icon: 'assets/assets2/talents/funnel.png', desc: 'Притягивает врагов к центру.', maxLevel: 2 },
         { id: 'inspiration', name: 'Вдохновение', branch: 'heal', icon: 'assets/assets2/talents/inspiration.png', desc: 'Повышает урон всей команды.', maxLevel: 2 },
         { id: 'knot', name: 'Узел', branch: 'heal', icon: 'assets/assets2/talents/knot.png', desc: 'Связывает врагов, снижая их мобильность.', maxLevel: 2 },
 
-        // ВЕТКА ПАССИВА (Защита, снижение урона, иммунитет)
+        // ВЕТКА ПАССИВА
         { id: 'blocking', name: 'Блокировка', branch: 'passive', icon: 'assets/assets2/talents/blocking.png', desc: 'Уменьшает получаемый урон на 8%.', maxLevel: 3 },
         { id: 'parry', name: 'Парирование', branch: 'passive', icon: 'assets/assets2/talents/parry.png', desc: 'Шанс полностью отразить атаку врага.', maxLevel: 2 },
         { id: 'silence', name: 'Тишина', branch: 'passive', icon: 'assets/assets2/talents/Silence.png', desc: 'Шанс запретить врагу использовать навыки.', maxLevel: 2 },
@@ -109,20 +109,19 @@ Sherwood.Talents = {
 
         var h = '<div style="text-align:center;padding:10px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
-
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
 
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto;">';
+            h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:360px;margin:0 auto;">';
             for (var i = 0; i < learnedTalents.length; i++) {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
-                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:8px;cursor:pointer;">';
-                h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-                h += '<div style="color:#fff;font-size:10px;margin-top:4px;">' + t.name + '</div>';
+                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
+                h += '<img src="' + t.icon + '" style="width:90px;height:90px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<div style="color:#fff;font-size:11px;text-align:center;margin-bottom:4px;">' + t.name + '</div>';
                 h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
                 h += '</div>';
             }
@@ -131,7 +130,7 @@ Sherwood.Talents = {
 
         h += '</div>';
 
-        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
+        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
     },
 
     // ========== ЭКРАН ДЛЯ ТАВЕРНЫ (все таланты, можно изучать) ==========
@@ -166,14 +165,14 @@ Sherwood.Talents = {
             // Ветка
             h += '<div style="margin-bottom:30px;">';
             h += '<div style="color:' + branch.color + ';font-size:20px;font-weight:bold;margin-bottom:10px;">' + branch.name + '</div>';
-            h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:420px;margin:0 auto;">';
+            h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:360px;margin:0 auto;">';
 
             for (var j = 0; j < branchTalents.length; j++) {
                 var t = branchTalents[j];
                 var lvl = this.getTalentLevel(t.id);
-                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:8px;cursor:pointer;">';
-                h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-                h += '<div style="color:#fff;font-size:10px;margin-top:4px;">' + t.name + '</div>';
+                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
+                h += '<img src="' + t.icon + '" style="width:90px;height:90px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<div style="color:#fff;font-size:11px;text-align:center;margin-bottom:4px;">' + t.name + '</div>';
                 h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
                 h += '</div>';
             }
