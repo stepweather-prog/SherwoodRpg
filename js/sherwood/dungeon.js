@@ -155,6 +155,10 @@ Sherwood.Dungeon2D5 = {
     _renderLoop: null,
     _w: 480,
     _h: 800,
+    _walls: [],
+    _floors: [],
+    _ceilings: [],
+    _images: {},
 
     init: function() {
         this._w = UI._screenLayer ? UI._screenLayer.clientWidth : 480;
