@@ -745,29 +745,24 @@ UI.training = function() {
     var names = { attack: 'Атака', defense: 'Защита', hp: 'Здоровье' };
     var colors = { attack: '#f44336', defense: '#2196f3', hp: '#4caf50' };
     var bonuses = { attack: 3, defense: 3, hp: 3 };
-    
-    // Иконки из главной шапки
     var icons = {
         attack: 'assets/assets2/icons/power.png',
         defense: 'assets/assets2/icons/armor.png',
         hp: 'assets/assets2/icons/life.png'
     };
-    
     var h = '<div style="padding:10px;display:flex;flex-direction:column;gap:15px;">';
     for (var i = 0; i < stats.length; i++) {
         var s = stats[i];
         var lvl = tl[s] || 0;
         var nextLevel = lvl + 1;
-        var cost = 1; // Стоимость в очках опыта
+        var cost = 1;
         var currencyIcon = 'assets/assets2/game_details/tablet_of_experience.png';
-        
         h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:15px;">';
         h += '<img src="' + icons[s] + '" style="width:70px;height:70px;object-fit:contain;margin-bottom:8px;">';
         h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;">' + names[s] + '</div>';
         h += '<div style="color:#aaa;font-size:0.8em;">Уровень: ' + lvl + '/1000</div>';
         h += '<div style="color:' + colors[s] + ';font-size:0.7em;">+' + bonuses[s] + ' за уровень</div>';
         h += '<div style="color:#e0c080;font-size:0.75em;margin-bottom:6px;">Стоимость: <img src="' + currencyIcon + '" style="width:16px;height:16px;vertical-align:middle;"> ' + cost + ' очков опыта</div>';
-        
         if (lvl >= 1000) {
             h += '<div style="color:#4caf50;font-weight:bold;">МАКСИМУМ</div>';
         } else {
