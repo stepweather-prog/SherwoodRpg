@@ -124,7 +124,7 @@ Sherwood.Dungeon = {
 };
 
 // ============================================================
-//  РЕНДЕР (Sherwood.Dungeon2D5)
+//  РЕНДЕР (Sherwood.Dungeon2D5) — ТВОЙ МАКЕТ PS2 STYLE
 // ============================================================
 Sherwood.Dungeon2D5 = {
     _scene: null,
@@ -139,10 +139,6 @@ Sherwood.Dungeon2D5 = {
     _renderLoop: null,
     _w: 480,
     _h: 800,
-    _walls: [],
-    _floors: [],
-    _ceilings: [],
-    _images: {},
 
     init: function() {
         this._w = UI._screenLayer ? UI._screenLayer.clientWidth : 480;
@@ -153,14 +149,18 @@ Sherwood.Dungeon2D5 = {
 
     _setupThree: function() {
         this._scene = new THREE.Scene();
-        this._scene.background = null;
+        this._scene.background = new THREE.Color(0x1a1208);
+        this._scene.fog = new THREE.Fog(0x1a1208, 7, 16);
+        
         this._camera = new THREE.PerspectiveCamera(65, this._w / this._h, 0.1, 25);
         this._camera.position.set(0, 0.65, 0);
         this._camera.rotation.order = 'YXZ';
-        this._renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        this._renderer = new THREE.WebGLRenderer({ antialias: false });
         this._renderer.setSize(this._w, this._h);
         this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        this._renderer.setClearColor(0x000000, 0);
+        this._renderer.setClearColor(0x1a1208, 1);
+        
         this._scene.add(new THREE.AmbientLight(0x887766, 1.0));
         const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
         mainLight.position.set(5, 10, 5);
@@ -168,6 +168,7 @@ Sherwood.Dungeon2D5 = {
         const fillLight = new THREE.DirectionalLight(0x998877, 0.6);
         fillLight.position.set(-5, 2, -5);
         this._scene.add(fillLight);
+        
         this._group = new THREE.Group();
         this._scene.add(this._group);
     },
@@ -184,7 +185,7 @@ Sherwood.Dungeon2D5 = {
         this._exitBtn.addEventListener('click', function() { UI.loadHome(); });
         this._topPanel.appendChild(this._exitBtn);
         
-        // Джойстик
+        // ДЖОЙСТИК ТВОЕГО ШАБЛОНА (4 кнопки)
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);width:180px;height:180px;z-index:30;pointer-events:auto;';
         
@@ -208,116 +209,124 @@ Sherwood.Dungeon2D5 = {
             });
             self._joystick.appendChild(btn);
         });
-        
-        this._renderer.domElement.addEventListener('click', function(e) { self._handleWallClick(e); });
     },
 
-    _handleWallClick: function(e) {
-        if (this._isMoving) return;
+    // =========== ГЕНЕРАЦИЯ ТЕКСТУР ЧЕРЕЗ CANVAS ===========
+    _createWallTexture: function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#5a4a3a';
+        ctx.fillRect(0, 0, 128, 128);
+        for (var i = 0; i < 50; i++) {
+            ctx.fillStyle = 'rgba(' + (40 + Math.random()*40) + ', ' + (30 + Math.random()*30) + ', ' + (20 + Math.random()*20) + ', 0.5)';
+            ctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*20+5, Math.random()*20+5);
+        }
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+    },
+
+    _createFloorTexture: function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#3a2a1a';
+        ctx.fillRect(0, 0, 128, 128);
+        for (var i = 0; i < 80; i++) {
+            ctx.fillStyle = 'rgba(' + (30 + Math.random()*30) + ', ' + (20 + Math.random()*20) + ', ' + (10 + Math.random()*15) + ', 0.3)';
+            ctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*10+2, Math.random()*10+2);
+        }
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+    },
+
+    _createCeilTexture: function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#2a1a0a';
+        ctx.fillRect(0, 0, 128, 128);
+        for (var i = 0; i < 30; i++) {
+            ctx.fillStyle = 'rgba(30, 20, 10, 0.5)';
+            ctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*15+3, Math.random()*15+3);
+        }
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+    },
+
+    // =========== ПОСТРОЕНИЕ СЦЕНЫ (ТВОЙ МАКЕТ) ===========
+    _buildMesh: function() {
         var d = this._dungeon;
         if (!d) return;
-        var rect = this._renderer.domElement.getBoundingClientRect();
-        var mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        var mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        var raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this._camera);
-        var intersects = raycaster.intersectObjects(this._group.children, false);
-        for (var i = 0; i < intersects.length; i++) {
-            var obj = intersects[i].object;
-            if (obj.userData && obj.userData.openable) {
-                var dist = Math.abs(obj.userData.gridX - d.px) + Math.abs(obj.userData.gridY - d.py);
-                if (dist === 1) this._openWall(obj.userData.gridX, obj.userData.gridY);
-                break;
+        while (this._group.children.length > 0) this._group.remove(this._group.children[0]);
+        
+        var size = d.size, wallHeight = 1.1, cellSize = 1, center = Math.floor(size / 2);
+        
+        var wallMat = new THREE.MeshStandardMaterial({ map: this._createWallTexture(), roughness: 0.7, metalness: 0.05, emissive: new THREE.Color(0x1a0f08), emissiveIntensity: 0.2 });
+        var floorMat = new THREE.MeshStandardMaterial({ map: this._createFloorTexture(), roughness: 0.9, metalness: 0.0 });
+        var ceilMat = new THREE.MeshStandardMaterial({ map: this._createCeilTexture(), roughness: 0.9, metalness: 0.0 });
+        
+        for (var row = 0; row < size; row++) {
+            for (var col = 0; col < size; col++) {
+                var x = col - center, z = row - center;
+                var cell = d.grid[row][col];
+                
+                var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.set(x, 0, z);
+                this._group.add(floor);
+                
+                var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                ceil.rotation.x = Math.PI / 2;
+                ceil.position.set(x, wallHeight, z);
+                this._group.add(ceil);
+                
+                if (cell && !cell.open && !cell.isPath) {
+                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
+                    wall.position.set(x, wallHeight / 2, z);
+                    this._group.add(wall);
+                }
+                
+                if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
+                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), new THREE.MeshStandardMaterial({ map: this._createWallTexture(), roughness: 0.7 }));
+                    wall.position.set(x, wallHeight / 2, z);
+                    wall.userData = { openable: true, gridX: col, gridY: row };
+                    this._group.add(wall);
+                }
             }
         }
-    },
-
-    _openWall: function(gridX, gridY) {
-        var d = this._dungeon;
-        if (!d) return;
-        var cell = d.grid[gridY][gridX];
-        if (!cell || !cell.isPath) return;
-        cell.open = true;
-        cell.type = 1;
-        if (cell.monster) {
-            this._buildMesh();
-            this._updateCamera();
-            this._renderer.render(this._scene, this._camera);
-            Sherwood.Combat.start(cell.monsterId, cell.isBoss || false, 'dungeon');
-            setTimeout(function() { UI._showBattleScreen(); }, 400);
-        } else {
-            if (UI && UI._playSound) UI._playSound('tile_open');
-            this._buildMesh();
-            this._updateCamera();
-            this._updateMinimap();
-            this._checkInteract();
+        
+        // СВЕТИЛЬНИКИ (как в макете)
+        for (var row = 0; row < size; row++) {
+            for (var col = 0; col < size; col++) {
+                if (d.grid[row][col].open === true && row % 2 === 0 && col % 2 === 0) {
+                    var x = col - center, z = row - center;
+                    var torch = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.05, 6, 6),
+                        new THREE.MeshStandardMaterial({
+                            color: 0xffaa55,
+                            emissive: new THREE.Color(0xff6600),
+                            emissiveIntensity: 1.0
+                        })
+                    );
+                    torch.position.set(x, wallHeight - 0.05, z);
+                    this._group.add(torch);
+                    
+                    var light = new THREE.PointLight(0xff8844, 0.5, 4);
+                    light.position.set(x, wallHeight - 0.1, z);
+                    this._group.add(light);
+                }
+            }
         }
-    },
-
-    _moveForward: function() {
-        if (this._isMoving || this._isTurning) return;
-        var d = this._dungeon;
-        if (!d) return;
-        
-        var dx = 0, dy = 0;
-        if (this._dir === 0) dy = -1;
-        else if (this._dir === 1) dx = 1;
-        else if (this._dir === 2) dy = 1;
-        else dx = -1;
-        
-        var nx = d.px + dx;
-        var ny = d.py + dy;
-        if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
-        var cell = d.grid[ny][nx];
-        if (!cell || !cell.isPath) return;
-        if (!cell.open) { cell.open = true; cell.type = 1; }
-        
-        this._fromX = d.px;
-        this._fromY = d.py;
-        this._toX = nx;
-        this._toY = ny;
-        this._moveT = 0;
-        this._isMoving = true;
-    },
-
-    _moveBackward: function() {
-        if (this._isMoving || this._isTurning) return;
-        var d = this._dungeon;
-        if (!d) return;
-        
-        var dx = 0, dy = 0;
-        if (this._dir === 0) dy = 1;
-        else if (this._dir === 1) dx = -1;
-        else if (this._dir === 2) dy = -1;
-        else dx = 1;
-        
-        var nx = d.px + dx;
-        var ny = d.py + dy;
-        if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
-        var cell = d.grid[ny][nx];
-        if (!cell || !cell.isPath) return;
-        if (!cell.open) { cell.open = true; cell.type = 1; }
-        
-        this._fromX = d.px;
-        this._fromY = d.py;
-        this._toX = nx;
-        this._toY = ny;
-        this._moveT = 0;
-        this._isMoving = true;
-    },
-
-    _turnLeft: function() {
-        if (this._isMoving || this._isTurning) return;
-        this._dir = (this._dir + 3) % 4;
-        this._updateCamera();
-        this._buildMesh();
-    },
-
-    _turnRight: function() {
-        if (this._isMoving || this._isTurning) return;
-        this._dir = (this._dir + 1) % 4;
-        this._updateCamera();
-        this._buildMesh();
     },
 
     _isAdjacentToOpen: function(d, col, row) {
@@ -341,112 +350,65 @@ Sherwood.Dungeon2D5 = {
         this._camera.quaternion.setFromEuler(new THREE.Euler(0, -this._dir * Math.PI / 2, 0, 'YXZ'));
     },
 
-    _buildMesh: function() {
+    // =========== УПРАВЛЕНИЕ ===========
+    _moveForward: function() {
+        if (this._isMoving || this._isTurning) return;
         var d = this._dungeon;
         if (!d) return;
-        while (this._group.children.length > 0) this._group.remove(this._group.children[0]);
-        
-        var size = d.size, wallHeight = 1.1, cellSize = 1, center = Math.floor(size / 2);
-        
-        var wallMat = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.7 });
-        var floorMat = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 });
-        var ceilMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
-        
-        for (var row = 0; row < size; row++) {
-            for (var col = 0; col < size; col++) {
-                var x = col - center, z = row - center;
-                var cell = d.grid[row][col];
-                
-                var floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-                floor.rotation.x = -Math.PI / 2;
-                floor.position.set(x, 0, z);
-                this._group.add(floor);
-                
-                var ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
-                ceil.rotation.x = Math.PI / 2;
-                ceil.position.set(x, wallHeight, z);
-                this._group.add(ceil);
-                
-                if (cell && !cell.open && !cell.isPath) {
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
-                    wall.position.set(x, wallHeight / 2, z);
-                    wall.userData = { openable: false, gridX: col, gridY: row };
-                    this._group.add(wall);
-                }
-                
-                if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), new THREE.MeshStandardMaterial({ map: this._images.wall_openable, roughness: 0.7 }));
-                    wall.position.set(x, wallHeight / 2, z);
-                    wall.userData = { openable: true, gridX: col, gridY: row };
-                    this._group.add(wall);
-                }
-            }
-        }
+        var dx = 0, dy = 0;
+        if (this._dir === 0) dy = -1;
+        else if (this._dir === 1) dx = 1;
+        else if (this._dir === 2) dy = 1;
+        else dx = -1;
+        var nx = d.px + dx;
+        var ny = d.py + dy;
+        if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
+        var cell = d.grid[ny][nx];
+        if (!cell || !cell.isPath) return;
+        if (!cell.open) { cell.open = true; cell.type = 1; }
+        this._fromX = d.px;
+        this._fromY = d.py;
+        this._toX = nx;
+        this._toY = ny;
+        this._moveT = 0;
+        this._isMoving = true;
     },
 
-    _updateMinimap: function() {
-        if (!this._minimapCtx || !this._dungeon) return;
-        var ctx = this._minimapCtx;
-        var d = this._dungeon;
-        var mapSize = 100;
-        var center = mapSize / 2;
-        var radius = mapSize / 2 - 2;
-        var cellSize = (radius * 2) / d.size;
-        ctx.clearRect(0, 0, mapSize, mapSize);
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(center, center, radius, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, mapSize, mapSize);
-        for (var row = 0; row < d.size; row++) {
-            for (var col = 0; col < d.size; col++) {
-                var cell = d.grid[row][col];
-                var x = col * cellSize;
-                var y = row * cellSize;
-                if (cell && cell.open) { ctx.fillStyle = '#4a4a4a'; ctx.fillRect(x, y, cellSize, cellSize); }
-                else if (cell && cell.isPath && this._isAdjacentToOpen(d, col, row)) { ctx.fillStyle = '#8b6914'; ctx.fillRect(x, y, cellSize, cellSize); }
-                else { ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x, y, cellSize, cellSize); }
-            }
-        }
-        ctx.fillStyle = '#ff4444';
-        ctx.beginPath();
-        ctx.arc(d.px * cellSize + cellSize / 2, d.py * cellSize + cellSize / 2, cellSize / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    },
-
-    _checkInteract: function() {
+    _moveBackward: function() {
+        if (this._isMoving || this._isTurning) return;
         var d = this._dungeon;
         if (!d) return;
-        var cell = d.grid[d.py][d.px];
-        if (!cell) return;
-        if (cell.chest && !cell.looted) {
-            var btn = document.createElement('button');
-            btn.style.cssText = 'position:fixed;bottom:350px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.85);border:3px solid #ffd700;cursor:pointer;z-index:11;';
-            btn.innerHTML = '<img src="assets/interface/chest_open.png" style="width:100%;height:100%;object-fit:contain;">';
-            btn.addEventListener('click', function() { this._collectChest(); }.bind(this));
-            document.body.appendChild(btn);
-        } else {
-            var oldBtn = document.querySelectorAll('body > button');
-            for (var i = 0; i < oldBtn.length; i++) {
-                if (oldBtn[i].style.bottom === '350px') {
-                    oldBtn[i].remove();
-                }
-            }
-        }
+        var dx = 0, dy = 0;
+        if (this._dir === 0) dy = 1;
+        else if (this._dir === 1) dx = -1;
+        else if (this._dir === 2) dy = -1;
+        else dx = 1;
+        var nx = d.px + dx;
+        var ny = d.py + dy;
+        if (nx < 0 || nx >= d.size || ny < 0 || ny >= d.size) return;
+        var cell = d.grid[ny][nx];
+        if (!cell || !cell.isPath) return;
+        if (!cell.open) { cell.open = true; cell.type = 1; }
+        this._fromX = d.px;
+        this._fromY = d.py;
+        this._toX = nx;
+        this._toY = ny;
+        this._moveT = 0;
+        this._isMoving = true;
     },
 
-    _collectChest: function() {
-        var d = this._dungeon;
-        if (!d) return;
-        var cell = d.grid[d.py][d.px];
-        if (cell.chest && !cell.looted) {
-            cell.looted = true;
-            UI._showToast('📦 Сундук открыт!');
-        }
+    _turnLeft: function() {
+        if (this._isMoving || this._isTurning) return;
+        this._dir = (this._dir + 3) % 4;
+        this._updateCamera();
         this._buildMesh();
-        this._checkInteract();
+    },
+
+    _turnRight: function() {
+        if (this._isMoving || this._isTurning) return;
+        this._dir = (this._dir + 1) % 4;
+        this._updateCamera();
+        this._buildMesh();
     },
 
     _ease: function(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; },
@@ -467,7 +429,6 @@ Sherwood.Dungeon2D5 = {
         this._isMoving = false;
         this._buildMesh();
         this._updateCamera();
-        this._checkInteract();
         if (this._renderLoop) cancelAnimationFrame(this._renderLoop);
         this._startLoop();
     },
@@ -492,7 +453,6 @@ Sherwood.Dungeon2D5 = {
                         d.py = self._toY;
                         self._buildMesh();
                         self._updateCamera();
-                        self._checkInteract();
                     }
                 }
             }
