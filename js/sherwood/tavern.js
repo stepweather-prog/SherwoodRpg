@@ -116,8 +116,8 @@ Sherwood.Tavern = {
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
         h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;">';
 
-        // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (на самом верху)
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:20px;margin-top:15px;">';
+        // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (опущены ниже и с меньшим отступом)
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:100px;">';
         
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
