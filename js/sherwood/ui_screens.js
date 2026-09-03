@@ -762,7 +762,7 @@ UI.training = function() {
         var currencyIcon = 'assets/assets2/game_details/tablet_of_experience.png';
         
         h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:15px;">';
-        h += '<img src="' + icons[s] + '" style="width:64px;height:64px;object-fit:contain;margin-bottom:8px;">';
+        h += '<img src="' + icons[s] + '" style="width:70px;height:70px;object-fit:contain;margin-bottom:8px;">';
         h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;">' + names[s] + '</div>';
         h += '<div style="color:#aaa;font-size:0.8em;">Уровень: ' + lvl + '/1000</div>';
         h += '<div style="color:' + colors[s] + ';font-size:0.7em;">+' + bonuses[s] + ' за уровень</div>';
@@ -776,7 +776,7 @@ UI.training = function() {
         h += '</div>';
     }
     h += '<div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div></div>';
-    UI._openScreenScrollable('Тренировка', 'training', h, 'UI.tavern()');
+    UI._openScreenScrollable('Тренировка', 'training', h, gb);
 };
 
 UI._doTraining = function(stat) {
