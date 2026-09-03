@@ -1,5 +1,5 @@
 /**
- * Sherwood Dungeon — Единый файл
+ * Sherwood Dungeon — Рабочая версия (перенос твоего newlabir.html)
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -11,18 +11,10 @@ if (typeof Sherwood === 'undefined') {
 // ============================================================
 Sherwood.Dungeon = {
     _dungeon: null,
-    _ticketTimer: null,
     
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
-        if (!p.dungeonProgress) {
-            p.dungeonProgress = {
-                forest: { level: 1, cups: {} },
-                swamp: { level: 1, cups: {} },
-                cave: { level: 1, cups: {} }
-            };
-        }
         if (!p.dungeon) {
             p.dungeon = { tickets: 15, maxTickets: 15 };
         }
@@ -33,8 +25,7 @@ Sherwood.Dungeon = {
     generate: function(dungeonId, level) {
         var p = Sherwood.getPlayer();
         if (!p) return null;
-        var dungeonTickets = (p.dungeon && p.dungeon.tickets) ? p.dungeon.tickets : 0;
-        if (dungeonTickets <= 0) return null;
+        if ((p.dungeon && p.dungeon.tickets) <= 0) return null;
         p.dungeon.tickets--;
         Sherwood.saveGame();
         
@@ -47,36 +38,34 @@ Sherwood.Dungeon = {
             }
         }
         
-        function generateMaze() {
-            var stack = [];
-            var startX = 1, startY = 1;
-            map[startY][startX] = 0;
-            stack.push({x: startX, y: startY});
-            var dirs = [{x: 0, y: -2}, {x: 0, y: 2}, {x: -2, y: 0}, {x: 2, y: 0}];
-            while (stack.length > 0) {
-                var current = stack[stack.length - 1];
-                var neighbors = [];
-                for (var d = 0; d < dirs.length; d++) {
-                    var dir = dirs[d];
-                    var nx = current.x + dir.x;
-                    var ny = current.y + dir.y;
-                    if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && map[ny][nx] === 1) {
-                        neighbors.push({x: nx, y: ny, dx: dir.x/2, dy: dir.y/2});
-                    }
-                }
-                if (neighbors.length > 0) {
-                    var next = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    map[next.y][next.x] = 0;
-                    map[current.y + next.dy][current.x + next.dx] = 0;
-                    stack.push({x: next.x, y: next.y});
-                } else {
-                    stack.pop();
+        // Генерация лабиринта (как в newlabir.html)
+        var stack = [];
+        var startX = 1, startY = 1;
+        map[startY][startX] = 0;
+        stack.push({x: startX, y: startY});
+        var dirs = [{x: 0, y: -2}, {x: 0, y: 2}, {x: -2, y: 0}, {x: 2, y: 0}];
+        
+        while (stack.length > 0) {
+            var current = stack[stack.length - 1];
+            var neighbors = [];
+            for (var d = 0; d < dirs.length; d++) {
+                var dir = dirs[d];
+                var nx = current.x + dir.x;
+                var ny = current.y + dir.y;
+                if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && map[ny][nx] === 1) {
+                    neighbors.push({x: nx, y: ny, dx: dir.x/2, dy: dir.y/2});
                 }
             }
-            map[size-2][size-2] = 0;
+            if (neighbors.length > 0) {
+                var next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                map[next.y][next.x] = 0;
+                map[current.y + next.dy][current.x + next.dx] = 0;
+                stack.push({x: next.x, y: next.y});
+            } else {
+                stack.pop();
+            }
         }
-        
-        generateMaze();
+        map[size-2][size-2] = 0;
         
         this._dungeon = {
             id: dungeonId,
@@ -85,7 +74,10 @@ Sherwood.Dungeon = {
             map: map,
             grid: map, // Алиас
             px: 1,
-            py: 1
+            py: 1,
+            monstersKilled: 0,
+            totalMonsters: 5,
+            minToKill: 3
         };
         return this._dungeon;
     },
@@ -124,7 +116,7 @@ Sherwood.Dungeon = {
 };
 
 // ============================================================
-//  РЕНДЕР (Sherwood.Dungeon2D5) — ТВОЙ МАКЕТ PS2 STYLE
+//  РЕНДЕР (Sherwood.Dungeon2D5) — ТВОЙ МАКЕТ
 // ============================================================
 Sherwood.Dungeon2D5 = {
     _scene: null,
@@ -185,7 +177,7 @@ Sherwood.Dungeon2D5 = {
         this._exitBtn.addEventListener('click', function() { UI.loadHome(); });
         this._topPanel.appendChild(this._exitBtn);
         
-        // ДЖОЙСТИК ТВОЕГО ШАБЛОНА (4 кнопки)
+        // Джойстик (4 кнопки)
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);width:180px;height:180px;z-index:30;pointer-events:auto;';
         
@@ -222,6 +214,13 @@ Sherwood.Dungeon2D5 = {
         for (var i = 0; i < 50; i++) {
             ctx.fillStyle = 'rgba(' + (40 + Math.random()*40) + ', ' + (30 + Math.random()*30) + ', ' + (20 + Math.random()*20) + ', 0.5)';
             ctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*20+5, Math.random()*20+5);
+        }
+        for (var row = 0; row < 8; row++) {
+            for (var col = 0; col < 4; col++) {
+                var offset = row % 2 === 0 ? 0 : 16;
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.strokeRect(col*32 + offset, row*16, 32, 16);
+            }
         }
         var tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
@@ -263,7 +262,7 @@ Sherwood.Dungeon2D5 = {
         return tex;
     },
 
-    // =========== ПОСТРОЕНИЕ СЦЕНЫ (ТВОЙ МАКЕТ) ===========
+    // =========== ПОСТРОЕНИЕ СЦЕНЫ ===========
     _buildMesh: function() {
         var d = this._dungeon;
         if (!d) return;
@@ -297,7 +296,7 @@ Sherwood.Dungeon2D5 = {
                 }
                 
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), new THREE.MeshStandardMaterial({ map: this._createWallTexture(), roughness: 0.7 }));
+                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
                     wall.position.set(x, wallHeight / 2, z);
                     wall.userData = { openable: true, gridX: col, gridY: row };
                     this._group.add(wall);
@@ -305,7 +304,7 @@ Sherwood.Dungeon2D5 = {
             }
         }
         
-        // СВЕТИЛЬНИКИ (как в макете)
+        // СВЕТИЛЬНИКИ
         for (var row = 0; row < size; row++) {
             for (var col = 0; col < size; col++) {
                 if (d.grid[row][col].open === true && row % 2 === 0 && col % 2 === 0) {
