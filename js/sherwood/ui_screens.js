@@ -776,7 +776,7 @@ UI.training = function() {
         h += '</div>';
     }
     h += '<div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div></div>';
-    UI._openScreenScrollable('Тренировка', 'training', h, gb);
+    UI._openScreenScrollable('Тренировка', 'training', h, 'UI.tavern()');
 };
 
 UI._doTraining = function(stat) {
