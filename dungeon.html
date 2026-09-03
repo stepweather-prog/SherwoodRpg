@@ -240,37 +240,9 @@
                // wctx.strokeRect(col*32 + offset, row*16, 32, 16);
           //  }
        // }
-       // const wallTexture = new THREE.CanvasTexture(wallCanvas);
-       // wallTexture.wrapS = THREE.RepeatWrapping;
-     //   wallTexture.wrapT = THREE.RepeatWrapping;
-
-      //  const floorCanvas = document.createElement('canvas');
-       // floorCanvas.width = 128;
-     //   floorCanvas.height = 128;
-      //  const fctx = floorCanvas.getContext('2d');
-       // fctx.fillStyle = '#3a2a1a';
-       // fctx.fillRect(0, 0, 128, 128);
-       // for (let i = 0; i < 80; i++) {
-          //  fctx.fillStyle = `rgba(${30 + Math.random()*30}, ${20 + Math.random()*20}, ${10 + Math.random()*15}, 0.3)`;
-         //   fctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*10+2, Math.random()*10+2);
-       // }
-      //  const floorTexture = new THREE.CanvasTexture(floorCanvas);
-      //  floorTexture.wrapS = THREE.RepeatWrapping;
-      //  floorTexture.wrapT = THREE.RepeatWrapping;
-
-     //   const ceilCanvas = document.createElement('canvas');
-     //   ceilCanvas.width = 128;
-     //   ceilCanvas.height = 128;
-    //    const cctx = ceilCanvas.getContext('2d');
-     //   cctx.fillStyle = '#2a1a0a';
-    //    cctx.fillRect(0, 0, 128, 128);
-    //    for (let i = 0; i < 30; i++) {
-    //        cctx.fillStyle = `rgba(30, 20, 10, 0.5)`;
-    //        cctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*15+3, Math.random()*15+3);
-      //  }
-    //    const ceilTexture = new THREE.CanvasTexture(ceilCanvas);
-      //  ceilTexture.wrapS = THREE.RepeatWrapping;
-     //   ceilTexture.wrapT = THREE.RepeatWrapping; //
+       const wallTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
+const floorTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
+const ceilTexture = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_area_1.png');
 
     const wallMat = new THREE.MeshStandardMaterial({
     map: wallTexture,
