@@ -111,8 +111,9 @@ Sherwood.Dungeon = {
         if (typeof UI === 'undefined') return;
         UI._playSound('click');
         
-        var h = '<div style="text-align:center;padding:10px;">';
+        var h = '<div style="text-align:center;padding:10px;background:url(\'assets/assets2/Sherwood_Square/substrate.png\') center/cover no-repeat;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">🏚️ Подземка</div>';
+        h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:120px;height:120px;object-fit:contain;margin:0 auto 15px;display:block;">';
         h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;">';
         h += '<button onclick="Sherwood.Dungeon._startDungeon(\'forest\', 1)" style="padding:12px 24px;background:#c9a040;border:none;border-radius:8px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">⚔️ Войти в Проклятую чащу</button>';
         h += '</div>';
@@ -138,6 +139,10 @@ Sherwood.Dungeon2D5 = {
     _renderLoop: null,
     _w: 480,
     _h: 800,
+    _walls: [],
+    _floors: [],
+    _ceilings: [],
+    _images: {},
 
     init: function() {
         this._w = UI._screenLayer ? UI._screenLayer.clientWidth : 480;
