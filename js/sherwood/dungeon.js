@@ -169,22 +169,28 @@ Sherwood.Dungeon2D5 = {
     },
 
     _loadTextures: function() {
-        const loader = new THREE.TextureLoader();
-        function loadTex(src) { const tex = loader.load(src); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex; }
-        for (let i = 1; i <= 6; i++) this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png'));
-        for (let i = 1; i <= 6; i++) this._floors.push(loadTex('assets/dungeon_tiles/dungeon1/tiles_' + i + '.png'));
-        for (let i = 1; i <= 6; i++) this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png'));
-        this._images.wall_openable = loadTex('assets/interface/labyrinth_asset.png');
-        const objs = { altar: 'altar_of_the_first_dungeon.png', cauldron: 'cauldron_first_dungeon.png', potion: 'resource_life_potion.png', chest_locked: 'locked_chest_first_dungeon.png', chest_open: 'open_chest_first_dungeon.png', loot_bag: 'loot_bag_of_beasts.png', loot_bag_empty: 'empty_bag_of_loot_beasts.png', exit: 'exit_completion_dungeon.png', exit_locked: 'closed_level_lock_icon.png' };
-        for (let key in objs) this._images[key] = loadTex('assets/interface/' + objs[key]);
-        this._brazierVideo = document.createElement('video');
-        this._brazierVideo.src = 'assets/animation/stone_brazier_fire.webm';
-        this._brazierVideo.loop = true;
-        this._brazierVideo.muted = true;
-        this._brazierVideo.playsInline = true;
-        this._brazierVideo.autoplay = true;
-        this._brazierVideo.play().catch(function() {});
-    },
+    const loader = new THREE.TextureLoader();
+    function loadTex(src) { const tex = loader.load(src); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex; }
+    
+    // СТЕНЫ
+    for (let i = 1; i <= 6; i++) this._walls.push(loadTex('assets/dungeon_tiles/visual_dungeon/wall_' + i + '.png'));
+    // ПОЛЫ
+    for (let i = 1; i <= 6; i++) this._floors.push(loadTex('assets/dungeon_tiles/visual_dungeon/tiles_' + i + '.png'));
+    // ПОТОЛКИ
+    for (let i = 1; i <= 6; i++) this._ceilings.push(loadTex('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_' + i + '.png'));
+    
+    this._images.wall_openable = loadTex('assets/interface/labyrinth_asset.png');
+    const objs = { altar: 'altar_of_the_first_dungeon.png', cauldron: 'cauldron_first_dungeon.png', potion: 'resource_life_potion.png', chest_locked: 'locked_chest_first_dungeon.png', chest_open: 'open_chest_first_dungeon.png', loot_bag: 'loot_bag_of_beasts.png', loot_bag_empty: 'empty_bag_of_loot_beasts.png', exit: 'exit_completion_dungeon.png', exit_locked: 'closed_level_lock_icon.png' };
+    for (let key in objs) this._images[key] = loadTex('assets/interface/' + objs[key]);
+    
+    this._brazierVideo = document.createElement('video');
+    this._brazierVideo.src = 'assets/assets2/animation/stone_brazier_fire.webm';
+    this._brazierVideo.loop = true;
+    this._brazierVideo.muted = true;
+    this._brazierVideo.playsInline = true;
+    this._brazierVideo.autoplay = true;
+    this._brazierVideo.play().catch(function() {});
+},
 
     _setupThree: function() {
         this._scene = new THREE.Scene();
