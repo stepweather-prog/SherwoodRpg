@@ -2,113 +2,745 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SherwoodRpg</title>
-    <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Шервудская чащоба - PS2 Style</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            overflow: hidden; 
+            background: #000;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        canvas { 
+            display: block; 
+            background: #000;
+            touch-action: none;
+        }
+        #vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+        }
+        #scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 2px,
+                rgba(0,0,0,0.08) 2px,
+                rgba(0,0,0,0.08) 4px
+            );
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #c8a050;
+            font: 18px "Times New Roman", serif;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 20px;
+            border: 2px solid #6b5a3a;
+            border-radius: 4px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 10px #8b6b3a;
+            letter-spacing: 2px;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #c8a050;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 20;
+            text-shadow: 0 0 12px #8b6b3a;
+            opacity: 0.6;
+        }
+        #counter {
+            position: absolute;
+            bottom: 80px;
+            right: 30px;
+            color: #c8a050;
+            font: 16px "Times New Roman", serif;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 6px 14px;
+            border: 1px solid #4a3a2a;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 10;
+            letter-spacing: 1px;
+        }
+        #joystick {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 180px;
+            z-index: 30;
+            pointer-events: auto;
+        }
+        .arrow-btn {
+            position: absolute;
+            width: 56px;
+            height: 56px;
+            background: rgba(10, 8, 5, 0.9);
+            border: 2px solid #6b5a3a;
+            border-radius: 50%;
+            color: #c8a050;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+            text-shadow: 0 0 8px #8b6b3a;
+            box-shadow: 0 0 10px rgba(139, 107, 58, 0.3);
+        }
+        .arrow-btn:active {
+            background: rgba(139, 107, 58, 0.6);
+            transform: scale(0.9);
+            box-shadow: 0 0 20px rgba(139, 107, 58, 0.8);
+        }
+        #btn-forward { top: 0; left: 62px; }
+        #btn-left { top: 62px; left: 0; }
+        #btn-right { top: 62px; left: 124px; }
+        #btn-back { top: 124px; left: 62px; }
+    </style>
 </head>
 <body>
-
-<div id="homeScreen">
-    <!-- Левая статуя за пределами игровой зоны -->
-    <img id="leftStatue" src="assets/assets2/game_details/left_statue_of_the_main_screen.png" alt="Left Statue">
-    
-    <!-- Левый разделитель — между статуей и gameZone -->
-    <img id="leftDivider" src="assets/assets2/game_details/left_divider.png" alt="Left Divider">
-    
-    <!-- ЦЕНТРАЛЬНАЯ ИГРОВАЯ ЗОНА -->
-    <div id="gameZone">
-        <div id="loadingScreen" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2000;">
-        <img src="assets/assets2/backgrounds/loading_screen_with_logo.png" alt="Loading" style="width:100%;height:100%;object-fit:cover;">
-        
-    </div>
-        <!-- Фоны и декорации -->
-        <img id="substrate" src="assets/assets2/Sherwood_Square/substrate.png" alt="Substrate">
-        <img id="arch" src="assets/assets2/game_details/staircase_with_an_arch.png" alt="Arch">
-        
-        <!-- Главный герой -->
-        <img id="hero" src="assets/hero_skins/skin1_01.png" alt="Hero">
-
-        <!-- Элементы карусели меню -->
-        <img id="sectionIcon" src="assets/assets2/icons/player_profile.png" alt="Section Icon">
-        <div id="sectionName">Профиль</div>
-        <img id="carouselLeftArrow" src="assets/assets2/icons/left.png" alt="Left">
-        <img id="carouselRightArrow" src="assets/assets2/icons/right.png" alt="Right">
-
-        <!-- Верхняя панель характеристик -->
-        <div id="topBar">
-            <div class="main-stone-panel"></div>
-
-            <!-- Иконки (Ряд 1) -->
-            <img src="assets/assets2/icons/progress.png" alt="Опыт" class="top-icon cell-1">
-            <img src="assets/assets2/icons/power.png" alt="Урон" class="top-icon cell-2">
-            <img src="assets/assets2/icons/armor.png" alt="Броня" class="top-icon cell-3">
-            <img src="assets/assets2/icons/life.png" alt="Жизнь" class="top-icon cell-4">
-            <img src="assets/assets2/icons/resource_gold.png" alt="Золото" class="top-icon cell-5">
-            <img src="assets/assets2/icons/resource_silver.png" alt="Серебро" class="top-icon cell-6">
-
-            <!-- Цифры (Ряд 2) -->
-            <span class="stat-value val-1" id="expVal">0</span>
-            <span class="stat-value val-2" id="dmgVal">0</span>
-            <span class="stat-value val-3" id="armorVal">0</span>
-            <span class="stat-value val-4" id="hpVal">0</span>
-            <span class="stat-value val-5" id="goldVal">0</span>
-            <span class="stat-value val-6" id="silverVal">0</span>
+    <div id="info">⚔️ ШЕРВУДСКАЯ ЧАЩОБА ⚔️</div>
+    <div id="crosshair">✚</div>
+    <div id="counter">🏆 0</div>
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-forward">▲</div>
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+        <div class="arrow-btn" id="btn-back">▼</div>
+        <!-- Кнопка обычного удара в центре -->
+        <div id="attack-icon" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:50px;height:50px;z-index:40;cursor:pointer;pointer-events:auto;">
+            <img src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;">
         </div>
-    </div> <!-- Конец #gameZone -->
-    
-    <!-- Правый разделитель — между gameZone и статуей -->
-    <img id="rightDivider" src="assets/assets2/game_details/divider_right.png" alt="Right Divider">
-    
-    <!-- Правая статуя за пределами игровой зоны -->
-    <img id="rightStatue" src="assets/assets2/game_details/right_statue_of_the_main_screen.png" alt="Right Statue">
-</div>
+    </div>
+    <div id="vignette"></div>
+    <div id="scanlines"></div>
 
-<div id="menuScreen" style="display:none;"></div>
+    <button onclick="parent.UI.loadHome()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">← НАЗАД</button>
 
-<!-- ========== СКРИПТЫ ========== -->
+    <!-- Сфера жизни (ВСЕГДА ВИДНА, ВНИЗУ) -->
+    <div id="hero-life" style="display:block;position:absolute;bottom:10px;left:10px;width:80px;height:80px;z-index:50;">
+        <img src="assets/assets2/game_details/sphere_of_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
+        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">HP</span>
+    </div>
 
-<!-- 0. СОЗДАЁМ ОБЪЕКТ Sherwood -->
-<script>
-    if (typeof Sherwood === 'undefined') {
-        window.Sherwood = {};
-    }
-</script>
+    <!-- Сфера скверны (ВСЕГДА ВИДНА, ВНИЗУ) -->
+    <div id="hero-mana" style="display:block;position:absolute;bottom:10px;right:10px;width:80px;height:80px;z-index:50;">
+        <img src="assets/assets2/game_details/sphere_of_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
+        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">МАНА</span>
+    </div>
 
-<!-- 1. Модели и ядро -->
-<script src="js/sherwood/models.js"></script>
-<script src="js/sherwood/core.js"></script>
+    <!-- Панель жизни мобов (увеличена в 2 раза) -->
+    <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:400px;height:50px;z-index:50;">
+        <img src="assets/assets2/game_details/life_of_mobs.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
+        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);">
+        <span id="mob-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;font-weight:bold;">HP: 1000/1000</span>
+    </div>
 
-<!-- 2. Базовые системы -->
-<script src="js/sherwood/audio.js"></script>
-<script src="js/sherwood/bag.js"></script>
-<script src="js/sherwood/talents.js"></script>
-<script src="js/sherwood/settings.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+            }
+        }
+    </script>
 
-<!-- 3. Игровые режимы -->
-<script src="js/sherwood/quests.js"></script>
-<script src="js/sherwood/tavern.js"></script>
+    <script type="module">
+        import * as THREE from 'three';
 
-<!-- THREE.JS ДОЛЖЕН БЫТЬ ЗДЕСЬ (ПЕРЕД dungeon.js) -->
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1208);
+        scene.fog = new THREE.Fog(0x1a1208, 7, 16);
 
-<script src="js/sherwood/portal.js"></script>
-<script src="js/sherwood/raid.js"></script>
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 25);
+        camera.position.set(0, 0.65, 0);
+        camera.rotation.order = 'YXZ';
 
-<!-- 4. Дополнительные системы -->
-<script src="js/sherwood/bestiary.js"></script>
-<script src="js/sherwood/blackmarket.js"></script>
-<script src="js/sherwood/forge.js"></script>
-<script src="js/sherwood/combat.js"></script>
-<script src="js/sherwood/hearth.js"></script>
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setClearColor(0x1a1208, 1);
+        document.body.appendChild(renderer.domElement);
 
-<!-- 5. UI (ОБЯЗАТЕЛЬНО ПОСЛЕ ВСЕХ МОДУЛЕЙ) -->
-<script src="js/sherwood/ui_screens.js"></script>
+        const ambient = new THREE.AmbientLight(0x887766, 1.0);
+        scene.add(ambient);
 
-<!-- 6. Главный файл (ВАЖНО: ИДЁТ ПОСЛЕ UI!) -->
-<script src="js/sherwood/main.js"></script>
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+        mainLight.position.set(5, 10, 5);
+        scene.add(mainLight);
 
-<!-- 7. РОУТЕР (ДОБАВЬ ЕГО В КОНЦЕ) -->
-<script src="js/sherwood/router.js"></script>
+        const fillLight = new THREE.DirectionalLight(0x998877, 0.6);
+        fillLight.position.set(-5, 2, -5);
+        scene.add(fillLight);
 
+        const size = 15;
+        const wallHeight = 1.1;
+        const cellSize = 1;
+
+        const map = [];
+        for (let i = 0; i < size; i++) {
+            map[i] = [];
+            for (let j = 0; j < size; j++) {
+                map[i][j] = 1;
+            }
+        }
+
+        function generateMaze() {
+            const stack = [];
+            const startX = 1, startY = 1;
+            map[startY][startX] = 0;
+            stack.push({x: startX, y: startY});
+
+            const dirs = [
+                {x: 0, y: -2}, {x: 0, y: 2},
+                {x: -2, y: 0}, {x: 2, y: 0}
+            ];
+
+            while (stack.length > 0) {
+                const current = stack[stack.length - 1];
+                const neighbors = [];
+
+                for (const dir of dirs) {
+                    const nx = current.x + dir.x;
+                    const ny = current.y + dir.y;
+                    if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && map[ny][nx] === 1) {
+                        neighbors.push({x: nx, y: ny, dx: dir.x/2, dy: dir.y/2});
+                    }
+                }
+
+                if (neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    map[next.y][next.x] = 0;
+                    map[current.y + next.dy][current.x + next.dx] = 0;
+                    stack.push({x: next.x, y: next.y});
+                } else {
+                    stack.pop();
+                }
+            }
+            map[size-2][size-2] = 0;
+        }
+
+        generateMaze();
+
+        const wallTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
+        const floorTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
+        const ceilTexture = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_area_1.png');
+
+        const wallMat = new THREE.MeshStandardMaterial({
+            map: wallTexture,
+            roughness: 0.7,
+            metalness: 0.05,
+            emissive: new THREE.Color(0x1a0f08),
+            emissiveIntensity: 0.2
+        });
+
+        const floorMat = new THREE.MeshStandardMaterial({
+            map: floorTexture,
+            roughness: 0.9,
+            metalness: 0.0
+        });
+
+        const ceilMat = new THREE.MeshStandardMaterial({
+            map: ceilTexture,
+            roughness: 0.9,
+            metalness: 0.0
+        });
+
+        const group = new THREE.Group();
+
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const x = col - Math.floor(size/2);
+                const z = row - Math.floor(size/2);
+                const isWall = map[row][col] === 1;
+
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.set(x, 0, z);
+                group.add(floor);
+
+                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                ceil.rotation.x = Math.PI / 2;
+                ceil.position.set(x, wallHeight, z);
+                group.add(ceil);
+
+                if (isWall) {
+                    const wall = new THREE.Mesh(
+                        new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                        wallMat
+                    );
+                    wall.position.set(x, wallHeight/2, z);
+                    group.add(wall);
+                }
+            }
+        }
+
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                if (map[row][col] === 0 && row % 2 === 0 && col % 2 === 0) {
+                    const x = col - Math.floor(size/2);
+                    const z = row - Math.floor(size/2);
+                    
+                    const torch = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.05, 6, 6),
+                        new THREE.MeshStandardMaterial({
+                            color: 0xffaa55,
+                            emissive: new THREE.Color(0xff6600),
+                            emissiveIntensity: 1.0
+                        })
+                    );
+                    torch.position.set(x, wallHeight - 0.05, z);
+                    group.add(torch);
+
+                    const light = new THREE.PointLight(0xff8844, 0.5, 4);
+                    light.position.set(x, wallHeight - 0.1, z);
+                    group.add(light);
+                }
+            }
+        }
+
+        scene.add(group);
+
+        // ===== РАНДОМНЫЕ ОБЪЕКТЫ =====
+        var objectTypes = [
+            { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
+            { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_mana', count: 2, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'cauldron', count: 3, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'altar', count: 3, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
+        ];
+
+        var objects = [];
+
+        function getRandomFreeCell() {
+            var attempts = 0;
+            while (attempts < 100) {
+                attempts++;
+                var x = 2 + Math.floor(Math.random() * (size - 4));
+                var y = 2 + Math.floor(Math.random() * (size - 4));
+                
+                if (map[y][x] === 0) {
+                    var tooClose = false;
+                    for (var i = 0; i < objects.length; i++) {
+                        if (Math.abs(objects[i].x - x) + Math.abs(objects[i].y - y) < 3) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                    if (!tooClose) return { x: x, y: y };
+                }
+            }
+            return { x: 1, y: 1 };
+        }
+
+        for (var t = 0; t < objectTypes.length; t++) {
+            var typeDef = objectTypes[t];
+            for (var i = 0; i < typeDef.count; i++) {
+                var pos = getRandomFreeCell();
+                objects.push({
+                    type: typeDef.type,
+                    x: pos.x,
+                    y: pos.y,
+                    img: typeDef.img,
+                    collected: false
+                });
+            }
+        }
+
+        // Создаем 3D-объекты (на полу)
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i];
+            var x = obj.x - Math.floor(size/2);
+            var z = obj.y - Math.floor(size/2);
+            
+            var mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(0.5, 0.5, 0.5),
+                new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true })
+            );
+            mesh.position.set(x, 0.25, z); // На полу
+            mesh.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false };
+            group.add(mesh);
+            obj.mesh = mesh;
+        }
+
+        // СТЕНА ПЕРЕД ВРАГОМ
+        var enemyWalls = [];
+        for (var i = 0; i < objects.length; i++) {
+            if (objects[i].type === 'enemy') {
+                var wallPosX = objects[i].x - 1;
+                var wallPosY = objects[i].y;
+                
+                var wallMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.8, 0.8, 0.8),
+                    new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/labyrinth_asset.png'), transparent: true })
+                );
+                wallMesh.position.set(wallPosX - Math.floor(size/2), 0.25, wallPosY - Math.floor(size/2));
+                wallMesh.userData = { wall: true, gridX: wallPosX, gridY: wallPosY };
+                group.add(wallMesh);
+                enemyWalls.push(wallMesh);
+            }
+        }
+
+        // Выходная стена
+        var exitWall = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1.1, 1),
+            new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
+        );
+        exitWall.position.set(size-2 - Math.floor(size/2), 0.55, size-2 - Math.floor(size/2));
+        exitWall.userData = { exit: true, locked: true };
+        group.add(exitWall);
+
+        // --- УПРАВЛЕНИЕ ---
+        let yaw = 0;
+        const rotationSpeed = Math.PI / 2;
+        let score = 0;
+        let isMoving = false;
+        let isTurning = false;
+        const counterElement = document.getElementById('counter');
+
+        function updateCamera() {
+            const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
+            camera.quaternion.setFromEuler(euler);
+        }
+
+        function isWall(x, z) {
+            const col = Math.round(x + Math.floor(size/2));
+            const row = Math.round(z + Math.floor(size/2));
+            if (row < 0 || row >= size || col < 0 || col >= size) return true;
+            return map[row][col] === 1;
+        }
+
+        function canMoveTo(x, z) {
+            const radius = 0.25;
+            return !isWall(x - radius, z - radius) &&
+                   !isWall(x + radius, z - radius) &&
+                   !isWall(x - radius, z + radius) &&
+                   !isWall(x + radius, z + radius);
+        }
+
+        function animateStep(targetX, targetZ) {
+            const startX = camera.position.x;
+            const startZ = camera.position.z;
+            const startY = camera.position.y;
+            const duration = 800;
+            const startTime = performance.now();
+            
+            function stepLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                
+                camera.position.x = startX + (targetX - startX) * smoothT;
+                camera.position.z = startZ + (targetZ - startZ) * smoothT;
+                camera.position.y = startY + Math.sin(t * Math.PI) * 0.015;
+                
+                if (t < 1) {
+                    requestAnimationFrame(stepLoop);
+                } else {
+                    camera.position.x = targetX;
+                    camera.position.z = targetZ;
+                    camera.position.y = startY;
+                    isMoving = false;
+                    checkTreasure();
+                    checkObjects();
+                }
+            }
+            
+            stepLoop();
+        }
+
+        function animateTurn(targetYaw) {
+            const startYaw = yaw;
+            const duration = 500;
+            const startTime = performance.now();
+            isTurning = true;
+            
+            function turnLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t * t * (3 - 2 * t);
+                
+                yaw = startYaw + (targetYaw - startYaw) * smoothT;
+                updateCamera();
+                
+                if (t < 1) {
+                    requestAnimationFrame(turnLoop);
+                } else {
+                    yaw = targetYaw;
+                    updateCamera();
+                    isTurning = false;
+                }
+            }
+            
+            turnLoop();
+        }
+
+        function moveForward() {
+            if (isMoving || isTurning) return;
+            
+            const forward = new THREE.Vector3(0, 0, -1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            
+            const targetX = camera.position.x + Math.round(forward.x);
+            const targetZ = camera.position.z + Math.round(forward.z);
+            
+            if (!canMoveTo(targetX, targetZ)) {
+                isMoving = false;
+                return;
+            }
+            
+            isMoving = true;
+            animateStep(targetX, targetZ);
+        }
+
+        function moveBackward() {
+            if (isMoving || isTurning) return;
+            
+            const forward = new THREE.Vector3(0, 0, 1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            
+            const targetX = camera.position.x + Math.round(forward.x);
+            const targetZ = camera.position.z + Math.round(forward.z);
+            
+            if (!canMoveTo(targetX, targetZ)) {
+                isMoving = false;
+                return;
+            }
+            
+            isMoving = true;
+            animateStep(targetX, targetZ);
+        }
+
+        function turnLeft() {
+            if (isMoving || isTurning) return;
+            animateTurn(yaw + rotationSpeed);
+        }
+
+        function turnRight() {
+            if (isMoving || isTurning) return;
+            animateTurn(yaw - rotationSpeed);
+        }
+
+        function checkTreasure() {
+            const playerPos = camera.position;
+            treasures.forEach(t => {
+                if (!t.collected) {
+                    const dist = Math.sqrt(
+                        Math.pow(playerPos.x - t.x, 2) + 
+                        Math.pow(playerPos.z - t.z, 2)
+                    );
+                    if (dist < 0.3) {
+                        t.collected = true;
+                        group.remove(t.mesh);
+                        score++;
+                        counterElement.textContent = `🏆 ${score}/${treasureCount}`;
+                        
+                        const flash = new THREE.PointLight(0xffaa00, 2, 2);
+                        flash.position.set(t.x, 0.3, t.z);
+                        group.add(flash);
+                        setTimeout(() => group.remove(flash), 200);
+                    }
+                }
+            });
+        }
+
+        // Проверка: нашёл ли игрок объекты
+        function checkObjects() {
+            var playerPos = camera.position;
+            objects.forEach(function(obj) {
+                if (!obj.collected) {
+                    var dist = Math.sqrt(
+                        Math.pow(playerPos.x - obj.x, 2) + 
+                        Math.pow(playerPos.z - obj.z, 2)
+                    );
+                    if (dist < 0.3) {
+                        if (obj.type === 'enemy') {
+                            startBattle();
+                            document.getElementById('mob-hp').style.display = 'block';
+                        }
+                        if (obj.type === 'cauldron' || obj.type === 'altar' || obj.type === 'potion') {
+                            parent.UI._showToast('🎁 ' + obj.type + ' собран!');
+                        }
+                        obj.collected = true;
+                        group.remove(obj.mesh);
+                    }
+                }
+            });
+        }
+
+        document.getElementById('btn-forward').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveForward();
+        });
+        document.getElementById('btn-back').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            moveBackward();
+        });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            turnLeft();
+        });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            turnRight();
+        });
+
+        document.getElementById('btn-forward').addEventListener('click', moveForward);
+        document.getElementById('btn-back').addEventListener('click', moveBackward);
+        document.getElementById('btn-left').addEventListener('click', turnLeft);
+        document.getElementById('btn-right').addEventListener('click', turnRight);
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup': moveForward(); e.preventDefault(); break;
+                case 's': case 'arrowdown': moveBackward(); e.preventDefault(); break;
+                case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
+                case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
+            }
+        });
+
+        // Кнопка обычного удара
+        document.getElementById('attack-icon').addEventListener('click', function() {
+            attackEnemy();
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // ===== БОЕВАЯ ЛОГИКА =====
+
+        // Характеристики героя
+        var heroStats = {
+            hp: 100,
+            maxHp: 100,
+            attack: 10,
+            defense: 5
+        };
+
+        // Характеристики врага
+        var enemyStats = {
+            hp: 1000,
+            maxHp: 1000,
+            attack: 50,
+            defense: 10
+        };
+
+        // Если враг виден, он начинает атаковать
+        var isBattleActive = false;
+        var battleTimer = null;
+
+        // Когда враг появляется, запускается бой
+        function startBattle() {
+            isBattleActive = true;
+            battleTimer = setInterval(function() {
+                // Враг наносит урон герою
+                var damage = Math.max(1, enemyStats.attack - heroStats.defense);
+                heroStats.hp = Math.max(0, heroStats.hp - damage);
+                
+                // Следим за жизни героя
+                document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyStats.hp + '/' + enemyStats.maxHp;
+                
+                // Если герой погиб
+                if (heroStats.hp <= 0) {
+                    stopBattle();
+                    parent.UI._showToast('💀 Ты погиб!');
+                }
+            }, 1000);
+        }
+
+        // Когда враг повержен, бой останавливается
+        function stopBattle() {
+            isBattleActive = false;
+            if (battleTimer) {
+                clearInterval(battleTimer);
+                battleTimer = null;
+            }
+        }
+
+        // Атака героя (при тапе на врага)
+        function attackEnemy() {
+            if (!isBattleActive) return;
+            
+            var damage = Math.max(1, heroStats.attack - enemyStats.defense);
+            enemyStats.hp = Math.max(0, enemyStats.hp - damage);
+            
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyStats.hp + '/' + enemyStats.maxHp;
+            
+            if (enemyStats.hp <= 0) {
+                stopBattle();
+                parent.UI._showToast('🏆 Враг повержен!');
+            }
+        }
+
+        // Заполнение сферы жизни
+        document.getElementById('life-fill').style.clipPath = 'inset(0 0 ' + (100 - (heroStats.hp / heroStats.maxHp * 100)) + '% 0)';
+        // Заполнение сферы скверны
+        document.getElementById('mana-fill').style.clipPath = 'inset(0 0 ' + (100 - (heroStats.mana / heroStats.maxMana * 100)) + '% 0)';
+
+        // ===== КЛИК ПО СТЕНЕ ПЕРЕД ВРАГОМ =====
+        var raycaster = new THREE.Raycaster();
+        var mouse = new THREE.Vector2();
+
+        document.addEventListener('click', function(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            var intersects = raycaster.intersectObjects(group.children);
+            
+            if (intersects.length > 0) {
+                var clickedObj = intersects[0].object;
+                
+                // Если это стена перед врагом – открываем её
+                if (clickedObj.userData && clickedObj.userData.wall) {
+                    clickedObj.visible = false;
+                    startBattle();
+                    document.getElementById('mob-hp').style.display = 'block';
+                }
+                
+                // Если это объект для сбора
+                if (clickedObj.userData && clickedObj.userData.type && clickedObj.userData.type !== 'enemy') {
+                    clickedObj.userData.collected = true;
+                    clickedObj.visible = false;
+                    parent.UI._showToast('🎁 Объект собран!');
+                }
+            }
+        });
+    </script>
 </body>
 </html>
