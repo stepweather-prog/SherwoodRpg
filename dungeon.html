@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Шервудская чащоба - PS2 Style</title>
     <style>
@@ -126,7 +126,7 @@
     </style>
 </head>
 <body>
-    <div id="info">⚔️ ШЕРВУДСКАЯ ЧАЩОБА ⚔️</div>
+    <div id="info">⚔️ ПРОКЛЯТАЯ ЧАЩА ⚔️</div>
     <div id="crosshair">✚</div>
     <div id="counter">🏆 0</div>
     <div id="joystick">
@@ -134,6 +134,10 @@
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
         <div class="arrow-btn" id="btn-back">▼</div>
+        <!-- Кнопка обычного удара в центре -->
+        <div id="attack-icon" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:50px;height:50px;z-index:40;cursor:pointer;pointer-events:auto;">
+            <img src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;">
+        </div>
     </div>
     <div id="vignette"></div>
     <div id="scanlines"></div>
@@ -141,16 +145,17 @@
     <button onclick="parent.UI.loadHome()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">← НАЗАД</button>
 
     <!-- Боевой интерфейс -->
-    <div id="hero-life" style="position:absolute;bottom:180px;left:10px;width:80px;height:80px;z-index:50;">
+    <div id="hero-life" style="display:block;position:absolute;bottom:180px;left:10px;width:80px;height:80px;z-index:50;">
         <img src="assets/assets2/game_details/sphere_of_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
         <img src="assets/assets2/game_details/filling_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 50% 0);">
         <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">HP</span>
     </div>
-    <div id="hero-mana" style="position:absolute;bottom:180px;right:10px;width:80px;height:80px;z-index:50;">
+    <div id="hero-mana" style="display:block;position:absolute;bottom:180px;right:10px;width:80px;height:80px;z-index:50;">
         <img src="assets/assets2/game_details/sphere_of_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
         <img src="assets/assets2/game_details/filling_with_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 50% 0);">
         <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">МАНА</span>
     </div>
+
     <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:200px;height:25px;z-index:50;">
         <img src="assets/assets2/game_details/life_of_mobs.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
         <img src="assets/assets2/game_details/mob_life_filling.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);">
@@ -366,6 +371,32 @@
             }
         }
 
+        // ===== ОБЪЕКТЫ В ЛАБИРИНТЕ =====
+
+        var objects = [
+            { type: 'enemy', x: 3, y: 3, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
+            { type: 'cauldron', x: 5, y: 5, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'chest', x: 7, y: 7, img: 'assets/assets2/game_details/locked_chest_first_dungeon.png' },
+            { type: 'altar', x: 9, y: 9, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
+            { type: 'potion', x: 11, y: 11, img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'exit', x: 13, y: 13, img: 'assets/assets2/game_details/completion_of_the_second_underground_level1.png' }
+        ];
+
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i];
+            var x = obj.x - Math.floor(size/2);
+            var z = obj.y - Math.floor(size/2);
+            
+            var mesh = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: new THREE.TextureLoader().load(obj.img),
+                transparent: true
+            }));
+            mesh.position.set(x, 0.6, z);
+            mesh.scale.set(0.8, 0.8, 1);
+            group.add(mesh);
+            obj.mesh = mesh;
+        }
+
         // --- УПРАВЛЕНИЕ ---
         let yaw = 0;
         const rotationSpeed = Math.PI / 2;
@@ -418,6 +449,7 @@
                     camera.position.y = startY;
                     isMoving = false;
                     checkTreasure();
+                    checkObjects();
                 }
             }
             
@@ -523,6 +555,45 @@
             });
         }
 
+        // Проверка: нашёл ли игрок какой-то объект
+        function checkObjects() {
+            var playerPos = camera.position;
+            objects.forEach(function(obj) {
+                if (!obj.collected) {
+                    var dist = Math.sqrt(
+                        Math.pow(playerPos.x - obj.x, 2) + 
+                        Math.pow(playerPos.z - obj.z, 2)
+                    );
+                    if (dist < 0.3) {
+                        // Если нашли врага
+                        if (obj.type === 'enemy') {
+                            startBattle();
+                            document.getElementById('mob-hp').style.display = 'block';
+                            // Враг в центре
+                            document.querySelector('.enemy-card').style.display = 'block';
+                            document.querySelector('.enemy-card').innerHTML = '<img src="' + obj.img + '" style="width:150px;height:150px;object-fit:contain;">';
+                        }
+                        // Если нашли котел/сундук/алтарь/зелье
+                        if (obj.type === 'cauldron' || obj.type === 'chest' || obj.type === 'altar' || obj.type === 'potion') {
+                            var randomLoot = obj.type;
+                            // Здесь ты вставляешь логику сбора
+                            if (randomLoot === 'cauldron') {
+                                parent.UI._showToast('🧪 Котёл! Награда за найденный объект.');
+                            }
+                        }
+                        // Если нашли выход
+                        if (obj.type === 'exit') {
+                            parent.UI._showToast('🏆 Выход найден!');
+                        }
+                        
+                        // Объект собран
+                        obj.collected = true;
+                        group.remove(obj.mesh);
+                    }
+                }
+            });
+        }
+
         document.getElementById('btn-forward').addEventListener('touchstart', (e) => {
             e.preventDefault();
             moveForward();
@@ -552,6 +623,11 @@
                 case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
                 case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
             }
+        });
+
+        // Кнопка обычного удара
+        document.getElementById('attack-icon').addEventListener('click', function() {
+            attackEnemy();
         });
 
         function animate() {
