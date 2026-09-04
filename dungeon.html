@@ -158,11 +158,11 @@
         <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">МАНА</span>
     </div>
 
-    <!-- Панель жизни мобов -->
-    <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:200px;height:25px;z-index:50;">
+    <!-- Панель жизни мобов (увеличена в 2 раза) -->
+    <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:400px;height:50px;z-index:50;">
         <img src="assets/assets2/game_details/life_of_mobs.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
         <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);">
-        <span id="mob-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:12px;font-weight:bold;">HP: 1000/1000</span>
+        <span id="mob-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;font-weight:bold;">HP: 1000/1000</span>
     </div>
 
     <script type="importmap">
@@ -329,7 +329,7 @@
 
         scene.add(group);
 
-        // ===== РАНДОМНЫЕ ОБЪЕКТЫ =====
+        // ===== РАНДОМНЫЕ ОБЪЕКТЫ (ВРАГИ, ЗЕЛЬЯ, КОТЛЫ, АЛТАРИ) =====
         var objectTypes = [
             { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
             { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -340,7 +340,6 @@
 
         var objects = [];
 
-        // Генерация случайных позиций
         function getRandomFreeCell() {
             var attempts = 0;
             while (attempts < 100) {
@@ -376,21 +375,38 @@
             }
         }
 
-        // Создаем 3D-объекты
+        // Создаем 3D-объекты (на полу, уменьшенные)
         for (var i = 0; i < objects.length; i++) {
             var obj = objects[i];
             var x = obj.x - Math.floor(size/2);
             var z = obj.y - Math.floor(size/2);
             
             var mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(1, 1.1, 1),
+                new THREE.BoxGeometry(0.5, 0.5, 0.5), // Уменьшаем размер
                 new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true })
             );
-            mesh.position.set(x, 0.55, z);
-            mesh.scale.set(0.33, 0.33, 0.33); // Уменьшаем в 3 раза
+            mesh.position.set(x, 0.25, z); // На полу
             mesh.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false };
             group.add(mesh);
             obj.mesh = mesh;
+        }
+
+        // СТЕНА ПЕРЕД ВРАГОМ (открывается тапом)
+        var enemyWalls = [];
+        for (var i = 0; i < objects.length; i++) {
+            if (objects[i].type === 'enemy') {
+                var wallPosX = objects[i].x - 1;
+                var wallPosY = objects[i].y;
+                
+                var wallMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.8, 0.8, 0.8),
+                    new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/labyrinth_asset.png'), transparent: true })
+                );
+                wallMesh.position.set(wallPosX - Math.floor(size/2), 0.25, wallPosY - Math.floor(size/2));
+                wallMesh.userData = { wall: true, gridX: wallPosX, gridY: wallPosY };
+                group.add(wallMesh);
+                enemyWalls.push(wallMesh);
+            }
         }
 
         // Выходная стена
@@ -399,7 +415,6 @@
             new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
         );
         exitWall.position.set(size-2 - Math.floor(size/2), 0.55, size-2 - Math.floor(size/2));
-        exitWall.scale.set(0.33, 0.33, 0.33);
         exitWall.userData = { exit: true, locked: true };
         group.add(exitWall);
 
@@ -697,7 +712,7 @@
         // Заполнение сферы скверны
         document.getElementById('mana-fill').style.clipPath = 'inset(0 0 ' + (100 - (heroStats.mana / heroStats.maxMana * 100)) + '% 0)';
 
-        // ===== КЛИК ПО ОБЪЕКТУ ДЛЯ СБОРА =====
+        // ===== КЛИК ПО СТЕНЕ ПЕРЕД ВРАГОМ =====
         var raycaster = new THREE.Raycaster();
         var mouse = new THREE.Vector2();
 
@@ -711,50 +726,19 @@
             if (intersects.length > 0) {
                 var clickedObj = intersects[0].object;
                 
-                // Если объект уже собран – только сообщение
-                if (clickedObj.userData && clickedObj.userData.collected) {
-                    parent.UI._showToast('Объект уже пуст');
-                    return;
+                // Если это стена перед врагом – открываем её
+                if (clickedObj.userData && clickedObj.userData.wall) {
+                    clickedObj.visible = false;
+                    // Теперь можно встретить врага
+                    startBattle();
+                    document.getElementById('mob-hp').style.display = 'block';
                 }
                 
-                // Собираем лут
-                if (clickedObj.userData && clickedObj.userData.type) {
+                // Если это объект для сбора
+                if (clickedObj.userData && clickedObj.userData.type && clickedObj.userData.type !== 'enemy') {
                     clickedObj.userData.collected = true;
-                    
-                    if (clickedObj.userData.type === 'altar') {
-                        clickedObj.material.map = new THREE.TextureLoader().load('assets/assets2/game_details/altar_of_the_first_dungeon.png');
-                        clickedObj.material.needsUpdate = true;
-                        parent.UI._showToast('✨ Алтарь дал лут!');
-                    } else if (clickedObj.userData.type === 'cauldron') {
-                        clickedObj.material.map = new THREE.TextureLoader().load('assets/assets2/game_details/cauldron_first_dungeon.png');
-                        clickedObj.material.needsUpdate = true;
-                        parent.UI._showToast('🧪 Котёл дал лут!');
-                    } else if (clickedObj.userData.type === 'potion') {
-                        clickedObj.material.map = new THREE.TextureLoader().load('assets/assets2/game_details/resource_life_potion.png');
-                        clickedObj.material.needsUpdate = true;
-                        parent.UI._showToast('💚 Зелье дало лут!');
-                    } else if (clickedObj.userData.type === 'chest') {
-                        clickedObj.material.map = new THREE.TextureLoader().load('assets/assets2/game_details/open_chest_first_dungeon.png');
-                        clickedObj.material.needsUpdate = true;
-                        parent.UI._showToast('📦 Сундук дал лут!');
-                    } else if (clickedObj.userData.type === 'lootBag') {
-                        clickedObj.material.map = new THREE.TextureLoader().load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
-                        clickedObj.material.needsUpdate = true;
-                        parent.UI._showToast('💰 Мешок лута дал лут!');
-                    }
-                    
-                    // Сохраняем прогресс
-                    parent.Sherwood.addResource('gold', 50);
-                    parent.Sherwood.addResource('silver', 100);
-                }
-                
-                // Если это выход-стена
-                if (clickedObj.userData && clickedObj.userData.exit) {
-                    if (clickedObj.userData.locked) {
-                        parent.UI._showToast('🔒 Выход закрыт!');
-                    } else {
-                        parent.UI._showToast('🏆 Выход открыт!');
-                    }
+                    clickedObj.visible = false;
+                    parent.UI._showToast('🎁 Объект собран!');
                 }
             }
         });
