@@ -329,22 +329,54 @@
 
         scene.add(group);
 
-        // ===== ОБЪЕКТЫ В ЛАБИРИНТЕ =====
-        var exitWall = new THREE.Mesh(
-            new THREE.BoxGeometry(1, 1.1, 1),
-            new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
-        );
-        exitWall.position.set(size-2 - Math.floor(size/2), 0.55, size-2 - Math.floor(size/2));
-        exitWall.userData = { exit: true, locked: true };
-        group.add(exitWall);
-
-        var objects = [
-            { type: 'enemy', x: 3, y: 3, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
-            { type: 'cauldron', x: 5, y: 5, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
-            { type: 'altar', x: 9, y: 9, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
-            { type: 'potion', x: 11, y: 11, img: 'assets/assets2/game_details/resource_life_potion.png' }
+        // ===== РАНДОМНЫЕ ОБЪЕКТЫ =====
+        var objectTypes = [
+            { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
+            { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_mana', count: 2, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'cauldron', count: 3, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'altar', count: 3, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
         ];
 
+        var objects = [];
+
+        // Генерация случайных позиций
+        function getRandomFreeCell() {
+            var attempts = 0;
+            while (attempts < 100) {
+                attempts++;
+                var x = 2 + Math.floor(Math.random() * (size - 4));
+                var y = 2 + Math.floor(Math.random() * (size - 4));
+                
+                if (map[y][x] === 0) {
+                    var tooClose = false;
+                    for (var i = 0; i < objects.length; i++) {
+                        if (Math.abs(objects[i].x - x) + Math.abs(objects[i].y - y) < 3) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                    if (!tooClose) return { x: x, y: y };
+                }
+            }
+            return { x: 1, y: 1 };
+        }
+
+        for (var t = 0; t < objectTypes.length; t++) {
+            var typeDef = objectTypes[t];
+            for (var i = 0; i < typeDef.count; i++) {
+                var pos = getRandomFreeCell();
+                objects.push({
+                    type: typeDef.type,
+                    x: pos.x,
+                    y: pos.y,
+                    img: typeDef.img,
+                    collected: false
+                });
+            }
+        }
+
+        // Создаем 3D-объекты
         for (var i = 0; i < objects.length; i++) {
             var obj = objects[i];
             var x = obj.x - Math.floor(size/2);
@@ -355,10 +387,21 @@
                 new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true })
             );
             mesh.position.set(x, 0.55, z);
+            mesh.scale.set(0.33, 0.33, 0.33); // Уменьшаем в 3 раза
             mesh.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false };
             group.add(mesh);
             obj.mesh = mesh;
         }
+
+        // Выходная стена
+        var exitWall = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1.1, 1),
+            new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
+        );
+        exitWall.position.set(size-2 - Math.floor(size/2), 0.55, size-2 - Math.floor(size/2));
+        exitWall.scale.set(0.33, 0.33, 0.33);
+        exitWall.userData = { exit: true, locked: true };
+        group.add(exitWall);
 
         // --- УПРАВЛЕНИЕ ---
         let yaw = 0;
