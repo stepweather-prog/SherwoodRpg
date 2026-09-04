@@ -64,7 +64,13 @@ UI._audioFiles = {
     'levelup': 'assets/assets2/tune/levelup.wav',
     'forge': 'assets/assets2/tune/forge.wav',
     'heal': 'assets/assets2/tune/heal.wav',
-    'victory': 'assets/assets2/tune/victory.wav'
+    'victory': 'assets/assets2/tune/victory.wav',
+    'main_theme': 'assets/assets2/tune/main_theme.ogg',
+    'main_theme_2': 'assets/assets2/tune/main_theme_2.ogg',
+    'main_theme_3': 'assets/assets2/tune/main_theme_3.ogg',
+    'dungeon_1': 'assets/assets2/tune/dungeon_1.ogg',
+    'dungeon_2': 'assets/assets2/tune/dungeon_2.ogg',
+    'dungeon_3': 'assets/assets2/tune/dungeon_3.ogg'
 };
 
 // ============================================================
@@ -132,12 +138,19 @@ UI._playMusic = function(k) {
             m.play().catch(function() {});
             UI._currentMusic = m;
             UI._currentMusicKey = k;
+            
+            // Главная музыка: 3 трека по очереди
             if (k === 'main_theme') {
                 m.loop = false;
                 var self = UI;
                 m.onended = function() { self._playMusic('main_theme_2'); };
             }
             if (k === 'main_theme_2') {
+                m.loop = false;
+                var self = UI;
+                m.onended = function() { self._playMusic('main_theme_3'); };
+            }
+            if (k === 'main_theme_3') {
                 m.loop = false;
                 var self = UI;
                 m.onended = function() { self._playMusic('main_theme'); };
@@ -360,7 +373,10 @@ UI.loadHome = function() {
             UI._screenLayer.innerHTML = '';
         }
     } catch(e) {}
-    try { UI.updateDisplay(); } catch(e) {}
+    
+    // Возвращаем музыку главной
+    UI._playMusic('main_theme');
+    
     if (typeof showHomeScreen === 'function') {
         showHomeScreen();
     }
@@ -531,13 +547,10 @@ UI.profile = function() {
         var section = sections[i];
         var display = (i === 0) ? 'flex' : 'none';
         
-        // ИСПРАВЛЕНИЕ: Убираем position:absolute, используем Flexbox
         h += '<div class="profile-slide" data-index="' + i + '" onclick="' + section.action + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;cursor:pointer;">';
         
-        // 1. ИКОНКА (сверху, с жестким отступом)
         h += '<img src="' + section.icon + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 30px;display:block;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         
-        // 2. ПЛАШКА С НАЗВАНИЕМ (снизу, с ЖЕСТКИМ ВЕРХНИМ ОТСТУПОМ)
         h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + section.name + '</div>';
         h += '</div>';
     }
@@ -559,7 +572,7 @@ UI.profile = function() {
             slides[currentIndex].style.display = 'none';
             if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
             else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-            slides[currentIndex].style.display = 'flex'; // ВАЖНО: flex, а не block!
+            slides[currentIndex].style.display = 'flex';
         }, { passive: false });
         
         carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
@@ -570,7 +583,7 @@ UI.profile = function() {
             slides[currentIndex].style.display = 'none';
             if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
             else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-            slides[currentIndex].style.display = 'flex'; // ВАЖНО: flex, а не block!
+            slides[currentIndex].style.display = 'flex';
         }, { passive: true });
     }
 };
@@ -782,7 +795,7 @@ UI._doTraining = function(stat) {
     var cur = p.trainingLevels[stat] || 0;
     if (cur >= 1000) { var log = document.getElementById('training-log'); if (log) log.textContent = 'Макс. уровень!'; return; }
     
-    var cost = 1; // Стоимость в очках опыта
+    var cost = 1;
     if (p.experiencePoints < cost) {
         var log = document.getElementById('training-log');
         if (log) log.textContent = 'Нужно ' + cost + ' очков опыта!';
@@ -799,6 +812,7 @@ UI._doTraining = function(stat) {
     var log = document.getElementById('training-log');
     if (log) log.textContent = stat + ' → ' + (cur + 1) + ' (-' + cost + ' очков опыта)';
 };
+
 // ============================================================
 //  БЕСТИАРИЙ
 // ============================================================
@@ -1155,14 +1169,12 @@ UI.raid = function() {
     video.playsInline = true;
     video.setAttribute('webkit-playsinline', 'true');
     
-    // ВАЖНО: Вставь видео в UI._screenLayer, НЕ на document.body!
     if (UI._screenLayer) {
         UI._screenLayer.innerHTML = '';
         UI._screenLayer.appendChild(video);
         UI._screenLayer.style.display = 'block';
     }
     
-    // При старте, настрой размеры
     var videoStyles = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:100;';
     
     if (window.innerWidth < 480) {
@@ -1173,7 +1185,6 @@ UI.raid = function() {
         video.style.cssText = videoStyles + 'width:480px;height:800px;';
     }
     
-    // Пытаемся запустить
     try {
         video.play().catch(function() {
             var onTouch = function() {
@@ -1204,6 +1215,21 @@ UI.raid = function() {
 
 UI.dungeon = function() {
     UI._playSound('click');
+    
+    var h = '<div style="text-align:center;padding:20px;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;width:100%;height:100%;">';
+    h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">🏚️ Подземка</div>';
+    h += '<div style="display:flex;flex-direction:column;align-items:center;gap:15px;">';
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:100px;height:100px;object-fit:contain;">';
+    h += '<button onclick="UI.loadIframeDungeon()" style="padding:10px 30px;background:#c9a040;border:none;border-radius:8px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">⚔️ Войти в подземку</button>';
+    h += '</div>';
+    h += '</div>';
+    
+    UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
+};
+
+UI.loadIframeDungeon = function() {
+    UI._playSound('click');
+    UI._stopMusic();
     var iframe = document.createElement('iframe');
     iframe.src = 'dungeon.html';
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
@@ -1213,6 +1239,7 @@ UI.dungeon = function() {
         UI._screenLayer.style.display = 'block';
     }
 };
+
 UI.market = function() {
     UI._playSound('click');
     if (typeof Sherwood.BlackMarket !== 'undefined' && Sherwood.BlackMarket.showUI) {
