@@ -1202,17 +1202,7 @@ UI.raid = function() {
     }, 5000);
 };
 
-UI.dungeon = function() {
-    UI._playSound('click');
-    var iframe = document.createElement('iframe');
-    iframe.src = 'dungeon.html';
-    iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
-    if (UI._screenLayer) {
-        UI._screenLayer.innerHTML = '';
-        UI._screenLayer.appendChild(iframe);
-        UI._screenLayer.style.display = 'block';
-    }
-};
+
 UI.market = function() {
     UI._playSound('click');
     if (typeof Sherwood.BlackMarket !== 'undefined' && Sherwood.BlackMarket.showUI) {
