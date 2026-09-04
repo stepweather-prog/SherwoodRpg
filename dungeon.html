@@ -329,7 +329,7 @@
 
         scene.add(group);
 
-        // ===== РАНДОМНЫЕ ОБЪЕКТЫ (ВРАГИ, ЗЕЛЬЯ, КОТЛЫ, АЛТАРИ) =====
+        // ===== РАНДОМНЫЕ ОБЪЕКТЫ =====
         var objectTypes = [
             { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
             { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -375,14 +375,14 @@
             }
         }
 
-        // Создаем 3D-объекты (на полу, уменьшенные)
+        // Создаем 3D-объекты (на полу)
         for (var i = 0; i < objects.length; i++) {
             var obj = objects[i];
             var x = obj.x - Math.floor(size/2);
             var z = obj.y - Math.floor(size/2);
             
             var mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(0.5, 0.5, 0.5), // Уменьшаем размер
+                new THREE.BoxGeometry(0.5, 0.5, 0.5),
                 new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true })
             );
             mesh.position.set(x, 0.25, z); // На полу
@@ -391,7 +391,7 @@
             obj.mesh = mesh;
         }
 
-        // СТЕНА ПЕРЕД ВРАГОМ (открывается тапом)
+        // СТЕНА ПЕРЕД ВРАГОМ
         var enemyWalls = [];
         for (var i = 0; i < objects.length; i++) {
             if (objects[i].type === 'enemy') {
@@ -729,7 +729,6 @@
                 // Если это стена перед врагом – открываем её
                 if (clickedObj.userData && clickedObj.userData.wall) {
                     clickedObj.visible = false;
-                    // Теперь можно встретить врага
                     startBattle();
                     document.getElementById('mob-hp').style.display = 'block';
                 }
