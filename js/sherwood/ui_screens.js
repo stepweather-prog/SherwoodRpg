@@ -1,5 +1,5 @@
 // ============================================================
-//  ui_screens.js —
+//  ui_screens.js — ОБЪЕДИНЕННЫЙ ФАЙЛ (без ui_common.js)
 // ============================================================
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
@@ -1153,8 +1153,17 @@ UI.raid = function() {
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
+    video.setAttribute('webkit-playsinline', 'true');
     
-    var videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+    // ВАЖНО: Вставь видео в UI._screenLayer, НЕ на document.body!
+    if (UI._screenLayer) {
+        UI._screenLayer.innerHTML = '';
+        UI._screenLayer.appendChild(video);
+        UI._screenLayer.style.display = 'block';
+    }
+    
+    // При старте, настрой размеры
+    var videoStyles = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:100;';
     
     if (window.innerWidth < 480) {
         video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
@@ -1164,21 +1173,30 @@ UI.raid = function() {
         video.style.cssText = videoStyles + 'width:480px;height:800px;';
     }
     
-    document.body.appendChild(video);
+    // Пытаемся запустить
+    try {
+        video.play().catch(function() {
+            var onTouch = function() {
+                video.play();
+                document.removeEventListener('touchstart', onTouch);
+            };
+            document.addEventListener('touchstart', onTouch);
+        });
+    } catch(e) {}
     
     video.onended = function() {
-        video.remove();
+        UI._screenLayer.innerHTML = '';
         Sherwood.Raid.showUI();
     };
     
     video.onerror = function() {
-        video.remove();
+        UI._screenLayer.innerHTML = '';
         Sherwood.Raid.showUI();
     };
     
     setTimeout(function() {
-        if (document.body.contains(video)) {
-            video.remove();
+        if (UI._screenLayer && UI._screenLayer.contains(video)) {
+            UI._screenLayer.innerHTML = '';
             Sherwood.Raid.showUI();
         }
     }, 5000);
