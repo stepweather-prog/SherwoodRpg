@@ -6,16 +6,119 @@
     <title>Шервудская чащоба - PS2 Style</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
-        canvas { display: block; background: #000; touch-action: none; }
-        #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%); }
-        #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
-        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 0 10px #8b6b3a; letter-spacing: 2px; }
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 24px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
-        #counter { position: absolute; bottom: 80px; right: 30px; color: #c8a050; font: 16px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 6px 14px; border: 1px solid #4a3a2a; border-radius: 4px; pointer-events: none; z-index: 10; letter-spacing: 1px; }
-        #joystick { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 180px; height: 180px; z-index: 30; pointer-events: auto; }
-        .arrow-btn { position: absolute; width: 56px; height: 56px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 8px #8b6b3a; box-shadow: 0 0 10px rgba(139, 107, 58, 0.3); }
-        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); box-shadow: 0 0 20px rgba(139, 107, 58, 0.8); }
+        body { 
+            overflow: hidden; 
+            background: #000;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        canvas { 
+            display: block; 
+            background: #000;
+            touch-action: none;
+        }
+        #vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+        }
+        #scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 2px,
+                rgba(0,0,0,0.08) 2px,
+                rgba(0,0,0,0.08) 4px
+            );
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #c8a050;
+            font: 18px "Times New Roman", serif;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 20px;
+            border: 2px solid #6b5a3a;
+            border-radius: 4px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 10px #8b6b3a;
+            letter-spacing: 2px;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #c8a050;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 20;
+            text-shadow: 0 0 12px #8b6b3a;
+            opacity: 0.6;
+        }
+        #counter {
+            position: absolute;
+            bottom: 80px;
+            right: 30px;
+            color: #c8a050;
+            font: 16px "Times New Roman", serif;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 6px 14px;
+            border: 1px solid #4a3a2a;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 10;
+            letter-spacing: 1px;
+        }
+        #joystick {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 180px;
+            z-index: 30;
+            pointer-events: auto;
+        }
+        .arrow-btn {
+            position: absolute;
+            width: 56px;
+            height: 56px;
+            background: rgba(10, 8, 5, 0.9);
+            border: 2px solid #6b5a3a;
+            border-radius: 50%;
+            color: #c8a050;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+            text-shadow: 0 0 8px #8b6b3a;
+            box-shadow: 0 0 10px rgba(139, 107, 58, 0.3);
+        }
+        .arrow-btn:active {
+            background: rgba(139, 107, 58, 0.6);
+            transform: scale(0.9);
+            box-shadow: 0 0 20px rgba(139, 107, 58, 0.8);
+        }
         #btn-forward { top: 0; left: 62px; }
         #btn-left { top: 62px; left: 0; }
         #btn-right { top: 62px; left: 124px; }
@@ -23,8 +126,26 @@
     </style>
 </head>
 <body>
-    <div id="info">⚔️ ШЕРВУДСКАЯ ЧАЩОБА ⚔️</div>
+    <div id="info">⚔️ ШЕРВУДСКАЯ ЛОЩИНА ⚔️</div>
     <div id="crosshair">✚</div>
+    <div id="hero-life" style="display:block;position:absolute;bottom:10px;left:10px;width:80px;height:80px;z-index:50;">
+        <img src="assets/assets2/game_details/sphere_of_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
+        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">HP</span>
+    </div>
+
+    <div id="hero-mana" style="display:block;position:absolute;bottom:10px;right:10px;width:80px;height:80px;z-index:50;">
+        <img src="assets/assets2/game_details/sphere_of_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
+        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">МАНА</span>
+    </div>
+
+    <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:400px;height:50px;z-index:50;">
+        <img src="assets/assets2/game_details/life_of_mobs.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
+        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);">
+        <span id="mob-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;font-weight:bold;">HP: 1000/1000</span>
+    </div>
+
     <div id="counter">🏆 0</div>
     <div id="joystick">
         <div class="arrow-btn" id="btn-forward">▲</div>
@@ -37,27 +158,6 @@
     <div id="scanlines"></div>
 
     <button onclick="parent.UI.loadHome()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">← НАЗАД</button>
-
-    <!-- Сфера жизни -->
-    <div id="hero-life" style="display:block;position:absolute;bottom:10px;left:10px;width:80px;height:80px;z-index:50;">
-        <img src="assets/assets2/game_details/sphere_of_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
-        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
-        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">HP</span>
-    </div>
-
-    <!-- Сфера скверны -->
-    <div id="hero-mana" style="display:block;position:absolute;bottom:10px;right:10px;width:80px;height:80px;z-index:50;">
-        <img src="assets/assets2/game_details/sphere_of_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
-        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
-        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">МАНА</span>
-    </div>
-
-    <!-- Панель жизни мобов -->
-    <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:400px;height:50px;z-index:50;">
-        <img src="assets/assets2/game_details/life_of_mobs.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
-        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);">
-        <span id="mob-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;font-weight:bold;">HP: 1000/1000</span>
-    </div>
 
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
