@@ -71,7 +71,7 @@ Sherwood.Training = {
 
     // ========== UI ==========
 
-    showUI: function() {
+        showUI: function() {
         if (typeof UI === 'undefined') {
             if (typeof showGenericScreen === 'function') {
                 showGenericScreen('Тренировка', '💪');
@@ -95,13 +95,11 @@ Sherwood.Training = {
         var h = '<div style="text-align:center;padding:10px;">';
         h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:15px;">💪 Тренировка</div>';
         
-        // Очки тренировки (крупная иконка слева от текста)
         h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">';
         h += '<img src="assets/assets2/game_details/tablet_of_experience.png" style="width:40px;height:40px;object-fit:contain;">';
         h += '<span style="color:#aaa;font-size:18px;font-weight:bold;">Очки тренировки: ' + (p.experiencePoints || 0) + '</span>';
         h += '</div>';
 
-        // ТРИ ВКЛАДКИ-ПЛАШКИ (в стиле таверны)
         h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:30px;">';
         for (var i = 0; i < stats.length; i++) {
             var s = stats[i];
@@ -112,7 +110,6 @@ Sherwood.Training = {
         }
         h += '</div>';
 
-        // ВЕРТИКАЛЬНЫЙ СПИСОК ТРЕНИРОВОК (все три видны сразу)
         h += '<div style="overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;">';
         h += '<style>.training-scroll::-webkit-scrollbar { display: none; } .training-scroll { scrollbar-width: none; }</style>';
         h += '<div class="training-scroll" style="display:flex;flex-direction:column;gap:20px;max-width:420px;margin:0 auto;padding:10px;">';
@@ -123,23 +120,35 @@ Sherwood.Training = {
 
             h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:15px;text-align:center;">';
             
-                        // Иконка статы
-            h += '<img src="' + icons[stat] + '" style="display:block;margin:0 auto;width:60px;height:60px;object-fit:contain;">';
+            // Иконка статы сверху по центру
+            // ВОТ ЗДЕСЬ БЫЛО 10px, Я ПОСТАВИЛ 50px
+            h += '<div style="text-align:center;margin-bottom:50px;">';
+            h += '<img src="' + icons[stat] + '" style="width:50px;height:50px;object-fit:contain;">';
+            h += '</div>';
             
-            // Название + уровень + бонус (увеличили отступы от иконки)
-            h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:15px;margin-top:20px;">' + names[stat] + '</div>';
-            h += '<div style="color:#aaa;font-size:12px;margin-top:8px;">Уровень: ' + info.level + '/1000</div>';
-            h += '<div style="color:#aaa;font-size:11px;margin-top:8px;">+' + info.bonus + ' за уровень</div>';
+            // Название
+            h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:16px;">' + names[stat] + '</div>';
+            
+            // Уровень
+            h += '<div style="color:#aaa;font-size:0.8em;margin-top:4px;">Уровень: ' + info.level + '/1000</div>';
+            
+            // Описание (бонус)
+            h += '<div style="color:#888;font-size:0.7em;margin-top:4px;">+' + info.bonus + ' за уровень</div>';
 
             if (info.isMax) {
-                h += '<div style="color:#4caf50;font-weight:bold;font-size:14px;margin-top:15px;">✅ МАКСИМУМ</div>';
+                h += '<div style="color:#4caf50;font-weight:bold;margin-top:8px;">✅ МАКСИМУМ</div>';
             } else {
-                // Стоимость + кнопка
-                h += '<div style="color:#ffd700;font-size:12px;margin-top:12px;">Стоимость: ⭐ ' + info.cost + ' очков опыта</div>';
-                h += '<button onclick="Sherwood.Training._trainFromUI(\'' + stat + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;font-size:12px;margin-top:12px;">⬆ Тренировать</button>';
+                h += '<div style="color:#e0c080;font-size:0.8em;margin:8px 0;">Стоимость: ⭐ ' + info.cost + ' очков опыта</div>';
+                h += '<button onclick="Sherwood.Training._trainFromUI(\'' + stat + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:5px;">⬆ Тренировать</button>';
             }
             
             h += '</div>';
+        }
+        h += '</div>';
+        h += '</div>';
+
+        h += '<div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;min-height:20px;"></div>';
+        h += '</div>';
 
         UI._openScreenScrollable('💪 Тренировка', 'training', h);
     },
