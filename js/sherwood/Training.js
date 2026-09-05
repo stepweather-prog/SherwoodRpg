@@ -180,7 +180,7 @@ Sherwood.Training = {
     }
 };
 
-// Переопределяем UI.training на Sherwood.Training.showUI
+// ВАЖНО: Переопределяем UI.training, чтобы кнопка в таверне вызывала ТВОЮ версию
 if (typeof UI !== 'undefined') {
     UI.training = function() {
         Sherwood.Training.showUI();
