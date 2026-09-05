@@ -284,7 +284,7 @@ UI._openScreen = function(title, bgKey, html, backFn) {
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
                     <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:10px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Назад</button>
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>
                         <span style="color:#e0c080;font-size:18px;font-weight:bold;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
@@ -320,7 +320,7 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
                     <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:10px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Назад</button>
+                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>
                         <span style="color:#e0c080;font-size:18px;font-weight:bold;">${title}</span>
                     </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
@@ -1188,16 +1188,21 @@ UI.dungeon = function() {
     UI._playSound('click');
     UI._stopMusic();
     
-    var h = '<div style="text-align:center;padding:20px;max-width:400px;margin:0 auto;">';
+    var h = '<div style="text-align:center;padding:20px;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;width:100%;height:100%;">';
     h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">🏚️ Подземка</div>';
-    h += '<div style="display:flex;flex-direction:column;align-items:center;gap:15px;">';
-    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:100px;height:100px;object-fit:contain;">';
-    h += '<div style="color:#fff;font-size:16px;">Проклятая чаща</div>';
+    
+    // Иконка по центру и ниже
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:200px;height:200px;object-fit:contain;margin:0 auto 30px;display:block;">';
+    
+    // Плашка с названием (как в порталах)
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-bottom:25px;">Проклятая чаща</div>';
+    
+    // Кнопка
     h += '<button onclick="UI.loadIframeDungeon()" style="padding:10px 30px;background:#c9a040;border:none;border-radius:8px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">⚔️ Войти</button>';
     h += '</div>';
     h += '</div>';
     
-    UI._openScreenScrollable(' Подземка', null, h, 'UI.loadHome()');
+    UI._openScreenScrollable('🏚️ Подземка', 'dungeon', h, 'UI.loadHome()');
 };
 
 // ===== ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME =====
