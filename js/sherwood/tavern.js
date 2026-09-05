@@ -1,5 +1,5 @@
 // ============================================================
-//  js/sherwood/tavern.js — Таверна «Весёлый Разбойник»
+//  js/sherwood/tavern.js — Таверна Гаррета
 // ============================================================
 
 if (typeof Sherwood === 'undefined') {
@@ -167,7 +167,7 @@ Sherwood.Tavern = {
         h += '</div>'; // Закрываем главный контейнер
 
         // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
-        UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
+        UI._openScreenScrollable('Таверна', null, h);
     },
 
     acceptFromUI: function() {
