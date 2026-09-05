@@ -1186,6 +1186,17 @@ UI.raid = function() {
 
 UI.dungeon = function() {
     UI._playSound('click');
+    if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
+        Sherwood.Dungeon.showUI();
+    } else {
+        UI._showPlaceholder('Подземка', 'dungeon');
+    }
+};
+
+// ===== ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME =====
+UI.loadIframeDungeon = function() {
+    UI._playSound('click');
+    UI._stopMusic();
     var iframe = document.createElement('iframe');
     iframe.src = 'dungeon.html';
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
