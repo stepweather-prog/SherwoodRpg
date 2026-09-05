@@ -23,7 +23,7 @@
     </style>
 </head>
 <body>
-    <div id="info">⚔️ ШЕРВУДСКАЯ ЧАЩОБА ⚔️</div>
+    <div id="info">Проклятая чаща</div>
     <div id="crosshair">✚</div>
     <div id="hero-life" style="display:block;position:absolute;bottom:10px;left:10px;width:80px;height:80px;z-index:50;">
         <img src="assets/assets2/game_details/sphere_of_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
@@ -54,7 +54,7 @@
     <div id="vignette"></div>
     <div id="scanlines"></div>
 
-    <button onclick="parent.UI.loadHome()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">← НАЗАД</button>
+   <button onclick="parent.UI.loadHome()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">← </button>
 
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
@@ -223,8 +223,8 @@
             var sprite = new THREE.Sprite(
                 new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true })
             );
-            sprite.position.set(x, 0.02, z);
-            sprite.scale.set(0.15, 0.15, 1);
+            sprite.position.set(x, 0.1, z);
+            sprite.scale.set(0.25, 0.25, 1);
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false };
             group.add(sprite);
             obj.mesh = sprite;
