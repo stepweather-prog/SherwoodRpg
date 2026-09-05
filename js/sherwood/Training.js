@@ -1,6 +1,6 @@
 /**
  * Sherwood Training — Тренировка
- * Прокачка атаки, защиты и HP за ресурсы
+ * Прокачка атаки, защиты и HP за очки опыта
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -27,25 +27,14 @@ Sherwood.Training = {
         var levels = this.getLevels();
         var current = levels[stat] || 0;
         var nextLevel = current + 1;
-        var isGoldLevel = nextLevel % 5 === 0;
-        var cost;
-        if (isGoldLevel) {
-            cost = Math.round(5 * Math.pow(1.15, Math.floor(nextLevel / 5)));
-        } else {
-            cost = Math.round(10 * Math.pow(nextLevel, 1.15));
-        }
-        var currency = isGoldLevel ? 'gold' : 'silver';
-        var currencyName = isGoldLevel ? 'золота' : 'серебра';
+        var cost = Math.round(10 * Math.pow(nextLevel, 1.15));
         var bonus = { attack: 3, defense: 3, hp: 3 };
         return {
             stat: stat,
             level: current,
             nextLevel: nextLevel,
             cost: cost,
-            currency: currency,
-            currencyName: currencyName,
             bonus: bonus[stat] || 0,
-            isGoldLevel: isGoldLevel,
             isMax: current >= 1000
         };
     },
@@ -59,11 +48,11 @@ Sherwood.Training = {
         var p = Sherwood.getPlayer();
         if (!p) return { success: false, reason: 'Игрок не найден' };
 
-        if ((p.resources[info.currency] || 0) < info.cost) {
-            return { success: false, reason: 'Нужно ' + info.cost + ' ' + info.currencyName };
+        if ((p.exp || 0) < info.cost) {
+            return { success: false, reason: 'Нужно ' + info.cost + ' опыта' };
         }
 
-        p.resources[info.currency] -= info.cost;
+        p.exp -= info.cost;
         if (!p.trainingLevels) p.trainingLevels = { attack: 0, defense: 0, hp: 0 };
         p.trainingLevels[stat] = info.nextLevel;
 
@@ -76,8 +65,7 @@ Sherwood.Training = {
             success: true,
             stat: stat,
             newLevel: info.nextLevel,
-            cost: info.cost,
-            currency: info.currencyName
+            cost: info.cost
         };
     },
 
@@ -96,33 +84,37 @@ Sherwood.Training = {
         if (!p) return;
 
         var stats = ['attack', 'defense', 'hp'];
-        var names = { attack: '⚔️ Атака', defense: '🛡️ Защита', hp: '❤️ Здоровье' };
+        var names = { attack: ' Атака', defense: ' Защита', hp: ' Здоровье' };
         var colors = { attack: '#f44336', defense: '#2196f3', hp: '#4caf50' };
         var icons = { attack: UI._statIcons.attack, defense: UI._statIcons.defense, hp: UI._statIcons.hp };
 
-        var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
-        h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;text-align:center;margin-bottom:12px;">💪 Тренировка</div>';
+        var h = '<div style="padding:10px;max-width:420px;margin:0 auto;">';
+        h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;text-align:center;margin-bottom:12px;"> Тренировка</div>';
 
-        // ТРИ ВКЛАДКИ-ПЛАШКИ
-        h += '<div style="display:flex;justify-content:center;gap:0;margin-bottom:30px;">';
+        // Очки опыта
+        h += '<div style="color:#aaa;font-size:14px;text-align:center;margin-bottom:15px;">Опыт: ' + (p.exp || 0) + '</div>';
+        h += '<img src="assets/assets2/game_details/tablet_of_experience.png" style="width:30px;height:30px;object-fit:contain;display:block;margin:0 auto 20px;">';
+
+        // ТРИ ВКЛАДКИ-ПЛАШКИ (в стиле таверны - с фоном all_stat.png)
+        h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:30px;">';
         for (var i = 0; i < stats.length; i++) {
             var s = stats[i];
             var isActive = (this._selectedStat === s);
-            h += '<div onclick="Sherwood.Training._selectStat(\'' + s + '\')" style="width:140px;height:50px;background:' + (isActive ? colors[s] : 'rgba(0,0,0,0.5)') + ';border:2px solid ' + colors[s] + ';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 -2px;transition:all 0.2s;">';
-            h += '<span style="color:#fff;font-size:14px;font-weight:bold;text-shadow:0 2px 4px #000;">' + names[s] + '</span>';
+            h += '<div onclick="Sherwood.Training._selectStat(\'' + s + '\')" style="width:150px;height:55px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;border:2px solid ' + (isActive ? colors[s] : 'rgba(255,255,255,0.3)') + ';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:' + (isActive ? '0 0 15px ' + colors[s] + '88' : '0 2px 4px rgba(0,0,0,0.5)') + ';">';
+            h += '<span style="color:' + (isActive ? colors[s] : '#fff') + ';font-size:14px;font-weight:bold;text-shadow:0 2px 4px #000;">' + names[s] + '</span>';
             h += '</div>';
         }
         h += '</div>';
 
-        // ВЕРТИКАЛЬНЫЙ СПИСОК ТРЕНИРОВОК (все три, с отступами)
+        // ВЕРТИКАЛЬНЫЙ СПИСОК ТРЕНИРОВОК (все три видны сразу)
         for (var j = 0; j < stats.length; j++) {
             var stat = stats[j];
             var info = this.getStatInfo(stat);
 
             h += '<div style="background:rgba(0,0,0,0.5);border:1px solid #555;border-radius:8px;padding:15px;margin-bottom:20px;">';
-            h += '<div style="display:flex;align-items:center;gap:10px;">';
-            h += '<img src="' + icons[stat] + '" style="width:50px;height:50px;object-fit:contain;">';
-            h += '<div style="flex:1;">';
+            h += '<div style="display:flex;align-items:center;gap:12px;">';
+            h += '<img src="' + icons[stat] + '" style="width:50px;height:50px;object-fit:contain;flex-shrink:0;">';
+            h += '<div style="flex:1;min-width:0;">';
             h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:16px;">' + names[stat] + '</div>';
             h += '<div style="color:#aaa;font-size:0.8em;margin-top:4px;">Уровень: ' + info.level + '/1000</div>';
             h += '<div style="color:#888;font-size:0.7em;margin-top:4px;">+' + info.bonus + ' за уровень</div>';
@@ -132,9 +124,8 @@ Sherwood.Training = {
             if (info.isMax) {
                 h += '<div style="color:#4caf50;font-weight:bold;text-align:center;margin-top:8px;">✅ МАКСИМУМ</div>';
             } else {
-                var currencyIcon = info.currency === 'gold' ? '💰' : '🥈';
-                h += '<div style="color:#e0c080;font-size:0.8em;text-align:center;margin:8px 0;">Следующая тренировка: ' + currencyIcon + ' ' + info.cost + ' ' + info.currencyName + '</div>';
-                h += '<button onclick="Sherwood.Training._trainFromUI(\'' + stat + '\')" class="btn btn-gold" style="width:100%;padding:10px;font-size:0.9em;">⬆ Тренировать</button>';
+                h += '<div style="color:#e0c080;font-size:0.8em;text-align:center;margin:8px 0;">Следующая тренировка: ⭐ ' + info.cost + ' опыта</div>';
+                h += '<button onclick="Sherwood.Training._trainFromUI(\'' + stat + '\')" style="width:100%;padding:10px;background:#c9a040;border:none;border-radius:6px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:5px;">⬆ Тренировать</button>';
             }
             h += '</div>';
         }
@@ -142,7 +133,7 @@ Sherwood.Training = {
         h += '<div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;min-height:20px;"></div>';
         h += '</div>';
 
-        UI._openScreenScrollable('💪 Тренировка', 'training', h);
+        UI._openScreenScrollable(' Тренировка', 'training', h);
     },
 
     _selectedStat: 'attack',
@@ -156,7 +147,7 @@ Sherwood.Training = {
         var result = this.train(stat);
         var log = document.getElementById('training-log');
         if (result.success) {
-            if (log) log.textContent = '✅ ' + stat + ' → ' + result.newLevel + ' (-' + result.cost + ' ' + result.currency + ')';
+            if (log) log.textContent = '✅ ' + stat + ' → ' + result.newLevel + ' (-' + result.cost + ' опыта)';
             UI._playSound('levelup');
             UI.updateDisplay();
             this.showUI();
@@ -170,4 +161,4 @@ Sherwood.Training = {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Training = Sherwood.Training;
 
-console.log('💪 Тренировка загружена!');
+console.log(' Тренировка загружена!');
