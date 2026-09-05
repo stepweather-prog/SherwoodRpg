@@ -108,7 +108,10 @@ Sherwood.Talents = {
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            h += '<div style="display:flex;flex-direction:column;gap:15px;max-width:400px;margin:0 auto;padding:10px;">';
+            h += '<div style="display:flex;flex-direction:column;gap:15px;max-width:400px;margin:0 auto;padding:10px;overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;">';
+            h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
+            h += '<div class="talents-scroll" style="display:flex;flex-direction:column;gap:15px;">';
+            
             for (var i = 0; i < learnedTalents.length; i++) {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
@@ -130,6 +133,7 @@ Sherwood.Talents = {
                 
                 h += '</div>';
             }
+            h += '</div>';
             h += '</div>';
         }
         h += '</div>';
@@ -170,7 +174,7 @@ Sherwood.Talents = {
         }
         h += '</div>';
 
-        // ВЕРТИКАЛЬНЫЙ СПИСОК ТАЛАНТОВ
+        // ВЕРТИКАЛЬНЫЙ СПИСОК ТАЛАНТОВ С СКРОЛЛОМ
         var branchTalents = [];
         for (var i = 0; i < allTalents.length; i++) {
             if (allTalents[i].branch === selectedBranch) {
@@ -178,8 +182,8 @@ Sherwood.Talents = {
             }
         }
 
-        h += '<div style="display:flex;flex-direction:column;gap:20px;max-width:420px;margin:0 auto;padding:10px;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;">';
-        h += '<style>/* Скрыть полосу прокрутки */ .talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
+        h += '<div style="display:flex;flex-direction:column;gap:20px;max-width:420px;margin:0 auto;padding:10px;overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;">';
+        h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
         h += '<div class="talents-scroll" style="display:flex;flex-direction:column;gap:20px;">';
         
         for (var j = 0; j < branchTalents.length; j++) {
