@@ -136,7 +136,7 @@ Sherwood.Talents = {
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
     },
 
-            showUI: function() {
+                showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
@@ -148,10 +148,10 @@ Sherwood.Talents = {
         var talentPoints = p ? (p.talentPoints || 0) : 0;
         var selectedBranch = this._selectedBranch;
 
-        // 1. Основной контейнер с ТВОИМ фоном дерева
+        // 1. ВОЗВРАЩАЕМ ТВОЙ РОДНОЙ ФОН ДЕРЕВА (отсюда и была ошибка 404)
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/talents/background_talents.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;">';
 
-        // 2. Внутренний контейнер (отступ сверху для кнопки назад)
+        // 2. Внутренний контейнер
         h += '<div style="display:flex;flex-direction:column;align-items:center;padding-top:60px;width:100%;">';
 
         // Заголовок и очки
@@ -162,7 +162,7 @@ Sherwood.Talents = {
         h += '<span style="color:#ffd700;font-size:16px;font-weight:bold;">Очки: ' + talentPoints + '</span>';
         h += '</div>';
 
-        // Кнопки веток (сделаны уже, чтобы не вылезать за экран)
+        // Кнопки веток
         h += '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:20px;width:100%;max-width:280px;">';
         var branchesOrder = ['damage', 'passive', 'heal'];
         for (var b = 0; b < branchesOrder.length; b++) {
@@ -183,7 +183,7 @@ Sherwood.Talents = {
             }
         }
 
-        // 3. Список талантов (БЕЗ ВНУТРЕННЕЙ ПРОКРУТКИ, все элементы идут друг за другом)
+        // 3. Список талантов
         h += '<div style="width:90%;max-width:320px;padding:10px;">';
         
         for (var j = 0; j < branchTalents.length; j++) {
@@ -191,10 +191,8 @@ Sherwood.Talents = {
             var lvl = this.getTalentLevel(t.id);
             h += '<div style="background:rgba(0,0,0,0.7);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:15px;text-align:center;margin-bottom:15px;">';
             
-            // ЖЕСТКО ЦЕНТРИРУЕМ ИКОНКУ: display:block + margin:0 auto
-            h += '<div style="text-align:center;margin-bottom:8px;display:flex;justify-content:center;align-items:center;">';
+            // ИКОНКА ПО ЦЕНТРУ (убрал сдвиг вправо)
             h += '<img src="' + t.icon + '" style="display:block;margin:0 auto;width:50px;height:50px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-            h += '</div>';
             
             h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
             h += '<div style="color:#aaa;font-size:11px;margin-top:6px;line-height:1.5;">' + t.desc + '</div>';
