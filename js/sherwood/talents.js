@@ -8,9 +8,9 @@ if (typeof Sherwood === 'undefined') {
 
 Sherwood.Talents = {
     BRANCHES: {
-        damage: { id: 'damage', name: 'Урон', color: '#f44336', icon: 'assets/assets2/talents/simple_attack.png' },
-        heal: { id: 'heal', name: 'Хил', color: '#4caf50', icon: 'assets/assets2/talents/healing.png' },
-        passive: { id: 'passive', name: 'Пассив', color: '#2196f3', icon: 'assets/assets2/talents/blocking.png' }
+        damage: { id: 'damage', name: 'Атакующие', color: '#f44336', icon: 'assets/assets2/talents/simple_attack.png' },
+        passive: { id: 'passive', name: 'Пассивные', color: '#2196f3', icon: 'assets/assets2/talents/blocking.png' },
+        heal: { id: 'heal', name: 'Исцеляющие', color: '#4caf50', icon: 'assets/assets2/talents/healing.png' }
     },
 
     TALENTS: [
@@ -23,17 +23,17 @@ Sherwood.Talents = {
         { id: 'force_of_elements', name: 'Сила стихий', branch: 'damage', icon: 'assets/assets2/talents/force of the elements.png', desc: 'Добавляет стихийный урон к атакам.', maxLevel: 5 },
         { id: 'evil_eye', name: 'Злой глаз', branch: 'damage', icon: 'assets/assets2/talents/evil_eye.png', desc: 'Снижает удачу врага.', maxLevel: 2 },
 
-        { id: 'healing', name: 'Исцеление', branch: 'heal', icon: 'assets/assets2/talents/healing.png', desc: 'Увеличивает эффективность лечения на 15%.', maxLevel: 4 },
-        { id: 'healer', name: 'Хилер', branch: 'heal', icon: 'assets/assets2/talents/Healer.png', desc: 'Увеличивает лечение союзников.', maxLevel: 3 },
-        { id: 'funnel', name: 'Воронка', branch: 'heal', icon: 'assets/assets2/talents/funnel.png', desc: 'Притягивает врагов к центру.', maxLevel: 2 },
-        { id: 'inspiration', name: 'Вдохновение', branch: 'heal', icon: 'assets/assets2/talents/inspiration.png', desc: 'Повышает урон всей команды.', maxLevel: 2 },
-        { id: 'knot', name: 'Узел', branch: 'heal', icon: 'assets/assets2/talents/knot.png', desc: 'Связывает врагов, снижая их мобильность.', maxLevel: 2 },
-
         { id: 'blocking', name: 'Блокировка', branch: 'passive', icon: 'assets/assets2/talents/blocking.png', desc: 'Уменьшает получаемый урон на 8%.', maxLevel: 3 },
         { id: 'parry', name: 'Парирование', branch: 'passive', icon: 'assets/assets2/talents/parry.png', desc: 'Шанс полностью отразить атаку врага.', maxLevel: 2 },
         { id: 'silence', name: 'Тишина', branch: 'passive', icon: 'assets/assets2/talents/Silence.png', desc: 'Шанс запретить врагу использовать навыки.', maxLevel: 2 },
         { id: 'numbness', name: 'Онемение', branch: 'passive', icon: 'assets/assets2/talents/Numbness.png', desc: 'Снижает скорость атаки врагов.', maxLevel: 3 },
-        { id: 'ignore', name: 'Игнор', branch: 'passive', icon: 'assets/assets2/talents/ignore.png', desc: 'Игнорирует часть защиты врага.', maxLevel: 3 }
+        { id: 'ignore', name: 'Игнор', branch: 'passive', icon: 'assets/assets2/talents/ignore.png', desc: 'Игнорирует часть защиты врага.', maxLevel: 3 },
+
+        { id: 'healing', name: 'Исцеление', branch: 'heal', icon: 'assets/assets2/talents/healing.png', desc: 'Увеличивает эффективность лечения на 15%.', maxLevel: 4 },
+        { id: 'healer', name: 'Хилер', branch: 'heal', icon: 'assets/assets2/talents/Healer.png', desc: 'Увеличивает лечение союзников.', maxLevel: 3 },
+        { id: 'funnel', name: 'Воронка', branch: 'heal', icon: 'assets/assets2/talents/funnel.png', desc: 'Притягивает врагов к центру.', maxLevel: 2 },
+        { id: 'inspiration', name: 'Вдохновение', branch: 'heal', icon: 'assets/assets2/talents/inspiration.png', desc: 'Повышает урон всей команды.', maxLevel: 2 },
+        { id: 'knot', name: 'Узел', branch: 'heal', icon: 'assets/assets2/talents/knot.png', desc: 'Связывает врагов, снижая их мобильность.', maxLevel: 2 }
     ],
 
     _selectedBranch: 'damage',
@@ -103,14 +103,17 @@ Sherwood.Talents = {
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:360px;margin:0 auto;">';
+            h += '<div style="display:flex;flex-direction:column;gap:15px;max-width:360px;margin:0 auto;padding:10px;">';
             for (var i = 0; i < learnedTalents.length; i++) {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
-                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-                h += '<img src="' + t.icon + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-                h += '<div style="color:#fff;font-size:11px;text-align:center;margin-bottom:4px;">' + t.name + '</div>';
-                h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:15px;cursor:pointer;display:flex;align-items:center;gap:15px;">';
+                h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<div style="flex:1;text-align:left;">';
+                h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
+                h += '<div style="color:#ffa500;font-size:12px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+                h += '</div>';
+                h += '<div style="color:#888;font-size:20px;">›</div>';
                 h += '</div>';
             }
             h += '</div>';
@@ -135,30 +138,44 @@ Sherwood.Talents = {
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
-        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;">';
-        for (var b = 0; b < this.BRANCHES.length; b++) {
-            var branch = this.BRANCHES[b];
-            var active = (branch.id === selectedBranch);
-            h += '<button onclick="Sherwood.Talents._selectBranch(\'' + branch.id + '\')" style="background:' + (active ? branch.color : 'rgba(0,0,0,0.5)') + ';border:2px solid ' + branch.color + ';border-radius:6px;padding:10px 20px;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;">' + branch.name + '</button>';
+
+        // ТРИ ВКЛАДКИ-ПЛАШКИ
+        h += '<div style="display:flex;justify-content:center;gap:0;margin-bottom:30px;margin-top:20px;">';
+        var branchesOrder = ['damage', 'passive', 'heal'];
+        for (var b = 0; b < branchesOrder.length; b++) {
+            var branchId = branchesOrder[b];
+            var branch = this.BRANCHES[branchId];
+            var isActive = (branchId === selectedBranch);
+            h += '<div onclick="Sherwood.Talents._selectBranch(\'' + branchId + '\')" style="width:160px;height:50px;background:' + (isActive ? branch.color : 'rgba(0,0,0,0.5)') + ';border:2px solid ' + branch.color + ';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 -2px;transition:all 0.2s;">';
+            h += '<span style="color:#fff;font-size:14px;font-weight:bold;text-shadow:0 2px 4px #000;">' + branch.name + '</span>';
+            h += '</div>';
         }
         h += '</div>';
+
+        // ВЕРТИКАЛЬНЫЙ СПИСОК ТАЛАНТОВ
         var branchTalents = [];
         for (var i = 0; i < allTalents.length; i++) {
             if (allTalents[i].branch === selectedBranch) {
                 branchTalents.push(allTalents[i]);
             }
         }
-        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:360px;margin:0 auto;">';
+
+        h += '<div style="display:flex;flex-direction:column;gap:20px;max-width:400px;margin:0 auto;padding:10px;">';
         for (var j = 0; j < branchTalents.length; j++) {
             var t = branchTalents[j];
             var lvl = this.getTalentLevel(t.id);
-            h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-            h += '<img src="' + t.icon + '" style="width:100px;height:100px;object-fit:contain;margin-bottom:8px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-            h += '<div style="color:#fff;font-size:11px;text-align:center;margin-bottom:4px;">' + t.name + '</div>';
-            h += '<div style="color:#ffa500;font-size:10px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+            h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:15px;cursor:pointer;display:flex;align-items:center;gap:15px;">';
+            h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="flex:1;text-align:left;">';
+            h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
+            h += '<div style="color:#aaa;font-size:12px;margin-top:4px;">' + t.desc + '</div>';
+            h += '<div style="color:#ffa500;font-size:12px;margin-top:6px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+            h += '</div>';
+            h += '<div style="color:#888;font-size:20px;">›</div>';
             h += '</div>';
         }
         h += '</div>';
+
         h += '</div>';
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
     },
