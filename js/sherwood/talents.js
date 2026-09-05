@@ -99,7 +99,7 @@ Sherwood.Talents = {
         var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
         
-        // Очки талантов (крупная иконка слева от текста, как в тренировке)
+        // Очки талантов (крупная иконка слева от текста)
         h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:40px;height:40px;object-fit:contain;">';
         h += '<span style="color:#aaa;font-size:18px;font-weight:bold;">Очки талантов: ' + talentPoints + '</span>';
@@ -108,7 +108,7 @@ Sherwood.Talents = {
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            // Весь список скроллится вместе (и иконки, и описание)
+            // Весь список скроллится вместе
             h += '<div style="overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;max-width:420px;margin:0 auto;padding:10px;">';
             h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
             h += '<div class="talents-scroll" style="display:flex;flex-direction:column;gap:15px;">';
@@ -158,7 +158,7 @@ Sherwood.Talents = {
         var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
         
-        // Очки талантов (крупная иконка слева от текста, как в тренировке)
+        // Очки талантов (крупная иконка слева от текста)
         h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:40px;height:40px;object-fit:contain;">';
         h += '<span style="color:#aaa;font-size:18px;font-weight:bold;">Очки талантов: ' + talentPoints + '</span>';
@@ -237,6 +237,13 @@ Sherwood.Talents = {
         this.showUI();
     }
 };
+
+// Переопределяем UI.talents (если есть) на Sherwood.Talents.showUI
+if (typeof UI !== 'undefined' && UI.talents) {
+    UI.talents = function() {
+        Sherwood.Talents.showUI();
+    };
+}
 
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Talents = Sherwood.Talents;
