@@ -99,35 +99,38 @@ Sherwood.Talents = {
         var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
         
-        // Очки талантов (иконка слева от текста)
-        h += '<div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:15px;">';
-        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:24px;height:24px;object-fit:contain;">';
-        h += '<span style="color:#aaa;font-size:14px;">Очки талантов: ' + talentPoints + '</span>';
+        // Очки талантов (крупная иконка слева от текста, как в тренировке)
+        h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:40px;height:40px;object-fit:contain;">';
+        h += '<span style="color:#aaa;font-size:18px;font-weight:bold;">Очки талантов: ' + talentPoints + '</span>';
         h += '</div>';
         
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            h += '<div style="display:flex;flex-direction:column;gap:15px;max-width:400px;margin:0 auto;padding:10px;overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;">';
+            // Весь список скроллится вместе (и иконки, и описание)
+            h += '<div style="overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;max-width:420px;margin:0 auto;padding:10px;">';
             h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
             h += '<div class="talents-scroll" style="display:flex;flex-direction:column;gap:15px;">';
             
             for (var i = 0; i < learnedTalents.length; i++) {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
-                h += '<div style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:15px;">';
+                h += '<div style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:15px;text-align:center;">';
                 
                 // Иконка сверху по центру
                 h += '<div style="text-align:center;margin-bottom:10px;">';
                 h += '<img src="' + t.icon + '" style="width:50px;height:50px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
                 
-                // Название и уровень по центру
-                h += '<div style="text-align:center;color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
-                h += '<div style="text-align:center;color:#ffa500;font-size:12px;margin-top:4px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+                // Название
+                h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
+                
+                // Уровень
+                h += '<div style="color:#ffa500;font-size:12px;margin-top:4px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
                 
                 // Кнопка улучшения
-                h += '<div style="text-align:center;margin-top:10px;">';
+                h += '<div style="margin-top:10px;">';
                 h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + t.id + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:6px 12px;color:#000;font-weight:bold;cursor:pointer;font-size:12px;">⬆ Улучшить</button>';
                 h += '</div>';
                 
@@ -155,10 +158,10 @@ Sherwood.Talents = {
         var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изучить таланты</div>';
         
-        // Очки талантов (иконка слева от текста)
-        h += '<div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:15px;">';
-        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:24px;height:24px;object-fit:contain;">';
-        h += '<span style="color:#aaa;font-size:14px;">Очки талантов: ' + talentPoints + '</span>';
+        // Очки талантов (крупная иконка слева от текста, как в тренировке)
+        h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:40px;height:40px;object-fit:contain;">';
+        h += '<span style="color:#aaa;font-size:18px;font-weight:bold;">Очки талантов: ' + talentPoints + '</span>';
         h += '</div>';
 
         // ТРИ ВКЛАДКИ-ПЛАШКИ (в стиле таверны)
@@ -174,7 +177,7 @@ Sherwood.Talents = {
         }
         h += '</div>';
 
-        // ВЕРТИКАЛЬНЫЙ СПИСОК ТАЛАНТОВ С СКРОЛЛОМ
+        // ВЕРТИКАЛЬНЫЙ СПИСОК ТАЛАНТОВ (весь контент скроллится вместе)
         var branchTalents = [];
         for (var i = 0; i < allTalents.length; i++) {
             if (allTalents[i].branch === selectedBranch) {
@@ -182,14 +185,14 @@ Sherwood.Talents = {
             }
         }
 
-        h += '<div style="display:flex;flex-direction:column;gap:20px;max-width:420px;margin:0 auto;padding:10px;overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;">';
+        h += '<div style="overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;max-width:420px;margin:0 auto;padding:10px;">';
         h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
         h += '<div class="talents-scroll" style="display:flex;flex-direction:column;gap:20px;">';
         
         for (var j = 0; j < branchTalents.length; j++) {
             var t = branchTalents[j];
             var lvl = this.getTalentLevel(t.id);
-            h += '<div style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:15px;">';
+            h += '<div style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:15px;text-align:center;">';
             
             // Иконка сверху по центру
             h += '<div style="text-align:center;margin-bottom:10px;">';
@@ -197,16 +200,16 @@ Sherwood.Talents = {
             h += '</div>';
             
             // Название
-            h += '<div style="text-align:center;color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
+            h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
             
-            // Описание
-            h += '<div style="text-align:center;color:#aaa;font-size:12px;margin-top:6px;line-height:1.4;">' + t.desc + '</div>';
+            // Описание (под иконкой, отдельной строкой)
+            h += '<div style="color:#aaa;font-size:12px;margin-top:6px;line-height:1.4;">' + t.desc + '</div>';
             
             // Уровень
-            h += '<div style="text-align:center;color:#ffa500;font-size:12px;margin-top:8px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+            h += '<div style="color:#ffa500;font-size:12px;margin-top:8px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
             
             // Кнопка улучшения
-            h += '<div style="text-align:center;margin-top:10px;">';
+            h += '<div style="margin-top:10px;">';
             h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + t.id + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;font-size:12px;">⬆ Улучшить</button>';
             h += '</div>';
             
