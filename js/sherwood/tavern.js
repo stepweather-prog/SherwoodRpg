@@ -90,19 +90,19 @@ Sherwood.Tavern = {
     },
 
     showUI: function() {
-        if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
+        if (typeof SherwoodUI === 'undefined' || !SherwoodUI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
         }
         
-        UI._playSound('click');
+        SherwoodUI._playSound('click');
         var current = this.getCurrentChapter();
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
 
         // 1. Скрываем прокрутку на уровне слоя
-        if (UI._screenLayer) {
-            UI._screenLayer.style.overflow = 'hidden';
+        if (SherwoodUI._screenLayer) {
+            SherwoodUI._screenLayer.style.overflow = 'hidden';
         }
 
         // 2. Строим HTML с фоновым изображением и видео-анимацией
@@ -116,21 +116,26 @@ Sherwood.Tavern = {
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
         h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;">';
 
-        // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (опущены ниже и с меньшим отступом)
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:100px;">';
+        // 5. Кнопка назад (кликабельная, поверх всего)
+        h += '<button onclick="Sherwood.Tavern.closeUI()" style="position:absolute;top:20px;left:20px;z-index:30;background:transparent;border:none;cursor:pointer;padding:0;width:50px;height:50px;">';
+        h += '<img src="assets/all_buttons/back.png" style="width:100%;height:100%;object-fit:contain;">';
+        h += '</button>';
+
+        // 6. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (опущены ниже и с меньшим отступом)
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:80px;">';
         
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
         h += '</div>';
         
-        h += '<div onclick="UI.training()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<div onclick="SherwoodUI.training()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
         h += '</div>';
         
         h += '</div>';
 
-        // 6. Панель с заданиями (пергамент, 90% ширины и 300px высоты, висит низко в центре)
-        h += '<div style="width:90%;margin:0 auto;margin-top:200px;">';
+        // 7. Панель с заданиями (пергамент, 90% ширины и 300px высоты, поднята выше)
+        h += '<div style="width:90%;margin:0 auto;margin-top:140px;">';
         h += '<div style="width:100%;height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
         
         if (current) {
@@ -160,35 +165,29 @@ Sherwood.Tavern = {
         h += '</div>';
         h += '</div>';
         
-        // 7. Прогресс (самый низ)
+        // 8. Прогресс (самый низ)
         h += '<div style="margin-top:30px;margin-bottom:30px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
         
         h += '</div>'; // Закрываем контент поверх видео
         h += '</div>'; // Закрываем главный контейнер
 
         // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
-        UI._openScreenScrollable('Таверна', null, h);
+        SherwoodUI._openScreenScrollable('Таверна', null, h);
     },
 
     acceptFromUI: function() {
         var r = this.acceptQuest();
         if (!r.success) {
-            UI._showToast(r.reason || 'Ошибка');
+            SherwoodUI._showToast(r.reason || 'Ошибка');
             return;
         }
-        UI._showToast('Квест принят: ' + r.chapter.title);
-        this.showUI();
-    },
-
-    nextFromUI: function() {
-        this._currentChapterIndex++;
-        this._saveState();
+        SherwoodUI._showToast('Квест принят: ' + r.chapter.title);
         this.showUI();
     },
 
     closeUI: function() {
-        if (typeof UI !== 'undefined' && UI.loadHome) {
-            UI.loadHome();
+        if (typeof SherwoodUI !== 'undefined' && SherwoodUI.loadHome) {
+            SherwoodUI.loadHome();
         }
     }
 };
