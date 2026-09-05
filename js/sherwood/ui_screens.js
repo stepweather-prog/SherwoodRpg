@@ -1186,11 +1186,18 @@ UI.raid = function() {
 
 UI.dungeon = function() {
     UI._playSound('click');
-    if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.showUI) {
-        Sherwood.Dungeon.showUI();
-    } else {
-        UI._showPlaceholder('Подземка', 'dungeon');
-    }
+    UI._stopMusic();
+    
+    var h = '<div style="text-align:center;padding:20px;max-width:400px;margin:0 auto;">';
+    h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">🏚️ Подземка</div>';
+    h += '<div style="display:flex;flex-direction:column;align-items:center;gap:15px;">';
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:100px;height:100px;object-fit:contain;">';
+    h += '<div style="color:#fff;font-size:16px;">Проклятая чаща</div>';
+    h += '<button onclick="UI.loadIframeDungeon()" style="padding:10px 30px;background:#c9a040;border:none;border-radius:8px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">⚔️ Войти</button>';
+    h += '</div>';
+    h += '</div>';
+    
+    UI._openScreenScrollable(' Подземка', null, h, 'UI.loadHome()');
 };
 
 // ===== ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME =====
