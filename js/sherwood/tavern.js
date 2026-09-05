@@ -89,7 +89,7 @@ Sherwood.Tavern = {
         Sherwood.saveGame();
     },
 
-    showUI: function() {
+       showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
@@ -114,10 +114,11 @@ Sherwood.Tavern = {
         h += '</div>';
 
         // 4. Помещаем весь игровой контент ПОВЕРХ видео
-        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;">';
+        // ВАЖНО: Добавляем padding-top, чтобы не перекрывать кнопку назад, которую генерирует UI._openScreenScrollable
+        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;padding-top:50px;">';
 
-        // 5. ПЕРВЫМИ идут вкладки «Таланты» и «Тренировка» (опущены ниже и с меньшим отступом)
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:100px;">';
+        // 5. Вкладки «Таланты» и «Тренировка» (подняты выше, ближе к кнопке назад)
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:30px;">';
         
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
@@ -129,22 +130,18 @@ Sherwood.Tavern = {
         
         h += '</div>';
 
-        // 6. Панель с заданиями (пергамент, 90% ширины и 300px высоты, висит низко в центре)
-        h += '<div style="width:90%;margin:0 auto;margin-top:200px;">';
+        // 6. Панель с заданиями (ПОДНЯТА ВЫШЕ: margin-top уменьшен с 200px до 60px)
+        h += '<div style="width:90%;margin:0 auto;margin-top:60px;">';
         h += '<div style="width:100%;height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
         
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null;
             
-            // Заголовок (оранжевый, с тенью)
             h += '<div style="text-align:center;color:#ffa500;font-size:14px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.6;">' + current.title + '</div>';
-            
-            // Текст задания (один цвет - белый, крупнее, с тенью)
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
             
-            // Награда (белый, крупный)
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
             
             if (isCompleted) {
@@ -166,8 +163,9 @@ Sherwood.Tavern = {
         h += '</div>'; // Закрываем контент поверх видео
         h += '</div>'; // Закрываем главный контейнер
 
-        // ВАЖНО: передаем null вместо 'tavern' для фона, чтобы старый фон не перекрывался!
-        UI._openScreenScrollable('Таверна', null, h);
+        // ВАЖНО: Передаем null, чтобы фон не перекрывался, НО функция сама создаст кнопку назад
+        // Мы передаем 'UI.loadHome()' в качестве backFn, чтобы кнопка «←» сверху работала идеально!
+        UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
     },
 
     acceptFromUI: function() {
