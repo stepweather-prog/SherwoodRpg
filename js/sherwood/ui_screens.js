@@ -132,6 +132,8 @@ UI._playMusic = function(k) {
             m.play().catch(function() {});
             UI._currentMusic = m;
             UI._currentMusicKey = k;
+            
+            // ГЛАВНАЯ: ЦИКЛ ИЗ 7 ТРЕКОВ
             if (k === 'main_theme') {
                 m.loop = false;
                 var self = UI;
@@ -140,7 +142,37 @@ UI._playMusic = function(k) {
             if (k === 'main_theme_2') {
                 m.loop = false;
                 var self = UI;
+                m.onended = function() { self._playMusic('main_theme_3'); };
+            }
+            if (k === 'main_theme_3') {
+                m.loop = false;
+                var self = UI;
+                m.onended = function() { self._playMusic('main_theme_4'); };
+            }
+            if (k === 'main_theme_4') {
+                m.loop = false;
+                var self = UI;
+                m.onended = function() { self._playMusic('main_theme_5'); };
+            }
+            if (k === 'main_theme_5') {
+                m.loop = false;
+                var self = UI;
+                m.onended = function() { self._playMusic('main_theme_6'); };
+            }
+            if (k === 'main_theme_6') {
+                m.loop = false;
+                var self = UI;
+                m.onended = function() { self._playMusic('city_theme1'); };
+            }
+            if (k === 'city_theme1') {
+                m.loop = false;
+                var self = UI;
                 m.onended = function() { self._playMusic('main_theme'); };
+            }
+            
+            // ПОДЗЕМКА: ЗАЦИКЛИВАЕМ СООТВЕТСТВУЮЩИЙ ТРЕК
+            if (k === 'dungeon_1' || k === 'dungeon_2' || k === 'dungeon_3') {
+                m.loop = true;
             }
         }
     } catch(e) {}
@@ -1209,6 +1241,10 @@ UI.dungeon = function() {
 UI.loadIframeDungeon = function() {
     UI._playSound('click');
     UI._stopMusic();
+    
+    // Если подземка 1 (Проклятая чаща) → dungeon_1
+    UI._playMusic('dungeon_1');
+    
     var iframe = document.createElement('iframe');
     iframe.src = 'dungeon.html';
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
