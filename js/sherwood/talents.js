@@ -44,7 +44,7 @@ Sherwood.Talents = {
         if (!p) return;
         if (!p.talents) p.talents = {};
         this._talentLevels = p.talents;
-        console.log('⚡ Таланты инициализированы');
+        console.log(' Таланты инициализированы');
     },
 
     getAllTalents: function() { return this.TALENTS; },
@@ -103,23 +103,23 @@ Sherwood.Talents = {
         if (learnedTalents.length === 0) {
             h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            h += '<div style="display:flex;flex-direction:column;gap:15px;max-width:360px;margin:0 auto;padding:10px;">';
+            h += '<div style="display:flex;flex-direction:column;gap:15px;max-width:400px;margin:0 auto;padding:10px;">';
             for (var i = 0; i < learnedTalents.length; i++) {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
-                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:15px;cursor:pointer;display:flex;align-items:center;gap:15px;">';
-                h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-                h += '<div style="flex:1;text-align:left;">';
+                h += '<div style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:15px;display:flex;align-items:center;gap:15px;">';
+                h += '<img src="' + t.icon + '" style="width:50px;height:50px;object-fit:contain;flex-shrink:0;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '<div style="flex:1;min-width:0;text-align:left;">';
                 h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
-                h += '<div style="color:#ffa500;font-size:12px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+                h += '<div style="color:#ffa500;font-size:12px;margin-top:4px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
                 h += '</div>';
-                h += '<div style="color:#888;font-size:20px;">›</div>';
+                h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + t.id + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:6px 12px;color:#000;font-weight:bold;cursor:pointer;font-size:12px;flex-shrink:0;">⬆</button>';
                 h += '</div>';
             }
             h += '</div>';
         }
         h += '</div>';
-        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
+        UI._openScreenScrollable(' Таланты', 'talents', h, 'UI.profile()');
     },
 
     showUI: function() {
@@ -139,15 +139,16 @@ Sherwood.Talents = {
         h += '<div style="color:#aaa;font-size:14px;margin-bottom:15px;">Очки талантов: ' + talentPoints + '</div>';
         h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:30px;height:30px;object-fit:contain;">';
 
-        // ТРИ ВКЛАДКИ-ПЛАШКИ
-        h += '<div style="display:flex;justify-content:center;gap:0;margin-bottom:30px;margin-top:20px;">';
+        // ТРИ ВКЛАДКИ-ПЛАШКИ (в стиле таверны - с фоном all_stat.png)
+        h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:30px;margin-top:20px;">';
         var branchesOrder = ['damage', 'passive', 'heal'];
         for (var b = 0; b < branchesOrder.length; b++) {
             var branchId = branchesOrder[b];
             var branch = this.BRANCHES[branchId];
             var isActive = (branchId === selectedBranch);
-            h += '<div onclick="Sherwood.Talents._selectBranch(\'' + branchId + '\')" style="width:160px;height:50px;background:' + (isActive ? branch.color : 'rgba(0,0,0,0.5)') + ';border:2px solid ' + branch.color + ';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 -2px;transition:all 0.2s;">';
-            h += '<span style="color:#fff;font-size:14px;font-weight:bold;text-shadow:0 2px 4px #000;">' + branch.name + '</span>';
+            // Плашка в стиле таверны
+            h += '<div onclick="Sherwood.Talents._selectBranch(\'' + branchId + '\')" style="width:160px;height:55px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;border:2px solid ' + (isActive ? branch.color : 'rgba(255,255,255,0.3)') + ';border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:' + (isActive ? '0 0 15px ' + branch.color + '88' : '0 2px 4px rgba(0,0,0,0.5)') + ';">';
+            h += '<span style="color:' + (isActive ? branch.color : '#fff') + ';font-size:14px;font-weight:bold;text-shadow:0 2px 4px #000;">' + branch.name + '</span>';
             h += '</div>';
         }
         h += '</div>';
@@ -160,55 +161,29 @@ Sherwood.Talents = {
             }
         }
 
-        h += '<div style="display:flex;flex-direction:column;gap:20px;max-width:400px;margin:0 auto;padding:10px;">';
+        h += '<div style="display:flex;flex-direction:column;gap:20px;max-width:420px;margin:0 auto;padding:10px;">';
         for (var j = 0; j < branchTalents.length; j++) {
             var t = branchTalents[j];
             var lvl = this.getTalentLevel(t.id);
-            h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:15px;cursor:pointer;display:flex;align-items:center;gap:15px;">';
-            h += '<img src="' + t.icon + '" style="width:60px;height:60px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-            h += '<div style="flex:1;text-align:left;">';
+            h += '<div style="background:rgba(0,0,0,0.6);border:2px solid ' + (lvl > 0 ? '#ffa500' : '#555') + ';border-radius:10px;padding:15px;display:flex;align-items:center;gap:15px;">';
+            h += '<img src="' + t.icon + '" style="width:55px;height:55px;object-fit:contain;flex-shrink:0;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="flex:1;min-width:0;text-align:left;">';
             h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
-            h += '<div style="color:#aaa;font-size:12px;margin-top:4px;">' + t.desc + '</div>';
+            h += '<div style="color:#aaa;font-size:12px;margin-top:4px;line-height:1.4;">' + t.desc + '</div>';
             h += '<div style="color:#ffa500;font-size:12px;margin-top:6px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
             h += '</div>';
-            h += '<div style="color:#888;font-size:20px;">›</div>';
+            h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + t.id + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:8px 12px;color:#000;font-weight:bold;cursor:pointer;font-size:12px;flex-shrink:0;">⬆</button>';
             h += '</div>';
         }
         h += '</div>';
 
         h += '</div>';
-        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.tavern()');
+        UI._openScreenScrollable(' Таланты', 'talents', h, 'UI.tavern()');
     },
 
     _selectBranch: function(branchId) {
         this._selectedBranch = branchId;
         this.showUI();
-    },
-
-    _showTalentInfo: function(id) {
-        var talent = null;
-        for (var i = 0; i < this.TALENTS.length; i++) {
-            if (this.TALENTS[i].id === id) { talent = this.TALENTS[i]; break; }
-        }
-        if (!talent) return;
-        var lvl = this.getTalentLevel(talent.id);
-        var branch = this.BRANCHES[talent.branch];
-        var p = Sherwood.getPlayer();
-        var talentPoints = p ? (p.talentPoints || 0) : 0;
-        var h = '<div style="text-align:center;padding:20px;">';
-        h += '<img src="' + talent.icon + '" style="width:120px;height:120px;object-fit:contain;margin-bottom:15px;">';
-        h += '<div style="color:' + branch.color + ';font-size:16px;font-weight:bold;margin-bottom:10px;">Ветка: ' + branch.name + '</div>';
-        h += '<div style="color:#ffa500;font-size:22px;font-weight:bold;">' + talent.name + '</div>';
-        h += '<div style="color:#fff;font-size:14px;margin-top:10px;">' + talent.desc + '</div>';
-        h += '<div style="color:#aaa;font-size:12px;margin-top:10px;">Уровень: ' + lvl + '/' + talent.maxLevel + '</div>';
-        h += '<div style="color:#aaa;font-size:12px;margin-top:10px;">Очки талантов: ' + talentPoints + '</div>';
-        if (lvl < talent.maxLevel) {
-            h += '<button onclick="Sherwood.Talents._upgradeTalent(\'' + talent.id + '\')" style="margin-top:20px;background:#c9a040;border:none;border-radius:8px;padding:12px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:16px;">Улучшить</button>';
-        } else {
-            h += '<div style="color:#4caf50;margin-top:20px;font-size:16px;font-weight:bold;">МАКСИМАЛЬНЫЙ УРОВЕНЬ</div>';
-        }
-        h += '</div>';
-        UI._openScreen(talent.name, 'talents', h, 'Sherwood.Talents.showUI()');
     },
 
     _upgradeTalent: function(id) {
@@ -218,11 +193,11 @@ Sherwood.Talents = {
             return;
         }
         UI._showToast('Талант улучшен до уровня ' + r.newLevel + '!');
-        this._showTalentInfo(id);
+        this.showUI();
     }
 };
 
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Talents = Sherwood.Talents;
 
-console.log('⚡ Таланты загружены!');
+console.log(' Таланты загружены!');
