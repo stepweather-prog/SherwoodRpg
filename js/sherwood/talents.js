@@ -136,7 +136,7 @@ Sherwood.Talents = {
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
     },
 
-            showUI: function() {
+    showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
@@ -265,7 +265,8 @@ Sherwood.Talents = {
     _confirmTalents: function() {
         UI._showToast('Таланты распределены!');
         UI.tavern();
-    }
+    },
+
     _selectBranch: function(branchId) {
         this._selectedBranch = branchId;
         this.showUI();
