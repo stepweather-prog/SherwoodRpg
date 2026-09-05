@@ -170,7 +170,7 @@ UI._playMusic = function(k) {
                 m.onended = function() { self._playMusic('main_theme'); };
             }
             
-            // ПОДЗЕМКА: ЗАЦИКЛИВАЕМ СООТВЕТСТВУЮЩИЙ ТРЕК
+            // ПОДЗЕМКА: ЗАЦИКЛИВАЕМ
             if (k === 'dungeon_1' || k === 'dungeon_2' || k === 'dungeon_3') {
                 m.loop = true;
             }
@@ -1220,21 +1220,18 @@ UI.dungeon = function() {
     UI._playSound('click');
     UI._stopMusic();
     
-    var h = '<div style="text-align:center;padding:20px;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;width:100%;height:100%;">';
-    h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">🏚️ Подземка</div>';
+    var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;">';
+    h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">';
     
-    // Иконка по центру и ниже
-    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:200px;height:200px;object-fit:contain;margin:0 auto 30px;display:block;">';
+    // ИКОНКА ПО ЦЕНТРУ (кликабельная)
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" onclick="UI.loadIframeDungeon()" style="width:180px;height:180px;object-fit:contain;cursor:pointer;display:block;margin:0 auto 15px;">';
     
-    // Плашка с названием (как в порталах)
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-bottom:25px;">Проклятая чаща</div>';
-    
-    // Кнопка
-    h += '<button onclick="UI.loadIframeDungeon()" style="padding:10px 30px;background:#c9a040;border:none;border-radius:8px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">⚔️ Войти</button>';
+    // ПЛАШКА ПРЯМО ПОД ИКОНКОЙ (как в порталах)
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 40px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;margin-bottom:15px;">Проклятая чаща</div>';
     h += '</div>';
     h += '</div>';
     
-    UI._openScreenScrollable('🏚️ Подземка', 'dungeon', h, 'UI.loadHome()');
+    UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
 };
 
 // ===== ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME =====
