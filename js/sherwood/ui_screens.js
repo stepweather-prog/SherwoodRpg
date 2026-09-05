@@ -106,7 +106,16 @@ UI._initSounds = function() {
             UI._sounds[k] = a;
         } catch(e) {}
     }
-    try { UI._sounds['main_theme_2'].loop = true; UI._sounds['main_theme_2'].volume = 0.5; } catch(e) {}
+    try { UI._sounds['main_theme_2'].loop = true; UI._sounds['assets/assets2/music/city_theme1.ogg',
+        'assets/assets2/music/main_theme_6.ogg',
+        'assets/assets2/music/main_theme_5.ogg',
+        'assets/assets2/music/main_theme_4.ogg',
+        'assets/assets2/music/main_theme_3.ogg',
+        'assets/assets2/music/main_theme_2.ogg',
+        'assets/assets2/music/main_theme.ogg',
+        'assets/assets2/music/dungeon_1.ogg',
+        'assets/assets2/music/dungeon_2.ogg',
+        'assets/assets2/music/dungeon_3.ogg'].volume = 0.3; } catch(e) {}
     try { UI._sounds['dungeon_1'].loop = true; UI._sounds['dungeon_1'].volume = 0.4; } catch(e) {}
     try { UI._sounds['dungeon_2'].loop = true; UI._sounds['dungeon_2'].volume = 0.4; } catch(e) {}
     try { UI._sounds['dungeon_3'].loop = true; UI._sounds['dungeon_3'].volume = 0.4; } catch(e) {}
@@ -127,7 +136,7 @@ UI._playMusic = function(k) {
         UI._stopMusic();
         var m = UI._sounds[k];
         if (m) {
-            m.volume = (k.indexOf('dungeon_') === 0) ? 0.4 : 0.5;
+            m.volume = (k.indexOf('dungeon_') === 0) ? 0.5 : 0.6;
             m.currentTime = 0;
             m.play().catch(function() {});
             UI._currentMusic = m;
