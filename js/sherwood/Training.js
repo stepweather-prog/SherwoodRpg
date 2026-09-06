@@ -157,7 +157,7 @@ Sherwood.Training = {
     },
     _selectedStat: 'attack',
 
-    _selectStat: function(stat) {
+     _selectStat: function(stat) {
         this._selectedStat = stat;
         this.showUI();
     },
