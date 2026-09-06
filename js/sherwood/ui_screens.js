@@ -772,74 +772,7 @@ UI._enhanceEquipped = function(type) {
     if (r.success) { UI._playSound('forge'); UI._showToast('Улучшено!'); UI.updateDisplay(); UI.forge(); } else { UI._showToast(r.reason || 'Ошибка'); }
 };
 
-// ============================================================
-//  ТРЕНИРОВКА
-// ============================================================
-UI.training = function() {
-    var gb = 'UI.tavern()';
-    UI._playSound('click');
-    var p = Sherwood.getPlayer();
-    if (!p.trainingLevels) p.trainingLevels = { attack: 0, defense: 0, hp: 0 };
-    if (!p.experiencePoints) p.experiencePoints = 0;
-    var tl = p.trainingLevels;
-    var stats = ['attack', 'defense', 'hp'];
-    var names = { attack: 'Атака', defense: 'Защита', hp: 'Здоровье' };
-    var colors = { attack: '#f44336', defense: '#2196f3', hp: '#4caf50' };
-    var bonuses = { attack: 3, defense: 3, hp: 3 };
-    var icons = {
-        attack: 'assets/assets2/icons/power.png',
-        defense: 'assets/assets2/icons/armor.png',
-        hp: 'assets/assets2/icons/life.png'
-    };
-    var h = '<div style="padding:10px;display:flex;flex-direction:column;gap:15px;">';
-    for (var i = 0; i < stats.length; i++) {
-        var s = stats[i];
-        var lvl = tl[s] || 0;
-        var nextLevel = lvl + 1;
-        var cost = 1;
-        var currencyIcon = 'assets/assets2/game_details/tablet_of_experience.png';
-        h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:15px;">';
-        h += '<img src="' + icons[s] + '" style="width:70px;height:70px;object-fit:contain;margin-bottom:8px;">';
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;">' + names[s] + '</div>';
-        h += '<div style="color:#aaa;font-size:0.8em;">Уровень: ' + lvl + '/1000</div>';
-        h += '<div style="color:' + colors[s] + ';font-size:0.7em;">+' + bonuses[s] + ' за уровень</div>';
-        h += '<div style="color:#e0c080;font-size:0.75em;margin-bottom:6px;">Стоимость: <img src="' + currencyIcon + '" style="width:16px;height:16px;vertical-align:middle;"> ' + cost + ' очков опыта</div>';
-        if (lvl >= 1000) {
-            h += '<div style="color:#4caf50;font-weight:bold;">МАКСИМУМ</div>';
-        } else {
-            h += '<button onclick="UI._doTraining(\'' + s + '\')" style="background:#c9a040;border:none;border-radius:6px;padding:10px 24px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Тренировать</button>';
-        }
-        h += '</div>';
-    }
-    h += '<div id="training-log" style="text-align:center;color:#aaa;font-size:0.7em;margin-top:8px;"></div></div>';
-    UI._openScreenScrollable('Тренировка', 'training', h, gb);
-};
 
-UI._doTraining = function(stat) {
-    var p = Sherwood.getPlayer();
-    if (!p) return;
-    if (!p.trainingLevels) p.trainingLevels = { attack: 0, defense: 0, hp: 0 };
-    if (!p.experiencePoints) p.experiencePoints = 0;
-    var cur = p.trainingLevels[stat] || 0;
-    if (cur >= 1000) { var log = document.getElementById('training-log'); if (log) log.textContent = 'Макс. уровень!'; return; }
-    
-    var cost = 1; // Стоимость в очках опыта
-    if (p.experiencePoints < cost) {
-        var log = document.getElementById('training-log');
-        if (log) log.textContent = 'Нужно ' + cost + ' очков опыта!';
-        return;
-    }
-    
-    p.experiencePoints -= cost;
-    p.trainingLevels[stat] = cur + 1;
-    if (Sherwood.Daily) Sherwood.Daily.updateProgress('stat_' + stat, p.stats[stat]);
-    if (Sherwood._recalcStats) Sherwood._recalcStats();
-    if (Sherwood.saveGame) Sherwood.saveGame();
-    UI.updateDisplay();
-    UI.training();
-    var log = document.getElementById('training-log');
-    if (log) log.textContent = stat + ' → ' + (cur + 1) + ' (-' + cost + ' очков опыта)';
-};
 // ============================================================
 //  БЕСТИАРИЙ
 // ============================================================
