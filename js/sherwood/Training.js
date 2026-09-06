@@ -69,7 +69,7 @@ Sherwood.Training = {
         };
     },
 
-        // ========== UI ==========
+    // ========== UI ==========
 
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
@@ -215,6 +215,7 @@ Sherwood.Training = {
         UI._showToast('Тренировка подтверждена!');
         UI.tavern();
     }
+};
 
 // ВАЖНО: Переопределяем UI.training, чтобы кнопка в таверне вызывала ТВОЮ версию
 if (typeof UI !== 'undefined') {
