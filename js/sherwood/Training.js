@@ -69,7 +69,7 @@ Sherwood.Training = {
         };
     },
 
-    // ========== UI ==========
+      // ========== UI ==========
 
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
@@ -102,7 +102,7 @@ Sherwood.Training = {
         h += '<span style="color:#ffd700;font-size:18px;font-weight:bold;">' + (p.experiencePoints || 0) + '</span>';
         h += '</div>';
 
-        // 2. Плашки (чистые, без смайлов, рамок и подложек)
+        // 2. Три плашки в одну линию
         h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:30px;width:100%;max-width:280px;">';
         for (var i = 0; i < stats.length; i++) {
             var s = stats[i];
@@ -113,7 +113,7 @@ Sherwood.Training = {
         }
         h += '</div>';
 
-        // 3. Все три статы на одной странице
+        // 3. Все три статы (вертикальный столбик)
         h += '<div style="width:90%;max-width:320px;">';
         for (var j = 0; j < stats.length; j++) {
             var stat = stats[j];
@@ -215,7 +215,6 @@ Sherwood.Training = {
         UI._showToast('Тренировка подтверждена!');
         UI.tavern();
     }
-};
 
 // ВАЖНО: Переопределяем UI.training, чтобы кнопка в таверне вызывала ТВОЮ версию
 if (typeof UI !== 'undefined') {
