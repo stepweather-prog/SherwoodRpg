@@ -69,7 +69,7 @@ Sherwood.Training = {
         };
     },
 
-    // ========== UI ==========
+        // ========== UI ==========
 
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
@@ -103,7 +103,7 @@ Sherwood.Training = {
         h += '</div>';
 
         // 2. Три плашки в одну линию
-        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:30px;width:100%;max-width:280px;">';
+        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:40px;width:100%;max-width:280px;">';
         for (var i = 0; i < stats.length; i++) {
             var s = stats[i];
             var isActive = (this._selectedStat === s);
@@ -113,13 +113,13 @@ Sherwood.Training = {
         }
         h += '</div>';
 
-        // 3. Все три статы (вертикальный столбик)
-        h += '<div style="width:90%;max-width:320px;">';
+        // 3. Три колонки (горизонтальный ряд)
+        h += '<div style="display:flex;justify-content:space-between;width:90%;max-width:320px;">';
         for (var j = 0; j < stats.length; j++) {
             var stat = stats[j];
             var info = this.getStatInfo(stat);
 
-            h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;margin-bottom:25px;">';
+            h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;margin:0 5px;">';
             
             // Иконка статы
             h += '<img src="' + icons[stat] + '" style="display:block;margin:0 auto;width:60px;height:60px;object-fit:contain;">';
@@ -215,7 +215,6 @@ Sherwood.Training = {
         UI._showToast('Тренировка подтверждена!');
         UI.tavern();
     }
-};
 
 // ВАЖНО: Переопределяем UI.training, чтобы кнопка в таверне вызывала ТВОЮ версию
 if (typeof UI !== 'undefined') {
