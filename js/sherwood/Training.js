@@ -97,13 +97,13 @@ Sherwood.Training = {
         h += '<div class="training-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:40px;width:100%;">';
 
         // 1. Иконка очков + число
-        h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:30px;">';
+        h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;">';
         h += '<img src="assets/assets2/game_details/tablet_of_experience.png" style="width:36px;height:36px;object-fit:contain;">';
         h += '<span style="color:#ffd700;font-size:18px;font-weight:bold;">' + (p.experiencePoints || 0) + '</span>';
         h += '</div>';
 
         // 2. Три плашки в одну линию
-        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:40px;width:100%;max-width:280px;">';
+        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;width:100%;max-width:280px;">';
         for (var i = 0; i < stats.length; i++) {
             var s = stats[i];
             var isActive = (this._selectedStat === s);
@@ -113,31 +113,35 @@ Sherwood.Training = {
         }
         h += '</div>';
 
-        // 3. Три колонки (горизонтальный ряд)
-        h += '<div style="display:flex;justify-content:space-between;width:90%;max-width:320px;">';
+        // 3. Три колонки (компактные карточки в ряд)
+        h += '<div style="display:flex;justify-content:center;align-items:flex-start;width:90%;max-width:320px;gap:15px;">';
         for (var j = 0; j < stats.length; j++) {
             var stat = stats[j];
             var info = this.getStatInfo(stat);
 
-            h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;margin:0 5px;">';
+            h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;border-radius:8px;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);">';
             
             // Иконка статы
-            h += '<img src="' + icons[stat] + '" style="display:block;margin:0 auto;width:60px;height:60px;object-fit:contain;">';
+            h += '<img src="' + icons[stat] + '" style="display:block;margin:0 auto;width:45px;height:45px;object-fit:contain;">';
             
-            // Название + уровень + бонус
-            h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:14px;margin-top:8px;">' + names[stat] + '</div>';
-            h += '<div style="color:#aaa;font-size:12px;margin-top:4px;">Уровень: ' + info.level + '/1000</div>';
-            h += '<div style="color:#aaa;font-size:11px;margin-top:4px;">+' + info.bonus + ' за уровень</div>';
+            // Название
+            h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:12px;margin-top:4px;">' + names[stat] + '</div>';
+            
+            // Уровень
+            h += '<div style="color:#aaa;font-size:11px;margin-top:2px;">Уровень: ' + info.level + '</div>';
+            
+            // Бонус
+            h += '<div style="color:#aaa;font-size:10px;margin-top:2px;">+' + info.bonus + ' за ур.</div>';
 
             // Кнопки + / -
-            h += '<div style="display:flex;align-items:center;justify-content:center;gap:15px;margin-top:10px;">';
-            h += '<button onclick="Sherwood.Training._removePoint(\'' + stat + '\')" style="background:#f44336;border:none;border-radius:50%;padding:5px 10px;color:#fff;font-weight:bold;cursor:pointer;font-size:16px;">-</button>';
-            h += '<span style="color:#fff;font-size:16px;font-weight:bold;">' + info.level + '</span>';
-            h += '<button onclick="Sherwood.Training._addPoint(\'' + stat + '\')" style="background:#4caf50;border:none;border-radius:50%;padding:5px 10px;color:#fff;font-weight:bold;cursor:pointer;font-size:16px;">+</button>';
+            h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;">';
+            h += '<button onclick="Sherwood.Training._removePoint(\'' + stat + '\')" style="background:#f44336;border:none;border-radius:50%;padding:3px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:12px;">-</button>';
+            h += '<span style="color:#fff;font-size:14px;font-weight:bold;">' + info.level + '</span>';
+            h += '<button onclick="Sherwood.Training._addPoint(\'' + stat + '\')" style="background:#4caf50;border:none;border-radius:50%;padding:3px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:12px;">+</button>';
             h += '</div>';
 
             // Стоимость
-            h += '<div style="color:#ffd700;font-size:12px;margin-top:12px;">Стоимость: ⭐ ' + info.cost + ' очков опыта</div>';
+            h += '<div style="color:#ffd700;font-size:10px;margin-top:6px;">⭐ ' + info.cost + '</div>';
             
             h += '</div>';
         }
