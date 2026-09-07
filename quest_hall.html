@@ -12,9 +12,10 @@
         #quest-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffa500; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #quest-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
 
-        /* ЭТО ПОЛОСКА НАД ВРАГОМ */
+        /* ПОЛОСКА HP НАД ВРАГОМ - с твоими реальными текстурами */
         #mob-hp { position: absolute; width: 150px; height: 30px; z-index: 50; transform: translate(-50%, -50%); display: none; }
         #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        /* Заливка из mob_life_filling.png (как в подземке) */
         #mob-hp-fill { clip-path: inset(0 50% 0 0); }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
 
@@ -43,10 +44,12 @@
         <span class="enemy-name" id="enemy-name">Чумной Ворон</span>
     </div>
 
-    <!-- Полоска HP, которая будет двигаться над врагом -->
+    <!-- Полоска HP, которая двигается над врагом -->
     <div id="mob-hp">
-        <img src="assets/assets2/game_details/raid_boss_hp_bar.png" alt="">
-        <img id="mob-hp-fill" src="assets/assets2/game_details/raid_boss_hp_bar_fill.png" alt="">
+        <!-- ТВОЯ рамка -->
+        <img src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <!-- ТВОЯ заливка -->
+        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000/1000</span>
     </div>
 
