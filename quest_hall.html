@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Квестовый коридор</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; touch-action: none; }
+        canvas { display: block; }
+        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; }
+        #mob-hp { display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%); width: 300px; height: 40px; z-index: 50; }
+        #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #mob-hp-fill { clip-path: inset(0 50% 0 0); }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
+        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); }
+        #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
+        .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+        #btn-forward { top: 0; left: 55px; }
+        #btn-left { top: 55px; left: 0; }
+        #btn-right { top: 55px; left: 110px; }
+        #btn-back { top: 110px; left: 55px; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; z-index: 40; cursor: pointer; pointer-events: auto; }
+    </style>
+</head>
+<body>
+    <div id="info">Квестовый коридор</div>
+    <div id="mob-hp">
+        <img src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
+        <span id="mob-hp-text">HP: 1000/1000</span>
+    </div>
+
+    <div id="hero-life">
+        <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
+        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
+        <span>HP</span>
+    </div>
+
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-forward">▲</div>
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+        <div class="arrow-btn" id="btn-back">▼</div>
+        <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    </div>
+
+    <button onclick="parent.Sherwood.Quests._questFlee()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0e0a06);
+        scene.fog = new THREE.Fog(0x0e0a06, 5, 12);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 20);
+        camera.position.set(0, 0.8, 6);
+        camera.rotation.order = 'YXZ';
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setClearColor(0x0e0a06, 1);
+        document.body.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0x887766, 1.0);
+        scene.add(ambient);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+        mainLight.position.set(2, 5, 2);
+        scene.add(mainLight);
+
+        // ===== ТЕКСТУРЫ ИЗ ТВОЕГО ПУТИ =====
+        const floorTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/floors_quest.png');
+        const wallTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/walls_quest.png');
+        const ceilTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_quest.png');
+
+        const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.9 });
+        const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
+        const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
+
+        // ===== ПРЯМОЙ КОРИДОР (длина 12, ширина 4) =====
+        const corridorLength = 12;
+        const corridorWidth = 4;
+
+        // Пол
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(0, 0, 0);
+        scene.add(floor);
+
+        // Потолок
+        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), ceilMat);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.set(0, 2.5, 0);
+        scene.add(ceiling);
+
+        // Левая стена
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength), wallMat);
+        leftWall.position.set(-corridorWidth / 2, 1.25, 0);
+        scene.add(leftWall);
+
+        // Правая стена
+        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength), wallMat);
+        rightWall.position.set(corridorWidth / 2, 1.25, 0);
+        scene.add(rightWall);
+
+        // Задняя стена (вход)
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, 2.5, 0.2), wallMat);
+        backWall.position.set(0, 1.25, -corridorLength / 2);
+        scene.add(backWall);
+
+        // Передняя стена (выход)
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, 2.5, 0.2), wallMat);
+        frontWall.position.set(0, 1.25, corridorLength / 2);
+        scene.add(frontWall);
+
+        // ===== СПРАЙТ ВРАГА =====
+        var enemySprite = null;
+        var enemyHp = 1000;
+        var enemyMaxHp = 1000;
+        var isBattleActive = false;
+
+        // Враг в конце коридора
+        const enemyPos = new THREE.Vector3(0, 1.2, -corridorLength / 2 + 1.5);
+        enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: new THREE.TextureLoader().load('assets/all_beasts/plague_crow.png'),
+            transparent: true
+        }));
+        enemySprite.position.copy(enemyPos);
+        enemySprite.scale.set(1.2, 1.2, 1);
+        scene.add(enemySprite);
+
+        document.getElementById('mob-hp').style.display = 'block';
+        document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+
+        // ===== УПРАВЛЕНИЕ =====
+        let yaw = 0;
+        const rotationSpeed = Math.PI / 2;
+        let isMoving = false;
+        let isTurning = false;
+
+        function updateCamera() {
+            const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
+            camera.quaternion.setFromEuler(euler);
+        }
+
+        function animateStep(targetX, targetZ) {
+            const startX = camera.position.x;
+            const startZ = camera.position.z;
+            const duration = 500;
+            const startTime = performance.now();
+            function stepLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                camera.position.x = startX + (targetX - startX) * smoothT;
+                camera.position.z = startZ + (targetZ - startZ) * smoothT;
+                if (t < 1) {
+                    requestAnimationFrame(stepLoop);
+                } else {
+                    camera.position.x = targetX;
+                    camera.position.z = targetZ;
+                    isMoving = false;
+                    checkEnemy();
+                }
+            }
+            stepLoop();
+        }
+
+        function animateTurn(targetYaw) {
+            const startYaw = yaw;
+            const duration = 300;
+            const startTime = performance.now();
+            isTurning = true;
+            function turnLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                yaw = startYaw + (targetYaw - startYaw) * t;
+                updateCamera();
+                if (t < 1) {
+                    requestAnimationFrame(turnLoop);
+                } else {
+                    yaw = targetYaw;
+                    updateCamera();
+                    isTurning = false;
+                }
+            }
+            turnLoop();
+        }
+
+        function moveForward() {
+            if (isMoving || isTurning) return;
+            const forward = new THREE.Vector3(0, 0, -1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            const targetX = camera.position.x + Math.round(forward.x);
+            const targetZ = camera.position.z + Math.round(forward.z);
+            if (targetX < -corridorWidth / 2 + 0.5 || targetX > corridorWidth / 2 - 0.5 || targetZ < -corridorLength / 2 + 0.5 || targetZ > corridorLength / 2 - 0.5) return;
+            isMoving = true;
+            animateStep(targetX, targetZ);
+        }
+
+        function moveBackward() {
+            if (isMoving || isTurning) return;
+            const forward = new THREE.Vector3(0, 0, 1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            const targetX = camera.position.x + Math.round(forward.x);
+            const targetZ = camera.position.z + Math.round(forward.z);
+            if (targetX < -corridorWidth / 2 + 0.5 || targetX > corridorWidth / 2 - 0.5 || targetZ < -corridorLength / 2 + 0.5 || targetZ > corridorLength / 2 - 0.5) return;
+            isMoving = true;
+            animateStep(targetX, targetZ);
+        }
+
+        function turnLeft() { if (!isMoving && !isTurning) animateTurn(yaw + rotationSpeed); }
+        function turnRight() { if (!isMoving && !isTurning) animateTurn(yaw - rotationSpeed); }
+
+        document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
+        document.getElementById('btn-back').addEventListener('touchstart', (e) => { e.preventDefault(); moveBackward(); });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); turnLeft(); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); turnRight(); });
+        document.getElementById('btn-forward').addEventListener('click', moveForward);
+        document.getElementById('btn-back').addEventListener('click', moveBackward);
+        document.getElementById('btn-left').addEventListener('click', turnLeft);
+        document.getElementById('btn-right').addEventListener('click', turnRight);
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup': moveForward(); e.preventDefault(); break;
+                case 's': case 'arrowdown': moveBackward(); e.preventDefault(); break;
+                case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
+                case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
+            }
+        });
+
+        // ===== БОЙ =====
+        document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
+
+        function attackEnemy() {
+            if (!isBattleActive) return;
+            var playerStats = parent.Sherwood.getPlayer();
+            var dmg = Math.max(1, playerStats.stats.attack - 100 + Math.floor(Math.random() * 20));
+            enemyHp = Math.max(0, enemyHp - dmg);
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
+
+            if (enemyHp <= 0) {
+                isBattleActive = false;
+                document.getElementById('mob-hp').style.display = 'none';
+                scene.remove(enemySprite);
+                parent.Sherwood.Quests._questAttack(); // Передаем управление обратно
+            }
+        }
+
+        function checkEnemy() {
+            var dist = camera.position.distanceTo(enemyPos);
+            if (dist < 1.5 && !isBattleActive) {
+                isBattleActive = true;
+                // Используем данные игрока и врага из родительского окна
+                var enemyData = parent.Sherwood.Quests._currentEnemy;
+                if (enemyData) {
+                    enemyHp = enemyData.hp;
+                    enemyMaxHp = enemyData.hp;
+                    document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
