@@ -71,8 +71,9 @@
         scene.background = new THREE.Color(0x0e0a06);
         scene.fog = new THREE.Fog(0x0e0a06, 5, 12);
 
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 20);
-        camera.position.set(0, 0.8, 6);
+        // АДАПТИВНАЯ КАМЕРА: ниже угол, выше позиция, чтобы было видно коридор
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20);
+        camera.position.set(0, 1.15, 6); // Подняли выше (было 0.8)
         camera.rotation.order = 'YXZ';
 
         const renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -146,7 +147,7 @@
         var enemyMaxHp = 1000;
         var isBattleActive = false;
 
-        // Враг в конце коридора, ниже (ближе к полу)
+        // Враг в конце коридора, ниже (ближе к полу), теперь видно нормально
         const enemyPos = new THREE.Vector3(0, 0.6, -corridorLength / 2 + 1.5);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: new THREE.TextureLoader().load('assets/all_beasts/plague_crow.png'),
