@@ -53,10 +53,30 @@ Sherwood.Bag = {
         if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
 
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
-            player.unlockedSkins = ['skin1_01'];
-            player.activeSkin = 'skin1_01';
-            Sherwood.saveGame();
-        }
+    player.unlockedSkins = [
+        'skin1_01', 'skin1_02', 'skin1_03',
+        'skin2_01', 'skin2_02', 'skin2_03',
+        'skin3_01', 'skin3_02', 'skin3_03',
+        'skin4_01', 'skin4_02', 'skin4_03',
+        'skin5_01', 'skin5_02', 'skin5_03',
+        'skin6_01', 'skin6_02', 'skin6_03',
+        'skin7_01', 'skin7_02', 'skin7_03',
+        'skin8_01', 'skin8_02', 'skin8_03',
+        'skin9_01', 'skin9_02', 'skin9_03',
+        'skin10_01', 'skin10_02', 'skin10_03',
+        'skin11_01', 'skin11_02', 'skin11_03',
+        'skin12_01', 'skin12_02', 'skin12_03',
+        'skin13_01', 'skin13_02', 'skin13_03',
+        'skin14_01', 'skin14_02', 'skin14_03',
+        'skin15_01', 'skin15_02', 'skin15_03',
+        'skin16_01', 'skin16_02', 'skin16_03',
+        'bonus_skin_2', 'bonus_skin_4', 'bonus_skin_6',
+        'bonus_skin_8', 'bonus_skin_10', 'bonus_skin_12',
+        'bonus_skin_14', 'bonus_skin_sec'
+    ];
+    player.activeSkin = 'skin1_01';
+    Sherwood.saveGame();
+}
 
         if (player.bagResources) {
             this._resources = player.bagResources;
