@@ -12,11 +12,11 @@
         #raid-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ff6b35; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #raid-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
 
-        /* ПОЛОСКА HP НАД ВРАГОМ */
-        #mob-hp { position: absolute; width: 150px; height: 30px; z-index: 50; transform: translate(-50%, -50%); display: none; }
+        /* Полоска HP над врагом */
+        #mob-hp { position: absolute; width: 130px; height: 30px; z-index: 50; transform: translate(-50%, -50%); display: none; }
         #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mob-hp-fill { clip-path: inset(0 50% 0 0); }
-        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 11px; font-weight: bold; }
 
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -43,7 +43,6 @@
         <span class="enemy-name" id="enemy-name">Изначальный Ужас</span>
     </div>
 
-    <!-- Полоска HP, которая двигается над врагом -->
     <div id="mob-hp">
         <img src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
@@ -81,10 +80,10 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0e0a06);
-        scene.fog = new THREE.Fog(0x0e0a06, 7, 16);
+        scene.fog = new THREE.Fog(0x0e0a06, 4, 10);
 
         const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 25);
-        camera.position.set(0, 0.65, 0);
+        camera.position.set(0, 0.65, 2.5);
         camera.rotation.order = 'YXZ';
 
         const renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -163,7 +162,7 @@
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
         }
 
-        const enemyPos = new THREE.Vector3(0, 0.55, -corridorLength / 2 + 1);
+        const enemyPos = new THREE.Vector3(0, 0.55, -2.0);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: new THREE.TextureLoader().load('assets/assets2/mobs/raid_mobs/' + (enemyData ? enemyData.image : 'original_horror.png')),
             transparent: true
@@ -174,7 +173,7 @@
 
         document.getElementById('mob-hp').style.display = 'block';
 
-        // ===== УПРАВЛЕНИЕ (КАК В ПОДЗЕМКЕ) =====
+        // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
         const rotationSpeed = Math.PI / 2;
         let isMoving = false;
@@ -242,6 +241,7 @@
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
             if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
+            if (targetZ < enemyPos.z + 1) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
@@ -298,7 +298,6 @@
             }
         }
 
-        // ВАЖНО: Привязываем полоску к позиции врага
         function updateMobHpBar() {
             var vector = enemyPos.clone();
             vector.project(camera);
@@ -307,12 +306,12 @@
             var y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
             
             document.getElementById('mob-hp').style.left = x + 'px';
-            document.getElementById('mob-hp').style.top = (y - 50) + 'px';
+            document.getElementById('mob-hp').style.top = (y - 45) + 'px';
         }
 
         function checkEnemy() {
             var dist = camera.position.distanceTo(enemyPos);
-            if (dist < 1.5 && !isBattleActive) {
+            if (dist < 1.2 && !isBattleActive) {
                 isBattleActive = true;
                 if (enemyData) {
                     enemyHp = enemyData.hp;
