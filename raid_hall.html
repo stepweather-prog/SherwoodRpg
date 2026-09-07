@@ -8,26 +8,26 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; }
-        
+
         #raid-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ff6b35; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #raid-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
-        
-        /* ЭТО ПОЛОСКА НАД ВРАГОМ */
+
+        /* ПОЛОСКА HP НАД ВРАГОМ */
         #mob-hp { position: absolute; width: 150px; height: 30px; z-index: 50; transform: translate(-50%, -50%); display: none; }
         #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mob-hp-fill { clip-path: inset(0 50% 0 0); }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
-        
+
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
-        
+
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
-        
+
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
         #btn-forward { top: 0; left: 55px; }
@@ -43,11 +43,10 @@
         <span class="enemy-name" id="enemy-name">Изначальный Ужас</span>
     </div>
 
-    <!-- Полоска HP, которая будет двигаться над врагом -->
+    <!-- Полоска HP, которая двигается над врагом -->
     <div id="mob-hp">
-        <!-- ТУТ ТВОЯ КАРТИНКА. Если путь другой - поменяй src -->
-        <img src="assets/assets2/game_details/raid_boss_hp_bar.png" alt="">
-        <img id="mob-hp-fill" src="assets/assets2/game_details/raid_boss_hp_bar_fill.png" alt="">
+        <img src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000/1000</span>
     </div>
 
@@ -144,11 +143,12 @@
         frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
         scene.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА И ПОЛОСКА НАД НИМ =====
+        // ===== СПРАЙТ ВРАГА =====
         var enemySprite = null;
         var enemyHp = 1000;
         var enemyMaxHp = 1000;
         var isBattleActive = false;
+
         var enemyData = parent.Sherwood.Raid.getCurrentEnemy();
         var bossData = parent.Sherwood.Raid._raidBoss;
 
@@ -172,7 +172,6 @@
         enemySprite.scale.set(1.0, 1.0, 1);
         scene.add(enemySprite);
 
-        // Активируем HTML-полоску над врагом
         document.getElementById('mob-hp').style.display = 'block';
 
         // ===== УПРАВЛЕНИЕ (КАК В ПОДЗЕМКЕ) =====
@@ -299,18 +298,16 @@
             }
         }
 
-        // ВАЖНО: Привязываем полоску к позиции врага каждый кадр
+        // ВАЖНО: Привязываем полоску к позиции врага
         function updateMobHpBar() {
-            // Проецируем 3D позицию врага в 2D экранные координаты
             var vector = enemyPos.clone();
             vector.project(camera);
             
             var x = (vector.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
             
-            // Ставим полоску чуть выше головы врага
             document.getElementById('mob-hp').style.left = x + 'px';
-            document.getElementById('mob-hp').style.top = (y - 50) + 'px'; // сдвиг вверх
+            document.getElementById('mob-hp').style.top = (y - 50) + 'px';
         }
 
         function checkEnemy() {
@@ -330,7 +327,6 @@
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
             
-            // Обновляем позицию полоски HP над врагом
             if (document.getElementById('mob-hp').style.display !== 'none') {
                 updateMobHpBar();
             }
