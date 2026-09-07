@@ -1,7 +1,6 @@
 /**
  * Sherwood Raid — Мировой рейд
  * Изначальный Ужас — Спящий в Корнях
- * Открывается после прохождения всех 16 глав
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -14,11 +13,11 @@ Sherwood.Raid = {
     _participants: [],
     _maxParticipants: 10,
     _raidsToday: 0,
-    _maxRaidsPerDay: 0, // Убрали лимит (0 = безлимит)
+    _maxRaidsPerDay: 0, // Убрали лимит
     _currentStage: 0,
     _totalStages: 3,
     _playerAlive: true,
-    _isUnlocked: false,
+    _isUnlocked: true, // Открыт всегда (для теста)
 
     RAID_BOSSES: [{
         id: 'primordial_dread',
@@ -85,7 +84,7 @@ Sherwood.Raid = {
         }
         this._raidsToday = p.raid.raidsToday || 0;
         this._participants = p.raid.participants || [];
-        this._isUnlocked = this._checkUnlock();
+        this._isUnlocked = true; // Всегда открыт (для теста)
         if (p.raid.activeRaid) {
             this._raidBoss = p.raid.activeRaid;
             this._raidActive = true;
@@ -96,10 +95,8 @@ Sherwood.Raid = {
     },
 
     _checkUnlock: function() {
-        if (typeof Sherwood.Tavern !== 'undefined' && Sherwood.Tavern.getCompletedCount) {
-            return Sherwood.Tavern.getCompletedCount() >= 16;
-        }
-        return false;
+        // ВРЕМЕННО ДЛЯ ТЕСТА: Рейд открыт всегда
+        return true;
     },
 
     isUnlocked: function() { return this._isUnlocked; },
