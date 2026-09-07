@@ -14,7 +14,7 @@ Sherwood.Raid = {
     _participants: [],
     _maxParticipants: 10,
     _raidsToday: 0,
-    _maxRaidsPerDay: 3,
+    _maxRaidsPerDay: 0, // Убрали лимит (0 = безлимит)
     _currentStage: 0,
     _totalStages: 3,
     _playerAlive: true,
@@ -110,9 +110,6 @@ Sherwood.Raid = {
         var p = Sherwood.getPlayer();
         if (!p) return { can: false, reason: 'Игрок не найден' };
         if (!this._isUnlocked) return { can: false, reason: 'Рейд запечатан. Пройди все 16 глав.' };
-        if ((p.raid.raidsToday || 0) >= this._maxRaidsPerDay) {
-            return { can: false, reason: 'Лимит рейдов на сегодня (3/3)' };
-        }
         if (this._raidActive) return { can: false, reason: 'Рейд уже идёт' };
         if (!p.stats || p.stats.hp <= 0) return { can: false, reason: 'Игрок мёртв' };
         if (p.raid.completed) return { can: false, reason: 'Рейд уже пройден. Жди обновления.' };
@@ -344,7 +341,7 @@ Sherwood.Raid = {
         var check = this.canJoinRaid();
         var player = Sherwood.getPlayer();
         var raidsToday = player.raid ? (player.raid.raidsToday || 0) : 0;
-        var maxRaids = 3;
+        var maxRaids = 0; // Безлимит
         var completed = player.raid ? player.raid.completed : false;
 
         if (!this._isUnlocked) {
@@ -371,7 +368,7 @@ Sherwood.Raid = {
 
         var h = '<div style="text-align:center;padding:20px;">';
         h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">⚔️ Мировой Рейд</div>';
-        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:16px;">Доступно: ' + (maxRaids - raidsToday) + ' / ' + maxRaids + ' сегодня</div>';
+        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:16px;">Доступно: ∞ (безлимит)</div>';
 
         for (var i = 0; i < raids.length; i++) {
             var raid = raids[i];
@@ -399,69 +396,54 @@ Sherwood.Raid = {
         this._showRaidBattle();
     },
 
+    // ============================================================
+    //  ПЕРЕХОД В 3D РЕЙД (iframe)
+    // ============================================================
     _showRaidBattle: function() {
-        var s = this.getRaidStatus();
-        if (!s) { this.showUI(); return; }
-        var enemy = null;
-        for (var i = 0; i < s.enemies.length; i++) {
-            if (s.enemies[i].hp > 0) { enemy = s.enemies[i]; break; }
+        if (!this.isRaidActive()) { this.showUI(); return; }
+
+        var iframe = document.createElement('iframe');
+        iframe.src = 'raid_hall.html';
+        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.appendChild(iframe);
+            UI._screenLayer.style.display = 'block';
         }
-        if (!enemy) { this._raidAttack(); return; }
-        UI._showBattleScreen({
-            name: enemy.name,
-            image: 'assets/beast_quest/' + (enemy.image || 'plague_crow.png'),
-            hp: enemy.hp,
-            maxHp: enemy.maxHp,
-            attack: enemy.attack,
-            defense: enemy.defense
-        }, 'raid', s.boss.name + ' - Этап ' + s.stageIndex + '/' + s.totalStages, '', 'Sherwood.Raid._raidAttack()', 'Sherwood.Raid._raidFlee()', 'assets/interface/fight_raid.png');
     },
 
-    _raidAttack: function() {
-        UI._playHitSounds();
+    // Возврат из рейда с победой (вызывается из iframe)
+    _onRaidWin: function() {
         var r = this.raidAttack();
-        if (!r) return;
 
         if (r.raidComplete) {
-            UI._showDialog('Рейд пройден! +' + r.rewards.exp + 'XP +' + r.rewards.gold + 'G', '#ffd700');
+            // Рейд полностью пройден!
             UI._stopMusic();
             UI.updateDisplay();
-            var scrolls = Math.random() < 0.3 ? 1 + Math.floor(Math.random() * 3) : 0;
-            if (scrolls) Sherwood.addResource('scrolls', scrolls);
-            UI._pendingRewards = { exp: r.rewards.exp, gold: r.rewards.gold, silver: r.rewards.silver, scrolls: scrolls };
-            UI._afterRewardAction = function() { UI._playMusic('main_theme'); Sherwood.Raid.showUI(); };
-            UI._showVictoryScreen(UI._pendingRewards);
+            UI._pendingRewards = r.rewards;
+            UI._afterRewardAction = function() {
+                UI._playMusic('main_theme');
+                Sherwood.Raid.showUI();
+            };
+            UI._showVictoryScreen(r.rewards);
             return;
         }
 
         if (r.stageComplete) {
-            UI._showDialog('Этап пройден!', '#4caf50');
-            var self = this;
-            setTimeout(function() { self._showRaidBattle(); }, 1200);
+            // Этап пройден, переходим к следующему
+            if (UI._screenLayer) {
+                UI._screenLayer.innerHTML = '';
+            }
+            this._showRaidBattle();
             return;
         }
 
-        if (r.playerDead) {
-            UI._showDialog('Вы погибли!', '#f44336');
-            UI._stopMusic();
-            var scrolls = Math.random() < 0.08 ? 1 : 0;
-            if (scrolls) Sherwood.addResource('scrolls', scrolls);
-            UI._pendingRewards = { exp: Math.floor(50), silver: Math.floor(100), scrolls: scrolls };
-            UI._afterRewardAction = function() { UI._playMusic('main_theme'); Sherwood.Raid.showUI(); };
-            UI._showDefeatScreen(UI._pendingRewards);
-            return;
+        // Если враг ещё жив - просто продолжай бой
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
         }
-
-        UI._hitEnemyCard();
-        UI._updateEnemyHP(r.enemyHp, r.enemyMaxHp);
-        UI._showDialog((r.crit ? 'КРИТ! ' : '') + 'Вы нанесли ' + r.damage + ' урона', r.crit ? '#ff6a00' : '#fff');
-        if (r.enemyDamage) {
-            var self = this;
-            setTimeout(function() { UI._showDialog('Враг нанёс ' + r.enemyDamage + ' урона', '#f44336'); }, 700);
-        }
-        UI.updateDisplay();
-        var self = this;
-        setTimeout(function() { self._showRaidBattle(); }, 1000);
+        this._showRaidBattle();
     },
 
     _raidFlee: function() {
