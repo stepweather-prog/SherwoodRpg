@@ -44,7 +44,8 @@
 
     <div id="mob-hp">
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
-        <img class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
+        <!-- ВАЖНО: id="mob-hp-fill" -->
+        <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000/1000</span>
     </div>
 
@@ -141,7 +142,7 @@
         frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
         scene.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА (ДИНАМИЧЕСКИЙ, ИЗ raid_mobs) =====
+        // ===== СПРАЙТ ВРАГА (ДИНАМИЧЕСКИЙ) =====
         var enemySprite = null;
         var enemyData = parent.Sherwood.Raid.getCurrentEnemy();
         var bossData = parent.Sherwood.Raid._raidBoss;
@@ -155,8 +156,6 @@
             if (!enemyData) return;
             
             document.getElementById('enemy-name').textContent = enemyData.name;
-            
-            // Обновляем спрайт врага из правильной папки
             if (enemySprite) scene.remove(enemySprite);
             enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
                 map: new THREE.TextureLoader().load('assets/assets2/mobs/raid_mobs/' + enemyData.image),
@@ -166,14 +165,13 @@
             enemySprite.scale.set(0.6, 0.6, 1);
             scene.add(enemySprite);
             
-            // Обновляем HP
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyData.hp + '/' + enemyData.maxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
         }
 
-        updateEnemy(); // Первый враг
+        updateEnemy();
 
-        document.getElementById('mob-hp').style.display = 'block';
+        document.getElementById('mob-hp').style.display = 'none'; // Скрываем до боя
 
         // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
@@ -307,10 +305,17 @@
             if (dist < 1.2 && !isBattleActive) {
                 isBattleActive = true;
                 document.getElementById('mob-hp').style.display = 'block';
+                if (enemyData) {
+                    enemyHp = enemyData.hp;
+                    enemyMaxHp = enemyData.hp;
+                    document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+                    document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
+                }
             }
         }
 
         function updateMobHpBar() {
+            if (!isBattleActive) return;
             var vector = enemyPos.clone();
             vector.project(camera);
             
