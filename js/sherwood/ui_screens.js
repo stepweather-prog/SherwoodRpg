@@ -1112,16 +1112,13 @@ UI.portals = function() {
 UI.raid = function() {
     UI._playSound('click');
     
-    if (typeof Sherwood.Raid === 'undefined' || !Sherwood.Raid.showUI) {
-        UI._showPlaceholder('Рейд', 'raid');
-        return;
-    }
-    
+    // Если рейд активен - показываем без видео
     if (Sherwood.Raid.isRaidActive && Sherwood.Raid.isRaidActive()) {
         Sherwood.Raid.showUI();
         return;
     }
     
+    // Проигрываем видео
     var video = document.createElement('video');
     video.src = 'assets/assets2/animation/raid_entrance.webm';
     video.autoplay = true;
