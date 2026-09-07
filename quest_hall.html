@@ -8,19 +8,27 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; }
-        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; }
-        #mob-hp { display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%); width: 280px; height: 40px; z-index: 50; }
+        
+        /* Заголовок с названием главы и врага */
+        #quest-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffa500; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
+        #quest-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
+        
+        /* Полоска здоровья врага (как в подземке) */
+        #mob-hp { display: none; position: absolute; top: 100px; left: 50%; transform: translateX(-50%); width: 320px; height: 40px; z-index: 50; }
         #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mob-hp-fill { clip-path: inset(0 50% 0 0); }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
+        
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
         #btn-forward { top: 0; left: 55px; }
@@ -31,7 +39,13 @@
     </style>
 </head>
 <body>
-    <div id="info">Квестовый коридор</div>
+    <!-- Заголовок: Глава + Враг -->
+    <div id="quest-title">
+        <span id="chapter-name">Глава 1 — Кровь Великого Дуба</span>
+        <span class="enemy-name" id="enemy-name">Чумной Ворон</span>
+    </div>
+    
+    <!-- Полоска HP врага (как в подземке) -->
     <div id="mob-hp">
         <img src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
@@ -73,7 +87,7 @@
 
         // АДАПТИВНАЯ КАМЕРА: ниже угол, выше позиция, чтобы было видно коридор
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20);
-        camera.position.set(0, 1.15, 6); // Подняли выше (было 0.8)
+        camera.position.set(0, 1.15, 6); // Подняли выше
         camera.rotation.order = 'YXZ';
 
         const renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -141,16 +155,32 @@
         frontWall.position.set(0, 1.25, corridorLength / 2);
         scene.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА (опущен ближе к полу) =====
+        // ===== СПРАЙТ ВРАГА =====
         var enemySprite = null;
         var enemyHp = 1000;
         var enemyMaxHp = 1000;
         var isBattleActive = false;
 
-        // Враг в конце коридора, ниже (ближе к полу), теперь видно нормально
+        // Получаем данные о враге и главе из родительского окна
+        var enemyData = parent.Sherwood.Quests._currentEnemy;
+        var chapterData = parent.Sherwood.Quests._currentQuest;
+        
+        // Устанавлим заголовок
+        if (chapterData) {
+            document.getElementById('chapter-name').textContent = 'Глава ' + chapterData.id + ' — ' + chapterData.name;
+        }
+        if (enemyData) {
+            document.getElementById('enemy-name').textContent = enemyData.name;
+            enemyHp = enemyData.hp;
+            enemyMaxHp = enemyData.hp;
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
+        }
+        
+        // Враг в конце коридора, ближе к полу
         const enemyPos = new THREE.Vector3(0, 0.6, -corridorLength / 2 + 1.5);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
-            map: new THREE.TextureLoader().load('assets/all_beasts/plague_crow.png'),
+            map: new THREE.TextureLoader().load('assets/all_beasts/' + (enemyData ? enemyData.image : 'plague_crow.png')),
             transparent: true
         }));
         enemySprite.position.copy(enemyPos);
@@ -158,8 +188,6 @@
         scene.add(enemySprite);
 
         document.getElementById('mob-hp').style.display = 'block';
-        document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
-        document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
 
         // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
@@ -268,7 +296,7 @@
         function attackEnemy() {
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
-            var dmg = Math.max(1, playerStats.stats.attack - 100 + Math.floor(Math.random() * 20));
+            var dmg = Math.max(1, playerStats.stats.attack - enemyData.def + Math.floor(Math.random() * 20));
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
@@ -285,7 +313,6 @@
             var dist = camera.position.distanceTo(enemyPos);
             if (dist < 1.5 && !isBattleActive) {
                 isBattleActive = true;
-                var enemyData = parent.Sherwood.Quests._currentEnemy;
                 if (enemyData) {
                     enemyHp = enemyData.hp;
                     enemyMaxHp = enemyData.hp;
