@@ -391,15 +391,13 @@ function cycleSkin() {
 }
 
 function loadSavedSkin() {
+    localStorage.removeItem('active_skin'); // Убираем старый скин
     const heroEl = document.getElementById('hero');
     if (!heroEl) return;
-
-    try {
-        const savedSkin = localStorage.getItem('active_skin');
-        if (savedSkin) {
-            heroEl.src = 'assets/hero_skins/' + savedSkin;
-            console.log('🎭 Загружен скин:', savedSkin);
-        }
+    
+    heroEl.src = 'assets/hero_skins/skin1_01.png';
+    console.log('🎭 Загружен скин: skin1_01.png');
+}
     } catch(e) {}
 }
 
