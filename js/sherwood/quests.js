@@ -1,6 +1,5 @@
 // ============================================================
 //  js/sherwood/quests.js — ПОЛНЫЙ РАБОЧИЙ ФАЙЛ
-//  Взят из старого SherwoodUI
 // ============================================================
 
 if (typeof Sherwood === 'undefined') {
@@ -377,67 +376,80 @@ Sherwood.Quests = {
         this._showQuestBattle();
     },
 
+    // ============================================================
+    //  ПЕРЕХОД В 3D КОРИДОР (1 враг за бой)
+    // ============================================================
     _showQuestBattle: function() {
         if (!this._inBattle || !this._currentEnemy) { this.showUI(); return; }
-        var b = this.getBattle();
-        if (!b) return;
-        var ch = this._currentQuest;
-        var enemy = this._currentEnemy;
-        UI._showBattleScreen({
-            name: enemy.name,
-            image: 'assets/all_beasts/' + (enemy.image || 'plague_crow.png'),
-            hp: enemy.hp,
-            maxHp: enemy.maxHp || enemy.hp,
-            attack: enemy.atk || 0,
-            defense: enemy.def || 0
-        }, 'quest', ch.name + ' — Этап ' + b.stage + '/' + b.total, '', 'Sherwood.Quests._questAttack()', 'Sherwood.Quests._questFlee()');
+        
+        // Открываем iframe с 3D коридором
+        var iframe = document.createElement('iframe');
+        iframe.src = 'quest_hall.html';
+        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+        
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.appendChild(iframe);
+            UI._screenLayer.style.display = 'block';
+        }
     },
 
-    _questAttack: function() {
-        UI._playHitSounds();
-        var result = this.attack();
-        if (result.error) { UI._showDialog(result.error, '#ff9800'); return; }
-        if (result.chapterComplete) {
+    // Возврат из коридора с победой (вызывается из iframe)
+    _onQuestWin: function() {
+        var ch = this._currentQuest;
+        if (!ch) { this.showUI(); return; }
+        
+        // Завершаем текущий этап (убиваем текущего врага)
+        this._currentStage++;
+        
+        // 1. Если все 5 этапов пройдены -> завершаем главу
+        if (this._currentStage >= ch.stages) {
+            var p = Sherwood.getPlayer();
+            p.questProgress.completed.push(ch.id);
+            p.questProgress.currentChapter = ch.id + 1;
+            Sherwood.saveGame();
+            Sherwood.addExp(ch.rewards.exp);
+            Sherwood.addResource('gold', ch.rewards.gold);
+            Sherwood.addResource('silver', ch.rewards.silver);
+            this._inBattle = false;
+            
             UI._showDialog('🏆 Глава пройдена!', '#ffd700');
             UI._playSound('victory');
             UI._stopMusic();
-            UI._pendingRewards = result.rewards;
             UI._afterRewardAction = function() {
                 UI._playMusic('main_theme');
-                Sherwood.Quests.showUI();
+                Sherwood.Quests.showUI(); // Возвращаемся в раздел квест
             };
-            UI._showVictoryScreen(UI._pendingRewards);
+            UI._showVictoryScreen(ch.rewards);
             return;
         }
-        if (result.playerDead) {
-            UI._showDialog('💀 Поражение...', '#f44336');
-            UI._playSound('defeat');
-            UI._stopMusic();
-            UI._pendingRewards = { exp: 10, silver: 50 };
-            UI._afterRewardAction = function() { Sherwood.Quests.showUI(); };
-            UI._showDefeatScreen(UI._pendingRewards);
-            return;
+        
+        // 2. Если этапы остались -> обновляем врага и показываем экран победы
+        if (this._currentStage === ch.stages - 1) {
+            // Это босс (этап 5)
+            this._currentEnemy = JSON.parse(JSON.stringify(ch.boss));
+        } else {
+            // Обычный враг с увеличением характеристик
+            var nextEnemy = JSON.parse(JSON.stringify(ch.enemies[this._currentStage]));
+            var mult = 1 + (this._currentStage * 0.2);
+            nextEnemy.hp = Math.floor(nextEnemy.hp * mult);
+            nextEnemy.atk = Math.floor(nextEnemy.atk * mult);
+            nextEnemy.def = Math.floor(nextEnemy.def * mult);
+            this._currentEnemy = nextEnemy;
         }
-        if (result.enemyDead) {
-            UI._showDialog('✅ Враг повержен!', '#4caf50');
-            UI._updateEnemyHP(0, result.enemyMaxHp || 100);
-            if (result.stageComplete) UI._playSound('victory');
-            var self = this;
-            setTimeout(function() { self._showQuestBattle(); }, 1000);
-            return;
-        }
-        UI._hitEnemyCard();
-        UI._updateEnemyHP(result.enemyHp, result.enemyMaxHp);
-        UI._showDialog((result.crit ? '💥 КРИТ! ' : '') + 'Урон: ' + result.damage, result.crit ? '#ff6a00' : '#fff');
-        if (result.enemyDamage) {
-            var self = this;
-            setTimeout(function() {
-                UI._showDialog('💢 Враг нанёс ' + result.enemyDamage + ' урона', '#f44336');
-                UI.updateDisplay();
-            }, 700);
-        }
-        var self = this;
-        setTimeout(function() { self._showQuestBattle(); }, 1200);
+        
+        // Показываем экран победы с наградой за текущий этап
+        var stageReward = {
+            exp: ch.rewards.exp,
+            gold: ch.rewards.gold,
+            silver: ch.rewards.silver
+        };
+        
+        UI._afterRewardAction = function() {
+            UI._playMusic('main_theme');
+            Sherwood.Quests.showUI(); // Возвращаемся в раздел квест
+        };
+        UI._showVictoryScreen(stageReward);
     },
 
     _questFlee: function() {
