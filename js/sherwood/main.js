@@ -346,29 +346,29 @@ function closeGenericScreen() {
     showHomeScreen();
 }
 
-// ---------- СМЕНА СКИНА ----------
+// ---------- СМЕНА СКИНА (ВСЕ 62) ----------
 function cycleSkin() {
     const skins = [
-    'skin1_01.png', 'skin1_02.png', 'skin1_03.png',
-    'skin2_01.png', 'skin2_02.png', 'skin2_03.png',
-    'skin3_01.png', 'skin3_02.png', 'skin3_03.png',
-    'skin4_01.png', 'skin4_02.png', 'skin4_03.png',
-    'skin5_01.png', 'skin5_02.png', 'skin5_03.png',
-    'skin6_01.png', 'skin6_02.png', 'skin6_03.png',
-    'skin7_01.png', 'skin7_02.png', 'skin7_03.png',
-    'skin8_01.png', 'skin8_02.png', 'skin8_03.png',
-    'skin9_01.png', 'skin9_02.png', 'skin9_03.png',
-    'skin10_01.png', 'skin10_02.png', 'skin10_03.png',
-    'skin11_01.png', 'skin11_02.png', 'skin11_03.png',
-    'skin12_01.png', 'skin12_02.png', 'skin12_03.png',
-    'skin13_01.png', 'skin13_02.png', 'skin13_03.png',
-    'skin14_01.png', 'skin14_02.png', 'skin14_03.png',
-    'skin15_01.png', 'skin15_02.png', 'skin15_03.png',
-    'skin16_01.png', 'skin16_02.png', 'skin16_03.png',
-    'bonus_skin_2.png', 'bonus_skin_4.png', 'bonus_skin_6.png',
-    'bonus_skin_8.png', 'bonus_skin_10.png', 'bonus_skin_12.png',
-    'bonus_skin_14.png', 'bonus_skin_sec.png'
-];
+        'skin1_01.png', 'skin1_02.png', 'skin1_03.png',
+        'skin2_01.png', 'skin2_02.png', 'skin2_03.png',
+        'skin3_01.png', 'skin3_02.png', 'skin3_03.png',
+        'skin4_01.png', 'skin4_02.png', 'skin4_03.png',
+        'skin5_01.png', 'skin5_02.png', 'skin5_03.png',
+        'skin6_01.png', 'skin6_02.png', 'skin6_03.png',
+        'skin7_01.png', 'skin7_02.png', 'skin7_03.png',
+        'skin8_01.png', 'skin8_02.png', 'skin8_03.png',
+        'skin9_01.png', 'skin9_02.png', 'skin9_03.png',
+        'skin10_01.png', 'skin10_02.png', 'skin10_03.png',
+        'skin11_01.png', 'skin11_02.png', 'skin11_03.png',
+        'skin12_01.png', 'skin12_02.png', 'skin12_03.png',
+        'skin13_01.png', 'skin13_02.png', 'skin13_03.png',
+        'skin14_01.png', 'skin14_02.png', 'skin14_03.png',
+        'skin15_01.png', 'skin15_02.png', 'skin15_03.png',
+        'skin16_01.png', 'skin16_02.png', 'skin16_03.png',
+        'bonus_skin_2.png', 'bonus_skin_4.png', 'bonus_skin_6.png',
+        'bonus_skin_8.png', 'bonus_skin_10.png', 'bonus_skin_12.png',
+        'bonus_skin_14.png', 'bonus_skin_sec.png'
+    ];
 
     const heroEl = document.getElementById('hero');
     if (!heroEl) return;
