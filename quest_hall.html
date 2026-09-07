@@ -14,7 +14,7 @@
         #quest-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
         
         /* Полоска здоровья врага (как в подземке) */
-        #mob-hp { display: none; position: absolute; top: 100px; left: 50%; transform: translateX(-50%); width: 320px; height: 40px; z-index: 50; }
+        #mob-hp { display: none; position: absolute; top: 90px; left: 50%; transform: translateX(-50%); width: 300px; height: 40px; z-index: 50; }
         #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mob-hp-fill { clip-path: inset(0 50% 0 0); }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
@@ -83,11 +83,11 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0e0a06);
-        scene.fog = new THREE.Fog(0x0e0a06, 5, 12);
+        scene.fog = new THREE.Fog(0x0e0a06, 7, 16);
 
-        // АДАПТИВНАЯ КАМЕРА: ниже угол, выше позиция, чтобы было видно коридор
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 20);
-        camera.position.set(0, 1.15, 6); // Подняли выше
+        // Камера как в подземке
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 25);
+        camera.position.set(0, 0.65, 0);
         camera.rotation.order = 'YXZ';
 
         const renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -98,8 +98,8 @@
 
         const ambient = new THREE.AmbientLight(0x887766, 1.0);
         scene.add(ambient);
-        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.0);
-        mainLight.position.set(2, 5, 2);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+        mainLight.position.set(5, 10, 5);
         scene.add(mainLight);
 
         // ===== ТЕКСТУРЫ ИЗ ТВОЕГО ПУТИ =====
@@ -111,9 +111,10 @@
         const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
         const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
 
-        // ===== ПРЯМОЙ КОРИДОР (ширина 2.5, длина 12) =====
+        // ===== КОРИДОР (ширина 1.8, длина 12, высота 1.1) =====
         const corridorLength = 12;
-        const corridorWidth = 2.5;
+        const corridorWidth = 1.8;
+        const wallHeight = 1.1;
 
         // ПОЛ: 3 отдельных сегмента
         for (let i = 0; i < 3; i++) {
@@ -127,32 +128,32 @@
         for (let i = 0; i < 3; i++) {
             const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength / 3), ceilMat);
             ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(0, 2.5, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            ceiling.position.set(0, wallHeight, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
             scene.add(ceiling);
         }
 
         // ЛЕВАЯ СТЕНА: 3 отдельных сегмента
         for (let i = 0; i < 3; i++) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength / 3), wallMat);
-            wall.position.set(-corridorWidth / 2, 1.25, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, corridorLength / 3), wallMat);
+            wall.position.set(-corridorWidth / 2, wallHeight / 2, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
             scene.add(wall);
         }
 
         // ПРАВАЯ СТЕНА: 3 отдельных сегмента
         for (let i = 0; i < 3; i++) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength / 3), wallMat);
-            wall.position.set(corridorWidth / 2, 1.25, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, corridorLength / 3), wallMat);
+            wall.position.set(corridorWidth / 2, wallHeight / 2, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
             scene.add(wall);
         }
 
         // Задняя стена (вход)
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, 2.5, 0.2), wallMat);
-        backWall.position.set(0, 1.25, -corridorLength / 2);
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, wallHeight, 0.2), wallMat);
+        backWall.position.set(0, wallHeight / 2, -corridorLength / 2);
         scene.add(backWall);
 
         // Передняя стена (выход)
-        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, 2.5, 0.2), wallMat);
-        frontWall.position.set(0, 1.25, corridorLength / 2);
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, wallHeight, 0.2), wallMat);
+        frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
         scene.add(frontWall);
 
         // ===== СПРАЙТ ВРАГА =====
@@ -165,7 +166,6 @@
         var enemyData = parent.Sherwood.Quests._currentEnemy;
         var chapterData = parent.Sherwood.Quests._currentQuest;
         
-        // Устанавлим заголовок
         if (chapterData) {
             document.getElementById('chapter-name').textContent = 'Глава ' + chapterData.id + ' — ' + chapterData.name;
         }
@@ -178,7 +178,7 @@
         }
         
         // Враг в конце коридора, ближе к полу
-        const enemyPos = new THREE.Vector3(0, 0.6, -corridorLength / 2 + 1.5);
+        const enemyPos = new THREE.Vector3(0, 0.35, -corridorLength / 2 + 1.5);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: new THREE.TextureLoader().load('assets/all_beasts/' + (enemyData ? enemyData.image : 'plague_crow.png')),
             transparent: true
@@ -189,7 +189,7 @@
 
         document.getElementById('mob-hp').style.display = 'block';
 
-        // ===== УПРАВЛЕНИЕ =====
+        // ===== УПРАВЛЕНИЕ (КАК В ПОДЗЕМКЕ) =====
         let yaw = 0;
         const rotationSpeed = Math.PI / 2;
         let isMoving = false;
@@ -200,10 +200,12 @@
             camera.quaternion.setFromEuler(euler);
         }
 
+        // Анимация шага (с подпрыгиванием)
         function animateStep(targetX, targetZ) {
             const startX = camera.position.x;
             const startZ = camera.position.z;
-            const duration = 500;
+            const startY = camera.position.y;
+            const duration = 800;
             const startTime = performance.now();
             function stepLoop() {
                 const elapsed = performance.now() - startTime;
@@ -211,11 +213,13 @@
                 const smoothT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
                 camera.position.x = startX + (targetX - startX) * smoothT;
                 camera.position.z = startZ + (targetZ - startZ) * smoothT;
+                camera.position.y = startY + Math.sin(t * Math.PI) * 0.015;
                 if (t < 1) {
                     requestAnimationFrame(stepLoop);
                 } else {
                     camera.position.x = targetX;
                     camera.position.z = targetZ;
+                    camera.position.y = startY;
                     isMoving = false;
                     checkEnemy();
                 }
@@ -223,15 +227,17 @@
             stepLoop();
         }
 
+        // Анимация поворота
         function animateTurn(targetYaw) {
             const startYaw = yaw;
-            const duration = 300;
+            const duration = 500;
             const startTime = performance.now();
             isTurning = true;
             function turnLoop() {
                 const elapsed = performance.now() - startTime;
                 const t = Math.min(elapsed / duration, 1);
-                yaw = startYaw + (targetYaw - startYaw) * t;
+                const smoothT = t * t * (3 - 2 * t);
+                yaw = startYaw + (targetYaw - startYaw) * smoothT;
                 updateCamera();
                 if (t < 1) {
                     requestAnimationFrame(turnLoop);
@@ -252,7 +258,7 @@
             forward.normalize();
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
-            if (targetX < -corridorWidth / 2 + 0.5 || targetX > corridorWidth / 2 - 0.5 || targetZ < -corridorLength / 2 + 0.5 || targetZ > corridorLength / 2 - 0.5) return;
+            if (targetX < -corridorWidth / 2 + 0.3 || targetX > corridorWidth / 2 - 0.3 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
@@ -265,7 +271,7 @@
             forward.normalize();
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
-            if (targetX < -corridorWidth / 2 + 0.5 || targetX > corridorWidth / 2 - 0.5 || targetZ < -corridorLength / 2 + 0.5 || targetZ > corridorLength / 2 - 0.5) return;
+            if (targetX < -corridorWidth / 2 + 0.3 || targetX > corridorWidth / 2 - 0.3 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
