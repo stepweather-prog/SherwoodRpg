@@ -102,7 +102,7 @@
         mainLight.position.set(5, 10, 5);
         scene.add(mainLight);
 
-        // ===== ТЕКСТУРЫ ИЗ ТВОЕГО ПУТИ =====
+        // ===== ТЕКСТУРЫ =====
         const floorTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/floors_quest.png');
         const wallTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/walls_quest.png');
         const ceilTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_quest.png');
@@ -111,48 +111,44 @@
         const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
         const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
 
-        // ===== КОРИДОР (ширина 1.8, длина 12, высота 1.1) =====
-        const corridorLength = 12;
-        const corridorWidth = 1.8;
+        // ===== КОРИДОР 1x5 (из квадратных плит) =====
+        const corridorWidth = 1; // 1 клетка в ширину
+        const corridorLength = 5; // 5 клеток в длину
         const wallHeight = 1.1;
 
-        // ПОЛ: 3 отдельных сегмента
-        for (let i = 0; i < 3; i++) {
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength / 3), floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.set(0, 0, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
-            scene.add(floor);
+        // Строим пол и потолок из отдельных квадратов 1x1
+        for (let z = 0; z < corridorLength; z++) {
+            // ПОЛ
+            const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
+            floorTile.rotation.x = -Math.PI / 2;
+            floorTile.position.set(0, 0, z - corridorLength / 2 + 0.5);
+            scene.add(floorTile);
+
+            // ПОТОЛОК
+            const ceilTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), ceilMat);
+            ceilTile.rotation.x = Math.PI / 2;
+            ceilTile.position.set(0, wallHeight, z - corridorLength / 2 + 0.5);
+            scene.add(ceilTile);
         }
 
-        // ПОТОЛОК: 3 отдельных сегмента
-        for (let i = 0; i < 3; i++) {
-            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength / 3), ceilMat);
-            ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.set(0, wallHeight, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
-            scene.add(ceiling);
-        }
+        // Строим стены из отдельных квадратов 1x1
+        for (let z = 0; z < corridorLength; z++) {
+            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, 1), wallMat);
+            wallLeft.position.set(-0.6, wallHeight / 2, z - corridorLength / 2 + 0.5);
+            scene.add(wallLeft);
 
-        // ЛЕВАЯ СТЕНА: 3 отдельных сегмента
-        for (let i = 0; i < 3; i++) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, corridorLength / 3), wallMat);
-            wall.position.set(-corridorWidth / 2, wallHeight / 2, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
-            scene.add(wall);
-        }
-
-        // ПРАВАЯ СТЕНА: 3 отдельных сегмента
-        for (let i = 0; i < 3; i++) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, corridorLength / 3), wallMat);
-            wall.position.set(corridorWidth / 2, wallHeight / 2, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
-            scene.add(wall);
+            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, 1), wallMat);
+            wallRight.position.set(0.6, wallHeight / 2, z - corridorLength / 2 + 0.5);
+            scene.add(wallRight);
         }
 
         // Задняя стена (вход)
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, wallHeight, 0.2), wallMat);
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 0.2), wallMat);
         backWall.position.set(0, wallHeight / 2, -corridorLength / 2);
         scene.add(backWall);
 
         // Передняя стена (выход)
-        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, wallHeight, 0.2), wallMat);
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 0.2), wallMat);
         frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
         scene.add(frontWall);
 
@@ -177,8 +173,8 @@
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
         }
         
-        // Враг в конце коридора, ближе к полу
-        const enemyPos = new THREE.Vector3(0, 0.35, -corridorLength / 2 + 1.5);
+        // Враг в конце коридора, на нормальной высоте (не в полу)
+        const enemyPos = new THREE.Vector3(0, 0.55, -corridorLength / 2 + 1);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: new THREE.TextureLoader().load('assets/all_beasts/' + (enemyData ? enemyData.image : 'plague_crow.png')),
             transparent: true
@@ -258,7 +254,7 @@
             forward.normalize();
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
-            if (targetX < -corridorWidth / 2 + 0.3 || targetX > corridorWidth / 2 - 0.3 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
+            if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
@@ -271,7 +267,7 @@
             forward.normalize();
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
-            if (targetX < -corridorWidth / 2 + 0.3 || targetX > corridorWidth / 2 - 0.3 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
+            if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
