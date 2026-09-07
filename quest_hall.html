@@ -9,7 +9,7 @@
         body { overflow: hidden; background: #000; touch-action: none; }
         canvas { display: block; }
         #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; }
-        #mob-hp { display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%); width: 300px; height: 40px; z-index: 50; }
+        #mob-hp { display: none; position: absolute; top: 70px; left: 50%; transform: translateX(-50%); width: 280px; height: 40px; z-index: 50; }
         #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mob-hp-fill { clip-path: inset(0 50% 0 0); }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
@@ -17,6 +17,10 @@
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; z-index: 50; }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); }
+        #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
         #btn-forward { top: 0; left: 55px; }
@@ -38,6 +42,12 @@
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span>HP</span>
+    </div>
+
+    <div id="hero-mana">
+        <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
+        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
+        <span>МАНА</span>
     </div>
 
     <div id="joystick">
@@ -86,9 +96,9 @@
         const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
         const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
 
-        // ===== ПРЯМОЙ КОРИДОР (длина 12, ширина 4) =====
+        // ===== ПРЯМОЙ КОРИДОР (ширина 2.5, длина 12) =====
         const corridorLength = 12;
-        const corridorWidth = 4;
+        const corridorWidth = 2.5;
 
         // Пол
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), floorMat);
@@ -102,15 +112,19 @@
         ceiling.position.set(0, 2.5, 0);
         scene.add(ceiling);
 
-        // Левая стена
-        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength), wallMat);
-        leftWall.position.set(-corridorWidth / 2, 1.25, 0);
-        scene.add(leftWall);
+        // ЛЕВАЯ СТЕНА (3 отдельных плиты)
+        for (let i = 0; i < 3; i++) {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength / 3), wallMat);
+            wall.position.set(-corridorWidth / 2, 1.25, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            scene.add(wall);
+        }
 
-        // Правая стена
-        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength), wallMat);
-        rightWall.position.set(corridorWidth / 2, 1.25, 0);
-        scene.add(rightWall);
+        // ПРАВАЯ СТЕНА (3 отдельных плиты)
+        for (let i = 0; i < 3; i++) {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength / 3), wallMat);
+            wall.position.set(corridorWidth / 2, 1.25, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            scene.add(wall);
+        }
 
         // Задняя стена (вход)
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(corridorWidth, 2.5, 0.2), wallMat);
@@ -122,24 +136,25 @@
         frontWall.position.set(0, 1.25, corridorLength / 2);
         scene.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА =====
+        // ===== СПРАЙТ ВРАГА (опущен ближе к полу) =====
         var enemySprite = null;
         var enemyHp = 1000;
         var enemyMaxHp = 1000;
         var isBattleActive = false;
 
-        // Враг в конце коридора
-        const enemyPos = new THREE.Vector3(0, 1.2, -corridorLength / 2 + 1.5);
+        // Враг в конце коридора, ниже (ближе к полу)
+        const enemyPos = new THREE.Vector3(0, 0.6, -corridorLength / 2 + 1.5);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: new THREE.TextureLoader().load('assets/all_beasts/plague_crow.png'),
             transparent: true
         }));
         enemySprite.position.copy(enemyPos);
-        enemySprite.scale.set(1.2, 1.2, 1);
+        enemySprite.scale.set(1.0, 1.0, 1);
         scene.add(enemySprite);
 
         document.getElementById('mob-hp').style.display = 'block';
         document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+        document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
 
         // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
@@ -257,7 +272,7 @@
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
                 scene.remove(enemySprite);
-                parent.Sherwood.Quests._questAttack(); // Передаем управление обратно
+                parent.Sherwood.Quests._onQuestWin();
             }
         }
 
@@ -265,12 +280,12 @@
             var dist = camera.position.distanceTo(enemyPos);
             if (dist < 1.5 && !isBattleActive) {
                 isBattleActive = true;
-                // Используем данные игрока и врага из родительского окна
                 var enemyData = parent.Sherwood.Quests._currentEnemy;
                 if (enemyData) {
                     enemyHp = enemyData.hp;
                     enemyMaxHp = enemyData.hp;
                     document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+                    document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
                 }
             }
         }
