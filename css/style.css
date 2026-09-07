@@ -182,11 +182,11 @@ canvas {
 
 /* Герой по центру */
 #hero {
-    bottom: 10%;
+    bottom: 14%;
     left: 50%;
     transform: translateX(-50%);
-    width: 550px;   /* Увеличили с 40% (было ~200px) до 550px */
-    height: 900px;  /* Высота задана, чтобы было видно рост */
+    width: 160px;   /* Было 550px - теперь маленький */
+    height: 280px;  /* Было 900px - теперь аккуратно */
     object-fit: contain;
     z-index: 5;
     cursor: pointer;
