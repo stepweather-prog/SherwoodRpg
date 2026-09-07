@@ -274,17 +274,14 @@ function showHomeScreen() {
         layer.innerHTML = '';
     }
     
-    // ВАЖНО: Показываем игровое поле
     if (gameZone) {
         gameZone.style.display = 'block';
     }
     
-    // ВАЖНО: Показываем элементы главного экрана
     showHomeElements();
     
-    // ВАЖНО: Показываем сам homeScreen и скрываем menuScreen
     if (homeScreen) {
-        homeScreen.style.display = 'flex'; // Или 'block' если у тебя так
+        homeScreen.style.display = 'flex';
     }
     if (menuScreen) {
         menuScreen.style.display = 'none';
@@ -391,13 +388,15 @@ function cycleSkin() {
 }
 
 function loadSavedSkin() {
-    localStorage.removeItem('active_skin'); // Убираем старый скин
     const heroEl = document.getElementById('hero');
     if (!heroEl) return;
-    
-    heroEl.src = 'assets/hero_skins/skin1_01.png';
-    console.log('🎭 Загружен скин: skin1_01.png');
-}
+
+    try {
+        const savedSkin = localStorage.getItem('active_skin');
+        if (savedSkin) {
+            heroEl.src = 'assets/hero_skins/' + savedSkin;
+            console.log('🎭 Загружен скин:', savedSkin);
+        }
     } catch(e) {}
 }
 
@@ -568,7 +567,6 @@ function initGameModules() {
     }
 }
 
-// Вызываем инициализацию после полной загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
         initGameModules();
