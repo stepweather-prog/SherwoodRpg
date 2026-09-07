@@ -176,7 +176,8 @@
         // Враг в конце коридора, на нормальной высоте (не в полу)
         const enemyPos = new THREE.Vector3(0, 0.55, -corridorLength / 2 + 1);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
-            map: new THREE.TextureLoader().load('assets/beast_quest/' + (enemyData ? enemyData.image : 'original_horror.png')),
+            // ТОЧНЫЙ ПУТЬ К КАРТИНКАМ ВРАГОВ РЕЙДА
+            map: new THREE.TextureLoader().load('assets/assets2/mobs/raid_mobs/' + (enemyData ? enemyData.image : 'original_horror.png')),
             transparent: true
         }));
         enemySprite.position.copy(enemyPos);
@@ -307,7 +308,7 @@
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
                 scene.remove(enemySprite);
-                parent.Sherwood.Raid._raidAttack();
+                parent.Sherwood.Raid._onRaidWin();
             }
         }
 
