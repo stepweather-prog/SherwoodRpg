@@ -13,11 +13,12 @@ Sherwood.Raid = {
     _participants: [],
     _maxParticipants: 10,
     _raidsToday: 0,
-    _maxRaidsPerDay: 0, // Убрали лимит
+    _maxRaidsPerDay: 0,
     _currentStage: 0,
-    _totalStages: 3,
+    _totalStages: 2, // 1 волна + 1 босс
     _playerAlive: true,
-    _isUnlocked: true, // Открыт всегда (для теста)
+    _isUnlocked: true, // Открыт всегда для теста
+    _raidEnemies: [], // Список уникальных врагов (без дублей)
 
     RAID_BOSSES: [{
         id: 'primordial_dread',
@@ -29,23 +30,17 @@ Sherwood.Raid = {
         requiredChapters: 16,
         stages: [
             {
-                name: 'Пробуждение Корней',
+                name: 'Волна 1',
                 enemies: [
-                    { name: 'Голем Скверного Дуба', image: 'blighted_oak_golem.png', hp: 5000, maxHp: 5000, attack: 140, defense: 70 },
-                    { name: 'Корневой Палач', image: 'root_executioner.png', hp: 5500, maxHp: 5500, attack: 155, defense: 75 },
-                    { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 6000, maxHp: 6000, attack: 170, defense: 85 }
+                    { name: 'Древний Владыка', image: 'blight_lord_leshy.png', hp: 6000, maxHp: 6000, attack: 170, defense: 85 },
+                    { name: 'Альфа-Гончая Егеря', image: 'huntsman_alpha_hound.png', hp: 6500, maxHp: 6500, attack: 180, defense: 90 },
+                    { name: 'Голод Чащи', image: 'thicket_hunger.png', hp: 7000, maxHp: 7000, attack: 190, defense: 95 },
+                    { name: 'Страж Разломов', image: 'rift_warden.png', hp: 7500, maxHp: 7500, attack: 200, defense: 100 },
+                    { name: 'Изначальный Стержень', image: 'the_primordial_core.png', hp: 8000, maxHp: 8000, attack: 210, defense: 110 }
                 ]
             },
             {
-                name: 'Стражи Бездны',
-                enemies: [
-                    { name: 'Проклятая Жрица', image: 'cursed_priestess.png', hp: 7000, maxHp: 7000, attack: 190, defense: 95 },
-                    { name: 'Лорд Хаоса', image: 'chaos_lord.png', hp: 7500, maxHp: 7500, attack: 205, defense: 100 },
-                    { name: 'Скверный Король', image: 'blight_king.png', hp: 8000, maxHp: 8000, attack: 220, defense: 110 }
-                ]
-            },
-            {
-                name: 'Изначальный Ужас',
+                name: 'Босс',
                 enemies: [
                     { name: 'Изначальный Ужас', image: 'original_horror.png', hp: 50000, maxHp: 50000, attack: 350, defense: 180, isRaidBoss: true }
                 ]
@@ -84,7 +79,7 @@ Sherwood.Raid = {
         }
         this._raidsToday = p.raid.raidsToday || 0;
         this._participants = p.raid.participants || [];
-        this._isUnlocked = true; // Всегда открыт (для теста)
+        this._isUnlocked = true;
         if (p.raid.activeRaid) {
             this._raidBoss = p.raid.activeRaid;
             this._raidActive = true;
@@ -95,7 +90,6 @@ Sherwood.Raid = {
     },
 
     _checkUnlock: function() {
-        // ВРЕМЕННО ДЛЯ ТЕСТА: Рейд открыт всегда
         return true;
     },
 
@@ -123,6 +117,10 @@ Sherwood.Raid = {
         this._currentStage = 0;
         this._playerAlive = true;
 
+        // Перемешиваем уникальных врагов из волны
+        var enemies = this._raidBoss.stages[0].enemies;
+        this._raidEnemies = enemies.slice().sort(function() { return Math.random() - 0.5; });
+
         var p = Sherwood.getPlayer();
         p.raid.raidsToday = (p.raid.raidsToday || 0) + 1;
         p.raid.participants = [p.name || 'Охотник'];
@@ -137,7 +135,6 @@ Sherwood.Raid = {
         return {
             success: true,
             boss: this._raidBoss,
-            currentStage: this._raidBoss.stages[0],
             stageIndex: 1,
             totalStages: this._totalStages,
             participants: this._participants
@@ -400,6 +397,7 @@ Sherwood.Raid = {
         if (!this.isRaidActive()) { this.showUI(); return; }
 
         var iframe = document.createElement('iframe');
+        iframe.id = 'raid-iframe';
         iframe.src = 'raid_hall.html';
         iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
 
@@ -410,7 +408,6 @@ Sherwood.Raid = {
         }
     },
 
-    // Возврат из рейда с победой (вызывается из iframe)
     _onRaidWin: function() {
         var r = this.raidAttack();
 
@@ -428,7 +425,7 @@ Sherwood.Raid = {
         }
 
         if (r.stageComplete) {
-            // Этап пройден, переходим к следующему
+            // Этап пройден (переход к боссу)
             if (UI._screenLayer) {
                 UI._screenLayer.innerHTML = '';
             }
@@ -436,11 +433,11 @@ Sherwood.Raid = {
             return;
         }
 
-        // Если враг ещё жив - просто продолжай бой
-        if (UI._screenLayer) {
-            UI._screenLayer.innerHTML = '';
+        // Враг убит, волна не пройдена - подгружаем следующего врага
+        var iframe = document.getElementById('raid-iframe');
+        if (iframe) {
+            iframe.contentWindow.updateEnemy();
         }
-        this._showRaidBattle();
     },
 
     _raidFlee: function() {
