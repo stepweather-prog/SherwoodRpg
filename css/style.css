@@ -182,11 +182,11 @@ canvas {
 
 /* Герой по центру */
 #hero {
-    bottom: 14%;
+    bottom: 12%;
     left: 50%;
     transform: translateX(-50%);
-    width: 160px;   /* Было 550px - теперь маленький */
-    height: 280px;  /* Было 900px - теперь аккуратно */
+    width: 220px;
+    height: 380px;
     object-fit: contain;
     z-index: 5;
     cursor: pointer;
