@@ -100,26 +100,30 @@
         const corridorLength = 12;
         const corridorWidth = 2.5;
 
-        // Пол
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.set(0, 0, 0);
-        scene.add(floor);
+        // ПОЛ: 3 отдельных сегмента
+        for (let i = 0; i < 3; i++) {
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength / 3), floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(0, 0, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            scene.add(floor);
+        }
 
-        // Потолок
-        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), ceilMat);
-        ceiling.rotation.x = Math.PI / 2;
-        ceiling.position.set(0, 2.5, 0);
-        scene.add(ceiling);
+        // ПОТОЛОК: 3 отдельных сегмента
+        for (let i = 0; i < 3; i++) {
+            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength / 3), ceilMat);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.set(0, 2.5, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
+            scene.add(ceiling);
+        }
 
-        // ЛЕВАЯ СТЕНА (3 отдельных плиты)
+        // ЛЕВАЯ СТЕНА: 3 отдельных сегмента
         for (let i = 0; i < 3; i++) {
             const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength / 3), wallMat);
             wall.position.set(-corridorWidth / 2, 1.25, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
             scene.add(wall);
         }
 
-        // ПРАВАЯ СТЕНА (3 отдельных плиты)
+        // ПРАВАЯ СТЕНА: 3 отдельных сегмента
         for (let i = 0; i < 3; i++) {
             const wall = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, corridorLength / 3), wallMat);
             wall.position.set(corridorWidth / 2, 1.25, -corridorLength / 2 + (corridorLength / 6) + (i * corridorLength / 3));
