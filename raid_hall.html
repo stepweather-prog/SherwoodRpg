@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Рейдовый коридор</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; touch-action: none; }
+        canvas { display: block; }
+        
+        /* Заголовок: Рейд + Враг */
+        #raid-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ff6b35; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
+        #raid-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
+        
+        /* Полоска HP врага */
+        #mob-hp { display: none; position: absolute; top: 90px; left: 50%; transform: translateX(-50%); width: 300px; height: 40px; z-index: 50; }
+        #mob-hp img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #mob-hp-fill { clip-path: inset(0 50% 0 0); }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
+        
+        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); }
+        #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        
+        #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; z-index: 50; }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); }
+        #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        
+        #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
+        .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+        #btn-forward { top: 0; left: 55px; }
+        #btn-left { top: 55px; left: 0; }
+        #btn-right { top: 55px; left: 110px; }
+        #btn-back { top: 110px; left: 55px; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; z-index: 40; cursor: pointer; pointer-events: auto; }
+    </style>
+</head>
+<body>
+    <!-- Заголовок: Рейд + Враг -->
+    <div id="raid-title">
+        <span id="boss-name">Изначальный Ужас — Спящий в Корнях</span>
+        <span class="enemy-name" id="enemy-name">Изначальный Ужас</span>
+    </div>
+    
+    <!-- Полоска HP врага -->
+    <div id="mob-hp">
+        <img src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
+        <span id="mob-hp-text">HP: 1000/1000</span>
+    </div>
+
+    <div id="hero-life">
+        <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
+        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
+        <span>HP</span>
+    </div>
+
+    <div id="hero-mana">
+        <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
+        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
+        <span>МАНА</span>
+    </div>
+
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-forward">▲</div>
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+        <div class="arrow-btn" id="btn-back">▼</div>
+        <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    </div>
+
+    <button onclick="parent.Sherwood.Raid._raidFlee()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0e0a06);
+        scene.fog = new THREE.Fog(0x0e0a06, 7, 16);
+
+        // Камера как в подземке
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 25);
+        camera.position.set(0, 0.65, 0);
+        camera.rotation.order = 'YXZ';
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setClearColor(0x0e0a06, 1);
+        document.body.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0x887766, 1.0);
+        scene.add(ambient);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+        mainLight.position.set(5, 10, 5);
+        scene.add(mainLight);
+
+        // ===== ТЕКСТУРЫ РЕЙДА =====
+        const floorTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/floors_raid.png');
+        const wallTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/walls_raid.png');
+        const ceilTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_raid.png');
+
+        const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.9 });
+        const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
+        const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
+
+        // ===== КОРИДОР 1x5 (из квадратных плит) =====
+        const corridorWidth = 1;
+        const corridorLength = 5;
+        const wallHeight = 1.1;
+
+        // Строим пол и потолок из отдельных квадратов 1x1
+        for (let z = 0; z < corridorLength; z++) {
+            // ПОЛ
+            const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
+            floorTile.rotation.x = -Math.PI / 2;
+            floorTile.position.set(0, 0, z - corridorLength / 2 + 0.5);
+            scene.add(floorTile);
+
+            // ПОТОЛОК
+            const ceilTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), ceilMat);
+            ceilTile.rotation.x = Math.PI / 2;
+            ceilTile.position.set(0, wallHeight, z - corridorLength / 2 + 0.5);
+            scene.add(ceilTile);
+        }
+
+        // Строим стены из отдельных квадратов 1x1
+        for (let z = 0; z < corridorLength; z++) {
+            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, 1), wallMat);
+            wallLeft.position.set(-0.6, wallHeight / 2, z - corridorLength / 2 + 0.5);
+            scene.add(wallLeft);
+
+            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, 1), wallMat);
+            wallRight.position.set(0.6, wallHeight / 2, z - corridorLength / 2 + 0.5);
+            scene.add(wallRight);
+        }
+
+        // Задняя стена (вход)
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 0.2), wallMat);
+        backWall.position.set(0, wallHeight / 2, -corridorLength / 2);
+        scene.add(backWall);
+
+        // Передняя стена (выход)
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 0.2), wallMat);
+        frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
+        scene.add(frontWall);
+
+        // ===== СПРАЙТ ВРАГА =====
+        var enemySprite = null;
+        var enemyHp = 1000;
+        var enemyMaxHp = 1000;
+        var isBattleActive = false;
+
+        // Получаем данные о враге и боссе из родительского окна
+        var enemyData = parent.Sherwood.Raid.getCurrentEnemy();
+        var bossData = parent.Sherwood.Raid._raidBoss;
+        
+        if (bossData) {
+            document.getElementById('boss-name').textContent = bossData.name;
+        }
+        if (enemyData) {
+            document.getElementById('enemy-name').textContent = enemyData.name;
+            enemyHp = enemyData.hp;
+            enemyMaxHp = enemyData.hp;
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
+        }
+        
+        // Враг в конце коридора, на нормальной высоте (не в полу)
+        const enemyPos = new THREE.Vector3(0, 0.55, -corridorLength / 2 + 1);
+        enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: new THREE.TextureLoader().load('assets/beast_quest/' + (enemyData ? enemyData.image : 'original_horror.png')),
+            transparent: true
+        }));
+        enemySprite.position.copy(enemyPos);
+        enemySprite.scale.set(1.0, 1.0, 1);
+        scene.add(enemySprite);
+
+        document.getElementById('mob-hp').style.display = 'block';
+
+        // ===== УПРАВЛЕНИЕ (КАК В ПОДЗЕМКЕ) =====
+        let yaw = 0;
+        const rotationSpeed = Math.PI / 2;
+        let isMoving = false;
+        let isTurning = false;
+
+        function updateCamera() {
+            const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
+            camera.quaternion.setFromEuler(euler);
+        }
+
+        // Анимация шага (с подпрыгиванием)
+        function animateStep(targetX, targetZ) {
+            const startX = camera.position.x;
+            const startZ = camera.position.z;
+            const startY = camera.position.y;
+            const duration = 800;
+            const startTime = performance.now();
+            function stepLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                camera.position.x = startX + (targetX - startX) * smoothT;
+                camera.position.z = startZ + (targetZ - startZ) * smoothT;
+                camera.position.y = startY + Math.sin(t * Math.PI) * 0.015;
+                if (t < 1) {
+                    requestAnimationFrame(stepLoop);
+                } else {
+                    camera.position.x = targetX;
+                    camera.position.z = targetZ;
+                    camera.position.y = startY;
+                    isMoving = false;
+                    checkEnemy();
+                }
+            }
+            stepLoop();
+        }
+
+        // Анимация поворота
+        function animateTurn(targetYaw) {
+            const startYaw = yaw;
+            const duration = 500;
+            const startTime = performance.now();
+            isTurning = true;
+            function turnLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t * t * (3 - 2 * t);
+                yaw = startYaw + (targetYaw - startYaw) * smoothT;
+                updateCamera();
+                if (t < 1) {
+                    requestAnimationFrame(turnLoop);
+                } else {
+                    yaw = targetYaw;
+                    updateCamera();
+                    isTurning = false;
+                }
+            }
+            turnLoop();
+        }
+
+        function moveForward() {
+            if (isMoving || isTurning) return;
+            const forward = new THREE.Vector3(0, 0, -1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            const targetX = camera.position.x + Math.round(forward.x);
+            const targetZ = camera.position.z + Math.round(forward.z);
+            if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
+            isMoving = true;
+            animateStep(targetX, targetZ);
+        }
+
+        function moveBackward() {
+            if (isMoving || isTurning) return;
+            const forward = new THREE.Vector3(0, 0, 1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            const targetX = camera.position.x + Math.round(forward.x);
+            const targetZ = camera.position.z + Math.round(forward.z);
+            if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
+            isMoving = true;
+            animateStep(targetX, targetZ);
+        }
+
+        function turnLeft() { if (!isMoving && !isTurning) animateTurn(yaw + rotationSpeed); }
+        function turnRight() { if (!isMoving && !isTurning) animateTurn(yaw - rotationSpeed); }
+
+        document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
+        document.getElementById('btn-back').addEventListener('touchstart', (e) => { e.preventDefault(); moveBackward(); });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); turnLeft(); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); turnRight(); });
+        document.getElementById('btn-forward').addEventListener('click', moveForward);
+        document.getElementById('btn-back').addEventListener('click', moveBackward);
+        document.getElementById('btn-left').addEventListener('click', turnLeft);
+        document.getElementById('btn-right').addEventListener('click', turnRight);
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup': moveForward(); e.preventDefault(); break;
+                case 's': case 'arrowdown': moveBackward(); e.preventDefault(); break;
+                case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
+                case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
+            }
+        });
+
+        // ===== БОЙ =====
+        document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
+
+        function attackEnemy() {
+            if (!isBattleActive) return;
+            var playerStats = parent.Sherwood.getPlayer();
+            var dmg = Math.max(1, Math.floor((playerStats.stats.attack * playerStats.stats.attack) / (playerStats.stats.attack + enemyData.defense)));
+            enemyHp = Math.max(0, enemyHp - dmg);
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
+
+            if (enemyHp <= 0) {
+                isBattleActive = false;
+                document.getElementById('mob-hp').style.display = 'none';
+                scene.remove(enemySprite);
+                parent.Sherwood.Raid._raidAttack();
+            }
+        }
+
+        function checkEnemy() {
+            var dist = camera.position.distanceTo(enemyPos);
+            if (dist < 1.5 && !isBattleActive) {
+                isBattleActive = true;
+                if (enemyData) {
+                    enemyHp = enemyData.hp;
+                    enemyMaxHp = enemyData.hp;
+                    document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
+                    document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
