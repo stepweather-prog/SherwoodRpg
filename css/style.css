@@ -144,15 +144,16 @@ canvas {
 }
 
 /* Арка */
+/* Арка от низа до верха */
 #arch {
-    top: 0;
-    left: 0;
-    transform: none;
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 100vh;  /* 100% от высоты экрана */
     object-fit: contain;
-    z-index: 3;
-    pointer-events: none;
+    z-index: 4;
 }
 
 /* =========================================
