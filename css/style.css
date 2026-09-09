@@ -171,7 +171,7 @@ canvas {
 #rightDivider {
     position: fixed;
     right: calc((100vw - 480px) / 2 - 20px);
-    top: 0;
+    bottom: -15%;
     height: 100vh;
     width: 50px;
     object-fit: fill;
@@ -181,7 +181,7 @@ canvas {
 
 /* Герой по центру */
 #hero {
-    bottom: -20%;
+    bottom: -15%;
     left: 50%;
     transform: translateX(-50%);
     width: 250px;
