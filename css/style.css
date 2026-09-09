@@ -147,7 +147,7 @@ canvas {
 #arch {
     top: 0;
     left: 0;
-    width: 100%;
+    width: 70%;
     height: 70%;
     object-fit: cover;
     z-index: 4;
@@ -300,7 +300,7 @@ canvas {
     position: absolute !important;
     top: 38.5% !important;
     transform: translateY(-50%) !important;
-    left: 40% !important;
+    left: 10% !important;
     width: 10% !important;
     max-width: 50px !important;
     height: auto !important;
@@ -315,7 +315,7 @@ canvas {
     position: absolute !important;
     top: 38.5% !important;
     transform: translateY(-50%) !important;
-    right: 40% !important;
+    right: 10% !important;
     width: 10% !important;
     max-width: 50px !important;
     height: auto !important;
