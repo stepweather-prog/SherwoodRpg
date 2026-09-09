@@ -144,15 +144,15 @@ canvas {
 }
 
 /* Арка */
-/* Арка от низа до верха */
+/* Арка, растянутая до краев */
 #arch {
     position: absolute;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    height: 100vh;  /* 100% от высоты экрана */
-    object-fit: contain;
+    width: 100vw;        /* Максимальная ширина экрана */
+    height: 100vh;       /* 100% высоты */
+    object-fit: fill;    /* Растягиваем и по ширине, и по высоте (максимально широко) */
     z-index: 4;
 }
 
