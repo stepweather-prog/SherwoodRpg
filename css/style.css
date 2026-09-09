@@ -145,7 +145,7 @@ canvas {
 
 #arch {
     position: absolute;
-    top: -5%;         
+    top: -15%;         
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
@@ -181,7 +181,7 @@ canvas {
 
 /* Герой по центру */
 #hero {
-    bottom: -10%;
+    bottom: -20%;
     left: 50%;
     transform: translateX(-50%);
     width: 250px;
@@ -265,7 +265,7 @@ canvas {
     top: 18.5% !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 22% !important;
+    width: 32% !important;
     max-width: 115px !important;
     height: auto !important;
     object-fit: contain !important;
