@@ -145,8 +145,8 @@ canvas {
 
 /* Арка */
 #arch {
-    top: -10;
-    left: 80;
+    top: 0;
+    left: 100;
     width: 80%;
     height: 100%;
     object-fit: cover;
