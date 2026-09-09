@@ -149,7 +149,7 @@ canvas {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
+    width: 120%;
     height: 100vh;
     object-fit: contain;
     z-index: 4;
