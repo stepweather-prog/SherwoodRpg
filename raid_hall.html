@@ -14,14 +14,14 @@
 
         /* ===== ПОЛОСКА HP ВРАГА ===== */
         #mob-hp {
-            position: absolute;
-            width: 260px;
-            height: 70px;
-            z-index: 50;
-            transform: translate(-50%, -50%);
-            display: none;
-            pointer-events: none;
-        }
+    position: absolute;
+    width: 520px;        /* было 260px — увеличили в 2 раза */
+    height: 140px;       /* было 70px — увеличили в 2 раза */
+    z-index: 50;
+    transform: translate(-50%, -50%);
+    display: none;
+    pointer-events: none;
+}
         #mob-hp .frame {
             position: absolute;
             top: 0;
@@ -29,18 +29,18 @@
             width: 100%;
             height: 100%;
             object-fit: fill;
-            z-index: 1;
-        }
-        #mob-hp .fill {
-            position: absolute;
-            top: 22%;
-            left: 10%;
-            width: 80%;
-            height: 56%;
-            object-fit: cover;
-            clip-path: inset(0 50% 0 0);
             z-index: 2;
         }
+        #mob-hp .fill {
+    position: absolute;
+    top: 26%;          /* было 22% — сдвинули ниже */
+    left: 16%;         /* было 10% — сдвинули правее */
+    width: 68%;        /* было 80% — ужали по ширине */
+    height: 48%;       /* было 56% — ужали по высоте */
+    object-fit: cover;
+    clip-path: inset(0 50% 0 0);
+    z-index: 1;
+}
         #mob-hp-text {
             position: absolute;
             top: 50%;
