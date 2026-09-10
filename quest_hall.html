@@ -12,11 +12,11 @@
         #quest-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffa500; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #quest-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
 
-        /* ===== ПОЛОСКА HP ВРАГА (рамка + заливка + текст) ===== */
+        /* ===== ПОЛОСКА HP ВРАГА ===== */
         #mob-hp {
             position: absolute;
-            width: 150px;
-            height: 40px;
+            width: 260px;
+            height: 70px;
             z-index: 50;
             transform: translate(-50%, -50%);
             display: none;
@@ -33,10 +33,10 @@
         }
         #mob-hp .fill {
             position: absolute;
-            top: 18%;
-            left: 8%;
-            width: 84%;
-            height: 64%;
+            top: 22%;
+            left: 10%;
+            width: 80%;
+            height: 56%;
             object-fit: cover;
             clip-path: inset(0 50% 0 0);
             z-index: 2;
@@ -47,7 +47,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: #fff;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             z-index: 3;
             text-shadow: 0 0 4px #000, 0 2px 4px #000;
@@ -203,10 +203,10 @@
             transparent: true
         }));
         enemySprite.position.copy(enemyPos);
-        enemySprite.scale.set(0.6, 0.6, 1);
+        enemySprite.scale.set(1.0, 1.0, 1);  // ← Увеличенный спрайт
         scene.add(enemySprite);
 
-        document.getElementById('mob-hp').style.display = 'block';
+        document.getElementById('mob-hp').style.display = 'none';  // ← Скрыта до боя
 
         // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
@@ -276,7 +276,8 @@
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
             if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
-            if (targetZ < enemyPos.z + 1) return;
+            // Ограничение: 1 клетка до врага
+            if (targetZ < enemyPos.z + 1.0) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
@@ -376,7 +377,7 @@
 
         function checkEnemy() {
             var dist = camera.position.distanceTo(enemyPos);
-            if (dist < 1.2 && !isBattleActive) {
+            if (dist < 2.0 && !isBattleActive) {
                 isBattleActive = true;
                 document.getElementById('mob-hp').style.display = 'block';
                 if (enemyData) {
