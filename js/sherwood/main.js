@@ -14,11 +14,10 @@ let currentScreen = 'loading';
 
 // ---------- ДАННЫЕ ИГРОКА ----------
 const PlayerStats = {
-    exp: 0,
-    damage: 100,
-    armor: 100,
-    hp: 100,
-    maxHp: 100,
+    exp: 100,
+    damage: 150,
+    armor: 150,
+    hp: 150,
     gold: 150,
     silver: 150,
     level: 1,
@@ -37,7 +36,13 @@ const PlayerStats = {
 
 // ---------- МУЗЫКА ----------
 const musicPlaylist = [
-    'assets/assets2/music/main_theme_6.ogg'
+        'assets/assets2/music/city_theme1.ogg',
+        'assets/assets2/music/main_theme_5.ogg',
+        'assets/assets2/music/main_theme_4.ogg',
+        'assets/assets2/music/main_theme_3.ogg',
+        'assets/assets2/music/main_theme_2.ogg',
+        'assets/assets2/music/main_theme.ogg',
+        'assets/assets2/music/main_theme_6.ogg'
 ];
 let currentMusicIndex = 0;
 let isMusicPlaying = false;
