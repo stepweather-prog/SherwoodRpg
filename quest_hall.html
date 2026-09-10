@@ -389,7 +389,7 @@
                 hitEffectImg.src = 'assets/assets2/animation/' + randomSprite;
 
                 var screenPos = enemyPos.clone();
-                screenPos.y += 0.3; // БЫЛО 0.7 — ТЕПЕРЬ 0.3
+                screenPos.y += 0.1; // БЫЛО 0.3 — ТЕПЕРЬ 0.1
                 screenPos.project(camera);
                 var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
                 var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
