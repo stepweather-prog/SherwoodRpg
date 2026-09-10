@@ -44,7 +44,6 @@
 
     <div id="mob-hp">
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
-        <!-- ВАЖНО: id="mob-hp-fill" -->
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000/1000</span>
     </div>
@@ -107,7 +106,7 @@
         const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
         const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
 
-        // ===== КОРИДОР 1x5 (из квадратных плит) =====
+        // ===== КОРИДОР 1x5 =====
         const corridorWidth = 1;
         const corridorLength = 5;
         const wallHeight = 1.1;
@@ -285,29 +284,41 @@
         function attackEnemy() {
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
+
+            // Урон по врагу
             var dmg = Math.max(1, Math.floor(playerStats.stats.attack * 0.5) - Math.floor(enemyData.def * 0.2) + Math.floor(Math.random() * 20));
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
-// ВРАГ БЬЁТ В ОТВЕТ
-var edmg = Math.max(1, Math.floor(enemyData.atk * 0.1) - Math.floor(playerStats.stats.defense * 0.3) + Math.floor(Math.random() * 10));
-playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
-if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) {
-    parent.UI.updateDisplay();
-}
 
-// Если игрок умер
-if (playerStats.stats.hp <= 0) {
-    isBattleActive = false;
-    document.getElementById('mob-hp').style.display = 'none';
-    scene.remove(enemySprite);
-    if (parent.Sherwood.Quests._onQuestDefeat) {
-        parent.Sherwood.Quests._onQuestDefeat();
-    } else {
-        parent.Sherwood.Quests._questFlee();
-    }
-    return;
-}
+            // Враг бьёт в ответ (мягкая формула)
+            var edmg = Math.max(1, Math.floor(enemyData.atk * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
+            playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
+            if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) {
+                parent.UI.updateDisplay();
+            }
+
+            // Обновляем сферу HP внутри iframe
+            var lifeFill = document.getElementById('life-fill');
+            if (lifeFill) {
+                var hpPercent = playerStats.stats.hp / playerStats.stats.maxHp;
+                lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            }
+
+            // Если игрок умер
+            if (playerStats.stats.hp <= 0) {
+                isBattleActive = false;
+                document.getElementById('mob-hp').style.display = 'none';
+                scene.remove(enemySprite);
+                if (parent.Sherwood.Quests._onQuestDefeat) {
+                    parent.Sherwood.Quests._onQuestDefeat();
+                } else {
+                    parent.Sherwood.Quests._questFlee();
+                }
+                return;
+            }
+
+            // Если враг убит
             if (enemyHp <= 0) {
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
@@ -317,22 +328,16 @@ if (playerStats.stats.hp <= 0) {
         }
 
         function updateMobHpBar() {
-    if (!isBattleActive) return;
-    
-    // Берём позицию ВРАГА и поднимаем её на 0.7 над ним (в мировых координатах)
-    var worldPos = enemyPos.clone();
-    worldPos.y += 0.7;   // <- высота над врагом
-    
-    // Проецируем эту точку на экран
-    worldPos.project(camera);
-    
-    // Переводим в экранные координаты
-    var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
-    var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-    
-    document.getElementById('mob-hp').style.left = x + 'px';
-    document.getElementById('mob-hp').style.top = y + 'px';
-}
+            if (!isBattleActive) return;
+            var worldPos = enemyPos.clone();
+            worldPos.y += 0.7;
+            worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            document.getElementById('mob-hp').style.left = x + 'px';
+            document.getElementById('mob-hp').style.top = y + 'px';
+        }
+
         function checkEnemy() {
             var dist = camera.position.distanceTo(enemyPos);
             if (dist < 1.2 && !isBattleActive) {
@@ -350,7 +355,6 @@ if (playerStats.stats.hp <= 0) {
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
-            
             if (isBattleActive) {
                 updateMobHpBar();
             }
