@@ -215,7 +215,7 @@ canvas {
     position: absolute;
     top: 35px;
     left: 0;
-    width: 100%;
+    width: 120%;
     height: 100px;
     background-image: url('../assets/assets2/game_details/main_panel_stat1.png');
     background-size: 100% 100%;
