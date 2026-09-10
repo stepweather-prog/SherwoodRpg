@@ -116,7 +116,7 @@ function updateTopBar() {
         const el = document.getElementById(id);
         if (el) el.innerText = values[i];
     });
-}
+
 const levelEl = document.getElementById('hero-level');
     if (levelEl) levelEl.textContent = PlayerStats.level;
 }
