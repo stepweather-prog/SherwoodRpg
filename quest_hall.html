@@ -289,7 +289,25 @@
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
+// ВРАГ БЬЁТ В ОТВЕТ
+var edmg = Math.max(1, Math.floor(enemyData.atk * 0.1) - Math.floor(playerStats.stats.defense * 0.3) + Math.floor(Math.random() * 10));
+playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
+if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) {
+    parent.UI.updateDisplay();
+}
 
+// Если игрок умер
+if (playerStats.stats.hp <= 0) {
+    isBattleActive = false;
+    document.getElementById('mob-hp').style.display = 'none';
+    scene.remove(enemySprite);
+    if (parent.Sherwood.Quests._onQuestDefeat) {
+        parent.Sherwood.Quests._onQuestDefeat();
+    } else {
+        parent.Sherwood.Quests._questFlee();
+    }
+    return;
+}
             if (enemyHp <= 0) {
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
