@@ -25,9 +25,9 @@ UI._bg = {
 };
 
 UI._statIcons = { 
-    attack: 'assets/assets2/interface/icon_power.png', 
-    defense: 'assets/assets2/interface/icon_defense.png', 
-    hp: 'assets/assets2/interface/icon_health.png' 
+    attack: 'assets/interface/icon_power.png', 
+    defense: 'assets/interface/icon_defense.png', 
+    hp: 'assets/interface/icon_health.png' 
 };
 
 UI._sounds = {};
@@ -423,11 +423,11 @@ UI._showVictoryScreen = function(rewards) {
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
     var rewardItems = [];
-    if (rewards.cupEarned) { rewardItems.push({ icon: 'assets/assets2/interface/resource_cup_for_completed_tasks.png', quantity: 1, label: 'Кубок' }); }
-    if (rewards.exp) { rewardItems.push({ icon: 'assets/assets2/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' }); }
-    if (rewards.gold) { rewardItems.push({ icon: 'assets/assets2/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' }); }
-    if (rewards.silver) { rewardItems.push({ icon: 'assets/assets2/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' }); }
-    if (rewards.scrolls) { rewardItems.push({ icon: 'assets/assets2/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' }); }
+    if (rewards.cupEarned) { rewardItems.push({ icon: 'assets/interface/resource_cup_for_completed_tasks.png', quantity: 1, label: 'Кубок' }); }
+    if (rewards.exp) { rewardItems.push({ icon: 'assets/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' }); }
+    if (rewards.gold) { rewardItems.push({ icon: 'assets/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' }); }
+    if (rewards.silver) { rewardItems.push({ icon: 'assets/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' }); }
+    if (rewards.scrolls) { rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' }); }
     if (rewards.items && rewards.items.length > 0) {
         var lootMap = {};
         for (var i = 0; i < rewards.items.length; i++) {
@@ -449,8 +449,8 @@ UI._showVictoryScreen = function(rewards) {
             var rw = rewardItems[ri];
             h += '<div style="text-align:center;">';
             h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;text-shadow:0 0 4px #000;">' + rw.quantity + '</div>';
-            h += '<div style="background:url(\'assets/assets2/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
-            h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/assets2/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
+            h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
             h += '</div>';
             h += '<div style="color:#ddd;font-size:0.6em;margin-top:2px;text-shadow:0 0 4px #000;">' + rw.label + '</div>';
             h += '</div>';
@@ -473,10 +473,10 @@ UI._showDefeatScreen = function(rewards) {
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
     var rewardItems = [];
-    if (rewards.exp) { rewardItems.push({ icon: 'assets/assets2/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' }); }
-    if (rewards.gold) { rewardItems.push({ icon: 'assets/assets2/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' }); }
-    if (rewards.silver) { rewardItems.push({ icon: 'assets/assets2/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' }); }
-    if (rewards.scrolls) { rewardItems.push({ icon: 'assets/assets2/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' }); }
+    if (rewards.exp) { rewardItems.push({ icon: 'assets/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' }); }
+    if (rewards.gold) { rewardItems.push({ icon: 'assets/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' }); }
+    if (rewards.silver) { rewardItems.push({ icon: 'assets/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' }); }
+    if (rewards.scrolls) { rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' }); }
     if (rewards.items && rewards.items.length > 0) {
         var lootMap = {};
         for (var i = 0; i < rewards.items.length; i++) {
@@ -498,8 +498,8 @@ UI._showDefeatScreen = function(rewards) {
             var rw = rewardItems[ri];
             h += '<div style="text-align:center;">';
             h += '<div style="color:#fff;font-size:0.8em;font-weight:bold;margin-bottom:2px;text-shadow:0 0 4px #000;">' + rw.quantity + '</div>';
-            h += '<div style="background:url(\'assets/assets2/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
-            h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/assets2/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;width:70px;height:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;">';
+            h += '<img src="' + rw.icon + '" style="width:44px;height:44px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
             h += '</div>';
             h += '<div style="color:#ddd;font-size:0.6em;margin-top:2px;text-shadow:0 0 4px #000;">' + rw.label + '</div>';
             h += '</div>';
