@@ -12,10 +12,46 @@
         #quest-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffa500; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #quest-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
 
-        #mob-hp { position: absolute; width: 120px; height: 30px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
-        #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
-        #mob-hp .fill { position: absolute; top: 15%; left: 5%; width: 90%; height: 70%; object-fit: cover; clip-path: inset(0 50% 0 0); }
-        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 10px; font-weight: bold; }
+        /* ===== ПОЛОСКА HP ВРАГА (рамка + заливка + текст) ===== */
+        #mob-hp {
+            position: absolute;
+            width: 150px;
+            height: 40px;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            pointer-events: none;
+        }
+        #mob-hp .frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            z-index: 1;
+        }
+        #mob-hp .fill {
+            position: absolute;
+            top: 18%;
+            left: 8%;
+            width: 84%;
+            height: 64%;
+            object-fit: cover;
+            clip-path: inset(0 50% 0 0);
+            z-index: 2;
+        }
+        #mob-hp-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 3;
+            text-shadow: 0 0 4px #000, 0 2px 4px #000;
+        }
 
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -285,13 +321,13 @@
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
 
-            // Урон по врагу
-            var dmg = Math.max(1, Math.floor(playerStats.stats.attack * 0.5) - Math.floor(enemyData.def * 0.2) + Math.floor(Math.random() * 20));
+            // УРОН ПО ВРАГУ (усиленная формула)
+            var dmg = Math.max(50, Math.floor(playerStats.stats.attack * 1.5) - Math.floor(enemyData.def * 0.1) + Math.floor(Math.random() * 20));
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
 
-            // Враг бьёт в ответ (мягкая формула)
+            // ВРАГ БЬЁТ В ОТВЕТ (мягкая формула)
             var edmg = Math.max(1, Math.floor(enemyData.atk * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
             playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
             if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) {
