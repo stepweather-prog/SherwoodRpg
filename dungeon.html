@@ -20,11 +20,41 @@
         #btn-left { top: 62px; left: 0; }
         #btn-right { top: 62px; left: 124px; }
         #btn-back { top: 124px; left: 62px; }
+
+        /* ===== ПОЛОСКА HP ВРАГА ===== */
+        #mob-hp {
+            position: absolute;
+            width: 260px;
+            height: 70px;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            pointer-events: none;
+        }
+        #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 1; }
+        #mob-hp .fill { position: absolute; top: 22%; left: 10%; width: 80%; height: 56%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 2; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+
+        /* ===== СПРАЙТ УДАРА ===== */
+        #hit-effect {
+            position: absolute;
+            display: none;
+            pointer-events: none;
+            z-index: 60;
+            transform: translate(-50%, -50%);
+        }
+        #hit-effect-img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px #ff0000);
+        }
     </style>
 </head>
 <body>
     <div id="info">Проклятая чаща</div>
     <div id="crosshair">✚</div>
+
     <div id="hero-life" style="display:block;position:absolute;bottom:10px;left:10px;width:80px;height:80px;z-index:50;">
         <img src="assets/assets2/game_details/sphere_of_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 0 0 0);">
@@ -37,10 +67,14 @@
         <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:14px;font-weight:bold;">МАНА</span>
     </div>
 
-    <div id="mob-hp" style="display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:400px;height:50px;z-index:50;">
-        <img src="assets/assets2/game_details/life_of_mobs.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;">
-        <img id="mob-hp-fill" src="assets/assets2/game_details/mob_life_filling.png" style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;clip-path:inset(0 50% 0 0);">
-        <span id="mob-hp-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;font-weight:bold;">HP: 1000/1000</span>
+    <div id="mob-hp">
+        <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
+        <span id="mob-hp-text">HP: 1000/1000</span>
+    </div>
+
+    <div id="hit-effect">
+        <img id="hit-effect-img" src="" alt="">
     </div>
 
     <div id="counter">🏆 0</div>
@@ -214,7 +248,7 @@
             }
         }
 
-        // ===== СОЗДАНИЕ ОБЪЕКТОВ (СПРАЙТЫ НА ПОЛУ, МАЛЕНЬКИЕ) =====
+        // ===== СОЗДАНИЕ ОБЪЕКТОВ (УВЕЛИЧЕННЫЕ ВРАГИ) =====
         for (var i = 0; i < objects.length; i++) {
             var obj = objects[i];
             var x = obj.x - Math.floor(size/2);
@@ -224,7 +258,15 @@
                 new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true })
             );
             sprite.position.set(x, 0.1, z);
-            sprite.scale.set(0.25, 0.25, 1);
+            
+            // УВЕЛИЧЕННЫЕ ВРАГИ
+            if (obj.type === 'enemy') {
+                sprite.scale.set(0.8, 0.8, 1);
+                sprite.position.y = 0.35;
+            } else {
+                sprite.scale.set(0.25, 0.25, 1);
+            }
+            
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false };
             group.add(sprite);
             obj.mesh = sprite;
@@ -340,15 +382,25 @@
             animateStep(targetX, targetZ);
         }
 
-        function turnLeft() {
-            if (isMoving || isTurning) return;
-            animateTurn(yaw + rotationSpeed);
-        }
+        function turnLeft() { if (isMoving || isTurning) return; animateTurn(yaw + rotationSpeed); }
+        function turnRight() { if (isMoving || isTurning) return; animateTurn(yaw - rotationSpeed); }
 
-        function turnRight() {
-            if (isMoving || isTurning) return;
-            animateTurn(yaw - rotationSpeed);
-        }
+        // ===== БОЙ =====
+        var currentEnemySprite = null;
+        var currentEnemyStats = null;
+        var isBattleActive = false;
+        var pushTimer = null;
+        var battleTimer = null;
+
+        // Массив спрайтов ударов
+        var hitSprites = [
+            'strike_claws.png',
+            'strike_claws_1.png',
+            'strike_claws_2.png',
+            'strike_claws_4.png',
+            'strike_claws_5.png',
+            'strike_claws_6.png'
+        ];
 
         function checkObjects() {
             var playerPos = camera.position;
@@ -356,10 +408,9 @@
             objects.forEach(function(obj) {
                 if (!obj.collected) {
                     var dist = Math.sqrt(Math.pow(playerPos.x - obj.x, 2) + Math.pow(playerPos.z - obj.z, 2));
-                    if (dist < 0.3) {
+                    if (dist < 0.5) {
                         if (obj.type === 'enemy') {
-                            startBattle();
-                            document.getElementById('mob-hp').style.display = 'block';
+                            startBattle(obj);
                         }
                         if (obj.type === 'cauldron' || obj.type === 'altar' || obj.type === 'potion') {
                             parent.UI._showToast('🎁 ' + obj.type + ' собран!');
@@ -381,6 +432,125 @@
                 exitWall.material.needsUpdate = true;
                 exitWall.userData.locked = false;
             }
+        }
+
+        function startBattle(obj) {
+            isBattleActive = true;
+            currentEnemySprite = obj.mesh;
+            // HP врага (1000-2000)
+            currentEnemyStats = {
+                hp: 1000 + Math.floor(Math.random() * 1000),
+                maxHp: 0
+            };
+            currentEnemyStats.maxHp = currentEnemyStats.hp;
+
+            // Показываем полоску HP
+            document.getElementById('mob-hp').style.display = 'block';
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+
+            parent.UI._playSound('trap');
+
+            // Враг бьёт в ответ каждые 1.5 секунды
+            battleTimer = setInterval(function() {
+                if (!isBattleActive) return;
+                var p = parent.Sherwood.getPlayer();
+                if (!p) return;
+                var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
+                p.stats.hp = Math.max(0, p.stats.hp - edmg);
+                if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+
+                // Обновляем сферу HP игрока
+                var lifeFill = document.getElementById('life-fill');
+                if (lifeFill) {
+                    var hpPercent = p.stats.hp / p.stats.maxHp;
+                    lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+                }
+
+                if (p.stats.hp <= 0) {
+                    stopBattle();
+                    showDefeatScreen();
+                }
+            }, 1500);
+        }
+
+        function stopBattle() {
+            isBattleActive = false;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+            currentEnemySprite = null;
+            currentEnemyStats = null;
+        }
+
+        function attackEnemy() {
+            if (!isBattleActive || !currentEnemyStats) return;
+            var p = parent.Sherwood.getPlayer();
+            var dmg = Math.max(20, Math.floor(p.stats.attack * 0.8) - 5 + Math.floor(Math.random() * 20));
+            currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+
+            // ===== ЭФФЕКТЫ УДАРА =====
+            if (currentEnemySprite) {
+                // Красная подсветка
+                currentEnemySprite.material.color.set(0xff3333);
+                // Толчок
+                currentEnemySprite.position.y += 0.1;
+
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(function() {
+                    if (currentEnemySprite) {
+                        currentEnemySprite.material.color.set(0xffffff);
+                        currentEnemySprite.position.y -= 0.1;
+                    }
+                }, 150);
+            }
+
+            // Спрайт удара
+            var hitEffect = document.getElementById('hit-effect');
+            var hitEffectImg = document.getElementById('hit-effect-img');
+            if (hitEffect && hitEffectImg && currentEnemySprite) {
+                var randomSprite = hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                hitEffectImg.src = 'assets/assets2/animation/' + randomSprite;
+
+                var screenPos = currentEnemySprite.position.clone();
+                screenPos.y += 0.5;
+                screenPos.project(camera);
+                var sx = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                var sy = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                hitEffect.style.left = sx + 'px';
+                hitEffect.style.top = sy + 'px';
+                hitEffect.style.display = 'block';
+
+                setTimeout(function() {
+                    hitEffect.style.display = 'none';
+                }, 200);
+            }
+
+            if (currentEnemyStats.hp <= 0) {
+                stopBattle();
+                showVictoryScreen();
+            }
+        }
+
+        function updateMobHpBar() {
+            if (!isBattleActive || !currentEnemySprite) return;
+            var worldPos = currentEnemySprite.position.clone();
+            worldPos.y += 0.6;
+            worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            document.getElementById('mob-hp').style.left = x + 'px';
+            document.getElementById('mob-hp').style.top = y + 'px';
+        }
+
+        function showDefeatScreen() {
+            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_defeat.png\') center/100% 100% no-repeat;"></div>';
+            setTimeout(function() { parent.UI.loadHome(); }, 1500);
+        }
+
+        function showVictoryScreen() {
+            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_victory.png\') center/100% 100% no-repeat;"></div>';
+            setTimeout(function() { parent.UI.loadHome(); }, 1500);
         }
 
         document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
@@ -406,53 +576,11 @@
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
-        }
-        animate();
-
-        // ===== БОЕВАЯ ЛОГИКА =====
-        var heroStats = { hp: 100, maxHp: 100, attack: 10, defense: 5 };
-        var enemyStats = { hp: 1000, maxHp: 1000, attack: 50, defense: 10 };
-        var isBattleActive = false;
-        var battleTimer = null;
-
-        function startBattle() {
-            isBattleActive = true;
-            battleTimer = setInterval(function() {
-                var damage = Math.max(1, enemyStats.attack - heroStats.defense);
-                heroStats.hp = Math.max(0, heroStats.hp - Math.floor(damage / 10));
-                document.getElementById('life-fill').style.clipPath = 'inset(0 0 ' + (100 - (heroStats.hp / heroStats.maxHp * 100)) + '% 0)';
-                if (heroStats.hp <= 0) {
-                    stopBattle();
-                    showDefeatScreen();
-                }
-            }, 1000);
-        }
-
-        function stopBattle() {
-            isBattleActive = false;
-            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
-        }
-
-        function attackEnemy() {
-            if (!isBattleActive) return;
-            var damage = Math.max(1, heroStats.attack - enemyStats.defense);
-            enemyStats.hp = Math.max(0, enemyStats.hp - damage);
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyStats.hp + '/' + enemyStats.maxHp;
-            if (enemyStats.hp <= 0) {
-                stopBattle();
-                showVictoryScreen();
+            if (isBattleActive) {
+                updateMobHpBar();
             }
         }
-
-        function showDefeatScreen() {
-            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/interface/vertical_slab_defeat.png\') center/100% 100% no-repeat;"></div>';
-            setTimeout(function() { parent.UI.loadHome(); }, 1500);
-        }
-
-        function showVictoryScreen() {
-            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/interface/vertical_slab_victory.png\') center/100% 100% no-repeat;"></div>';
-            setTimeout(function() { parent.UI.loadHome(); }, 1500);
-        }
+        animate();
 
         // Клик по стене перед врагом
         var raycaster = new THREE.Raycaster();
