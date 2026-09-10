@@ -299,17 +299,22 @@
         }
 
         function updateMobHpBar() {
-            if (!isBattleActive) return;
-            var vector = enemyPos.clone();
-            vector.project(camera);
-            
-            var x = (vector.x * 0.5 + 0.5) * window.innerWidth;
-            var y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
-            
-            document.getElementById('mob-hp').style.left = x + 'px';
-            document.getElementById('mob-hp').style.top = (y - 50) + 'px';
-        }
-
+    if (!isBattleActive) return;
+    
+    // Берём позицию ВРАГА и поднимаем её на 0.7 над ним (в мировых координатах)
+    var worldPos = enemyPos.clone();
+    worldPos.y += 0.7;   // <- высота над врагом
+    
+    // Проецируем эту точку на экран
+    worldPos.project(camera);
+    
+    // Переводим в экранные координаты
+    var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+    var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+    
+    document.getElementById('mob-hp').style.left = x + 'px';
+    document.getElementById('mob-hp').style.top = y + 'px';
+}
         function checkEnemy() {
             var dist = camera.position.distanceTo(enemyPos);
             if (dist < 1.2 && !isBattleActive) {
