@@ -285,7 +285,7 @@
         function attackEnemy() {
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
-            var dmg = Math.max(1, playerStats.stats.attack - enemyData.def + Math.floor(Math.random() * 20));
+            var dmg = Math.max(1, Math.floor(playerStats.stats.attack * 0.5) - Math.floor(enemyData.def * 0.2) + Math.floor(Math.random() * 20));
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
