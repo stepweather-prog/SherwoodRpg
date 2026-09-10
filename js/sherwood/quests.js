@@ -454,11 +454,27 @@ Sherwood.Quests = {
 
     // Поражение в бою (вызывается из iframe)
     _onQuestDefeat: function() {
-        UI._showToast('💀 Вы погибли...');
-        this.flee();
-        UI._stopMusic();
-        this.showUI();
-    },
+    var ch = this._currentQuest;
+    if (!ch) { this.showUI(); return; }
+
+    UI._showDialog('💀 Поражение...', '#f44336');
+    UI._playSound('defeat');
+    UI._stopMusic();
+
+    // Небольшая награда за попытку
+    var defeatRewards = {
+        exp: Math.floor(ch.rewards.exp * 0.1),
+        silver: Math.floor(ch.rewards.silver * 0.2)
+    };
+
+    UI._pendingRewards = defeatRewards;
+    UI._afterRewardAction = function() {
+        UI._playMusic('main_theme');
+        Sherwood.Quests.flee();
+        Sherwood.Quests.showUI();
+    };
+    UI._showDefeatScreen(defeatRewards);
+},
 
     _questFlee: function() {
         this.flee();
