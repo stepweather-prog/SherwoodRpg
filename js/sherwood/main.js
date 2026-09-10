@@ -37,11 +37,8 @@ const PlayerStats = {
 // ---------- МУЗЫКА ----------
 const musicPlaylist = [
         'assets/assets2/music/city_theme1.ogg',
-        'assets/assets2/music/main_theme_5.ogg',
-        'assets/assets2/music/main_theme_4.ogg',
         'assets/assets2/music/main_theme_3.ogg',
         'assets/assets2/music/main_theme_2.ogg',
-        'assets/assets2/music/main_theme.ogg',
         'assets/assets2/music/main_theme_6.ogg'
 ];
 let currentMusicIndex = 0;
@@ -110,7 +107,7 @@ function updateTopBar() {
         PlayerStats.exp,
         PlayerStats.damage,
         PlayerStats.armor,
-        `${PlayerStats.hp}/${PlayerStats.maxHp}`,
+        PlayerStats.hp,
         PlayerStats.gold,
         PlayerStats.silver,
         PlayerStats.level
