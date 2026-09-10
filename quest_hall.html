@@ -31,20 +31,21 @@
             pointer-events: none;
         }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 1; }
-        #mob-hp .fill { position: absolute; top: 26%; left: 16%; width: 68%; height: 48%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 2; }
+        #mob-hp .fill { position: absolute; top: 35%; left: 16%; width: 68%; height: 30%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 2; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
 
-        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
+        /* ===== УВЕЛИЧЕННЫЕ СФЕРЫ ГЕРОЯ ===== */
+        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); }
-        #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; z-index: 50; }
+        #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); }
-        #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        /* ===== СПРАЙТ УДАРА ПОВЕРХ ВРАГА ===== */
+        /* ===== СПРАЙТ УДАРА ===== */
         #hit-effect {
             position: absolute;
             display: none;
@@ -56,7 +57,7 @@
             width: 220px;
             height: 220px;
             object-fit: contain;
-            filter: drop-shadow(0 0 20px #ff0000);
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6));
         }
 
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
@@ -80,7 +81,6 @@
         <span id="mob-hp-text">HP: 1000/1000</span>
     </div>
 
-    <!-- Спрайт удара (появляется поверх врага при атаке) -->
     <div id="hit-effect">
         <img id="hit-effect-img" src="" alt="">
     </div>
@@ -88,13 +88,13 @@
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
-        <span>HP</span>
+        <span id="hp-text">HP: 0</span>
     </div>
 
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
-        <span>МАНА</span>
+        <span id="mana-text">MP: 0</span>
     </div>
 
     <div id="joystick">
@@ -210,6 +210,34 @@
 
         document.getElementById('mob-hp').style.display = 'none';
 
+        // ===== ОБНОВЛЕНИЕ СФЕР ГЕРОЯ =====
+        function updateHeroSpheres() {
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            // HP
+            var hpPercent = p.stats.hp / p.stats.maxHp;
+            var lifeFill = document.getElementById('life-fill');
+            if (lifeFill) {
+                lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            }
+            var hpText = document.getElementById('hp-text');
+            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+
+            // MANA
+            var mana = p.stats.mana || 0;
+            var maxMana = p.stats.maxMana || 100;
+            var manaPercent = mana / maxMana;
+            var manaFill = document.getElementById('mana-fill');
+            if (manaFill) {
+                manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - manaPercent) * 100) + '% 0 0 0)';
+            }
+            var manaText = document.getElementById('mana-text');
+            if (manaText) manaText.textContent = 'MP: ' + Math.floor(mana);
+        }
+
+        setTimeout(updateHeroSpheres, 500);
+
         // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
         const rotationSpeed = Math.PI / 2;
@@ -319,7 +347,6 @@
         // ===== БОЙ =====
         document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
 
-        // Массив спрайтов ударов
         var hitSprites = [
             'strike_claws.png',
             'strike_claws_1.png',
@@ -333,17 +360,15 @@
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
 
-            // Урон по врагу
             var dmg = Math.max(50, Math.floor(playerStats.stats.attack * 1.5) - Math.floor(enemyData.def * 0.1) + Math.floor(Math.random() * 20));
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
 
-            // ===== ЭФФЕКТЫ ПОПАДАНИЯ =====
-
-            // 1. Толчок + красная подсветка
+            // ЭФФЕКТЫ ПОПАДАНИЯ (мягкое свечение)
             if (enemySprite) {
-                enemySprite.material.color.set(0xff3333);
+                enemySprite.material.color.set(0xffaaaa);
+                enemySprite.material.opacity = 0.85;
                 enemySprite.position.z = enemyPos.z + 0.15;
 
                 clearTimeout(pushTimer);
@@ -351,11 +376,12 @@
                     if (enemySprite) {
                         enemySprite.position.z = enemyPos.z;
                         enemySprite.material.color.set(0xffffff);
+                        enemySprite.material.opacity = 1.0;
                     }
                 }, 150);
             }
 
-            // 2. Спрайт удара над врагом
+            // СПРАЙТ УДАРА (НИЖЕ)
             var hitEffect = document.getElementById('hit-effect');
             var hitEffectImg = document.getElementById('hit-effect-img');
             if (hitEffect && hitEffectImg) {
@@ -363,7 +389,7 @@
                 hitEffectImg.src = 'assets/assets2/animation/' + randomSprite;
 
                 var screenPos = enemyPos.clone();
-                screenPos.y += 0.7;
+                screenPos.y += 0.3; // БЫЛО 0.7 — ТЕПЕРЬ 0.3
                 screenPos.project(camera);
                 var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
                 var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
@@ -376,21 +402,16 @@
                 }, 200);
             }
 
-            // ===== ВРАГ БЬЁТ В ОТВЕТ =====
+            // ВРАГ БЬЁТ В ОТВЕТ
             var edmg = Math.max(1, Math.floor(enemyData.atk * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
             playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
             if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) {
                 parent.UI.updateDisplay();
             }
 
-            // Обновляем сферу HP игрока
-            var lifeFill = document.getElementById('life-fill');
-            if (lifeFill) {
-                var hpPercent = playerStats.stats.hp / playerStats.stats.maxHp;
-                lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
-            }
+            // ОБНОВЛЯЕМ СФЕРЫ ГЕРОЯ
+            updateHeroSpheres();
 
-            // Если игрок умер
             if (playerStats.stats.hp <= 0) {
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
@@ -403,7 +424,6 @@
                 return;
             }
 
-            // Если враг убит
             if (enemyHp <= 0) {
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
