@@ -345,90 +345,56 @@ canvas {
     background: #000;
 }
 
-/* =========================================
-   АДАПТИВНОСТЬ ПОД МОБИЛЬНЫЕ УСТРОЙСТВА
-   ========================================= */
-@media (max-width: 768px) {
-    #leftStatue, #rightStatue {
-        display: none !important;
-    }
-    
-    #leftDivider, #rightDivider {
-        display: none !important;
-    }
-    
-    #gameZone {
-        width: 100vw;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-    }
-    
-    #loadingScreen {
-        width: 100%;
-        height: 100%;
-        left: 0;
-    }
-    
-    #arch {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    
-    #substrate {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    #hero {
-        width: 40%;
-        bottom: 8%;
-    }
-    
+/* ============================================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ (для узких экранов)
+   ============================================================ */
+@media (max-width: 600px) {
+
+    /* Верхняя панель — уменьшаем размеры иконок и цифр */
     #topBar {
-        max-width: 350px;
-        height: 75px;
-        top: 0.5%;
+        transform: scale(0.85);
+        transform-origin: top center;
     }
-    
+
     .top-icon {
-        width: 44px;
-        height: 44px;
+        width: 42px !important;
+        height: 42px !important;
     }
-    
-    .main-stone-panel {
-        height: 75px;
-        top: 10px;
-    }
-    
+
     .stat-value {
-        font-size: 10px;
-        top: 45px;
+        font-size: 12px !important;
+        top: 52px !important;
     }
-    
-    #homeScreen #sectionIcon {
-        top: 16.5% !important;
-        width: 20% !important;
+
+    #hero-level {
+        font-size: 13px !important;
+        top: 50px !important;
     }
-    
-    #homeScreen #sectionName {
-        top: 33% !important;
-        width: 45% !important;
+
+    /* Герой — делаем чуть меньше, чтобы влезал в арку */
+    #hero {
+        width: 130px !important;
+        height: 220px !important;
+        bottom: 20% !important;
     }
-    
-    #homeScreen #carouselLeftArrow {
-        top: 35.5% !important;
-        left: 17% !important;
-        width: 12% !important;
+
+    /* Название раздела — чуть ниже, компактнее */
+    #sectionName {
+        font-size: 18px !important;
     }
-    
-    #homeScreen #carouselRightArrow {
-        top: 35.5% !important;
-        right: 17% !important;
-        width: 12% !important;
+
+    /* Арка — чуть уже, чтобы не вылезала за экран */
+    #arch {
+        width: 90% !important;
+        height: 90vh !important;
+        bottom: 0 !important;
+    }
+
+    /* Стрелки карусели — компактнее */
+    #carouselLeftArrow,
+    #carouselRightArrow {
+        width: 40px !important;
+        height: 40px !important;
     }
 }
 
