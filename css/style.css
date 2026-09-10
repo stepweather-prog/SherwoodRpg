@@ -238,7 +238,7 @@ canvas {
 
 .stat-value {
     position: absolute;
-    top: 60px;
+    top: 75px;
     transform: translateX(-50%);
     color: #fff;
     font-family: 'Times New Roman', serif;
