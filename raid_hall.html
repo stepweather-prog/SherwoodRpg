@@ -6,7 +6,15 @@
     <title>Рейдовый коридор</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #000; touch-action: none; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
         canvas { display: block; }
 
         #raid-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ff6b35; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
@@ -14,44 +22,17 @@
 
         /* ===== ПОЛОСКА HP ВРАГА ===== */
         #mob-hp {
-    position: absolute;
-    width: 520px;        /* было 260px — увеличили в 2 раза */
-    height: 140px;       /* было 70px — увеличили в 2 раза */
-    z-index: 50;
-    transform: translate(-50%, -50%);
-    display: none;
-    pointer-events: none;
-}
-        #mob-hp .frame {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: fill;
-            z-index: 2;
-        }
-        #mob-hp .fill {
-    position: absolute;
-    top: 26%;          /* было 22% — сдвинули ниже */
-    left: 16%;         /* было 10% — сдвинули правее */
-    width: 68%;        /* было 80% — ужали по ширине */
-    height: 48%;       /* было 56% — ужали по высоте */
-    object-fit: cover;
-    clip-path: inset(0 50% 0 0);
-    z-index: 1;
-}
-        #mob-hp-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            width: 520px;
+            height: 140px;
+            z-index: 50;
             transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 3;
-            text-shadow: 0 0 4px #000, 0 2px 4px #000;
+            display: none;
+            pointer-events: none;
         }
+        #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 1; }
+        #mob-hp .fill { position: absolute; top: 26%; left: 16%; width: 68%; height: 48%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 2; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
 
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 70px; height: 70px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -62,6 +43,21 @@
         #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+
+        /* ===== СПРАЙТ УДАРА ===== */
+        #hit-effect {
+            position: absolute;
+            display: none;
+            pointer-events: none;
+            z-index: 60;
+            transform: translate(-50%, -50%);
+        }
+        #hit-effect-img {
+            width: 220px;
+            height: 220px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px #ff0000);
+        }
 
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
@@ -82,6 +78,10 @@
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000/1000</span>
+    </div>
+
+    <div id="hit-effect">
+        <img id="hit-effect-img" src="" alt="">
     </div>
 
     <div id="hero-life">
@@ -177,15 +177,15 @@
         frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
         scene.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА (ДИНАМИЧЕСКИЙ) =====
+        // ===== СПРАЙТ ВРАГА =====
         var enemySprite = null;
         var enemyData = parent.Sherwood.Raid.getCurrentEnemy();
         var bossData = parent.Sherwood.Raid._raidBoss;
         var isBattleActive = false;
         var enemyHp = 1000;
         var enemyMaxHp = 1000;
+        var pushTimer = null;
 
-        // ВРАГ ПОДНЯТ ВЫШЕ (было 0.35)
         var enemyPos = new THREE.Vector3(0, 0.65, -1.5);
 
         if (bossData) {
@@ -214,7 +214,7 @@
 
         updateEnemy();
 
-        document.getElementById('mob-hp').style.display = 'none'; // Скрываем до боя
+        document.getElementById('mob-hp').style.display = 'none';
 
         // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
@@ -284,7 +284,6 @@
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
             if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
-            // ОГРАНИЧЕНИЕ ПОДХОДА: 2 клетки до врага
             if (targetZ < enemyPos.z + 2.0) return;
             isMoving = true;
             animateStep(targetX, targetZ);
@@ -326,14 +325,62 @@
         // ===== БОЙ =====
         document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
 
+        // Массив спрайтов ударов
+        var hitSprites = [
+            'strike_claws.png',
+            'strike_claws_1.png',
+            'strike_claws_2.png',
+            'strike_claws_4.png',
+            'strike_claws_5.png',
+            'strike_claws_6.png'
+        ];
+
         function attackEnemy() {
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
-            // УРОН ПО ВРАГУ (усиленная формула)
+
+            // УРОН ПО ВРАГУ
             var dmg = Math.max(50, Math.floor(playerStats.stats.attack * 1.5) - Math.floor(enemyData.defense * 0.1) + Math.floor(Math.random() * 20));
             enemyData.hp = Math.max(0, enemyData.hp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyData.hp + '/' + enemyData.maxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyData.hp / enemyData.maxHp * 100)) + '% 0 0)';
+
+            // ===== ЭФФЕКТЫ ПОПАДАНИЯ =====
+
+            // 1. Толчок + красная подсветка
+            if (enemySprite) {
+                enemySprite.material.color.set(0xff3333);
+                enemySprite.position.z = enemyPos.z + 0.15;
+
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(function() {
+                    if (enemySprite) {
+                        enemySprite.position.z = enemyPos.z;
+                        enemySprite.material.color.set(0xffffff);
+                    }
+                }, 150);
+            }
+
+            // 2. Спрайт удара над врагом
+            var hitEffect = document.getElementById('hit-effect');
+            var hitEffectImg = document.getElementById('hit-effect-img');
+            if (hitEffect && hitEffectImg) {
+                var randomSprite = hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                hitEffectImg.src = 'assets/assets2/animation/' + randomSprite;
+
+                var screenPos = enemyPos.clone();
+                screenPos.y += 0.7;
+                screenPos.project(camera);
+                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                hitEffect.style.left = x + 'px';
+                hitEffect.style.top = y + 'px';
+                hitEffect.style.display = 'block';
+
+                setTimeout(function() {
+                    hitEffect.style.display = 'none';
+                }, 200);
+            }
 
             // ВРАГ БЬЁТ В ОТВЕТ (мягкая формула)
             var edmg = Math.max(1, Math.floor(enemyData.attack * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
@@ -369,13 +416,12 @@
 
         function checkEnemy() {
             var dist = camera.position.distanceTo(enemyPos);
-            // ХП ВРАГА ПОЯВЛЯЕТСЯ НА 3 КЛЕТКАХ
             if (dist < 3.0 && !isBattleActive) {
                 isBattleActive = true;
                 document.getElementById('mob-hp').style.display = 'block';
                 if (enemyData) {
                     enemyHp = enemyData.hp;
-                    enemyMaxHp = enemyData.hp;
+                    enemyMaxHp = enemyData.maxHp;
                     document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
                     document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
                 }
