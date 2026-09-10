@@ -452,6 +452,14 @@ Sherwood.Quests = {
         UI._showVictoryScreen(stageReward);
     },
 
+    // Поражение в бою (вызывается из iframe)
+    _onQuestDefeat: function() {
+        UI._showToast('💀 Вы погибли...');
+        this.flee();
+        UI._stopMusic();
+        this.showUI();
+    },
+
     _questFlee: function() {
         this.flee();
         UI._stopMusic();
