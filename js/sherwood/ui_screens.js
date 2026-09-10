@@ -419,7 +419,7 @@ UI._showToast = function(msg) {
 };
 
 UI._showVictoryScreen = function(rewards) {
-    var h = var h = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_victory.png\') center/100% 100% no-repeat;z-index:100;">';
+    var h = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_victory.png\') center/100% 100% no-repeat;z-index:100;">';
     h += '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:80%;">';
     
     var rewardItems = [];
