@@ -36,7 +36,7 @@
     top: 45%;        /* было 35% — опускаем ниже верхнего края рамки */
     left: 10%;       /* было 16% — сдвигаем правее */
     width: 80%;      /* было 68% — ужимаем по ширине */
-    height: 17%;     /* было 15% — ужимаем по высоте */
+    height: 25%;     /* было 15% — ужимаем по высоте */
     object-fit: cover;
     clip-path: inset(0 50% 0 0);
     z-index: 1;
@@ -81,7 +81,7 @@
         #btn-left { top: 55px; left: 0; }
         #btn-right { top: 55px; left: 110px; }
         #btn-back { top: 110px; left: 55px; }
-        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; z-index: 40; cursor: pointer; pointer-events: auto; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; pointer-events: auto; }
     </style>
 </head>
 <body>
@@ -120,7 +120,7 @@
         <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
     </div>
 
-    <button onclick="parent.Sherwood.Quests._questFlee()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
+    <button onclick="dungeonMusic.pause(); parent.Sherwood.Quests._questFlee()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
 
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
@@ -128,7 +128,33 @@
 
     <script type="module">
         import * as THREE from 'three';
+// ===== ЗВУКИ =====
+var soundHit = new Audio('assets/assets2/tune/hit.wav');
+var soundVictory = new Audio('assets/assets2/tune/victory.wav');
+var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
+var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
+dungeonMusic.loop = true;
+dungeonMusic.volume = 0.4;
 
+// Запускаем эмбиэнт
+setTimeout(function() {
+    dungeonMusic.play().catch(function() {});
+}, 500);
+
+function playSound(audio) {
+    try {
+        audio.currentTime = 0;
+        audio.play().catch(function() {});
+    } catch(e) {}
+}
+        // Экспорт в window (для onclick в HTML)
+window.soundHit = soundHit;
+window.soundVictory = soundVictory;
+window.soundDefeat = soundDefeat;
+window.soundSteps = soundSteps;
+window.dungeonMusic = dungeonMusic;
+window.playSound = playSound;
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0e0a06);
         scene.fog = new THREE.Fog(0x0e0a06, 4, 10);
@@ -270,6 +296,7 @@
             const startY = camera.position.y;
             const duration = 800;
             const startTime = performance.now();
+            playSound(soundSteps);
             function stepLoop() {
                 const elapsed = performance.now() - startTime;
                 const t = Math.min(elapsed / duration, 1);
@@ -374,7 +401,7 @@
         function attackEnemy() {
             if (!isBattleActive) return;
             var playerStats = parent.Sherwood.getPlayer();
-
+            playSound(soundHit);  // ← звук удара
             var dmg = Math.max(50, Math.floor(playerStats.stats.attack * 1.5) - Math.floor(enemyData.def * 0.1) + Math.floor(Math.random() * 20));
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
@@ -428,24 +455,30 @@
             updateHeroSpheres();
 
             if (playerStats.stats.hp <= 0) {
-                isBattleActive = false;
-                document.getElementById('mob-hp').style.display = 'none';
-                scene.remove(enemySprite);
-                if (parent.Sherwood.Quests._onQuestDefeat) {
-                    parent.Sherwood.Quests._onQuestDefeat();
-                } else {
-                    parent.Sherwood.Quests._questFlee();
-                }
-                return;
-            }
+    playSound(soundDefeat);      // ← звук поражения
+    dungeonMusic.pause();        // ← остановить эмбиэнт
+
+    isBattleActive = false;
+    document.getElementById('mob-hp').style.display = 'none';
+    scene.remove(enemySprite);
+    if (parent.Sherwood.Quests._onQuestDefeat) {
+        parent.Sherwood.Quests._onQuestDefeat();
+    } else {
+        parent.Sherwood.Quests._questFlee();
+    }
+    return;
+}
 
             if (enemyHp <= 0) {
-                isBattleActive = false;
-                document.getElementById('mob-hp').style.display = 'none';
-                scene.remove(enemySprite);
-                parent.Sherwood.Quests._onQuestWin();
-            }
-        }
+    playSound(soundVictory);     // ← звук победы
+    dungeonMusic.pause();        // ← остановить эмбиэнт
+
+    isBattleActive = false;
+    document.getElementById('mob-hp').style.display = 'none';
+    scene.remove(enemySprite);
+    parent.Sherwood.Quests._onQuestWin();
+}
+        
 
         function updateMobHpBar() {
             if (!isBattleActive) return;
