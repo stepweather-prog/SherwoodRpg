@@ -102,6 +102,21 @@ function loadGameData() {
 
 // ---------- ОБНОВЛЕНИЕ HUD ----------
 function updateTopBar() {
+    // СИНХРОНИЗАЦИЯ С SHERWOOD ПЕРЕД ОБНОВЛЕНИЕМ
+    if (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) {
+        var sp = Sherwood.getPlayer();
+        if (sp) {
+            PlayerStats.exp = sp.exp || 0;
+            PlayerStats.gold = (sp.resources && sp.resources.gold) || 0;
+            PlayerStats.silver = (sp.resources && sp.resources.silver) || 0;
+            PlayerStats.level = sp.level || 1;
+            PlayerStats.damage = (sp.stats && sp.stats.attack) || 0;
+            PlayerStats.armor = (sp.stats && sp.stats.defense) || 0;
+            PlayerStats.hp = (sp.stats && sp.stats.hp) || 0;
+            PlayerStats.maxHp = (sp.stats && sp.stats.maxHp) || 0;
+        }
+    }
+
     const ids = ['expVal', 'dmgVal', 'armorVal', 'hpVal', 'goldVal', 'silverVal', 'levelVal'];
     const values = [
         PlayerStats.exp,
@@ -117,7 +132,7 @@ function updateTopBar() {
         if (el) el.innerText = values[i];
     });
 
-const levelEl = document.getElementById('hero-level');
+    const levelEl = document.getElementById('hero-level');
     if (levelEl) levelEl.textContent = PlayerStats.level;
 }
 // ---------- КАРУСЕЛЬ ----------
