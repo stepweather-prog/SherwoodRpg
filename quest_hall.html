@@ -36,7 +36,7 @@
     top: 45%;        /* было 35% — опускаем ниже верхнего края рамки */
     left: 10%;       /* было 16% — сдвигаем правее */
     width: 80%;      /* было 68% — ужимаем по ширине */
-    height: 25%;     /* было 15% — ужимаем по высоте */
+    height: 5%;     /* было 25% — ужимаем по высоте */
     object-fit: cover;
     clip-path: inset(0 50% 0 0);
     z-index: 1;
@@ -290,7 +290,7 @@ window.playSound = playSound;
             camera.quaternion.setFromEuler(euler);
         }
 
-        function animateStep(targetX, targetZ) {
+                function animateStep(targetX, targetZ) {
             const startX = camera.position.x;
             const startZ = camera.position.z;
             const startY = camera.position.y;
@@ -311,12 +311,18 @@ window.playSound = playSound;
                     camera.position.z = targetZ;
                     camera.position.y = startY;
                     isMoving = false;
+
+                    // ОСТАНАВЛИВАЕМ ЗВУК ШАГА
+                    try {
+                        soundSteps.pause();
+                        soundSteps.currentTime = 0;
+                    } catch(e) {}
+
                     checkEnemy();
                 }
             }
             stepLoop();
         }
-
         function animateTurn(targetYaw) {
             const startYaw = yaw;
             const duration = 500;
@@ -468,16 +474,29 @@ window.playSound = playSound;
     }
     return;
 }
+if (enemyHp <= 0) {
+    // ГЛУШИМ ЭМБИЭНТ СНАЧАЛА
+    try {
+        dungeonMusic.pause();
+        dungeonMusic.currentTime = 0;
+    } catch(e) {}
 
-                      if (enemyHp <= 0) {
-                playSound(soundVictory);
-                dungeonMusic.pause();
+    // ЗАТЕМ ИГРАЕМ ЗВУК ПОБЕДЫ
+    try {
+        soundVictory.pause();
+        soundVictory.currentTime = 0;
+        soundVictory.volume = 1.0;
+        soundVictory.play().catch(function(e) { console.log('Victory sound error:', e); });
+    } catch(e) { console.log('Victory sound exception:', e); }
 
-                isBattleActive = false;
-                document.getElementById('mob-hp').style.display = 'none';
-                scene.remove(enemySprite);
-                parent.Sherwood.Quests._onQuestWin();
-            }
+    isBattleActive = false;
+    document.getElementById('mob-hp').style.display = 'none';
+    scene.remove(enemySprite);
+
+    setTimeout(function() {
+        parent.Sherwood.Quests._onQuestWin();
+    }, 500);
+}
         }   
         function updateMobHpBar() {
             if (!isBattleActive) return;
