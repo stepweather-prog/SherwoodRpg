@@ -469,17 +469,16 @@ window.playSound = playSound;
     return;
 }
 
-            if (enemyHp <= 0) {
-    playSound(soundVictory);     // ← звук победы
-    dungeonMusic.pause();        // ← остановить эмбиэнт
+                      if (enemyHp <= 0) {
+                playSound(soundVictory);
+                dungeonMusic.pause();
 
-    isBattleActive = false;
-    document.getElementById('mob-hp').style.display = 'none';
-    scene.remove(enemySprite);
-    parent.Sherwood.Quests._onQuestWin();
-}
-        
-
+                isBattleActive = false;
+                document.getElementById('mob-hp').style.display = 'none';
+                scene.remove(enemySprite);
+                parent.Sherwood.Quests._onQuestWin();
+            }
+        }   
         function updateMobHpBar() {
             if (!isBattleActive) return;
             var worldPos = enemyPos.clone();
