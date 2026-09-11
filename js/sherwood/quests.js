@@ -237,19 +237,26 @@ Sherwood.Quests = {
     getCooldownRemaining: function() { return 0; },
 
     startChapter: function(id) {
-        var ch = this.getChapter(id);
-        if (!ch) return { success: false, reason: 'Глава не найдена' };
-        var p = Sherwood.getPlayer();
-        if (p.questProgress.completed.indexOf(id) !== -1) {
-            return { success: false, reason: 'Глава уже пройдена' };
-        }
-        this._currentQuest = ch;
-        this._currentStage = 0;
-        this._inBattle = true;
-        this._currentEnemy = JSON.parse(JSON.stringify(ch.enemies[0]));
-        this._battleLog = [];
-        return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
-    },
+    var ch = this.getChapter(id);
+    if (!ch) return { success: false, reason: 'Глава не найдена' };
+    var p = Sherwood.getPlayer();
+    if (p.questProgress.completed.indexOf(id) !== -1) {
+        return { success: false, reason: 'Глава уже пройдена' };
+    }
+    
+    // ВОССТАНАВЛИВАЕМ HP ПЕРЕД НОВЫМ БОЕМ
+    if (p.stats.hp <= 0 || p.stats.hp < p.stats.maxHp) {
+        p.stats.hp = p.stats.maxHp;
+        Sherwood.saveGame();
+    }
+    
+    this._currentQuest = ch;
+    this._currentStage = 0;
+    this._inBattle = true;
+    this._currentEnemy = JSON.parse(JSON.stringify(ch.enemies[0]));
+    this._battleLog = [];
+    return { success: true, chapter: ch, enemy: this._currentEnemy, stage: 1, total: ch.stages };
+},
 
     attack: function() {
         if (!this._inBattle || !this._currentEnemy) return { error: 'Нет активного боя' };
