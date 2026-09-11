@@ -458,6 +458,15 @@ Sherwood.Quests = {
                 UI._playMusic('main_theme');
                 Sherwood.Quests.showUI(); // Возвращаемся в раздел квест
             };
+            // ЗВУК ПОБЕДЫ (в родителе, чтобы не обрывался)
+try {
+    var vSound = new Audio('assets/assets2/tune/victory.wav');
+    vSound.volume = 1.0;
+    vSound.play().catch(function(e) { console.log('Victory sound error:', e); });
+} catch(e) { console.log('Victory sound exception:', e); }
+
+// ЭКРАН ПОБЕДЫ
+UI._showVictoryScreen(ch.rewards);
             UI._showVictoryScreen(ch.rewards);
             return;
         }
@@ -509,8 +518,14 @@ Sherwood.Quests = {
             UI._playMusic('main_theme');
             Sherwood.Quests.flee();
             Sherwood.Quests.showUI();
-        };
-        UI._showDefeatScreen(defeatRewards);
+        };// ЗВУК ПОРАЖЕНИЯ
+try {
+    var dSound = new Audio('assets/assets2/tune/defeat.wav');
+    dSound.volume = 1.0;
+    dSound.play().catch(function(e) { console.log('Defeat sound error:', e); });
+} catch(e) { console.log('Defeat sound exception:', e); }
+
+UI._showDefeatScreen(defeatRewards);
     },
 
     _questFlee: function() {
