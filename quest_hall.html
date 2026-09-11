@@ -240,7 +240,7 @@ window.playSound = playSound;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
         }
 
-        const enemyPos = new THREE.Vector3(0, 0.65, -1.5);
+               const enemyPos = new THREE.Vector3(0, 0.65, -1.5);
         enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: new THREE.TextureLoader().load('assets/all_beasts/' + (enemyData ? enemyData.image : 'plague_crow.png')),
             transparent: true
@@ -248,9 +248,31 @@ window.playSound = playSound;
         enemySprite.position.copy(enemyPos);
         enemySprite.scale.set(1.0, 1.0, 1);
         scene.add(enemySprite);
+       // ===== МАССИВ ПЯТЕН КРОВИ =====
+var bloodSprites = [
+    'assets/assets2/animation/blood_1.png',
+    'assets/assets2/animation/blood_2.png',
+    'assets/assets2/animation/blood_3.png',
+    'assets/assets2/animation/blood_4.png',
+    'assets/assets2/animation/blood_5.png'
+];
 
-        document.getElementById('mob-hp').style.display = 'none';
+var bloodTextures = bloodSprites.map(function(path) {
+    return new THREE.TextureLoader().load(path);
+});
 
+var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: bloodTextures[0],
+    transparent: true,
+    opacity: 0.85,
+    depthTest: false,
+    depthWrite: false
+}));
+hitFlashSprite.scale.set(0.8, 0.8, 1);
+hitFlashSprite.visible = false;
+scene.add(hitFlashSprite);
+
+document.getElementById('mob-hp').style.display = 'none';
         // ===== ОБНОВЛЕНИЕ СФЕР ГЕРОЯ =====
         function updateHeroSpheres() {
             var p = parent.Sherwood.getPlayer();
@@ -412,23 +434,31 @@ window.playSound = playSound;
             enemyHp = Math.max(0, enemyHp - dmg);
             document.getElementById('mob-hp-text').textContent = 'HP: ' + enemyHp + '/' + enemyMaxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (enemyHp / enemyMaxHp * 100)) + '% 0 0)';
+// ЭФФЕКТЫ ПОПАДАНИЯ
+if (enemySprite) {
+    // ТОЛЧОК НАЗАД
+    enemySprite.position.z = enemyPos.z - 0.15;
 
-            // ЭФФЕКТЫ ПОПАДАНИЯ (мягкое свечение)
-            if (enemySprite) {
-                enemySprite.material.color.set(0xffaaaa);
-                enemySprite.material.opacity = 0.85;
-                enemySprite.position.z = enemyPos.z + 0.15;
+    // СЛУЧАЙНОЕ ПЯТНО КРОВИ
+    var randomIdx = Math.floor(Math.random() * bloodTextures.length);
+    hitFlashSprite.material.map = bloodTextures[randomIdx];
+    hitFlashSprite.material.needsUpdate = true;
 
-                clearTimeout(pushTimer);
-                pushTimer = setTimeout(function() {
-                    if (enemySprite) {
-                        enemySprite.position.z = enemyPos.z;
-                        enemySprite.material.color.set(0xffffff);
-                        enemySprite.material.opacity = 1.0;
-                    }
-                }, 150);
-            }
+    // Позиция — центр врага
+    hitFlashSprite.position.copy(enemyPos);
+    hitFlashSprite.position.y += 0.1;
 
+    // Случайный поворот для разнообразия
+    hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
+
+    hitFlashSprite.visible = true;
+
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(function() {
+        if (enemySprite) enemySprite.position.z = enemyPos.z;
+        hitFlashSprite.visible = false;
+    }, 200);
+}
             // СПРАЙТ УДАРА (НИЖЕ)
             var hitEffect = document.getElementById('hit-effect');
             var hitEffectImg = document.getElementById('hit-effect-img');
