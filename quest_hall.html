@@ -459,26 +459,33 @@ if (enemySprite) {
         hitFlashSprite.visible = false;
     }, 200);
 }
-            // СПРАЙТ УДАРА (НИЖЕ)
-            var hitEffect = document.getElementById('hit-effect');
-            var hitEffectImg = document.getElementById('hit-effect-img');
-            if (hitEffect && hitEffectImg) {
-                var randomSprite = hitSprites[Math.floor(Math.random() * hitSprites.length)];
-                hitEffectImg.src = 'assets/assets2/animation/' + randomSprite;
+            // СПРАЙТ УДАРА (КОГТИ) — СЛЕВА И СПРАВА ОТ ВРАГА
+var hitEffect = document.getElementById('hit-effect');
+var hitEffectImg = document.getElementById('hit-effect-img');
+if (hitEffect && hitEffectImg) {
+    var randomSprite = hitSprites[Math.floor(Math.random() * hitSprites.length)];
+    hitEffectImg.src = 'assets/assets2/animation/' + randomSprite;
 
-                var screenPos = enemyPos.clone();
-                screenPos.y += 0.1; // БЫЛО 0.3 — ТЕПЕРЬ 0.1
-                screenPos.project(camera);
-                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                hitEffect.style.left = x + 'px';
-                hitEffect.style.top = y + 'px';
-                hitEffect.style.display = 'block';
+    // ПРОЕЦИРУЕМ ПОЗИЦИЮ ВРАГА В ЭКРАННЫЕ КООРДИНАТЫ
+    var screenPos = enemyPos.clone();
+    screenPos.y += 0.1;
+    screenPos.project(camera);
+    var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+    var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
 
-                setTimeout(function() {
-                    hitEffect.style.display = 'none';
-                }, 200);
-            }
+    // СЛУЧАЙНО: СЛЕВА ИЛИ СПРАВА
+    var side = Math.random() < 0.5 ? -1 : 1;
+    var offsetX = side * 120;   // смещение в пикселях от центра (120 = ~120px в сторону)
+    var offsetY = (Math.random() - 0.5) * 60;  // случайное смещение по вертикали (-30..30)
+
+    hitEffect.style.left = (x + offsetX) + 'px';
+    hitEffect.style.top  = (y + offsetY) + 'px';
+    hitEffect.style.display = 'block';
+
+    setTimeout(function() {
+        hitEffect.style.display = 'none';
+    }, 200);
+}
 
             // ВРАГ БЬЁТ В ОТВЕТ
             var edmg = Math.max(1, Math.floor(enemyData.atk * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
