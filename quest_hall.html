@@ -473,14 +473,25 @@ window.playSound = playSound;
     return;
 }
 if (enemyHp <= 0) {
-    playSound(soundVictory);      // ← ЗВУК ПОБЕДЫ ЗДЕСЬ (как поражение)
-    setTimeout(function() { dungeonMusic.pause(); }, 800);
+    // ИГРАЕМ ЗВУК ПОБЕДЫ В IFRAME — ОН ДОИГРАЕТ ДО КОНЦА
+    soundVictory.currentTime = 0;
+    soundVictory.volume = 1.0;
+    soundVictory.play();
+
     isBattleActive = false;
     document.getElementById('mob-hp').style.display = 'none';
     scene.remove(enemySprite);
+
+    // ЭМБИЭНТ ГЛУШИМ ТОЛЬКО ЧЕРЕЗ 2 СЕКУНДЫ, ЧТОБЫ НЕ МЕШАЛ
+    setTimeout(function() {
+        dungeonMusic.pause();
+        dungeonMusic.currentTime = 0;
+    }, 2000);
+
+    // ЭКРАН ПОБЕДЫ ЧЕРЕЗ 1.5 СЕКУНДЫ, ЧТОБЫ iframe НЕ УДАЛЯЛСЯ СРАЗУ
     setTimeout(function() {
         parent.Sherwood.Quests._onQuestWin();
-    }, 800);   // ← задержка 800мс, чтобы звук успел проиграть
+    }, 1500);
 }
         }   
         function updateMobHpBar() {
