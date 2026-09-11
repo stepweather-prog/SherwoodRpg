@@ -276,29 +276,34 @@ Sherwood.Quests = {
             p.questProgress.currentChapter = ch.id + 1;
             Sherwood.saveGame();
             Sherwood.addExp(ch.rewards.exp);
-            Sherwood.addResource('gold', ch.rewards.gold);
-            Sherwood.addResource('silver', ch.rewards.silver);
-            this._inBattle = false;
-            result.chapterComplete = true;
-            result.rewards = ch.rewards;
+Sherwood.addResource('gold', ch.rewards.gold);
+Sherwood.addResource('silver', ch.rewards.silver);
+this._inBattle = false;
 
-            // ===== СИНХРОНИЗАЦИЯ С ВЕРХНЕЙ ПАНЕЛЬЮ =====
-            if (typeof PlayerStats !== 'undefined') {
-                var sp = Sherwood.getPlayer();
-                if (sp) {
-                    PlayerStats.exp = sp.exp || 0;
-                    PlayerStats.gold = sp.resources.gold || 0;
-                    PlayerStats.silver = sp.resources.silver || 0;
-                    PlayerStats.level = sp.level || 1;
-                    PlayerStats.damage = sp.stats.attack || 0;
-                    PlayerStats.armor = sp.stats.defense || 0;
-                    PlayerStats.hp = sp.stats.hp || 0;
-                    PlayerStats.maxHp = sp.stats.maxHp || 0;
-                }
-                if (typeof updateTopBar === 'function') updateTopBar();
-            }
+// СИНХРОНИЗАЦИЯ С ВЕРХНЕЙ ПАНЕЛЬЮ
+if (typeof PlayerStats !== 'undefined') {
+    var sp = Sherwood.getPlayer();
+    if (sp) {
+        PlayerStats.exp = sp.exp || 0;
+        PlayerStats.gold = sp.resources.gold || 0;
+        PlayerStats.silver = sp.resources.silver || 0;
+        PlayerStats.level = sp.level || 1;
+        PlayerStats.damage = sp.stats.attack || 0;
+        PlayerStats.armor = sp.stats.defense || 0;
+        PlayerStats.hp = sp.stats.hp || 0;
+        PlayerStats.maxHp = sp.stats.maxHp || 0;
+    }
+    if (typeof updateTopBar === 'function') updateTopBar();
+    // Проверка на level up
+    if (sp.exp >= sp.expToLevel) {
+        if (typeof Sherwood.checkLevelUp === 'function') Sherwood.checkLevelUp();
+    }
+}
 
-            return result;
+result.chapterComplete = true;
+result.rewards = ch.rewards;
+
+return result;
         }
         if (this._currentStage === ch.stages - 1) {
             this._currentEnemy = JSON.parse(JSON.stringify(ch.boss));
