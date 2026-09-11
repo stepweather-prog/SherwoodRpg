@@ -417,8 +417,9 @@ Sherwood.Quests = {
     _showQuestBattle: function() {
     if (!this._inBattle || !this._currentEnemy) { this.showUI(); return; }
     
-    // ОСТАНАВЛИВАЕМ МУЗЫКУ ГЛАВНОЙ
-    UI._stopMusic();
+    // ОСТАНАВЛИВАЕМ МУЗЫКУ ГЛАВНОЙ (два способа)
+    if (typeof UI !== 'undefined' && UI._stopMusic) UI._stopMusic();
+    if (typeof stopMainMusic === 'function') stopMainMusic();
     
     var iframe = document.createElement('iframe');
     iframe.src = 'quest_hall.html';
