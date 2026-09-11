@@ -475,19 +475,11 @@ window.playSound = playSound;
     return;
 }
 if (enemyHp <= 0) {
-    // ГЛУШИМ ЭМБИЭНТ СНАЧАЛА
+    // ГЛУШИМ ЭМБИЭНТ
     try {
         dungeonMusic.pause();
         dungeonMusic.currentTime = 0;
     } catch(e) {}
-
-    // ЗАТЕМ ИГРАЕМ ЗВУК ПОБЕДЫ
-    try {
-        soundVictory.pause();
-        soundVictory.currentTime = 0;
-        soundVictory.volume = 1.0;
-        soundVictory.play().catch(function(e) { console.log('Victory sound error:', e); });
-    } catch(e) { console.log('Victory sound exception:', e); }
 
     isBattleActive = false;
     document.getElementById('mob-hp').style.display = 'none';
@@ -495,7 +487,7 @@ if (enemyHp <= 0) {
 
     setTimeout(function() {
         parent.Sherwood.Quests._onQuestWin();
-    }, 500);
+    }, 300);
 }
         }   
         function updateMobHpBar() {
