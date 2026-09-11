@@ -451,13 +451,7 @@ Sherwood.Quests = {
             Sherwood.addResource('silver', ch.rewards.silver);
             this._inBattle = false;
 
-            // ЗВУК ПОБЕДЫ (в родителе)
-            try {
-                var vSound = new Audio('assets/assets2/tune/victory.wav');
-                vSound.volume = 1.0;
-                vSound.play().catch(function(e) { console.log('Victory sound error:', e); });
-            } catch(e) { console.log('Victory sound exception:', e); }
-
+            
             // ЭКРАН ПОБЕДЫ (только ОДИН раз)
             UI._afterRewardAction = function() {
                 UI._playMusic('main_theme');
