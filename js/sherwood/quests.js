@@ -411,15 +411,15 @@ return result;
     },
 
     _startQuest: function(id) {
-        var r = this.startChapter(id);
-        if (!r.success) { UI._showToast(r.reason || 'Ошибка'); this.showUI(); return; }
-        this._showQuestBattle();
-    },
+    var r = this.startChapter(id);
+    if (!r.success) { UI._showToast(r.reason || 'Ошибка'); this.showUI(); return; }
+    this._showQuestBattle();
+},
 
-    // ============================================================
-    //  ПЕРЕХОД В 3D КОРИДОР (1 враг за бой)
-    // ============================================================
-    _showQuestBattle: function() {
+// ============================================================
+//  ПЕРЕХОД В 3D КОРИДОР (1 враг за бой)
+// ============================================================
+_showQuestBattle: function() {
     if (!this._inBattle || !this._currentEnemy) { this.showUI(); return; }
     
     // ОСТАНАВЛИВАЕМ МУЗЫКУ ГЛАВНОЙ (два способа)
@@ -437,96 +437,125 @@ return result;
     }
 },
 
-       // Возврат из коридора с победой (вызывается из iframe)
-    _onQuestWin: function() {
-        var ch = this._currentQuest;
-        if (!ch) { this.showUI(); return; }
-        
-        // Завершаем текущий этап
-        this._currentStage++;
-        
-        // 1. Если все 5 этапов пройдены -> завершаем главу
-        if (this._currentStage >= ch.stages) {
-            var p = Sherwood.getPlayer();
-            p.questProgress.completed.push(ch.id);
-            p.questProgress.currentChapter = ch.id + 1;
-            Sherwood.saveGame();
-            Sherwood.addExp(ch.rewards.exp);
-            Sherwood.addResource('gold', ch.rewards.gold);
-            Sherwood.addResource('silver', ch.rewards.silver);
-            this._inBattle = false;
-
-            
-            // ЭКРАН ПОБЕДЫ (только ОДИН раз)
-            UI._afterRewardAction = function() {
-                UI._playMusic('main_theme');
-                Sherwood.Quests.showUI();
-            };
-            UI._showVictoryScreen(ch.rewards);
-            return;
+// Возврат из коридора с победой (вызывается из iframe)
+_onQuestWin: function() {
+    var ch = this._currentQuest;
+    if (!ch) { this.showUI(); return; }
+    
+    // Завершаем текущий этап
+    this._currentStage++;
+    
+    // ===== НАЧИСЛЯЕМ НАГРАДУ ЗА КАЖДОГО УБИТОГО ВРАГА =====
+    // Опыт и золото — x2, серебро — без изменений
+    var stageReward = {
+        exp: Math.floor((ch.rewards.exp * 2) / ch.stages),
+        gold: Math.floor((ch.rewards.gold * 2) / ch.stages),
+        silver: Math.floor(ch.rewards.silver / ch.stages)
+    };
+    
+    Sherwood.addExp(stageReward.exp);
+    Sherwood.addResource('gold', stageReward.gold);
+    Sherwood.addResource('silver', stageReward.silver);
+    
+    // СИНХРОНИЗАЦИЯ С ВЕРХНЕЙ ПАНЕЛЬЮ
+    if (typeof PlayerStats !== 'undefined') {
+        var sp = Sherwood.getPlayer();
+        if (sp) {
+            PlayerStats.exp = sp.exp || 0;
+            PlayerStats.gold = (sp.resources && sp.resources.gold) || 0;
+            PlayerStats.silver = (sp.resources && sp.resources.silver) || 0;
+            PlayerStats.level = sp.level || 1;
+            PlayerStats.hp = (sp.stats && sp.stats.hp) || 0;
+            PlayerStats.maxHp = (sp.stats && sp.stats.maxHp) || 0;
         }
-        
-        // 2. Если этапы остались -> обновляем врага и показываем экран победы
-        if (this._currentStage === ch.stages - 1) {
-            this._currentEnemy = JSON.parse(JSON.stringify(ch.boss));
-        } else {
-            var nextEnemy = JSON.parse(JSON.stringify(ch.enemies[this._currentStage]));
-            var mult = 1 + (this._currentStage * 0.2);
-            nextEnemy.hp = Math.floor(nextEnemy.hp * mult);
-            nextEnemy.atk = Math.floor(nextEnemy.atk * mult);
-            nextEnemy.def = Math.floor(nextEnemy.def * mult);
-            this._currentEnemy = nextEnemy;
-        }
-        
-        // Экран победы за этап (без звука)
-        var stageReward = {
-            exp: ch.rewards.exp,
-            gold: ch.rewards.gold,
-            silver: ch.rewards.silver
-        };
+        if (typeof updateTopBar === 'function') updateTopBar();
+    }
+    
+    // 1. Если все 5 этапов пройдены -> завершаем главу
+    if (this._currentStage >= ch.stages) {
+        var p = Sherwood.getPlayer();
+        p.questProgress.completed.push(ch.id);
+        p.questProgress.currentChapter = ch.id + 1;
+        Sherwood.saveGame();
+        this._inBattle = false;
         
         UI._afterRewardAction = function() {
             UI._playMusic('main_theme');
             Sherwood.Quests.showUI();
         };
         UI._showVictoryScreen(stageReward);
-    },
-        
-        
-               // Поражение в бою (вызывается из iframe)
-    _onQuestDefeat: function() {
-        var ch = this._currentQuest;
-        if (!ch) { this.showUI(); return; }
-
-        UI._showToast('💀 Поражение...');
-        UI._playSound('defeat');
-        UI._stopMusic();
-
-        var defeatRewards = {
-            exp: Math.floor(ch.rewards.exp * 0.1),
-            silver: Math.floor(ch.rewards.silver * 0.2)
-        };
-
-        UI._pendingRewards = defeatRewards;
-        UI._afterRewardAction = function() {
-            UI._playMusic('main_theme');
-            Sherwood.Quests.flee();
-            Sherwood.Quests.showUI();
-        };// ЗВУК ПОРАЖЕНИЯ
-try {
-    var dSound = new Audio('assets/assets2/tune/defeat.wav');
-    dSound.volume = 1.0;
-    dSound.play().catch(function(e) { console.log('Defeat sound error:', e); });
-} catch(e) { console.log('Defeat sound exception:', e); }
-
-UI._showDefeatScreen(defeatRewards);
-    },
-
-    _questFlee: function() {
-        this.flee();
-        UI._stopMusic();
-        this.showUI();
+        return;
     }
+    
+    // 2. Если этапы остались -> обновляем врага
+    if (this._currentStage === ch.stages - 1) {
+        this._currentEnemy = JSON.parse(JSON.stringify(ch.boss));
+    } else {
+        var nextEnemy = JSON.parse(JSON.stringify(ch.enemies[this._currentStage]));
+        var mult = 1 + (this._currentStage * 0.2);
+        nextEnemy.hp = Math.floor(nextEnemy.hp * mult);
+        nextEnemy.atk = Math.floor(nextEnemy.atk * mult);
+        nextEnemy.def = Math.floor(nextEnemy.def * mult);
+        this._currentEnemy = nextEnemy;
+    }
+    
+    UI._afterRewardAction = function() {
+        UI._playMusic('main_theme');
+        Sherwood.Quests.showUI();
+    };
+    UI._showVictoryScreen(stageReward);
+},
+
+// Поражение в бою (вызывается из iframe)
+_onQuestDefeat: function() {
+    var ch = this._currentQuest;
+    if (!ch) { this.showUI(); return; }
+
+    UI._showToast('💀 Поражение...');
+
+    // ===== НАЧИСЛЯЕМ НАГРАДУ ЗА ПОРАЖЕНИЕ =====
+    // Опыт — x2 от 10%, серебро — 20% (без удвоения)
+    var defeatRewards = {
+        exp: Math.floor(ch.rewards.exp * 2 * 0.1),
+        silver: Math.floor(ch.rewards.silver * 0.2)
+    };
+
+    Sherwood.addExp(defeatRewards.exp);
+    Sherwood.addResource('silver', defeatRewards.silver);
+
+    // СИНХРОНИЗАЦИЯ С ВЕРХНЕЙ ПАНЕЛЬЮ
+    if (typeof PlayerStats !== 'undefined') {
+        var sp = Sherwood.getPlayer();
+        if (sp) {
+            PlayerStats.exp = sp.exp || 0;
+            PlayerStats.silver = (sp.resources && sp.resources.silver) || 0;
+            PlayerStats.level = sp.level || 1;
+        }
+        if (typeof updateTopBar === 'function') updateTopBar();
+    }
+
+    UI._pendingRewards = defeatRewards;
+    UI._afterRewardAction = function() {
+        UI._playMusic('main_theme');
+        Sherwood.Quests.flee();
+        Sherwood.Quests.showUI();
+    };
+
+    // ЗВУК ПОРАЖЕНИЯ
+    try {
+        var dSound = new Audio('assets/assets2/tune/defeat.wav');
+        dSound.volume = 1.0;
+        dSound.play().catch(function(e) { console.log('Defeat sound error:', e); });
+    } catch(e) { console.log('Defeat sound exception:', e); }
+
+    UI._showDefeatScreen(defeatRewards);
+},
+
+_questFlee: function() {
+    this.flee();
+    UI._stopMusic();
+    this.showUI();
+}
 };
 
 window.Sherwood = window.Sherwood || {};
