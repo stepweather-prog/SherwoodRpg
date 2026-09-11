@@ -415,19 +415,21 @@ Sherwood.Quests = {
     //  ПЕРЕХОД В 3D КОРИДОР (1 враг за бой)
     // ============================================================
     _showQuestBattle: function() {
-        if (!this._inBattle || !this._currentEnemy) { this.showUI(); return; }
-        
-        // Открываем iframe с 3D коридором
-        var iframe = document.createElement('iframe');
-        iframe.src = 'quest_hall.html';
-        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
-        
-        if (UI._screenLayer) {
-            UI._screenLayer.innerHTML = '';
-            UI._screenLayer.appendChild(iframe);
-            UI._screenLayer.style.display = 'block';
-        }
-    },
+    if (!this._inBattle || !this._currentEnemy) { this.showUI(); return; }
+    
+    // ОСТАНАВЛИВАЕМ МУЗЫКУ ГЛАВНОЙ
+    UI._stopMusic();
+    
+    var iframe = document.createElement('iframe');
+    iframe.src = 'quest_hall.html';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+    
+    if (UI._screenLayer) {
+        UI._screenLayer.innerHTML = '';
+        UI._screenLayer.appendChild(iframe);
+        UI._screenLayer.style.display = 'block';
+    }
+},
 
     // Возврат из коридора с победой (вызывается из iframe)
     _onQuestWin: function() {
