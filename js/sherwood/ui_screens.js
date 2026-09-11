@@ -424,7 +424,7 @@ UI._showVictoryScreen = function(rewards) {
     
     var rewardItems = [];
     if (rewards.cupEarned) { rewardItems.push({ icon: 'assets/interface/resource_cup_for_completed_tasks.png', quantity: 1, label: 'Кубок' }); }
-    if (rewards.exp) { rewardItems.push({ icon: 'assets/interface/icon_health.png', quantity: rewards.exp, label: 'Опыт' }); }
+    if (rewards.exp) { rewardItems.push({ icon: 'assets/assets2/icons/progress.png', quantity: rewards.exp, label: 'Опыт' }); }
     if (rewards.gold) { rewardItems.push({ icon: 'assets/interface/resource_gold.png', quantity: rewards.gold, label: 'Золото' }); }
     if (rewards.silver) { rewardItems.push({ icon: 'assets/interface/resource_silver.png', quantity: rewards.silver, label: 'Серебро' }); }
     if (rewards.scrolls) { rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', quantity: rewards.scrolls, label: 'Скрижали' }); }
