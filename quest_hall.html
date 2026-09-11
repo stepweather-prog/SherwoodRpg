@@ -473,13 +473,14 @@ window.playSound = playSound;
     return;
 }
 if (enemyHp <= 0) {
-    dungeonMusic.pause();
+    playSound(soundVictory);      // ← ЗВУК ПОБЕДЫ ЗДЕСЬ (как поражение)
+    setTimeout(function() { dungeonMusic.pause(); }, 800);
     isBattleActive = false;
     document.getElementById('mob-hp').style.display = 'none';
     scene.remove(enemySprite);
     setTimeout(function() {
         parent.Sherwood.Quests._onQuestWin();
-    }, 300);
+    }, 800);   // ← задержка 800мс, чтобы звук успел проиграть
 }
         }   
         function updateMobHpBar() {
