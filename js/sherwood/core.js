@@ -144,7 +144,7 @@ Sherwood._createNewPlayer = function() {
         level: 1, exp: 0, expToLevel: 500,
         experiencePoints: 0,
         talentPoints: 0,
-        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200 },
+        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200, mana: 100, maxMana: 100 },
         resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
         dungeon: { tickets: 100, maxTickets: 100, autoTickets: 25 },
@@ -238,13 +238,15 @@ Sherwood.addExp = function(amount) {
         
         // ⬇️ НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
         p.experiencePoints = (p.experiencePoints || 0) + 5;
-        p.talentPoints = (p.talentPoints || 0) + 3;
+p.talentPoints = (p.talentPoints || 0) + 5;
         
         p.expToLevel = Math.min(Math.floor(p.expToLevel * 1.3), 999999);
         this.dispatch({ type: 'PLAYER_LEVEL_UP', payload: { level: p.level } });
         this._recalcStats();
     }
     if (p.level >= 100) { p.exp = 0; p.expToLevel = 0; }
+    p.stats.maxMana = 100 + p.level * 5;
+if (!p.stats.mana || p.stats.mana > p.stats.maxMana) p.stats.mana = p.stats.maxMana;
     this.saveGame();
 };
 
