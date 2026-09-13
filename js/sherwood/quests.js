@@ -503,6 +503,12 @@ _onQuestWin: function() {
         UI._playMusic('main_theme');
         Sherwood.Quests.showUI();
     };
+    // ВОССТАНАВЛИВАЕМ HP ПОСЛЕ БОЯ
+var p2 = Sherwood.getPlayer();
+if (p2 && p2.stats) {
+    p2.stats.hp = p2.stats.maxHp;
+    Sherwood.saveGame();
+}
     UI._showVictoryScreen(stageReward);
 },
 
@@ -547,7 +553,12 @@ _onQuestDefeat: function() {
         dSound.volume = 1.0;
         dSound.play().catch(function(e) { console.log('Defeat sound error:', e); });
     } catch(e) { console.log('Defeat sound exception:', e); }
-
+// ВОССТАНАВЛИВАЕМ HP ПОСЛЕ ПОРАЖЕНИЯ
+var p2 = Sherwood.getPlayer();
+if (p2 && p2.stats) {
+    p2.stats.hp = p2.stats.maxHp;
+    Sherwood.saveGame();
+}
     UI._showDefeatScreen(defeatRewards);
 },
 
@@ -557,7 +568,9 @@ _questFlee: function() {
     this.showUI();
 }
 };
-
+var p = Sherwood.getPlayer();
+if (p && p.stats) p.stats.hp = p.stats.maxHp;
+Sherwood.saveGame();
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Quests = Sherwood.Quests;
 
