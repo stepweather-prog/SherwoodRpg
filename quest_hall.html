@@ -557,7 +557,50 @@ if (enemyHp <= 0) {
                 }
             }
         }
+// ===== ОТОБРАЖЕНИЕ АКТИВНЫХ СКИЛЛОВ =====
+        function renderLearnedTalents() {
+            var leftCol = document.getElementById('skills-left');
+            var rightCol = document.getElementById('skills-right');
+            if (!leftCol || !rightCol) return;
 
+            var p = parent.Sherwood.getPlayer();
+            if (!p || !p.talents) return;
+
+            var talentData = {
+                'simple_attack': { icon: 'assets/assets2/talents/simple_attack.png', side: 'left' },
+                'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left' },
+                'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left' },
+                'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left' },
+                'ricochet': { icon: 'assets/assets2/talents/Ricochet.png', side: 'left' },
+                'riot': { icon: 'assets/assets2/talents/Riot.png', side: 'left' },
+                'force_of_elements': { icon: 'assets/assets2/talents/force of the elements.png', side: 'left' },
+                'evil_eye': { icon: 'assets/assets2/talents/evil_eye.png', side: 'left' },
+                'healing': { icon: 'assets/assets2/talents/healing.png', side: 'right' },
+                'healer': { icon: 'assets/assets2/talents/Healer.png', side: 'right' },
+                'funnel': { icon: 'assets/assets2/talents/funnel.png', side: 'right' },
+                'inspiration': { icon: 'assets/assets2/talents/inspiration.png', side: 'right' },
+                'knot': { icon: 'assets/assets2/talents/knot.png', side: 'right' }
+            };
+
+            leftCol.innerHTML = '';
+            rightCol.innerHTML = '';
+
+            for (var id in p.talents) {
+                var lvl = p.talents[id];
+                if (lvl > 0 && talentData[id]) {
+                    var img = document.createElement('img');
+                    img.src = talentData[id].icon;
+                    img.style.cssText = 'width:44px; height:44px; object-fit:contain; filter:drop-shadow(0 0 6px #ffd700);';
+                    img.title = id + ' (Ур. ' + lvl + ')';
+                    if (talentData[id].side === 'left') {
+                        leftCol.appendChild(img);
+                    } else {
+                        rightCol.appendChild(img);
+                    }
+                }
+            }
+        }
+        setTimeout(renderLearnedTalents, 500);
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
