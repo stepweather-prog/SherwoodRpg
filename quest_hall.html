@@ -639,19 +639,49 @@ document.getElementById('mob-hp').style.display = 'none';
         setTimeout(renderLearnedTalents, 500);
 
         function useSkill(skillId) {
-            if (!isBattleActive) return;
+    if (!isBattleActive) return;
 
-            if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) {
-                return;
-            }
+    if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) {
+        return;
+    }
 
-            var p = parent.Sherwood.getPlayer();
-            if (!p || !p.talents) return;
-            var lvl = p.talents[skillId] || 0;
-            if (lvl <= 0) return;
+    var p = parent.Sherwood.getPlayer();
+    if (!p || !p.talents) return;
+    var lvl = p.talents[skillId] || 0;
+    if (lvl <= 0) return;
 
-            var dmg = 0;
-            var heal = 0;
+    // ===== СТОИМОСТЬ МАНЫ (базовая × уровень) =====
+    var manaCosts = {
+        'poisoning': 10,
+        'vampirism': 15,
+        'stunning': 20,
+        'ricochet': 25,
+        'riot': 15,
+        'force_of_elements': 10,
+        'evil_eye': 20,
+        'healing': 20,
+        'healer': 25,
+        'funnel': 15,
+        'inspiration': 30,
+        'knot': 20
+    };
+    var baseCost = manaCosts[skillId] || 10;
+    var manaCost = baseCost * lvl;   // × уровень
+
+    if (!p.stats.mana) p.stats.mana = 0;
+    if (p.stats.mana < manaCost) {
+        if (typeof parent.UI !== 'undefined' && parent.UI._showToast) {
+            parent.UI._showToast('Не хватает маны! Нужно ' + manaCost);
+        }
+        return;
+    }
+
+    // СПИСЫВАЕМ МАНУ
+    p.stats.mana -= manaCost;
+    updateHeroSpheres();
+
+    var dmg = 0;
+    var heal = 0;
 
             switch (skillId) {
                 case 'poisoning':
@@ -683,8 +713,8 @@ document.getElementById('mob-hp').style.display = 'none';
                     }
                     break;
 
-                case 'ricochet':
-                    activeEffects.push({ type: 'ricochet', endsAt: Date.now() + 3000, bonus: 0.3, crit: 0.5 });
+                                case 'ricochet':
+                    activeEffects.push({ type: 'ricochet', endsAt: Date.now() + 3000, bonus: 0.3 * lvl, crit: 0.5 });
                     break;
 
                 case 'riot':
