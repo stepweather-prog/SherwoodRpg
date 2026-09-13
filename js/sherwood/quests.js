@@ -471,7 +471,7 @@ _onQuestWin: function() {
         if (typeof updateTopBar === 'function') updateTopBar();
     }
     
-    // 1. Если все 5 этапов пройдены -> завершаем главу
+       // 1. Если все этапы пройдены -> завершаем главу
     if (this._currentStage >= ch.stages) {
         var p = Sherwood.getPlayer();
         p.questProgress.completed.push(ch.id);
@@ -487,30 +487,40 @@ _onQuestWin: function() {
         return;
     }
     
-    // 2. Если этапы остались -> обновляем врага
+    // 2. Определяем СЛЕДУЮЩЕГО врага
+    var nextEnemyTemplate = null;
+    
+    // Если остался 1 этап до конца -> босс
     if (this._currentStage === ch.stages - 1) {
-        this._currentEnemy = JSON.parse(JSON.stringify(ch.boss));
+        nextEnemyTemplate = ch.boss;
+    } else if (ch.enemies[this._currentStage]) {
+        // Если есть обычный враг на этом индексе
+        nextEnemyTemplate = ch.enemies[this._currentStage];
     } else {
-        var nextEnemy = JSON.parse(JSON.stringify(ch.enemies[this._currentStage]));
-        var mult = 1 + (this._currentStage * 0.2);
-        nextEnemy.hp = Math.floor(nextEnemy.hp * mult);
-        nextEnemy.atk = Math.floor(nextEnemy.atk * mult);
-        nextEnemy.def = Math.floor(nextEnemy.def * mult);
-        this._currentEnemy = nextEnemy;
+        // Врагов больше нет -> босс
+        nextEnemyTemplate = ch.boss;
+    }
+    
+    var nextEnemy = JSON.parse(JSON.stringify(nextEnemyTemplate));
+    var mult = 1 + (this._currentStage * 0.2);
+    nextEnemy.hp = Math.floor(nextEnemy.hp * mult);
+    nextEnemy.atk = Math.floor(nextEnemy.atk * mult);
+    nextEnemy.def = Math.floor(nextEnemy.def * mult);
+    this._currentEnemy = nextEnemy;
+    
+    // ВОССТАНАВЛИВАЕМ HP ПОСЛЕ БОЯ
+    var p2 = Sherwood.getPlayer();
+    if (p2 && p2.stats) {
+        p2.stats.hp = p2.stats.maxHp;
+        Sherwood.saveGame();
     }
     
     UI._afterRewardAction = function() {
         UI._playMusic('main_theme');
         Sherwood.Quests.showUI();
     };
-    // ВОССТАНАВЛИВАЕМ HP ПОСЛЕ БОЯ
-var p2 = Sherwood.getPlayer();
-if (p2 && p2.stats) {
-    p2.stats.hp = p2.stats.maxHp;
-    Sherwood.saveGame();
-}
     UI._showVictoryScreen(stageReward);
-},
+},   // ← ЗАКРЫВАЮЩАЯ СКОБКА ФУНКЦИИ _onQuestWin
 
 // Поражение в бою (вызывается из iframe)
 _onQuestDefeat: function() {
@@ -553,24 +563,24 @@ _onQuestDefeat: function() {
         dSound.volume = 1.0;
         dSound.play().catch(function(e) { console.log('Defeat sound error:', e); });
     } catch(e) { console.log('Defeat sound exception:', e); }
-// ВОССТАНАВЛИВАЕМ HP ПОСЛЕ ПОРАЖЕНИЯ
-var p2 = Sherwood.getPlayer();
-if (p2 && p2.stats) {
-    p2.stats.hp = p2.stats.maxHp;
-    Sherwood.saveGame();
-}
+
+    // ВОССТАНАВЛИВАЕМ HP ПОСЛЕ ПОРАЖЕНИЯ
+    var p2 = Sherwood.getPlayer();
+    if (p2 && p2.stats) {
+        p2.stats.hp = p2.stats.maxHp;
+        Sherwood.saveGame();
+    }
+
     UI._showDefeatScreen(defeatRewards);
-},
+},   // ← ЗАКРЫВАЮЩАЯ СКОБКА ФУНКЦИИ _onQuestDefeat
 
 _questFlee: function() {
     this.flee();
     UI._stopMusic();
     this.showUI();
 }
-};
-var p = Sherwood.getPlayer();
-if (p && p.stats) p.stats.hp = p.stats.maxHp;
-Sherwood.saveGame();
+};   // ← ЗАКРЫТИЕ ОБЪЕКТА Sherwood.Quests
+
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Quests = Sherwood.Quests;
 
