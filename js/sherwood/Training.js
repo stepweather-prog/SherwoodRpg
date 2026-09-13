@@ -27,8 +27,8 @@ Sherwood.Training = {
         var levels = this.getLevels();
         var current = levels[stat] || 0;
         var nextLevel = current + 1;
-        var cost = Math.round(10 * Math.pow(nextLevel, 1.15));
-        var bonus = { attack: 3, defense: 3, hp: 3 };
+        var cost = 1;   // 1 очко = 1 улучшение
+        var bonus = { attack: 10, defense: 10, hp: 10 };
         return {
             stat: stat,
             level: current,
