@@ -63,7 +63,7 @@ Sherwood._ensureDefaults = function() {
         level: 1, exp: 0, expToLevel: 500,
         experiencePoints: 0,
         talentPoints: 0,
-        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200 },
+        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200, mana: 200, maxMana: 200 },
         resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
         dungeon: { tickets: 15, maxTickets: 15, autoTickets: 3 },
@@ -101,6 +101,8 @@ Sherwood._ensureDefaults = function() {
 
     if (!p.stats) p.stats = defaults.stats;
     if (!p.stats.attack) p.stats = defaults.stats;
+    if (!p.stats.mana) p.stats.mana = 200;
+    if (!p.stats.maxMana) p.stats.maxMana = 200;
     if (!p.resources) p.resources = defaults.resources;
     if (!p.dungeon) p.dungeon = defaults.dungeon;
     if (!p.dungeon.autoTickets && p.dungeon.autoTickets !== 0) p.dungeon.autoTickets = 3;
@@ -144,7 +146,7 @@ Sherwood._createNewPlayer = function() {
         level: 1, exp: 0, expToLevel: 500,
         experiencePoints: 0,
         talentPoints: 0,
-        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200, mana: 100, maxMana: 100 },
+        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200, mana: 200, maxMana: 200 },
         resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
         dungeon: { tickets: 100, maxTickets: 100, autoTickets: 25 },
@@ -236,17 +238,15 @@ Sherwood.addExp = function(amount) {
         p.exp -= p.expToLevel;
         p.level++;
         
-        // ⬇️ НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
+        // НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
         p.experiencePoints = (p.experiencePoints || 0) + 5;
-p.talentPoints = (p.talentPoints || 0) + 5;
+        p.talentPoints = (p.talentPoints || 0) + 5;
         
         p.expToLevel = Math.min(Math.floor(p.expToLevel * 1.3), 999999);
         this.dispatch({ type: 'PLAYER_LEVEL_UP', payload: { level: p.level } });
         this._recalcStats();
     }
     if (p.level >= 100) { p.exp = 0; p.expToLevel = 0; }
-    p.stats.maxMana = 100 + p.level * 5;
-if (!p.stats.mana || p.stats.mana > p.stats.maxMana) p.stats.mana = p.stats.maxMana;
     this.saveGame();
 };
 
@@ -454,16 +454,26 @@ Sherwood._recalcStats = function() {
     var totalSkinBonus = p.unlockedSkins ? p.unlockedSkins.length : 0;
     var totalMultiplier = 1 + totalSkinBonus / 100;
 
-    var MAX = 30000;
+    var MAX = 999999;
     var baseAttack = Math.min(Math.floor(50 + (p.level - 1) * 5 + ba), MAX);
     var baseDefense = Math.min(Math.floor(50 + (p.level - 1) * 5 + bd), MAX);
-    var baseMaxHp = Math.min(Math.floor(200 + (p.level - 1) * 5 + bh), MAX);
+
+    // ===== НОВАЯ ФОРМУЛА HP И МАНЫ (ПРОГРЕССИЯ) =====
+    // Прибавка за уровень: level * 10
+    // Сумма за N уровней: 10 * (1 + 2 + ... + level) = 10 * level * (level + 1) / 2
+    // Вычитаем единицу за 1-й уровень, чтобы на 1-м было 200
+    var levelBonus = Math.floor(p.level * (p.level + 1) / 2 - 1) * 10;
+    var baseMaxHp = Math.min(200 + levelBonus + bh, MAX);
+    var baseMaxMana = Math.min(200 + levelBonus, MAX);
 
     p.stats.attack = Math.min(Math.floor(baseAttack * totalMultiplier), MAX);
     p.stats.defense = Math.min(Math.floor(baseDefense * totalMultiplier), MAX);
     p.stats.maxHp = Math.min(Math.floor(baseMaxHp * totalMultiplier), MAX);
+    p.stats.maxMana = baseMaxMana;
 
     if (!p.stats.hp || p.stats.hp > p.stats.maxHp) p.stats.hp = p.stats.maxHp;
+    if (!p.stats.mana || p.stats.mana > p.stats.maxMana) p.stats.mana = p.stats.maxMana;
+
     this.saveGame();
 };
 
@@ -501,7 +511,7 @@ Sherwood.init = function() {
     this.getPlayer(); 
     this._recalcStats();
     
-    var subsystems = ['Dungeon', 'Quests', 'Tavern', 'Daily', 'Portal', 'Forge', 'Raid', 'Arena', 'BlackMarket', 'Chat', 'Bestiary', 'Combat'];
+    var subsystems = ['Dungeon', 'Quests', 'Tavern', 'Portal', 'Forge', 'Raid', 'Arena', 'BlackMarket', 'Bestiary', 'Combat'];
     for (var i = 0; i < subsystems.length; i++) {
         var name = subsystems[i];
         if (typeof Sherwood[name] !== 'undefined' && Sherwood[name].init) {
