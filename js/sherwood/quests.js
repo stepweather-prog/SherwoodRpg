@@ -508,10 +508,11 @@ _onQuestWin: function() {
     nextEnemy.def = Math.floor(nextEnemy.def * mult);
     this._currentEnemy = nextEnemy;
     
-    // ВОССТАНАВЛИВАЕМ HP ПОСЛЕ БОЯ
+       // ВОССТАНАВЛИВАЕМ HP И МАНУ ПОСЛЕ БОЯ
     var p2 = Sherwood.getPlayer();
     if (p2 && p2.stats) {
         p2.stats.hp = p2.stats.maxHp;
+        p2.stats.mana = p2.stats.maxMana;
         Sherwood.saveGame();
     }
     
@@ -564,10 +565,11 @@ _onQuestDefeat: function() {
         dSound.play().catch(function(e) { console.log('Defeat sound error:', e); });
     } catch(e) { console.log('Defeat sound exception:', e); }
 
-    // ВОССТАНАВЛИВАЕМ HP ПОСЛЕ ПОРАЖЕНИЯ
+       // ВОССТАНАВЛИВАЕМ HP И МАНУ ПОСЛЕ ПОРАЖЕНИЯ
     var p2 = Sherwood.getPlayer();
     if (p2 && p2.stats) {
         p2.stats.hp = p2.stats.maxHp;
+        p2.stats.mana = p2.stats.maxMana;
         Sherwood.saveGame();
     }
 
