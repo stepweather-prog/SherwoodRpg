@@ -34,13 +34,24 @@ Sherwood.Tavern = {
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
-        if (!p.tavern) {
-            p.tavern = { completedChapters: [], currentChapter: 0, secretUnlocked: false };
+
+        // ===== ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ — questProgress =====
+        if (!p.questProgress) {
+            p.questProgress = { completed: [], currentChapter: 1 };
         }
-        this._completedChapters = p.tavern.completedChapters || [];
-        this._currentChapterIndex = p.tavern.currentChapter || 0;
-        this._isSecretUnlocked = p.tavern.secretUnlocked || false;
-        console.log('Таверна инициализирована');
+
+        // Синхронизируем Tavern с questProgress
+        this._completedChapters = p.questProgress.completed || [];
+        this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
+        this._isSecretUnlocked = this._completedChapters.length >= 15;
+
+        // Записываем обратно в p.tavern (для совместимости)
+        if (!p.tavern) p.tavern = {};
+        p.tavern.completedChapters = this._completedChapters;
+        p.tavern.currentChapter = this._currentChapterIndex;
+        p.tavern.secretUnlocked = this._isSecretUnlocked;
+
+        console.log('Таверна инициализирована (синхронизирована с квестами)');
     },
 
     getAllChapters: function() { return this.CHAPTERS; },
@@ -82,20 +93,35 @@ Sherwood.Tavern = {
     _saveState: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
+
+        // ОБНОВЛЯЕМ ОБА ХРАНИЛИЩА
+        if (!p.questProgress) p.questProgress = { completed: [], currentChapter: 1 };
+        p.questProgress.completed = this._completedChapters.slice();
+        p.questProgress.currentChapter = this._currentChapterIndex + 1;
+
         if (!p.tavern) p.tavern = {};
         p.tavern.completedChapters = this._completedChapters;
         p.tavern.currentChapter = this._currentChapterIndex;
         p.tavern.secretUnlocked = this._isSecretUnlocked || false;
+
         Sherwood.saveGame();
     },
 
-              showUI: function() {
+    showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
         }
         
         UI._playSound('click');
+
+        // ПЕРЕСИНХРОНИЗАЦИЯ ПЕРЕД ОТКРЫТИЕМ
+        var p = Sherwood.getPlayer();
+        if (p && p.questProgress) {
+            this._completedChapters = p.questProgress.completed || [];
+            this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
+        }
+
         var current = this.getCurrentChapter();
         var completed = this.getCompletedCount();
         var total = this.getTotalChapters();
@@ -111,13 +137,10 @@ Sherwood.Tavern = {
         h += '<video src="assets/assets2/animation/Garret.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>';
         h += '</div>';
 
-        // ГЛАВНОЕ ИЗМЕНЕНИЕ: добавляем pointer-events:none самому контейнеру, чтобы клики проходили сквозь него к кнопке назад
         h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;padding-top:60px;pointer-events:none;">';
 
-        // Прогресс (верх)
         h += '<div style="margin-bottom:20px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
 
-        // Вкладки (нужно вернуть клики сюда, чтобы кнопки работали)
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:40px;pointer-events:auto;">';
         
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
@@ -125,12 +148,11 @@ Sherwood.Tavern = {
         h += '</div>';
         
         h += '<div onclick="Sherwood.Training.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
-h += '</div>';
+        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
+        h += '</div>';
         
         h += '</div>';
 
-        // Свиток (тоже нужно вернуть клики для кнопки "Принять квест")
         h += '<div style="width:90%;margin:0 auto;margin-top:180px;pointer-events:auto;">';
         h += '<div style="width:100%;height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
         
@@ -157,12 +179,12 @@ h += '</div>';
         h += '</div>';
         h += '</div>';
         
-        h += '</div>'; // Закрываем контент поверх видео
-        h += '</div>'; // Закрываем главный контейнер
+        h += '</div>';
+        h += '</div>';
 
-        // Передаем 'UI.loadHome()' в качестве backFn
         UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
     },
+
     acceptFromUI: function() {
         var r = this.acceptQuest();
         if (!r.success) {
