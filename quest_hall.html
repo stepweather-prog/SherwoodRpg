@@ -93,23 +93,25 @@
     <div id="mob-hp">
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
-        <span id="mob-hp-text">HP: 1000/1000</span>
+        <span id="mob-hp-text">1000</span>
     </div>
 
     <div id="hit-effect">
         <img id="hit-effect-img" src="" alt="">
     </div>
-
+<!-- АТАКУЮЩИЕ СКИЛЛЫ НАД HP -->
+<div id="skills-left" style="position:absolute; bottom:130px; left:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45; pointer-events:none;"></div>
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
-
+<!-- ИСЦЕЛЯЮЩИЕ СКИЛЛЫ НАД МАНОЙ -->
+<div id="skills-right" style="position:absolute; bottom:130px; right:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45; pointer-events:none;"></div>
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
-        <span id="mana-text">MP: 0</span>
+        <span id="mana-text">1000</span>
     </div>
 
     <div id="joystick">
@@ -117,7 +119,7 @@
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
         <div class="arrow-btn" id="btn-back">▼</div>
-        <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+        <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:90%;height:90%;object-fit:contain;"></div>
     </div>
 
     <button onclick="dungeonMusic.pause(); parent.Sherwood.Quests._questFlee()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
