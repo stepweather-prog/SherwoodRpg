@@ -114,7 +114,7 @@
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
         <div class="arrow-btn" id="btn-back">▼</div>
-        <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:90%;height:90%;object-fit:contain;"></div>
+        <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:90%;height:90%;object-fit:contain;"></div>
     </div>
     <div id="vignette"></div>
     <div id="scanlines"></div>
@@ -442,6 +442,8 @@
         var isBattleActive = false;
         var pushTimer = null;
         var battleTimer = null;
+        var lootInRange = null;
+        var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
 
         var hitSprites = [
             'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
@@ -470,29 +472,81 @@
         function checkObjects() {
             var playerPos = camera.position;
             var enemiesLeft = 0;
+            var nearestLoot = null;
+            var nearestDist = 999;
+
             objects.forEach(function(obj) {
                 if (!obj.collected) {
                     var dist = Math.sqrt(Math.pow(playerPos.x - obj.x, 2) + Math.pow(playerPos.z - obj.z, 2));
                     if (dist < 0.5) {
+                        // ВРАГ — сразу бой
                         if (obj.type === 'enemy') {
                             startBattle(obj);
+                            obj.collected = true;
+                            group.remove(obj.mesh);
+                            return;
                         }
-                        if (obj.type === 'cauldron' || obj.type === 'altar' || obj.type === 'potion') {
-                            parent.UI._showToast('🎁 ' + obj.type + ' собран!');
+                        // ЛУТ — запоминаем ближайший
+                        if (LOOT_TYPES.indexOf(obj.type) !== -1 && dist < nearestDist) {
+                            nearestDist = dist;
+                            nearestLoot = obj;
                         }
-                        obj.collected = true;
-                        group.remove(obj.mesh);
                     }
+                    if (obj.type === 'enemy') enemiesLeft++;
                 }
             });
-            for (var i = 0; i < objects.length; i++) {
-                if (objects[i].type === 'enemy' && !objects[i].collected) enemiesLeft++;
+
+            // Если рядом лут — включаем режим подбора
+            if (nearestLoot && !isBattleActive) {
+                lootInRange = nearestLoot;
+                var iconImg = document.getElementById('attack-icon-img');
+                if (iconImg) iconImg.src = 'assets/assets2/icons/take.png';
+            } else if (!isBattleActive) {
+                lootInRange = null;
+                var iconImg = document.getElementById('attack-icon-img');
+                if (iconImg) iconImg.src = 'assets/assets2/talents/simple_attack.png';
             }
+
             if (enemiesLeft === 0) {
                 exitWall.material.map = new THREE.TextureLoader().load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
                 exitWall.material.needsUpdate = true;
                 exitWall.userData.locked = false;
             }
+        }
+
+        function pickUpLoot(obj) {
+            if (!obj || obj.collected) return;
+
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            if (obj.type === 'potion_hp') {
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 50);
+                parent.UI._showToast('❤️ +50 HP');
+            } else if (obj.type === 'potion_mana') {
+                p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 50);
+                parent.UI._showToast('🔮 +50 MP');
+            } else if (obj.type === 'cauldron') {
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 25);
+                p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 25);
+                parent.UI._showToast('🍲 +25 HP, +25 MP');
+            } else if (obj.type === 'altar') {
+                p.stats.hp = p.stats.maxHp;
+                p.stats.mana = p.stats.maxMana;
+                parent.UI._showToast('🛐 Полное восстановление');
+            }
+
+            obj.collected = true;
+            group.remove(obj.mesh);
+            lootInRange = null;
+
+            var iconImg = document.getElementById('attack-icon-img');
+            if (iconImg) iconImg.src = 'assets/assets2/talents/simple_attack.png';
+
+            updateHeroSpheres();
+            parent.Sherwood.saveGame();
+            parent.UI.updateDisplay();
+            checkObjects();
         }
 
         function startBattle(obj) {
@@ -514,7 +568,6 @@
                 if (!p) return;
                 var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
 
-                // ПАССИВКИ: BLOCKING, NUMBNESS
                 if (p.talents) {
                     if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
                     if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
@@ -551,7 +604,7 @@
             setTimeout(function() { showVictoryScreen(); }, 800);
         }
 
-        function attackEnemy() {
+                function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats) return;
             var p = parent.Sherwood.getPlayer();
             playSound(soundHit);
@@ -577,7 +630,6 @@
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
 
-            // ЭФФЕКТЫ
             if (currentEnemySprite) {
                 currentEnemySprite.position.z = currentEnemySprite.position.z - 0.15;
                 hitFlashSprite.position.copy(currentEnemySprite.position);
@@ -611,20 +663,17 @@
 
             if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
 
-            // STUN/KNOT — пропуск хода врага
             var skipEnemyTurn = false;
             for (var i = activeEffects.length - 1; i >= 0; i--) {
                 if (activeEffects[i].type === 'stun' || activeEffects[i].type === 'knot') skipEnemyTurn = true;
             }
             if (skipEnemyTurn) { updateHeroSpheres(); return; }
 
-            // PARRY, SILENCE
             if (p.talents) {
                 if (p.talents['parry'] && Math.random() < 0.05 * p.talents['parry']) return;
                 if (p.talents['silence'] && Math.random() < 0.1 * p.talents['silence']) return;
             }
 
-            // УРОН ОТ ВРАГА (ответ)
             var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
             if (p.talents) {
                 if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
@@ -685,7 +734,13 @@
             }
         });
 
-        document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
+        document.getElementById('attack-icon').addEventListener('click', function() {
+            if (lootInRange) {
+                pickUpLoot(lootInRange);
+                return;
+            }
+            attackEnemy();
+        });
 
         // ============================================================
         //  СКИЛЛЫ И ТАЛАНТЫ
@@ -846,7 +901,6 @@
         }
         animate();
 
-        // Клик по стене
         var raycaster = new THREE.Raycaster();
         var mouse = new THREE.Vector2();
         document.addEventListener('click', function(e) {
