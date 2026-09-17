@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Шервудская чаща - PS2 Style</title>
+    <title>Шервудская чащоба - PS2 Style</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
@@ -33,6 +33,9 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
+        /* Контейнер для всплывающих иконок лута */
+        #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
+
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -54,6 +57,7 @@
 <body>
     <div id="info">Проклятая чаща</div>
     <div id="crosshair">✚</div>
+    <div id="loot-fly-layer"></div>
 
     <div id="mob-hp">
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
@@ -107,6 +111,7 @@
         var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var soundCauldron = new Audio('assets/assets2/tune/cauldron.wav');
+        var soundLoot = new Audio('assets/assets2/tune/loot_fly.wav');
         var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
         dungeonMusic.loop = true;
         dungeonMusic.volume = 0.4;
@@ -238,7 +243,7 @@
                 for (const p of placed) {
                     if (Math.abs(p.x - c.x) + Math.abs(p.y - c.y) < 4) { ok = false; break; }
                 }
-                if (ok && Math.random() < 0.5) {   // было 0.35 — теперь дверей больше
+                if (ok && Math.random() < 0.4) {
                     map[c.y][c.x] = 2;
                     placed.push(c);
                 }
@@ -322,9 +327,24 @@
         heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
         scene.add(heroGlow);
 
+        // ===== ПУЛ ВРАГОВ — 1-Й ЭТАЖ ПОДЗЕМКИ 1 =====
+        // Лес / гниль / птицы / пикси
+        var ENEMY_POOL = [
+            'plague_crow.png',           // Чумной Ворон
+            'bone_vulture.png',          // Костяной Стервятник
+            'executioner_crow.png',      // Ворон-Палач
+            'forest_strangler.png',      // Лесной Душегуб (босс)
+            'plague_pixie.png',          // Чумная Пикси
+            'putrid_sprite.png',         // Гнилостный Спрайт
+            'bark_beetle.png',           // Жук-Короед (на всякий, есть в пуле)
+            'blight_fox.png',
+            'warped_imp.png',
+            'twigtangle.png'
+        ];
+
         // ===== ОБЪЕКТЫ =====
         var objectTypes = [
-            { type: 'enemy', count: 15, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },   // было 10 — стало 15
+            { type: 'enemy', count: 15 },
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
             { type: 'potion_mana', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
             { type: 'cauldron', count: 4, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
@@ -356,9 +376,15 @@
             var typeDef = objectTypes[t];
             for (var i = 0; i < typeDef.count; i++) {
                 var pos = getRandomFreeCell();
+                var imgPath = typeDef.img;
+                if (typeDef.type === 'enemy') {
+                    // Случайный враг из пула
+                    var enName = ENEMY_POOL[Math.floor(Math.random() * ENEMY_POOL.length)];
+                    imgPath = 'assets/assets2/mobs/dungeon_mobs/' + enName;
+                }
                 objects.push({
                     type: typeDef.type, x: pos.x, y: pos.y,
-                    img: typeDef.img, collected: false, attacking: false, stepTimer: 0,
+                    img: imgPath, collected: false, attacking: false, stepTimer: 0,
                     hp: 0, maxHp: 0,
                     fleeTimer: 0, fleeCooldown: 0,
                     _chasing: false,
@@ -403,6 +429,47 @@
             lootBags.push(bag);
         }
 
+        // ===== ВСПЛЫВАЮЩИЕ ИКОНКИ ЛУТА =====
+        function showLootIcons(items) {
+            var layer = document.getElementById('loot-fly-layer');
+            if (!layer) return;
+            playSound(soundLoot);
+            var i = 0;
+            function next() {
+                if (i >= items.length) return;
+                var it = items[i++];
+                var img = document.createElement('img');
+                img.src = it.icon;
+                img.style.cssText = 'position:absolute;top:50%;left:50%;width:64px;height:64px;object-fit:contain;transform:translate(-50%,-50%) scale(0.5);opacity:0;transition:all 0.6s cubic-bezier(.2,.7,.3,1);filter:drop-shadow(0 0 12px #ffd700);pointer-events:none;';
+                layer.appendChild(img);
+                // Анимация
+                requestAnimationFrame(function() {
+                    img.style.opacity = '1';
+                    img.style.transform = 'translate(-50%,-120%) scale(1.2)';
+                });
+                // Количество
+                if (it.qty && it.qty > 1) {
+                    var qtyEl = document.createElement('div');
+                    qtyEl.textContent = '×' + it.qty;
+                    qtyEl.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);color:#fff;font-size:18px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;pointer-events:none;transition:all 0.6s;';
+                    layer.appendChild(qtyEl);
+                    requestAnimationFrame(function() {
+                        qtyEl.style.opacity = '0';
+                        qtyEl.style.transform = 'translate(-50%,-140%)';
+                    });
+                    setTimeout(function() { qtyEl.remove(); }, 700);
+                }
+                setTimeout(function() {
+                    img.style.opacity = '0';
+                    img.style.transform = 'translate(-50%,-160%) scale(0.7)';
+                }, 700);
+                setTimeout(function() { img.remove(); }, 1400);
+                // Следующая иконка через 400мс
+                setTimeout(next, 400);
+            }
+            next();
+        }
+
         function openLootBag(bag) {
             if (!bag || bag.opened) return;
             bag.opened = true;
@@ -440,15 +507,18 @@
                 }
             }
 
-            var msg = ' +' + exp + ' XP, +' + gold + ' зол., +' + silver + ' сер.';
-            if (resources.skin) msg += ', +1 шкура';
-            if (resources.amuletTablets) msg += ', +1 скрижаль амулета';
-            if (resources.ringTablets) msg += ', +1 скрижаль кольца';
-            if (resources.skinTablets) msg += ', +1 скрижаль скинов';
-            if (resources.skinDrawings) msg += ', +1 чертёж скинов';
-            if (resources.portalToken1) msg += ', +1 токен портала';
-            if (resources.branchDamnedYew) msg += ', +1 ветка';
-            if (parent.UI && parent.UI._showToast) parent.UI._showToast(msg);
+            // Иконки всплывают
+            var icons = [];
+            icons.push({ icon: 'assets/interface/resource_gold.png', qty: gold });
+            icons.push({ icon: 'assets/interface/resource_silver.png', qty: silver });
+            if (resources.skin) icons.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', qty: resources.skin });
+            if (resources.amuletTablets) icons.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', qty: resources.amuletTablets });
+            if (resources.ringTablets) icons.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', qty: resources.ringTablets });
+            if (resources.skinTablets) icons.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', qty: resources.skinTablets });
+            if (resources.skinDrawings) icons.push({ icon: 'assets/interface/skin_drawing.png', qty: resources.skinDrawings });
+            if (resources.portalToken1) icons.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', qty: resources.portalToken1 });
+            if (resources.branchDamnedYew) icons.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', qty: resources.branchDamnedYew });
+            showLootIcons(icons);
 
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
@@ -492,7 +562,6 @@
             const v = map[gy][gx];
             return v === 0 || v === 3;
         }
-        // Проверка на врага в клетке — нельзя пройти сквозь живого
         function isEnemyAt(gx, gy) {
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
@@ -506,7 +575,7 @@
         }
         function canStep(fromGX, fromGY, toGX, toGY) {
             if (!isWalkable(toGX, toGY)) return false;
-            if (isEnemyAt(toGX, toGY)) return false;  // нельзя пройти сквозь врага
+            if (isEnemyAt(toGX, toGY)) return false;
             const dx = toGX - fromGX, dy = toGY - fromGY;
             if (dx !== 0 && dy !== 0) {
                 if (!isWalkable(fromGX + dx, fromGY)) return false;
@@ -549,7 +618,6 @@
             prev.set(key(startGX, startGY), null);
             const dirs = [
                 { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }
-                // БЕЗ ДИАГОНАЛЕЙ
             ];
             let found = false;
             while (q.length) {
@@ -573,7 +641,6 @@
                 k = prev.get(k);
             }
             out.reverse();
-            // Убираем первую точку (текущая позиция)
             return out.slice(1).map(n => gridToWorld(n.gx, n.gy));
         }
 
@@ -598,7 +665,7 @@
             return null;
         }
 
-        // ===== ПОВОРОТЫ 90° =====
+        // ===== ПОВОРОТЫ 90° (без авторазворота на врага) =====
         function animateTurn(targetYaw, duration) {
             if (isTurning) return;
             duration = duration || 400;
@@ -618,24 +685,19 @@
             }
             turnLoop();
         }
-        // ВАЖНО: повороты разрешены всегда, даже в бою
         function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
         function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
 
         function moveForward() {
-            if (isBattleActive) return;   // в бою двигаться нельзя
+            if (isBattleActive) return;
             if (moving || isTurning) return;
             const dirX = -Math.sin(playerYaw);
             const dirZ = -Math.cos(playerYaw);
             const cur = worldToGrid(playerPos.x, playerPos.z);
             const nx = cur.gx + Math.round(dirX);
             const ny = cur.gy + Math.round(dirZ);
-            // Если впереди враг — начинаем бой
             var en = isEnemyAt(nx, ny);
-            if (en) {
-                startBattle(en);
-                return;
-            }
+            if (en) { startBattle(en); return; }
             if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
             if (!canStep(cur.gx, cur.gy, nx, ny)) return;
             const to = gridToWorld(nx, ny);
@@ -688,7 +750,6 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // В бою — только удар
             if (isBattleActive) {
                 if (currentEnemySprite) {
                     var hits = raycaster.intersectObject(currentEnemySprite, false);
@@ -787,7 +848,6 @@
         }
 
         // ===== КНОПКА ЛУТА =====
-        // Обновляет иконку attack-icon-img: если рядом лут — take.png, если в бою — attack, иначе simple_attack
         function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img');
             if (!iconImg) return;
@@ -795,7 +855,6 @@
                 iconImg.src = 'assets/assets2/talents/simple_attack.png';
                 return;
             }
-            // Ищем ближайший лут в радиусе 1
             var cur = worldToGrid(playerPos.x, playerPos.z);
             var nearLoot = null;
             for (var i = 0; i < objects.length; i++) {
@@ -803,7 +862,6 @@
                 if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
                 if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = o; break; }
             }
-            // И мешки
             if (!nearLoot) {
                 for (var b = 0; b < lootBags.length; b++) {
                     var bag = lootBags[b];
@@ -815,11 +873,9 @@
             else iconImg.src = 'assets/assets2/talents/simple_attack.png';
         }
 
-        // Клик по центральной кнопке = взять лут или ударить
         document.getElementById('attack-icon').addEventListener('click', (e) => {
             e.stopPropagation();
             if (isBattleActive) { attackEnemy(); return; }
-            // Ищем лут рядом
             var cur = worldToGrid(playerPos.x, playerPos.z);
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
@@ -841,7 +897,6 @@
         var battleTimer = null;
         var pushTimer = null;
         var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
-        var playerAttackedFirst = false;   // враг не бьёт, пока игрок не ударил
 
         var hitSprites = [
             'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
@@ -886,14 +941,16 @@
             var p = parent.Sherwood.getPlayer();
             if (!p) return;
 
+            var icons = [];
+
             if (obj.type === 'potion_hp') {
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 50);
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast(' +50 HP');
+                icons.push({ icon: 'assets/interface/icon_health.png', qty: 50 });
                 obj.collected = true;
                 group.remove(obj.mesh);
             } else if (obj.type === 'potion_mana') {
                 p.stats.mana = Math.min(p.stats.maxMana || 100, (p.stats.mana || 0) + 50);
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast(' +50 MP');
+                icons.push({ icon: 'assets/interface/icon_mana.png', qty: 50 });
                 obj.collected = true;
                 group.remove(obj.mesh);
             } else if (obj.type === 'cauldron') {
@@ -904,7 +961,8 @@
                 obj.used = true;
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 25);
                 p.stats.mana = Math.min(p.stats.maxMana || 100, (p.stats.mana || 0) + 25);
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast(' +25 HP, +25 MP');
+                icons.push({ icon: 'assets/interface/icon_health.png', qty: 25 });
+                icons.push({ icon: 'assets/interface/icon_mana.png', qty: 25 });
                 playSound(soundCauldron);
                 if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
             } else if (obj.type === 'altar') {
@@ -915,10 +973,13 @@
                 obj.used = true;
                 p.stats.hp = p.stats.maxHp;
                 p.stats.mana = p.stats.maxMana || 100;
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Полное восстановление');
+                icons.push({ icon: 'assets/interface/icon_health.png', qty: 'MAX' });
+                icons.push({ icon: 'assets/interface/icon_mana.png', qty: 'MAX' });
                 playSound(soundAltar);
                 if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
             }
+
+            if (icons.length) showLootIcons(icons);
 
             updateHeroSpheres();
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
@@ -930,18 +991,13 @@
         function startBattle(obj) {
             if (isBattleActive) return;
             isBattleActive = true;
-            playerAttackedFirst = false;   // враг не бьёт первым
             currentEnemySprite = obj.mesh;
             currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp };
 
             waypoints = []; moving = false; stopSteps();
 
-            // Разворот камеры на врага при старте боя
-            var dx = obj.mesh.position.x - playerPos.x;
-            var dz = obj.mesh.position.z - playerPos.z;
-            var targetYaw = Math.atan2(-dx, -dz);
-            animateTurn(targetYaw, 400);
+            // БЕЗ АВТОРАЗВОРОТА
 
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
@@ -949,11 +1005,10 @@
 
             playSound(soundHit);
 
-            // Враг НЕ бьёт, пока игрок не ударит первым
+            // Враг бьёт сразу
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
                 if (!isBattleActive) return;
-                if (!playerAttackedFirst) return;   // враг стоит ждёт
                 if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
                 var p = parent.Sherwood.getPlayer();
                 if (!p) return;
@@ -971,7 +1026,6 @@
 
         function stopBattle() {
             isBattleActive = false;
-            playerAttackedFirst = false;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
             currentEnemySprite = null;
@@ -999,7 +1053,6 @@
         function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats) return;
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
-            playerAttackedFirst = true;   // теперь враг бьёт в ответ
             var p = parent.Sherwood.getPlayer();
             playSound(soundHit);
 
@@ -1325,7 +1378,6 @@
                     return;
                 }
 
-                // Прямая видимость
                 var pg = worldToGrid(playerPos.x, playerPos.z);
                 var eg = worldToGrid(ex, ez);
                 if (!canWalkStraight(eg, pg)) {
