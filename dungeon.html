@@ -10,7 +10,6 @@
         canvas { display: block; background: #000; touch-action: none; cursor: crosshair; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
-        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 16px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 6px 18px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 0 10px #8b6b3a; letter-spacing: 2px; }
 
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
 
@@ -35,6 +34,33 @@
 
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
+        /* ====== МИНИКАРТА ====== */
+        #minimap {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            width: 180px;
+            height: 180px;
+            z-index: 30;
+            pointer-events: none;
+        }
+        #minimap img {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        #minimap-canvas {
+            position: absolute;
+            top: 18%;
+            left: 18%;
+            width: 64%;
+            height: 64%;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -54,9 +80,13 @@
     </style>
 </head>
 <body>
-    <div id="info">Проклятая чаща</div>
     <div id="crosshair">✚</div>
     <div id="loot-fly-layer"></div>
+
+    <div id="minimap">
+        <img src="assets/assets2/icons/maps.png" alt="">
+        <canvas id="minimap-canvas"></canvas>
+    </div>
 
     <div id="mob-hp">
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
@@ -111,8 +141,6 @@
         var currentDiff = parseInt(urlParams.get('diff') || '1');
         if (currentFloor < 1 || currentFloor > 6) currentFloor = 1;
         if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
-
-        document.getElementById('info').textContent = 'Проклятая чаща — Этаж ' + currentFloor + ' (' + currentDiff + '/3)';
 
         // ============================================================
         //  ПУЛЫ ВРАГОВ
@@ -227,7 +255,7 @@
         scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
         // ============================================================
-        //  КАРТА
+        //  КАРТА — backtracker-лабиринт
         // ============================================================
         const size = 31;
         const wallHeight = 1.4;
@@ -264,10 +292,7 @@
                     stack.pop();
                 }
             }
-            map[size - 2][size - 2] = 0;
-            if (map[size - 3][size - 2] === 1 && map[size - 2][size - 3] === 1) {
-                map[size - 3][size - 2] = 0;
-            }
+            // выход — оставляем клетку стеной, дверь рисуется поверх
         }
         generateMaze();
 
@@ -417,6 +442,7 @@
             return { x: 1, y: 1 };
         }
 
+        // 1 босс + 14 случайных обычных (могут повторяться)
         var enemyImgList = [];
         enemyImgList.push('assets/assets2/mobs/dungeon_mobs/' + currentPool.boss);
         for (var ei = 0; ei < 14; ei++) {
@@ -486,27 +512,21 @@
         }
 
         // ============================================================
-        //  ДВЕРЬ-ВЫХОД с замком
+        //  ВЫХОД — стена + замок поверх / открытая дверь поверх
         // ============================================================
         var exitCell = { gx: size - 2, gy: size - 2 };
         var exitW = gridToWorld(exitCell.gx, exitCell.gy);
 
-        var exitDoorMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(cellSize, wallHeight),
-            new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide })
-        );
-        exitDoorMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
-        exitDoorMesh.userData = { isExitDoor: true };
-        group.add(exitDoorMesh);
-
+        // Замок поверх стены (пока враги живы)
         var exitLockMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: closedLockTex, transparent: true, depthTest: false }));
-        exitLockMesh.scale.set(0.9, 0.9, 1);
+        exitLockMesh.scale.set(1.1, 1.1, 1);
         exitLockMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
         exitLockMesh.userData = { isExitLock: true };
         group.add(exitLockMesh);
 
+        // Открытая дверь (когда все убиты) — заменяет собой замок
         var exitOpenMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: openDoorTex, transparent: true, depthTest: false }));
-        exitOpenMesh.scale.set(1.2, 1.2, 1);
+        exitOpenMesh.scale.set(1.3, 1.3, 1);
         exitOpenMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
         exitOpenMesh.userData = { isExitOpen: true };
         exitOpenMesh.visible = false;
