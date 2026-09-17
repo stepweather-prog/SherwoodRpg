@@ -11,7 +11,6 @@
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 0 10px #8b6b3a; letter-spacing: 2px; }
-        #counter { position: absolute; bottom: 80px; right: 30px; color: #c8a050; font: 16px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 6px 14px; border: 1px solid #4a3a2a; border-radius: 4px; pointer-events: none; z-index: 10; letter-spacing: 1px; }
 
         #target { position: fixed; width: 34px; height: 34px; margin: -17px 0 0 -17px;
             border: 2px solid #c8a050; border-radius: 50%; pointer-events: none; z-index: 8;
@@ -20,10 +19,8 @@
         #target.on { opacity: 1; animation: pulse .8s infinite alternate; }
         @keyframes pulse { from { transform: scale(1);} to { transform: scale(1.15);} }
 
-        #mob-hp {
-            position: absolute; width: 300px; height: 200px; z-index: 50;
-            transform: translate(-50%, -50%); display: none; pointer-events: none;
-        }
+        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50;
+            transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
@@ -77,7 +74,6 @@
         <span id="mana-text">1000</span>
     </div>
 
-    <div id="counter">🏆 0</div>
     <div id="target"></div>
 
     <div id="vignette"></div>
@@ -155,10 +151,13 @@
         renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
 
-        const ambient = new THREE.AmbientLight(0x2a1e12, 0.6);
+        const ambient = new THREE.AmbientLight(0x8a7a6a, 0.9);
         scene.add(ambient);
-        const hemi = new THREE.HemisphereLight(0x1a1008, 0x000000, 0.3);
+        const hemi = new THREE.HemisphereLight(0x4a3a28, 0x000000, 0.5);
         scene.add(hemi);
+        const dirLight = new THREE.DirectionalLight(0xffeedd, 0.5);
+        dirLight.position.set(5, 10, 3);
+        scene.add(dirLight);
 
         const size = 33;
         const wallHeight = 1.4;
@@ -292,7 +291,6 @@
                 const x = col - Math.floor(size / 2);
                 const z = row - Math.floor(size / 2);
 
-                // ПОЛ — без потолка над ним (потолок только верхняя грань кубиков-стен)
                 if (map[row][col] !== 1) {
                     const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                     floor.rotation.x = -Math.PI / 2;
@@ -309,9 +307,13 @@
                     group.add(wall);
                     wallMeshes.push(wall);
                 } else if (map[row][col] === 2) {
+                    // ДВЕРЬ — плоскость ПОПЕРЁК прохода.
+                    // Если проход идёт по X (стены слева/справа по X, пол вверх/вниз) →
+                    // дверь стоит вдоль Z, значит плоскость НЕ поворачиваем.
                     const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
                     const leaf = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), doorMat);
-                    if (horiz) leaf.rotation.y = Math.PI / 2;
+                    // плоскость по умолчанию в X-Y, нормаль вдоль Z — это как раз поперёк прохода по X.
+                    if (!horiz) leaf.rotation.y = Math.PI / 2;
                     leaf.position.set(x, wallHeight / 2, z);
                     leaf.userData = { doorGX: col, doorGY: row, isDoor: true };
                     group.add(leaf);
@@ -325,26 +327,7 @@
             }
         }
 
-        const torches = [];
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                if (map[row][col] === 0 && row % 3 === 0 && col % 3 === 0) {
-                    const x = col - Math.floor(size / 2);
-                    const z = row - Math.floor(size / 2);
-                    const bulb = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.05, 6, 6),
-                        new THREE.MeshBasicMaterial({ color: 0xffcc66 })
-                    );
-                    bulb.position.set(x, wallHeight - 0.15, z);
-                    group.add(bulb);
-                    const light = new THREE.PointLight(0xff8833, 0.9, 6, 2);
-                    light.position.set(x, wallHeight - 0.2, z);
-                    group.add(light);
-                    torches.push({ light, phase: Math.random() * Math.PI * 2 });
-                }
-            }
-        }
-
+        // ===== ОБЪЕКТЫ =====
         var objectTypes = [
             { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
             { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -1073,7 +1056,6 @@
             });
         }
 
-        // ===== КАМЕРА — смотрит чуть вперёд и вниз =====
         const CAM_HEIGHT = 11.5;
         const CAM_TILT = 0.75;
         const CAM_DEADZONE = 2.2;
@@ -1182,11 +1164,6 @@
             }
 
             updateCamera(dt);
-
-            for (const tr of torches) {
-                const f = 0.75 + Math.sin(t * 9 + tr.phase) * 0.18 + Math.sin(t * 23 + tr.phase * 1.7) * 0.07;
-                tr.light.intensity = 1.0 * f + 0.35;
-            }
 
             renderer.render(scene, camera);
             if (isBattleActive) updateMobHpBar();
