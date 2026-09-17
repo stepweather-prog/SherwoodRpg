@@ -33,7 +33,6 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-        /* ===== КОМПАКТНЫЙ ДЖОЙСТИК ===== */
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -80,7 +79,6 @@
         <span id="mana-text">1000</span>
     </div>
 
-    <!-- КОМПАКТНЫЙ ДЖОЙСТИК -->
     <div id="joystick">
         <div class="arrow-btn" id="btn-forward">▲</div>
         <div class="arrow-btn" id="btn-left">◀</div>
@@ -127,18 +125,12 @@
                 }
             } catch(e){}
         }
-        window.stopAllParentMusic = stopAllParentMusic;
-
         setTimeout(function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); }, 300);
         window.addEventListener('click', function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); });
         setInterval(stopAllParentMusic, 500);
 
-        function playSound(audio) {
-            try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {}
-        }
-        window.playSound = playSound;
+        function playSound(audio) { try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {} }
 
-        // Функция шага — включаем шаги, выключаем при окончании
         var stepsPlaying = false;
         function startSteps() {
             if (stepsPlaying) return;
@@ -171,10 +163,8 @@
         renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
 
-        const ambient = new THREE.AmbientLight(0x554433, 0.9);
-        scene.add(ambient);
-        const hemi = new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4);
-        scene.add(hemi);
+        scene.add(new THREE.AmbientLight(0x554433, 0.9));
+        scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
         // ===== КАРТА =====
         const size = 33;
@@ -433,7 +423,7 @@
         exitWall.userData = { exit: true, locked: true };
         group.add(exitWall);
 
-        // ===== ИГРОК (от первого лица) =====
+        // ===== ИГРОК =====
         const startRoom = rooms[0] || { cx: 1, cy: 1 };
         let playerGX = startRoom.cx;
         let playerGY = startRoom.cy;
@@ -452,6 +442,7 @@
         let waypoints = [];
         let moving = false;
         let isTurning = false;
+        let forcedTurn = null;   // принудительный разворот (на врага)
 
         function isWalkable(gx, gy) {
             if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
@@ -480,6 +471,8 @@
                 gy: Math.round(wz + Math.floor(size / 2))
             };
         }
+
+        // ===== BFS + СГЛАЖИВАНИЕ ПУТИ =====
         function buildPath(startGX, startGY, goalGX, goalGY) {
             if (!isWalkable(goalGX, goalGY)) return [];
             const key = (x, y) => y * size + x;
@@ -490,17 +483,10 @@
                 { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
                 { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }
             ];
+            let found = false;
             while (q.length) {
                 const cur = q.shift();
-                if (cur.x === goalGX && cur.y === goalGY) {
-                    const out = [];
-                    let k = key(cur.x, cur.y);
-                    while (k !== null) {
-                        out.push({ gx: k % size, gy: Math.floor(k / size) });
-                        k = prev.get(k);
-                    }
-                    return out.reverse();
-                }
+                if (cur.x === goalGX && cur.y === goalGY) { found = true; break; }
                 for (const d of dirs) {
                     const nx = cur.x + d.x, ny = cur.y + d.y;
                     if (!canStep(cur.x, cur.y, nx, ny)) continue;
@@ -511,7 +497,44 @@
                     }
                 }
             }
-            return [];
+            if (!found) return [];
+            const raw = [];
+            let k = key(goalGX, goalGY);
+            while (k !== null) {
+                raw.push({ gx: k % size, gy: Math.floor(k / size) });
+                k = prev.get(k);
+            }
+            raw.reverse();
+
+            // Сглаживание: выбрасываем промежуточные точки, если между текущей и
+            // "через одну" можно пройти напрямую (line of sight по сетке).
+            const smooth = [raw[0]];
+            let i = 0;
+            while (i < raw.length - 1) {
+                let far = i + 1;
+                for (let j = raw.length - 1; j > i; j--) {
+                    if (canWalkStraight(raw[i], raw[j])) { far = j; break; }
+                }
+                if (far === i + 1) { smooth.push(raw[i + 1]); i++; }
+                else { smooth.push(raw[far]); i = far; }
+            }
+            return smooth;
+        }
+
+        // Прямая видимость между двумя клетками (по сетке, шаг = Bresenham)
+        function canWalkStraight(a, b) {
+            let x0 = a.gx, y0 = a.gy;
+            const x1 = b.gx, y1 = b.gy;
+            const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+            const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+            let err = dx - dy;
+            while (true) {
+                if (!isWalkable(x0, y0)) return false;
+                if (x0 === x1 && y0 === y1) return true;
+                const e2 = 2 * err;
+                if (e2 > -dy) { err -= dy; x0 += sx; }
+                if (e2 < dx) { err += dx; y0 += sy; }
+            }
         }
 
         function openDoor(gx, gy) {
@@ -535,25 +558,40 @@
             return null;
         }
 
-        // ===== ЛОГИКА ПОВОРОТА (как в твоём исходнике) =====
-        function animateTurn(targetYaw) {
-            if (isTurning || moving) return;
+        // ===== ПОВОРОТ (пошагово) =====
+        function animateTurn(targetYaw, duration) {
+            if (isTurning) return;
+            duration = duration || 400;
             const startYaw = playerYaw;
-            const duration = 500;
             const startTime = performance.now();
             isTurning = true;
             function turnLoop() {
                 const elapsed = performance.now() - startTime;
                 const t = Math.min(elapsed / duration, 1);
                 const smoothT = t * t * (3 - 2 * t);
-                playerYaw = startYaw + (targetYaw - startYaw) * smoothT;
+                let delta = targetYaw - startYaw;
+                while (delta > Math.PI) delta -= Math.PI * 2;
+                while (delta < -Math.PI) delta += Math.PI * 2;
+                playerYaw = startYaw + delta * smoothT;
                 if (t < 1) requestAnimationFrame(turnLoop);
-                else { playerYaw = targetYaw; isTurning = false; }
+                else { playerYaw = startYaw + delta; isTurning = false; }
             }
             turnLoop();
         }
+
         function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
         function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
+
+        // ===== ШАГ (свободное движение по этажу) =====
+        // Идём в целевую клетку напрямую — путь уже сглажен, поэтому нет "сначала прямо, потом по диагонали"
+        function moveTo(targetGX, targetGY) {
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            if (cur.gx === targetGX && cur.gy === targetGY) return;
+            const to = gridToWorld(targetGX, targetGY);
+            waypoints = [{ x: to.x, z: to.z }];
+            moving = true;
+            startSteps();
+        }
 
         function moveForward() {
             if (moving || isTurning) return;
@@ -564,10 +602,7 @@
             const ny = cur.gy + Math.round(dirZ);
             if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
             if (!canStep(cur.gx, cur.gy, nx, ny)) return;
-            const to = gridToWorld(nx, ny);
-            waypoints = [{ x: to.x, z: to.z }];
-            moving = true;
-            startSteps();
+            moveTo(nx, ny);
         }
         function moveBackward() {
             if (moving || isTurning) return;
@@ -578,10 +613,7 @@
             const ny = cur.gy + Math.round(dirZ);
             if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
             if (!canStep(cur.gx, cur.gy, nx, ny)) return;
-            const to = gridToWorld(nx, ny);
-            waypoints = [{ x: to.x, z: to.z }];
-            moving = true;
-            startSteps();
+            moveTo(nx, ny);
         }
 
         document.getElementById('btn-forward').addEventListener('click', (e) => { e.preventDefault(); moveForward(); });
@@ -690,7 +722,6 @@
         var isBattleActive = false;
         var pushTimer = null;
         var battleTimer = null;
-        var lootInRange = null;
         var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
 
         var hitSprites = [
@@ -754,7 +785,6 @@
 
             obj.collected = true;
             group.remove(obj.mesh);
-            lootInRange = null;
             updateHeroSpheres();
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
             if (parent.UI.updateDisplay) parent.UI.updateDisplay();
@@ -769,6 +799,14 @@
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp };
 
             waypoints = []; moving = false; stopSteps();
+
+            // === РАЗВОРОТ КАМЕРЫ НА ВРАГА ===
+            var dx = obj.mesh.position.x - playerPos.x;
+            var dz = obj.mesh.position.z - playerPos.z;
+            var targetYaw = Math.atan2(-dx, -dz);
+            // Плавный поворот (не сбрасываем isTurning заранее — animateTurn сам выставит)
+            animateTurn(targetYaw, 400);
+
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
 
@@ -800,7 +838,6 @@
             currentEnemyObj = null;
         }
 
-        // НЕ играем victory при убийстве врага — только помечаем и продолжаем
         function onEnemyKilled() {
             if (!isBattleActive) return;
             isBattleActive = false;
@@ -911,7 +948,6 @@
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        // ЭКРАНЫ ПОБЕДЫ / ПОРАЖЕНИЯ — через parent.UI (с наградами и кнопкой «Забрать»)
         function showDefeatScreen() {
             stopSteps();
             playSound(soundDefeat);
@@ -919,9 +955,7 @@
             var rewards = { exp: 50, gold: 0, silver: 20 };
             if (parent.UI && parent.UI._showDefeatScreen) {
                 parent.UI._showDefeatScreen(rewards);
-                parent.UI._afterRewardAction = function() {
-                    exitDungeon();
-                };
+                parent.UI._afterRewardAction = function() { exitDungeon(); };
             } else {
                 exitDungeon();
             }
@@ -931,13 +965,10 @@
             stopSteps();
             playSound(soundVictory);
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            // Награды за прохождение подземки
             var rewards = { exp: 500, gold: 250, silver: 100 };
             if (parent.UI && parent.UI._showVictoryScreen) {
                 parent.UI._showVictoryScreen(rewards);
-                parent.UI._afterRewardAction = function() {
-                    exitDungeon();
-                };
+                parent.UI._afterRewardAction = function() { exitDungeon(); };
             } else {
                 exitDungeon();
             }
@@ -1206,11 +1237,10 @@
                 if (!waypoints.length) {
                     moving = false;
                     stopSteps();
-                    // Проверяем, не все ли враги убиты
+                    // Проверяем, все ли враги мертвы — если да, победа
                     var enemiesLeft = 0;
                     objects.forEach(function(o) { if (!o.collected && o.type === 'enemy') enemiesLeft++; });
                     if (enemiesLeft === 0) {
-                        // Прохождение подземки — показываем победу с наградами
                         showVictoryScreen();
                     } else {
                         checkObjects();
