@@ -66,10 +66,32 @@ function startMainMusic() {
 function stopMainMusic() {
     isMusicPlaying = false;
     if (audioPlayer) {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
+        try {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioPlayer.src = '';
+        } catch(e){}
     }
 }
+
+// Жёсткая остановка — используется подземкой
+window.killMenuMusic = function() {
+    try {
+        isMusicPlaying = false;
+        if (audioPlayer) {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioPlayer.src = '';
+        }
+        // На всякий случай — вдруг ещё где-то играет
+        document.querySelectorAll('audio').forEach(function(a){
+            try { a.pause(); a.currentTime = 0; } catch(e){}
+        });
+    } catch(e){}
+};
+
+window.audioPlayerRef = function() { return audioPlayer; };
+window.isMusicPlayingRef = function() { return isMusicPlaying; };
 
 // ---------- СОХРАНЕНИЕ ----------
 function saveGameData() {
