@@ -1155,71 +1155,33 @@ UI.raid = function() {
     }, 5000);
 };
 
-// ============================================================
-//  ЭКРАН ПОДЗЕМКИ — СПИСОК ЭТАЖЕЙ (логика в Sherwood.Dungeon)
-// ============================================================
 UI.dungeon = function() {
     UI._playSound('click');
     UI._stopMusic();
 
-    var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
-    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:420px;margin:0 auto;">';
+    var h = '<div style="position:absolute;top:10%;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;display:flex;align-items:center;justify-content:center;">';
+    
+    // Внутренний блок с колонкой по центру
+    h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;">';
+    
+    // ИКОНКА
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" onclick="UI.loadIframeDungeon()" style="top:10%;width:180px;height:180px;object-fit:contain;cursor:pointer;display:block;margin:0 auto 35px auto;">';
+    
+    // ПЛАШКА ПОД ИКОНКОЙ
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:20px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;">Проклятая чаща</div>';
+    
+    h += '</div>';
+    h += '</div>';
 
-    for (var n = 1; n <= 6; n++) {
-        var cups = Sherwood.Dungeon.getFloorCups(n);
-        var floor1Open = Sherwood.Dungeon.isFloorAvailable(n, 1);
-        var floor2Open = Sherwood.Dungeon.isFloorAvailable(n, 2);
-        var floor3Open = Sherwood.Dungeon.isFloorAvailable(n, 3);
-
-        h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
-
-        // Номер этажа сверху
-        h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
-
-        // Замок поверх, если этаж ещё не открыт
-        if (!floor1Open) {
-            h += '<img src="assets/assets2/game_details/closed_level_lock_icon.png" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;object-fit:contain;opacity:0.9;pointer-events:none;">';
-        }
-
-        // 3 кружка снизу — кубки за сложности
-        h += '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
-        for (var k = 1; k <= 3; k++) {
-            var hasCup = cups >= k;
-            var isOpen = (k === 1 && floor1Open) || (k === 2 && floor2Open) || (k === 3 && floor3Open);
-            var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
-            var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
-            var clickAttr = isOpen ? 'onclick="event.stopPropagation();UI.loadIframeDungeon(' + n + ',' + k + ')"' : '';
-            var cursor = isOpen ? 'pointer' : 'not-allowed';
-
-            h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
-            if (hasCup) {
-                h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">';
-            } else if (!isOpen) {
-                h += '<span style="color:#666;font-size:12px;font-weight:bold;">🔒</span>';
-            } else {
-                h += '<span style="color:#8b6b3a;font-size:11px;font-weight:bold;">' + k + '</span>';
-            }
-            h += '</div>';
-        }
-        h += '</div>';
-
-        h += '</div>'; // конец плитки
-    }
-
-    h += '</div>'; // конец сетки
-    h += '</div>'; // конец контейнера
-
-    UI._openScreenScrollable('🏚️ Проклятая чаща', null, h, 'UI.loadHome()');
+    UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
 };
 
-// ============================================================
-//  ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME (этаж + сложность)
-// ============================================================
-UI.loadIframeDungeon = function(floor, diff) {
+// ===== ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME =====
+UI.loadIframeDungeon = function() {
     UI._playSound('click');
-    UI._stopMusic();
+    UI._stopMusic();       // останавливаем UI._currentMusic
 
-    // Глушим музыку меню
+    // Дополнительно глушим main.js audioPlayer, чтобы музыка меню не играла
     try {
         if (window.stopMainMusic) window.stopMainMusic();
         if (window.audioPlayer) {
@@ -1230,12 +1192,9 @@ UI.loadIframeDungeon = function(floor, diff) {
         if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
     } catch(e){}
 
-    // Сохраняем, куда возвращаться
-    UI._lastFloor = floor;
-    UI._lastDiff = diff;
-
+    // Музыку подземки будет играть САМ iframe (dungeon.html). В родителе — ничего не запускаем.
     var iframe = document.createElement('iframe');
-    iframe.src = 'dungeon.html?dungeon=1&floor=' + floor + '&diff=' + diff;
+    iframe.src = 'dungeon.html';
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
     if (UI._screenLayer) {
         UI._screenLayer.innerHTML = '';
