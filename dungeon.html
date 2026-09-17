@@ -96,7 +96,7 @@
 <div id="vignette"></div>
 <div id="scanlines"></div>
 
-<button onclick="dungeonMusic.pause(); if(parent && parent.UI) parent.UI.dungeon()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
+<button onclick="stopAllMusic(); if(parent && parent.UI) parent.UI.dungeon()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
 
 <script type="importmap">
     { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
@@ -105,7 +105,9 @@
 <script type="module">
 import * as THREE from 'three';
 
-// ===== ЗВУКИ — ТОЛЬКО DUNGEON, БЕЗ МЕНЮ =====
+// ============================================================
+//  ЗВУК — ТОЛЬКО DUNGEON. Гасим ВСЁ, что может играть.
+// ============================================================
 var soundHit = new Audio('assets/assets2/tune/hit.wav');
 var soundVictory = new Audio('assets/assets2/tune/victory.wav');
 var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -114,40 +116,60 @@ var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
 dungeonMusic.loop = true;
 dungeonMusic.volume = 0.4;
 
-// Останавливаем любую музыку меню/родителя, если она играет
-function stopMenuMusic() {
+// Глобально глушим музыку родителя (включая AudioManager из js/audio.js)
+function stopAllMusic() {
     try {
-        if (parent && parent.document) {
-            var audios = parent.document.querySelectorAll('audio');
-            audios.forEach(function(a){ try { a.pause(); a.currentTime = 0; } catch(e){} });
+        if (parent) {
+            // 1) AudioManager.stopCityTheme()
+            if (parent.AudioManager && typeof parent.AudioManager.stopCityTheme === 'function') {
+                parent.AudioManager.stopCityTheme();
+            }
+            if (parent.AudioManager && parent.AudioManager.currentMusic) {
+                try { parent.AudioManager.currentMusic.pause(); } catch(e){}
+                parent.AudioManager.currentMusic = null;
+            }
+            // 2) все <audio> в DOM родителя
+            if (parent.document) {
+                parent.document.querySelectorAll('audio').forEach(function(a){
+                    try { a.pause(); a.currentTime = 0; } catch(e){}
+                });
+            }
+            // 3) популярные имена переменных
+            ['menuMusic','backgroundMusic','currentMusic','music','bgm'].forEach(function(k){
+                if (parent[k] && typeof parent[k].pause === 'function') {
+                    try { parent[k].pause(); } catch(e){}
+                }
+            });
         }
-        // глобальные ссылки из родителя, если они есть
-        if (parent && parent.menuMusic) { try { parent.menuMusic.pause(); } catch(e){} }
-        if (parent && parent.backgroundMusic) { try { parent.backgroundMusic.pause(); } catch(e){} }
-        if (window.menuMusic) { try { window.menuMusic.pause(); } catch(e){} }
-        if (window.backgroundMusic) { try { window.backgroundMusic.pause(); } catch(e){} }
+        // 4) в своём окне — тоже глушим всё, кроме dungeonMusic
+        document.querySelectorAll('audio').forEach(function(a){
+            if (a !== dungeonMusic) { try { a.pause(); a.currentTime = 0; } catch(e){} }
+        });
+        ['menuMusic','backgroundMusic','currentMusic','music','bgm'].forEach(function(k){
+            if (window[k] && typeof window[k].pause === 'function' && window[k] !== dungeonMusic) {
+                try { window[k].pause(); } catch(e){}
+            }
+        });
     } catch(e) {}
 }
-stopMenuMusic();
+window.stopAllMusic = stopAllMusic;
 
-// запускаем музыку подземки
+// Запуск музыки подземки. Браузеры не дают играть без действия юзера,
+// поэтому привязываем старт к первому клику/тапу.
 var musicStarted = false;
 function startDungeonMusic() {
     if (musicStarted) return;
     musicStarted = true;
-    stopMenuMusic();
+    stopAllMusic();
     dungeonMusic.play().catch(function(){});
 }
-setTimeout(startDungeonMusic, 300);
-// повторная попытка после первого клика/тапа (политики браузера)
-document.addEventListener('click', function once(){
-    startDungeonMusic();
-    document.removeEventListener('click', once);
-}, { once: false });
-document.addEventListener('touchstart', function once2(){
-    startDungeonMusic();
-    document.removeEventListener('touchstart', once2);
-}, { once: false });
+// Пытаемся сразу
+setTimeout(function(){ stopAllMusic(); dungeonMusic.play().catch(function(){}); }, 300);
+// И повторяем на первое взаимодействие
+window.addEventListener('click', function once(){ startDungeonMusic(); window.removeEventListener('click', once); }, { once: false });
+window.addEventListener('touchstart', function once2(){ startDungeonMusic(); window.removeEventListener('touchstart', once2); }, { once: false });
+// Периодически глушим чужую музыку (на случай, если родитель снова запустит)
+setInterval(stopAllMusic, 2000);
 
 function playSound(audio) {
     try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {}
@@ -159,7 +181,9 @@ window.soundSteps = soundSteps;
 window.dungeonMusic = dungeonMusic;
 window.playSound = playSound;
 
-// ===== СЦЕНА =====
+// ============================================================
+//  СЦЕНА
+// ============================================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0805);
 scene.fog = new THREE.Fog(0x0a0805, 10, 24);
@@ -178,11 +202,14 @@ scene.add(ambient);
 const hemi = new THREE.HemisphereLight(0x1a1008, 0x000000, 0.25);
 scene.add(hemi);
 
-// ===== КАРТА =====
+// ============================================================
+//  КАРТА
+// ============================================================
 const size = 33;
 const wallHeight = 1.1;
 const cellSize = 1;
 
+// 0=пол, 1=стена, 2=закрытая дверь, 3=открытая дверь
 const map = [];
 for (let i = 0; i < size; i++) {
     map[i] = [];
@@ -238,7 +265,9 @@ function generateDungeon() {
 }
 generateDungeon();
 
-// ===== ДВЕРИ =====
+// ============================================================
+//  ДВЕРИ — одна на проём
+// ============================================================
 function isWallCell(x, y) {
     if (x < 0 || y < 0 || x >= size || y >= size) return true;
     return map[y][x] === 1;
@@ -267,9 +296,9 @@ function placeDoors() {
             const wL = isWallCell(x - 1, y), wR = isWallCell(x + 1, y);
             const wU = isWallCell(x, y - 1), wD = isWallCell(x, y + 1);
             if (wL && wR && !wU && !wD) {
-                if (floorWidthX(x, y - 1) >= 3 || floorWidthX(x, y + 1) >= 3) candidates.push({ x, y });
+                if (floorWidthX(x, y - 1) >= 3 || floorWidthX(x, y + 1) >= 3) candidates.push({ x, y, horiz: true });
             } else if (wU && wD && !wL && !wR) {
-                if (floorHeightY(x - 1, y) >= 3 || floorHeightY(x + 1, y) >= 3) candidates.push({ x, y });
+                if (floorHeightY(x - 1, y) >= 3 || floorHeightY(x + 1, y) >= 3) candidates.push({ x, y, horiz: false });
             }
         }
     }
@@ -287,17 +316,40 @@ function placeDoors() {
 }
 placeDoors();
 
-// ===== ТЕКСТУРЫ (твои) =====
+// ============================================================
+//  ТЕКСТУРЫ — твои
+// ============================================================
 const wallTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
 const floorTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
-// ВАЖНО: потолок — отдельная текстура, НЕ стена
-const ceilTexture = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_area_1.png');
-const doorTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
+// ПОТОЛОК — swamp_ceiling_dungeon_1.png
+const ceilTexture = new THREE.TextureLoader().load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png');
+
+// ДВЕРИ — спрайт-лист labyrinth_asset.png
+const doorSheet = new THREE.TextureLoader().load('assets/interface/labyrinth_asset.png');
+doorSheet.magFilter = THREE.NearestFilter;
+doorSheet.minFilter = THREE.LinearFilter;
+// Спрайт-лист обычно содержит несколько кадров в строке — режем на 4 части.
+// Если у тебя другая раскладка — подстрой repeat/offset ниже.
+const DOOR_FRAMES = 4;
+const DOOR_FRAME_W = 1 / DOOR_FRAMES;
 
 const wallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.85, metalness: 0.05, emissive: new THREE.Color(0x1a0f08), emissiveIntensity: 0.15 });
 const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95, metalness: 0.0 });
 const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTexture, roughness: 0.95, metalness: 0.0 });
-const doorMat = new THREE.MeshStandardMaterial({ map: doorTexture, color: 0x8b5a2b, roughness: 0.8, metalness: 0.15 });
+
+// Функция: сделать материал двери с нужным кадром (0..3)
+function makeDoorMaterial(frame) {
+    const t = doorSheet.clone();
+    t.needsUpdate = true;
+    t.repeat.set(DOOR_FRAME_W, 1);
+    t.offset.set(DOOR_FRAME_W * frame, 0);
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.LinearFilter;
+    return new THREE.MeshStandardMaterial({
+        map: t, transparent: true, alphaTest: 0.4,
+        roughness: 0.8, metalness: 0.1, side: THREE.DoubleSide
+    });
+}
 
 const group = new THREE.Group();
 scene.add(group);
@@ -331,12 +383,16 @@ for (let row = 0; row < size; row++) {
             wallMeshes.push(wall);
         } else if (map[row][col] === 2) {
             const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
-            const doorGeo = new THREE.BoxGeometry(
-                horiz ? cellSize : cellSize * 0.25,
-                wallHeight,
-                horiz ? cellSize * 0.25 : cellSize
+            // Плоскость под размер клетки — как дверь
+            const leaf = new THREE.Mesh(
+                new THREE.PlaneGeometry(cellSize, wallHeight),
+                makeDoorMaterial(0)
             );
-            const leaf = new THREE.Mesh(doorGeo, doorMat);
+            // Ставим перпендикулярно проходу
+            if (horiz) {
+                // проход вдоль X — дверь стоит поперёк, повёрнута вокруг Y
+                leaf.rotation.y = Math.PI / 2;
+            }
             leaf.position.set(x, wallHeight / 2, z);
             leaf.userData = { doorGX: col, doorGY: row, isDoor: true };
             group.add(leaf);
@@ -350,7 +406,9 @@ for (let row = 0; row < size; row++) {
     }
 }
 
-// ===== ФАКТЕЛЫ =====
+// ============================================================
+//  ФАКТЕЛЫ
+// ============================================================
 for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
         if (map[row][col] === 0 && row % 3 === 0 && col % 3 === 0) {
@@ -369,7 +427,9 @@ for (let row = 0; row < size; row++) {
     }
 }
 
-// ===== ОБЪЕКТЫ (увеличенные, кликабельные) =====
+// ============================================================
+//  ОБЪЕКТЫ
+// ============================================================
 var objectTypes = [
     { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
     { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -401,7 +461,10 @@ for (var t = 0; t < objectTypes.length; t++) {
     var typeDef = objectTypes[t];
     for (var i = 0; i < typeDef.count; i++) {
         var pos = getRandomFreeCell();
-        objects.push({ type: typeDef.type, x: pos.x, y: pos.y, img: typeDef.img, collected: false, hp: 1 });
+        objects.push({
+            type: typeDef.type, x: pos.x, y: pos.y,
+            img: typeDef.img, collected: false, attacking: false
+        });
     }
 }
 
@@ -413,20 +476,20 @@ for (var i = 0; i < objects.length; i++) {
     var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true }));
     sprite.position.set(x, 0.1, z);
     if (obj.type === 'enemy') {
-        // ВРАГ КРУПНЕЕ И ВЫШЕ
         sprite.scale.set(1.3, 1.3, 1);
         sprite.position.y = 0.85;
     } else {
-        // ПРЕДМЕТЫ КРУПНЕЕ
         sprite.scale.set(0.55, 0.55, 1);
         sprite.position.y = 0.35;
     }
-    sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false, objRef: obj };
+    sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
     group.add(sprite);
     obj.mesh = sprite;
 }
 
-// ===== КРОВЬ =====
+// ============================================================
+//  КРОВЬ / ВЫХОД
+// ============================================================
 var bloodSprites = [
     'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
     'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
@@ -441,7 +504,6 @@ hitFlashSprite.scale.set(0.8, 0.8, 1);
 hitFlashSprite.visible = false;
 scene.add(hitFlashSprite);
 
-// Выходная стена
 var exitWall = new THREE.Mesh(
     new THREE.BoxGeometry(1, wallHeight, 1),
     new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
@@ -450,7 +512,9 @@ exitWall.position.set(size - 2 - Math.floor(size / 2), wallHeight / 2, size - 2 
 exitWall.userData = { exit: true, locked: true };
 group.add(exitWall);
 
-// ===== ПЕРСОНАЖ =====
+// ============================================================
+//  ПЕРСОНАЖ
+// ============================================================
 const startRoom = rooms[0] || { cx: 1, cy: 1 };
 let playerGX = startRoom.cx;
 let playerGY = startRoom.cy;
@@ -475,7 +539,9 @@ const heroGlow = new THREE.PointLight(0xffb060, 0.55, 5, 2);
 heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
 scene.add(heroGlow);
 
-// ===== ДВИЖЕНИЕ =====
+// ============================================================
+//  ДВИЖЕНИЕ
+// ============================================================
 const MOVE_SPEED = 1.6;
 const TURN_SPEED = 8.0;
 
@@ -565,7 +631,9 @@ function findNearestWalkable(gx, gy, maxR = 4) {
     return null;
 }
 
-// ===== КЛИК =====
+// ============================================================
+//  КЛИК
+// ============================================================
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 const targetEl = document.getElementById('target');
@@ -575,14 +643,14 @@ renderer.domElement.addEventListener('click', (e) => {
     ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(ndc, camera);
 
-    // 1) клик по двери
+    // 1) дверь
     const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
     if (doorHits.length) {
         const ud = doorHits[0].object.userData;
         if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
     }
 
-    // 2) клик по выходной стене
+    // 2) выход
     const exitHits = raycaster.intersectObject(exitWall, false);
     if (exitHits.length) {
         if (exitWall.userData.locked) {
@@ -593,14 +661,12 @@ renderer.domElement.addEventListener('click', (e) => {
         return;
     }
 
-    // 3) клик по объектам (спрайты мобов/лута) — приоритетно перед полом
+    // 3) спрайты (враги/лут)
     const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
     const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
     if (spriteHits.length) {
-        const hit = spriteHits[0].object;
-        const ud = hit.userData;
+        const ud = spriteHits[0].object.userData;
         if (ud) {
-            // враг — идём к нему, бой стартует по подходу
             if (ud.type === 'enemy') {
                 const cur = worldToGrid(playerPos.x, playerPos.z);
                 const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
@@ -613,13 +679,11 @@ renderer.domElement.addEventListener('click', (e) => {
                 }
                 return;
             }
-            // лут — подбираем сразу (если близко), иначе идём
             if (LOOT_TYPES.indexOf(ud.type) !== -1) {
                 const cur = worldToGrid(playerPos.x, playerPos.z);
                 const dist = Math.abs(cur.gx - ud.gridX) + Math.abs(cur.gy - ud.gridY);
-                if (dist <= 1) {
-                    pickUpLoot(ud.objRef);
-                } else {
+                if (dist <= 1) pickUpLoot(ud.objRef);
+                else {
                     const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
                     if (path.length > 1) {
                         waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
@@ -634,14 +698,14 @@ renderer.domElement.addEventListener('click', (e) => {
         }
     }
 
-    // 4) клик по полу
+    // 4) пол
     const floorHits = raycaster.intersectObjects(floorMeshes, false);
     if (floorHits.length) {
         const cell = floorHits[0].object.userData;
         if (cell.walkable) { goTo(cell.gridX, cell.gridY, e.clientX, e.clientY); return; }
     }
 
-    // 5) клик по стене — ближайший пол
+    // 5) стена → ближайший пол
     const wallHits = raycaster.intersectObjects(wallMeshes, false);
     if (wallHits.length) {
         const cell = wallHits[0].object.userData;
@@ -666,7 +730,9 @@ function goTo(gridX, gridY, clientX, clientY) {
     }
 }
 
-// ===== ДЖОЙСТИК =====
+// ============================================================
+//  ДЖОЙСТИК
+// ============================================================
 function tryTurn(deltaYaw) {
     if (moving || manualTurn) return;
     manualTurn = { fromYaw: playerYaw, toYaw: playerYaw + deltaYaw, t: 0 };
@@ -698,7 +764,9 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ===== БОЙ =====
+// ============================================================
+//  БОЙ
+// ============================================================
 var currentEnemySprite = null;
 var currentEnemyStats = null;
 var currentEnemyObj = null;
@@ -776,17 +844,21 @@ function pickUpLoot(obj) {
     if (obj.type === 'potion_hp') {
         p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 50);
         parent.UI._showToast(' +50 HP');
+        playSound(new Audio('assets/assets2/tune/potion.wav'));
     } else if (obj.type === 'potion_mana') {
         p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 50);
         parent.UI._showToast(' +50 MP');
+        playSound(new Audio('assets/assets2/tune/potion.wav'));
     } else if (obj.type === 'cauldron') {
         p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 25);
         p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 25);
         parent.UI._showToast(' +25 HP, +25 MP');
+        playSound(new Audio('assets/assets2/tune/cauldron.wav'));
     } else if (obj.type === 'altar') {
         p.stats.hp = p.stats.maxHp;
         p.stats.mana = p.stats.maxMana;
         parent.UI._showToast(' Полное восстановление');
+        playSound(new Audio('assets/assets2/tune/altar.wav'));
     }
 
     obj.collected = true;
@@ -809,7 +881,6 @@ function startBattle(obj) {
     currentEnemyStats = { hp: 1000 + Math.floor(Math.random() * 1000), maxHp: 0 };
     currentEnemyStats.maxHp = currentEnemyStats.hp;
 
-    // останавливаем движение игрока — встаём в бой
     waypoints = []; moving = false; targetEl.classList.remove('on');
 
     document.getElementById('mob-hp').style.display = 'block';
@@ -823,16 +894,13 @@ function startBattle(obj) {
         var p = parent.Sherwood.getPlayer();
         if (!p) return;
         var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
-
         if (p.talents) {
             if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
             if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
         }
-
         p.stats.hp = Math.max(0, p.stats.hp - edmg);
         if (parent.UI.updateDisplay) parent.UI.updateDisplay();
         updateHeroSpheres();
-
         if (p.stats.hp <= 0) { stopBattle(); showDefeatScreen(); }
     }, 1500);
 }
@@ -974,7 +1042,9 @@ document.getElementById('attack-icon').addEventListener('click', function() {
     attackEnemy();
 });
 
-// ===== СКИЛЛЫ И ТАЛАНТЫ =====
+// ============================================================
+//  СКИЛЛЫ
+// ============================================================
 var talentData = {
     'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
     'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
@@ -1032,7 +1102,6 @@ function useSkill(skillId) {
         'funnel': 15, 'inspiration': 30, 'knot': 20
     };
     var manaCost = (manaCosts[skillId] || 10) * lvl;
-
     if (!p.stats.mana) p.stats.mana = 0;
     if (p.stats.mana < manaCost) {
         if (parent.UI && parent.UI._showToast) parent.UI._showToast('Не хватает маны! Нужно ' + manaCost);
@@ -1125,7 +1194,9 @@ function useSkill(skillId) {
     }
 }
 
-// ===== КАМЕРА =====
+// ============================================================
+//  КАМЕРА D1
+// ============================================================
 const CAM_HEIGHT = 11.5;
 const CAM_TILT = 0.75;
 const CAM_DEADZONE = 2.0;
@@ -1140,7 +1211,6 @@ function updateCamera(dt) {
     const tx = playerPos.x, tz = playerPos.z;
     const dx = tx - camFocus.x, dz = tz - camFocus.z;
     const dist = Math.hypot(dx, dz);
-
     if (dist > CAM_DEADZONE) {
         const targetDist = dist - CAM_DEADZONE;
         const moveDist = Math.min(targetDist, CAM_FOLLOW * dt * (1 + targetDist));
@@ -1148,14 +1218,8 @@ function updateCamera(dt) {
         camFocus.x += nx * moveDist;
         camFocus.z += nz * moveDist;
     }
-
-    const desiredPos = new THREE.Vector3(
-        camFocus.x,
-        CAM_HEIGHT,
-        camFocus.z + CAM_TILT * CAM_HEIGHT * 0.85
-    );
+    const desiredPos = new THREE.Vector3(camFocus.x, CAM_HEIGHT, camFocus.z + CAM_TILT * CAM_HEIGHT * 0.85);
     const lookAt = new THREE.Vector3(camFocus.x, 0, camFocus.z - 1.0);
-
     if (!camInitialized) {
         camPosSmooth.copy(desiredPos);
         camLookSmooth.copy(lookAt);
@@ -1165,60 +1229,81 @@ function updateCamera(dt) {
         camPosSmooth.lerp(desiredPos, k);
         camLookSmooth.lerp(lookAt, k);
     }
-
     camera.position.copy(camPosSmooth);
     camera.lookAt(camLookSmooth);
 }
 
-// ===== AI ВРАГОВ (не стоят на месте) =====
-const ENEMY_SPEED = 1.1;          // чуть медленнее игрока
-const ENEMY_AGGRO_RANGE = 6.0;    // видят игрока в радиусе 6 клеток
-const ENEMY_STOP_DIST = 0.7;      // останавливаются и атакуют на этом расстоянии
+// ============================================================
+//  AI ВРАГОВ — двигаются по МИРОВЫМ координатам, не по клеткам
+// ============================================================
+const ENEMY_SPEED = 1.4;          // клеток/сек
+const ENEMY_AGGRO_RANGE = 8.0;    // радиус агрессии
+const ENEMY_STOP_DIST = 0.85;     // ближе — начинают бой
+
+function worldToGridRound(wx, wz) {
+    return {
+        gx: Math.round(wx + Math.floor(size / 2)),
+        gy: Math.round(wz + Math.floor(size / 2))
+    };
+}
 
 function updateEnemies(dt) {
-    if (isBattleActive) return; // в бою мобы не двигаются
+    if (isBattleActive) return;
+
     objects.forEach(function(obj) {
         if (obj.collected || obj.type !== 'enemy' || !obj.mesh) return;
         if (obj.attacking) return;
 
-        var ex = obj.x - Math.floor(size / 2);
-        var ez = obj.y - Math.floor(size / 2);
-        var dxp = playerPos.x - ex;
-        var dzp = playerPos.z - ez;
-        var distToPlayer = Math.hypot(dxp, dzp);
+        // мировая позиция спрайта
+        var ex = obj.mesh.position.x;
+        var ez = obj.mesh.position.z;
 
-        if (distToPlayer > ENEMY_AGGRO_RANGE) return;
+        var dx = playerPos.x - ex;
+        var dz = playerPos.z - ez;
+        var dist = Math.hypot(dx, dz);
 
-        // если уже близко — начинаем бой
-        if (distToPlayer < ENEMY_STOP_DIST) {
+        if (dist > ENEMY_AGGRO_RANGE) return;
+
+        // вплотную — старт боя
+        if (dist < ENEMY_STOP_DIST) {
             obj.attacking = true;
             startBattle(obj);
             return;
         }
 
-        // идём к игроку по прямой (простенько), с проверкой проходимости
+        // идём к игроку по прямой в МИРОВЫХ координатах
         var step = ENEMY_SPEED * dt;
-        var nx = ex + (dxp / distToPlayer) * step;
-        var nz = ez + (dzp / distToPlayer) * step;
+        var nx = ex + (dx / dist) * step;
+        var nz = ez + (dz / dist) * step;
 
-        // проверяем целевую клетку
-        var gx = Math.round(nx + Math.floor(size / 2));
-        var gy = Math.round(nz + Math.floor(size / 2));
-        if (isWalkable(gx, gy)) {
-            obj.x = gx;
-            obj.y = gy;
-            obj.mesh.position.set(gx - Math.floor(size / 2), obj.mesh.position.y, gy - Math.floor(size / 2));
+        // проверяем, что целевая точка не в стене
+        var g = worldToGridRound(nx, nz);
+        if (isWalkable(g.gx, g.gy)) {
+            obj.mesh.position.x = nx;
+            obj.mesh.position.z = nz;
+            // синхронизируем логические координаты врага с миром
+            obj.x = g.gx;
+            obj.y = g.gy;
+        } else {
+            // пробуем сдвинуться только по X или только по Z (обход угла)
+            var gx1 = worldToGridRound(nx, ez);
+            if (isWalkable(gx1.gx, gx1.gy)) {
+                obj.mesh.position.x = nx;
+                obj.x = gx1.gx; obj.y = gx1.gy;
+            } else {
+                var gz1 = worldToGridRound(ex, nz);
+                if (isWalkable(gz1.gx, gz1.gy)) {
+                    obj.mesh.position.z = nz;
+                    obj.x = gz1.gx; obj.y = gz1.gy;
+                }
+            }
         }
     });
 }
 
-function syncPlayerGrid() {
-    const g = worldToGrid(playerPos.x, playerPos.z);
-    playerGX = g.gx;
-    playerGY = g.gy;
-}
-
-// ===== ЦИКЛ =====
+// ============================================================
+//  ЦИКЛ
+// ============================================================
 const clock = new THREE.Clock();
 
 function animate() {
@@ -1272,10 +1357,7 @@ function animate() {
         }
     }
 
-    // AI врагов
     updateEnemies(dt);
-
-    syncPlayerGrid();
 
     hero.position.set(playerPos.x, 0.175, playerPos.z);
     heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
@@ -1295,7 +1377,6 @@ function animate() {
     }
 
     updateCamera(dt);
-
     renderer.render(scene, camera);
     if (isBattleActive) updateMobHpBar();
 }
