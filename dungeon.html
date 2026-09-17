@@ -14,11 +14,11 @@
 
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
 
-        #mob-hp { position: absolute; width: 180px; height: 120px; z-index: 50;
-            transform: translate(-50%, -30%); display: none; pointer-events: none; }
+        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50;
+            transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
-        #mob-hp .fill { position: absolute; top: 42%; left: 12%; width: 76%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
-        #mob-hp-text { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 13px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+        #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
 
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
@@ -169,8 +169,8 @@
         scene.add(new THREE.AmbientLight(0x554433, 0.9));
         scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
-        // ===== КАРТА =====
-        const size = 33;
+        // ===== КАРТА — чистый backtracker-лабиринт (узкие коридоры 1 клетка) =====
+        const size = 31;   // нечётное для корректного лабиринта
         const wallHeight = 1.4;
         const cellSize = 1;
 
@@ -180,51 +180,37 @@
             for (let j = 0; j < size; j++) { map[i][j] = 1; }
         }
 
-        const rooms = [];
-
-        function carveRoom(x, y, w, h) {
-            for (let j = y; j < y + h; j++)
-                for (let i = x; i < x + w; i++)
-                    map[j][i] = 0;
-            rooms.push({ x, y, w, h, cx: (x + (w >> 1)), cy: (y + (h >> 1)) });
-        }
-        function roomsOverlap(a, b, pad = 1) {
-            return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x ||
-                     a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y);
-        }
-        function carveH(x1, x2, y) {
-            const a = Math.min(x1, x2), b = Math.max(x1, x2);
-            for (let x = a; x <= b; x++) if (map[y][x] === 1) map[y][x] = 0;
-        }
-        function carveV(y1, y2, x) {
-            const a = Math.min(y1, y2), b = Math.max(y1, y2);
-            for (let y = a; y <= b; y++) if (map[y][x] === 1) map[y][x] = 0;
-        }
-
         function generateMaze() {
-            const maxRooms = 14;
-            const minR = 5, maxR = 11;
-            let attempts = 0;
-            while (rooms.length < maxRooms && attempts < 400) {
-                attempts++;
-                const w = minR + Math.floor(Math.random() * (maxR - minR));
-                const h = minR + Math.floor(Math.random() * (maxR - minR));
-                const x = 1 + Math.floor(Math.random() * (size - w - 2));
-                const y = 1 + Math.floor(Math.random() * (size - h - 2));
-                const r = { x, y, w, h };
-                if (rooms.some(o => roomsOverlap(r, o))) continue;
-                carveRoom(x, y, w, h);
-            }
-            for (let i = 1; i < rooms.length; i++) {
-                const a = rooms[i - 1], b = rooms[i];
-                const ax = a.cx, ay = a.cy, bx = b.cx, by = b.cy;
-                if (Math.random() < 0.5) {
-                    carveH(ax, bx, ay);
-                    carveV(ay, by, bx);
-                } else {
-                    carveV(ay, by, ax);
-                    carveH(ax, bx, by);
+            // Backtracker на нечётных клетках
+            const stack = [];
+            const startX = 1, startY = 1;
+            map[startY][startX] = 0;
+            stack.push({ x: startX, y: startY });
+            const dirs = [{ x: 0, y: -2 }, { x: 0, y: 2 }, { x: -2, y: 0 }, { x: 2, y: 0 }];
+            while (stack.length > 0) {
+                const current = stack[stack.length - 1];
+                const neighbors = [];
+                for (const dir of dirs) {
+                    const nx = current.x + dir.x;
+                    const ny = current.y + dir.y;
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) {
+                        neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 });
+                    }
                 }
+                if (neighbors.length > 0) {
+                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    map[next.y][next.x] = 0;
+                    map[current.y + next.dy][current.x + next.dx] = 0;
+                    stack.push({ x: next.x, y: next.y });
+                } else {
+                    stack.pop();
+                }
+            }
+            // Выход в правом нижнем углу
+            map[size - 2][size - 2] = 0;
+            // Соединяем с соседним коридором, чтобы он не был отдельно стоящим
+            if (map[size - 3][size - 2] === 1 && map[size - 2][size - 3] === 1) {
+                map[size - 3][size - 2] = 0;
             }
         }
         generateMaze();
@@ -238,39 +224,27 @@
             if (x < 0 || y < 0 || x >= size || y >= size) return false;
             return map[y][x] === 0 || map[y][x] === 2 || map[y][x] === 3;
         }
-        function floorWidthX(x, y) {
-            let w = 1;
-            for (let i = 1; i < 6; i++) { if (isFloorCell(x - i, y)) w++; else break; }
-            for (let i = 1; i < 6; i++) { if (isFloorCell(x + i, y)) w++; else break; }
-            return w;
-        }
-        function floorHeightY(x, y) {
-            let h = 1;
-            for (let i = 1; i < 6; i++) { if (isFloorCell(x, y - i)) h++; else break; }
-            for (let i = 1; i < 6; i++) { if (isFloorCell(x, y + i)) h++; else break; }
-            return h;
-        }
         function placeDoors() {
+            // В узком лабиринте ставим двери на клетках, где стены с двух противоположных сторон,
+            // а с двух других — пол (то есть это узкое место в проходе шириной 1).
             const candidates = [];
             for (let y = 1; y < size - 1; y++) {
                 for (let x = 1; x < size - 1; x++) {
                     if (map[y][x] !== 0) continue;
                     const wL = isWallCell(x - 1, y), wR = isWallCell(x + 1, y);
                     const wU = isWallCell(x, y - 1), wD = isWallCell(x, y + 1);
-                    if (wL && wR && !wU && !wD) {
-                        if (floorWidthX(x, y - 1) >= 3 || floorWidthX(x, y + 1) >= 3) candidates.push({ x, y, horiz: true });
-                    } else if (wU && wD && !wL && !wR) {
-                        if (floorHeightY(x - 1, y) >= 3 || floorHeightY(x + 1, y) >= 3) candidates.push({ x, y, horiz: false });
-                    }
+                    if (wL && wR && !wU && !wD) candidates.push({ x, y });
+                    else if (wU && wD && !wL && !wR) candidates.push({ x, y });
                 }
             }
+            // Анти-пачка: минимум 4 клетки между дверями
             const placed = [];
             for (const c of candidates) {
                 let ok = true;
                 for (const p of placed) {
                     if (Math.abs(p.x - c.x) + Math.abs(p.y - c.y) < 4) { ok = false; break; }
                 }
-                if (ok && Math.random() < 0.85) {
+                if (ok && Math.random() < 0.35) {
                     map[c.y][c.x] = 2;
                     placed.push(c);
                 }
@@ -345,24 +319,28 @@
 
         // ===== ОБЪЕКТЫ =====
         var objectTypes = [
-            { type: 'enemy', count: 22, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
+            { type: 'enemy', count: 10, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
             { type: 'potion_mana', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
-            { type: 'cauldron', count: 5, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
-            { type: 'altar', count: 5, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
+            { type: 'cauldron', count: 4, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'altar', count: 4, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
         ];
 
         var objects = [];
 
         function getRandomFreeCell() {
             var attempts = 0;
-            while (attempts < 200) {
+            while (attempts < 300) {
                 attempts++;
-                var x = 2 + Math.floor(Math.random() * (size - 4));
-                var y = 2 + Math.floor(Math.random() * (size - 4));
+                // В узком лабиринте только нечётные клетки гарантированно пол, но после carve все 0 — можно любые
+                var x = 1 + Math.floor(Math.random() * (size - 2));
+                var y = 1 + Math.floor(Math.random() * (size - 2));
                 if (map[y][x] === 0) {
+                    // Не ставим слишком близко к игроку и друг к другу
                     var tooClose = false;
-                    for (var i = 0; i < objects.length; i++) {
+                    var pg = worldToGrid(playerPos.x, playerPos.z);
+                    if (Math.abs(pg.gx - x) + Math.abs(pg.gy - y) < 4) tooClose = true;
+                    for (var i = 0; i < objects.length && !tooClose; i++) {
                         if (Math.abs(objects[i].x - x) + Math.abs(objects[i].y - y) < 2) { tooClose = true; break; }
                     }
                     if (!tooClose) return { x: x, y: y };
@@ -371,6 +349,18 @@
             return { x: 1, y: 1 };
         }
 
+        // ===== ИГРОК (создаём ДО генерации объектов) =====
+        const playerStart = { cx: 1, cy: 1 };
+        let playerGX = playerStart.cx;
+        let playerGY = playerStart.cy;
+        const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
+        let playerYaw = 0;
+
+        const heroGlow = new THREE.PointLight(0xffb060, 0.7, 6, 2);
+        heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
+        scene.add(heroGlow);
+
+        // теперь можно расставлять объекты
         for (var t = 0; t < objectTypes.length; t++) {
             var typeDef = objectTypes[t];
             for (var i = 0; i < typeDef.count; i++) {
@@ -394,7 +384,7 @@
             sprite.position.set(x, 0.1, z);
             if (obj.type === 'enemy') {
                 sprite.scale.set(1.3, 1.3, 1);
-                sprite.position.y = 0.45;
+                sprite.position.y = 0.55;
                 obj.hp = 1000 + Math.floor(Math.random() * 1000);
                 obj.maxHp = obj.hp;
             } else {
@@ -439,6 +429,7 @@
             var silver = 5 + Math.floor(Math.random() * 15);
 
             if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
+            if (!p.resources) p.resources = {};
             p.resources.gold = (p.resources.gold || 0) + gold;
             p.resources.silver = (p.resources.silver || 0) + silver;
 
@@ -451,7 +442,6 @@
                 portalToken1: Math.random() < 0.15 ? 1 : 0,
                 branchDamnedYew: Math.random() < 0.3 ? 1 : 0
             };
-            if (!p.resources) p.resources = {};
             for (var key in resources) {
                 if (resources[key] > 0) {
                     p.resources[key] = (p.resources[key] || 0) + resources[key];
@@ -495,17 +485,6 @@
         exitWall.userData = { exit: true, locked: true };
         group.add(exitWall);
 
-        // ===== ИГРОК =====
-        const startRoom = rooms[0] || { cx: 1, cy: 1 };
-        let playerGX = startRoom.cx;
-        let playerGY = startRoom.cy;
-        const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
-        let playerYaw = 0;
-
-        const heroGlow = new THREE.PointLight(0xffb060, 0.7, 6, 2);
-        heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
-        scene.add(heroGlow);
-
         // ===== ДВИЖЕНИЕ =====
         const MOVE_SPEED = 2.0;
         const TURN_SPEED = 8.0;
@@ -514,6 +493,7 @@
         let waypoints = [];
         let moving = false;
         let isTurning = false;
+        let pendingLoot = null;
 
         function isWalkable(gx, gy) {
             if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
@@ -706,7 +686,6 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // Если в бою — только удар по врагу
             if (isBattleActive) {
                 if (currentEnemySprite) {
                     var hits = raycaster.intersectObject(currentEnemySprite, false);
@@ -715,14 +694,12 @@
                 return;
             }
 
-            // 1) дверь
             const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
             if (doorHits.length) {
                 const ud = doorHits[0].object.userData;
                 if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
             }
 
-            // 2) выход
             const exitHits = raycaster.intersectObject(exitWall, false);
             if (exitHits.length) {
                 if (exitWall.userData.locked) {
@@ -733,7 +710,6 @@
                 return;
             }
 
-            // 3) мешки с лутом
             const bagMeshes = lootBags.map(b => b.mesh);
             const bagHits = raycaster.intersectObjects(bagMeshes, false);
             if (bagHits.length) {
@@ -755,14 +731,12 @@
                 }
             }
 
-            // 4) спрайты врагов и лут сцены
             const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
             if (spriteHits.length) {
                 const ud = spriteHits[0].object.userData;
                 if (ud) {
                     if (ud.type === 'enemy') {
-                        // Клик по врагу = сразу бой с разворотом
                         ud.objRef.attacking = true;
                         startBattle(ud.objRef);
                         return;
@@ -777,6 +751,7 @@
                             if (path.length > 1) {
                                 waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
                                 moving = true;
+                                pendingLoot = ud.objRef;
                                 startSteps();
                             }
                         }
@@ -785,14 +760,12 @@
                 }
             }
 
-            // 5) пол
             const floorHits = raycaster.intersectObjects(floorMeshes, false);
             if (floorHits.length) {
                 const cell = floorHits[0].object.userData;
                 if (cell.walkable) { goTo(cell.gridX, cell.gridY); return; }
             }
 
-            // 6) стена → ближайший пол
             const wallHits = raycaster.intersectObjects(wallMeshes, false);
             if (wallHits.length) {
                 const cell = wallHits[0].object.userData;
@@ -899,7 +872,6 @@
 
             waypoints = []; moving = false; stopSteps();
 
-            // Разворот камеры на врага
             var dx = obj.mesh.position.x - playerPos.x;
             var dz = obj.mesh.position.z - playerPos.z;
             var targetYaw = Math.atan2(-dx, -dz);
@@ -1043,7 +1015,7 @@
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += 0.25;
+            worldPos.y += 0.9;
             worldPos.project(camera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
@@ -1057,8 +1029,10 @@
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
             var rewards = { exp: 50, gold: 0, silver: 20 };
             if (parent.UI && parent.UI._showDefeatScreen) {
+                parent.UI._afterRewardAction = function() {
+                    if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                };
                 parent.UI._showDefeatScreen(rewards);
-                parent.UI._afterRewardAction = function() { exitDungeon(); };
             } else {
                 exitDungeon();
             }
@@ -1070,8 +1044,10 @@
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
             var rewards = { exp: 500, gold: 250, silver: 100 };
             if (parent.UI && parent.UI._showVictoryScreen) {
+                parent.UI._afterRewardAction = function() {
+                    if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                };
                 parent.UI._showVictoryScreen(rewards);
-                parent.UI._afterRewardAction = function() { exitDungeon(); };
             } else {
                 exitDungeon();
             }
@@ -1230,12 +1206,12 @@
         // ===== AI ВРАГОВ =====
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 3.5;
-        const ENEMY_STOP_DIST = 1.4;
+        const ENEMY_STOP_DIST = 1.2;
         const ENEMY_STEP_INTERVAL = 0.5;
         const ENEMY_FLEE_CHANCE = 0.05;
         const ENEMY_FLEE_RANGE = 2.2;
         const ENEMY_FLEE_STEP = 0.5;
-        const ENEMY_MAX_AGGRO = 2;
+        const ENEMY_MAX_AGGRO = 1;   // в узком лабиринте больше одного не пролезет, ставим 1
 
         function updateEnemies(dt) {
             if (isBattleActive) return;
@@ -1358,7 +1334,6 @@
                         budget = 0;
                     }
 
-                    // Жёсткая проверка на врага
                     for (var ii = 0; ii < objects.length; ii++) {
                         var en = objects[ii];
                         if (en.collected || en.type !== 'enemy' || en.attacking) continue;
@@ -1438,6 +1413,7 @@
         setTimeout(checkObjects, 800);
 
         addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
             camera.aspect = innerWidth / innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(innerWidth, innerHeight);
