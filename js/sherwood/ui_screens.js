@@ -1165,10 +1165,10 @@ UI.dungeon = function() {
     h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;">';
     
     // ИКОНКА
-    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" onclick="UI.loadIframeDungeon()" style="width:180px;height:180px;object-fit:contain;cursor:pointer;display:block;margin:0 auto 35px auto;">';
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" onclick="UI.loadIframeDungeon()" style="top:10%;width:180px;height:180px;object-fit:contain;cursor:pointer;display:block;margin:0 auto 35px auto;">';
     
     // ПЛАШКА ПОД ИКОНКОЙ
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:40px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;">Проклятая чаща</div>';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:20px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;">Проклятая чаща</div>';
     
     h += '</div>';
     h += '</div>';
@@ -1179,11 +1179,20 @@ UI.dungeon = function() {
 // ===== ЗАГРУЗКА ПОДЗЕМКИ ЧЕРЕЗ IFRAME =====
 UI.loadIframeDungeon = function() {
     UI._playSound('click');
-    UI._stopMusic();
-    
-    // Если подземка 1 (Проклятая чаща) → dungeon_1
-    UI._playMusic('dungeon_1');
-    
+    UI._stopMusic();       // останавливаем UI._currentMusic
+
+    // Дополнительно глушим main.js audioPlayer, чтобы музыка меню не играла
+    try {
+        if (window.stopMainMusic) window.stopMainMusic();
+        if (window.audioPlayer) {
+            window.audioPlayer.pause();
+            window.audioPlayer.currentTime = 0;
+            window.audioPlayer.src = '';
+        }
+        if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
+    } catch(e){}
+
+    // Музыку подземки будет играть САМ iframe (dungeon.html). В родителе — ничего не запускаем.
     var iframe = document.createElement('iframe');
     iframe.src = 'dungeon.html';
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
