@@ -20,7 +20,6 @@
         #target.on { opacity: 1; animation: pulse .8s infinite alternate; }
         @keyframes pulse { from { transform: scale(1);} to { transform: scale(1.15);} }
 
-        /* ===== ПОЛОСКА HP ВРАГА ===== */
         #mob-hp {
             position: absolute; width: 300px; height: 200px; z-index: 50;
             transform: translate(-50%, -50%); display: none; pointer-events: none;
@@ -29,7 +28,6 @@
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
 
-        /* ===== СФЕРЫ ===== */
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
@@ -40,11 +38,9 @@
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        /* ===== СПРАЙТ УДАРА ===== */
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-        /* ===== ИКОНКИ СКИЛЛОВ ===== */
         #skills-left, #skills-right { pointer-events: auto; }
         #skills-left img, #skills-right img {
             cursor: pointer; border-radius: 6px; transition: all 0.2s;
@@ -96,7 +92,6 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // ===== ЗВУКИ — ТОЛЬКО DUNGEON =====
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -131,10 +126,10 @@
         window.stopAllMusic = stopAllMusic;
 
         setTimeout(function(){ stopAllMusic(); dungeonMusic.play().catch(function(){}); }, 300);
-        window.addEventListener('click', function once(){
+        window.addEventListener('click', function(){
             stopAllMusic();
             dungeonMusic.play().catch(function(){});
-        }, { once: false });
+        });
         setInterval(stopAllMusic, 500);
 
         function playSound(audio) {
@@ -147,10 +142,9 @@
         window.dungeonMusic = dungeonMusic;
         window.playSound = playSound;
 
-        // ===== СЦЕНА =====
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
-        scene.fog = new THREE.Fog(0x0a0805, 8, 20);
+        scene.fog = new THREE.Fog(0x0a0805, 10, 24);
 
         const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 60);
         camera.rotation.order = 'YXZ';
@@ -166,12 +160,10 @@
         const hemi = new THREE.HemisphereLight(0x1a1008, 0x000000, 0.3);
         scene.add(hemi);
 
-        // ===== КАРТА =====
         const size = 33;
         const wallHeight = 1.4;
         const cellSize = 1;
 
-        // 0=пол, 1=стена, 2=закрытая дверь, 3=открытая дверь
         const map = [];
         for (let i = 0; i < size; i++) {
             map[i] = [];
@@ -227,7 +219,6 @@
         }
         generateMaze();
 
-        // ===== ДВЕРИ =====
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
             return map[y][x] === 1;
@@ -276,7 +267,6 @@
         }
         placeDoors();
 
-        // ===== ТЕКСТУРЫ =====
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
         const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
@@ -288,7 +278,6 @@
         const ceilMat  = new THREE.MeshStandardMaterial({ map: ceilTexture,  roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide });
         const doorMat  = new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.85 });
 
-        // 6 материалов на BoxGeometry: +X, -X, +Y(верх=потолок), -Y, +Z, -Z
         const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
 
         const group = new THREE.Group();
@@ -303,6 +292,7 @@
                 const x = col - Math.floor(size / 2);
                 const z = row - Math.floor(size / 2);
 
+                // ПОЛ — без потолка над ним (потолок только верхняя грань кубиков-стен)
                 if (map[row][col] !== 1) {
                     const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                     floor.rotation.x = -Math.PI / 2;
@@ -310,11 +300,6 @@
                     floor.userData = { gridX: col, gridY: row, walkable: true, isFloor: true };
                     group.add(floor);
                     floorMeshes.push(floor);
-
-                    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
-                    ceil.rotation.x = Math.PI / 2;
-                    ceil.position.set(x, wallHeight, z);
-                    group.add(ceil);
                 }
 
                 if (map[row][col] === 1) {
@@ -340,7 +325,6 @@
             }
         }
 
-        // ===== ФАКТЕЛЫ =====
         const torches = [];
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
@@ -361,7 +345,6 @@
             }
         }
 
-        // ===== ОБЪЕКТЫ =====
         var objectTypes = [
             { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
             { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -422,7 +405,6 @@
             obj.mesh = sprite;
         }
 
-        // ===== КРОВЬ / ВЫХОД =====
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
             'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
@@ -445,7 +427,6 @@
         exitWall.userData = { exit: true, locked: true };
         group.add(exitWall);
 
-        // ===== ИГРОК =====
         const startRoom = rooms[0] || { cx: 1, cy: 1 };
         let playerGX = startRoom.cx;
         let playerGY = startRoom.cy;
@@ -470,7 +451,6 @@
         heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
         scene.add(heroGlow);
 
-        // ===== ДВИЖЕНИЕ =====
         const MOVE_SPEED = 1.6;
         const TURN_SPEED = 8.0;
 
@@ -559,7 +539,6 @@
             return null;
         }
 
-        // ===== КЛИК =====
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
         const targetEl = document.getElementById('target');
@@ -569,14 +548,12 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // 1) клик по двери
             const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
             if (doorHits.length) {
                 const ud = doorHits[0].object.userData;
                 if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
             }
 
-            // 2) клик по выходной стене
             const exitHits = raycaster.intersectObject(exitWall, false);
             if (exitHits.length) {
                 if (exitWall.userData.locked) {
@@ -587,19 +564,16 @@
                 return;
             }
 
-            // 3) клик по спрайтам (враги/лут)
             const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
             if (spriteHits.length) {
                 const ud = spriteHits[0].object.userData;
                 if (ud) {
                     if (ud.type === 'enemy') {
-                        // если уже в бою — бьём
                         if (isBattleActive && currentEnemyObj === ud.objRef) {
                             attackEnemy();
                             return;
                         }
-                        // иначе идём к нему
                         const cur = worldToGrid(playerPos.x, playerPos.z);
                         const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
                         if (path.length > 1) {
@@ -630,14 +604,12 @@
                 }
             }
 
-            // 4) клик по полу
             const floorHits = raycaster.intersectObjects(floorMeshes, false);
             if (floorHits.length) {
                 const cell = floorHits[0].object.userData;
                 if (cell.walkable) { goTo(cell.gridX, cell.gridY, e.clientX, e.clientY); return; }
             }
 
-            // 5) клик по стене — ближайший пол
             const wallHits = raycaster.intersectObjects(wallMeshes, false);
             if (wallHits.length) {
                 const cell = wallHits[0].object.userData;
@@ -659,7 +631,6 @@
             }
         }
 
-        // ===== БОЙ =====
         var currentEnemySprite = null;
         var currentEnemyStats = null;
         var currentEnemyObj = null;
@@ -923,7 +894,6 @@
             setTimeout(function() { parent.UI.loadHome(); }, 1500);
         }
 
-        // ===== СКИЛЛЫ =====
         var talentData = {
             'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
             'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
@@ -1073,7 +1043,6 @@
             }
         }
 
-        // ===== AI ВРАГОВ — медленно, шагами =====
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 6.0;
         const ENEMY_STOP_DIST = 0.9;
@@ -1104,7 +1073,7 @@
             });
         }
 
-        // ===== КАМЕРА =====
+        // ===== КАМЕРА — смотрит чуть вперёд и вниз =====
         const CAM_HEIGHT = 11.5;
         const CAM_TILT = 0.75;
         const CAM_DEADZONE = 2.2;
@@ -1127,7 +1096,7 @@
                 camFocus.z += nz * moveDist;
             }
             const desiredPos = new THREE.Vector3(camFocus.x, CAM_HEIGHT, camFocus.z + CAM_TILT * CAM_HEIGHT * 0.85);
-            const lookAt = new THREE.Vector3(camFocus.x, 0, camFocus.z - 1.0);
+            const lookAt = new THREE.Vector3(camFocus.x, 0, camFocus.z);
             if (!camInitialized) {
                 camPosSmooth.copy(desiredPos);
                 camLookSmooth.copy(lookAt);
@@ -1147,7 +1116,6 @@
             playerGY = g.gy;
         }
 
-        // ===== ЦИКЛ =====
         const clock = new THREE.Clock();
 
         function animate() {
