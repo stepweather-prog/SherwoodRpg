@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Шервудская чаща - PS2 Style</title>
+    <title>Шервудская чащоба - PS2 Style</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
@@ -379,7 +379,8 @@
                     type: typeDef.type, x: pos.x, y: pos.y,
                     img: typeDef.img, collected: false, attacking: false, stepTimer: 0,
                     hp: 0, maxHp: 0,
-                    fleeTimer: 0, fleeCooldown: 0
+                    fleeTimer: 0, fleeCooldown: 0,
+                    _chasing: false
                 });
             }
         }
@@ -393,7 +394,7 @@
             sprite.position.set(x, 0.1, z);
             if (obj.type === 'enemy') {
                 sprite.scale.set(1.3, 1.3, 1);
-                sprite.position.y = 0.85;
+                sprite.position.y = 0.45;
                 obj.hp = 1000 + Math.floor(Math.random() * 1000);
                 obj.maxHp = obj.hp;
             } else {
@@ -411,8 +412,8 @@
         function spawnLootBag(gx, gy) {
             var w = gridToWorld(gx, gy);
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: lootBagTex.clone(), transparent: true }));
-            spr.scale.set(0.75, 0.75, 1);
-            spr.position.set(w.x, 0.5, w.z);
+            spr.scale.set(0.65, 0.65, 1);
+            spr.position.set(w.x, 0.15, w.z);
             spr.userData = { type: 'loot_bag', gx: gx, gy: gy };
             group.add(spr);
             var bag = { mesh: spr, gx: gx, gy: gy, opened: false };
@@ -425,7 +426,7 @@
             bag.opened = true;
             bag.mesh.material.map = emptyBagTex;
             bag.mesh.material.needsUpdate = true;
-            bag.mesh.scale.set(0.6, 0.6, 1);
+            bag.mesh.scale.set(0.55, 0.55, 1);
 
             playSound(soundChest);
 
@@ -433,18 +434,16 @@
             var p = parent.Sherwood.getPlayer();
             if (!p) return;
 
-            // === НАГРАДЫ ИЗ МЕШКА ===
-            var exp = 50 + Math.floor(Math.random() * 100);        // опыт за убийство
+            var exp = 50 + Math.floor(Math.random() * 100);
             var gold = 15 + Math.floor(Math.random() * 25);
             var silver = 5 + Math.floor(Math.random() * 15);
 
-            Sherwood.addExp(exp);
+            if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
             p.resources.gold = (p.resources.gold || 0) + gold;
             p.resources.silver = (p.resources.silver || 0) + silver;
 
-            // Ресурсы (шкуры, скрижали и т.д.)
             var resources = {
-                skin: 1,                             // шкура с каждого убитого
+                skin: 1,
                 amuletTablets: Math.random() < 0.3 ? 1 : 0,
                 ringTablets: Math.random() < 0.3 ? 1 : 0,
                 skinTablets: Math.random() < 0.25 ? 1 : 0,
@@ -459,7 +458,6 @@
                 }
             }
 
-            // Тост с кратким описанием
             var msg = ' +' + exp + ' XP, +' + gold + ' зол., +' + silver + ' сер.';
             if (resources.skin) msg += ', +1 шкура';
             if (resources.amuletTablets) msg += ', +1 скрижаль амулета';
@@ -593,7 +591,6 @@
             }
             raw.reverse();
 
-            // Сглаживание
             const smooth = [raw[0]];
             let i = 0;
             while (i < raw.length - 1) {
@@ -648,10 +645,11 @@
             }
             turnLoop();
         }
-        function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
-        function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
+        function turnLeft() { if (isBattleActive) return; if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
+        function turnRight() { if (isBattleActive) return; if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
 
         function moveForward() {
+            if (isBattleActive) return;
             if (moving || isTurning) return;
             const dirX = -Math.sin(playerYaw);
             const dirZ = -Math.cos(playerYaw);
@@ -666,6 +664,7 @@
             startSteps();
         }
         function moveBackward() {
+            if (isBattleActive) return;
             if (moving || isTurning) return;
             const dirX = Math.sin(playerYaw);
             const dirZ = Math.cos(playerYaw);
@@ -707,6 +706,15 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
+            // Если в бою — только удар по врагу
+            if (isBattleActive) {
+                if (currentEnemySprite) {
+                    var hits = raycaster.intersectObject(currentEnemySprite, false);
+                    if (hits.length) { attackEnemy(); return; }
+                }
+                return;
+            }
+
             // 1) дверь
             const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
             if (doorHits.length) {
@@ -747,25 +755,19 @@
                 }
             }
 
-            // 4) спрайты врагов и лут сцены (алтари/котлы/поты)
+            // 4) спрайты врагов и лут сцены
             const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
             if (spriteHits.length) {
                 const ud = spriteHits[0].object.userData;
                 if (ud) {
                     if (ud.type === 'enemy') {
-                        if (isBattleActive && currentEnemyObj === ud.objRef) { attackEnemy(); return; }
-                        const ccur = worldToGrid(playerPos.x, playerPos.z);
-                        const path = buildPath(ccur.gx, ccur.gy, ud.gridX, ud.gridY);
-                        if (path.length > 1) {
-                            waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
-                            moving = true;
-                            startSteps();
-                        }
+                        // Клик по врагу = сразу бой с разворотом
+                        ud.objRef.attacking = true;
+                        startBattle(ud.objRef);
                         return;
                     }
                     if (LOOT_TYPES.indexOf(ud.type) !== -1) {
-                        // Клик по алтарю/котлу/поту — идём к нему, по подходу применим эффект
                         const ccur = worldToGrid(playerPos.x, playerPos.z);
                         const d = Math.abs(ccur.gx - ud.gridX) + Math.abs(ccur.gy - ud.gridY);
                         if (d <= 1) {
@@ -854,7 +856,6 @@
             }
         }
 
-        // Алтарь/котёл/пот — применяем эффект. Алтари и котлы НЕ исчезают.
         function applyLootEffect(obj) {
             if (!obj) return;
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -872,19 +873,15 @@
                 obj.collected = true;
                 group.remove(obj.mesh);
             } else if (obj.type === 'cauldron') {
-                // Котёл лечит и НЕ исчезает
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 25);
                 p.stats.mana = Math.min(p.stats.maxMana || 100, (p.stats.mana || 0) + 25);
                 if (parent.UI && parent.UI._showToast) parent.UI._showToast(' +25 HP, +25 MP');
                 playSound(soundCauldron);
-                // obj.collected = НЕ ставим, чтобы котёл остался
             } else if (obj.type === 'altar') {
-                // Алтарь лечит и НЕ исчезает
                 p.stats.hp = p.stats.maxHp;
                 p.stats.mana = p.stats.maxMana || 100;
                 if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Полное восстановление');
                 playSound(soundAltar);
-                // obj.collected = НЕ ставим, чтобы алтарь остался
             }
 
             updateHeroSpheres();
@@ -910,6 +907,7 @@
 
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
 
             playSound(soundHit);
 
@@ -946,7 +944,6 @@
             document.getElementById('mob-hp').style.display = 'none';
 
             if (currentEnemyObj) {
-                // Спавним мешок на клетке, где умер враг
                 spawnLootBag(currentEnemyObj.x, currentEnemyObj.y);
                 currentEnemyObj.collected = true;
                 if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
@@ -1232,15 +1229,23 @@
 
         // ===== AI ВРАГОВ =====
         const ENEMY_SPEED = 0.55;
-        const ENEMY_AGGRO_RANGE = 6.0;
-        const ENEMY_STOP_DIST = 1.4;   // было 0.9 — теперь враг на 1 клетку дальше
+        const ENEMY_AGGRO_RANGE = 3.5;
+        const ENEMY_STOP_DIST = 1.4;
         const ENEMY_STEP_INTERVAL = 0.5;
-        const ENEMY_FLEE_CHANCE = 0.35;
+        const ENEMY_FLEE_CHANCE = 0.05;
         const ENEMY_FLEE_RANGE = 2.2;
         const ENEMY_FLEE_STEP = 0.5;
+        const ENEMY_MAX_AGGRO = 2;
 
         function updateEnemies(dt) {
             if (isBattleActive) return;
+
+            var alreadyChasing = 0;
+            for (var ci = 0; ci < objects.length; ci++) {
+                var ce = objects[ci];
+                if (ce.type === 'enemy' && !ce.collected && !ce.attacking && ce._chasing) alreadyChasing++;
+            }
+
             objects.forEach(function(obj) {
                 if (obj.collected || obj.type !== 'enemy' || !obj.mesh) return;
                 if (obj.attacking) return;
@@ -1267,7 +1272,20 @@
                     return;
                 }
 
-                if (dist > ENEMY_AGGRO_RANGE) { obj.stepTimer = 0; return; }
+                if (dist > ENEMY_AGGRO_RANGE) {
+                    obj.stepTimer = 0;
+                    obj._chasing = false;
+                    return;
+                }
+
+                if (!obj._chasing && alreadyChasing >= ENEMY_MAX_AGGRO) {
+                    obj.stepTimer = 0;
+                    return;
+                }
+                if (!obj._chasing) {
+                    obj._chasing = true;
+                    alreadyChasing++;
+                }
 
                 if (dist < ENEMY_FLEE_RANGE && obj.fleeCooldown <= 0) {
                     if (Math.random() < ENEMY_FLEE_CHANCE * dt * 10) {
@@ -1321,7 +1339,7 @@
             const dt = Math.min(clock.getDelta(), 0.05);
             const t = clock.elapsedTime;
 
-            if (moving && waypoints.length) {
+            if (moving && waypoints.length && !isBattleActive) {
                 let budget = MOVE_SPEED * dt;
                 while (budget > 0 && waypoints.length) {
                     const tgt = waypoints[0];
@@ -1339,10 +1357,28 @@
                         playerPos.z += nz * budget;
                         budget = 0;
                     }
+
+                    // Жёсткая проверка на врага
+                    for (var ii = 0; ii < objects.length; ii++) {
+                        var en = objects[ii];
+                        if (en.collected || en.type !== 'enemy' || en.attacking) continue;
+                        if (!en.mesh) continue;
+                        var dxE = en.mesh.position.x - playerPos.x;
+                        var dzE = en.mesh.position.z - playerPos.z;
+                        var distE = Math.hypot(dxE, dzE);
+                        if (distE < ENEMY_STOP_DIST) {
+                            en.attacking = true;
+                            waypoints = [];
+                            moving = false;
+                            stopSteps();
+                            startBattle(en);
+                            break;
+                        }
+                    }
+                    if (isBattleActive) break;
                 }
 
-                // Плавный разворот в сторону движения
-                if (!isTurning && waypoints.length) {
+                if (!isBattleActive && !isTurning && waypoints.length) {
                     var lookTgt = waypoints[0];
                     var lookDx = lookTgt.x - playerPos.x;
                     var lookDz = lookTgt.z - playerPos.z;
@@ -1356,10 +1392,9 @@
                     }
                 }
 
-                if (!waypoints.length) {
+                if (!waypoints.length && !isBattleActive) {
                     moving = false;
                     stopSteps();
-                    // Автоприменение эффекта к алтарю/котлу, если дошли до него
                     if (pendingLoot) {
                         var pp = pendingLoot;
                         pendingLoot = null;
@@ -1367,7 +1402,6 @@
                         var dd = Math.abs(cg.gx - pp.x) + Math.abs(cg.gy - pp.y);
                         if (dd <= 1) applyLootEffect(pp);
                     }
-                    // Проверка победы
                     var enemiesLeft = 0;
                     objects.forEach(function(o) { if (!o.collected && o.type === 'enemy') enemiesLeft++; });
                     if (enemiesLeft === 0) {
