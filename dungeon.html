@@ -721,12 +721,13 @@
         }
 
         function openDoor(gx, gy) {
-            if (!isClosedDoor(gx, gy)) return false;
-            map[gy][gx] = 3;
-            const d = doorLeaves.find(o => o.gx === gx && o.gy === gy);
-            if (d && !d.open) { d.open = true; d.t = 0; }
-            return true;
-        }
+    if (!isClosedDoor(gx, gy)) return false;
+    map[gy][gx] = 3;
+    const d = doorLeaves.find(o => o.gx === gx && o.gy === gy);
+    if (d && !d.open) { d.open = true; d.t = 0; }
+    playSound(soundAltar);
+    return true;
+}
         function findNearestWalkable(gx, gy, maxR = 4) {
             if (isWalkable(gx, gy) && !isEnemyAt(gx, gy)) return { gx, gy };
             for (let r = 1; r <= maxR; r++) {
