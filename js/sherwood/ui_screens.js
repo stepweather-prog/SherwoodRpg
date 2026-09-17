@@ -1159,7 +1159,7 @@ UI.dungeon = function() {
     UI._playSound('click');
     UI._stopMusic();
 
-    var h = '<div style="position:absolute;top:0;left:0;width:80%;height:80%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;display:flex;align-items:center;justify-content:center;">';
+    var h = '<div style="position:absolute;top:10%;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;display:flex;align-items:center;justify-content:center;">';
     
     // Внутренний блок с колонкой по центру
     h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;">';
@@ -1168,7 +1168,7 @@ UI.dungeon = function() {
     h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" onclick="UI.loadIframeDungeon()" style="width:180px;height:180px;object-fit:contain;cursor:pointer;display:block;margin:0 auto 35px auto;">';
     
     // ПЛАШКА ПОД ИКОНКОЙ
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:22px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;">Проклятая чаща</div>';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:40px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;">Проклятая чаща</div>';
     
     h += '</div>';
     h += '</div>';
