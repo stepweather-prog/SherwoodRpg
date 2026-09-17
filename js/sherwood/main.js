@@ -592,7 +592,7 @@ function initGameModules() {
     if (typeof Sherwood !== 'undefined') {
         const modules = [
             'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
-            'Dungeon', 'Dungeon2D5', 'Forge', 'BlackMarket',
+            'Dungeon','Forge', 'BlackMarket',
             'Bag', 'Wallet', 'Training', 'Hearth', 'Combat'
         ];
         modules.forEach(name => {
