@@ -12,7 +12,7 @@ if (typeof Sherwood === 'undefined') {
 Sherwood.Dungeon = {
     _dungeon: null,
 
-    // === ПРОГРЕСС ПОДЗЕМКИ (6 этажей × 3 сложности) ===
+    // === ПРОГРЕСС ПОДЗЕМКИ ===
     _ensureProgress: function() {
         var p = Sherwood.getPlayer();
         if (!p) return null;
@@ -138,57 +138,7 @@ Sherwood.Dungeon = {
             UI._showToast('❌ Нет билетов!');
             return;
         }
-
-        // === ГЛУШИМ ВСЮ МУЗЫКУ РОДИТЕЛЯ (меню) ===
-        try {
-            if (UI._currentMusic) {
-                UI._currentMusic.pause();
-                UI._currentMusic.currentTime = 0;
-                UI._currentMusic = null;
-                UI._currentMusicKey = null;
-            }
-            for (var k in UI._sounds) {
-                try { UI._sounds[k].pause(); UI._sounds[k].currentTime = 0; } catch(e){}
-            }
-            if (window.AudioManager) {
-                if (typeof AudioManager.stopCityTheme === 'function') AudioManager.stopCityTheme();
-                if (AudioManager.currentMusic) {
-                    AudioManager.currentMusic.pause();
-                    AudioManager.currentMusic.currentTime = 0;
-                    AudioManager.currentMusic = null;
-                }
-            }
-            document.querySelectorAll('audio').forEach(function(a){
-                try { a.pause(); a.currentTime = 0; } catch(e){}
-            });
-        } catch(e){}
-
-        // === ЗАПУСКАЕМ МУЗЫКУ ПОДЗЕМКИ ===
-        if (!Sherwood.Dungeon._music) {
-            Sherwood.Dungeon._music = new Audio('assets/assets2/music/dungeon_3.ogg');
-            Sherwood.Dungeon._music.loop = true;
-            Sherwood.Dungeon._music.volume = 0.4;
-        }
-        try {
-            Sherwood.Dungeon._music.currentTime = 0;
-            Sherwood.Dungeon._music.play().catch(function(){});
-        } catch(e){}
-
-        // === СТРАЖ: каждые 200 мс глушим чужую музыку, кроме музыки подземки ===
-        if (Sherwood.Dungeon._guard) clearInterval(Sherwood.Dungeon._guard);
-        Sherwood.Dungeon._guard = setInterval(function(){
-            try {
-                if (UI._currentMusic && !UI._currentMusic.paused) UI._currentMusic.pause();
-                if (window.AudioManager && AudioManager.currentMusic && !AudioManager.currentMusic.paused) {
-                    AudioManager.currentMusic.pause();
-                }
-                document.querySelectorAll('audio').forEach(function(a){
-                    if (a === Sherwood.Dungeon._music) return;
-                    if (!a.paused) { try { a.pause(); } catch(e){} }
-                });
-            } catch(e){}
-        }, 200);
-
+        UI._stopMusic();
         if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
             Sherwood.Dungeon2D5.render();
         } else {
@@ -209,6 +159,100 @@ Sherwood.Dungeon = {
         h += '</div>';
 
         UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
+    },
+
+    // ============================================================
+    //  ВЫБОР ЭТАЖА ПОДЗЕМКИ (сетка 6 плиток с кубками)
+    // ============================================================
+    showFloors: function(dungeonId) {
+        if (typeof UI === 'undefined') return;
+        UI._playSound('click');
+        UI._stopMusic();
+
+        // Глушим музыку меню
+        try {
+            if (window.stopMainMusic) window.stopMainMusic();
+            if (UI._currentMusic) {
+                UI._currentMusic.pause();
+                UI._currentMusic.currentTime = 0;
+                UI._currentMusic = null;
+                UI._currentMusicKey = null;
+            }
+        } catch(e){}
+
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:420px;margin:0 auto;">';
+
+        for (var n = 1; n <= 6; n++) {
+            var cups = this.getFloorCups(n);
+            var f1 = this.isFloorAvailable(n, 1);
+            var f2 = this.isFloorAvailable(n, 2);
+            var f3 = this.isFloorAvailable(n, 3);
+
+            h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
+            h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
+
+            if (!f1) {
+                h += '<img src="assets/assets2/game_details/closed_level_lock_icon.png" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;object-fit:contain;opacity:0.9;pointer-events:none;">';
+            }
+
+            h += '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
+            for (var k = 1; k <= 3; k++) {
+                var hasCup = cups >= k;
+                var isOpen = (k === 1 && f1) || (k === 2 && f2) || (k === 3 && f3);
+                var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
+                var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
+                var clickAttr = isOpen ? 'onclick="event.stopPropagation();Sherwood.Dungeon._enterFloor(' + n + ',' + k + ')"' : '';
+                var cursor = isOpen ? 'pointer' : 'not-allowed';
+
+                h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
+                if (hasCup) {
+                    h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">';
+                } else if (!isOpen) {
+                    h += '<span style="color:#666;font-size:12px;font-weight:bold;">🔒</span>';
+                } else {
+                    h += '<span style="color:#8b6b3a;font-size:11px;font-weight:bold;">' + k + '</span>';
+                }
+                h += '</div>';
+            }
+            h += '</div>';
+            h += '</div>';
+        }
+
+        h += '</div>';
+        h += '</div>';
+
+        UI._openScreenScrollable('🏚️ Проклятая чаща', null, h, 'UI.dungeon()');
+    },
+
+    // ============================================================
+    //  ЗАХОД В ПОДЗЕМЕЛЬЕ (iframe с параметрами)
+    // ============================================================
+    _enterFloor: function(floor, diff) {
+        UI._playSound('click');
+        UI._stopMusic();
+
+        try {
+            if (window.stopMainMusic) window.stopMainMusic();
+            if (window.audioPlayer) {
+                window.audioPlayer.pause();
+                window.audioPlayer.currentTime = 0;
+                window.audioPlayer.src = '';
+            }
+            if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
+        } catch(e){}
+
+        UI._lastFloor = floor;
+        UI._lastDiff = diff;
+
+        var iframe = document.createElement('iframe');
+        iframe.src = 'dungeon.html?dungeon=1&floor=' + floor + '&diff=' + diff;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.appendChild(iframe);
+            UI._screenLayer.style.display = 'block';
+        }
     }
 };
 
@@ -393,10 +437,10 @@ Sherwood.Dungeon2D5 = {
                 }
 
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
-                    wall.position.set(x, wallHeight / 2, z);
-                    wall.userData = { openable: true, gridX: col, gridY: row };
-                    this._group.add(wall);
+                    var wall2 = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
+                    wall2.position.set(x, wallHeight / 2, z);
+                    wall2.userData = { openable: true, gridX: col, gridY: row };
+                    this._group.add(wall2);
                 }
             }
         }
