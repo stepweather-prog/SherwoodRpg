@@ -87,17 +87,71 @@ Sherwood.Dungeon = {
     },
 
     _startDungeon: function(id, level) {
-        if (!this.generate(id, level)) {
-            UI._showToast('❌ Нет билетов!');
-            return;
+    if (!this.generate(id, level)) {
+        UI._showToast('❌ Нет билетов!');
+        return;
+    }
+
+    // === ГЛУШИМ ВСЮ МУЗЫКУ РОДИТЕЛЯ (меню) ===
+    try {
+        // 1) UI._currentMusic
+        if (UI._currentMusic) {
+            UI._currentMusic.pause();
+            UI._currentMusic.currentTime = 0;
+            UI._currentMusic = null;
+            UI._currentMusicKey = null;
         }
-        UI._stopMusic();
-        if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
-            Sherwood.Dungeon2D5.render();
-        } else {
-            UI._showToast('⚠️ 3D подземка недоступна');
+        // 2) все UI._sounds
+        for (var k in UI._sounds) {
+            try { UI._sounds[k].pause(); UI._sounds[k].currentTime = 0; } catch(e){}
         }
-    },
+        // 3) AudioManager из js/audio.js
+        if (window.AudioManager) {
+            if (typeof AudioManager.stopCityTheme === 'function') AudioManager.stopCityTheme();
+            if (AudioManager.currentMusic) {
+                AudioManager.currentMusic.pause();
+                AudioManager.currentMusic.currentTime = 0;
+                AudioManager.currentMusic = null;
+            }
+        }
+        // 4) все <audio> в DOM родителя
+        document.querySelectorAll('audio').forEach(function(a){
+            try { a.pause(); a.currentTime = 0; } catch(e){}
+        });
+    } catch(e){}
+
+    // === ЗАПУСКАЕМ МУЗЫКУ ПОДЗЕМКИ ===
+    if (!Sherwood.Dungeon._music) {
+        Sherwood.Dungeon._music = new Audio('assets/assets2/music/dungeon_3.ogg');
+        Sherwood.Dungeon._music.loop = true;
+        Sherwood.Dungeon._music.volume = 0.4;
+    }
+    try {
+        Sherwood.Dungeon._music.currentTime = 0;
+        Sherwood.Dungeon._music.play().catch(function(){});
+    } catch(e){}
+
+    // === СТРАЖ: каждые 200 мс глушим чужую музыку, кроме музыки подземки ===
+    if (Sherwood.Dungeon._guard) clearInterval(Sherwood.Dungeon._guard);
+    Sherwood.Dungeon._guard = setInterval(function(){
+        try {
+            if (UI._currentMusic && !UI._currentMusic.paused) UI._currentMusic.pause();
+            if (window.AudioManager && AudioManager.currentMusic && !AudioManager.currentMusic.paused) {
+                AudioManager.currentMusic.pause();
+            }
+            document.querySelectorAll('audio').forEach(function(a){
+                if (a === Sherwood.Dungeon._music) return; // свою не трогаем
+                if (!a.paused) { try { a.pause(); } catch(e){} }
+            });
+        } catch(e){}
+    }, 200);
+
+    if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
+        Sherwood.Dungeon2D5.render();
+    } else {
+        UI._showToast('⚠️ 3D подземка недоступна');
+    }
+},
 
     showUI: function() {
         if (typeof UI === 'undefined') return;
