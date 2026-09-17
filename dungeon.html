@@ -28,10 +28,8 @@
     #target.on { opacity: 1; animation: pulse .8s infinite alternate; }
     @keyframes pulse { from { transform: scale(1);} to { transform: scale(1.15);} }
 
-    #mob-hp {
-        position: absolute; width: 300px; height: 200px; z-index: 50;
-        transform: translate(-50%, -50%); display: none; pointer-events: none;
-    }
+    #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50;
+        transform: translate(-50%, -50%); display: none; pointer-events: none; }
     #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
     #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
     #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
@@ -98,7 +96,7 @@
 <div id="vignette"></div>
 <div id="scanlines"></div>
 
-<button onclick="dungeonMusic.pause(); parent.UI.dungeon()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
+<button onclick="dungeonMusic.pause(); if(parent && parent.UI) parent.UI.dungeon()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
 
 <script type="importmap">
     { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
@@ -107,7 +105,7 @@
 <script type="module">
 import * as THREE from 'three';
 
-// ===== ЗВУКИ (как у тебя) =====
+// ===== ЗВУКИ — ТОЛЬКО DUNGEON, БЕЗ МЕНЮ =====
 var soundHit = new Audio('assets/assets2/tune/hit.wav');
 var soundVictory = new Audio('assets/assets2/tune/victory.wav');
 var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -115,7 +113,41 @@ var soundSteps = new Audio('assets/assets2/tune/steps.wav');
 var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
 dungeonMusic.loop = true;
 dungeonMusic.volume = 0.4;
-setTimeout(function() { dungeonMusic.play().catch(function() {}); }, 500);
+
+// Останавливаем любую музыку меню/родителя, если она играет
+function stopMenuMusic() {
+    try {
+        if (parent && parent.document) {
+            var audios = parent.document.querySelectorAll('audio');
+            audios.forEach(function(a){ try { a.pause(); a.currentTime = 0; } catch(e){} });
+        }
+        // глобальные ссылки из родителя, если они есть
+        if (parent && parent.menuMusic) { try { parent.menuMusic.pause(); } catch(e){} }
+        if (parent && parent.backgroundMusic) { try { parent.backgroundMusic.pause(); } catch(e){} }
+        if (window.menuMusic) { try { window.menuMusic.pause(); } catch(e){} }
+        if (window.backgroundMusic) { try { window.backgroundMusic.pause(); } catch(e){} }
+    } catch(e) {}
+}
+stopMenuMusic();
+
+// запускаем музыку подземки
+var musicStarted = false;
+function startDungeonMusic() {
+    if (musicStarted) return;
+    musicStarted = true;
+    stopMenuMusic();
+    dungeonMusic.play().catch(function(){});
+}
+setTimeout(startDungeonMusic, 300);
+// повторная попытка после первого клика/тапа (политики браузера)
+document.addEventListener('click', function once(){
+    startDungeonMusic();
+    document.removeEventListener('click', once);
+}, { once: false });
+document.addEventListener('touchstart', function once2(){
+    startDungeonMusic();
+    document.removeEventListener('touchstart', once2);
+}, { once: false });
 
 function playSound(audio) {
     try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {}
@@ -132,7 +164,6 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0805);
 scene.fog = new THREE.Fog(0x0a0805, 10, 24);
 
-// Камера D1-style: сверху с наклоном, узкий угол
 const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 60);
 camera.rotation.order = 'YXZ';
 
@@ -147,12 +178,11 @@ scene.add(ambient);
 const hemi = new THREE.HemisphereLight(0x1a1008, 0x000000, 0.25);
 scene.add(hemi);
 
-// ===== КАРТА: комнаты + коридоры + двери =====
+// ===== КАРТА =====
 const size = 33;
 const wallHeight = 1.1;
 const cellSize = 1;
 
-// 0=пол, 1=стена, 2=закрытая дверь, 3=открытая дверь
 const map = [];
 for (let i = 0; i < size; i++) {
     map[i] = [];
@@ -208,7 +238,7 @@ function generateDungeon() {
 }
 generateDungeon();
 
-// Двери — одна на проём, между дверями минимум 4 клетки
+// ===== ДВЕРИ =====
 function isWallCell(x, y) {
     if (x < 0 || y < 0 || x >= size || y >= size) return true;
     return map[y][x] === 1;
@@ -229,7 +259,6 @@ function floorHeightY(x, y) {
     for (let i = 1; i < 6; i++) { if (isFloorCell(x, y + i)) h++; else break; }
     return h;
 }
-
 function placeDoors() {
     const candidates = [];
     for (let y = 1; y < size - 1; y++) {
@@ -238,13 +267,9 @@ function placeDoors() {
             const wL = isWallCell(x - 1, y), wR = isWallCell(x + 1, y);
             const wU = isWallCell(x, y - 1), wD = isWallCell(x, y + 1);
             if (wL && wR && !wU && !wD) {
-                const widthAbove = floorWidthX(x, y - 1);
-                const widthBelow = floorWidthX(x, y + 1);
-                if (widthAbove >= 3 || widthBelow >= 3) candidates.push({ x, y });
+                if (floorWidthX(x, y - 1) >= 3 || floorWidthX(x, y + 1) >= 3) candidates.push({ x, y });
             } else if (wU && wD && !wL && !wR) {
-                const heightLeft = floorHeightY(x - 1, y);
-                const heightRight = floorHeightY(x + 1, y);
-                if (heightLeft >= 3 || heightRight >= 3) candidates.push({ x, y });
+                if (floorHeightY(x - 1, y) >= 3 || floorHeightY(x + 1, y) >= 3) candidates.push({ x, y });
             }
         }
     }
@@ -265,6 +290,7 @@ placeDoors();
 // ===== ТЕКСТУРЫ (твои) =====
 const wallTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
 const floorTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
+// ВАЖНО: потолок — отдельная текстура, НЕ стена
 const ceilTexture = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_area_1.png');
 const doorTexture = new THREE.TextureLoader().load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
 
@@ -324,7 +350,7 @@ for (let row = 0; row < size; row++) {
     }
 }
 
-// ===== ФАКТЕЛЫ (твоя логика) =====
+// ===== ФАКТЕЛЫ =====
 for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
         if (map[row][col] === 0 && row % 3 === 0 && col % 3 === 0) {
@@ -343,7 +369,7 @@ for (let row = 0; row < size; row++) {
     }
 }
 
-// ===== ОБЪЕКТЫ (как у тебя) =====
+// ===== ОБЪЕКТЫ (увеличенные, кликабельные) =====
 var objectTypes = [
     { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
     { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -375,7 +401,7 @@ for (var t = 0; t < objectTypes.length; t++) {
     var typeDef = objectTypes[t];
     for (var i = 0; i < typeDef.count; i++) {
         var pos = getRandomFreeCell();
-        objects.push({ type: typeDef.type, x: pos.x, y: pos.y, img: typeDef.img, collected: false });
+        objects.push({ type: typeDef.type, x: pos.x, y: pos.y, img: typeDef.img, collected: false, hp: 1 });
     }
 }
 
@@ -387,12 +413,15 @@ for (var i = 0; i < objects.length; i++) {
     var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load(obj.img), transparent: true }));
     sprite.position.set(x, 0.1, z);
     if (obj.type === 'enemy') {
-        sprite.scale.set(0.8, 0.8, 1);
-        sprite.position.y = 0.65;
+        // ВРАГ КРУПНЕЕ И ВЫШЕ
+        sprite.scale.set(1.3, 1.3, 1);
+        sprite.position.y = 0.85;
     } else {
-        sprite.scale.set(0.25, 0.25, 1);
+        // ПРЕДМЕТЫ КРУПНЕЕ
+        sprite.scale.set(0.55, 0.55, 1);
+        sprite.position.y = 0.35;
     }
-    sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false };
+    sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, collected: false, objRef: obj };
     group.add(sprite);
     obj.mesh = sprite;
 }
@@ -426,9 +455,8 @@ const startRoom = rooms[0] || { cx: 1, cy: 1 };
 let playerGX = startRoom.cx;
 let playerGY = startRoom.cy;
 const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
-let playerYaw = 0; // 0 = смотрит на -Z
+let playerYaw = 0;
 
-// маркер направления
 const facingMarker = new THREE.Mesh(
     new THREE.ConeGeometry(0.16, 0.36, 4),
     new THREE.MeshBasicMaterial({ color: 0xc8a050 })
@@ -436,7 +464,6 @@ const facingMarker = new THREE.Mesh(
 facingMarker.rotation.x = Math.PI / 2;
 group.add(facingMarker);
 
-// "герой" — небольшой цилиндр
 const hero = new THREE.Mesh(
     new THREE.CylinderGeometry(0.22, 0.26, 0.35, 10),
     new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 })
@@ -448,7 +475,7 @@ const heroGlow = new THREE.PointLight(0xffb060, 0.55, 5, 2);
 heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
 scene.add(heroGlow);
 
-// ===== ДВИЖЕНИЕ (непрерывное, по клику) =====
+// ===== ДВИЖЕНИЕ =====
 const MOVE_SPEED = 1.6;
 const TURN_SPEED = 8.0;
 
@@ -524,7 +551,6 @@ function openDoor(gx, gy) {
     if (d && !d.open) { d.open = true; d.t = 0; }
     return true;
 }
-
 function findNearestWalkable(gx, gy, maxR = 4) {
     if (isWalkable(gx, gy)) return { gx, gy };
     for (let r = 1; r <= maxR; r++) {
@@ -545,7 +571,6 @@ const ndc = new THREE.Vector2();
 const targetEl = document.getElementById('target');
 
 renderer.domElement.addEventListener('click', (e) => {
-    // Клик по джойстику не должен попадать в канвас — но джойстик поверх, так что ок
     ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
     ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(ndc, camera);
@@ -556,6 +581,7 @@ renderer.domElement.addEventListener('click', (e) => {
         const ud = doorHits[0].object.userData;
         if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
     }
+
     // 2) клик по выходной стене
     const exitHits = raycaster.intersectObject(exitWall, false);
     if (exitHits.length) {
@@ -566,13 +592,56 @@ renderer.domElement.addEventListener('click', (e) => {
         }
         return;
     }
-    // 3) клик по полу
+
+    // 3) клик по объектам (спрайты мобов/лута) — приоритетно перед полом
+    const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
+    const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
+    if (spriteHits.length) {
+        const hit = spriteHits[0].object;
+        const ud = hit.userData;
+        if (ud) {
+            // враг — идём к нему, бой стартует по подходу
+            if (ud.type === 'enemy') {
+                const cur = worldToGrid(playerPos.x, playerPos.z);
+                const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
+                if (path.length > 1) {
+                    waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+                    moving = true;
+                    targetEl.style.left = e.clientX + 'px';
+                    targetEl.style.top = e.clientY + 'px';
+                    targetEl.classList.add('on');
+                }
+                return;
+            }
+            // лут — подбираем сразу (если близко), иначе идём
+            if (LOOT_TYPES.indexOf(ud.type) !== -1) {
+                const cur = worldToGrid(playerPos.x, playerPos.z);
+                const dist = Math.abs(cur.gx - ud.gridX) + Math.abs(cur.gy - ud.gridY);
+                if (dist <= 1) {
+                    pickUpLoot(ud.objRef);
+                } else {
+                    const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
+                    if (path.length > 1) {
+                        waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+                        moving = true;
+                        targetEl.style.left = e.clientX + 'px';
+                        targetEl.style.top = e.clientY + 'px';
+                        targetEl.classList.add('on');
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    // 4) клик по полу
     const floorHits = raycaster.intersectObjects(floorMeshes, false);
     if (floorHits.length) {
         const cell = floorHits[0].object.userData;
         if (cell.walkable) { goTo(cell.gridX, cell.gridY, e.clientX, e.clientY); return; }
     }
-    // 4) клик по стене — ближайший пол
+
+    // 5) клик по стене — ближайший пол
     const wallHits = raycaster.intersectObjects(wallMeshes, false);
     if (wallHits.length) {
         const cell = wallHits[0].object.userData;
@@ -597,7 +666,7 @@ function goTo(gridX, gridY, clientX, clientY) {
     }
 }
 
-// ===== ДЖОЙСТИК (твоя логика: пошаговый поворот + шаг) =====
+// ===== ДЖОЙСТИК =====
 function tryTurn(deltaYaw) {
     if (moving || manualTurn) return;
     manualTurn = { fromYaw: playerYaw, toYaw: playerYaw + deltaYaw, t: 0 };
@@ -629,7 +698,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ===== БОЙ (как у тебя) =====
+// ===== БОЙ =====
 var currentEnemySprite = null;
 var currentEnemyStats = null;
 var currentEnemyObj = null;
@@ -665,30 +734,20 @@ function updateHeroSpheres() {
 setTimeout(updateHeroSpheres, 500);
 
 function checkObjects() {
-    var playerPos = camera.position;
     var enemiesLeft = 0;
     var nearestLoot = null;
     var nearestDist = 999;
 
     objects.forEach(function(obj) {
-        if (!obj.collected) {
+        if (!obj.collected && obj.type !== 'enemy') {
             var dx = playerPos.x - (obj.x - Math.floor(size / 2));
             var dz = playerPos.z - (obj.y - Math.floor(size / 2));
             var dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist < 0.7) {
-                if (obj.type === 'enemy') {
-                    startBattle(obj);
-                    obj.collected = true;
-                    group.remove(obj.mesh);
-                    return;
-                }
-                if (LOOT_TYPES.indexOf(obj.type) !== -1 && dist < nearestDist) {
-                    nearestDist = dist;
-                    nearestLoot = obj;
-                }
+            if (dist < 0.9 && LOOT_TYPES.indexOf(obj.type) !== -1) {
+                if (dist < nearestDist) { nearestDist = dist; nearestLoot = obj; }
             }
-            if (obj.type === 'enemy') enemiesLeft++;
         }
+        if (!obj.collected && obj.type === 'enemy') enemiesLeft++;
     });
 
     if (nearestLoot && !isBattleActive) {
@@ -743,11 +802,15 @@ function pickUpLoot(obj) {
 }
 
 function startBattle(obj) {
+    if (isBattleActive) return;
     isBattleActive = true;
     currentEnemySprite = obj.mesh;
     currentEnemyObj = obj;
     currentEnemyStats = { hp: 1000 + Math.floor(Math.random() * 1000), maxHp: 0 };
     currentEnemyStats.maxHp = currentEnemyStats.hp;
+
+    // останавливаем движение игрока — встаём в бой
+    waypoints = []; moving = false; targetEl.classList.remove('on');
 
     document.getElementById('mob-hp').style.display = 'block';
     document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
@@ -786,12 +849,17 @@ function stopBattle() {
 function onEnemyKilled() {
     if (!isBattleActive) return;
     playSound(soundVictory);
-    dungeonMusic.pause();
-    dungeonMusic.currentTime = 0;
     isBattleActive = false;
+    if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
     document.getElementById('mob-hp').style.display = 'none';
-    if (currentEnemySprite) group.remove(currentEnemySprite);
-    setTimeout(function() { showVictoryScreen(); }, 800);
+    if (currentEnemyObj) {
+        currentEnemyObj.collected = true;
+        if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
+    }
+    currentEnemySprite = null;
+    currentEnemyStats = null;
+    currentEnemyObj = null;
+    checkObjects();
 }
 
 function attackEnemy() {
@@ -874,7 +942,6 @@ function attackEnemy() {
 
     if (p.stats.hp <= 0) {
         playSound(soundDefeat);
-        dungeonMusic.pause();
         stopBattle();
         showDefeatScreen();
     }
@@ -892,10 +959,12 @@ function updateMobHpBar() {
 }
 
 function showDefeatScreen() {
+    if (!parent.document) return;
     parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_defeat.png\') center/100% 100% no-repeat;"></div>';
     setTimeout(function() { parent.UI.loadHome(); }, 1500);
 }
 function showVictoryScreen() {
+    if (!parent.document) return;
     parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_victory.png\') center/100% 100% no-repeat;"></div>';
     setTimeout(function() { parent.UI.loadHome(); }, 1500);
 }
@@ -905,7 +974,7 @@ document.getElementById('attack-icon').addEventListener('click', function() {
     attackEnemy();
 });
 
-// ===== СКИЛЛЫ И ТАЛАНТЫ (как у тебя) =====
+// ===== СКИЛЛЫ И ТАЛАНТЫ =====
 var talentData = {
     'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
     'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
@@ -1056,7 +1125,7 @@ function useSkill(skillId) {
     }
 }
 
-// ===== КАМЕРА (D1-style, мёртвая зона) =====
+// ===== КАМЕРА =====
 const CAM_HEIGHT = 11.5;
 const CAM_TILT = 0.75;
 const CAM_DEADZONE = 2.0;
@@ -1099,6 +1168,48 @@ function updateCamera(dt) {
 
     camera.position.copy(camPosSmooth);
     camera.lookAt(camLookSmooth);
+}
+
+// ===== AI ВРАГОВ (не стоят на месте) =====
+const ENEMY_SPEED = 1.1;          // чуть медленнее игрока
+const ENEMY_AGGRO_RANGE = 6.0;    // видят игрока в радиусе 6 клеток
+const ENEMY_STOP_DIST = 0.7;      // останавливаются и атакуют на этом расстоянии
+
+function updateEnemies(dt) {
+    if (isBattleActive) return; // в бою мобы не двигаются
+    objects.forEach(function(obj) {
+        if (obj.collected || obj.type !== 'enemy' || !obj.mesh) return;
+        if (obj.attacking) return;
+
+        var ex = obj.x - Math.floor(size / 2);
+        var ez = obj.y - Math.floor(size / 2);
+        var dxp = playerPos.x - ex;
+        var dzp = playerPos.z - ez;
+        var distToPlayer = Math.hypot(dxp, dzp);
+
+        if (distToPlayer > ENEMY_AGGRO_RANGE) return;
+
+        // если уже близко — начинаем бой
+        if (distToPlayer < ENEMY_STOP_DIST) {
+            obj.attacking = true;
+            startBattle(obj);
+            return;
+        }
+
+        // идём к игроку по прямой (простенько), с проверкой проходимости
+        var step = ENEMY_SPEED * dt;
+        var nx = ex + (dxp / distToPlayer) * step;
+        var nz = ez + (dzp / distToPlayer) * step;
+
+        // проверяем целевую клетку
+        var gx = Math.round(nx + Math.floor(size / 2));
+        var gy = Math.round(nz + Math.floor(size / 2));
+        if (isWalkable(gx, gy)) {
+            obj.x = gx;
+            obj.y = gy;
+            obj.mesh.position.set(gx - Math.floor(size / 2), obj.mesh.position.y, gy - Math.floor(size / 2));
+        }
+    });
 }
 
 function syncPlayerGrid() {
@@ -1145,7 +1256,6 @@ function animate() {
         if (!waypoints.length) {
             moving = false;
             targetEl.classList.remove('on');
-            // проверяем объекты после остановки
             checkObjects();
         }
         let lookX = playerPos.x, lookZ = playerPos.z;
@@ -1161,6 +1271,9 @@ function animate() {
             playerYaw += Math.max(-maxStep, Math.min(maxStep, dy));
         }
     }
+
+    // AI врагов
+    updateEnemies(dt);
 
     syncPlayerGrid();
 
@@ -1188,7 +1301,6 @@ function animate() {
 }
 animate();
 
-// Первичная проверка объектов
 setTimeout(checkObjects, 800);
 
 window.addEventListener('resize', () => {
