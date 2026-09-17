@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Шервудская чащоба - PS2 Style</title>
+    <title>Проклятая чаща</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
         canvas { display: block; background: #000; touch-action: none; cursor: crosshair; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
-        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 0 10px #8b6b3a; letter-spacing: 2px; }
+        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 16px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 6px 18px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 0 10px #8b6b3a; letter-spacing: 2px; }
 
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
 
@@ -33,7 +33,6 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-        /* Контейнер для всплывающих иконок лута */
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
@@ -103,7 +102,94 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // ===== ЗВУКИ =====
+        // ============================================================
+        //  ЧИТАЕМ ПАРАМЕТРЫ ИЗ URL
+        // ============================================================
+        var urlParams = new URLSearchParams(window.location.search);
+        var currentDungeon = parseInt(urlParams.get('dungeon') || '1');
+        var currentFloor = parseInt(urlParams.get('floor') || '1');
+        var currentDiff = parseInt(urlParams.get('diff') || '1');
+        if (currentFloor < 1 || currentFloor > 6) currentFloor = 1;
+        if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
+
+        document.getElementById('info').textContent = 'Проклятая чаща — Этаж ' + currentFloor + ' (' + currentDiff + '/3)';
+
+        // ============================================================
+        //  ПУЛЫ ВРАГОВ ПО ЭТАЖАМ 1-Й ПОДЗЕМКИ
+        //  Обычные (5) + босс (1)
+        // ============================================================
+        var ENEMY_POOLS = {
+            1: {
+                normal: [
+                    'plague_crow.png',          // Чумной Ворон
+                    'bone_vulture.png',         // Костяной Стервятник
+                    'executioner_crow.png',     // Ворон-Палач
+                    'plague_pixie.png',         // Чумная Пикси
+                    'putrid_sprite.png'         // Гнилостный Спрайт
+                ],
+                boss: 'forest_strangler.png'    // Лесной Душегуб
+            },
+            2: {
+                normal: [
+                    'warped_imp.png',           // Искажённый Бес
+                    'bristle_boar.png',         // Шипастый Секач
+                    'quill_beast.png',          // Кристальный Иглобрюх
+                    'grave_borer.png',          // Личинка Короеда
+                    'acid_devourer.png'         // Кислотный Короед-Пожиратель
+                ],
+                boss: 'shard_back.png'          // Шервудский Дикобраз
+            },
+            3: {
+                normal: [
+                    'bone_borer.png',           // Костяной Короед-Трупоед
+                    'bark_beetle.png',          // Жук-Короед
+                    'blight_beetle_warden.png', // Чумной Короед-Страж
+                    'armored_beetle.png',       // Бронированный Короед
+                    'blighted_werewolf.png'     // Осквернённый Оборотень
+                ],
+                boss: 'blight_lord_beetle.png'  // Повелитель Гнили
+            },
+            4: {
+                normal: [
+                    'blight_alpha.png',         // Альфа-Скверноискатель
+                    'yew_blight_wolf.png',      // Волк Тисовой Скверны
+                    'swamp_slugmouth.png',      // Болотный Слизнерот
+                    'swamp_gorgymouth.png',     // Скверножаб
+                    'swamp_drowner.png'         // Болотный Утопленник
+                ],
+                boss: 'bog_brute.png'           // Торфяной Труп
+            },
+            5: {
+                normal: [
+                    'blighted_oak_golem.png',   // Голем Скверного Дуба
+                    'oak_golem.png',            // Голем Дуба
+                    'twigtangle.png',           // Хворост
+                    'woodland_terror.png',      // Древесный Ужас
+                    'leshy.png'                 // Леший
+                ],
+                boss: 'root_executioner.png'    // Корневой Палач
+            },
+            6: {
+                normal: [
+                    'leshy_servant.png',        // Слуга Лешего
+                    'spectral_stag.png',        // Призрачный Олень
+                    'forest_blight_cyclops.png',// Лесное Лихо
+                    'blight_troglodyte.png',    // Лихо-Троглодит
+                    'blight_oozemouth.png'      // Слизнерот-Громила
+                ],
+                boss: 'blight_lord_leshy.png'   // Древний Владыка
+            }
+        };
+
+        var currentPool = ENEMY_POOLS[currentFloor] || ENEMY_POOLS[1];
+
+        // Множители сложности
+        var DIFF_MULT = { 1: 1.0, 2: 1.5, 3: 2.5 };
+        var mult = DIFF_MULT[currentDiff] || 1.0;
+
+        // ============================================================
+        //  ЗВУКИ
+        // ============================================================
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -153,11 +239,15 @@
         function exitDungeon() {
             stopSteps();
             try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){}
-            try { if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon(); } catch(e) {}
+            try {
+                if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+            } catch(e) {}
         }
         window.exitDungeon = exitDungeon;
 
-        // ===== СЦЕНА =====
+        // ============================================================
+        //  СЦЕНА
+        // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
         scene.fog = new THREE.Fog(0x0a0805, 4, 12);
@@ -174,7 +264,9 @@
         scene.add(new THREE.AmbientLight(0x554433, 0.9));
         scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
-        // ===== КАРТА — backtracker-лабиринт =====
+        // ============================================================
+        //  КАРТА — backtracker-лабиринт
+        // ============================================================
         const size = 31;
         const wallHeight = 1.4;
         const cellSize = 1;
@@ -217,14 +309,12 @@
         }
         generateMaze();
 
-        // ===== ДВЕРИ =====
+        // ============================================================
+        //  ДВЕРИ
+        // ============================================================
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
             return map[y][x] === 1;
-        }
-        function isFloorCell(x, y) {
-            if (x < 0 || y < 0 || x >= size || y >= size) return false;
-            return map[y][x] === 0 || map[y][x] === 2 || map[y][x] === 3;
         }
         function placeDoors() {
             const candidates = [];
@@ -251,7 +341,9 @@
         }
         placeDoors();
 
-        // ===== ТЕКСТУРЫ =====
+        // ============================================================
+        //  ТЕКСТУРЫ
+        // ============================================================
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
         const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
@@ -259,6 +351,8 @@
         const doorTexture  = loader.load('assets/interface/labyrinth_asset.png');
         const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
         const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
+        const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
+        const openDoorTex  = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
 
         const wallMat  = new THREE.MeshStandardMaterial({ map: wallTexture,  roughness: 0.85, metalness: 0.05 });
         const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95, metalness: 0.0 });
@@ -316,7 +410,9 @@
             }
         }
 
-        // ===== ИГРОК =====
+        // ============================================================
+        //  ИГРОК
+        // ============================================================
         const playerStart = { cx: 1, cy: 1 };
         let playerGX = playerStart.cx;
         let playerGY = playerStart.cy;
@@ -327,22 +423,9 @@
         heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
         scene.add(heroGlow);
 
-        // ===== ПУЛ ВРАГОВ — 1-Й ЭТАЖ ПОДЗЕМКИ 1 =====
-        // Лес / гниль / птицы / пикси
-        var ENEMY_POOL = [
-            'plague_crow.png',           // Чумной Ворон
-            'bone_vulture.png',          // Костяной Стервятник
-            'executioner_crow.png',      // Ворон-Палач
-            'forest_strangler.png',      // Лесной Душегуб (босс)
-            'plague_pixie.png',          // Чумная Пикси
-            'putrid_sprite.png',         // Гнилостный Спрайт
-            'bark_beetle.png',           // Жук-Короед (на всякий, есть в пуле)
-            'blight_fox.png',
-            'warped_imp.png',
-            'twigtangle.png'
-        ];
-
-        // ===== ОБЪЕКТЫ =====
+        // ============================================================
+        //  ОБЪЕКТЫ
+        // ============================================================
         var objectTypes = [
             { type: 'enemy', count: 15 },
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -372,20 +455,49 @@
             return { x: 1, y: 1 };
         }
 
+        // Готовим список врагов: 1 босс + 14 обычных из пула
+        var enemyImgList = [];
+        enemyImgList.push('assets/assets2/mobs/dungeon_mobs/' + currentPool.boss);
+        for (var ei = 0; ei < 14; ei++) {
+            var enName = currentPool.normal[Math.floor(Math.random() * currentPool.normal.length)];
+            enemyImgList.push('assets/assets2/mobs/dungeon_mobs/' + enName);
+        }
+        // Перемешаем, чтобы босс не всегда был первым
+        enemyImgList.sort(function() { return Math.random() - 0.5; });
+
+        var enemyIndex = 0;
+
         for (var t = 0; t < objectTypes.length; t++) {
             var typeDef = objectTypes[t];
             for (var i = 0; i < typeDef.count; i++) {
                 var pos = getRandomFreeCell();
                 var imgPath = typeDef.img;
+                var isBoss = false;
+
                 if (typeDef.type === 'enemy') {
-                    // Случайный враг из пула
-                    var enName = ENEMY_POOL[Math.floor(Math.random() * ENEMY_POOL.length)];
-                    imgPath = 'assets/assets2/mobs/dungeon_mobs/' + enName;
+                    imgPath = enemyImgList[enemyIndex];
+                    if (imgPath.indexOf(currentPool.boss) !== -1) isBoss = true;
+                    enemyIndex++;
                 }
+
+                var baseHp = 1000 + Math.floor(Math.random() * 500);
+                var baseAtk = 50 + Math.floor(Math.random() * 20);
+                var baseDef = 10 + Math.floor(Math.random() * 10);
+
+                if (isBoss) {
+                    baseHp *= 3;
+                    baseAtk *= 2;
+                    baseDef *= 2;
+                }
+
                 objects.push({
                     type: typeDef.type, x: pos.x, y: pos.y,
                     img: imgPath, collected: false, attacking: false, stepTimer: 0,
-                    hp: 0, maxHp: 0,
+                    hp: Math.floor(baseHp * mult),
+                    maxHp: Math.floor(baseHp * mult),
+                    atk: Math.floor(baseAtk * mult),
+                    def: Math.floor(baseDef * mult),
+                    isBoss: isBoss,
                     fleeTimer: 0, fleeCooldown: 0,
                     _chasing: false,
                     used: false
@@ -401,10 +513,9 @@
             var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
             sprite.position.set(x, 0.1, z);
             if (obj.type === 'enemy') {
-                sprite.scale.set(1.3, 1.3, 1);
+                var scale = obj.isBoss ? 1.8 : 1.3;
+                sprite.scale.set(scale, scale, 1);
                 sprite.position.y = 0.55;
-                obj.hp = 1000 + Math.floor(Math.random() * 1000);
-                obj.maxHp = obj.hp;
             } else {
                 sprite.scale.set(0.55, 0.55, 1);
                 sprite.position.y = 0.35;
@@ -414,7 +525,53 @@
             obj.mesh = sprite;
         }
 
-        // ===== МЕШКИ С ЛУТОМ =====
+        // ============================================================
+        //  ДВЕРЬ-ВЫХОД с замком
+        // ============================================================
+        var exitCell = { gx: size - 2, gy: size - 2 };
+        var exitW = gridToWorld(exitCell.gx, exitCell.gy);
+
+        // Сама дверь (та же, что и обычная дверь)
+        var exitDoorMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(cellSize, wallHeight),
+            new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide })
+        );
+        exitDoorMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
+        exitDoorMesh.userData = { isExitDoor: true };
+        group.add(exitDoorMesh);
+
+        // Замок поверх двери (пока враги живы)
+        var exitLockMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: closedLockTex, transparent: true, depthTest: false }));
+        exitLockMesh.scale.set(0.9, 0.9, 1);
+        exitLockMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
+        exitLockMesh.userData = { isExitLock: true };
+        group.add(exitLockMesh);
+
+        // Открытая дверь (когда все убиты)
+        var exitOpenMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: openDoorTex, transparent: true, depthTest: false }));
+        exitOpenMesh.scale.set(1.2, 1.2, 1);
+        exitOpenMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
+        exitOpenMesh.userData = { isExitOpen: true };
+        exitOpenMesh.visible = false;
+        group.add(exitOpenMesh);
+
+        var exitIsOpen = false;
+
+        function checkExitDoor() {
+            var enemiesLeft = 0;
+            for (var i = 0; i < objects.length; i++) {
+                if (!objects[i].collected && objects[i].type === 'enemy') enemiesLeft++;
+            }
+            if (enemiesLeft === 0 && !exitIsOpen) {
+                exitIsOpen = true;
+                exitLockMesh.visible = false;
+                exitOpenMesh.visible = true;
+            }
+        }
+
+        // ============================================================
+        //  МЕШКИ С ЛУТОМ
+        // ============================================================
         var lootBags = [];
 
         function spawnLootBag(gx, gy) {
@@ -429,7 +586,9 @@
             lootBags.push(bag);
         }
 
-        // ===== ВСПЛЫВАЮЩИЕ ИКОНКИ ЛУТА =====
+        // ============================================================
+        //  ИКОНКИ ЛУТА
+        // ============================================================
         function showLootIcons(items) {
             var layer = document.getElementById('loot-fly-layer');
             if (!layer) return;
@@ -442,13 +601,11 @@
                 img.src = it.icon;
                 img.style.cssText = 'position:absolute;top:50%;left:50%;width:64px;height:64px;object-fit:contain;transform:translate(-50%,-50%) scale(0.5);opacity:0;transition:all 0.6s cubic-bezier(.2,.7,.3,1);filter:drop-shadow(0 0 12px #ffd700);pointer-events:none;';
                 layer.appendChild(img);
-                // Анимация
                 requestAnimationFrame(function() {
                     img.style.opacity = '1';
                     img.style.transform = 'translate(-50%,-120%) scale(1.2)';
                 });
-                // Количество
-                if (it.qty && it.qty > 1) {
+                if (it.qty && it.qty > 1 && it.qty !== 'MAX') {
                     var qtyEl = document.createElement('div');
                     qtyEl.textContent = '×' + it.qty;
                     qtyEl.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);color:#fff;font-size:18px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;pointer-events:none;transition:all 0.6s;';
@@ -464,7 +621,6 @@
                     img.style.transform = 'translate(-50%,-160%) scale(0.7)';
                 }, 700);
                 setTimeout(function() { img.remove(); }, 1400);
-                // Следующая иконка через 400мс
                 setTimeout(next, 400);
             }
             next();
@@ -507,7 +663,6 @@
                 }
             }
 
-            // Иконки всплывают
             var icons = [];
             icons.push({ icon: 'assets/interface/resource_gold.png', qty: gold });
             icons.push({ icon: 'assets/interface/resource_silver.png', qty: silver });
@@ -524,7 +679,9 @@
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
         }
 
-        // ===== КРОВЬ / ВЫХОД =====
+        // ============================================================
+        //  КРОВЬ
+        // ============================================================
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
             'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
@@ -539,18 +696,11 @@
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
 
-        var exitWall = new THREE.Mesh(
-            new THREE.BoxGeometry(1, wallHeight, 1),
-            new THREE.MeshStandardMaterial({ map: loader.load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
-        );
-        exitWall.position.set(size - 2 - Math.floor(size / 2), wallHeight / 2, size - 2 - Math.floor(size / 2));
-        exitWall.userData = { exit: true, locked: true };
-        group.add(exitWall);
-
-        // ===== ДВИЖЕНИЕ =====
+        // ============================================================
+        //  ДВИЖЕНИЕ
+        // ============================================================
         const MOVE_SPEED = 2.0;
-        const TURN_SPEED = 8.0;
-        const rotationSpeed = Math.PI / 2;   // 90°
+        const rotationSpeed = Math.PI / 2;
 
         let waypoints = [];
         let moving = false;
@@ -580,7 +730,6 @@
             if (dx !== 0 && dy !== 0) {
                 if (!isWalkable(fromGX + dx, fromGY)) return false;
                 if (!isWalkable(fromGX, fromGY + dy)) return false;
-                if (isEnemyAt(fromGX + dx, fromGY) || isEnemyAt(fromGX, fromGY + dy)) return false;
             }
             return true;
         }
@@ -609,7 +758,6 @@
             }
         }
 
-        // ===== BFS БЕЗ ДИАГОНАЛЕЙ =====
         function buildPath(startGX, startGY, goalGX, goalGY) {
             if (!isWalkable(goalGX, goalGY)) return [];
             const key = (x, y) => y * size + x;
@@ -665,7 +813,6 @@
             return null;
         }
 
-        // ===== ПОВОРОТЫ 90° (без авторазворота на врага) =====
         function animateTurn(targetYaw, duration) {
             if (isTurning) return;
             duration = duration || 400;
@@ -741,7 +888,9 @@
             }
         });
 
-        // ===== КЛИК =====
+        // ============================================================
+        //  КЛИК
+        // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
@@ -758,22 +907,26 @@
                 return;
             }
 
+            // Дверь-выход
+            var exitHits = raycaster.intersectObjects([exitDoorMesh, exitLockMesh, exitOpenMesh], false);
+            if (exitHits.length) {
+                if (exitIsOpen) {
+                    // ПОБЕДА!
+                    winDungeon();
+                } else {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Дверь закрыта! Убей всех врагов.');
+                }
+                return;
+            }
+
+            // Обычные двери
             const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
             if (doorHits.length) {
                 const ud = doorHits[0].object.userData;
                 if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
             }
 
-            const exitHits = raycaster.intersectObject(exitWall, false);
-            if (exitHits.length) {
-                if (exitWall.userData.locked) {
-                    if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Выход закрыт!');
-                } else {
-                    if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Выход открыт!');
-                }
-                return;
-            }
-
+            // Мешки с лутом
             const bagMeshes = lootBags.map(b => b.mesh);
             const bagHits = raycaster.intersectObjects(bagMeshes, false);
             if (bagHits.length) {
@@ -795,6 +948,7 @@
                 }
             }
 
+            // Враги/лут сцены
             const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
             if (spriteHits.length) {
@@ -824,12 +978,14 @@
                 }
             }
 
+            // Пол
             const floorHits = raycaster.intersectObjects(floorMeshes, false);
             if (floorHits.length) {
                 const cell = floorHits[0].object.userData;
                 if (cell.walkable) { goTo(cell.gridX, cell.gridY); return; }
             }
 
+            // Стены
             const wallHits = raycaster.intersectObjects(wallMeshes, false);
             if (wallHits.length) {
                 const cell = wallHits[0].object.userData;
@@ -847,7 +1003,9 @@
             startSteps();
         }
 
-        // ===== КНОПКА ЛУТА =====
+        // ============================================================
+        //  КНОПКА ЛУТА
+        // ============================================================
         function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img');
             if (!iconImg) return;
@@ -889,7 +1047,9 @@
             }
         });
 
-        // ===== БОЙ =====
+        // ============================================================
+        //  БОЙ
+        // ============================================================
         var currentEnemySprite = null;
         var currentEnemyStats = null;
         var currentEnemyObj = null;
@@ -924,15 +1084,7 @@
         setTimeout(updateHeroSpheres, 500);
 
         function checkObjects() {
-            var enemiesLeft = 0;
-            objects.forEach(function(obj) {
-                if (!obj.collected && obj.type === 'enemy') enemiesLeft++;
-            });
-            if (enemiesLeft === 0) {
-                exitWall.material.map = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
-                exitWall.material.needsUpdate = true;
-                exitWall.userData.locked = false;
-            }
+            checkExitDoor();
         }
 
         function applyLootEffect(obj) {
@@ -993,11 +1145,9 @@
             isBattleActive = true;
             currentEnemySprite = obj.mesh;
             currentEnemyObj = obj;
-            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp };
+            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def };
 
             waypoints = []; moving = false; stopSteps();
-
-            // БЕЗ АВТОРАЗВОРОТА
 
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
@@ -1005,14 +1155,13 @@
 
             playSound(soundHit);
 
-            // Враг бьёт сразу
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
                 if (!isBattleActive) return;
                 if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
                 var p = parent.Sherwood.getPlayer();
                 if (!p) return;
-                var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
+                var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
                 if (p.talents) {
                     if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
                     if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
@@ -1020,7 +1169,7 @@
                 p.stats.hp = Math.max(0, p.stats.hp - edmg);
                 if (parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
-                if (p.stats.hp <= 0) { stopBattle(); showDefeatScreen(); }
+                if (p.stats.hp <= 0) { stopBattle(); loseDungeon(); }
             }, 1500);
         }
 
@@ -1056,7 +1205,7 @@
             var p = parent.Sherwood.getPlayer();
             playSound(soundHit);
 
-            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.hp * 0.001) + Math.floor(Math.random() * 20));
+            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
 
             var now = Date.now();
@@ -1116,7 +1265,7 @@
                 if (p.talents['silence'] && Math.random() < 0.1 * p.talents['silence']) return;
             }
 
-            var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
+            var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
             if (p.talents) {
                 if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
                 if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
@@ -1132,7 +1281,7 @@
             if (p.stats.hp <= 0) {
                 playSound(soundDefeat);
                 stopBattle();
-                showDefeatScreen();
+                loseDungeon();
             }
         }
 
@@ -1147,37 +1296,63 @@
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        function showDefeatScreen() {
-            stopSteps();
-            playSound(soundDefeat);
-            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            var rewards = { exp: 50, gold: 0, silver: 20 };
-            if (parent.UI && parent.UI._showDefeatScreen) {
-                parent.UI._afterRewardAction = function() {
-                    if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
-                };
-                parent.UI._showDefeatScreen(rewards);
-            } else {
-                exitDungeon();
-            }
-        }
-
-        function showVictoryScreen() {
+        // ============================================================
+        //  ПОБЕДА / ПОРАЖЕНИЕ
+        // ============================================================
+        function winDungeon() {
             stopSteps();
             playSound(soundVictory);
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            var rewards = { exp: 500, gold: 250, silver: 100 };
-            if (parent.UI && parent.UI._showVictoryScreen) {
-                parent.UI._afterRewardAction = function() {
-                    if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
-                };
-                parent.UI._showVictoryScreen(rewards);
-            } else {
-                exitDungeon();
-            }
+
+            // Выдаём кубок через Sherwood.Dungeon
+            try {
+                if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) {
+                    parent.Sherwood.Dungeon.grantCup(currentFloor, currentDiff);
+                }
+            } catch(e){}
+
+            var rewards = {
+                cupEarned: true,
+                exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300,
+                gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150,
+                silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60
+            };
+
+            try {
+                if (parent.UI && parent.UI._showVictoryScreen) {
+                    parent.UI._afterRewardAction = function() {
+                        if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                    };
+                    parent.UI._showVictoryScreen(rewards);
+                } else {
+                    exitDungeon();
+                }
+            } catch(e) { exitDungeon(); }
+        }
+        window.winDungeon = winDungeon;
+
+        function loseDungeon() {
+            stopSteps();
+            playSound(soundDefeat);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+
+            var rewards = { exp: 50, gold: 0, silver: 20 };
+
+            try {
+                if (parent.UI && parent.UI._showDefeatScreen) {
+                    parent.UI._afterRewardAction = function() {
+                        if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                    };
+                    parent.UI._showDefeatScreen(rewards);
+                } else {
+                    exitDungeon();
+                }
+            } catch(e) { exitDungeon(); }
         }
 
-        // ===== СКИЛЛЫ =====
+        // ============================================================
+        //  СКИЛЛЫ
+        // ============================================================
         var talentData = {
             'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
             'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
@@ -1327,15 +1502,14 @@
             }
         }
 
-        // ===== AI ВРАГОВ =====
+        // ============================================================
+        //  AI ВРАГОВ
+        // ============================================================
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 5.0;
         const ENEMY_STOP_DIST = 1.2;
         const ENEMY_STEP_INTERVAL = 0.5;
-        const ENEMY_FLEE_CHANCE = 0.05;
-        const ENEMY_FLEE_RANGE = 2.2;
-        const ENEMY_FLEE_STEP = 0.5;
-        const ENEMY_MAX_AGGRO = 1;
+        const ENEMY_MAX_AGGRO = 2;
 
         function updateEnemies(dt) {
             if (isBattleActive) return;
@@ -1353,24 +1527,6 @@
                 var ex = obj.mesh.position.x, ez = obj.mesh.position.z;
                 var dx = playerPos.x - ex, dz = playerPos.z - ez;
                 var dist = Math.hypot(dx, dz);
-
-                obj.fleeTimer = obj.fleeTimer || 0;
-                obj.fleeCooldown = obj.fleeCooldown || 0;
-                if (obj.fleeCooldown > 0) obj.fleeCooldown -= dt;
-
-                if (obj.fleeTimer > 0) {
-                    obj.fleeTimer -= dt;
-                    var awayStep = ENEMY_SPEED * 1.5 * dt;
-                    var ax = ex - (dx / dist) * awayStep;
-                    var az = ez - (dz / dist) * awayStep;
-                    var gAway = worldToGrid(ax, az);
-                    if (isWalkable(gAway.gx, gAway.gy)) {
-                        obj.mesh.position.x = ax;
-                        obj.mesh.position.z = az;
-                        obj.x = gAway.gx; obj.y = gAway.gy;
-                    }
-                    return;
-                }
 
                 if (dist > ENEMY_AGGRO_RANGE) {
                     obj.stepTimer = 0;
@@ -1393,14 +1549,6 @@
                 if (!obj._chasing) {
                     obj._chasing = true;
                     alreadyChasing++;
-                }
-
-                if (dist < ENEMY_FLEE_RANGE && obj.fleeCooldown <= 0) {
-                    if (Math.random() < ENEMY_FLEE_CHANCE * dt * 10) {
-                        obj.fleeTimer = ENEMY_FLEE_STEP;
-                        obj.fleeCooldown = 2.0;
-                        return;
-                    }
                 }
 
                 if (dist < ENEMY_STOP_DIST) {
@@ -1435,7 +1583,9 @@
             });
         }
 
-        // ===== КАМЕРА =====
+        // ============================================================
+        //  КАМЕРА
+        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -1451,7 +1601,9 @@
             playerGY = g.gy;
         }
 
-        // ===== ЦИКЛ =====
+        // ============================================================
+        //  ЦИКЛ
+        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
@@ -1505,13 +1657,7 @@
                         var dd = Math.abs(cg.gx - pp.x) + Math.abs(cg.gy - pp.y);
                         if (dd <= 1) applyLootEffect(pp);
                     }
-                    var enemiesLeft = 0;
-                    objects.forEach(function(o) { if (!o.collected && o.type === 'enemy') enemiesLeft++; });
-                    if (enemiesLeft === 0) {
-                        showVictoryScreen();
-                    } else {
-                        checkObjects();
-                    }
+                    checkObjects();
                 }
             }
 
