@@ -14,26 +14,26 @@ Sherwood.Talents = {
     },
 
     TALENTS: [
-        { id: 'simple_attack', name: 'Простая атака', branch: 'damage', icon: 'assets/assets2/talents/simple_attack.png', desc: 'Увеличивает базовый урон на 10%.', maxLevel: 5 },
-        { id: 'poisoning', name: 'Отравление', branch: 'damage', icon: 'assets/assets2/talents/poisoning.png', desc: 'Каждая атака имеет шанс отравить врага.', maxLevel: 3 },
-        { id: 'vampirism', name: 'Вампиризм', branch: 'damage', icon: 'assets/assets2/talents/vampirism.png', desc: 'Восстанавливает HP за каждый нанесённый удар.', maxLevel: 3 },
-        { id: 'stunning', name: 'Оглушение', branch: 'damage', icon: 'assets/assets2/talents/stunning.png', desc: 'Шанс оглушить врага после атаки.', maxLevel: 3 },
-        { id: 'ricochet', name: 'Рикошет', branch: 'damage', icon: 'assets/assets2/talents/Ricochet.png', desc: 'Атака может отскочить к другому врагу.', maxLevel: 2 },
-        { id: 'riot', name: 'Бунт', branch: 'damage', icon: 'assets/assets2/talents/Riot.png', desc: 'Повышает урон, когда HP низкий.', maxLevel: 3 },
-        { id: 'force_of_elements', name: 'Сила стихий', branch: 'damage', icon: 'assets/assets2/talents/force of the elements.png', desc: 'Добавляет стихийный урон к атакам.', maxLevel: 5 },
-        { id: 'evil_eye', name: 'Злой глаз', branch: 'damage', icon: 'assets/assets2/talents/evil_eye.png', desc: 'Снижает удачу врага.', maxLevel: 2 },
+        { id: 'simple_attack', name: 'Простая атака', branch: 'damage', icon: 'assets/assets2/talents/simple_attack.png', desc: 'Увеличивает базовый урон на 15%.', maxLevel: 50 },
+        { id: 'poisoning', name: 'Отравление', branch: 'damage', icon: 'assets/assets2/talents/poisoning.png', desc: 'Каждая атака имеет шанс отравить врага.', maxLevel: 50 },
+        { id: 'vampirism', name: 'Вампиризм', branch: 'damage', icon: 'assets/assets2/talents/vampirism.png', desc: 'Восстанавливает HP за каждый нанесённый удар.', maxLevel: 50 },
+        { id: 'stunning', name: 'Оглушение', branch: 'damage', icon: 'assets/assets2/talents/stunning.png', desc: 'Шанс оглушить врага после атаки.', maxLevel: 50 },
+        { id: 'ricochet', name: 'Рикошет', branch: 'damage', icon: 'assets/assets2/talents/Ricochet.png', desc: 'Атака может отскочить к другому врагу.', maxLevel: 50 },
+        { id: 'riot', name: 'Бунт', branch: 'damage', icon: 'assets/assets2/talents/Riot.png', desc: 'Повышает урон, когда HP низкий.', maxLevel: 50 },
+        { id: 'force_of_elements', name: 'Сила стихий', branch: 'damage', icon: 'assets/assets2/talents/force of the elements.png', desc: 'Добавляет стихийный урон к атакам.', maxLevel: 50 },
+        { id: 'evil_eye', name: 'Злой глаз', branch: 'damage', icon: 'assets/assets2/talents/evil_eye.png', desc: 'Снижает удачу врага.', maxLevel: 50 },
 
-        { id: 'blocking', name: 'Блокировка', branch: 'passive', icon: 'assets/assets2/talents/blocking.png', desc: 'Уменьшает получаемый урон на 8%.', maxLevel: 3 },
-        { id: 'parry', name: 'Парирование', branch: 'passive', icon: 'assets/assets2/talents/parry.png', desc: 'Шанс полностью отразить атаку врага.', maxLevel: 2 },
-        { id: 'silence', name: 'Тишина', branch: 'passive', icon: 'assets/assets2/talents/Silence.png', desc: 'Шанс запретить врагу использовать навыки.', maxLevel: 2 },
-        { id: 'numbness', name: 'Онемение', branch: 'passive', icon: 'assets/assets2/talents/Numbness.png', desc: 'Снижает скорость атаки врагов.', maxLevel: 3 },
-        { id: 'ignore', name: 'Игнор', branch: 'passive', icon: 'assets/assets2/talents/ignore.png', desc: 'Игнорирует часть защиты врага.', maxLevel: 3 },
+        { id: 'blocking', name: 'Блокировка', branch: 'passive', icon: 'assets/assets2/talents/blocking.png', desc: 'Уменьшает получаемый урон на 25%.', maxLevel: 50 },
+        { id: 'parry', name: 'Парирование', branch: 'passive', icon: 'assets/assets2/talents/parry.png', desc: 'Шанс полностью отразить атаку врага.', maxLevel: 50 },
+        { id: 'silence', name: 'Тишина', branch: 'passive', icon: 'assets/assets2/talents/Silence.png', desc: 'Шанс запретить врагу использовать навыки.', maxLevel: 50 },
+        { id: 'numbness', name: 'Онемение', branch: 'passive', icon: 'assets/assets2/talents/Numbness.png', desc: 'Снижает скорость атаки врагов.', maxLevel: 50 },
+        { id: 'ignore', name: 'Игнор', branch: 'passive', icon: 'assets/assets2/talents/ignore.png', desc: 'Игнорирует часть защиты врага.', maxLevel: 50 },
 
-        { id: 'healing', name: 'Исцеление', branch: 'heal', icon: 'assets/assets2/talents/healing.png', desc: 'Увеличивает эффективность лечения на 15%.', maxLevel: 4 },
-        { id: 'healer', name: 'Хилер', branch: 'heal', icon: 'assets/assets2/talents/Healer.png', desc: 'Увеличивает лечение союзников.', maxLevel: 3 },
-        { id: 'funnel', name: 'Воронка', branch: 'heal', icon: 'assets/assets2/talents/funnel.png', desc: 'Притягивает врагов к центру.', maxLevel: 2 },
-        { id: 'inspiration', name: 'Вдохновение', branch: 'heal', icon: 'assets/assets2/talents/inspiration.png', desc: 'Повышает урон всей команды.', maxLevel: 2 },
-        { id: 'knot', name: 'Узел', branch: 'heal', icon: 'assets/assets2/talents/knot.png', desc: 'Связывает врагов, снижая их мобильность.', maxLevel: 2 }
+        { id: 'healing', name: 'Исцеление', branch: 'heal', icon: 'assets/assets2/talents/healing.png', desc: 'Увеличивает эффективность лечения на 25%.', maxLevel: 50 },
+        { id: 'healer', name: 'Хилер', branch: 'heal', icon: 'assets/assets2/talents/Healer.png', desc: 'Увеличивает лечение союзников.', maxLevel: 50 },
+        { id: 'funnel', name: 'Воронка', branch: 'heal', icon: 'assets/assets2/talents/funnel.png', desc: 'Притягивает врагов к центру.', maxLevel: 50 },
+        { id: 'inspiration', name: 'Вдохновение', branch: 'heal', icon: 'assets/assets2/talents/inspiration.png', desc: 'Повышает урон всей команды.', maxLevel: 50 },
+        { id: 'knot', name: 'Узел', branch: 'heal', icon: 'assets/assets2/talents/knot.png', desc: 'Связывает врагов, снижая их мобильность.', maxLevel: 50 }
     ],
 
     _selectedBranch: 'damage',
@@ -133,7 +133,7 @@ Sherwood.Talents = {
             h += '</div>';
         }
         h += '</div>';
-        UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
+        UI._openScreenScrollable(' Таланты', 'talents', h, 'UI.profile()');
     },
 
     showUI: function() {
@@ -292,4 +292,4 @@ if (typeof UI !== 'undefined' && UI.talents) {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Talents = Sherwood.Talents;
 
-console.log('⚡ Таланты загружены!');
+console.log(' Таланты загружены!');
