@@ -21,7 +21,6 @@
             z-index: 30;
             pointer-events: none;
         }
-        /* Подложка снизу */
         #minimap-frame {
             position: absolute;
             top: 0; left: 0;
@@ -30,7 +29,6 @@
             pointer-events: none;
             z-index: 1;
         }
-        /* Канвас поверх подложки, на всю площадь */
         #minimap-canvas {
             position: absolute;
             top: 0; left: 0;
@@ -279,7 +277,7 @@
         // ============================================================
         //  КАРТА
         // ============================================================
-        const size = 31;
+        const size = 16;
         const wallHeight = 1.4;
         const cellSize = 1;
 
@@ -365,6 +363,12 @@
         const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex  = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
+
+        // Фильтры для чёткости пиксель-арта
+        [lootBagTex, emptyBagTex, closedLockTex, openDoorTex].forEach(function(t) {
+            t.minFilter = THREE.LinearFilter;
+            t.magFilter = THREE.LinearFilter;
+        });
 
         const wallMat  = new THREE.MeshStandardMaterial({ map: wallTexture,  roughness: 0.85, metalness: 0.05 });
         const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95, metalness: 0.0 });
@@ -457,7 +461,7 @@
                 if (map[y][x] === 0) {
                     var tooClose = false;
                     var pg = worldToGrid(playerPos.x, playerPos.z);
-                    if (Math.abs(pg.gx - x) + Math.abs(pg.gy - y) < 4) tooClose = true;
+                    if (Math.abs(pg.gx - x) + Math.abs(pg.gy - y) < 3) tooClose = true;
                     for (var i = 0; i < objects.length && !tooClose; i++) {
                         if (Math.abs(objects[i].x - x) + Math.abs(objects[i].y - y) < 2) { tooClose = true; break; }
                     }
@@ -583,7 +587,12 @@
 
         function spawnLootBag(gx, gy) {
             var w = gridToWorld(gx, gy);
-            var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: lootBagTex.clone(), transparent: true }));
+            var spr = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: lootBagTex,
+                transparent: true,
+                alphaTest: 0.1,
+                depthWrite: false
+            }));
             spr.scale.set(0.65, 0.65, 1);
             spr.position.set(w.x, 0.15, w.z);
             spr.userData = { type: 'loot_bag', gx: gx, gy: gy };
@@ -736,6 +745,28 @@
             };
         }
 
+        // === «ПЕРЕД ИГРОКОМ» ===
+        function getFrontCell() {
+            const dx = -Math.sin(playerYaw);
+            const dz = -Math.cos(playerYaw);
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            return { gx: cur.gx + Math.round(dx), gy: cur.gy + Math.round(dz) };
+        }
+        function isLootInFront(obj) {
+            if (!obj) return false;
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            // На той же клетке — тоже считается
+            if (obj.x === cur.gx && obj.y === cur.gy) return true;
+            // Прямо перед игроком
+            const front = getFrontCell();
+            if (obj.x === front.gx && obj.y === front.gy) return true;
+            return false;
+        }
+        function isBagInFront(bag) {
+            if (!bag) return false;
+            return isLootInFront({ x: bag.gx, y: bag.gy });
+        }
+
         function buildPath(startGX, startGY, goalGX, goalGY) {
             if (!isWalkable(goalGX, goalGY)) return [];
             const key = (x, y) => y * size + x;
@@ -864,10 +895,10 @@
         });
 
         // ============================================================
-        //  МИНИКАРТА — объявление ДО обработчика клика
+        //  МИНИКАРТА
         // ============================================================
         const minimapSize = size;
-        const minimapCell = 6;
+        const minimapCell = 11;
         const minimapCanvas = document.getElementById('minimap-canvas');
         minimapCanvas.width  = minimapSize * minimapCell;
         minimapCanvas.height = minimapSize * minimapCell;
@@ -992,18 +1023,17 @@
                 iconImg.src = 'assets/assets2/talents/simple_attack.png';
                 return;
             }
-            var cur = worldToGrid(playerPos.x, playerPos.z);
             var nearLoot = null;
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
                 if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
-                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = o; break; }
+                if (isLootInFront(o)) { nearLoot = o; break; }
             }
             if (!nearLoot) {
                 for (var b = 0; b < lootBags.length; b++) {
                     var bag = lootBags[b];
                     if (bag.opened) continue;
-                    if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = { type: 'bag', bag: bag }; break; }
+                    if (isBagInFront(bag)) { nearLoot = { type: 'bag', bag: bag }; break; }
                 }
             }
             if (nearLoot) iconImg.src = 'assets/assets2/icons/take.png';
@@ -1013,16 +1043,15 @@
         document.getElementById('attack-icon').addEventListener('click', (e) => {
             e.stopPropagation();
             if (isBattleActive) { attackEnemy(); return; }
-            var cur = worldToGrid(playerPos.x, playerPos.z);
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
                 if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
-                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; }
+                if (isLootInFront(o)) { applyLootEffect(o); return; }
             }
             for (var b = 0; b < lootBags.length; b++) {
                 var bag = lootBags[b];
                 if (bag.opened) continue;
-                if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; }
+                if (isBagInFront(bag)) { openLootBag(bag); return; }
             }
         });
 
@@ -1666,31 +1695,28 @@
         function drawMinimap() {
             mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
-            // Отрисовка клеток (только исследованные)
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
                     const idx = row * size + col;
                     if (!explored[idx]) continue;
                     let color = null;
                     const v = map[row][col];
-                    if (v === 1) color = 'rgba(42,26,10,0.85)';   // стена
-                    else if (v === 2) color = 'rgba(139,90,43,0.9)'; // дверь
-                    else if (v === 3) color = 'rgba(201,160,64,0.9)'; // открытая дверь
-                    else color = 'rgba(139,115,85,0.75)';          // пол
+                    if (v === 1) color = 'rgba(42,26,10,0.85)';
+                    else if (v === 2) color = 'rgba(139,90,43,0.9)';
+                    else if (v === 3) color = 'rgba(201,160,64,0.9)';
+                    else color = 'rgba(139,115,85,0.75)';
 
                     mmCtx.fillStyle = color;
                     mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
                 }
             }
 
-            // Игрок — жёлтая точка
             const pg = worldToGrid(playerPos.x, playerPos.z);
             mmCtx.fillStyle = '#ffd700';
             mmCtx.beginPath();
             mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
             mmCtx.fill();
 
-            // Стрелка направления
             const cx = pg.gx * minimapCell + minimapCell/2;
             const cy = pg.gy * minimapCell + minimapCell/2;
             const len = minimapCell * 3;
@@ -1706,7 +1732,7 @@
 
         function updateExplored() {
             const pg = worldToGrid(playerPos.x, playerPos.z);
-            const R = 4;
+            const R = 3;
             for (let dy = -R; dy <= R; dy++) {
                 for (let dx = -R; dx <= R; dx++) {
                     const gx = pg.gx + dx;
