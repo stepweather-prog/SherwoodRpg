@@ -1159,31 +1159,56 @@ UI.dungeon = function() {
     UI._playSound('click');
     UI._stopMusic();
 
-    var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
-    h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">';
+    var dungeons = [
+        { id: 1, name: 'Проклятая чаща', icon: 'assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png' },
+        { id: 2, name: 'Первородное болото', icon: 'assets/dungeon_tiles/visual_dungeon/primordial_swamp.png' },
+        { id: 3, name: 'Базальтовый грот', icon: 'assets/dungeon_tiles/visual_dungeon/basalt_grotto.png' }
+    ];
 
-    // === ПОДЗЕМКА 1: ПРОКЛЯТАЯ ЧАЩА ===
-    h += '<div onclick="Sherwood.Dungeon.showFloors(1)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-    h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:180px;height:180px;object-fit:contain;">';
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:12px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;margin-top:-10px;">Проклятая чаща</div>';
+    var h = '<div id="dungeon-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
+
+    for (var i = 0; i < dungeons.length; i++) {
+        var d = dungeons[i];
+        var display = (i === 0) ? 'flex' : 'none';
+
+        h += '<div class="dungeon-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;">';
+
+        h += '<img src="' + d.icon + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;">';
+
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + d.name + '</div>';
+
+        h += '<button onclick="UI._dungeonShowFloors(' + d.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:10px;">⚔️ Войти</button>';
+
+        h += '</div>';
+    }
     h += '</div>';
 
-    // === ПОДЗЕМКА 2: ПЕРВОРОДНОЕ БОЛОТО ===
-    h += '<div onclick="Sherwood.Dungeon.showFloors(2)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-    h += '<img src="assets/dungeon_tiles/visual_dungeon/primordial_swamp.png" style="width:180px;height:180px;object-fit:contain;">';
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:12px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;margin-top:-10px;">Первородное болото</div>';
-    h += '</div>';
+    UI._openScreen('🏚️ Подземка', null, h, 'UI.loadHome()');
 
-    // === ПОДЗЕМКА 3: БАЗАЛЬТОВЫЙ ГРОТ ===
-    h += '<div onclick="Sherwood.Dungeon.showFloors(3)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
-    h += '<img src="assets/dungeon_tiles/visual_dungeon/basalt_grotto.png" style="width:180px;height:180px;object-fit:contain;">';
-    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:12px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;margin-top:-10px;">Базальтовый грот</div>';
-    h += '</div>';
-
-    h += '</div>';
-    h += '</div>';
-
-    UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
+    var carousel = document.getElementById('dungeon-carousel');
+    if (carousel) {
+        var startY = 0;
+        var currentIndex = 0;
+        carousel.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (Math.abs(e.deltaY) < 20) return;
+            var slides = carousel.querySelectorAll('.dungeon-slide');
+            slides[currentIndex].style.display = 'none';
+            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'flex';
+        }, { passive: false });
+        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
+        carousel.addEventListener('touchend', function(e) {
+            var delta = e.changedTouches[0].clientY - startY;
+            if (Math.abs(delta) < 50) return;
+            var slides = carousel.querySelectorAll('.dungeon-slide');
+            slides[currentIndex].style.display = 'none';
+            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
+            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
+            slides[currentIndex].style.display = 'flex';
+        }, { passive: true });
+    }
 };
 UI.market = function() {
     UI._playSound('click');
