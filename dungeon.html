@@ -19,19 +19,33 @@
     z-index: 30;
     pointer-events: none;
 }
-#minimap img {
+
+#minimap-clip {
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    overflow: hidden;
+    /* круглая обрезка канваса */
+    z-index: 1;
+}
+
+#minimap-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+#minimap-frame {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     object-fit: contain;
     pointer-events: none;
-}
-#minimap-canvas {
-    position: absolute;
-    top: 15%; left: 15%;      /* внутри рамки */
-    width: 70%;
-    height: 70%;
-    pointer-events: none;
+    z-index: 2;
 }
 
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
@@ -112,8 +126,10 @@
         <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
     </div>
 <div id="minimap">
-    <img src="assets/assets2/icons/maps.png" alt="">
-    <canvas id="minimap-canvas"></canvas>
+    <div id="minimap-clip">
+        <canvas id="minimap-canvas"></canvas>
+    </div>
+    <img id="minimap-frame" src="assets/assets2/icons/maps.png" alt="">
 </div>
     <div id="vignette"></div>
     <div id="scanlines"></div>
@@ -856,7 +872,15 @@
                 case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
             }
         });
-
+//  МИНИКАРТА — объявление ДО обработчика клика
+// ============================================================
+const minimapSize = size;
+const minimapCell = 6;
+const minimapCanvas = document.getElementById('minimap-canvas');
+minimapCanvas.width = minimapSize * minimapCell;
+minimapCanvas.height = minimapSize * minimapCell;
+const mmCtx = minimapCanvas.getContext('2d');
+const explored = new Uint8Array(size * size);
         // ============================================================
         //  КЛИК
         // ============================================================
@@ -915,16 +939,7 @@
                     return;
                 }
             }
-// === МИНИКАРТА ===
-const minimapSize = size;         // совпадает с размером лабиринта
-const minimapCell = 3;            // пикселей на клетку
-const minimapCanvas = document.getElementById('minimap-canvas');
-minimapCanvas.width = minimapSize * minimapCell;
-minimapCanvas.height = minimapSize * minimapCell;
-const mmCtx = minimapCanvas.getContext('2d');
 
-// какие клетки уже видел игрок (по индексу [row*size+col])
-const explored = new Uint8Array(size * size);
             // Враги/лут сцены
             const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
@@ -1661,67 +1676,78 @@ const explored = new Uint8Array(size * size);
 
             renderer.render(scene, camera);
             if (isBattleActive) updateMobHpBar();
+
+            updateExplored();
+            drawMinimap();
         }
+
         function drawMinimap() {
-    mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
-    // Фон — чёрный
-    mmCtx.fillStyle = 'rgba(0,0,0,0.85)';
-    mmCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            // круглая маска
+            mmCtx.save();
+            mmCtx.beginPath();
+            mmCtx.arc(minimapCanvas.width/2, minimapCanvas.height/2, minimapCanvas.width/2, 0, Math.PI*2);
+            mmCtx.clip();
+            mmCtx.fillStyle = 'rgba(0,0,0,0.85)';
+            mmCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
-    // Отрисовка клеток
-    for (let row = 0; row < size; row++) {
-        for (let col = 0; col < size; col++) {
-            const idx = row * size + col;
-            if (!explored[idx]) continue;
-            let color = null;
-            const v = map[row][col];
-            if (v === 1) color = '#2a1a0a';      // стена
-            else if (v === 2) color = '#8b5a2b'; // дверь
-            else if (v === 3) color = '#c9a040'; // открытая дверь
-            else color = '#6b5a3a';              // пол
+            // Отрисовка клеток
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const idx = row * size + col;
+                    if (!explored[idx]) continue;
+                    let color = null;
+                    const v = map[row][col];
+                    if (v === 1) color = '#2a1a0a';      // стена
+                    else if (v === 2) color = '#8b5a2b'; // дверь
+                    else if (v === 3) color = '#c9a040'; // открытая дверь
+                    else color = '#6b5a3a';              // пол
 
-            mmCtx.fillStyle = color;
-            mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
+                    mmCtx.fillStyle = color;
+                    mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
+                }
+            }
+
+            // Игрок — жёлтая точка
+            const pg = worldToGrid(playerPos.x, playerPos.z);
+            mmCtx.fillStyle = '#ffd700';
+            mmCtx.beginPath();
+            mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.5, 0, Math.PI * 2);
+            mmCtx.fill();
+
+            // Направление взгляда — маленькая стрелка
+            const cx = pg.gx * minimapCell + minimapCell/2;
+            const cy = pg.gy * minimapCell + minimapCell/2;
+            const len = minimapCell * 3;
+            const dx = -Math.sin(playerYaw) * len;
+            const dy = -Math.cos(playerYaw) * len;
+            mmCtx.strokeStyle = '#ffd700';
+            mmCtx.lineWidth = 2;
+            mmCtx.beginPath();
+            mmCtx.moveTo(cx, cy);
+            mmCtx.lineTo(cx + dx, cy + dy);
+            mmCtx.stroke();
+
+            mmCtx.restore();
         }
-    }
 
-    // Игрок — жёлтая точка
-    const pg = worldToGrid(playerPos.x, playerPos.z);
-    mmCtx.fillStyle = '#ffd700';
-    mmCtx.beginPath();
-    mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.5, 0, Math.PI * 2);
-    mmCtx.fill();
-
-    // Направление взгляда — маленькая стрелка
-    const cx = pg.gx * minimapCell + minimapCell/2;
-    const cy = pg.gy * minimapCell + minimapCell/2;
-    const len = minimapCell * 3;
-    const dx = -Math.sin(playerYaw) * len;
-    const dy = -Math.cos(playerYaw) * len;
-    mmCtx.strokeStyle = '#ffd700';
-    mmCtx.lineWidth = 2;
-    mmCtx.beginPath();
-    mmCtx.moveTo(cx, cy);
-    mmCtx.lineTo(cx + dx, cy + dy);
-    mmCtx.stroke();
-}
         function updateExplored() {
-    const pg = worldToGrid(playerPos.x, playerPos.z);
-    const R = 4;   // радиус обзора в клетках
-    for (let dy = -R; dy <= R; dy++) {
-        for (let dx = -R; dx <= R; dx++) {
-            const gx = pg.gx + dx;
-            const gy = pg.gy + dy;
-            if (gx < 0 || gy < 0 || gx >= size || gy >= size) continue;
-            if (dx*dx + dy*dy > R*R) continue;
-            explored[gy * size + gx] = 1;
+            const pg = worldToGrid(playerPos.x, playerPos.z);
+            const R = 4;   // радиус обзора в клетках
+            for (let dy = -R; dy <= R; dy++) {
+                for (let dx = -R; dx <= R; dx++) {
+                    const gx = pg.gx + dx;
+                    const gy = pg.gy + dy;
+                    if (gx < 0 || gy < 0 || gx >= size || gy >= size) continue;
+                    if (dx*dx + dy*dy > R*R) continue;
+                    explored[gy * size + gx] = 1;
+                }
+            }
         }
-    }
-}
+
         animate();
-updateExplored();
-drawMinimap();
+
         setTimeout(checkObjects, 800);
 
         addEventListener('resize', () => {
