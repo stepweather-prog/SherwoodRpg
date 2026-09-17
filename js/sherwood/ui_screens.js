@@ -1168,7 +1168,17 @@ UI.dungeon = function() {
     h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:12px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;margin-top:-10px;">Проклятая чаща</div>';
     h += '</div>';
 
-    // === ДРУГИЕ ПОДЗЕМКИ (потом добавим) ===
+    // === ПОДЗЕМКА 2: ПЕРВОРОДНОЕ БОЛОТО ===
+    h += '<div onclick="Sherwood.Dungeon.showFloors(2)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/primordial_swamp.png" style="width:180px;height:180px;object-fit:contain;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:12px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;margin-top:-10px;">Первородное болото</div>';
+    h += '</div>';
+
+    // === ПОДЗЕМКА 3: БАЗАЛЬТОВЫЙ ГРОТ ===
+    h += '<div onclick="Sherwood.Dungeon.showFloors(3)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;">';
+    h += '<img src="assets/dungeon_tiles/visual_dungeon/basalt_grotto.png" style="width:180px;height:180px;object-fit:contain;">';
+    h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:12px 50px;color:#ffa500;font-size:1.2em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;white-space:nowrap;margin-top:-10px;">Базальтовый грот</div>';
+    h += '</div>';
 
     h += '</div>';
     h += '</div>';
