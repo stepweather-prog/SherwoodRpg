@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Шервудская чащоба - PS2 Style</title>
+    <title>Шервудская чаща - PS2 Style</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
@@ -32,6 +32,16 @@
 
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
+
+        /* ===== КОМПАКТНЫЙ ДЖОЙСТИК ===== */
+        #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
+        .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
+        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
+        #btn-forward { top: 0; left: 41px; }
+        #btn-left { top: 41px; left: 0; }
+        #btn-right { top: 41px; left: 82px; }
+        #btn-back { top: 82px; left: 41px; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; z-index: 40; cursor: pointer; pointer-events: auto; }
 
         #skills-left, #skills-right { pointer-events: auto; }
         #skills-left img, #skills-right img {
@@ -70,6 +80,15 @@
         <span id="mana-text">1000</span>
     </div>
 
+    <!-- КОМПАКТНЫЙ ДЖОЙСТИК -->
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-forward">▲</div>
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+        <div class="arrow-btn" id="btn-back">▼</div>
+        <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    </div>
+
     <div id="vignette"></div>
     <div id="scanlines"></div>
 
@@ -82,7 +101,7 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // ===== МУЗЫКА ПОДЗЕМКИ + ГЛУШЕНИЕ РОДИТЕЛЬСКОЙ =====
+        // ===== ЗВУКИ =====
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -94,54 +113,24 @@
         function stopAllParentMusic() {
             try {
                 if (parent) {
-                    if (parent.audioPlayer) {
-                        try { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } catch(e){}
-                    }
-                    if (typeof parent.stopMainMusic === 'function') {
-                        try { parent.stopMainMusic(); } catch(e){}
-                    }
+                    if (parent.audioPlayer) { try { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } catch(e){} }
+                    if (typeof parent.stopMainMusic === 'function') { try { parent.stopMainMusic(); } catch(e){} }
                     if (parent.UI) {
-                        try {
-                            if (parent.UI._currentMusic) {
-                                parent.UI._currentMusic.pause();
-                                parent.UI._currentMusic.currentTime = 0;
-                                parent.UI._currentMusic = null;
-                            }
-                        } catch(e){}
-                        try {
-                            if (parent.UI._sounds) {
-                                for (var k in parent.UI._sounds) {
-                                    try { parent.UI._sounds[k].pause(); parent.UI._sounds[k].currentTime = 0; } catch(e){}
-                                }
-                            }
-                        } catch(e){}
+                        try { if (parent.UI._currentMusic) { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; parent.UI._currentMusic = null; } } catch(e){}
+                        try { if (parent.UI._sounds) { for (var k in parent.UI._sounds) { try { parent.UI._sounds[k].pause(); parent.UI._sounds[k].currentTime = 0; } catch(e){} } } } catch(e){}
                     }
                     if (parent.AudioManager) {
                         try { if (typeof parent.AudioManager.stopCityTheme === 'function') parent.AudioManager.stopCityTheme(); } catch(e){}
-                        try {
-                            if (parent.AudioManager.currentMusic) {
-                                parent.AudioManager.currentMusic.pause();
-                                parent.AudioManager.currentMusic.currentTime = 0;
-                            }
-                        } catch(e){}
+                        try { if (parent.AudioManager.currentMusic) { parent.AudioManager.currentMusic.pause(); parent.AudioManager.currentMusic.currentTime = 0; } } catch(e){}
                     }
-                    if (parent.document) {
-                        try {
-                            parent.document.querySelectorAll('audio').forEach(function(a){
-                                try { a.pause(); a.currentTime = 0; } catch(e){}
-                            });
-                        } catch(e){}
-                    }
+                    if (parent.document) { try { parent.document.querySelectorAll('audio').forEach(function(a){ try { a.pause(); a.currentTime = 0; } catch(e){} }); } catch(e){} }
                 }
             } catch(e){}
         }
         window.stopAllParentMusic = stopAllParentMusic;
 
         setTimeout(function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); }, 300);
-        window.addEventListener('click', function(){
-            stopAllParentMusic();
-            dungeonMusic.play().catch(function(){});
-        });
+        window.addEventListener('click', function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); });
         setInterval(stopAllParentMusic, 500);
 
         function playSound(audio) {
@@ -149,22 +138,30 @@
         }
         window.playSound = playSound;
 
+        // Функция шага — включаем шаги, выключаем при окончании
+        var stepsPlaying = false;
+        function startSteps() {
+            if (stepsPlaying) return;
+            stepsPlaying = true;
+            try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){}
+        }
+        function stopSteps() {
+            stepsPlaying = false;
+            try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){}
+        }
+
         function exitDungeon() {
-            try {
-                if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; }
-            } catch(e){}
-            try {
-                if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon();
-            } catch(e) {}
+            stopSteps();
+            try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){}
+            try { if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon(); } catch(e) {}
         }
         window.exitDungeon = exitDungeon;
 
         // ===== СЦЕНА =====
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
-        scene.fog = new THREE.Fog(0x0a0805, 4, 12);  // туман ближе — вид от первого лица
+        scene.fog = new THREE.Fog(0x0a0805, 4, 12);
 
-        // ВИД ОТ ПЕРВОГО ЛИЦА
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
         camera.rotation.order = 'YXZ';
 
@@ -300,7 +297,6 @@
         const ceilMat  = new THREE.MeshStandardMaterial({ map: ceilTexture,  roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide });
         const doorMat  = new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.85 });
 
-        // 6 материалов на BoxGeometry: +X, -X, +Y(верх=потолок), -Y, +Z, -Z
         const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
 
         const group = new THREE.Group();
@@ -315,7 +311,6 @@
                 const x = col - Math.floor(size / 2);
                 const z = row - Math.floor(size / 2);
 
-                // ПОЛ + ПОТОЛОК над проходимыми клетками
                 if (map[row][col] !== 1) {
                     const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                     floor.rotation.x = -Math.PI / 2;
@@ -337,7 +332,6 @@
                     group.add(wall);
                     wallMeshes.push(wall);
                 } else if (map[row][col] === 2) {
-                    // Дверь — ПОПЕРЁК прохода
                     const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
                     const leaf = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), doorMat);
                     if (!horiz) leaf.rotation.y = Math.PI / 2;
@@ -451,11 +445,13 @@
         scene.add(heroGlow);
 
         // ===== ДВИЖЕНИЕ =====
-        const MOVE_SPEED = 2.0;    // чуть быстрее, т.к. от первого лица
+        const MOVE_SPEED = 2.0;
         const TURN_SPEED = 8.0;
+        const rotationSpeed = Math.PI / 2;   // 90°
 
         let waypoints = [];
         let moving = false;
+        let isTurning = false;
 
         function isWalkable(gx, gy) {
             if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
@@ -539,24 +535,88 @@
             return null;
         }
 
+        // ===== ЛОГИКА ПОВОРОТА (как в твоём исходнике) =====
+        function animateTurn(targetYaw) {
+            if (isTurning || moving) return;
+            const startYaw = playerYaw;
+            const duration = 500;
+            const startTime = performance.now();
+            isTurning = true;
+            function turnLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t * t * (3 - 2 * t);
+                playerYaw = startYaw + (targetYaw - startYaw) * smoothT;
+                if (t < 1) requestAnimationFrame(turnLoop);
+                else { playerYaw = targetYaw; isTurning = false; }
+            }
+            turnLoop();
+        }
+        function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
+        function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
+
+        function moveForward() {
+            if (moving || isTurning) return;
+            const dirX = -Math.sin(playerYaw);
+            const dirZ = -Math.cos(playerYaw);
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            const nx = cur.gx + Math.round(dirX);
+            const ny = cur.gy + Math.round(dirZ);
+            if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
+            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
+            const to = gridToWorld(nx, ny);
+            waypoints = [{ x: to.x, z: to.z }];
+            moving = true;
+            startSteps();
+        }
+        function moveBackward() {
+            if (moving || isTurning) return;
+            const dirX = Math.sin(playerYaw);
+            const dirZ = Math.cos(playerYaw);
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            const nx = cur.gx + Math.round(dirX);
+            const ny = cur.gy + Math.round(dirZ);
+            if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
+            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
+            const to = gridToWorld(nx, ny);
+            waypoints = [{ x: to.x, z: to.z }];
+            moving = true;
+            startSteps();
+        }
+
+        document.getElementById('btn-forward').addEventListener('click', (e) => { e.preventDefault(); moveForward(); });
+        document.getElementById('btn-back').addEventListener('click', (e) => { e.preventDefault(); moveBackward(); });
+        document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); turnLeft(); });
+        document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); turnRight(); });
+        document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
+        document.getElementById('btn-back').addEventListener('touchstart', (e) => { e.preventDefault(); moveBackward(); });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); turnLeft(); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); turnRight(); });
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': case 'arrowup': moveForward(); e.preventDefault(); break;
+                case 's': case 'arrowdown': moveBackward(); e.preventDefault(); break;
+                case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
+                case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
+            }
+        });
+
         // ===== КЛИК =====
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
-        // центр экрана — «прицел» для рейкаста, но клик тоже обрабатываем
         renderer.domElement.addEventListener('click', (e) => {
             ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // 1) дверь
             const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
             if (doorHits.length) {
                 const ud = doorHits[0].object.userData;
                 if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
             }
 
-            // 2) выход
             const exitHits = raycaster.intersectObject(exitWall, false);
             if (exitHits.length) {
                 if (exitWall.userData.locked) {
@@ -567,7 +627,6 @@
                 return;
             }
 
-            // 3) спрайты (враги/лут)
             const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
             if (spriteHits.length) {
@@ -580,6 +639,7 @@
                         if (path.length > 1) {
                             waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
                             moving = true;
+                            startSteps();
                         }
                         return;
                     }
@@ -592,6 +652,7 @@
                             if (path.length > 1) {
                                 waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
                                 moving = true;
+                                startSteps();
                             }
                         }
                         return;
@@ -599,14 +660,12 @@
                 }
             }
 
-            // 4) пол
             const floorHits = raycaster.intersectObjects(floorMeshes, false);
             if (floorHits.length) {
                 const cell = floorHits[0].object.userData;
                 if (cell.walkable) { goTo(cell.gridX, cell.gridY); return; }
             }
 
-            // 5) стена → ближайший пол
             const wallHits = raycaster.intersectObjects(wallMeshes, false);
             if (wallHits.length) {
                 const cell = wallHits[0].object.userData;
@@ -621,6 +680,7 @@
             if (path.length < 2) return;
             waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
             moving = true;
+            startSteps();
         }
 
         // ===== БОЙ =====
@@ -660,27 +720,9 @@
 
         function checkObjects() {
             var enemiesLeft = 0;
-            var nearestLoot = null;
-            var nearestDist = 999;
-
             objects.forEach(function(obj) {
-                if (!obj.collected && obj.type !== 'enemy') {
-                    var dx = playerPos.x - (obj.x - Math.floor(size / 2));
-                    var dz = playerPos.z - (obj.y - Math.floor(size / 2));
-                    var dist = Math.sqrt(dx * dx + dz * dz);
-                    if (dist < 0.9 && LOOT_TYPES.indexOf(obj.type) !== -1) {
-                        if (dist < nearestDist) { nearestDist = dist; nearestLoot = obj; }
-                    }
-                }
                 if (!obj.collected && obj.type === 'enemy') enemiesLeft++;
             });
-
-            if (nearestLoot && !isBattleActive) {
-                lootInRange = nearestLoot;
-            } else if (!isBattleActive) {
-                lootInRange = null;
-            }
-
             if (enemiesLeft === 0) {
                 exitWall.material.map = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
                 exitWall.material.needsUpdate = true;
@@ -726,8 +768,7 @@
             currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp };
 
-            waypoints = []; moving = false;
-
+            waypoints = []; moving = false; stopSteps();
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
 
@@ -759,9 +800,9 @@
             currentEnemyObj = null;
         }
 
+        // НЕ играем victory при убийстве врага — только помечаем и продолжаем
         function onEnemyKilled() {
             if (!isBattleActive) return;
-            playSound(soundVictory);
             isBattleActive = false;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
@@ -870,13 +911,36 @@
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
+        // ЭКРАНЫ ПОБЕДЫ / ПОРАЖЕНИЯ — через parent.UI (с наградами и кнопкой «Забрать»)
         function showDefeatScreen() {
-            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_defeat.png\') center/100% 100% no-repeat;"></div>';
-            setTimeout(function() { parent.UI.loadHome(); }, 1500);
+            stopSteps();
+            playSound(soundDefeat);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+            var rewards = { exp: 50, gold: 0, silver: 20 };
+            if (parent.UI && parent.UI._showDefeatScreen) {
+                parent.UI._showDefeatScreen(rewards);
+                parent.UI._afterRewardAction = function() {
+                    exitDungeon();
+                };
+            } else {
+                exitDungeon();
+            }
         }
+
         function showVictoryScreen() {
-            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_victory.png\') center/100% 100% no-repeat;"></div>';
-            setTimeout(function() { parent.UI.loadHome(); }, 1500);
+            stopSteps();
+            playSound(soundVictory);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+            // Награды за прохождение подземки
+            var rewards = { exp: 500, gold: 250, silver: 100 };
+            if (parent.UI && parent.UI._showVictoryScreen) {
+                parent.UI._showVictoryScreen(rewards);
+                parent.UI._afterRewardAction = function() {
+                    exitDungeon();
+                };
+            } else {
+                exitDungeon();
+            }
         }
 
         // ===== СКИЛЛЫ =====
@@ -1029,7 +1093,7 @@
             }
         }
 
-        // ===== AI ВРАГОВ — идут к игроку, иногда отбегают =====
+        // ===== AI ВРАГОВ =====
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 6.0;
         const ENEMY_STOP_DIST = 0.9;
@@ -1099,8 +1163,9 @@
         }
 
         // ===== ОБНОВЛЕНИЕ КАМЕРЫ ОТ ПЕРВОГО ЛИЦА =====
-        function updateCamera(dt) {
-            // Позиция камеры — «глаза» игрока чуть выше пола
+        const clock = new THREE.Clock();
+
+        function updateCamera() {
             camera.position.x = playerPos.x;
             camera.position.z = playerPos.z;
             camera.position.y = 0.75 + Math.sin(clock.elapsedTime * 10) * 0.012 * (moving ? 1 : 0);
@@ -1114,8 +1179,6 @@
         }
 
         // ===== ЦИКЛ =====
-        const clock = new THREE.Clock();
-
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
@@ -1142,20 +1205,16 @@
                 }
                 if (!waypoints.length) {
                     moving = false;
-                    checkObjects();
-                }
-                // Поворот камеры в сторону движения
-                let lookX = playerPos.x, lookZ = playerPos.z;
-                if (waypoints.length) { lookX = waypoints[0].x; lookZ = waypoints[0].z; }
-                const ddx = lookX - playerPos.x;
-                const ddz = lookZ - playerPos.z;
-                if (ddx * ddx + ddz * ddz > 1e-6) {
-                    const desiredYaw = Math.atan2(-ddx, -ddz);
-                    let dy = desiredYaw - playerYaw;
-                    while (dy > Math.PI) dy -= Math.PI * 2;
-                    while (dy < -Math.PI) dy += Math.PI * 2;
-                    const maxStep = TURN_SPEED * dt;
-                    playerYaw += Math.max(-maxStep, Math.min(maxStep, dy));
+                    stopSteps();
+                    // Проверяем, не все ли враги убиты
+                    var enemiesLeft = 0;
+                    objects.forEach(function(o) { if (!o.collected && o.type === 'enemy') enemiesLeft++; });
+                    if (enemiesLeft === 0) {
+                        // Прохождение подземки — показываем победу с наградами
+                        showVictoryScreen();
+                    } else {
+                        checkObjects();
+                    }
                 }
             }
 
@@ -1175,7 +1234,7 @@
                 }
             }
 
-            updateCamera(dt);
+            updateCamera();
 
             renderer.render(scene, camera);
             if (isBattleActive) updateMobHpBar();
