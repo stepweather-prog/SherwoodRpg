@@ -1155,59 +1155,130 @@ UI.raid = function() {
     }, 5000);
 };
 
-UI.dungeon = function() {
+// === ПРОГРЕСС ПОДЗЕМОК (в UI, не в dungeon.js) ===
+UI._ensureDungeonProgress = function() {
+    var p = Sherwood.getPlayer();
+    if (!p) return null;
+    if (!p.dungeonProgress || !p.dungeonProgress.byDungeon) {
+        p.dungeonProgress = { byDungeon: {} };
+    }
+    return p.dungeonProgress;
+};
+
+UI._getDungeonFloorsData = function(dungeonId) {
+    var prog = UI._ensureDungeonProgress();
+    if (!prog) return [];
+    if (!prog.byDungeon[dungeonId]) {
+        prog.byDungeon[dungeonId] = [
+            { cups: 0 }, { cups: 0 }, { cups: 0 },
+            { cups: 0 }, { cups: 0 }, { cups: 0 }
+        ];
+    }
+    return prog.byDungeon[dungeonId];
+};
+
+UI._getFloorCups = function(dungeonId, floor) {
+    var floors = UI._getDungeonFloorsData(dungeonId);
+    return floors[floor - 1].cups || 0;
+};
+
+UI._isFloorAvailable = function(dungeonId, floor, diff) {
+    var floors = UI._getDungeonFloorsData(dungeonId);
+    var N = floor, K = diff;
+    if (N < 1 || N > 6 || K < 1 || K > 3) return false;
+    var thisCups = floors[N - 1].cups || 0;
+    var prevCups = (N > 1) ? (floors[N - 2].cups || 0) : 0;
+    if (K === 1) {
+        if (N === 1) return true;
+        return prevCups >= 2;
+    }
+    if (K === 2) return thisCups >= 1;
+    if (K === 3) return thisCups >= 2;
+    return false;
+};
+
+UI._grantCup = function(dungeonId, floor, diff) {
+    var floors = UI._getDungeonFloorsData(dungeonId);
+    var cur = floors[floor - 1].cups || 0;
+    if (diff > cur) floors[floor - 1].cups = diff;
+    Sherwood.saveGame();
+    console.log('🏆 Кубок: подземка ' + dungeonId + ', этаж ' + floor + ', сложность ' + diff);
+};
+
+UI._dungeonShowFloors = function(dungeonId) {
     UI._playSound('click');
     UI._stopMusic();
 
-    var dungeons = [
-        { id: 1, name: 'Проклятая чаща', icon: 'assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png' },
-        { id: 2, name: 'Первородное болото', icon: 'assets/dungeon_tiles/visual_dungeon/primordial_swamp.png' },
-        { id: 3, name: 'Базальтовый грот', icon: 'assets/dungeon_tiles/visual_dungeon/basalt_grotto.png' }
-    ];
+    var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:420px;margin:0 auto;">';
 
-    var h = '<div id="dungeon-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
+    for (var n = 1; n <= 6; n++) {
+        var cups = UI._getFloorCups(dungeonId, n);
+        var f1 = UI._isFloorAvailable(dungeonId, n, 1);
+        var f2 = UI._isFloorAvailable(dungeonId, n, 2);
+        var f3 = UI._isFloorAvailable(dungeonId, n, 3);
 
-    for (var i = 0; i < dungeons.length; i++) {
-        var d = dungeons[i];
-        var display = (i === 0) ? 'flex' : 'none';
+        h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
+        h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
 
-        h += '<div class="dungeon-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;">';
+        if (!f1) {
+            h += '<img src="assets/assets2/game_details/closed_level_lock_icon.png" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;object-fit:contain;opacity:0.9;pointer-events:none;">';
+        }
 
-        h += '<img src="' + d.icon + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;">';
+        h += '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
+        for (var k = 1; k <= 3; k++) {
+            var hasCup = cups >= k;
+            var isOpen = (k === 1 && f1) || (k === 2 && f2) || (k === 3 && f3);
+            var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
+            var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
+            var clickAttr = isOpen ? 'onclick="event.stopPropagation();UI._dungeonEnter(' + dungeonId + ',' + n + ',' + k + ')"' : '';
+            var cursor = isOpen ? 'pointer' : 'not-allowed';
 
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + d.name + '</div>';
-
-        h += '<button onclick="UI._dungeonShowFloors(' + d.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:10px;">⚔️ Войти</button>';
-
+            h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
+            if (hasCup) {
+                h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">';
+            } else if (!isOpen) {
+                h += '<span style="color:#666;font-size:12px;font-weight:bold;">🔒</span>';
+            } else {
+                h += '<span style="color:#8b6b3a;font-size:11px;font-weight:bold;">' + k + '</span>';
+            }
+            h += '</div>';
+        }
+        h += '</div>';
         h += '</div>';
     }
+
+    h += '</div>';
     h += '</div>';
 
-    UI._openScreen('🏚️ Подземка', null, h, 'UI.loadHome()');
+    UI._openScreenScrollable('🏚️ Выбор этажа', null, h, 'UI.dungeon()');
+};
 
-    var carousel = document.getElementById('dungeon-carousel');
-    if (carousel) {
-        var startY = 0;
-        var currentIndex = 0;
-        carousel.addEventListener('wheel', function(e) {
-            e.preventDefault();
-            if (Math.abs(e.deltaY) < 20) return;
-            var slides = carousel.querySelectorAll('.dungeon-slide');
-            slides[currentIndex].style.display = 'none';
-            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
-            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-            slides[currentIndex].style.display = 'flex';
-        }, { passive: false });
-        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
-        carousel.addEventListener('touchend', function(e) {
-            var delta = e.changedTouches[0].clientY - startY;
-            if (Math.abs(delta) < 50) return;
-            var slides = carousel.querySelectorAll('.dungeon-slide');
-            slides[currentIndex].style.display = 'none';
-            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
-            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-            slides[currentIndex].style.display = 'flex';
-        }, { passive: true });
+UI._dungeonEnter = function(dungeonId, floor, diff) {
+    UI._playSound('click');
+    UI._stopMusic();
+
+    try {
+        if (window.stopMainMusic) window.stopMainMusic();
+        if (window.audioPlayer) {
+            window.audioPlayer.pause();
+            window.audioPlayer.currentTime = 0;
+            window.audioPlayer.src = '';
+        }
+        if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
+    } catch(e){}
+
+    UI._lastDungeon = dungeonId;
+    UI._lastFloor = floor;
+    UI._lastDiff = diff;
+
+    var iframe = document.createElement('iframe');
+    iframe.src = 'dungeon.html?dungeon=' + dungeonId + '&floor=' + floor + '&diff=' + diff;
+    iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+    if (UI._screenLayer) {
+        UI._screenLayer.innerHTML = '';
+        UI._screenLayer.appendChild(iframe);
+        UI._screenLayer.style.display = 'block';
     }
 };
 UI.market = function() {
