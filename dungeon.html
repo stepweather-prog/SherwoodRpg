@@ -1,903 +1,1221 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Dungeon — Diablo 1 style</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { overflow:hidden; background:#000; touch-action:none; -webkit-user-select:none; user-select:none; }
-  canvas { display:block; cursor: crosshair; touch-action:none; }
-  #vignette { position:fixed; inset:0; pointer-events:none; z-index:5;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%); }
-  #grain { position:fixed; inset:0; pointer-events:none; z-index:6; opacity:0.06;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
-  #hud { position:fixed; top:16px; left:50%; transform:translateX(-50%);
-    color:#c8a050; font:16px "Times New Roman", serif; letter-spacing:2px;
-    background:rgba(0,0,0,0.7); border:1px solid #4a3a2a; padding:6px 18px;
-    border-radius:3px; z-index:10; text-shadow:0 0 8px #8b6b3a; pointer-events:none; }
-  #hint { position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
-    color:#8b6b3a; font:13px "Times New Roman", serif; letter-spacing:1px;
-    z-index:10; pointer-events:none; text-shadow:0 0 6px #000; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Шервудская чащоба - PS2 Style</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
+        canvas { display: block; background: #000; touch-action: none; }
+        #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%); }
+        #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
+        #info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 8px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 0 10px #8b6b3a; letter-spacing: 2px; }
+        #counter { position: absolute; bottom: 80px; right: 30px; color: #c8a050; font: 16px "Times New Roman", serif; background: rgba(0, 0, 0, 0.8); padding: 6px 14px; border: 1px solid #4a3a2a; border-radius: 4px; pointer-events: none; z-index: 10; letter-spacing: 1px; }
+        #joystick { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 180px; height: 180px; z-index: 30; pointer-events: auto; }
+        .arrow-btn { position: absolute; width: 56px; height: 56px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 8px #8b6b3a; box-shadow: 0 0 10px rgba(139, 107, 58, 0.3); }
+        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); box-shadow: 0 0 20px rgba(139, 107, 58, 0.8); }
+        #btn-forward { top: 0; left: 62px; }
+        #btn-left { top: 62px; left: 0; }
+        #btn-right { top: 62px; left: 124px; }
+        #btn-back { top: 124px; left: 62px; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; pointer-events: auto; }
 
-  #target { position:fixed; width:34px; height:34px; margin:-17px 0 0 -17px;
-    border:2px solid #c8a050; border-radius:50%; pointer-events:none; z-index:8;
-    box-shadow:0 0 12px #8b6b3a, inset 0 0 8px #8b6b3a; opacity:0;
-    transition: opacity .15s; }
-  #target.on { opacity:1; animation: pulse .8s infinite alternate; }
-  @keyframes pulse { from { transform:scale(1);} to { transform:scale(1.15);} }
+        #target { position: fixed; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+            border: 2px solid #c8a050; border-radius: 50%; pointer-events: none; z-index: 8;
+            box-shadow: 0 0 12px #8b6b3a, inset 0 0 8px #8b6b3a; opacity: 0;
+            transition: opacity .15s; }
+        #target.on { opacity: 1; animation: pulse .8s infinite alternate; }
+        @keyframes pulse { from { transform: scale(1);} to { transform: scale(1.15);} }
 
-  /* кнопка обычного удара — fallback */
-  #attack-icon { position: fixed; bottom: 24px; right: 24px; width: 64px; height: 64px;
-    z-index: 40; cursor: pointer; pointer-events: auto; }
-  #attack-icon img { width:100%; height:100%; object-fit:contain; filter: drop-shadow(0 0 6px #8b6b3a); }
+        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50;
+            transform: translate(-50%, -50%); display: none; pointer-events: none; }
+        #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
+        #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
 
-  /* HP врага */
-  #mob-hp { position: fixed; width: 220px; height: 80px; z-index: 50;
-    transform: translate(-50%, -100%); display: none; pointer-events: none; }
-  #mob-hp .frame { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; z-index:2; }
-  #mob-hp .fill { position:absolute; top:40%; left:12%; width:76%; height:14%; object-fit:cover;
-    clip-path: inset(0 50% 0 0); z-index:1; }
-  #mob-hp-text { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%);
-    color:#fff; font-size:14px; font-weight:bold; z-index:3; text-shadow:0 0 6px #000; }
-</style>
+        #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+
+        #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+
+        #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
+        #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
+
+        #skills-left, #skills-right { pointer-events: auto; }
+        #skills-left img, #skills-right img {
+            cursor: pointer; border-radius: 6px; transition: all 0.2s;
+            border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px;
+        }
+        #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
+        #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+    </style>
 </head>
 <body>
-<div id="hud">ПРОКЛЯТЫЙ ЗАЛ</div>
-<div id="hint">Клик по полу — идти &nbsp;•&nbsp; клик по двери — открыть &nbsp;•&nbsp; клик по врагу — ударить</div>
-<div id="target"></div>
+    <div id="info">Проклятая чаща</div>
 
-<div id="mob-hp">
-  <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
-  <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
-  <span id="mob-hp-text">HP: 1000/1000</span>
-</div>
+    <div id="mob-hp">
+        <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
+        <span id="mob-hp-text">HP: 1000/1000</span>
+    </div>
 
-<div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png"></div>
+    <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
 
-<div id="vignette"></div>
-<div id="grain"></div>
+    <div id="skills-left" style="position:absolute; bottom:130px; left:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45;"></div>
 
-<script type="importmap">
-{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
-</script>
+    <div id="hero-life">
+        <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
+        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
+        <span id="hp-text">HP: 0</span>
+    </div>
 
-<script type="module">
-import * as THREE from 'three';
+    <div id="skills-right" style="position:absolute; bottom:130px; right:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45;"></div>
 
-// ============================================================
-//  МУЗЫКА — только dungeon_3.ogg, глушим всё остальное
-// ============================================================
-var soundHit    = new Audio('assets/assets2/tune/hit.wav');
-var soundVictory= new Audio('assets/assets2/tune/victory.wav');
-var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
-var dungeonMusic= new Audio('assets/assets2/music/dungeon_3.ogg');
-dungeonMusic.loop = true;
-dungeonMusic.volume = 0.4;
+    <div id="hero-mana">
+        <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
+        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
+        <span id="mana-text">1000</span>
+    </div>
 
-function stopAllMusic(){
-  try {
-    if (parent) {
-      if (parent.AudioManager) {
-        try { if (typeof parent.AudioManager.stopCityTheme === 'function') parent.AudioManager.stopCityTheme(); } catch(e){}
-        try {
-          if (parent.AudioManager.currentMusic) {
-            parent.AudioManager.currentMusic.pause();
-            parent.AudioManager.currentMusic.currentTime = 0;
-            parent.AudioManager.currentMusic = null;
-          }
-        } catch(e){}
-      }
-      if (parent.document) {
-        try {
-          parent.document.querySelectorAll('audio').forEach(function(a){
-            try { a.pause(); a.currentTime = 0; } catch(e){}
-          });
-        } catch(e){}
-      }
-    }
-  } catch(e){}
-}
-window.stopAllMusic = stopAllMusic;
+    <div id="counter">🏆 0</div>
+    <div id="target"></div>
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-forward">▲</div>
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+        <div class="arrow-btn" id="btn-back">▼</div>
+        <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:90%;height:90%;object-fit:contain;"></div>
+    </div>
+    <div id="vignette"></div>
+    <div id="scanlines"></div>
 
-var musicStarted = false;
-function startDungeonMusic(){
-  if (musicStarted) return;
-  musicStarted = true;
-  stopAllMusic();
-  dungeonMusic.play().catch(function(){});
-}
-setTimeout(function(){ stopAllMusic(); dungeonMusic.play().catch(function(){}); }, 200);
-window.addEventListener('click', startDungeonMusic);
-window.addEventListener('touchstart', startDungeonMusic);
-setInterval(stopAllMusic, 500);
+   <button onclick="dungeonMusic.pause(); parent.UI.dungeon()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
 
-function playSound(audio){ try { audio.currentTime = 0; audio.play().catch(function(){}); } catch(e){} }
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+    </script>
 
-// ============================================================
-//  СЦЕНА
-// ============================================================
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050403);
-scene.fog = new THREE.Fog(0x050403, 12, 26);
+    <script type="module">
+        import * as THREE from 'three';
 
-const camera = new THREE.PerspectiveCamera(38, innerWidth/innerHeight, 0.1, 80);
-camera.rotation.order = 'YXZ';
+        // ===== ЗВУКИ =====
+        var soundHit = new Audio('assets/assets2/tune/hit.wav');
+        var soundVictory = new Audio('assets/assets2/tune/victory.wav');
+        var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
+        var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+        var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
+        dungeonMusic.loop = true;
+        dungeonMusic.volume = 0.4;
+        setTimeout(function() { dungeonMusic.play().catch(function() {}); }, 500);
 
-const renderer = new THREE.WebGLRenderer({ antialias:false });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-renderer.setClearColor(0x050403, 1);
-document.body.appendChild(renderer.domElement);
-
-const ambient = new THREE.AmbientLight(0x2a1e12, 0.6);
-scene.add(ambient);
-const hemi = new THREE.HemisphereLight(0x1a1008, 0x000000, 0.3);
-scene.add(hemi);
-
-// ============================================================
-//  КАРТА
-// ============================================================
-const size = 33;
-const cellSize = 1;
-const wallHeight = 1.4;
-
-const map = Array.from({length:size}, ()=>Array(size).fill(1));
-const rooms = [];
-
-function carveRoom(x, y, w, h){
-  for (let j=y; j<y+h; j++)
-    for (let i=x; i<x+w; i++)
-      map[j][i] = 0;
-  rooms.push({ x, y, w, h, cx: (x + (w>>1)), cy: (y + (h>>1)) });
-}
-function roomsOverlap(a, b, pad=1){
-  return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x ||
-           a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y);
-}
-function carveH(x1, x2, y){
-  const [a,b] = x1<x2 ? [x1,x2] : [x2,x1];
-  for (let x=a; x<=b; x++) if (map[y][x]===1) map[y][x]=0;
-}
-function carveV(y1, y2, x){
-  const [a,b] = y1<y2 ? [y1,y2] : [y2,y1];
-  for (let y=a; y<=b; y++) if (map[y][x]===1) map[y][x]=0;
-}
-
-function generateRooms(){
-  const maxRooms = 14;
-  const minR = 5, maxR = 11;
-  let attempts = 0;
-  while (rooms.length < maxRooms && attempts < 400){
-    attempts++;
-    const w = minR + Math.floor(Math.random()*(maxR-minR));
-    const h = minR + Math.floor(Math.random()*(maxR-minR));
-    const x = 1 + Math.floor(Math.random()*(size - w - 2));
-    const y = 1 + Math.floor(Math.random()*(size - h - 2));
-    const r = { x, y, w, h };
-    if (rooms.some(o => roomsOverlap(r, o))) continue;
-    carveRoom(x, y, w, h);
-  }
-  for (let i=1; i<rooms.length; i++){
-    const a = rooms[i-1], b = rooms[i];
-    const ax = a.cx, ay = a.cy, bx = b.cx, by = b.cy;
-    if (Math.random() < 0.5){
-      carveH(ax, bx, ay);
-      carveV(ay, by, bx);
-    } else {
-      carveV(ay, by, ax);
-      carveH(ax, bx, by);
-    }
-  }
-}
-generateRooms();
-
-// ============================================================
-//  ДВЕРИ
-// ============================================================
-function isWallCell(x, y){
-  if (x<0||y<0||x>=size||y>=size) return true;
-  return map[y][x] === 1;
-}
-function isFloorCell(x, y){
-  if (x<0||y<0||x>=size||y>=size) return false;
-  return map[y][x] === 0 || map[y][x] === 2 || map[y][x] === 3;
-}
-function floorWidthX(x, y){
-  let w = 1;
-  for (let i=1; i<6; i++){ if (isFloorCell(x-i,y)) w++; else break; }
-  for (let i=1; i<6; i++){ if (isFloorCell(x+i,y)) w++; else break; }
-  return w;
-}
-function floorHeightY(x, y){
-  let h = 1;
-  for (let i=1; i<6; i++){ if (isFloorCell(x,y-i)) h++; else break; }
-  for (let i=1; i<6; i++){ if (isFloorCell(x,y+i)) h++; else break; }
-  return h;
-}
-function placeDoors(){
-  const candidates = [];
-  for (let y=1; y<size-1; y++){
-    for (let x=1; x<size-1; x++){
-      if (map[y][x] !== 0) continue;
-      const wL = isWallCell(x-1,y), wR = isWallCell(x+1,y);
-      const wU = isWallCell(x,y-1), wD = isWallCell(x,y+1);
-      if (wL && wR && !wU && !wD){
-        if (floorWidthX(x, y-1) >= 3 || floorWidthX(x, y+1) >= 3) candidates.push({ x, y, horiz:true });
-      } else if (wU && wD && !wL && !wR){
-        if (floorHeightY(x-1, y) >= 3 || floorHeightY(x+1, y) >= 3) candidates.push({ x, y, horiz:false });
-      }
-    }
-  }
-  const placed = [];
-  for (const c of candidates){
-    let ok = true;
-    for (const p of placed){
-      if (Math.abs(p.x - c.x) + Math.abs(p.y - c.y) < 4){ ok = false; break; }
-    }
-    if (ok && Math.random() < 0.85){
-      map[c.y][c.x] = 2;
-      placed.push(c);
-    }
-  }
-}
-placeDoors();
-
-// ============================================================
-//  ТЕКСТУРЫ — ТВОИ
-// ============================================================
-const loader = new THREE.TextureLoader();
-
-const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
-const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
-// потолок
-const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png');
-// дверь
-const doorTexture  = loader.load('assets/interface/labyrinth_asset.png');
-
-// ============================================================
-//  МАТЕРИАЛЫ
-// ============================================================
-const wallMat  = new THREE.MeshStandardMaterial({ map: wallTexture,  roughness:0.95, color:0x9a8a76 });
-const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness:1.0,  color:0x8a8070 });
-const ceilMat  = new THREE.MeshStandardMaterial({ map: ceilTexture,  roughness:1.0,  color:0x6a6258, side: THREE.DoubleSide });
-const doorMat  = new THREE.MeshStandardMaterial({ map: doorTexture, transparent:true, alphaTest:0.4, side:THREE.DoubleSide, roughness:0.8, metalness:0.1 });
-
-// ВАЖНО: массив из 6 материалов для BoxGeometry
-// порядок граней: +X, -X, +Y, -Y, +Z, -Z
-// верхняя (+Y) = потолок, остальные = стена
-const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
-
-const group = new THREE.Group();
-scene.add(group);
-
-const floorGeo = new THREE.PlaneGeometry(cellSize, cellSize);
-const ceilGeo  = new THREE.PlaneGeometry(cellSize, cellSize);
-const wallGeo  = new THREE.BoxGeometry(cellSize, wallHeight, cellSize);
-
-const floorMeshes = [];
-const wallMeshes  = [];
-const doorLeaves  = [];
-
-for (let row=0; row<size; row++){
-  for (let col=0; col<size; col++){
-    const x = col - Math.floor(size/2);
-    const z = row - Math.floor(size/2);
-
-    // ПОЛ — только под проходимыми клетками
-    if (map[row][col] !== 1){
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI/2;
-      floor.position.set(x, 0, z);
-      floor.userData = { gridX: col, gridY: row, walkable: map[row][col] !== 1, isFloor: true };
-      group.add(floor);
-      floorMeshes.push(floor);
-    }
-
-    // СТЕНЫ — кубики, верхняя грань = потолок
-    if (map[row][col] === 1){
-      const wall = new THREE.Mesh(wallGeo, wallMatsArray);
-      wall.position.set(x, wallHeight/2, z);
-      wall.userData = { gridX: col, gridY: row, isWall: true };
-      group.add(wall);
-      wallMeshes.push(wall);
-    } else if (map[row][col] === 2){
-      // ДВЕРЬ — плоскость на всю клетку
-      const horiz = map[row][col-1] === 1 && map[row][col+1] === 1;
-      const leaf = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), doorMat);
-      if (horiz) leaf.rotation.y = Math.PI/2;
-      leaf.position.set(x, wallHeight/2, z);
-      leaf.userData = { doorGX: col, doorGY: row, isDoor: true };
-      group.add(leaf);
-      doorLeaves.push({
-        mesh: leaf, gx: col, gy: row,
-        open: false, t: 0,
-        closedY: wallHeight/2,
-        openY: -wallHeight/2 - 0.1
-      });
-    }
-  }
-}
-
-// ============================================================
-//  ПОТОЛОК над проходимыми клетками
-// ============================================================
-for (let row=0; row<size; row++){
-  for (let col=0; col<size; col++){
-    if (map[row][col] === 1) continue;
-    const x = col - Math.floor(size/2);
-    const z = row - Math.floor(size/2);
-    const ceil = new THREE.Mesh(ceilGeo, ceilMat);
-    ceil.rotation.x = Math.PI/2;
-    ceil.position.set(x, wallHeight, z);
-    group.add(ceil);
-  }
-}
-
-// ============================================================
-//  ФАКТЕЛЫ
-// ============================================================
-const torches = [];
-for (let row=0; row<size; row++){
-  for (let col=0; col<size; col++){
-    if (map[row][col] === 0 && row % 3 === 0 && col % 3 === 0){
-      const x = col - Math.floor(size/2);
-      const z = row - Math.floor(size/2);
-      const bulb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.05, 6, 6),
-        new THREE.MeshBasicMaterial({ color: 0xffcc66 })
-      );
-      bulb.position.set(x, wallHeight - 0.15, z);
-      group.add(bulb);
-      const light = new THREE.PointLight(0xff8833, 0.9, 6, 2);
-      light.position.set(x, wallHeight - 0.2, z);
-      group.add(light);
-      const flame = new THREE.Sprite(new THREE.SpriteMaterial({
-        color:0xffaa44, transparent:true, opacity:0.9,
-        blending:THREE.AdditiveBlending, depthWrite:false
-      }));
-      flame.scale.set(0.22, 0.34, 1);
-      flame.position.copy(light.position);
-      group.add(flame);
-      torches.push({ light, flame, phase: Math.random()*Math.PI*2 });
-    }
-  }
-}
-
-// ============================================================
-//  ИГРОК
-// ============================================================
-const startRoom = rooms[0] || { cx:1, cy:1 };
-let playerGX = startRoom.cx;
-let playerGY = startRoom.cy;
-const playerPos = new THREE.Vector3(
-  playerGX - Math.floor(size/2), 0,
-  playerGY - Math.floor(size/2)
-);
-let playerYaw = 0;
-
-const facingMarker = new THREE.Mesh(
-  new THREE.ConeGeometry(0.16, 0.36, 4),
-  new THREE.MeshBasicMaterial({ color: 0xc8a050 })
-);
-facingMarker.rotation.x = Math.PI/2;
-group.add(facingMarker);
-
-const hero = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.22, 0.26, 0.35, 10),
-  new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness:0.9 })
-);
-hero.position.set(playerPos.x, 0.175, playerPos.z);
-group.add(hero);
-
-const heroGlow = new THREE.PointLight(0xffb060, 0.6, 5, 2);
-heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
-scene.add(heroGlow);
-
-// ============================================================
-//  ДВИЖЕНИЕ
-// ============================================================
-const MOVE_SPEED = 1.6;
-const TURN_SPEED = 8.0;
-
-let waypoints = [];
-let moving = false;
-
-function isWalkable(gx, gy){
-  if (gx<0 || gy<0 || gx>=size || gy>=size) return false;
-  const v = map[gy][gx];
-  return v === 0 || v === 3;
-}
-function isClosedDoor(gx, gy){
-  if (gx<0 || gy<0 || gx>=size || gy>=size) return false;
-  return map[gy][gx] === 2;
-}
-function canStep(fromGX, fromGY, toGX, toGY){
-  if (!isWalkable(toGX, toGY)) return false;
-  const dx = toGX - fromGX;
-  const dy = toGY - fromGY;
-  if (dx !== 0 && dy !== 0){
-    if (!isWalkable(fromGX + dx, fromGY)) return false;
-    if (!isWalkable(fromGX, fromGY + dy)) return false;
-  }
-  return true;
-}
-function gridToWorld(gx, gy){
-  return { x: gx - Math.floor(size/2), z: gy - Math.floor(size/2) };
-}
-function worldToGrid(wx, wz){
-  return {
-    gx: Math.round(wx + Math.floor(size/2)),
-    gy: Math.round(wz + Math.floor(size/2))
-  };
-}
-function buildPath(startGX, startGY, goalGX, goalGY){
-  if (!isWalkable(goalGX, goalGY)) return [];
-  const key = (x,y)=> y*size + x;
-  const prev = new Map();
-  const q = [{x:startGX, y:startGY}];
-  prev.set(key(startGX,startGY), null);
-  const dirs = [
-    {x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1},
-    {x:1,y:1},{x:1,y:-1},{x:-1,y:1},{x:-1,y:-1}
-  ];
-  while (q.length){
-    const cur = q.shift();
-    if (cur.x === goalGX && cur.y === goalGY){
-      const out = [];
-      let k = key(cur.x, cur.y);
-      while (k !== null){
-        out.push({ gx: k % size, gy: Math.floor(k/size) });
-        k = prev.get(k);
-      }
-      return out.reverse();
-    }
-    for (const d of dirs){
-      const nx = cur.x+d.x, ny = cur.y+d.y;
-      if (!canStep(cur.x, cur.y, nx, ny)) continue;
-      const k = key(nx, ny);
-      if (!prev.has(k)){
-        prev.set(k, key(cur.x, cur.y));
-        q.push({x:nx, y:ny});
-      }
-    }
-  }
-  return [];
-}
-
-function openDoor(gx, gy){
-  if (!isClosedDoor(gx, gy)) return false;
-  map[gy][gx] = 3;
-  const d = doorLeaves.find(o => o.gx === gx && o.gy === gy);
-  if (d && !d.open){ d.open = true; d.t = 0; }
-  return true;
-}
-function findNearestWalkable(gx, gy, maxR = 4){
-  if (isWalkable(gx, gy)) return { gx, gy };
-  for (let r=1; r<=maxR; r++){
-    for (let dy=-r; dy<=r; dy++){
-      for (let dx=-r; dx<=r; dx++){
-        if (Math.abs(dx) + Math.abs(dy) !== r) continue;
-        const nx = gx + dx, ny = gy + dy;
-        if (isWalkable(nx, ny)) return { gx: nx, gy: ny };
-      }
-    }
-  }
-  return null;
-}
-
-// ============================================================
-//  ВРАГИ (простая реализация — стоят на местах, бой по подходу)
-// ============================================================
-var enemies = [];
-for (var i=0; i<8; i++){
-  var pos = pickFreeCell();
-  if (!pos) continue;
-  var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: loader.load('assets/assets2/mobs/dungeon_mobs/plague_crow.png'),
-    transparent:true
-  }));
-  sprite.scale.set(1.2, 1.2, 1);
-  var w = gridToWorld(pos.gx, pos.gy);
-  sprite.position.set(w.x, 0.85, w.z);
-  sprite.userData = { gx: pos.gx, gy: pos.gy, type: 'enemy' };
-  group.add(sprite);
-  enemies.push({
-    mesh: sprite, gx: pos.gx, gy: pos.gy,
-    hp: 1000 + Math.floor(Math.random()*1000),
-    maxHp: 0, alive: true, attacking: false, stepTimer: 0
-  });
-  enemies[enemies.length-1].maxHp = enemies[enemies.length-1].hp;
-}
-
-// лут
-var lootItems = [];
-var lootTypes = [
-  { type:'potion_hp',    img:'assets/assets2/game_details/resource_life_potion.png' },
-  { type:'potion_mana',  img:'assets/assets2/game_details/potion_of_filth.png' },
-  { type:'cauldron',     img:'assets/assets2/game_details/cauldron_first_dungeon.png' },
-  { type:'altar',        img:'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
-];
-for (var t=0; t<lootTypes.length; t++){
-  for (var k=0; k<2; k++){
-    var lp = pickFreeCell(); if (!lp) continue;
-    var sp = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: loader.load(lootTypes[t].img), transparent:true
-    }));
-    sp.scale.set(0.5, 0.5, 1);
-    var wp = gridToWorld(lp.gx, lp.gy);
-    sp.position.set(wp.x, 0.35, wp.z);
-    sp.userData = { gx: lp.gx, gy: lp.gy, type: lootTypes[t].type };
-    group.add(sp);
-    lootItems.push({ mesh: sp, gx: lp.gx, gy: lp.gy, type: lootTypes[t].type, collected: false });
-  }
-}
-
-function pickFreeCell(){
-  for (var a=0; a<120; a++){
-    var x = 2 + Math.floor(Math.random()*(size-4));
-    var y = 2 + Math.floor(Math.random()*(size-4));
-    if (map[y][x] !== 0) continue;
-    // не рядом с игроком
-    if (Math.abs(x - playerGX) + Math.abs(y - playerGY) < 3) continue;
-    var busy = false;
-    for (var e of enemies) if (e.alive && Math.abs(e.gx-x)+Math.abs(e.gy-y)<2){ busy = true; break; }
-    if (!busy) for (var l of lootItems) if (Math.abs(l.gx-x)+Math.abs(l.gy-y)<2){ busy = true; break; }
-    if (!busy) return { gx: x, gy: y };
-  }
-  return null;
-}
-
-// ============================================================
-//  КЛИК
-// ============================================================
-const raycaster = new THREE.Raycaster();
-const ndc = new THREE.Vector2();
-const targetEl = document.getElementById('target');
-
-renderer.domElement.addEventListener('click', (e)=>{
-  ndc.x = (e.clientX / innerWidth) * 2 - 1;
-  ndc.y = -(e.clientY / innerHeight) * 2 + 1;
-  raycaster.setFromCamera(ndc, camera);
-
-  // 1) дверь
-  const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
-  if (doorHits.length){
-    const ud = doorHits[0].object.userData;
-    if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
-  }
-
-  // 2) враг
-  const enemyMeshes = enemies.filter(x => x.alive).map(x => x.mesh);
-  const enemyHits = raycaster.intersectObjects(enemyMeshes, false);
-  if (enemyHits.length){
-    const hit = enemyHits[0].object;
-    const enemy = enemies.find(x => x.mesh === hit);
-    if (enemy){
-      // если уже в бою с ним — бьём
-      if (isBattleActive && currentEnemy === enemy){
-        attackEnemy();
-      } else {
-        // иначе идём к нему
-        const cur = worldToGrid(playerPos.x, playerPos.z);
-        const path = buildPath(cur.gx, cur.gy, enemy.gx, enemy.gy);
-        if (path.length > 1){
-          waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
-          moving = true;
-          targetEl.style.left = e.clientX + 'px';
-          targetEl.style.top  = e.clientY + 'px';
-          targetEl.classList.add('on');
+        function playSound(audio) {
+            try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {}
         }
-      }
-      return;
-    }
-  }
+        window.soundHit = soundHit;
+        window.soundVictory = soundVictory;
+        window.soundDefeat = soundDefeat;
+        window.soundSteps = soundSteps;
+        window.dungeonMusic = dungeonMusic;
+        window.playSound = playSound;
 
-  // 3) лут
-  const lootMeshes = lootItems.filter(x => !x.collected).map(x => x.mesh);
-  const lootHits = raycaster.intersectObjects(lootMeshes, false);
-  if (lootHits.length){
-    const hit = lootHits[0].object;
-    const item = lootItems.find(x => x.mesh === hit);
-    if (item){
-      const cur = worldToGrid(playerPos.x, playerPos.z);
-      if (Math.abs(cur.gx - item.gx) + Math.abs(cur.gy - item.gy) <= 1){
-        pickUpLoot(item);
-      } else {
-        const path = buildPath(cur.gx, cur.gy, item.gx, item.gy);
-        if (path.length > 1){
-          waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
-          moving = true;
-          targetEl.style.left = e.clientX + 'px';
-          targetEl.style.top  = e.clientY + 'px';
-          targetEl.classList.add('on');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1208);
+        scene.fog = new THREE.Fog(0x1a1208, 7, 16);
+
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 25);
+        camera.rotation.order = 'YXZ';
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setClearColor(0x1a1208, 1);
+        document.body.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0x887766, 1.0);
+        scene.add(ambient);
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+        mainLight.position.set(5, 10, 5);
+        scene.add(mainLight);
+        const fillLight = new THREE.DirectionalLight(0x998877, 0.6);
+        fillLight.position.set(-5, 2, -5);
+        scene.add(fillLight);
+
+        const size = 33;
+        const wallHeight = 1.4;
+        const cellSize = 1;
+
+        const map = [];
+        for (let i = 0; i < size; i++) {
+            map[i] = [];
+            for (let j = 0; j < size; j++) { map[i][j] = 1; }
         }
-      }
-      return;
-    }
-  }
 
-  // 4) пол
-  const floorHits = raycaster.intersectObjects(floorMeshes, false);
-  if (floorHits.length){
-    const cell = floorHits[0].object.userData;
-    if (cell.walkable){ goTo(cell.gridX, cell.gridY, e.clientX, e.clientY); return; }
-  }
+        const rooms = [];
 
-  // 5) стена — ближайший пол
-  const wallHits = raycaster.intersectObjects(wallMeshes, false);
-  if (wallHits.length){
-    const cell = wallHits[0].object.userData;
-    const near = findNearestWalkable(cell.gridX, cell.gridY, 4);
-    if (near) goTo(near.gx, near.gy, e.clientX, e.clientY);
-  }
-});
+        function carveRoom(x, y, w, h) {
+            for (let j = y; j < y + h; j++)
+                for (let i = x; i < x + w; i++)
+                    map[j][i] = 0;
+            rooms.push({ x, y, w, h, cx: (x + (w >> 1)), cy: (y + (h >> 1)) });
+        }
+        function roomsOverlap(a, b, pad = 1) {
+            return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x ||
+                     a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y);
+        }
+        function carveH(x1, x2, y) {
+            const a = Math.min(x1, x2), b = Math.max(x1, x2);
+            for (let x = a; x <= b; x++) if (map[y][x] === 1) map[y][x] = 0;
+        }
+        function carveV(y1, y2, x) {
+            const a = Math.min(y1, y2), b = Math.max(y1, y2);
+            for (let y = a; y <= b; y++) if (map[y][x] === 1) map[y][x] = 0;
+        }
 
-function goTo(gridX, gridY, clientX, clientY){
-  const start = worldToGrid(playerPos.x, playerPos.z);
-  const path = buildPath(start.gx, start.gy, gridX, gridY);
-  if (path.length < 2) return;
-  waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
-  moving = true;
-  if (clientX !== undefined){
-    targetEl.style.left = clientX + 'px';
-    targetEl.style.top  = clientY + 'px';
-    targetEl.classList.add('on');
-  }
-}
+        function generateMaze() {
+            const maxRooms = 14;
+            const minR = 5, maxR = 11;
+            let attempts = 0;
+            while (rooms.length < maxRooms && attempts < 400) {
+                attempts++;
+                const w = minR + Math.floor(Math.random() * (maxR - minR));
+                const h = minR + Math.floor(Math.random() * (maxR - minR));
+                const x = 1 + Math.floor(Math.random() * (size - w - 2));
+                const y = 1 + Math.floor(Math.random() * (size - h - 2));
+                const r = { x, y, w, h };
+                if (rooms.some(o => roomsOverlap(r, o))) continue;
+                carveRoom(x, y, w, h);
+            }
+            for (let i = 1; i < rooms.length; i++) {
+                const a = rooms[i - 1], b = rooms[i];
+                const ax = a.cx, ay = a.cy, bx = b.cx, by = b.cy;
+                if (Math.random() < 0.5) {
+                    carveH(ax, bx, ay);
+                    carveV(ay, by, bx);
+                } else {
+                    carveV(ay, by, ax);
+                    carveH(ax, bx, by);
+                }
+            }
+        }
 
-// ============================================================
-//  БОЙ
-// ============================================================
-var isBattleActive = false;
-var currentEnemy = null;
-var battleTimer = null;
+        generateMaze();
 
-function startBattle(enemy){
-  if (isBattleActive) return;
-  isBattleActive = true;
-  currentEnemy = enemy;
-  waypoints = []; moving = false; targetEl.classList.remove('on');
-  document.getElementById('mob-hp').style.display = 'block';
-  updateMobHpUi();
-  playSound(soundHit);
+        // ===== ДВЕРИ =====
+        function isWallCell(x, y) {
+            if (x < 0 || y < 0 || x >= size || y >= size) return true;
+            return map[y][x] === 1;
+        }
+        function isFloorCell(x, y) {
+            if (x < 0 || y < 0 || x >= size || y >= size) return false;
+            return map[y][x] === 0 || map[y][x] === 2 || map[y][x] === 3;
+        }
+        function floorWidthX(x, y) {
+            let w = 1;
+            for (let i = 1; i < 6; i++) { if (isFloorCell(x - i, y)) w++; else break; }
+            for (let i = 1; i < 6; i++) { if (isFloorCell(x + i, y)) w++; else break; }
+            return w;
+        }
+        function floorHeightY(x, y) {
+            let h = 1;
+            for (let i = 1; i < 6; i++) { if (isFloorCell(x, y - i)) h++; else break; }
+            for (let i = 1; i < 6; i++) { if (isFloorCell(x, y + i)) h++; else break; }
+            return h;
+        }
+        function placeDoors() {
+            const candidates = [];
+            for (let y = 1; y < size - 1; y++) {
+                for (let x = 1; x < size - 1; x++) {
+                    if (map[y][x] !== 0) continue;
+                    const wL = isWallCell(x - 1, y), wR = isWallCell(x + 1, y);
+                    const wU = isWallCell(x, y - 1), wD = isWallCell(x, y + 1);
+                    if (wL && wR && !wU && !wD) {
+                        if (floorWidthX(x, y - 1) >= 3 || floorWidthX(x, y + 1) >= 3) candidates.push({ x, y, horiz: true });
+                    } else if (wU && wD && !wL && !wR) {
+                        if (floorHeightY(x - 1, y) >= 3 || floorHeightY(x + 1, y) >= 3) candidates.push({ x, y, horiz: false });
+                    }
+                }
+            }
+            const placed = [];
+            for (const c of candidates) {
+                let ok = true;
+                for (const p of placed) {
+                    if (Math.abs(p.x - c.x) + Math.abs(p.y - c.y) < 4) { ok = false; break; }
+                }
+                if (ok && Math.random() < 0.85) {
+                    map[c.y][c.x] = 2;
+                    placed.push(c);
+                }
+            }
+        }
+        placeDoors();
 
-  battleTimer = setInterval(function(){
-    if (!isBattleActive || !currentEnemy) return;
-    if (parent.Sherwood && parent.Sherwood.getPlayer){
-      var p = parent.Sherwood.getPlayer();
-      if (p){
-        var dmg = Math.max(1, Math.floor(10 + Math.random()*15));
-        p.stats.hp = Math.max(0, p.stats.hp - dmg);
-        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
-      }
-    }
-  }, 1500);
-}
+        // ===== ТЕКСТУРЫ =====
+        const loader = new THREE.TextureLoader();
+        const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
+        const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
+        const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png');
+        const doorTexture  = loader.load('assets/interface/labyrinth_asset.png');
 
-function stopBattle(){
-  isBattleActive = false;
-  if (battleTimer){ clearInterval(battleTimer); battleTimer = null; }
-  document.getElementById('mob-hp').style.display = 'none';
-  currentEnemy = null;
-}
+        const wallMat  = new THREE.MeshStandardMaterial({ map: wallTexture,  roughness: 0.7, metalness: 0.05, emissive: new THREE.Color(0x1a0f08), emissiveIntensity: 0.2 });
+        const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.9, metalness: 0.0 });
+        const ceilMat  = new THREE.MeshStandardMaterial({ map: ceilTexture,  roughness: 0.9, metalness: 0.0, side: THREE.DoubleSide });
+        const doorMat  = new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.8 });
 
-function updateMobHpUi(){
-  if (!currentEnemy) return;
-  document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemy.hp + '/' + currentEnemy.maxHp;
-  document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - currentEnemy.hp/currentEnemy.maxHp*100) + '% 0 0)';
-  var pos = currentEnemy.mesh.position.clone();
-  pos.y += 0.6;
-  pos.project(camera);
-  var sx = (pos.x*0.5+0.5)*innerWidth;
-  var sy = (-pos.y*0.5+0.5)*innerHeight;
-  var el = document.getElementById('mob-hp');
-  el.style.left = sx + 'px';
-  el.style.top  = sy + 'px';
-}
+        // 6 материалов на BoxGeometry: +X, -X, +Y(верх=потолок), -Y, +Z, -Z
+        const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
 
-function attackEnemy(){
-  if (!isBattleActive || !currentEnemy) return;
-  var baseDmg = 80 + Math.floor(Math.random()*60);
-  currentEnemy.hp = Math.max(0, currentEnemy.hp - baseDmg);
-  playSound(soundHit);
-  updateMobHpUi();
-  if (currentEnemy.hp <= 0){
-    playSound(soundVictory);
-    currentEnemy.alive = false;
-    group.remove(currentEnemy.mesh);
-    stopBattle();
-  }
-}
+        const group = new THREE.Group();
+        scene.add(group);
 
-document.getElementById('attack-icon').addEventListener('click', function(){
-  if (isBattleActive) attackEnemy();
-});
+        const floorMeshes = [];
+        const wallMeshes  = [];
+        const doorLeaves  = [];
 
-function pickUpLoot(item){
-  if (!item || item.collected) return;
-  item.collected = true;
-  group.remove(item.mesh);
-  if (parent.Sherwood && parent.Sherwood.getPlayer){
-    var p = parent.Sherwood.getPlayer();
-    if (p){
-      if (item.type === 'potion_hp')   p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 50);
-      if (item.type === 'potion_mana') p.stats.mana = Math.min(p.stats.maxMana || 100, (p.stats.mana||0) + 50);
-      if (item.type === 'cauldron'){ p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp+25); p.stats.mana = Math.min(p.stats.maxMana||100, (p.stats.mana||0)+25); }
-      if (item.type === 'altar'){ p.stats.hp = p.stats.maxHp; p.stats.mana = p.stats.maxMana||100; }
-      if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
-    }
-  }
-}
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const x = col - Math.floor(size / 2);
+                const z = row - Math.floor(size / 2);
+                const isWall = map[row][col] === 1;
 
-// ============================================================
-//  AI ВРАГОВ — медленно, шагами как в D1
-// ============================================================
-const ENEMY_SPEED = 0.55;
-const ENEMY_AGGRO_RANGE = 6.0;
-const ENEMY_STOP_DIST = 0.9;
-const ENEMY_STEP_INTERVAL = 0.5;
+                if (!isWall) {
+                    const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                    floor.rotation.x = -Math.PI / 2;
+                    floor.position.set(x, 0, z);
+                    floor.userData = { gridX: col, gridY: row, walkable: true, isFloor: true };
+                    group.add(floor);
+                    floorMeshes.push(floor);
 
-function updateEnemies(dt){
-  if (isBattleActive) return;
-  for (const e of enemies){
-    if (!e.alive || e.attacking) continue;
-    const ex = e.mesh.position.x, ez = e.mesh.position.z;
-    const dx = playerPos.x - ex, dz = playerPos.z - ez;
-    const dist = Math.hypot(dx, dz);
-    if (dist > ENEMY_AGGRO_RANGE){ e.stepTimer = 0; continue; }
-    if (dist < ENEMY_STOP_DIST){ e.attacking = true; startBattle(e); return; }
-    e.stepTimer += dt;
-    if (e.stepTimer < ENEMY_STEP_INTERVAL) continue;
-    e.stepTimer = 0;
-    const step = ENEMY_SPEED * ENEMY_STEP_INTERVAL;
-    const nx = ex + (dx/dist)*step;
-    const nz = ez + (dz/dist)*step;
-    const g = worldToGrid(nx, nz);
-    if (isWalkable(g.gx, g.gy)){
-      e.mesh.position.x = nx;
-      e.mesh.position.z = nz;
-      e.gx = g.gx; e.gy = g.gy;
-    }
-  }
-}
+                    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                    ceil.rotation.x = Math.PI / 2;
+                    ceil.position.set(x, wallHeight, z);
+                    group.add(ceil);
+                }
 
-// ============================================================
-//  КАМЕРА — плавная
-// ============================================================
-const CAM_HEIGHT = 11.5;
-const CAM_TILT   = 0.75;
-const CAM_DEADZONE = 2.2;
-const CAM_FOLLOW = 2.2;
+                if (isWall) {
+                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMatsArray);
+                    wall.position.set(x, wallHeight / 2, z);
+                    wall.userData = { gridX: col, gridY: row, isWall: true };
+                    group.add(wall);
+                    wallMeshes.push(wall);
+                } else if (map[row][col] === 2) {
+                    const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
+                    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), doorMat);
+                    if (horiz) leaf.rotation.y = Math.PI / 2;
+                    leaf.position.set(x, wallHeight / 2, z);
+                    leaf.userData = { doorGX: col, doorGY: row, isDoor: true };
+                    group.add(leaf);
+                    doorLeaves.push({
+                        mesh: leaf, gx: col, gy: row,
+                        open: false, t: 0,
+                        closedY: wallHeight / 2,
+                        openY: -wallHeight / 2 - 0.1
+                    });
+                }
+            }
+        }
 
-const camFocus = new THREE.Vector3(playerPos.x, 0, playerPos.z);
-const camPosSmooth  = new THREE.Vector3();
-const camLookSmooth = new THREE.Vector3();
-let camInitialized = false;
+        // ===== ФАКТЕЛЫ =====
+        const torches = [];
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                if (map[row][col] === 0 && row % 3 === 0 && col % 3 === 0) {
+                    const x = col - Math.floor(size / 2);
+                    const z = row - Math.floor(size / 2);
+                    const bulb = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.05, 6, 6),
+                        new THREE.MeshBasicMaterial({ color: 0xffcc66 })
+                    );
+                    bulb.position.set(x, wallHeight - 0.15, z);
+                    group.add(bulb);
+                    const light = new THREE.PointLight(0xff8833, 0.9, 6, 2);
+                    light.position.set(x, wallHeight - 0.2, z);
+                    group.add(light);
+                    torches.push({ light, phase: Math.random() * Math.PI * 2 });
+                }
+            }
+        }
 
-function updateCamera(dt){
-  const tx = playerPos.x, tz = playerPos.z;
-  const dx = tx - camFocus.x, dz = tz - camFocus.z;
-  const dist = Math.hypot(dx, dz);
+        // ===== ОБЪЕКТЫ =====
+        var objectTypes = [
+            { type: 'enemy', count: 8, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
+            { type: 'potion_hp', count: 2, img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_mana', count: 2, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'cauldron', count: 3, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'altar', count: 3, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
+        ];
 
-  if (dist > CAM_DEADZONE){
-    const targetDist = dist - CAM_DEADZONE;
-    const moveDist = Math.min(targetDist, CAM_FOLLOW * dt) * 0.7;
-    const nx = dx / dist, nz = dz / dist;
-    camFocus.x += nx * moveDist;
-    camFocus.z += nz * moveDist;
-  }
+        var objects = [];
 
-  const desiredPos = new THREE.Vector3(camFocus.x, CAM_HEIGHT, camFocus.z + CAM_TILT*CAM_HEIGHT*0.85);
-  const lookAt = new THREE.Vector3(camFocus.x, 0, camFocus.z - 1.0);
+        function getRandomFreeCell() {
+            var attempts = 0;
+            while (attempts < 200) {
+                attempts++;
+                var x = 2 + Math.floor(Math.random() * (size - 4));
+                var y = 2 + Math.floor(Math.random() * (size - 4));
+                if (map[y][x] === 0) {
+                    var tooClose = false;
+                    for (var i = 0; i < objects.length; i++) {
+                        if (Math.abs(objects[i].x - x) + Math.abs(objects[i].y - y) < 3) { tooClose = true; break; }
+                    }
+                    if (!tooClose) return { x: x, y: y };
+                }
+            }
+            return { x: 1, y: 1 };
+        }
 
-  if (!camInitialized){
-    camPosSmooth.copy(desiredPos);
-    camLookSmooth.copy(lookAt);
-    camInitialized = true;
-  } else {
-    const k = 1 - Math.pow(0.03, dt);
-    camPosSmooth.lerp(desiredPos, k);
-    camLookSmooth.lerp(lookAt, k);
-  }
-  camera.position.copy(camPosSmooth);
-  camera.lookAt(camLookSmooth);
-}
+        for (var t = 0; t < objectTypes.length; t++) {
+            var typeDef = objectTypes[t];
+            for (var i = 0; i < typeDef.count; i++) {
+                var pos = getRandomFreeCell();
+                objects.push({ type: typeDef.type, x: pos.x, y: pos.y, img: typeDef.img, collected: false, attacking: false, hp: 0, maxHp: 0 });
+            }
+        }
 
-function syncPlayerGrid(){
-  const g = worldToGrid(playerPos.x, playerPos.z);
-  playerGX = g.gx;
-  playerGY = g.gy;
-}
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i];
+            var x = obj.x - Math.floor(size / 2);
+            var z = obj.y - Math.floor(size / 2);
 
-// ============================================================
-//  ЦИКЛ
-// ============================================================
-const clock = new THREE.Clock();
+            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
+            sprite.position.set(x, 0.1, z);
+            if (obj.type === 'enemy') {
+                sprite.scale.set(1.2, 1.2, 1);
+                sprite.position.y = 0.85;
+                obj.hp = 1000 + Math.floor(Math.random() * 1000);
+                obj.maxHp = obj.hp;
+            } else {
+                sprite.scale.set(0.5, 0.5, 1);
+                sprite.position.y = 0.35;
+            }
+            sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
+            group.add(sprite);
+            obj.mesh = sprite;
+        }
 
-function animate(){
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  const t  = clock.elapsedTime;
+        // ===== КРОВЬ / ВЫХОД =====
+        var bloodSprites = [
+            'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
+            'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
+            'assets/assets2/animation/blood_5.png'
+        ];
+        var bloodTextures = bloodSprites.map(function(path) { return loader.load(path); });
 
-  if (moving && waypoints.length){
-    let budget = MOVE_SPEED * dt;
-    while (budget > 0 && waypoints.length){
-      const tgt = waypoints[0];
-      const dx = tgt.x - playerPos.x;
-      const dz = tgt.z - playerPos.z;
-      const dist = Math.hypot(dx, dz);
-      if (dist <= budget){
-        playerPos.x = tgt.x;
-        playerPos.z = tgt.z;
-        budget -= dist;
-        waypoints.shift();
-      } else {
-        const nx = dx/dist, nz = dz/dist;
-        playerPos.x += nx*budget;
-        playerPos.z += nz*budget;
-        budget = 0;
-      }
-    }
-    if (!waypoints.length){
-      moving = false;
-      targetEl.classList.remove('on');
-    }
-    let lookX = playerPos.x, lookZ = playerPos.z;
-    if (waypoints.length){ lookX = waypoints[0].x; lookZ = waypoints[0].z; }
-    const ddx = lookX - playerPos.x;
-    const ddz = lookZ - playerPos.z;
-    if (ddx*ddx + ddz*ddz > 1e-6){
-      const desiredYaw = Math.atan2(-ddx, -ddz);
-      let dy = desiredYaw - playerYaw;
-      while (dy >  Math.PI) dy -= Math.PI*2;
-      while (dy < -Math.PI) dy += Math.PI*2;
-      const maxStep = TURN_SPEED * dt;
-      playerYaw += Math.max(-maxStep, Math.min(maxStep, dy));
-    }
-  }
+        var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false
+        }));
+        hitFlashSprite.scale.set(0.8, 0.8, 1);
+        hitFlashSprite.visible = false;
+        scene.add(hitFlashSprite);
 
-  updateEnemies(dt);
-  syncPlayerGrid();
+        var exitWall = new THREE.Mesh(
+            new THREE.BoxGeometry(1, wallHeight, 1),
+            new THREE.MeshStandardMaterial({ map: loader.load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
+        );
+        exitWall.position.set(size - 2 - Math.floor(size / 2), wallHeight / 2, size - 2 - Math.floor(size / 2));
+        exitWall.userData = { exit: true, locked: true };
+        group.add(exitWall);
 
-  hero.position.set(playerPos.x, 0.175, playerPos.z);
-  heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
-  heroGlow.intensity = 0.55 + Math.sin(t*3)*0.08;
+        // ===== ИГРОК =====
+        const startRoom = rooms[0] || { cx: 1, cy: 1 };
+        let playerGX = startRoom.cx;
+        let playerGY = startRoom.cy;
+        const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
+        let playerYaw = 0;
 
-  facingMarker.position.set(playerPos.x, 0.05, playerPos.z);
-  facingMarker.rotation.set(Math.PI/2, -playerYaw, 0);
+        const facingMarker = new THREE.Mesh(
+            new THREE.ConeGeometry(0.16, 0.36, 4),
+            new THREE.MeshBasicMaterial({ color: 0xc8a050 })
+        );
+        facingMarker.rotation.x = Math.PI / 2;
+        group.add(facingMarker);
 
-  for (const d of doorLeaves){
-    if (d.open && d.t < 1){
-      d.t += dt / 0.45;
-      const k = Math.min(d.t, 1);
-      const e = k*k*(3-2*k);
-      d.mesh.position.y = d.closedY + (d.openY - d.closedY) * e;
-      if (k >= 1) d.mesh.visible = false;
-    }
-  }
+        const hero = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.22, 0.26, 0.35, 10),
+            new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.9 })
+        );
+        hero.position.set(playerPos.x, 0.175, playerPos.z);
+        group.add(hero);
 
-  updateCamera(dt);
+        const heroGlow = new THREE.PointLight(0xffb060, 0.5, 5, 2);
+        heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
+        scene.add(heroGlow);
 
-  for (const tr of torches){
-    const f = 0.75 + Math.sin(t*9 + tr.phase)*0.18 + Math.sin(t*23 + tr.phase*1.7)*0.07;
-    tr.light.intensity = 1.0 * f + 0.35;
-    tr.flame.material.opacity = 0.7 + f*0.25;
-    const s = 0.18 + f*0.05;
-    tr.flame.scale.set(s, s*1.5, 1);
-  }
+        // ===== ДВИЖЕНИЕ =====
+        const MOVE_SPEED = 1.6;
+        const TURN_SPEED = 8.0;
 
-  if (isBattleActive) updateMobHpUi();
+        let waypoints = [];
+        let moving = false;
 
-  renderer.render(scene, camera);
-}
-animate();
+        function isWalkable(gx, gy) {
+            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
+            const v = map[gy][gx];
+            return v === 0 || v === 3;
+        }
+        function isClosedDoor(gx, gy) {
+            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
+            return map[gy][gx] === 2;
+        }
+        function canStep(fromGX, fromGY, toGX, toGY) {
+            if (!isWalkable(toGX, toGY)) return false;
+            const dx = toGX - fromGX, dy = toGY - fromGY;
+            if (dx !== 0 && dy !== 0) {
+                if (!isWalkable(fromGX + dx, fromGY)) return false;
+                if (!isWalkable(fromGX, fromGY + dy)) return false;
+            }
+            return true;
+        }
+        function gridToWorld(gx, gy) {
+            return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) };
+        }
+        function worldToGrid(wx, wz) {
+            return {
+                gx: Math.round(wx + Math.floor(size / 2)),
+                gy: Math.round(wz + Math.floor(size / 2))
+            };
+        }
+        function buildPath(startGX, startGY, goalGX, goalGY) {
+            if (!isWalkable(goalGX, goalGY)) return [];
+            const key = (x, y) => y * size + x;
+            const prev = new Map();
+            const q = [{ x: startGX, y: startGY }];
+            prev.set(key(startGX, startGY), null);
+            const dirs = [
+                { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
+                { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }
+            ];
+            while (q.length) {
+                const cur = q.shift();
+                if (cur.x === goalGX && cur.y === goalGY) {
+                    const out = [];
+                    let k = key(cur.x, cur.y);
+                    while (k !== null) {
+                        out.push({ gx: k % size, gy: Math.floor(k / size) });
+                        k = prev.get(k);
+                    }
+                    return out.reverse();
+                }
+                for (const d of dirs) {
+                    const nx = cur.x + d.x, ny = cur.y + d.y;
+                    if (!canStep(cur.x, cur.y, nx, ny)) continue;
+                    const k = key(nx, ny);
+                    if (!prev.has(k)) {
+                        prev.set(k, key(cur.x, cur.y));
+                        q.push({ x: nx, y: ny });
+                    }
+                }
+            }
+            return [];
+        }
 
-addEventListener('resize', ()=>{
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-</script>
+        function openDoor(gx, gy) {
+            if (!isClosedDoor(gx, gy)) return false;
+            map[gy][gx] = 3;
+            const d = doorLeaves.find(o => o.gx === gx && o.gy === gy);
+            if (d && !d.open) { d.open = true; d.t = 0; }
+            return true;
+        }
+        function findNearestWalkable(gx, gy, maxR = 4) {
+            if (isWalkable(gx, gy)) return { gx, gy };
+            for (let r = 1; r <= maxR; r++) {
+                for (let dy = -r; dy <= r; dy++) {
+                    for (let dx = -r; dx <= r; dx++) {
+                        if (Math.abs(dx) + Math.abs(dy) !== r) continue;
+                        const nx = gx + dx, ny = gy + dy;
+                        if (isWalkable(nx, ny)) return { gx: nx, gy: ny };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // ===== КЛИК =====
+        const raycaster = new THREE.Raycaster();
+        const ndc = new THREE.Vector2();
+        const targetEl = document.getElementById('target');
+
+        renderer.domElement.addEventListener('click', (e) => {
+            ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+            ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(ndc, camera);
+
+            // 1) клик по двери
+            const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
+            if (doorHits.length) {
+                const ud = doorHits[0].object.userData;
+                if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
+            }
+
+            // 2) клик по выходной стене
+            const exitHits = raycaster.intersectObject(exitWall, false);
+            if (exitHits.length) {
+                if (exitWall.userData.locked) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Выход закрыт!');
+                } else {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Выход открыт!');
+                }
+                return;
+            }
+
+            // 3) клик по спрайтам (враги/лут)
+            const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
+            const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
+            if (spriteHits.length) {
+                const ud = spriteHits[0].object.userData;
+                if (ud) {
+                    if (ud.type === 'enemy') {
+                        // если уже в бою с ним — бьём
+                        if (isBattleActive && currentEnemyObj === ud.objRef) {
+                            attackEnemy();
+                            return;
+                        }
+                        // иначе идём к нему
+                        const cur = worldToGrid(playerPos.x, playerPos.z);
+                        const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
+                        if (path.length > 1) {
+                            waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+                            moving = true;
+                            targetEl.style.left = e.clientX + 'px';
+                            targetEl.style.top = e.clientY + 'px';
+                            targetEl.classList.add('on');
+                        }
+                        return;
+                    }
+                    if (LOOT_TYPES.indexOf(ud.type) !== -1) {
+                        const cur = worldToGrid(playerPos.x, playerPos.z);
+                        const dist = Math.abs(cur.gx - ud.gridX) + Math.abs(cur.gy - ud.gridY);
+                        if (dist <= 1) pickUpLoot(ud.objRef);
+                        else {
+                            const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
+                            if (path.length > 1) {
+                                waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+                                moving = true;
+                                targetEl.style.left = e.clientX + 'px';
+                                targetEl.style.top = e.clientY + 'px';
+                                targetEl.classList.add('on');
+                            }
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // 4) клик по полу
+            const floorHits = raycaster.intersectObjects(floorMeshes, false);
+            if (floorHits.length) {
+                const cell = floorHits[0].object.userData;
+                if (cell.walkable) { goTo(cell.gridX, cell.gridY, e.clientX, e.clientY); return; }
+            }
+
+            // 5) клик по стене — ближайший пол
+            const wallHits = raycaster.intersectObjects(wallMeshes, false);
+            if (wallHits.length) {
+                const cell = wallHits[0].object.userData;
+                const near = findNearestWalkable(cell.gridX, cell.gridY, 4);
+                if (near) goTo(near.gx, near.gy, e.clientX, e.clientY);
+            }
+        });
+
+        function goTo(gridX, gridY, clientX, clientY) {
+            const start = worldToGrid(playerPos.x, playerPos.z);
+            const path = buildPath(start.gx, start.gy, gridX, gridY);
+            if (path.length < 2) return;
+            waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+            moving = true;
+            if (clientX !== undefined) {
+                targetEl.style.left = clientX + 'px';
+                targetEl.style.top = clientY + 'px';
+                targetEl.classList.add('on');
+            }
+        }
+
+        // ===== ДЖОЙСТИК =====
+        function tryStep(forward) {
+            if (moving) return;
+            const dirX = -Math.sin(playerYaw) * forward;
+            const dirZ = -Math.cos(playerYaw) * forward;
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            const nx = cur.gx + Math.round(dirX);
+            const ny = cur.gy + Math.round(dirZ);
+            if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
+            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
+            const to = gridToWorld(nx, ny);
+            waypoints = [{ x: to.x, z: to.z }];
+            moving = true;
+        }
+        function tryTurn(dy) {
+            // в этой версии поворот не нужен — направление выставляется движением
+            // но оставим для совместимости кнопок
+            playerYaw += dy;
+        }
+
+        document.getElementById('btn-forward').addEventListener('click', (e) => { e.preventDefault(); tryStep(1); });
+        document.getElementById('btn-back').addEventListener('click', (e) => { e.preventDefault(); tryStep(-1); });
+        document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); tryTurn(+Math.PI / 2); });
+        document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); tryTurn(-Math.PI / 2); });
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': case 'arrowup': tryStep(1); e.preventDefault(); break;
+                case 's': case 'arrowdown': tryStep(-1); e.preventDefault(); break;
+                case 'a': case 'arrowleft': tryTurn(+Math.PI / 2); e.preventDefault(); break;
+                case 'd': case 'arrowright': tryTurn(-Math.PI / 2); e.preventDefault(); break;
+            }
+        });
+
+        // ===== БОЙ =====
+        var currentEnemySprite = null;
+        var currentEnemyStats = null;
+        var currentEnemyObj = null;
+        var isBattleActive = false;
+        var pushTimer = null;
+        var battleTimer = null;
+        var lootInRange = null;
+        var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
+
+        var hitSprites = [
+            'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
+            'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
+        ];
+
+        function updateHeroSpheres() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            var hpPercent = p.stats.hp / p.stats.maxHp;
+            var lifeFill = document.getElementById('life-fill');
+            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            var hpText = document.getElementById('hp-text');
+            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+
+            var mana = p.stats.mana || 0;
+            var maxMana = p.stats.maxMana || 100;
+            var manaPercent = mana / maxMana;
+            var manaFill = document.getElementById('mana-fill');
+            if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - manaPercent) * 100) + '% 0 0 0)';
+            var manaText = document.getElementById('mana-text');
+            if (manaText) manaText.textContent = 'MP: ' + Math.floor(mana);
+        }
+        setTimeout(updateHeroSpheres, 500);
+
+        function checkObjects() {
+            var enemiesLeft = 0;
+            var nearestLoot = null;
+            var nearestDist = 999;
+
+            objects.forEach(function(obj) {
+                if (!obj.collected && obj.type !== 'enemy') {
+                    var dx = playerPos.x - (obj.x - Math.floor(size / 2));
+                    var dz = playerPos.z - (obj.y - Math.floor(size / 2));
+                    var dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist < 0.9 && LOOT_TYPES.indexOf(obj.type) !== -1) {
+                        if (dist < nearestDist) { nearestDist = dist; nearestLoot = obj; }
+                    }
+                }
+                if (!obj.collected && obj.type === 'enemy') enemiesLeft++;
+            });
+
+            if (nearestLoot && !isBattleActive) {
+                lootInRange = nearestLoot;
+                var iconImg = document.getElementById('attack-icon-img');
+                if (iconImg) iconImg.src = 'assets/assets2/icons/take.png';
+            } else if (!isBattleActive) {
+                lootInRange = null;
+                var iconImg = document.getElementById('attack-icon-img');
+                if (iconImg) iconImg.src = 'assets/assets2/talents/simple_attack.png';
+            }
+
+            if (enemiesLeft === 0) {
+                exitWall.material.map = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
+                exitWall.material.needsUpdate = true;
+                exitWall.userData.locked = false;
+            }
+        }
+
+        function pickUpLoot(obj) {
+            if (!obj || obj.collected) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            if (obj.type === 'potion_hp') {
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 50);
+                parent.UI._showToast(' +50 HP');
+            } else if (obj.type === 'potion_mana') {
+                p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 50);
+                parent.UI._showToast(' +50 MP');
+            } else if (obj.type === 'cauldron') {
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 25);
+                p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 25);
+                parent.UI._showToast(' +25 HP, +25 MP');
+            } else if (obj.type === 'altar') {
+                p.stats.hp = p.stats.maxHp;
+                p.stats.mana = p.stats.maxMana;
+                parent.UI._showToast(' Полное восстановление');
+            }
+
+            obj.collected = true;
+            group.remove(obj.mesh);
+            lootInRange = null;
+            var iconImg = document.getElementById('attack-icon-img');
+            if (iconImg) iconImg.src = 'assets/assets2/talents/simple_attack.png';
+
+            updateHeroSpheres();
+            if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+            if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+            checkObjects();
+        }
+
+        function startBattle(obj) {
+            if (isBattleActive) return;
+            isBattleActive = true;
+            currentEnemySprite = obj.mesh;
+            currentEnemyObj = obj;
+            currentEnemyStats = { hp: obj.hp || (1000 + Math.floor(Math.random() * 1000)), maxHp: 0 };
+            currentEnemyStats.maxHp = currentEnemyStats.hp;
+
+            waypoints = []; moving = false;
+            targetEl.classList.remove('on');
+
+            document.getElementById('mob-hp').style.display = 'block';
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+
+            playSound(soundHit);
+
+            battleTimer = setInterval(function() {
+                if (!isBattleActive) return;
+                if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+                var p = parent.Sherwood.getPlayer();
+                if (!p) return;
+                var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
+                if (p.talents) {
+                    if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                    if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+                }
+                p.stats.hp = Math.max(0, p.stats.hp - edmg);
+                if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+                updateHeroSpheres();
+                if (p.stats.hp <= 0) { stopBattle(); showDefeatScreen(); }
+            }, 1500);
+        }
+
+        function stopBattle() {
+            isBattleActive = false;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+            currentEnemySprite = null;
+            currentEnemyStats = null;
+            currentEnemyObj = null;
+        }
+
+        function onEnemyKilled() {
+            if (!isBattleActive) return;
+            playSound(soundVictory);
+            dungeonMusic.pause();
+            dungeonMusic.currentTime = 0;
+            isBattleActive = false;
+            document.getElementById('mob-hp').style.display = 'none';
+            if (currentEnemySprite) group.remove(currentEnemySprite);
+            if (currentEnemyObj) currentEnemyObj.collected = true;
+            setTimeout(function() { showVictoryScreen(); }, 800);
+        }
+
+        function attackEnemy() {
+            if (!isBattleActive || !currentEnemyStats) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            playSound(soundHit);
+
+            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.hp * 0.001) + Math.floor(Math.random() * 20));
+            if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
+
+            var now = Date.now();
+            for (var i = activeEffects.length - 1; i >= 0; i--) {
+                var ef = activeEffects[i];
+                if (ef.endsAt < now) { activeEffects.splice(i, 1); continue; }
+                if (ef.type === 'ricochet' || ef.type === 'riot' || ef.type === 'inspiration') baseDmg = Math.floor(baseDmg * (1 + ef.bonus));
+            }
+            var dmg = baseDmg;
+
+            if (p.talents && p.talents['vampirism'] && Math.random() < 0.3) {
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 10 * p.talents['vampirism']);
+            }
+
+            currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
+            if (currentEnemyObj) { currentEnemyObj.hp = currentEnemyStats.hp; currentEnemyObj.maxHp = currentEnemyStats.maxHp; }
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+
+            if (currentEnemySprite) {
+                hitFlashSprite.position.copy(currentEnemySprite.position);
+                hitFlashSprite.position.y += 0.1;
+                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
+                hitFlashSprite.material.needsUpdate = true;
+                hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
+                hitFlashSprite.visible = true;
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+            }
+
+            var hitEffect = document.getElementById('hit-effect');
+            var hitEffectImg = document.getElementById('hit-effect-img');
+            if (hitEffect && hitEffectImg && currentEnemySprite) {
+                hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                var screenPos = currentEnemySprite.position.clone();
+                screenPos.y += 0.1;
+                screenPos.project(camera);
+                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                var side = Math.random() < 0.5 ? -1 : 1;
+                hitEffect.style.left = (x + side * 120) + 'px';
+                hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
+                hitEffect.style.display = 'block';
+                setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
+            }
+
+            if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+
+            var skipEnemyTurn = false;
+            for (var i = activeEffects.length - 1; i >= 0; i--) {
+                if (activeEffects[i].type === 'stun' || activeEffects[i].type === 'knot') skipEnemyTurn = true;
+            }
+            if (skipEnemyTurn) { updateHeroSpheres(); return; }
+
+            if (p.talents) {
+                if (p.talents['parry'] && Math.random() < 0.05 * p.talents['parry']) return;
+                if (p.talents['silence'] && Math.random() < 0.1 * p.talents['silence']) return;
+            }
+
+            var edmg = Math.max(1, Math.floor(10 + Math.random() * 15));
+            if (p.talents) {
+                if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+            }
+            for (var i = 0; i < activeEffects.length; i++) {
+                if (activeEffects[i].type === 'funnel') edmg = Math.floor(edmg * (1 - activeEffects[i].debuff));
+            }
+
+            p.stats.hp = Math.max(0, p.stats.hp - edmg);
+            if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateHeroSpheres();
+
+            if (p.stats.hp <= 0) {
+                playSound(soundDefeat);
+                dungeonMusic.pause();
+                stopBattle();
+                showDefeatScreen();
+            }
+        }
+
+        function updateMobHpBar() {
+            if (!isBattleActive || !currentEnemySprite) return;
+            var worldPos = currentEnemySprite.position.clone();
+            worldPos.y += 0.6;
+            worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            document.getElementById('mob-hp').style.left = x + 'px';
+            document.getElementById('mob-hp').style.top = y + 'px';
+        }
+
+        function showDefeatScreen() {
+            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_defeat.png\') center/100% 100% no-repeat;"></div>';
+            setTimeout(function() { parent.UI.loadHome(); }, 1500);
+        }
+
+        function showVictoryScreen() {
+            parent.document.getElementById('ui-screen-layer').innerHTML = '<div style="width:100%;height:100%;background:url(\'assets/assets2/backgrounds/vertical_slab_victory.png\') center/100% 100% no-repeat;"></div>';
+            setTimeout(function() { parent.UI.loadHome(); }, 1500);
+        }
+
+        document.getElementById('attack-icon').addEventListener('click', function() {
+            if (lootInRange) { pickUpLoot(lootInRange); return; }
+            attackEnemy();
+        });
+
+        // ===== СКИЛЛЫ И ТАЛАНТЫ (твой код без изменений) =====
+        var talentData = {
+            'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
+            'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
+            'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 8000, name: 'Оглушение' },
+            'ricochet': { icon: 'assets/assets2/talents/Ricochet.png', side: 'left', cooldown: 10000, name: 'Рикошет' },
+            'riot': { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 6000, name: 'Бунт' },
+            'force_of_elements': { icon: 'assets/assets2/talents/force of the elements.png', side: 'left', cooldown: 0, name: 'Сила стихий' },
+            'evil_eye': { icon: 'assets/assets2/talents/evil_eye.png', side: 'left', cooldown: 7000, name: 'Злой глаз' },
+            'healing': { icon: 'assets/assets2/talents/healing.png', side: 'right', cooldown: 10000, name: 'Исцеление' },
+            'healer': { icon: 'assets/assets2/talents/Healer.png', side: 'right', cooldown: 12000, name: 'Хилер' },
+            'funnel': { icon: 'assets/assets2/talents/funnel.png', side: 'right', cooldown: 8000, name: 'Воронка' },
+            'inspiration': { icon: 'assets/assets2/talents/inspiration.png', side: 'right', cooldown: 15000, name: 'Вдохновение' },
+            'knot': { icon: 'assets/assets2/talents/knot.png', side: 'right', cooldown: 10000, name: 'Узел' }
+        };
+        var skillCooldowns = {};
+        var activeEffects = [];
+        var poisonTimer = null;
+        var healerTimer = null;
+
+        function renderLearnedTalents() {
+            var leftCol = document.getElementById('skills-left');
+            var rightCol = document.getElementById('skills-right');
+            if (!leftCol || !rightCol) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p || !p.talents) return;
+            leftCol.innerHTML = ''; rightCol.innerHTML = '';
+            for (var id in p.talents) {
+                var lvl = p.talents[id];
+                if (lvl > 0 && talentData[id]) {
+                    var img = document.createElement('img');
+                    img.src = talentData[id].icon;
+                    img.style.cssText = 'width:44px; height:44px; object-fit:contain;';
+                    img.title = talentData[id].name + ' (Ур. ' + lvl + ')';
+                    img.dataset.skillId = id;
+                    img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
+                    (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
+                }
+            }
+        }
+        setTimeout(renderLearnedTalents, 500);
+
+        function useSkill(skillId) {
+            if (!isBattleActive || !currentEnemyStats) return;
+            if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p || !p.talents) return;
+            var lvl = p.talents[skillId] || 0;
+            if (lvl <= 0) return;
+
+            var manaCosts = {
+                'poisoning': 10, 'vampirism': 15, 'stunning': 20, 'ricochet': 25, 'riot': 15,
+                'force_of_elements': 10, 'evil_eye': 20, 'healing': 20, 'healer': 25,
+                'funnel': 15, 'inspiration': 30, 'knot': 20
+            };
+            var manaCost = (manaCosts[skillId] || 10) * lvl;
+            if (!p.stats.mana) p.stats.mana = 0;
+            if (p.stats.mana < manaCost) {
+                if (parent.UI && parent.UI._showToast) parent.UI._showToast('Не хватает маны! Нужно ' + manaCost);
+                return;
+            }
+            p.stats.mana -= manaCost;
+            updateHeroSpheres();
+
+            var dmg = 0, heal = 0;
+            switch (skillId) {
+                case 'poisoning':
+                    if (poisonTimer) clearInterval(poisonTimer);
+                    var poisonDmg = 20 * lvl;
+                    var poisonTicks = 3;
+                    poisonTimer = setInterval(function() {
+                        if (!isBattleActive) { clearInterval(poisonTimer); return; }
+                        currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - poisonDmg);
+                        document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+                        document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+                        if (currentEnemyStats.hp <= 0) { clearInterval(poisonTimer); onEnemyKilled(); }
+                        poisonTicks--;
+                        if (poisonTicks <= 0) clearInterval(poisonTimer);
+                    }, 1000);
+                    break;
+                case 'vampirism':
+                    dmg = 30 * lvl;
+                    currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
+                    heal = Math.floor(dmg * 0.5);
+                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                    updateHeroSpheres();
+                    break;
+                case 'stunning':
+                    if (Math.random() < 0.2 * lvl) activeEffects.push({ type: 'stun', endsAt: Date.now() + 3000 });
+                    break;
+                case 'ricochet':
+                    activeEffects.push({ type: 'ricochet', endsAt: Date.now() + 3000, bonus: 0.3 * lvl, crit: 0.5 });
+                    break;
+                case 'riot':
+                    if (p.stats.hp / p.stats.maxHp < 0.5) activeEffects.push({ type: 'riot', endsAt: Date.now() + 6000, bonus: 0.25 * lvl });
+                    break;
+                case 'force_of_elements':
+                    dmg = 20 * lvl;
+                    currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
+                    break;
+                case 'evil_eye':
+                    activeEffects.push({ type: 'evil_eye', endsAt: Date.now() + 5000, debuff: 0.15 * lvl });
+                    break;
+                case 'healing':
+                    heal = 50 * lvl;
+                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                    updateHeroSpheres();
+                    break;
+                case 'healer':
+                    if (healerTimer) clearInterval(healerTimer);
+                    var healerAmount = 5 * lvl;
+                    var healerTicks = 5;
+                    healerTimer = setInterval(function() {
+                        if (!isBattleActive) { clearInterval(healerTimer); return; }
+                        p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + healerAmount);
+                        updateHeroSpheres();
+                        healerTicks--;
+                        if (healerTicks <= 0) clearInterval(healerTimer);
+                    }, 1000);
+                    break;
+                case 'funnel':
+                    activeEffects.push({ type: 'funnel', endsAt: Date.now() + 4000, debuff: 0.3 * lvl });
+                    break;
+                case 'inspiration':
+                    activeEffects.push({ type: 'inspiration', endsAt: Date.now() + 5000, bonus: 0.2 * lvl });
+                    break;
+                case 'knot':
+                    activeEffects.push({ type: 'knot', endsAt: Date.now() + 3000 * lvl });
+                    break;
+            }
+
+            if (dmg > 0) {
+                document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+                document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+                if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+            }
+
+            var cd = talentData[skillId].cooldown || 0;
+            if (cd > 0) {
+                skillCooldowns[skillId] = Date.now() + cd;
+                var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon) {
+                    icon.classList.add('on-cooldown');
+                    setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd);
+                }
+            }
+        }
+
+        // ===== КАМЕРА (механика из черновика) =====
+        const CAM_HEIGHT = 11.5;
+        const CAM_TILT = 0.75;
+        const CAM_DEADZONE = 2.2;
+        const CAM_FOLLOW = 2.2;
+
+        const camFocus = new THREE.Vector3(playerPos.x, 0, playerPos.z);
+        const camPosSmooth = new THREE.Vector3();
+        const camLookSmooth = new THREE.Vector3();
+        let camInitialized = false;
+
+        function updateCamera(dt) {
+            const tx = playerPos.x, tz = playerPos.z;
+            const dx = tx - camFocus.x, dz = tz - camFocus.z;
+            const dist = Math.hypot(dx, dz);
+            if (dist > CAM_DEADZONE) {
+                const targetDist = dist - CAM_DEADZONE;
+                const moveDist = Math.min(targetDist, CAM_FOLLOW * dt) * 0.7;
+                const nx = dx / dist, nz = dz / dist;
+                camFocus.x += nx * moveDist;
+                camFocus.z += nz * moveDist;
+            }
+            const desiredPos = new THREE.Vector3(camFocus.x, CAM_HEIGHT, camFocus.z + CAM_TILT * CAM_HEIGHT * 0.85);
+            const lookAt = new THREE.Vector3(camFocus.x, 0, camFocus.z - 1.0);
+            if (!camInitialized) {
+                camPosSmooth.copy(desiredPos);
+                camLookSmooth.copy(lookAt);
+                camInitialized = true;
+            } else {
+                const k = 1 - Math.pow(0.03, dt);
+                camPosSmooth.lerp(desiredPos, k);
+                camLookSmooth.lerp(lookAt, k);
+            }
+            camera.position.copy(camPosSmooth);
+            camera.lookAt(camLookSmooth);
+        }
+
+        function syncPlayerGrid() {
+            const g = worldToGrid(playerPos.x, playerPos.z);
+            playerGX = g.gx;
+            playerGY = g.gy;
+        }
+
+        // ===== ЦИКЛ =====
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.05);
+            const t = clock.elapsedTime;
+
+            if (moving && waypoints.length) {
+                let budget = MOVE_SPEED * dt;
+                while (budget > 0 && waypoints.length) {
+                    const tgt = waypoints[0];
+                    const dx = tgt.x - playerPos.x;
+                    const dz = tgt.z - playerPos.z;
+                    const dist = Math.hypot(dx, dz);
+                    if (dist <= budget) {
+                        playerPos.x = tgt.x;
+                        playerPos.z = tgt.z;
+                        budget -= dist;
+                        waypoints.shift();
+                    } else {
+                        const nx = dx / dist, nz = dz / dist;
+                        playerPos.x += nx * budget;
+                        playerPos.z += nz * budget;
+                        budget = 0;
+                    }
+                }
+                if (!waypoints.length) {
+                    moving = false;
+                    targetEl.classList.remove('on');
+                    checkObjects();
+                }
+                let lookX = playerPos.x, lookZ = playerPos.z;
+                if (waypoints.length) { lookX = waypoints[0].x; lookZ = waypoints[0].z; }
+                const ddx = lookX - playerPos.x;
+                const ddz = lookZ - playerPos.z;
+                if (ddx * ddx + ddz * ddz > 1e-6) {
+                    const desiredYaw = Math.atan2(-ddx, -ddz);
+                    let dy = desiredYaw - playerYaw;
+                    while (dy > Math.PI) dy -= Math.PI * 2;
+                    while (dy < -Math.PI) dy += Math.PI * 2;
+                    const maxStep = TURN_SPEED * dt;
+                    playerYaw += Math.max(-maxStep, Math.min(maxStep, dy));
+                }
+            }
+
+            syncPlayerGrid();
+
+            hero.position.set(playerPos.x, 0.175, playerPos.z);
+            heroGlow.position.set(playerPos.x, 1.0, playerPos.z);
+            heroGlow.intensity = 0.5 + Math.sin(t * 3) * 0.08;
+
+            facingMarker.position.set(playerPos.x, 0.05, playerPos.z);
+            facingMarker.rotation.set(Math.PI / 2, -playerYaw, 0);
+
+            for (const d of doorLeaves) {
+                if (d.open && d.t < 1) {
+                    d.t += dt / 0.45;
+                    const k = Math.min(d.t, 1);
+                    const e = k * k * (3 - 2 * k);
+                    d.mesh.position.y = d.closedY + (d.openY - d.closedY) * e;
+                    if (k >= 1) d.mesh.visible = false;
+                }
+            }
+
+            updateCamera(dt);
+
+            for (const tr of torches) {
+                const f = 0.75 + Math.sin(t * 9 + tr.phase) * 0.18 + Math.sin(t * 23 + tr.phase * 1.7) * 0.07;
+                tr.light.intensity = 1.0 * f + 0.35;
+            }
+
+            renderer.render(scene, camera);
+            if (isBattleActive) updateMobHpBar();
+        }
+        animate();
+
+        setTimeout(checkObjects, 800);
+
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    </script>
 </body>
 </html>
