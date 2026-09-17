@@ -522,18 +522,18 @@
 
             if (obj.type === 'potion_hp') {
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 50);
-                parent.UI._showToast('❤️ +50 HP');
+                parent.UI._showToast(' +50 HP');
             } else if (obj.type === 'potion_mana') {
                 p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 50);
-                parent.UI._showToast('🔮 +50 MP');
+                parent.UI._showToast(' +50 MP');
             } else if (obj.type === 'cauldron') {
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 25);
                 p.stats.mana = Math.min(p.stats.maxMana, (p.stats.mana || 0) + 25);
-                parent.UI._showToast('🍲 +25 HP, +25 MP');
+                parent.UI._showToast(' +25 HP, +25 MP');
             } else if (obj.type === 'altar') {
                 p.stats.hp = p.stats.maxHp;
                 p.stats.mana = p.stats.maxMana;
-                parent.UI._showToast('🛐 Полное восстановление');
+                parent.UI._showToast(' Полное восстановление');
             }
 
             obj.collected = true;
@@ -912,9 +912,9 @@
                 var clickedObj = intersects[0].object;
                 if (clickedObj.userData && clickedObj.userData.exit) {
                     if (clickedObj.userData.locked) {
-                        parent.UI._showToast('🔒 Выход закрыт!');
+                        parent.UI._showToast(' Выход закрыт!');
                     } else {
-                        parent.UI._showToast('🏆 Выход открыт!');
+                        parent.UI._showToast(' Выход открыт!');
                     }
                 }
             }
