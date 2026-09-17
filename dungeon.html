@@ -39,7 +39,6 @@
     #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
     #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-    /* кнопка обычного удара — по центру снизу, как fallback */
     #attack-icon { position: fixed; bottom: 30px; right: 30px; width: 70px; height: 70px; z-index: 40; cursor: pointer; }
     #attack-icon img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 6px #8b6b3a); }
 
@@ -82,7 +81,6 @@
 <div id="counter">🏆 0</div>
 <div id="target"></div>
 
-<!-- Кнопка обычного удара -->
 <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png"></div>
 
 <div id="vignette"></div>
@@ -111,7 +109,6 @@ dungeonMusic.volume = 0.4;
 function stopAllMusic() {
     try {
         if (parent) {
-            // главное — AudioManager из js/audio.js
             if (parent.AudioManager) {
                 try { if (typeof parent.AudioManager.stopCityTheme === 'function') parent.AudioManager.stopCityTheme(); } catch(e){}
                 try {
@@ -122,7 +119,6 @@ function stopAllMusic() {
                     }
                 } catch(e){}
             }
-            // все теги <audio> в родителе
             if (parent.document) {
                 try {
                     parent.document.querySelectorAll('audio').forEach(function(a){
@@ -130,7 +126,6 @@ function stopAllMusic() {
                     });
                 } catch(e){}
             }
-            // по именам переменных
             ['menuMusic','backgroundMusic','music','bgm'].forEach(function(k){
                 try { if (parent[k] && typeof parent[k].pause === 'function') { parent[k].pause(); parent[k].currentTime = 0; } } catch(e){}
             });
@@ -150,7 +145,6 @@ function startDungeonMusic() {
 setTimeout(function(){ stopAllMusic(); dungeonMusic.play().catch(function(){}); }, 200);
 window.addEventListener('click', function(){ startDungeonMusic(); }, { once: false });
 window.addEventListener('touchstart', function(){ startDungeonMusic(); }, { once: false });
-// жёстко каждые 500мс гасим чужую музыку
 setInterval(stopAllMusic, 500);
 
 function playSound(audio) {
@@ -186,6 +180,7 @@ const size = 33;
 const wallHeight = 1.1;
 const cellSize = 1;
 
+// 0=пол, 1=стена, 2=закрытая дверь, 3=открытая дверь
 const map = [];
 for (let i = 0; i < size; i++) {
     map[i] = [];
@@ -293,7 +288,7 @@ function placeDoors() {
 placeDoors();
 
 // ============================================================
-//  ТЕКСТУРЫ
+//  ТЕКСТУРЫ — твои
 // ============================================================
 const loader = new THREE.TextureLoader();
 
@@ -303,7 +298,7 @@ const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_til
 // ПОТОЛОК — твой путь
 const CEIL_PATH = 'assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png';
 const ceilTexture = loader.load(CEIL_PATH,
-    function(t){ /* loaded */ },
+    function(){ /* loaded */ },
     undefined,
     function(err){ console.warn('Ceiling texture failed:', CEIL_PATH, err); }
 );
@@ -316,15 +311,24 @@ const doorSheet = loader.load(DOOR_PATH, undefined, undefined, function(err){
 doorSheet.magFilter = THREE.NearestFilter;
 doorSheet.minFilter = THREE.LinearFilter;
 
-// Сколько кадров в спрайт-листе? По умолчанию 1 — если это одна картинка,
-// она просто ляжет на всю плоскость. Если у тебя несколько кадров в ряд — увеличь.
 const DOOR_FRAMES = 1;
 const DOOR_FRAME_W = 1 / DOOR_FRAMES;
 const DOOR_FRAME_INDEX = 0;
 
-const wallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.85, metalness: 0.05, emissive: new THREE.Color(0x1a0f08), emissiveIntensity: 0.15 });
+// ============================================================
+//  МАТЕРИАЛЫ
+// ============================================================
+const wallMat = new THREE.MeshStandardMaterial({
+    map: wallTexture, roughness: 0.85, metalness: 0.05,
+    emissive: new THREE.Color(0x1a0f08), emissiveIntensity: 0.15
+});
 const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95, metalness: 0.0 });
 const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTexture, roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide });
+
+// ВАЖНО: массив из 6 материалов для BoxGeometry.
+// Порядок граней: +X, -X, +Y, -Y, +Z, -Z
+// Верхняя грань (+Y) = потолок, все остальные = стена.
+const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
 
 function makeDoorMaterial(frame) {
     const t = doorSheet.clone();
@@ -340,6 +344,9 @@ function makeDoorMaterial(frame) {
 }
 const doorMaterial = makeDoorMaterial(DOOR_FRAME_INDEX);
 
+// ============================================================
+//  ГЕОМЕТРИЯ
+// ============================================================
 const group = new THREE.Group();
 scene.add(group);
 
@@ -352,30 +359,33 @@ for (let row = 0; row < size; row++) {
         const x = col - Math.floor(size / 2);
         const z = row - Math.floor(size / 2);
 
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.set(x, 0, z);
-        floor.userData = { gridX: col, gridY: row, walkable: map[row][col] !== 1, isFloor: true };
-        group.add(floor);
-        floorMeshes.push(floor);
+        // ПОЛ — под проходимыми клетками (не под стенами)
+        if (map[row][col] !== 1) {
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(x, 0, z);
+            floor.userData = { gridX: col, gridY: row, walkable: map[row][col] !== 1, isFloor: true };
+            group.add(floor);
+            floorMeshes.push(floor);
+        }
 
-        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
-        ceil.rotation.x = Math.PI / 2;
-        ceil.position.set(x, wallHeight, z);
-        group.add(ceil);
-
+        // СТЕНЫ — кубики. Верхняя грань = потолок (см. wallMatsArray).
         if (map[row][col] === 1) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(cellSize, wallHeight, cellSize),
+                wallMatsArray
+            );
             wall.position.set(x, wallHeight / 2, z);
             wall.userData = { gridX: col, gridY: row, isWall: true };
             group.add(wall);
             wallMeshes.push(wall);
         } else if (map[row][col] === 2) {
+            // ДВЕРЬ
             const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
-            // Плоскость двери. Если проход горизонтальный (стены слева/справа),
-            // дверь стоит поперёк — по X. Иначе — по Z.
-            const geo = new THREE.PlaneGeometry(cellSize, wallHeight);
-            const leaf = new THREE.Mesh(geo, doorMaterial);
+            const leaf = new THREE.Mesh(
+                new THREE.PlaneGeometry(cellSize, wallHeight),
+                doorMaterial
+            );
             if (horiz) leaf.rotation.y = Math.PI / 2;
             leaf.position.set(x, wallHeight / 2, z);
             leaf.userData = { doorGX: col, doorGY: row, isDoor: true };
@@ -391,6 +401,22 @@ for (let row = 0; row < size; row++) {
 }
 
 // ============================================================
+//  ПОТОЛОК НАД ПРОХОДИМЫМИ КЛЕТКАМИ
+//  (чтобы было видно потолок не только сверху стен)
+// ============================================================
+for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+        if (map[row][col] === 1) continue; // над стенами уже есть верхняя грань кубика
+        const x = col - Math.floor(size / 2);
+        const z = row - Math.floor(size / 2);
+        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+        ceil.rotation.x = Math.PI / 2;
+        ceil.position.set(x, wallHeight, z);
+        group.add(ceil);
+    }
+}
+
+// ============================================================
 //  ФАКТЕЛЫ
 // ============================================================
 for (let row = 0; row < size; row++) {
@@ -402,10 +428,10 @@ for (let row = 0; row < size; row++) {
                 new THREE.SphereGeometry(0.05, 6, 6),
                 new THREE.MeshStandardMaterial({ color: 0xffaa55, emissive: new THREE.Color(0xff6600), emissiveIntensity: 1.0 })
             );
-            torch.position.set(x, wallHeight - 0.05, z);
+            torch.position.set(x, wallHeight - 0.15, z);
             group.add(torch);
             const light = new THREE.PointLight(0xff8844, 0.5, 4);
-            light.position.set(x, wallHeight - 0.1, z);
+            light.position.set(x, wallHeight - 0.2, z);
             group.add(light);
         }
     }
@@ -1045,12 +1071,13 @@ function useSkill(skillId) {
 }
 
 // ============================================================
-//  КАМЕРА — плавно едет за игроком (Diablo-style)
+//  КАМЕРА
 // ============================================================
 const CAM_HEIGHT = 11.5;
 const CAM_TILT = 0.75;
-const CAM_DEADZONE = 0.6;      // почти нет мёртвой зоны — едет сразу
-const CAM_FOLLOW = 4.5;        // догоняет быстро
+const CAM_DEADZONE = 2.5;      // радиус мёртвой зоны в клетках
+const CAM_FOLLOW = 2.2;        // скорость догона (клеток/сек с коэф.)
+const CAM_SMOOTH = 0.05;       // коэф. сглаживания позиции камеры (0..1)
 
 const camFocus = new THREE.Vector3(playerPos.x, 0, playerPos.z);
 const camPosSmooth = new THREE.Vector3();
@@ -1062,9 +1089,12 @@ function updateCamera(dt) {
     const dx = tx - camFocus.x, dz = tz - camFocus.z;
     const dist = Math.hypot(dx, dz);
 
+    // Камера двигается только если игрок вышел за мёртвую зону
     if (dist > CAM_DEADZONE) {
         const targetDist = dist - CAM_DEADZONE;
-        const moveDist = Math.min(targetDist, CAM_FOLLOW * dt * (1 + targetDist));
+        // Плавно: за кадр проходим не более CAM_FOLLOW * dt
+        // и не всю "лишнюю" дистанцию, а с коэффициентом.
+        const moveDist = Math.min(targetDist, CAM_FOLLOW * dt) * 0.6;
         const nx = dx / dist, nz = dz / dist;
         camFocus.x += nx * moveDist;
         camFocus.z += nz * moveDist;
@@ -1082,7 +1112,9 @@ function updateCamera(dt) {
         camLookSmooth.copy(lookAt);
         camInitialized = true;
     } else {
-        const k = 1 - Math.pow(0.0001, dt);   // очень быстрое сглаживание
+        // Плавное сглаживание через фиксированный коэффициент —
+        // не зависит от FPS, но и не "телепортирует" камеру.
+        const k = 1 - Math.pow(1 - CAM_SMOOTH, dt * 60);
         camPosSmooth.lerp(desiredPos, k);
         camLookSmooth.lerp(lookAt, k);
     }
@@ -1092,9 +1124,9 @@ function updateCamera(dt) {
 }
 
 // ============================================================
-//  AI ВРАГОВ — медленные, двигаются по МИРОВЫМ координатам
+//  AI ВРАГОВ — медленные, по мировым координатам
 // ============================================================
-const ENEMY_SPEED = 0.6;          // клеток/сек (игрок 1.6)
+const ENEMY_SPEED = 0.6;
 const ENEMY_AGGRO_RANGE = 7.0;
 const ENEMY_STOP_DIST = 0.85;
 
@@ -1161,7 +1193,7 @@ renderer.domElement.addEventListener('click', (e) => {
     ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(ndc, camera);
 
-    // 1) клик по двери
+    // 1) дверь
     const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
     if (doorHits.length) {
         const ud = doorHits[0].object.userData;
@@ -1186,13 +1218,10 @@ renderer.domElement.addEventListener('click', (e) => {
         const ud = spriteHits[0].object.userData;
         if (ud) {
             if (ud.type === 'enemy') {
-                // ==== КЛИК ПО ВРАГУ ====
-                // если уже в бою с ним — бьём
                 if (isBattleActive && currentEnemyObj === ud.objRef) {
                     attackEnemy();
                     return;
                 }
-                // иначе — идём к нему, бой стартует по подходу
                 const cur = worldToGrid(playerPos.x, playerPos.z);
                 const path = buildPath(cur.gx, cur.gy, ud.gridX, ud.gridY);
                 if (path.length > 1) {
