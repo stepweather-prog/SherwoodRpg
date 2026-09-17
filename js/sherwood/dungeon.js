@@ -1,5 +1,5 @@
 /**
- * Sherwood Dungeon — логика + рендер
+ * Sherwood Dungeon — Рабочая версия (перенос твоего newlabir.html)
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -40,7 +40,6 @@ Sherwood.Dungeon = {
         if (N < 1 || N > 6 || K < 1 || K > 3) return false;
         var thisCups = prog.floors[N - 1].cups || 0;
         var prevCups = (N > 1) ? (prog.floors[N - 2].cups || 0) : 0;
-
         if (K === 1) {
             if (N === 1) return true;
             return prevCups >= 2;
@@ -86,6 +85,7 @@ Sherwood.Dungeon = {
             }
         }
 
+        // Генерация лабиринта (как в newlabir.html)
         var stack = [];
         var startX = 1, startY = 1;
         map[startY][startX] = 0;
@@ -119,7 +119,7 @@ Sherwood.Dungeon = {
             level: level,
             size: size,
             map: map,
-            grid: map,
+            grid: map, // Алиас
             px: 1,
             py: 1,
             monstersKilled: 0,
@@ -139,7 +139,7 @@ Sherwood.Dungeon = {
             return;
         }
 
-        // Глушим музыку меню
+        // === ГЛУШИМ ВСЮ МУЗЫКУ РОДИТЕЛЯ (меню) ===
         try {
             if (UI._currentMusic) {
                 UI._currentMusic.pause();
@@ -163,6 +163,32 @@ Sherwood.Dungeon = {
             });
         } catch(e){}
 
+        // === ЗАПУСКАЕМ МУЗЫКУ ПОДЗЕМКИ ===
+        if (!Sherwood.Dungeon._music) {
+            Sherwood.Dungeon._music = new Audio('assets/assets2/music/dungeon_3.ogg');
+            Sherwood.Dungeon._music.loop = true;
+            Sherwood.Dungeon._music.volume = 0.4;
+        }
+        try {
+            Sherwood.Dungeon._music.currentTime = 0;
+            Sherwood.Dungeon._music.play().catch(function(){});
+        } catch(e){}
+
+        // === СТРАЖ: каждые 200 мс глушим чужую музыку, кроме музыки подземки ===
+        if (Sherwood.Dungeon._guard) clearInterval(Sherwood.Dungeon._guard);
+        Sherwood.Dungeon._guard = setInterval(function(){
+            try {
+                if (UI._currentMusic && !UI._currentMusic.paused) UI._currentMusic.pause();
+                if (window.AudioManager && AudioManager.currentMusic && !AudioManager.currentMusic.paused) {
+                    AudioManager.currentMusic.pause();
+                }
+                document.querySelectorAll('audio').forEach(function(a){
+                    if (a === Sherwood.Dungeon._music) return;
+                    if (!a.paused) { try { a.pause(); } catch(e){} }
+                });
+            } catch(e){}
+        }, 200);
+
         if (typeof Sherwood.Dungeon2D5 !== 'undefined' && Sherwood.Dungeon2D5.render) {
             Sherwood.Dungeon2D5.render();
         } else {
@@ -172,13 +198,22 @@ Sherwood.Dungeon = {
 
     showUI: function() {
         if (typeof UI === 'undefined') return;
-        UI.dungeon();
+        UI._playSound('click');
+
+        var h = '<div style="text-align:center;padding:10px;background:url(\'assets/assets2/Sherwood_Square/substrate.png\') center/cover no-repeat;">';
+        h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">🏚️ Подземка</div>';
+        h += '<img src="assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png" style="width:120px;height:120px;object-fit:contain;margin:0 auto 15px;display:block;">';
+        h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;">';
+        h += '<button onclick="Sherwood.Dungeon._startDungeon(\'forest\', 1)" style="padding:12px 24px;background:#c9a040;border:none;border-radius:8px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">⚔️ Войти в Проклятую чащу</button>';
+        h += '</div>';
+        h += '</div>';
+
+        UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
     }
 };
 
 // ============================================================
-//  РЕНДЕР (Sherwood.Dungeon2D5) — старый режим через canvas
-//  (не используется, если играешь через iframe dungeon.html)
+//  РЕНДЕР (Sherwood.Dungeon2D5) — ТВОЙ МАКЕТ
 // ============================================================
 Sherwood.Dungeon2D5 = {
     _scene: null,
@@ -230,6 +265,7 @@ Sherwood.Dungeon2D5 = {
     _setupControls: function() {
         var self = this;
 
+        // Верхняя панель с кнопкой выхода
         this._topPanel = document.createElement('div');
         this._topPanel.style.cssText = 'position:absolute;top:10px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 10px;z-index:15;';
         this._exitBtn = document.createElement('button');
@@ -238,6 +274,7 @@ Sherwood.Dungeon2D5 = {
         this._exitBtn.addEventListener('click', function() { UI.loadHome(); });
         this._topPanel.appendChild(this._exitBtn);
 
+        // Джойстик (4 кнопки)
         this._joystick = document.createElement('div');
         this._joystick.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);width:180px;height:180px;z-index:30;pointer-events:auto;';
 
@@ -252,15 +289,22 @@ Sherwood.Dungeon2D5 = {
             var btn = document.createElement('button');
             btn.style.cssText = 'position:absolute;width:56px;height:56px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;border-radius:50%;color:#c8a050;font-size:24px;display:flex;align-items:center;justify-content:center;pointer-events:auto;-webkit-tap-highlight-color:transparent;text-shadow:0 0 8px #8b6b3a;box-shadow:0 0 10px rgba(139,107,58,0.3);top:' + a.top + ';left:' + a.left + ';';
             btn.textContent = a.icon;
-            btn.addEventListener('touchstart', function(e) { e.preventDefault(); a.func(); });
-            btn.addEventListener('click', function() { a.func(); });
+            btn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                a.func();
+            });
+            btn.addEventListener('click', function() {
+                a.func();
+            });
             self._joystick.appendChild(btn);
         });
     },
 
+    // =========== ГЕНЕРАЦИЯ ТЕКСТУР ЧЕРЕЗ CANVAS ===========
     _createWallTexture: function() {
         var canvas = document.createElement('canvas');
-        canvas.width = 128; canvas.height = 128;
+        canvas.width = 128;
+        canvas.height = 128;
         var ctx = canvas.getContext('2d');
         ctx.fillStyle = '#5a4a3a';
         ctx.fillRect(0, 0, 128, 128);
@@ -283,7 +327,8 @@ Sherwood.Dungeon2D5 = {
 
     _createFloorTexture: function() {
         var canvas = document.createElement('canvas');
-        canvas.width = 128; canvas.height = 128;
+        canvas.width = 128;
+        canvas.height = 128;
         var ctx = canvas.getContext('2d');
         ctx.fillStyle = '#3a2a1a';
         ctx.fillRect(0, 0, 128, 128);
@@ -299,7 +344,8 @@ Sherwood.Dungeon2D5 = {
 
     _createCeilTexture: function() {
         var canvas = document.createElement('canvas');
-        canvas.width = 128; canvas.height = 128;
+        canvas.width = 128;
+        canvas.height = 128;
         var ctx = canvas.getContext('2d');
         ctx.fillStyle = '#2a1a0a';
         ctx.fillRect(0, 0, 128, 128);
@@ -313,6 +359,7 @@ Sherwood.Dungeon2D5 = {
         return tex;
     },
 
+    // =========== ПОСТРОЕНИЕ СЦЕНЫ ===========
     _buildMesh: function() {
         var d = this._dungeon;
         if (!d) return;
@@ -346,14 +393,15 @@ Sherwood.Dungeon2D5 = {
                 }
 
                 if (cell && !cell.open && cell.isPath && this._isAdjacentToOpen(d, col, row)) {
-                    var wall2 = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
-                    wall2.position.set(x, wallHeight / 2, z);
-                    wall2.userData = { openable: true, gridX: col, gridY: row };
-                    this._group.add(wall2);
+                    var wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMat);
+                    wall.position.set(x, wallHeight / 2, z);
+                    wall.userData = { openable: true, gridX: col, gridY: row };
+                    this._group.add(wall);
                 }
             }
         }
 
+        // СВЕТИЛЬНИКИ
         for (var row = 0; row < size; row++) {
             for (var col = 0; col < size; col++) {
                 if (d.grid[row][col].open === true && row % 2 === 0 && col % 2 === 0) {
@@ -398,6 +446,7 @@ Sherwood.Dungeon2D5 = {
         this._camera.quaternion.setFromEuler(new THREE.Euler(0, -this._dir * Math.PI / 2, 0, 'YXZ'));
     },
 
+    // =========== УПРАВЛЕНИЕ ===========
     _moveForward: function() {
         if (this._isMoving || this._isTurning) return;
         var d = this._dungeon;
