@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Шервудская чащоба - PS2 Style</title>
+    <title>Шервудская чаща - PS2 Style</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
@@ -40,7 +40,7 @@
         #btn-left { top: 41px; left: 0; }
         #btn-right { top: 41px; left: 82px; }
         #btn-back { top: 82px; left: 41px; }
-        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; z-index: 40; cursor: pointer; pointer-events: auto; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; z-index: 40; cursor: pointer; pointer-events: auto; }
 
         #skills-left, #skills-right { pointer-events: auto; }
         #skills-left img, #skills-right img {
@@ -238,7 +238,7 @@
                 for (const p of placed) {
                     if (Math.abs(p.x - c.x) + Math.abs(p.y - c.y) < 4) { ok = false; break; }
                 }
-                if (ok && Math.random() < 0.35) {
+                if (ok && Math.random() < 0.5) {   // было 0.35 — теперь дверей больше
                     map[c.y][c.x] = 2;
                     placed.push(c);
                 }
@@ -324,7 +324,7 @@
 
         // ===== ОБЪЕКТЫ =====
         var objectTypes = [
-            { type: 'enemy', count: 10, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },
+            { type: 'enemy', count: 15, img: 'assets/assets2/mobs/dungeon_mobs/plague_crow.png' },   // было 10 — стало 15
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
             { type: 'potion_mana', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
             { type: 'cauldron', count: 4, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
@@ -492,16 +492,26 @@
             const v = map[gy][gx];
             return v === 0 || v === 3;
         }
+        // Проверка на врага в клетке — нельзя пройти сквозь живого
+        function isEnemyAt(gx, gy) {
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.type === 'enemy' && !o.collected && o.x === gx && o.y === gy) return o;
+            }
+            return null;
+        }
         function isClosedDoor(gx, gy) {
             if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
             return map[gy][gx] === 2;
         }
         function canStep(fromGX, fromGY, toGX, toGY) {
             if (!isWalkable(toGX, toGY)) return false;
+            if (isEnemyAt(toGX, toGY)) return false;  // нельзя пройти сквозь врага
             const dx = toGX - fromGX, dy = toGY - fromGY;
             if (dx !== 0 && dy !== 0) {
                 if (!isWalkable(fromGX + dx, fromGY)) return false;
                 if (!isWalkable(fromGX, fromGY + dy)) return false;
+                if (isEnemyAt(fromGX + dx, fromGY) || isEnemyAt(fromGX, fromGY + dy)) return false;
             }
             return true;
         }
@@ -530,6 +540,7 @@
             }
         }
 
+        // ===== BFS БЕЗ ДИАГОНАЛЕЙ =====
         function buildPath(startGX, startGY, goalGX, goalGY) {
             if (!isWalkable(goalGX, goalGY)) return [];
             const key = (x, y) => y * size + x;
@@ -537,8 +548,8 @@
             const q = [{ x: startGX, y: startGY }];
             prev.set(key(startGX, startGY), null);
             const dirs = [
-                { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
-                { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }
+                { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }
+                // БЕЗ ДИАГОНАЛЕЙ
             ];
             let found = false;
             while (q.length) {
@@ -555,25 +566,15 @@
                 }
             }
             if (!found) return [];
-            const raw = [];
+            const out = [];
             let k = key(goalGX, goalGY);
             while (k !== null) {
-                raw.push({ gx: k % size, gy: Math.floor(k / size) });
+                out.push({ gx: k % size, gy: Math.floor(k / size) });
                 k = prev.get(k);
             }
-            raw.reverse();
-
-            const smooth = [raw[0]];
-            let i = 0;
-            while (i < raw.length - 1) {
-                let far = i + 1;
-                for (let j = raw.length - 1; j > i; j--) {
-                    if (canWalkStraight(raw[i], raw[j])) { far = j; break; }
-                }
-                if (far === i + 1) { smooth.push(raw[i + 1]); i++; }
-                else { smooth.push(raw[far]); i = far; }
-            }
-            return smooth;
+            out.reverse();
+            // Убираем первую точку (текущая позиция)
+            return out.slice(1).map(n => gridToWorld(n.gx, n.gy));
         }
 
         function openDoor(gx, gy) {
@@ -584,13 +585,13 @@
             return true;
         }
         function findNearestWalkable(gx, gy, maxR = 4) {
-            if (isWalkable(gx, gy)) return { gx, gy };
+            if (isWalkable(gx, gy) && !isEnemyAt(gx, gy)) return { gx, gy };
             for (let r = 1; r <= maxR; r++) {
                 for (let dy = -r; dy <= r; dy++) {
                     for (let dx = -r; dx <= r; dx++) {
                         if (Math.abs(dx) + Math.abs(dy) !== r) continue;
                         const nx = gx + dx, ny = gy + dy;
-                        if (isWalkable(nx, ny)) return { gx: nx, gy: ny };
+                        if (isWalkable(nx, ny) && !isEnemyAt(nx, ny)) return { gx: nx, gy: ny };
                     }
                 }
             }
@@ -617,17 +618,24 @@
             }
             turnLoop();
         }
-        function turnLeft() { if (isBattleActive) return; if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
-        function turnRight() { if (isBattleActive) return; if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
+        // ВАЖНО: повороты разрешены всегда, даже в бою
+        function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
+        function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
 
         function moveForward() {
-            if (isBattleActive) return;
+            if (isBattleActive) return;   // в бою двигаться нельзя
             if (moving || isTurning) return;
             const dirX = -Math.sin(playerYaw);
             const dirZ = -Math.cos(playerYaw);
             const cur = worldToGrid(playerPos.x, playerPos.z);
             const nx = cur.gx + Math.round(dirX);
             const ny = cur.gy + Math.round(dirZ);
+            // Если впереди враг — начинаем бой
+            var en = isEnemyAt(nx, ny);
+            if (en) {
+                startBattle(en);
+                return;
+            }
             if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
             if (!canStep(cur.gx, cur.gy, nx, ny)) return;
             const to = gridToWorld(nx, ny);
@@ -643,6 +651,8 @@
             const cur = worldToGrid(playerPos.x, playerPos.z);
             const nx = cur.gx + Math.round(dirX);
             const ny = cur.gy + Math.round(dirZ);
+            var en = isEnemyAt(nx, ny);
+            if (en) { startBattle(en); return; }
             if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
             if (!canStep(cur.gx, cur.gy, nx, ny)) return;
             const to = gridToWorld(nx, ny);
@@ -678,6 +688,7 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
+            // В бою — только удар
             if (isBattleActive) {
                 if (currentEnemySprite) {
                     var hits = raycaster.intersectObject(currentEnemySprite, false);
@@ -713,8 +724,8 @@
                         openLootBag(ud.objRef);
                     } else {
                         var path = buildPath(cur.gx, cur.gy, ud.gx, ud.gy);
-                        if (path.length > 1) {
-                            waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+                        if (path.length > 0) {
+                            waypoints = path;
                             moving = true;
                             startSteps();
                         }
@@ -740,8 +751,8 @@
                             applyLootEffect(ud.objRef);
                         } else {
                             const path = buildPath(ccur.gx, ccur.gy, ud.gridX, ud.gridY);
-                            if (path.length > 1) {
-                                waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+                            if (path.length > 0) {
+                                waypoints = path;
                                 moving = true;
                                 pendingLoot = ud.objRef;
                                 startSteps();
@@ -769,20 +780,68 @@
         function goTo(gridX, gridY) {
             const start = worldToGrid(playerPos.x, playerPos.z);
             const path = buildPath(start.gx, start.gy, gridX, gridY);
-            if (path.length < 2) return;
-            waypoints = path.slice(1).map(n => gridToWorld(n.gx, n.gy));
+            if (path.length === 0) return;
+            waypoints = path;
             moving = true;
             startSteps();
         }
+
+        // ===== КНОПКА ЛУТА =====
+        // Обновляет иконку attack-icon-img: если рядом лут — take.png, если в бою — attack, иначе simple_attack
+        function updateLootButton() {
+            var iconImg = document.getElementById('attack-icon-img');
+            if (!iconImg) return;
+            if (isBattleActive) {
+                iconImg.src = 'assets/assets2/talents/simple_attack.png';
+                return;
+            }
+            // Ищем ближайший лут в радиусе 1
+            var cur = worldToGrid(playerPos.x, playerPos.z);
+            var nearLoot = null;
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
+                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = o; break; }
+            }
+            // И мешки
+            if (!nearLoot) {
+                for (var b = 0; b < lootBags.length; b++) {
+                    var bag = lootBags[b];
+                    if (bag.opened) continue;
+                    if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = { type: 'bag', bag: bag }; break; }
+                }
+            }
+            if (nearLoot) iconImg.src = 'assets/assets2/icons/take.png';
+            else iconImg.src = 'assets/assets2/talents/simple_attack.png';
+        }
+
+        // Клик по центральной кнопке = взять лут или ударить
+        document.getElementById('attack-icon').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isBattleActive) { attackEnemy(); return; }
+            // Ищем лут рядом
+            var cur = worldToGrid(playerPos.x, playerPos.z);
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
+                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; }
+            }
+            for (var b = 0; b < lootBags.length; b++) {
+                var bag = lootBags[b];
+                if (bag.opened) continue;
+                if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; }
+            }
+        });
 
         // ===== БОЙ =====
         var currentEnemySprite = null;
         var currentEnemyStats = null;
         var currentEnemyObj = null;
         var isBattleActive = false;
-        var pushTimer = null;
         var battleTimer = null;
+        var pushTimer = null;
         var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
+        var playerAttackedFirst = false;   // враг не бьёт, пока игрок не ударил
 
         var hitSprites = [
             'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
@@ -864,28 +923,25 @@
             updateHeroSpheres();
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateLootButton();
             checkObjects();
         }
 
         function startBattle(obj) {
             if (isBattleActive) return;
             isBattleActive = true;
+            playerAttackedFirst = false;   // враг не бьёт первым
             currentEnemySprite = obj.mesh;
             currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp };
 
             waypoints = []; moving = false; stopSteps();
 
-            // Автоповорот — только если враг в поле зрения (±60°)
+            // Разворот камеры на врага при старте боя
             var dx = obj.mesh.position.x - playerPos.x;
             var dz = obj.mesh.position.z - playerPos.z;
             var targetYaw = Math.atan2(-dx, -dz);
-            var diffYaw = targetYaw - playerYaw;
-            while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
-            while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
-            if (Math.abs(diffYaw) < Math.PI / 3) {
-                animateTurn(targetYaw, 400);
-            }
+            animateTurn(targetYaw, 400);
 
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
@@ -893,8 +949,11 @@
 
             playSound(soundHit);
 
+            // Враг НЕ бьёт, пока игрок не ударит первым
+            if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
                 if (!isBattleActive) return;
+                if (!playerAttackedFirst) return;   // враг стоит ждёт
                 if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
                 var p = parent.Sherwood.getPlayer();
                 if (!p) return;
@@ -912,6 +971,7 @@
 
         function stopBattle() {
             isBattleActive = false;
+            playerAttackedFirst = false;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
             currentEnemySprite = null;
@@ -939,6 +999,7 @@
         function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats) return;
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            playerAttackedFirst = true;   // теперь враг бьёт в ответ
             var p = parent.Sherwood.getPlayer();
             playSound(soundHit);
 
@@ -1264,7 +1325,7 @@
                     return;
                 }
 
-                // Проверка прямой видимости
+                // Прямая видимость
                 var pg = worldToGrid(playerPos.x, playerPos.z);
                 var eg = worldToGrid(ex, ez);
                 if (!canWalkStraight(eg, pg)) {
@@ -1304,22 +1365,20 @@
                 var nx = ex + (dx / dist) * step;
                 var nz = ez + (dz / dist) * step;
                 var g = worldToGrid(nx, nz);
-                if (isWalkable(g.gx, g.gy)) {
+                if (isWalkable(g.gx, g.gy) && !isEnemyAt(g.gx, g.gy)) {
                     obj.mesh.position.x = nx;
                     obj.mesh.position.z = nz;
                     obj.x = g.gx; obj.y = g.gy;
                 } else {
-                    // Обход препятствия: только по X или только по Z
                     var gxOnly = worldToGrid(nx, ez);
                     var gzOnly = worldToGrid(ex, nz);
-                    if (isWalkable(gxOnly.gx, gxOnly.gy)) {
+                    if (isWalkable(gxOnly.gx, gxOnly.gy) && !isEnemyAt(gxOnly.gx, gxOnly.gy)) {
                         obj.mesh.position.x = nx;
                         obj.x = gxOnly.gx; obj.y = gxOnly.gy;
-                    } else if (isWalkable(gzOnly.gx, gzOnly.gy)) {
+                    } else if (isWalkable(gzOnly.gx, gzOnly.gy) && !isEnemyAt(gzOnly.gx, gzOnly.gy)) {
                         obj.mesh.position.z = nz;
                         obj.x = gzOnly.gx; obj.y = gzOnly.gy;
                     }
-                    // Иначе стоим
                 }
             });
         }
@@ -1384,8 +1443,6 @@
                     if (isBattleActive) break;
                 }
 
-                // УБРАНО: автодоворот камеры при ходьбе. Камера смотрит туда, куда её повернули кнопками.
-
                 if (!waypoints.length && !isBattleActive) {
                     moving = false;
                     stopSteps();
@@ -1408,6 +1465,7 @@
 
             updateEnemies(dt);
             syncPlayerGrid();
+            updateLootButton();
 
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
             heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
