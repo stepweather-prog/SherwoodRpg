@@ -524,6 +524,16 @@ UI._claimReward = function() {
         var cb = UI._afterRewardAction;
         UI._afterRewardAction = null;
         cb();
+    } else {
+        // Фолбэк: если колбэк не был установлен (iframe умер раньше, чем успел его поставить)
+        var dungeonId = UI._lastDungeon || 1;
+        if (typeof UI._dungeonShowFloors === 'function') {
+            UI._dungeonShowFloors(dungeonId);
+        } else if (typeof UI.dungeon === 'function') {
+            UI.dungeon();
+        } else if (typeof UI.loadHome === 'function') {
+            UI.loadHome();
+        }
     }
 };
 
