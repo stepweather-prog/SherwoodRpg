@@ -364,7 +364,6 @@
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex  = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
 
-        // Фильтры для чёткости пиксель-арта
         [lootBagTex, emptyBagTex, closedLockTex, openDoorTex].forEach(function(t) {
             t.minFilter = THREE.LinearFilter;
             t.magFilter = THREE.LinearFilter;
@@ -451,6 +450,14 @@
         ];
 
         var objects = [];
+
+        // Накопленный за забег лут — для экрана победы/поражения
+        var runLoot = {
+            gold: 0, silver: 0, exp: 0,
+            skin: 0, amuletTablets: 0, ringTablets: 0,
+            skinTablets: 0, skinDrawings: 0,
+            portalToken1: 0, branchDamnedYew: 0
+        };
 
         function getRandomFreeCell() {
             var attempts = 0;
@@ -540,27 +547,37 @@
         }
 
         // ============================================================
-        //  ДВЕРЬ-ВЫХОД с замком
+        //  ДВЕРЬ-ВЫХОД — стоит в стене, не в клетке пола
         // ============================================================
         var exitCell = { gx: size - 2, gy: size - 2 };
-        var exitW = gridToWorld(exitCell.gx, exitCell.gy);
+        var exitWallCell = { gx: size - 1, gy: size - 2 };
+        var exitW = gridToWorld(exitWallCell.gx, exitWallCell.gy);
+
+        var exitHoriz = isWallCell(exitWallCell.gx - 1, exitWallCell.gy) && isWallCell(exitWallCell.gx + 1, exitWallCell.gy);
 
         var exitDoorMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(cellSize, wallHeight),
             new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide })
         );
+        if (!exitHoriz) exitDoorMesh.rotation.y = Math.PI / 2;
         exitDoorMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
         exitDoorMesh.userData = { isExitDoor: true };
         group.add(exitDoorMesh);
 
-        var exitLockMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: closedLockTex, transparent: true, depthTest: false }));
-        exitLockMesh.scale.set(0.9, 0.9, 1);
-        exitLockMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
+        var exitLockMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.6, 0.6),
+            new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true, depthTest: false, side: THREE.DoubleSide })
+        );
+        if (!exitHoriz) exitLockMesh.rotation.y = Math.PI / 2;
+        exitLockMesh.position.set(exitW.x, wallHeight / 2 + 0.05, exitW.z);
         exitLockMesh.userData = { isExitLock: true };
         group.add(exitLockMesh);
 
-        var exitOpenMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: openDoorTex, transparent: true, depthTest: false }));
-        exitOpenMesh.scale.set(1.2, 1.2, 1);
+        var exitOpenMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(cellSize * 1.1, wallHeight * 1.1),
+            new THREE.MeshBasicMaterial({ map: openDoorTex, transparent: true, depthTest: false, side: THREE.DoubleSide })
+        );
+        if (!exitHoriz) exitOpenMesh.rotation.y = Math.PI / 2;
         exitOpenMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
         exitOpenMesh.userData = { isExitOpen: true };
         exitOpenMesh.visible = false;
@@ -650,6 +667,10 @@
             p.resources.gold = (p.resources.gold || 0) + gold;
             p.resources.silver = (p.resources.silver || 0) + silver;
 
+            runLoot.exp += exp;
+            runLoot.gold += gold;
+            runLoot.silver += silver;
+
             var resources = {
                 skin: 1,
                 amuletTablets: Math.random() < 0.3 ? 1 : 0,
@@ -662,6 +683,7 @@
             for (var key in resources) {
                 if (resources[key] > 0) {
                     p.resources[key] = (p.resources[key] || 0) + resources[key];
+                    runLoot[key] += resources[key];
                 }
             }
 
@@ -755,9 +777,7 @@
         function isLootInFront(obj) {
             if (!obj) return false;
             const cur = worldToGrid(playerPos.x, playerPos.z);
-            // На той же клетке — тоже считается
             if (obj.x === cur.gx && obj.y === cur.gy) return true;
-            // Прямо перед игроком
             const front = getFrontCell();
             if (obj.x === front.gx && obj.y === front.gy) return true;
             return false;
@@ -904,6 +924,7 @@
         minimapCanvas.height = minimapSize * minimapCell;
         const mmCtx = minimapCanvas.getContext('2d');
         const explored = new Uint8Array(size * size);
+        const walked = new Uint8Array(size * size);
 
         // ============================================================
         //  КЛИК
@@ -990,28 +1011,9 @@
                 }
             }
 
-            const floorHits = raycaster.intersectObjects(floorMeshes, false);
-            if (floorHits.length) {
-                const cell = floorHits[0].object.userData;
-                if (cell.walkable) { goTo(cell.gridX, cell.gridY); return; }
-            }
-
-            const wallHits = raycaster.intersectObjects(wallMeshes, false);
-            if (wallHits.length && wallHits[0].distance < 4) {
-                const cell = wallHits[0].object.userData;
-                const near = findNearestWalkable(cell.gridX, cell.gridY, 1);
-                if (near) goTo(near.gx, near.gy);
-            }
+            // Клик по полу/стене = шаг вперёд по направлению взгляда (как стрелка ▲)
+            moveForward();
         });
-
-        function goTo(gridX, gridY) {
-            const start = worldToGrid(playerPos.x, playerPos.z);
-            const path = buildPath(start.gx, start.gy, gridX, gridY);
-            if (path.length === 0) return;
-            waypoints = path;
-            moving = true;
-            startSteps();
-        }
 
         // ============================================================
         //  КНОПКА ЛУТА
@@ -1071,6 +1073,25 @@
             'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
             'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
         ];
+
+        // Отталкивание врага при ударе
+        var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
+        var cameraShake = 0;
+
+        function knockbackEnemy(sprite, fromX, fromZ) {
+            if (!sprite) return;
+            enemyKnockback.active = true;
+            enemyKnockback.sprite = sprite;
+            enemyKnockback.originalX = sprite.position.x;
+            enemyKnockback.originalZ = sprite.position.z;
+            var dx = sprite.position.x - fromX;
+            var dz = sprite.position.z - fromZ;
+            var len = Math.hypot(dx, dz) || 1;
+            var power = 0.35;
+            enemyKnockback.dx = (dx / len) * power;
+            enemyKnockback.dz = (dz / len) * power;
+            enemyKnockback.t = 0;
+        }
 
         function updateHeroSpheres() {
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -1265,6 +1286,9 @@
                 hitFlashSprite.visible = true;
                 clearTimeout(pushTimer);
                 pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+                // Отталкивание врага
+                knockbackEnemy(currentEnemySprite, playerPos.x, playerPos.z);
+                cameraShake = 0.06;
             }
 
             var hitEffect = document.getElementById('hit-effect');
@@ -1319,7 +1343,7 @@
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += 0.9;
+            worldPos.y += 0.55;   // ниже — было 0.9
             worldPos.project(camera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
@@ -1343,16 +1367,25 @@
 
             var rewards = {
                 cupEarned: true,
-                exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300,
-                gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150,
-                silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60
+                exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp,
+                gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold,
+                silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver,
+                skin: runLoot.skin,
+                amuletTablets: runLoot.amuletTablets,
+                ringTablets: runLoot.ringTablets,
+                skinTablets: runLoot.skinTablets,
+                skinDrawings: runLoot.skinDrawings,
+                portalToken1: runLoot.portalToken1,
+                branchDamnedYew: runLoot.branchDamnedYew
             };
 
             try {
                 if (parent.UI && parent.UI._showVictoryScreen) {
                     parent.UI._afterRewardAction = function() {
-                        if (parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
-                        else if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                        try {
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                            else if (parent.UI.dungeon) parent.UI.dungeon();
+                        } catch(e) { exitDungeon(); }
                     };
                     parent.UI._showVictoryScreen(rewards);
                 } else {
@@ -1367,13 +1400,26 @@
             playSound(soundDefeat);
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
 
-            var rewards = { exp: 50, gold: 0, silver: 20 };
+            var rewards = {
+                exp: 50 + runLoot.exp,
+                gold: 0 + runLoot.gold,
+                silver: 20 + runLoot.silver,
+                skin: runLoot.skin,
+                amuletTablets: runLoot.amuletTablets,
+                ringTablets: runLoot.ringTablets,
+                skinTablets: runLoot.skinTablets,
+                skinDrawings: runLoot.skinDrawings,
+                portalToken1: runLoot.portalToken1,
+                branchDamnedYew: runLoot.branchDamnedYew
+            };
 
             try {
                 if (parent.UI && parent.UI._showDefeatScreen) {
                     parent.UI._afterRewardAction = function() {
-                        if (parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
-                        else if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                        try {
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                            else if (parent.UI.dungeon) parent.UI.dungeon();
+                        } catch(e) { exitDungeon(); }
                     };
                     parent.UI._showDefeatScreen(rewards);
                 } else {
@@ -1612,10 +1658,12 @@
         const clock = new THREE.Clock();
 
         function updateCamera() {
-            camera.position.x = playerPos.x;
-            camera.position.z = playerPos.z;
-            camera.position.y = 0.75 + Math.sin(clock.elapsedTime * 10) * 0.012 * (moving ? 1 : 0);
+            camera.position.x = playerPos.x + (Math.random() - 0.5) * cameraShake;
+            camera.position.z = playerPos.z + (Math.random() - 0.5) * cameraShake;
+            camera.position.y = 0.75 + Math.sin(clock.elapsedTime * 10) * 0.012 * (moving ? 1 : 0) + (Math.random() - 0.5) * cameraShake;
             camera.rotation.set(0, playerYaw, 0);
+            cameraShake *= 0.85;
+            if (cameraShake < 0.001) cameraShake = 0;
         }
 
         function syncPlayerGrid() {
@@ -1670,6 +1718,22 @@
             syncPlayerGrid();
             updateLootButton();
 
+            // Отталкивание врага при ударе
+            if (enemyKnockback.active && enemyKnockback.sprite) {
+                enemyKnockback.t += dt;
+                var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
+                var ease = Math.sin(kk * Math.PI);
+                var spr = enemyKnockback.sprite;
+                spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease;
+                spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
+                if (kk >= 1) {
+                    spr.position.x = enemyKnockback.originalX;
+                    spr.position.z = enemyKnockback.originalZ;
+                    enemyKnockback.active = false;
+                    enemyKnockback.sprite = null;
+                }
+            }
+
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
             heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
 
@@ -1695,6 +1759,7 @@
         function drawMinimap() {
             mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
+            // Клетки
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
                     const idx = row * size + col;
@@ -1711,12 +1776,43 @@
                 }
             }
 
+            // Тропинка — где прошёл
+            mmCtx.fillStyle = 'rgba(255, 215, 0, 0.35)';
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    if (walked[row * size + col]) {
+                        mmCtx.beginPath();
+                        mmCtx.arc(col * minimapCell + minimapCell / 2, row * minimapCell + minimapCell / 2, minimapCell * 0.35, 0, Math.PI * 2);
+                        mmCtx.fill();
+                    }
+                }
+            }
+
+            // Выход на миникарте — если рядом с ним что-то исследовано
+            var exitKnown = false;
+            for (var ddy = -1; ddy <= 1 && !exitKnown; ddy++) {
+                for (var ddx = -1; ddx <= 1 && !exitKnown; ddx++) {
+                    var gx = exitCell.gx + ddx, gy = exitCell.gy + ddy;
+                    if (gx < 0 || gy < 0 || gx >= size || gy >= size) continue;
+                    if (explored[gy * size + gx]) exitKnown = true;
+                }
+            }
+            if (exitKnown) {
+                mmCtx.fillStyle = exitIsOpen ? '#4caf50' : '#c0392b';
+                mmCtx.fillRect(exitCell.gx * minimapCell + 2, exitCell.gy * minimapCell + 2, minimapCell - 4, minimapCell - 4);
+                mmCtx.strokeStyle = '#000';
+                mmCtx.lineWidth = 1;
+                mmCtx.strokeRect(exitCell.gx * minimapCell + 2, exitCell.gy * minimapCell + 2, minimapCell - 4, minimapCell - 4);
+            }
+
+            // Игрок
             const pg = worldToGrid(playerPos.x, playerPos.z);
             mmCtx.fillStyle = '#ffd700';
             mmCtx.beginPath();
             mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
             mmCtx.fill();
 
+            // Стрелка направления
             const cx = pg.gx * minimapCell + minimapCell/2;
             const cy = pg.gy * minimapCell + minimapCell/2;
             const len = minimapCell * 3;
@@ -1741,6 +1837,9 @@
                     if (dx*dx + dy*dy > R*R) continue;
                     explored[gy * size + gx] = 1;
                 }
+            }
+            if (pg.gx >= 0 && pg.gy >= 0 && pg.gx < size && pg.gy < size) {
+                walked[pg.gy * size + pg.gx] = 1;
             }
         }
 
