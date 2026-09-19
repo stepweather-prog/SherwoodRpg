@@ -65,7 +65,10 @@ if (typeof Settings === 'undefined') {
                     } catch(e) {}
                 }
             }
-
+    // AudioManager (js/audio.js)
+    if (typeof AudioManager !== 'undefined' && AudioManager.updateVolume) {
+        try { AudioManager.updateVolume(); } catch(e) {}
+    }
             // window.audioPlayer — старая музыка в main.js
             if (typeof window.audioPlayer !== 'undefined' && window.audioPlayer) {
                 try { window.audioPlayer.volume = musicVol; } catch(e) {}
