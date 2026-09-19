@@ -6,46 +6,67 @@
     <title>Портал</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; font-family: Georgia, serif; }
-        canvas { display: block; background: #000; touch-action: none; }
 
-        #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;
-            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.75) 100%); }
-        #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6;
-            background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
+        body {
+            overflow: hidden;
+            background: #000 url('assets/assets2/backgrounds/quest.png') center/cover no-repeat fixed;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            font-family: Georgia, serif;
+        }
 
-        /* Хп врага сверху */
+        canvas {
+            display: block;
+            background: transparent !important;
+            touch-action: none;
+        }
+
+        #vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+        }
+        #scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6;
+            background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+        }
+
+        /* === HP врага как в подземке — привязан к спрайту === */
         #mob-hp {
-            position: absolute; left: 50%; top: 40px; transform: translateX(-50%);
-            width: 320px; max-width: 80%;
-            z-index: 50; pointer-events: none;
+            position: absolute;
+            width: 300px;
+            height: 200px;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            display: none;
+            pointer-events: none;
         }
-        #mob-hp-name {
-            text-align: center; color: #ffd27a; font-size: 18px; font-weight: bold;
-            text-shadow: 0 0 8px #000, 0 2px 6px #000; margin-bottom: 6px; letter-spacing: 1px;
+        #mob-hp .frame {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: fill; z-index: 2;
         }
-        #mob-hp-bar {
-            height: 22px; background: rgba(0,0,0,0.7);
-            border: 2px solid #6b5a3a; border-radius: 4px; overflow: hidden;
-            box-shadow: 0 0 12px rgba(0,0,0,0.8) inset;
-        }
-        #mob-hp-fill {
-            height: 100%; width: 100%; background: linear-gradient(180deg, #d33, #7a0000);
-            transition: width 0.25s ease-out;
+        #mob-hp .fill {
+            position: absolute; top: 45%; left: 10%;
+            width: 80%; height: 12%;
+            object-fit: cover;
+            clip-path: inset(0 50% 0 0);
+            z-index: 1;
         }
         #mob-hp-text {
-            text-align: center; color: #fff; font-size: 13px; font-weight: bold;
-            text-shadow: 0 0 4px #000; margin-top: 4px;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff; font-size: 20px; font-weight: bold;
+            z-index: 3;
+            text-shadow: 0 0 6px #000, 0 2px 6px #000;
         }
 
-        /* Кнопка выхода */
         #exit-btn {
             position: fixed; top: 10px; left: 10px; z-index: 100;
             background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px;
             padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer;
         }
 
-        /* Кнопки скиллов */
         #skills-left, #skills-right {
             position: absolute; bottom: 130px; width: 110px;
             display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 45;
@@ -60,7 +81,6 @@
         #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
-        /* Джойстик атаки — центральная кнопка */
         #attack-icon {
             position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
             width: 84px; height: 84px; z-index: 40; cursor: pointer; pointer-events: auto;
@@ -74,7 +94,6 @@
         #attack-icon:active { transform: translateX(-50%) scale(0.92); }
         #attack-icon img { width: 60px; height: 60px; object-fit: contain; }
 
-        /* HP/MP игрока */
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
@@ -87,7 +106,6 @@
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        /* Эффект удара */
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
@@ -96,7 +114,7 @@
         #wave-label {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
             color: #c8a050; font-size: 14px; font-weight: bold; text-shadow: 0 0 6px #000;
-            z-index: 40; letter-spacing: 1px;
+            z-index: 40; letter-spacing: 1px; text-align: center;
         }
     </style>
 </head>
@@ -104,9 +122,9 @@
     <div id="wave-label"></div>
 
     <div id="mob-hp">
-        <div id="mob-hp-name">Враг</div>
-        <div id="mob-hp-bar"><div id="mob-hp-fill"></div></div>
-        <div id="mob-hp-text">HP: 0/0</div>
+        <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
+        <img id="mob-hp-fill-img" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
+        <span id="mob-hp-text">HP: 0/0</span>
     </div>
 
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
@@ -149,20 +167,19 @@
         var portalId = parseInt(urlParams.get('portal') || '1');
 
         // ============================================================
-        //  СЦЕНА
+        //  СЦЕНА (прозрачный фон, quest.png — это CSS-фон на body)
         // ============================================================
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0805);
 
         const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30);
         camera.position.set(0, 0.8, 4.2);
         camera.rotation.order = 'YXZ';
         camera.lookAt(0, 0.7, 0);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setClearColor(0x0a0805, 1);
+        renderer.setClearColor(0x000000, 0);   // прозрачный — видно CSS-фон
         document.body.appendChild(renderer.domElement);
 
         // Свет
@@ -173,22 +190,6 @@
         var fillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
         scene.add(fillLight);
 
-        // Фон — quest.png на большом plane позади всей сцены
-        const bgLoader = new THREE.TextureLoader();
-        bgLoader.load('assets/assets2/backgrounds/quest.png', function(tex) {
-            tex.minFilter = THREE.LinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-            var aspect = tex.image.width / tex.image.height;
-            var h = 8;
-            var w = h * aspect;
-            var bgPlane = new THREE.Mesh(
-                new THREE.PlaneGeometry(w, h),
-                new THREE.MeshBasicMaterial({ map: tex })
-            );
-            bgPlane.position.set(0, 1.2, -3.5);
-            scene.add(bgPlane);
-        });
-
         // ============================================================
         //  СПРАЙТ ВРАГА
         // ============================================================
@@ -197,7 +198,6 @@
         var enemyBaseY = 0.85;
         var enemyOriginalScale = 2.4;
 
-        // Возможные папки со спрайтами врагов портала
         var BEAST_DIRS = [
             'assets/portal_beasts/visual_portals/',
             'assets/portal_beasts/',
@@ -254,6 +254,9 @@
         var enemyKnockback = { active: false, t: 0, duration: 0.22, dx: 0, dz: 0, ox: 0, oz: 0 };
         var cameraShake = 0;
 
+        var activeEffects = [];       // эффекты от скиллов
+        var skillCooldowns = {};
+
         var hitFlash = new THREE.Sprite(new THREE.SpriteMaterial({
             transparent: true, opacity: 0.85, depthTest: false, depthWrite: false
         }));
@@ -307,13 +310,13 @@
                 return;
             }
             var e = battleData.enemy;
-            document.getElementById('mob-hp-name').textContent = e.name;
             document.getElementById('mob-hp-text').textContent = 'HP: ' + Math.max(0, e.hp) + '/' + e.maxHp;
-            updateMobHpBar(e.hp, e.maxHp);
+            updateMobHpBarFill(e.hp, e.maxHp);
             document.getElementById('wave-label').textContent =
                 battleData.portal.name + ' — Волна ' + battleData.level + '/' + battleData.totalLevels;
 
             createEnemySprite(e.image || 'plague_crow.png', !!e.isBoss);
+            document.getElementById('mob-hp').style.display = 'block';
             isBattleActive = true;
             playerHitFirst = false;
         }
@@ -354,12 +357,10 @@
                     if (!next) { onPortalComplete(r); return; }
                     battleData = next;
                     var e2 = next.enemy;
-                    document.getElementById('mob-hp-name').textContent = e2.name;
                     document.getElementById('wave-label').textContent =
                         next.portal.name + ' — Волна ' + next.level + '/' + next.totalLevels;
                     createEnemySprite(e2.image || 'plague_crow.png', !!e2.isBoss);
-                    updateMobHpBar(e2.hp, e2.maxHp);
-                    document.getElementById('mob-hp-text').textContent = 'HP: ' + e2.hp + '/' + e2.maxHp;
+                    updateMobHpBarFill(e2.hp, e2.maxHp);
                     isBattleActive = true;
                     playerHitFirst = false;
                 }, 700);
@@ -367,12 +368,122 @@
             }
 
             if (r.enemyHp !== undefined) {
-                updateMobHpBar(r.enemyHp, r.enemyMaxHp);
-                document.getElementById('mob-hp-text').textContent = 'HP: ' + r.enemyHp + '/' + r.enemyMaxHp;
+                updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
             }
 
             if (r.playerHp !== undefined) {
                 updateHeroSpheres();
+            }
+        }
+
+        // ============================================================
+        //  СКИЛЛЫ
+        // ============================================================
+        function useSkill(skillId) {
+            if (!isBattleActive || !battleData) return;
+            if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p || !p.talents) return;
+            var lvl = p.talents[skillId] || 0;
+            if (lvl <= 0) return;
+
+            var manaCosts = {
+                'poisoning': 10, 'vampirism': 15, 'stunning': 20, 'ricochet': 25, 'riot': 15,
+                'force_of_elements': 10, 'evil_eye': 20, 'healing': 20, 'healer': 25,
+                'funnel': 15, 'inspiration': 30, 'knot': 20
+            };
+            var manaCost = (manaCosts[skillId] || 10) * lvl;
+            if (!p.stats.mana) p.stats.mana = 0;
+            if (p.stats.mana < manaCost) {
+                if (parent.UI && parent.UI._showToast) parent.UI._showToast('Не хватает маны! Нужно ' + manaCost);
+                return;
+            }
+            p.stats.mana -= manaCost;
+            updateHeroSpheres();
+
+            var dmg = 0, heal = 0;
+            switch (skillId) {
+                case 'poisoning':
+                    activeEffects.push({ type: 'poison', dmg: 20 * lvl, ticks: 3, endsAt: Date.now() + 3000 });
+                    break;
+                case 'vampirism':
+                    dmg = 30 * lvl;
+                    heal = Math.floor(dmg * 0.5);
+                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                    updateHeroSpheres();
+                    break;
+                case 'stunning':
+                    if (Math.random() < 0.2 * lvl) activeEffects.push({ type: 'stun', endsAt: Date.now() + 3000 });
+                    break;
+                case 'ricochet':
+                    activeEffects.push({ type: 'ricochet', endsAt: Date.now() + 3000, bonus: 0.3 * lvl });
+                    break;
+                case 'riot':
+                    if (p.stats.hp / p.stats.maxHp < 0.5) activeEffects.push({ type: 'riot', endsAt: Date.now() + 6000, bonus: 0.25 * lvl });
+                    break;
+                case 'force_of_elements':
+                    dmg = 20 * lvl;
+                    break;
+                case 'evil_eye':
+                    activeEffects.push({ type: 'evil_eye', endsAt: Date.now() + 5000, debuff: 0.15 * lvl });
+                    break;
+                case 'healing':
+                    heal = 50 * lvl;
+                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                    updateHeroSpheres();
+                    break;
+                case 'healer':
+                    activeEffects.push({ type: 'regen', amount: 5 * lvl, ticks: 5, endsAt: Date.now() + 5000 });
+                    break;
+                case 'funnel':
+                    activeEffects.push({ type: 'funnel', endsAt: Date.now() + 4000, debuff: 0.3 * lvl });
+                    break;
+                case 'inspiration':
+                    activeEffects.push({ type: 'inspiration', endsAt: Date.now() + 5000, bonus: 0.2 * lvl });
+                    break;
+                case 'knot':
+                    activeEffects.push({ type: 'knot', endsAt: Date.now() + 3000 * lvl });
+                    break;
+            }
+
+            // Урон по врагу через родительский portalAttack
+            if (dmg > 0) {
+                // временно бустим атаку, чтобы урон прошёл больший — не обязательно, но так честнее
+                var r = parent.Sherwood.Portal.portalAttack();
+                if (r) {
+                    if (r.enemyHp !== undefined) updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
+                    if (r.enemyDead) {
+                        // Смерть врага — обрабатывается в attackEnemy через следующий вызов, но здесь
+                        // тоже надо переключить на следующего
+                        isBattleActive = false;
+                        setTimeout(function() {
+                            var next = parent.Sherwood.Portal.getCurrentBattle();
+                            if (!next) { onPortalComplete(r); return; }
+                            battleData = next;
+                            var e2 = next.enemy;
+                            document.getElementById('wave-label').textContent =
+                                next.portal.name + ' — Волна ' + next.level + '/' + next.totalLevels;
+                            createEnemySprite(e2.image || 'plague_crow.png', !!e2.isBoss);
+                            updateMobHpBarFill(e2.hp, e2.maxHp);
+                            isBattleActive = true;
+                        }, 700);
+                    }
+                }
+            }
+
+            // Кулдаун
+            var cdMap = {
+                'poisoning': 5000, 'vampirism': 5000, 'stunning': 8000, 'ricochet': 10000,
+                'riot': 6000, 'evil_eye': 7000, 'healing': 10000, 'healer': 12000,
+                'funnel': 8000, 'inspiration': 15000, 'knot': 10000
+            };
+            var cd = cdMap[skillId] || 5000;
+            skillCooldowns[skillId] = Date.now() + cd;
+            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
+            if (icon) {
+                icon.classList.add('on-cooldown');
+                setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd);
             }
         }
 
@@ -409,10 +520,25 @@
         // ============================================================
         //  HP-БАР ВРАГА
         // ============================================================
-        function updateMobHpBar(hp, maxHp) {
+        function updateMobHpBarFill(hp, maxHp) {
             if (!maxHp) maxHp = 1;
             var pct = Math.max(0, Math.min(1, hp / maxHp));
-            document.getElementById('mob-hp-fill').style.width = (pct * 100) + '%';
+            var fill = document.getElementById('mob-hp-fill-img');
+            if (fill) fill.style.clipPath = 'inset(0 ' + ((1 - pct) * 100) + '% 0 0)';
+            var txt = document.getElementById('mob-hp-text');
+            if (txt) txt.textContent = 'HP: ' + Math.max(0, hp) + '/' + maxHp;
+        }
+
+        function updateMobHpBarPosition() {
+            if (!battleData || !enemySprite) return;
+            var worldPos = enemySprite.position.clone();
+            worldPos.y += 0.85;
+            worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            var el = document.getElementById('mob-hp');
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
         }
 
         // ============================================================
@@ -440,6 +566,38 @@
         setInterval(updateHeroSpheres, 800);
 
         // ============================================================
+        //  ЭФФЕКТЫ СКИЛЛОВ — тик
+        // ============================================================
+        setInterval(function() {
+            if (!isBattleActive || !battleData) return;
+            var now = Date.now();
+            var p = parent.Sherwood && parent.Sherwood.getPlayer && parent.Sherwood.getPlayer();
+            for (var i = activeEffects.length - 1; i >= 0; i--) {
+                var ef = activeEffects[i];
+                if (ef.endsAt < now) { activeEffects.splice(i, 1); continue; }
+                if (ef.type === 'poison' && ef.ticks > 0) {
+                    if (!ef._lastTick || now - ef._lastTick >= 1000) {
+                        ef._lastTick = now;
+                        ef.ticks--;
+                        // нанести урон
+                        if (battleData && battleData.enemy) {
+                            battleData.enemy.hp = Math.max(0, battleData.enemy.hp - ef.dmg);
+                            updateMobHpBarFill(battleData.enemy.hp, battleData.enemy.maxHp);
+                        }
+                    }
+                }
+                if (ef.type === 'regen' && ef.ticks > 0 && p) {
+                    if (!ef._lastTick || now - ef._lastTick >= 1000) {
+                        ef._lastTick = now;
+                        ef.ticks--;
+                        p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + ef.amount);
+                        updateHeroSpheres();
+                    }
+                }
+            }
+        }, 250);
+
+        // ============================================================
         //  ПОБЕДА / ПОРАЖЕНИЕ
         // ============================================================
         function onPortalComplete(r) {
@@ -463,6 +621,7 @@
             try {
                 if (parent.UI && parent.UI._showVictoryScreen) {
                     parent.UI._lastPortal = portalId;
+                    parent.UI._lastDungeon = null;
                     parent.UI._afterRewardAction = function() {
                         try { parent.Sherwood.Portal.showUI(); } catch(e) { exitPortal(); }
                     };
@@ -481,6 +640,7 @@
             try {
                 if (parent.UI && parent.UI._showDefeatScreen) {
                     parent.UI._lastPortal = portalId;
+                    parent.UI._lastDungeon = null;
                     parent.UI._afterRewardAction = function() {
                         try { parent.Sherwood.Portal.showUI(); } catch(e) { exitPortal(); }
                     };
@@ -509,6 +669,12 @@
             try {
                 if (parent.Sherwood.Portal) {
                     if (parent.Sherwood.Portal.isInPortal()) parent.Sherwood.Portal.fleePortal();
+                }
+            } catch(e){}
+            try {
+                if (parent.UI) {
+                    parent.UI._lastPortal = portalId;
+                    parent.UI._lastDungeon = null;
                 }
             } catch(e){}
             try {
@@ -541,7 +707,7 @@
         });
 
         // ============================================================
-        //  СКИЛЛЫ
+        //  СКИЛЛЫ — рендер иконок с onclick
         // ============================================================
         function renderTalents() {
             var leftCol = document.getElementById('skills-left');
@@ -572,6 +738,17 @@
                     var img = document.createElement('img');
                     img.src = talentData[id].icon;
                     img.title = talentData[id].name + ' (Ур. ' + lvl + ')';
+                    img.dataset.skillId = id;
+                    img.style.cursor = 'pointer';
+                    img.onclick = (function(sid) {
+                        return function() { useSkill(sid); };
+                    })(id);
+                    img.addEventListener('touchstart', (function(sid) {
+                        return function(e) {
+                            e.preventDefault(); e.stopPropagation();
+                            useSkill(sid);
+                        };
+                    })(id));
                     (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
                 }
             }
@@ -619,6 +796,7 @@
                 enemySprite.position.y = enemyBaseY + Math.sin(t * 2.5) * 0.02;
             }
 
+            updateMobHpBarPosition();
             renderer.render(scene, camera);
         }
 
