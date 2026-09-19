@@ -3,8 +3,7 @@
  *  — вход за portalToken1 (общие для всех порталов)
  *  — чем старше портал, тем больше токенов (id * 3)
  *  — бой ведётся в portal_battle.html (iframe)
- *  — после победы/поражения возвращаемся к списку порталов
- *  — пройденные порталы можно перепроходить (кнопка "В бой снова")
+ *  — карусель как в UI.dungeon
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -272,9 +271,21 @@ Sherwood.Portal = {
 
         var allPortals = this.getAllPortals();
         var tokens = this.countTokens();
-        var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
+        var iconMap = {
+            1: 'invasion_portal.png',
+            2: 'skull_spider_portal.png',
+            3: 'portal_of_withering.png',
+            4: 'portal_of_chains.png',
+            5: 'lycanthrope_portal.png',
+            6: 'scorpio_portal.png',
+            7: 'portal_of_distortion.png'
+        };
 
+        // === КАРУСЕЛЬ КАК В ПОДЗЕМКЕ (UI.dungeon) ===
         var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
+
+        // Информационная полоска с токенами сверху
+        h += '<div style="position:absolute;top:6px;left:0;right:0;text-align:center;color:#c8a050;font-size:12px;font-weight:bold;text-shadow:0 0 6px #000;z-index:5;letter-spacing:1px;">Токены: ' + tokens + '</div>';
 
         for (var i = 0; i < allPortals.length; i++) {
             var portal = allPortals[i];
@@ -285,17 +296,19 @@ Sherwood.Portal = {
             var isUnlocked = this.isPortalUnlocked(portal.id);
             var display = (i === 0) ? 'flex' : 'none';
 
+            // Слайд портала — как в подземке
             h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;">';
 
-            // Иконка портала — без большого нижнего отступа
-            h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 0 20px 0;display:block;">';
+            // Иконка портала сверху
+            h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;' + (isUnlocked ? '' : 'filter:grayscale(1);opacity:0.4;') + '">';
 
-            // Плашка с названием — сразу под иконкой, без margin-top
-            h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin:0 0 15px 0;">' + portal.name + '</div>';
+            // Плашка с названием портала (как в подземке)
+            h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + portal.name + '</div>';
 
+            // Токены
             h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Токены: ' + tokens + ' / ' + requiredTokens + '</div>';
 
-            // Логика кнопки/статуса
+            // Статус / кнопка
             if (!isUnlocked) {
                 h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
             } else if (!canEnter) {
@@ -303,16 +316,17 @@ Sherwood.Portal = {
                 if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
             } else {
                 var btnLabel = isCompleted ? '⚔️ В бой снова' : '⚔️ В бой';
-                h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">' + btnLabel + '</button>';
+                h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:10px;">' + btnLabel + '</button>';
                 if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
             }
 
-            h += '</div>';
+            h += '</div>'; // конец слайда
         }
         h += '</div>';
 
         UI._openScreen('🌀 Порталы', 'portal', h);
 
+        // Свайпы/колесо/тач — как в UI.dungeon
         var carousel = document.getElementById('portal-carousel');
         if (carousel) {
             var startY = 0;
