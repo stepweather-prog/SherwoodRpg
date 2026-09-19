@@ -13,7 +13,6 @@
         #raid-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ff6b35; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #raid-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
 
-        /* === HP-КАРТОЧКА ВРАГА — как в подземке === */
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
@@ -150,7 +149,6 @@
         mainLight.position.set(5, 10, 5);
         scene.add(mainLight);
 
-        // ===== ТЕКСТУРЫ РЕЙДА =====
         const floorTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/floors_raid.png');
         const wallTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/walls_raid.png');
         const ceilTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_raid.png');
@@ -159,7 +157,6 @@
         const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
         const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
 
-        // ===== КОРИДОР =====
         const corridorWidth = 1;
         const corridorLength = 5;
         const wallHeight = 1.1;
@@ -194,7 +191,6 @@
         frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
         scene.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА — как в подземке =====
         var enemySprite = null;
         var enemyData = parent.Sherwood.Raid.getCurrentEnemy();
         var bossData = parent.Sherwood.Raid._raidBoss;
@@ -214,7 +210,9 @@
 
         var RAID_BEAST_DIRS = [
             'assets/assets2/mobs/raid_mobs/',
+            'assets/assets2/mobs/portal_mobs/',
             'assets/all_beasts/',
+            'assets/beast_quest/',
             'assets/assets2/mobs/dungeon_mobs/'
         ];
 
@@ -240,15 +238,18 @@
             tryNext();
         }
 
+        // === ОБНОВЛЕНИЕ ВРАГА — эта функция вызывается И снаружи (parent) ===
         function updateEnemy() {
             enemyData = parent.Sherwood.Raid.getCurrentEnemy();
             if (!enemyData) return;
 
             document.getElementById('enemy-name').textContent = enemyData.name;
-            if (enemySprite) scene.remove(enemySprite);
+            if (enemySprite) {
+                scene.remove(enemySprite);
+                enemySprite = null;
+            }
 
-            // === ТЕ ЖЕ ЗНАЧЕНИЯ ЧТО В ПОДЗЕМКЕ ===
-            var isBoss = !!enemyData.isBoss;
+            var isBoss = !!enemyData.isRaidBoss || !!enemyData.isBoss;
             var scale = isBoss ? 1.5 : 1.05;
 
             loadRaidEnemyTexture(enemyData.image, function(tex) {
@@ -263,13 +264,16 @@
             });
 
             enemyHp = enemyData.hp;
-            enemyMaxHp = enemyData.hp;
+            enemyMaxHp = enemyData.maxHp;
             updateMobHpBarFill(enemyHp, enemyMaxHp);
+            isBattleActive = true;
         }
+
+        // === ЭКСПОРТ В WINDOW, чтобы parent.Sherwood.Raid._onRaidWin мог вызвать ===
+        window.updateEnemy = updateEnemy;
 
         updateEnemy();
 
-        // ===== КРОВЬ — 0.4 + случайная текстура ====
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png',
             'assets/assets2/animation/blood_2.png',
@@ -282,7 +286,7 @@
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false
         }));
-        hitFlashSprite.scale.set(0.4, 0.4, 1);   // 0.4
+        hitFlashSprite.scale.set(0.4, 0.4, 1);
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
 
@@ -307,7 +311,6 @@
         }
         setTimeout(updateHeroSpheres, 500);
 
-        // ===== УПРАВЛЕНИЕ =====
         let yaw = 0;
         const rotationSpeed = Math.PI / 2;
         let isMoving = false;
@@ -407,7 +410,6 @@
             }
         });
 
-        // ===== БОЙ =====
         document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
 
         var hitSprites = [
@@ -426,28 +428,15 @@
 
         function attackEnemy() {
             if (!isBattleActive) return;
+            if (!enemyData || enemyData.hp <= 0) return;
+
             var playerStats = parent.Sherwood.getPlayer();
             playSound(soundHit);
 
-            var baseDmg = Math.max(50, Math.floor(playerStats.stats.attack * 1.5) - Math.floor(enemyData.defense * 0.1) + Math.floor(Math.random() * 20));
-            if (playerStats.talents && playerStats.talents['ignore']) baseDmg += Math.floor(baseDmg * playerStats.talents['ignore'] * 0.05);
+            var r = parent.Sherwood.Raid.raidAttack();
+            if (!r || r.error) return;
 
-            var now = Date.now();
-            for (var i = activeEffects.length - 1; i >= 0; i--) {
-                var ef = activeEffects[i];
-                if (ef.endsAt < now) { activeEffects.splice(i, 1); continue; }
-                if (ef.type === 'ricochet' || ef.type === 'riot' || ef.type === 'inspiration') baseDmg = Math.floor(baseDmg * (1 + ef.bonus));
-            }
-            var dmg = baseDmg;
-
-            if (playerStats.talents && playerStats.talents['vampirism'] && Math.random() < 0.3) {
-                playerStats.stats.hp = Math.min(playerStats.stats.maxHp, playerStats.stats.hp + 10 * playerStats.talents['vampirism']);
-            }
-
-            enemyData.hp = Math.max(0, enemyData.hp - dmg);
-            updateMobHpBarFill(enemyData.hp, enemyData.maxHp);
-
-            // === КРОВЬ В СЛУЧАЙНОЙ ЧАСТИ СПРАЙТА ===
+            // Отталкивание + кровь
             if (enemySprite) {
                 knockbackEnemy();
                 hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
@@ -481,40 +470,60 @@
                 setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
             }
 
-            if (enemyData.hp <= 0) { onEnemyKilled(); return; }
-
-            var skipEnemyTurn = false;
-            for (var i = activeEffects.length - 1; i >= 0; i--) {
-                if (activeEffects[i].type === 'stun' || activeEffects[i].type === 'knot') skipEnemyTurn = true;
-            }
-            if (skipEnemyTurn) { updateHeroSpheres(); return; }
-
-            if (playerStats.talents) {
-                if (playerStats.talents['parry'] && Math.random() < 0.05 * playerStats.talents['parry']) return;
-                if (playerStats.talents['silence'] && Math.random() < 0.1 * playerStats.talents['silence']) return;
+            // Обновляем HP
+            if (r.enemyHp !== undefined) {
+                enemyHp = r.enemyHp;
+                enemyMaxHp = r.enemyMaxHp;
+                updateMobHpBarFill(enemyHp, enemyMaxHp);
             }
 
-            var edmg = Math.max(1, Math.floor(enemyData.attack * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
-            if (playerStats.talents) {
-                if (playerStats.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * playerStats.talents['blocking']));
-                if (playerStats.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * playerStats.talents['numbness']));
-            }
-            for (var i = 0; i < activeEffects.length; i++) {
-                if (activeEffects[i].type === 'funnel') edmg = Math.floor(edmg * (1 - activeEffects[i].debuff));
-            }
+            // Игрок получил урон
+            if (r.playerHp !== undefined) updateHeroSpheres();
 
-            playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
-            if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) parent.UI.updateDisplay();
-            updateHeroSpheres();
-
-            if (playerStats.stats.hp <= 0) {
+            // Игрок умер
+            if (r.playerDead) {
                 playSound(soundDefeat);
                 dungeonMusic.pause();
                 isBattleActive = false;
                 document.getElementById('mob-hp').style.display = 'none';
                 if (enemySprite) scene.remove(enemySprite);
                 parent.Sherwood.Raid._raidFlee();
+                return;
             }
+
+            // Рейд полностью пройден
+            if (r.raidComplete) {
+                onRaidComplete(r);
+                return;
+            }
+
+            // Этап пройден (например, волна → босс)
+            if (r.stageComplete) {
+                // Переходим в новую сцену через parent — он пересоздаст iframe
+                isBattleActive = false;
+                document.getElementById('mob-hp').style.display = 'none';
+                if (enemySprite) scene.remove(enemySprite);
+                parent.Sherwood.Raid._onRaidWin();
+                return;
+            }
+
+            // Враг убит, но волна не пройдена → следующий враг
+            if (r.enemyDead) {
+                isBattleActive = false;
+                document.getElementById('mob-hp').style.display = 'none';
+                if (enemySprite) scene.remove(enemySprite);
+                parent.Sherwood.Raid._onRaidWin();
+                return;
+            }
+        }
+
+        function onRaidComplete(r) {
+            playSound(soundVictory);
+            dungeonMusic.pause();
+            isBattleActive = false;
+            document.getElementById('mob-hp').style.display = 'none';
+            if (enemySprite) scene.remove(enemySprite);
+            parent.Sherwood.Raid._onRaidWin();
         }
 
         function updateMobHpBarFill(hp, maxHp) {
@@ -539,14 +548,12 @@
 
         function checkEnemy() {
             var dist = camera.position.distanceTo(enemyPos);
-            if (dist < 3.0 && !isBattleActive) {
+            if (dist < 3.0 && !isBattleActive && enemyData && enemyData.hp > 0) {
                 isBattleActive = true;
                 document.getElementById('mob-hp').style.display = 'block';
-                if (enemyData) {
-                    enemyHp = enemyData.hp;
-                    enemyMaxHp = enemyData.maxHp;
-                    updateMobHpBarFill(enemyHp, enemyMaxHp);
-                }
+                enemyHp = enemyData.hp;
+                enemyMaxHp = enemyData.maxHp;
+                updateMobHpBarFill(enemyHp, enemyMaxHp);
             }
         }
 
@@ -607,50 +614,6 @@
             p.stats.mana -= manaCost;
             updateHeroSpheres();
 
-            var dmg = 0, heal = 0;
-            switch (skillId) {
-                case 'poisoning':
-                    if (poisonTimer) clearInterval(poisonTimer);
-                    var poisonDmg = 20 * lvl;
-                    var poisonTicks = 3;
-                    poisonTimer = setInterval(function() {
-                        if (!isBattleActive) { clearInterval(poisonTimer); return; }
-                        enemyData.hp = Math.max(0, enemyData.hp - poisonDmg);
-                        updateMobHpBarFill(enemyData.hp, enemyData.maxHp);
-                        if (enemyData.hp <= 0) { clearInterval(poisonTimer); onEnemyKilled(); }
-                        poisonTicks--;
-                        if (poisonTicks <= 0) clearInterval(poisonTimer);
-                    }, 1000);
-                    break;
-                case 'vampirism': dmg = 30 * lvl; enemyData.hp = Math.max(0, enemyData.hp - dmg); heal = Math.floor(dmg * 0.5); p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); updateHeroSpheres(); break;
-                case 'stunning': if (Math.random() < 0.2 * lvl) activeEffects.push({ type: 'stun', endsAt: Date.now() + 3000 }); break;
-                case 'ricochet': activeEffects.push({ type: 'ricochet', endsAt: Date.now() + 3000, bonus: 0.3 * lvl }); break;
-                case 'riot': if (p.stats.hp / p.stats.maxHp < 0.5) activeEffects.push({ type: 'riot', endsAt: Date.now() + 6000, bonus: 0.25 * lvl }); break;
-                case 'force_of_elements': dmg = 20 * lvl; enemyData.hp = Math.max(0, enemyData.hp - dmg); break;
-                case 'evil_eye': activeEffects.push({ type: 'evil_eye', endsAt: Date.now() + 5000, debuff: 0.15 * lvl }); break;
-                case 'healing': heal = 50 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); updateHeroSpheres(); break;
-                case 'healer':
-                    if (healerTimer) clearInterval(healerTimer);
-                    var healerAmount = 5 * lvl;
-                    var healerTicks = 5;
-                    healerTimer = setInterval(function() {
-                        if (!isBattleActive) { clearInterval(healerTimer); return; }
-                        p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + healerAmount);
-                        updateHeroSpheres();
-                        healerTicks--;
-                        if (healerTicks <= 0) clearInterval(healerTimer);
-                    }, 1000);
-                    break;
-                case 'funnel': activeEffects.push({ type: 'funnel', endsAt: Date.now() + 4000, debuff: 0.3 * lvl }); break;
-                case 'inspiration': activeEffects.push({ type: 'inspiration', endsAt: Date.now() + 5000, bonus: 0.2 * lvl }); break;
-                case 'knot': activeEffects.push({ type: 'knot', endsAt: Date.now() + 3000 * lvl }); break;
-            }
-
-            if (dmg > 0) {
-                updateMobHpBarFill(enemyData.hp, enemyData.maxHp);
-                if (enemyData.hp <= 0) { onEnemyKilled(); return; }
-            }
-
             var cd = talentData[skillId].cooldown || 0;
             if (cd > 0) {
                 skillCooldowns[skillId] = Date.now() + cd;
@@ -659,26 +622,12 @@
             }
         }
 
-        function onEnemyKilled() {
-            if (!isBattleActive) return;
-            soundVictory.currentTime = 0;
-            soundVictory.volume = 1.0;
-            soundVictory.play();
-            dungeonMusic.pause();
-            dungeonMusic.currentTime = 0;
-            isBattleActive = false;
-            document.getElementById('mob-hp').style.display = 'none';
-            if (enemySprite) scene.remove(enemySprite);
-            parent.Sherwood.Raid._onRaidWin();
-        }
-
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
             var dt = Math.min(clock.getDelta(), 0.05);
 
-            // Отталкивание врага
             if (enemyKnockback.active && enemySprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
@@ -690,7 +639,6 @@
                 }
             }
 
-            // Тряска камеры
             if (cameraShake > 0.001) {
                 camera.position.x = (Math.random() - 0.5) * cameraShake;
                 camera.position.y = 0.8 + (Math.random() - 0.5) * cameraShake;
@@ -703,13 +651,11 @@
                 cameraShake = 0;
             }
 
-            // Дыхание врага
             if (enemySprite && !enemyKnockback.active) {
                 var t = clock.elapsedTime;
                 enemySprite.position.y = enemyBaseY + Math.sin(t * 2.5) * 0.015;
             }
 
-            // Камера
             camera.rotation.set(0, yaw, 0);
 
             renderer.render(scene, camera);
@@ -722,6 +668,12 @@
             camera.updateProjectionMatrix();
             renderer.setSize(innerWidth, innerHeight);
         });
+
+        // === ДОПОЛНИТЕЛЬНЫЙ ЭКСПОРТ ДЛЯ PARENT ===
+        window.attackEnemy = attackEnemy;
+        window.updateMobHpBarFill = updateMobHpBarFill;
+        window.checkEnemy = checkEnemy;
+        window.isBattleActiveRef = function() { return isBattleActive; };
     </script>
 </body>
 </html>
