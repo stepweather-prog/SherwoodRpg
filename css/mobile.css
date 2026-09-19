@@ -1,0 +1,280 @@
+/* ============================================================
+   MOBILE.CSS — только для экранов ≤ 600px
+   Подключается через <link media="(max-width: 600px)">
+   Не влияет на ПК-версию.
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    /* ========================================================
+       1. СТАТУИ И РАЗДЕЛИТЕЛИ — СКРЫТЬ
+       ======================================================== */
+    #leftStatue,
+    #rightStatue,
+    #leftDivider,
+    #rightDivider {
+        display: none !important;
+    }
+
+    /* ========================================================
+       2. ГЛАВНЫЙ ЭКРАН — НА ВСЮ ШИРИНУ
+       ======================================================== */
+    #homeScreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+    }
+
+    /* ========================================================
+       3. ИГРОВАЯ ЗОНА — ПРОПОРЦИОНАЛЬНО ЭКРАНУ 480:800
+       Растягиваем по ширине, высоту считаем через aspect-ratio
+       ======================================================== */
+    #gameZone {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        /* На узких экранах 480:800 может быть выше экрана — тогда ограничиваем */
+        aspect-ratio: auto !important;
+    }
+
+    /* Всё, что внутри — уже абсолютное позиционирование
+       относительно gameZone, не меняем — оно само масштабируется */
+    #gameZone img {
+        position: absolute;
+    }
+
+    /* ========================================================
+       4. ФОН (SUBSTRATE) — COVER
+       ======================================================== */
+    #substrate {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+
+    /* ========================================================
+       5. АРКА — НЕ ДОЛЖНА РАЗДУВАТЬСЯ
+       ======================================================== */
+    #arch {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+
+    /* ========================================================
+       6. ГЕРОЙ — УМЕНЬШИТЬ ПРОПОРЦИОНАЛЬНО
+       ======================================================== */
+    #hero {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 55% !important;
+        height: auto !important;
+        max-height: 70vh !important;
+        object-fit: contain !important;
+        z-index: 5 !important;
+    }
+
+    /* ========================================================
+       7. ВЕРХНЯЯ ПАНЕЛЬ
+       ======================================================== */
+    #topBar {
+        position: absolute !important;
+        top: 0 !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 14vh !important;
+        z-index: 30 !important;
+    }
+
+    .main-stone-panel {
+        top: 4vh !important;
+        left: 3% !important;
+        width: 94% !important;
+        height: 11vh !important;
+        background-size: 100% 100% !important;
+    }
+
+    .top-icon {
+        width: 10% !important;
+        max-width: 50px !important;
+        height: auto !important;
+        top: 0 !important;
+    }
+
+    .stat-value {
+        font-size: 2.6vw !important;
+        top: 9vh !important;
+    }
+
+    #hero-level {
+        font-size: 2.4vw !important;
+        top: 5vh !important;
+        left: 8.33% !important;
+    }
+
+    /* ========================================================
+       8. ИКОНКА РАЗДЕЛА / НАЗВАНИЕ / СТРЕЛКИ
+       ======================================================== */
+    #homeScreen #sectionIcon {
+        position: absolute !important;
+        top: 17% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 25% !important;
+        max-width: 120px !important;
+        height: auto !important;
+        object-fit: contain !important;
+        z-index: 15 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+
+    #homeScreen #sectionName {
+        position: absolute !important;
+        top: 32% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 44% !important;
+        max-width: 200px !important;
+        height: 5.5% !important;
+        background: url('../assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        color: #ffa500 !important;
+        font-family: 'Times New Roman', serif !important;
+        font-size: 3.6vw !important;
+        font-weight: bold !important;
+        text-shadow: 0 2px 4px #000 !important;
+        z-index: 14 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+
+    #homeScreen #carouselLeftArrow,
+    #homeScreen #carouselRightArrow {
+        position: absolute !important;
+        top: 34.5% !important;
+        transform: translateY(-50%) !important;
+        width: 8% !important;
+        max-width: 45px !important;
+        height: auto !important;
+        object-fit: contain !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        z-index: 16 !important;
+    }
+    #homeScreen #carouselLeftArrow  { left: 8% !important; }
+    #homeScreen #carouselRightArrow { right: 8% !important; }
+
+    #homeScreen #carouselLeftArrow:active,
+    #homeScreen #carouselRightArrow:active {
+        transform: translateY(-50%) scale(0.85) !important;
+    }
+
+    /* ========================================================
+       9. UI-СЛОЙ (сумка, порталы, кузница и т.д.)
+       Он внутри #gameZone → растянется вместе с ним
+       ======================================================== */
+    #ui-screen-layer {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 40 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* ========================================================
+       10. ЭКРАН МЕНЮ (если он вне gameZone)
+       ======================================================== */
+    #menuScreen {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 200 !important;
+        overflow: hidden !important;
+    }
+
+    /* ========================================================
+       11. ЭКРАН ЗАГРУЗКИ
+       ======================================================== */
+    #loadingScreen {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    #loadingScreen img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
+
+    #playButton {
+        width: 42vw !important;
+        height: 42vw !important;
+        max-width: 220px !important;
+        max-height: 220px !important;
+    }
+
+    /* ========================================================
+       12. КНОПКА ВЫХОДА В iframe (dungeon/portal)
+       На телефоне — компактнее
+       ======================================================== */
+    #exit-btn {
+        padding: 6px 12px !important;
+        font-size: 14px !important;
+    }
+
+    /* ========================================================
+       13. ПОДЗЕМКА — уменьшить размер кнопок джойстика
+       ======================================================== */
+    #joystick {
+        bottom: 20px !important;
+        width: 100px !important;
+        height: 100px !important;
+    }
+    .arrow-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 14px !important;
+    }
+    #btn-forward { top: 0 !important; left: 34px !important; }
+    #btn-left    { top: 34px !important; left: 0 !important; }
+    #btn-right   { top: 34px !important; left: 68px !important; }
+    #btn-back    { top: 68px !important; left: 34px !important; }
+
+    #attack-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    /* Миникарта в подземке */
+    #minimap {
+        width: 130px !important;
+        height: 130px !important;
+        top: 8px !important;
+        right: 8px !important;
+    }
+
+    /* Хп/мана игрока в подземке */
+    #hero-life,
+    #hero-mana {
+        width: 90px !important;
+        height: 90px !important;
+    }
+}
