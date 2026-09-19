@@ -525,13 +525,14 @@ UI._claimReward = function() {
         UI._afterRewardAction = null;
         cb();
     } else {
-        // Фолбэк: если колбэк не был установлен (iframe умер раньше, чем успел его поставить)
-        var dungeonId = UI._lastDungeon || 1;
-        if (typeof UI._dungeonShowFloors === 'function') {
-            UI._dungeonShowFloors(dungeonId);
-        } else if (typeof UI.dungeon === 'function') {
+        // Фолбэк: сначала портал, потом подземка
+        if (UI._lastPortal && Sherwood.Portal && Sherwood.Portal.showUI) {
+            Sherwood.Portal.showUI();
+        } else if (UI._lastDungeon && UI._dungeonShowFloors) {
+            UI._dungeonShowFloors(UI._lastDungeon);
+        } else if (UI.dungeon) {
             UI.dungeon();
-        } else if (typeof UI.loadHome === 'function') {
+        } else {
             UI.loadHome();
         }
     }
