@@ -33,59 +33,89 @@ const AudioManager = {
     currentTrackIndex: 0,
     currentMusic: null,
     audioContext: null,
-    
+
     init() {
         this.currentTrackIndex = 0;
         this.currentMusic = null;
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {}
     },
-    
+
+    // === ГРОМКОСТЬ МУЗЫКИ ИЗ НАСТРОЕК ===
+    _getMusicVolume: function() {
+        if (typeof Settings !== 'undefined' && Settings.getMusicVolume) {
+            return Settings.getMusicVolume();
+        }
+        return 0.5;
+    },
+    _isMusicEnabled: function() {
+        if (typeof Settings !== 'undefined' && Settings.isMusicEnabled) {
+            return Settings.isMusicEnabled();
+        }
+        return true;
+    },
+
+    // === ГРОМКОСТЬ ЗВУКОВ ИЗ НАСТРОЕК ===
+    _getSoundVolume: function() {
+        if (typeof Settings !== 'undefined' && Settings.getSoundVolume) {
+            return Settings.getSoundVolume();
+        }
+        return 0.5;
+    },
+    _isSoundEnabled: function() {
+        if (typeof Settings !== 'undefined' && Settings.isSoundEnabled) {
+            return Settings.isSoundEnabled();
+        }
+        return true;
+    },
+
     playCityTheme() {
-        if (typeof Settings !== 'undefined' && Settings.isMusicEnabled && !Settings.isMusicEnabled()) {
-            return;
-        }
-        
+        if (!this._isMusicEnabled()) return;
+
         this.stopCityTheme();
-        
+
         const trackSrc = this.cityTracks[this.currentTrackIndex];
         this.currentMusic = new Audio(trackSrc);
-        
         this.currentMusic.loop = false;
-        this.currentMusic.volume = 0.5;
-        
+        this.currentMusic.volume = this._getMusicVolume();   // ← из Settings
+
         this.currentMusic.addEventListener('ended', () => {
             this.playNextTrack();
         });
-        
+
         this.currentMusic.play().catch(() => {});
-        
         this.currentTrackIndex = (this.currentTrackIndex + 1) % this.cityTracks.length;
     },
-    
+
     playNextTrack() {
-        if (typeof Settings !== 'undefined' && Settings.isMusicEnabled && !Settings.isMusicEnabled()) {
-            return;
-        }
-        
+        if (!this._isMusicEnabled()) return;
+
         this.stopCityTheme();
-        
+
         const trackSrc = this.cityTracks[this.currentTrackIndex];
         this.currentMusic = new Audio(trackSrc);
-        
         this.currentMusic.loop = false;
-        this.currentMusic.volume = 0.5;
-        
+        this.currentMusic.volume = this._getMusicVolume();   // ← из Settings
+
         this.currentMusic.addEventListener('ended', () => {
             this.playNextTrack();
         });
-        
+
         this.currentMusic.play().catch(() => {});
-        
         this.currentTrackIndex = (this.currentTrackIndex + 1) % this.cityTracks.length;
     },
-    
+
+    // === ОБНОВИТЬ ГРОМКОСТЬ УЖЕ ИГРАЮЩЕГО ТРЕКА ===
+    updateVolume: function() {
+        if (this.currentMusic) {
+            try { this.currentMusic.volume = this._getMusicVolume(); } catch(e) {}
+        }
+    },
+
     playSoundEffect(soundKey) {
-        // Сопоставляем ключ с файлом
+        if (!this._isSoundEnabled()) return;
+
         const soundMap = {
             'click': 'assets/assets2/tune/click.wav',
             'hit': 'assets/assets2/tune/hit.wav',
@@ -104,18 +134,20 @@ const AudioManager = {
             'heal': 'assets/assets2/tune/heal.wav',
             'victory': 'assets/assets2/tune/victory.wav'
         };
-        
+
         if (!soundMap[soundKey]) return;
-        
+
         const audio = new Audio(soundMap[soundKey]);
-        audio.volume = 0.5;
+        audio.volume = this._getSoundVolume();   // ← из Settings
         audio.play().catch(() => {});
     },
-    
+
     stopCityTheme() {
         if (this.currentMusic) {
-            this.currentMusic.pause();
-            this.currentMusic.currentTime = 0;
+            try {
+                this.currentMusic.pause();
+                this.currentMusic.currentTime = 0;
+            } catch(e) {}
             this.currentMusic = null;
         }
     }
@@ -123,3 +155,5 @@ const AudioManager = {
 
 // Инициализация
 AudioManager.init();
+
+window.AudioManager = AudioManager;
