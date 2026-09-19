@@ -33,8 +33,8 @@ UI._statIcons = {
 UI._sounds = {};
 UI._currentMusic = null;
 UI._currentMusicKey = null;
-UI._soundEnabled = true;
-UI._musicEnabled = true;
+//UI._soundEnabled = true;
+//UI._musicEnabled = true;
 UI._screenLayer = null;
 UI._pendingRewards = null;
 UI._afterRewardAction = null;
@@ -83,7 +83,7 @@ UI.init = function() {
     }
     
     try { UI._initSounds(); } catch(e) {}
-    try { UI._loadAudioSettings(); } catch(e) {}
+    try { if (typeof Settings !== 'undefined' && Settings._applyVolumes) Settings._applyVolumes(); } catch(e) {}
     try { UI.updateDisplay(); } catch(e) {}
     
     if (typeof Sherwood !== 'undefined') {
@@ -123,7 +123,7 @@ UI._initSounds = function() {
 
 UI._playSound = function(k) {
     try {
-        if (!UI._soundEnabled) return;
+        if (typeof Settings !== 'undefined' && !Settings.isSoundEnabled()) return;
         var s = UI._sounds[k];
         if (s) { s.currentTime = 0; s.play().catch(function() {}); }
     } catch(e) {}
@@ -131,12 +131,15 @@ UI._playSound = function(k) {
 
 UI._playMusic = function(k) {
     try {
-        if (!UI._musicEnabled) return;
+        if (typeof Settings !== 'undefined' && !Settings.isMusicEnabled()) return;
         if (UI._currentMusicKey === k && UI._currentMusic && !UI._currentMusic.paused) return;
         UI._stopMusic();
         var m = UI._sounds[k];
         if (m) {
-            m.volume = (k.indexOf('dungeon_') === 0) ? 0.5 : 0.6;
+            // Громкость = базовая * ползунок из настроек
+            var baseVol = (k.indexOf('dungeon_') === 0) ? 0.5 : 0.6;
+            var musicVol = (typeof Settings !== 'undefined' && Settings.getMusicVolume) ? Settings.getMusicVolume() : 0.6;
+            m.volume = baseVol * musicVol;
             m.currentTime = 0;
             m.play().catch(function() {});
             UI._currentMusic = m;
@@ -203,36 +206,11 @@ UI._pauseMusic = function() {
 };
 
 UI._resumeMusic = function() {
-    try { if (UI._currentMusic && UI._musicEnabled) { UI._currentMusic.play().catch(function() {}); } } catch(e) {}
-};
-
-UI._saveAudioSettings = function() {
-    try { localStorage.setItem('sherwood_audio', JSON.stringify({ sound: UI._soundEnabled, music: UI._musicEnabled })); } catch(e) {}
-};
-
-UI._loadAudioSettings = function() {
     try {
-        var s = localStorage.getItem('sherwood_audio');
-        if (s) { var d = JSON.parse(s); UI._soundEnabled = d.sound !== false; UI._musicEnabled = d.music !== false; }
-    } catch(e) {}
-};
-
-UI._toggleSound = function(en) {
-    UI._soundEnabled = en;
-    UI._saveAudioSettings();
-    if (!en) {
-        for (var k in UI._sounds) {
-            try { UI._sounds[k].pause(); UI._sounds[k].currentTime = 0; } catch(e) {}
+        if (UI._currentMusic && (typeof Settings === 'undefined' || Settings.isMusicEnabled())) {
+            UI._currentMusic.play().catch(function() {});
         }
-    }
-    UI.settings();
-};
-
-UI._toggleMusic = function(en) {
-    UI._musicEnabled = en;
-    UI._saveAudioSettings();
-    if (!en) { UI._stopMusic(); } else { UI._playMusic('main_theme'); }
-    UI.settings();
+    } catch(e) {}
 };
 
 // ============================================================
@@ -1073,88 +1051,13 @@ UI._addWalletSilver = function(amount) {
 //  НАСТРОЙКИ
 // ============================================================
 UI.settings = function() {
-    UI._playSound('click');
-    var p = Sherwood.getPlayer();
-    var nm = p ? p.name : 'Охотник';
-    var nameChanges = p ? (p.nameChanges || 0) : 0;
-    var h = '';
-    h += '<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="color:#fff;margin-bottom:8px;">Имя</div><div style="display:flex;gap:8px;"><input id="pni" value="' + nm + '" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:8px 12px;color:#fff;"><button onclick="UI._changePlayerName()" style="background:#c9a040;border:none;border-radius:6px;padding:8px 16px;color:#000;font-weight:bold;cursor:pointer;">Сохранить</button></div>';
-    if (nameChanges === 0) { h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">Первая смена имени — бесплатно</div>'; } else { h += '<div style="color:#ffd700;font-size:0.7em;margin-top:4px;">Смена имени: 500 золота</div>'; }
-    h += '<div id="name-status" style="color:#aaa;font-size:0.7em;margin-top:4px;"></div></div>';
-    h += '<div style="background:rgba(0,0,0,0.5);border-radius:10px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="color:#fff;">Звуки</span><button onclick="UI._toggleSound(' + !UI._soundEnabled + ')" style="width:60px;height:30px;background:' + (UI._soundEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;' + (UI._soundEnabled ? 'right:3px;' : 'left:3px;') + 'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#fff;">Музыка</span><button onclick="UI._toggleMusic(' + !UI._musicEnabled + ')" style="width:60px;height:30px;background:' + (UI._musicEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:15px;cursor:pointer;position:relative;"><span style="position:absolute;top:3px;' + (UI._musicEnabled ? 'right:3px;' : 'left:3px;') + 'width:24px;height:24px;background:#fff;border-radius:50%;transition:0.2s;"></span></button></div></div>';
-    h += '<button onclick="UI._saveProgress()" style="width:100%;background:#4caf50;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Сохранить прогресс</button>';
-    h += '<button onclick="UI._resetCharacter()" style="width:100%;background:#ff9800;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;margin-bottom:8px;">Сбросить персонажа (5000 золота)</button>';
-    h += '<button onclick="UI._exitGame()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:12px;color:#fff;font-weight:bold;font-size:1em;cursor:pointer;">Выйти</button>';
-    UI._openScreen('Настройки', 'settings', h);
-};
-
-UI._changePlayerName = function() {
-    var inp = document.getElementById('pni'), st = document.getElementById('name-status');
-    if (!inp || !st) return;
-    var nm = inp.value.trim();
-    if (!nm) { st.textContent = 'Пустое имя'; st.style.color = '#f44336'; return; }
-    var p = Sherwood.getPlayer();
-    if (!p) return;
-    if (!p.nameChanges) p.nameChanges = 0;
-    if (p.nameChanges === 0) {
-        p.name = nm;
-        p.nameChanges = 1;
-        Sherwood.saveGame();
-        st.textContent = 'Имя изменено бесплатно!';
-        st.style.color = '#4caf50';
+    if (typeof Settings !== 'undefined' && Settings.showUI) {
+        Settings.showUI();
     } else {
-        if ((p.resources.gold || 0) < 500) { st.textContent = 'Нужно 500 золота для смены имени'; st.style.color = '#f44336'; return; }
-        Sherwood.spendResource('gold', 500);
-        p.name = nm;
-        p.nameChanges++;
-        Sherwood.saveGame();
-        st.textContent = 'Имя изменено за 500 золота!';
-        st.style.color = '#4caf50';
-    }
-    UI.updateDisplay();
-    UI.settings();
-};
-
-UI._saveProgress = function() {
-    if (Sherwood.saveGameNow) { Sherwood.saveGameNow(); UI._showToast('Прогресс сохранён!'); }
-    else if (Sherwood.saveGame) { Sherwood.saveGame(); UI._showToast('Прогресс сохранён!'); }
-};
-
-UI._resetCharacter = function() {
-    var p = Sherwood.getPlayer();
-    if (!p) return;
-    if ((p.resources.gold || 0) < 5000) { UI._showToast('Нужно 5000 золота для сброса'); return; }
-    if (!confirm('Сбросить персонажа за 5000 золота? Весь прогресс будет удалён!')) return;
-    var remainingGold = (p.resources.gold || 0) - 5000;
-    var remainingSilver = p.resources.silver || 0;
-    Sherwood._createNewPlayer();
-    p = Sherwood.getPlayer();
-    p.resources.gold = remainingGold;
-    p.resources.silver = remainingSilver;
-    p.nameChanges = 0;
-    Sherwood._recalcStats();
-    Sherwood.saveGameNow();
-    UI._showToast('Персонаж сброшен!');
-    UI.loadHome();
-};
-
-UI._exitGame = function() {
-    if (confirm('Выйти в главное меню?')) {
-        if (Sherwood.saveGameNow) Sherwood.saveGameNow();
-        else if (Sherwood.saveGame) Sherwood.saveGame();
-        
-        UI._stopMusic();
-        
-        if (typeof playExitVideo === 'function') {
-            playExitVideo(function() {
-                location.reload();
-            });
-        } else {
-            location.reload();
-        }
+        UI._showPlaceholder('Настройки', 'settings');
     }
 };
-
+        
 // ============================================================
 //  СУМКА — новая версия (без верхних ресурсов, фон fixed)
 // ============================================================
@@ -1225,10 +1128,6 @@ UI._bagDrop = function(e, targetIndex) {
     }
     Sherwood.Bag._save();
     UI.bag();
-};
-
-UI._expandBag = function() {
-    UI._showToast('Ячейки расширяются автоматически при повышении уровня (+5 за уровень)');
 };
 
 UI._bagAction = function(i) {
