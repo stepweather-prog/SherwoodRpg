@@ -1,7 +1,7 @@
 /**
  * Sherwood Portal — Порталы (7 уровней)
- *  — вход за тикеты (entrance_ticket), общие для всех порталов
- *  — чем старше портал, тем больше тикетов (id * 3)
+ *  — вход за portalToken1 (общие для всех порталов)
+ *  — чем старше портал, тем больше токенов (id * 3)
  *  — бой ведётся в portal_battle.html (iframe)
  */
 
@@ -28,8 +28,8 @@ Sherwood.Portal = {
         { id: 7, name: 'Портал Искажения', icon: '👁️', bg: 'assets/backgrounds/portal_1.jpeg', requiredChapter: 15, boss: { name: 'Воплощение Искажения', image: 'embodiment_of_distortion.png', hp: 7000, attack: 220, defense: 100, exp: 1200, gold: 1000 }, guard: { name: 'Изначальный Стержень', image: 'the_primordial_core.png', hp: 5000, attack: 180, defense: 90, exp: 700, gold: 600 }, rewards: { gold: 1500, exp: 2200, silver: 3500 }, trophy: { id: 'portal_7', name: 'Корона Лесного Владыки', bonus: { attack: 150, defense: 150, hp: 150 }, icon: 'assets/all_trophies/portal_trophies/5_crown_of_the_forest_lord.png' } }
     ],
 
-    // Сколько тикетов нужно на вход в портал
-    getRequiredTickets: function(id) {
+    // Сколько токенов портала нужно на вход
+    getRequiredTokens: function(id) {
         return id * 3;
     },
 
@@ -70,24 +70,24 @@ Sherwood.Portal = {
         return player.portal.difficulty[id] || 0;
     },
 
-    // Считает тикеты в сумке (предмет id === 'entrance_ticket')
-    countTickets: function() {
+    // Считает portalToken1 в сумке (id === 'portal_token_1')
+    countTokens: function() {
         var total = 0;
         if (typeof Sherwood.Bag === 'undefined') return total;
         var items = Sherwood.Bag.getItems();
         for (var i = 0; i < items.length; i++) {
-            if (items[i].id === 'entrance_ticket') total += (items[i].quantity || 0);
+            if (items[i].id === 'portal_token_1') total += (items[i].quantity || 0);
         }
         return total;
     },
 
-    // Списывает тикеты из сумки
-    _spendTickets: function(amount) {
+    // Списывает portalToken1 из сумки
+    _spendTokens: function(amount) {
         if (typeof Sherwood.Bag === 'undefined') return false;
         var items = Sherwood.Bag.getItems();
         var toRemove = amount;
         for (var i = items.length - 1; i >= 0 && toRemove > 0; i--) {
-            if (items[i].id === 'entrance_ticket') {
+            if (items[i].id === 'portal_token_1') {
                 var qty = items[i].quantity || 1;
                 if (qty <= toRemove) { toRemove -= qty; Sherwood.Bag.removeItem(i); }
                 else { items[i].quantity -= toRemove; toRemove = 0; }
@@ -102,9 +102,9 @@ Sherwood.Portal = {
         if (!portal) return { can: false, reason: 'Портал не найден' };
         if (!this.isPortalUnlocked(id)) return { can: false, reason: 'Портал ещё не открыт. Пройди главу ' + portal.requiredChapter };
         if (this._inPortal) return { can: false, reason: 'Ты уже в портале!' };
-        var requiredTickets = this.getRequiredTickets(id);
-        var tickets = this.countTickets();
-        if (tickets < requiredTickets) return { can: false, reason: 'Нужно ' + requiredTickets + ' тикетов (у тебя ' + tickets + ')' };
+        var required = this.getRequiredTokens(id);
+        var tokens = this.countTokens();
+        if (tokens < required) return { can: false, reason: 'Нужно ' + required + ' токенов портала (у тебя ' + tokens + ')' };
         return { can: true };
     },
 
@@ -114,9 +114,9 @@ Sherwood.Portal = {
         var portal = this.getPortal(id);
         if (!portal) return { success: false, reason: 'Портал не найден' };
 
-        var requiredTickets = this.getRequiredTickets(id);
-        if (!this._spendTickets(requiredTickets)) {
-            return { success: false, reason: 'Не удалось списать тикеты' };
+        var required = this.getRequiredTokens(id);
+        if (!this._spendTokens(required)) {
+            return { success: false, reason: 'Не удалось списать токены' };
         }
 
         var difficulty = this.getPortalDifficulty(id);
@@ -267,7 +267,7 @@ Sherwood.Portal = {
         if (this.isInPortal()) { this._showPortalBattle(); return; }
 
         var allPortals = this.getAllPortals();
-        var tickets = this.countTickets();
+        var tokens = this.countTokens();
         var iconMap = { 1: 'invasion_portal.png', 2: 'skull_spider_portal.png', 3: 'portal_of_withering.png', 4: 'portal_of_chains.png', 5: 'lycanthrope_portal.png', 6: 'scorpio_portal.png', 7: 'portal_of_distortion.png' };
 
         var h = '<div id="portal-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
@@ -275,8 +275,8 @@ Sherwood.Portal = {
         for (var i = 0; i < allPortals.length; i++) {
             var portal = allPortals[i];
             var iconFile = iconMap[portal.id] || 'invasion_portal.png';
-            var requiredTickets = this.getRequiredTickets(portal.id);
-            var canEnter = tickets >= requiredTickets;
+            var requiredTokens = this.getRequiredTokens(portal.id);
+            var canEnter = tokens >= requiredTokens;
             var isCompleted = this.isPortalCompleted(portal.id);
             var isUnlocked = this.isPortalUnlocked(portal.id);
             var display = (i === 0) ? 'flex' : 'none';
@@ -287,10 +287,10 @@ Sherwood.Portal = {
 
             h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + portal.name + '</div>';
 
-            h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Тикеты: ' + tickets + ' / ' + requiredTickets + '</div>';
+            h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Токены: ' + tokens + ' / ' + requiredTokens + '</div>';
             if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-bottom:10px;">✅ Пройден</div>';
             else if (isUnlocked && canEnter) h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ В бой</button>';
-            else if (isUnlocked && !canEnter) h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно тикетов</div>';
+            else if (isUnlocked && !canEnter) h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно токенов</div>';
             else h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
             h += '</div>';
         }
@@ -330,7 +330,7 @@ Sherwood.Portal = {
         UI._stopMusic();
         UI._playSound('trap');
 
-        // Открываем боевую сцену в iframe (portal_battle.html)
+        // Открываем боевую сцену в iframe
         var iframe = document.createElement('iframe');
         iframe.src = 'portal_battle.html?portal=' + id;
         iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
@@ -341,7 +341,6 @@ Sherwood.Portal = {
         }
     },
 
-    // Оставляем для совместимости — на случай, если где-то ещё вызывается
     _showPortalBattle: function() {
         this._enterPortal(this._currentPortal ? this._currentPortal.id : 1);
     },
