@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Проклятая чаща</title>
+
+    <!-- Мобильный CSS: применяется только при max-width: 600px -->
+    <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
@@ -41,6 +45,95 @@
         #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; transition: all 0.2s; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; }
         #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+
+        /* ============================================================
+           МОБИЛЬНАЯ ВЁРСТКА DUNGEON.HTML
+           ============================================================ */
+        @media (max-width: 600px) {
+            /* Кнопка выхода (стрелка ← вверху слева) */
+            button[onclick="exitDungeon();"] {
+                padding: 6px 12px !important;
+                font-size: 14px !important;
+                top: 8px !important;
+                left: 8px !important;
+            }
+
+            /* Джойстик */
+            #joystick {
+                bottom: 20px !important;
+                width: 110px !important;
+                height: 110px !important;
+            }
+            .arrow-btn {
+                width: 34px !important;
+                height: 34px !important;
+                font-size: 14px !important;
+            }
+            #btn-forward { top: 0 !important; left: 38px !important; }
+            #btn-left    { top: 38px !important; left: 0 !important; }
+            #btn-right   { top: 38px !important; left: 76px !important; }
+            #btn-back    { top: 76px !important; left: 38px !important; }
+
+            /* Кнопка атаки по центру */
+            #attack-icon {
+                width: 34px !important;
+                height: 34px !important;
+            }
+
+            /* Миникарта */
+            #minimap {
+                width: 130px !important;
+                height: 130px !important;
+                top: 8px !important;
+                right: 8px !important;
+            }
+            #minimap-frame { width: 100% !important; height: 100% !important; }
+            #minimap-canvas { width: 100% !important; height: 100% !important; }
+
+            /* HP / MP игрока */
+            #hero-life,
+            #hero-mana {
+                width: 90px !important;
+                height: 90px !important;
+                bottom: 6px !important;
+            }
+            #hero-life img,
+            #hero-mana img {
+                width: 135% !important;
+                height: 135% !important;
+            }
+            #hero-life span,
+            #hero-mana span {
+                font-size: 13px !important;
+            }
+
+            /* HP врага (карточка над мобом) */
+            #mob-hp {
+                width: 220px !important;
+                height: 150px !important;
+            }
+            #mob-hp-text {
+                font-size: 15px !important;
+            }
+
+            /* Скиллы слева/справа */
+            #skills-left,
+            #skills-right {
+                bottom: 110px !important;
+                width: 80px !important;
+            }
+            #skills-left img,
+            #skills-right img {
+                width: 38px !important;
+                height: 38px !important;
+            }
+
+            /* Эффект удара */
+            #hit-effect-img {
+                width: 130px !important;
+                height: 130px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -97,6 +190,9 @@
     <script type="module">
         import * as THREE from 'three';
 
+        // ============================================================
+        //  ПАРАМЕТРЫ ИЗ URL
+        // ============================================================
         var urlParams = new URLSearchParams(window.location.search);
         var currentDungeon = parseInt(urlParams.get('dungeon') || '1');
         var currentFloor = parseInt(urlParams.get('floor') || '1');
@@ -116,6 +212,9 @@
         var DIFF_MULT = { 1: 1.0, 2: 1.5, 3: 2.5 };
         var mult = DIFF_MULT[currentDiff] || 1.0;
 
+        // ============================================================
+        //  ЗВУКИ
+        // ============================================================
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -180,8 +279,9 @@
 
         function showCenterText(text, color) {
             var el = document.createElement('div');
+            var fontSize = window.innerWidth <= 600 ? '22px' : '36px';
             el.textContent = text;
-            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:36px;font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;';
+            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:' + fontSize + ';font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;';
             document.body.appendChild(el);
             requestAnimationFrame(function() {
                 el.style.opacity = '1';
@@ -194,6 +294,9 @@
             setTimeout(function() { el.remove(); }, 1900);
         }
 
+        // ============================================================
+        //  СЦЕНА
+        // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
         scene.fog = new THREE.Fog(0x0a0805, 4, 12);
@@ -210,6 +313,9 @@
         scene.add(new THREE.AmbientLight(0x554433, 0.9));
         scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
+        // ============================================================
+        //  КАРТА
+        // ============================================================
         const size = 16;
         const wallHeight = 1.4;
         const cellSize = 1;
@@ -279,6 +385,9 @@
         }
         placeDoors();
 
+        // ============================================================
+        //  ТЕКСТУРЫ
+        // ============================================================
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
         const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
@@ -350,6 +459,9 @@
             }
         }
 
+        // ============================================================
+        //  ИГРОК
+        // ============================================================
         const playerStart = { cx: 1, cy: 1 };
         let playerGX = playerStart.cx;
         let playerGY = playerStart.cy;
@@ -360,6 +472,9 @@
         heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
         scene.add(heroGlow);
 
+        // ============================================================
+        //  ОБЪЕКТЫ
+        // ============================================================
         var objectTypes = [
             { type: 'enemy', count: 15 },
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -467,6 +582,9 @@
             obj.mesh = sprite;
         }
 
+        // ============================================================
+        //  ДВЕРЬ-ВЫХОД — плоские меши в проёме
+        // ============================================================
         var exitCell = { gx: size - 1, gy: size - 2 };
         var exitW = gridToWorld(exitCell.gx, exitCell.gy);
 
@@ -520,6 +638,9 @@
             }
         }
 
+        // ============================================================
+        //  МЕШКИ С ЛУТОМ
+        // ============================================================
         function spawnLootBag(gx, gy) {
             var w = gridToWorld(gx, gy);
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -634,6 +755,9 @@
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
         }
 
+        // ============================================================
+        //  КРОВЬ
+        // ============================================================
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
             'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
@@ -648,6 +772,9 @@
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
 
+        // ============================================================
+        //  ДВИЖЕНИЕ
+        // ============================================================
         const MOVE_SPEED = 2.0;
         const rotationSpeed = Math.PI / 2;
 
@@ -838,6 +965,9 @@
             }
         });
 
+        // ============================================================
+        //  МИНИКАРТА
+        // ============================================================
         const minimapSize = size;
         const minimapCell = 11;
         const minimapCanvas = document.getElementById('minimap-canvas');
@@ -847,6 +977,9 @@
         const explored = new Uint8Array(size * size);
         const walked = new Uint8Array(size * size);
 
+        // ============================================================
+        //  КЛИК
+        // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
@@ -932,6 +1065,9 @@
             moveForward();
         });
 
+        // ============================================================
+        //  КНОПКА ЛУТА
+        // ============================================================
         function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img');
             if (!iconImg) return;
@@ -971,6 +1107,9 @@
             }
         });
 
+        // ============================================================
+        //  БОЙ
+        // ============================================================
         var currentEnemySprite = null;
         var currentEnemyStats = null;
         var currentEnemyObj = null;
@@ -1260,7 +1399,7 @@
         }
 
         // ============================================================
-        //  ПОБЕДА / ПОРАЖЕНИЕ — возврат к подземке
+        //  ПОБЕДА / ПОРАЖЕНИЕ
         // ============================================================
         function grantCupBoth(floor, diff) {
             try {
@@ -1299,7 +1438,6 @@
 
             try {
                 if (parent.UI && parent.UI._showVictoryScreen) {
-                    // СБРОС: мы в подземке, не в портале
                     parent.UI._lastPortal = null;
                     parent.UI._lastDungeon = currentDungeon;
                     parent.UI._afterRewardAction = function() {
@@ -1339,7 +1477,6 @@
 
             try {
                 if (parent.UI && parent.UI._showDefeatScreen) {
-                    // СБРОС: мы в подземке, не в портале
                     parent.UI._lastPortal = null;
                     parent.UI._lastDungeon = currentDungeon;
                     parent.UI._afterRewardAction = function() {
@@ -1355,6 +1492,9 @@
             } catch(e) { exitDungeon(); }
         }
 
+        // ============================================================
+        //  СКИЛЛЫ
+        // ============================================================
         var talentData = {
             'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
             'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
@@ -1504,6 +1644,9 @@
             }
         }
 
+        // ============================================================
+        //  AI ВРАГОВ
+        // ============================================================
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 5.0;
         const ENEMY_STOP_DIST = 1.2;
@@ -1573,6 +1716,9 @@
             });
         }
 
+        // ============================================================
+        //  КАМЕРА
+        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -1590,6 +1736,9 @@
             playerGY = g.gy;
         }
 
+        // ============================================================
+        //  ЦИКЛ
+        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
