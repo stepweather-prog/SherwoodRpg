@@ -1264,6 +1264,18 @@ UI._grantCup = function(dungeonId, floor, diff) {
     var floors = UI._getDungeonFloorsData(dungeonId);
     var cur = floors[floor - 1].cups || 0;
     if (diff > cur) floors[floor - 1].cups = diff;
+
+    // Синхронизация со старой структурой dungeon.js (p.dungeonProgress.floors)
+    var p = Sherwood.getPlayer();
+    if (p) {
+        if (!p.dungeonProgress) p.dungeonProgress = {};
+        if (!p.dungeonProgress.floors || p.dungeonProgress.floors.length !== 6) {
+            p.dungeonProgress.floors = [{cups:0},{cups:0},{cups:0},{cups:0},{cups:0},{cups:0}];
+        }
+        var legacy = p.dungeonProgress.floors[floor - 1];
+        if (diff > (legacy.cups || 0)) legacy.cups = diff;
+    }
+
     Sherwood.saveGame();
     console.log('🏆 Кубок: подземка ' + dungeonId + ', этаж ' + floor + ', сложность ' + diff);
 };
