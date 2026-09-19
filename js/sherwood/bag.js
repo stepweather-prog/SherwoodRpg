@@ -2,12 +2,19 @@
  * Sherwood Bag — Сумка
  *  — +5 ячеек за уровень игрока
  *  — весь лут (кроме золота/серебра) падает в ячейки, стак 100
- *  — UI: только сетка ячеек, без верхних ресурсов
+ *  — UI: только сетка ячеек, без верхних ресурсов, фон не растягивается
  */
 
 if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
 }
+
+// Скрываем скроллбар у .bag-scroll
+(function() {
+    var s = document.createElement('style');
+    s.textContent = '.bag-scroll::-webkit-scrollbar{width:0;height:0;background:transparent;} .bag-scroll{-ms-overflow-style:none;scrollbar-width:none;}';
+    document.head.appendChild(s);
+})();
 
 Sherwood.Bag = {
     _inventory: [],
@@ -150,7 +157,6 @@ Sherwood.Bag = {
         // Новые ячейки
         while (remaining > 0) {
             if (this._inventory.length >= this._maxSlots) {
-                // Сумка полна — остаток теряем
                 if (Sherwood.dispatch) Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: def } });
                 break;
             }
@@ -212,7 +218,6 @@ Sherwood.Bag = {
     },
 
     getExpansionInfo: function() {
-        // Расширения больше нет — слоты растут только с уровнем
         return {
             current: this._maxSlots,
             level: this._expansionLevel,
@@ -417,18 +422,21 @@ Sherwood.Bag = {
         }
         UI._playSound('click');
 
-        // Пересчёт слотов (если уровень изменился)
         this._recalcMaxSlots();
 
         var items = this._inventory;
         var max = this._maxSlots;
 
-        var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
+        // Фон fixed — не растягивается при скролле
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/bag.png\') center/cover no-repeat fixed;overflow:hidden;">';
 
-        h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:10px;">📦 ' + items.length + ' / ' + max + ' ячеек</div>';
+        // Шапка со счётчиком
+        h += '<div style="position:absolute;top:56px;left:0;right:0;text-align:center;color:#e0c080;font-size:0.9em;font-weight:bold;text-shadow:0 2px 4px #000;z-index:5;padding:6px 0;">📦 ' + items.length + ' / ' + max + ' ячеек</div>';
 
-        // Сетка предметов
-        h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+        // Скролл-контейнер с сеткой
+        h += '<div class="bag-scroll" style="position:absolute;top:96px;left:0;right:0;bottom:0;overflow-y:auto;padding:10px 12px 20px 12px;">';
+
+        h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;justify-items:center;">';
         for (var i = 0; i < max; i++) {
             var item = items[i];
             if (item) {
@@ -448,7 +456,14 @@ Sherwood.Bag = {
         h += '<div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:12px;min-height:24px;">Нажми на предмет</div>';
         h += '</div>';
 
-        UI._openScreenScrollable('🎒 Сумка', 'bag', h);
+        h += '</div>';
+
+        // Отключаем скролл родительского слоя — крутится только сетка
+        try {
+            if (UI._screenLayer) UI._screenLayer.style.overflow = 'hidden';
+        } catch(e) {}
+
+        UI._openScreenScrollable('🎒 Сумка', null, h);
     },
 
     _dragStart: function(e, index) {
