@@ -1,5 +1,8 @@
 /**
  * Sherwood Bag — Сумка
+ *  — +5 ячеек за уровень игрока
+ *  — весь лут (кроме золота/серебра) падает в ячейки, стак 100
+ *  — UI: только сетка ячеек, без верхних ресурсов
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -9,104 +12,160 @@ if (typeof Sherwood === 'undefined') {
 Sherwood.Bag = {
     _inventory: [],
     _equipment: { head: null, torso: null, hands: null, legs: null, feet: null, weapon1: null, weapon2: null, belt: null, amulet: null, ring: null },
-    _maxSlots: 10,
+    _maxSlots: 25,
     _expansionLevel: 0,
 
+    // Золото/серебро живут в player.resources, здесь — только для совместимости
     _resources: {
         gold: 0,
-        silver: 0,
-        skins: 0,
-        entranceTickets: 0,
-        autoFightTickets: 0,
-        amuletTablets: 0,
-        ringTablets: 0,
-        skinTablets: 0,
-        portalToken1: 0,
-        portalToken2: 0,
-        portalToken3: 0
+        silver: 0
     },
 
-    _resourceIds: {
-        'skin_of_the_sherwood_creature': 'skins',
-        'entrance_ticket': 'entranceTickets',
-        'dungeon_ticket': 'entranceTickets',
-        'autofight_ticket': 'autoFightTickets',
-        'auto_ticket': 'autoFightTickets',
-        'amulet_tablet': 'amuletTablets',
-        'amulet_scroll': 'amuletTablets',
-        'ring_tablet': 'ringTablets',
-        'ring_scroll': 'ringTablets',
-        'skin_tablet': 'skinTablets',
-        'appearance_tablet': 'skinTablets',
-        'portal_token_1': 'portalToken1',
-        'portal_token_2': 'portalToken2',
-        'portal_token_3': 'portalToken3'
+    // Описание предметов, в которые превращаются бывшие "ресурсы"
+    _resourceDefs: {
+        skins:            { id: 'skin_of_the_sherwood_creature', name: 'Шкура шервудского зверя', icon: 'assets/interface/skin_of_the_sherwood_creature.png', maxStack: 100, sellPrice: 3 },
+        entranceTickets:  { id: 'entrance_ticket', name: 'Ключ от закрытого уровня', icon: 'assets/interface/resource_key_to_locked_levels.png', maxStack: 100, sellPrice: 10 },
+        autoFightTickets: { id: 'autofight_ticket', name: 'Билет авто-боя', icon: 'assets/interface/ticket_autofight.png', maxStack: 100, sellPrice: 5 },
+        amuletTablets:    { id: 'amulet_tablet', name: 'Амулетная табличка', icon: 'assets/interface/amulet_crafting_tablet_resource.png', maxStack: 100, sellPrice: 8 },
+        ringTablets:      { id: 'ring_tablet', name: 'Кольцевая табличка', icon: 'assets/interface/ring_crafting_tablet_resource.png', maxStack: 100, sellPrice: 8 },
+        skinTablets:      { id: 'skin_tablet', name: 'Табличка внешности', icon: 'assets/interface/resource_appearance_crafting_tablet.png', maxStack: 100, sellPrice: 8 },
+        skinDrawings:     { id: 'skin_drawing', name: 'Чертёж облика', icon: 'assets/interface/skin_drawing.png', maxStack: 100, sellPrice: 12 },
+        portalToken1:     { id: 'portal_token_1', name: 'Токен портала I', icon: 'assets/interface/resource_token_on_entrance_portal_1.png', maxStack: 100, sellPrice: 20 },
+        portalToken2:     { id: 'portal_token_2', name: 'Токен портала II', icon: 'assets/interface/resource_token_on_entrance_portal_2.png', maxStack: 100, sellPrice: 40 },
+        portalToken3:     { id: 'portal_token_3', name: 'Токен портала III', icon: 'assets/interface/resource_token_on_entrance_portal_3.png', maxStack: 100, sellPrice: 80 },
+        branchDamnedYew:  { id: 'branch_damned_yew', name: 'Ветвь проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png', maxStack: 100, sellPrice: 15 }
     },
 
     init: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
+
         this._inventory = player.inventory || [];
         this._equipment = player.equipment || this._equipment;
-        this._expansionLevel = player.bagExpansion || 0;
-        this._maxSlots = 10 + this._expansionLevel * 10;
-        if (player.bagSize && player.bagSize > this._maxSlots) this._maxSlots = player.bagSize;
 
+        // +5 ячеек за уровень
+        this._recalcMaxSlots();
+
+        // Стартовые облики
         if (!player.unlockedSkins || player.unlockedSkins.length === 0) {
-    player.unlockedSkins = [
-        'skin1_01', 'skin1_02', 'skin1_03',
-        'skin2_01', 'skin2_02', 'skin2_03',
-        'skin3_01', 'skin3_02', 'skin3_03',
-        'skin4_01', 'skin4_02', 'skin4_03',
-        'skin5_01', 'skin5_02', 'skin5_03',
-        'skin6_01', 'skin6_02', 'skin6_03',
-        'skin7_01', 'skin7_02', 'skin7_03',
-        'skin8_01', 'skin8_02', 'skin8_03',
-        'skin9_01', 'skin9_02', 'skin9_03',
-        'skin10_01', 'skin10_02', 'skin10_03',
-        'skin11_01', 'skin11_02', 'skin11_03',
-        'skin12_01', 'skin12_02', 'skin12_03',
-        'skin13_01', 'skin13_02', 'skin13_03',
-        'skin14_01', 'skin14_02', 'skin14_03',
-        'skin15_01', 'skin15_02', 'skin15_03',
-        'skin16_01', 'skin16_02', 'skin16_03',
-        'bonus_skin_2', 'bonus_skin_4', 'bonus_skin_6',
-        'bonus_skin_8', 'bonus_skin_10', 'bonus_skin_12',
-        'bonus_skin_14', 'bonus_skin_sec'
-    ];
-    player.activeSkin = 'skin1_01';
-    Sherwood.saveGame();
-}
+            player.unlockedSkins = [
+                'skin1_01', 'skin1_02', 'skin1_03',
+                'skin2_01', 'skin2_02', 'skin2_03',
+                'skin3_01', 'skin3_02', 'skin3_03',
+                'skin4_01', 'skin4_02', 'skin4_03',
+                'skin5_01', 'skin5_02', 'skin5_03',
+                'skin6_01', 'skin6_02', 'skin6_03',
+                'skin7_01', 'skin7_02', 'skin7_03',
+                'skin8_01', 'skin8_02', 'skin8_03',
+                'skin9_01', 'skin9_02', 'skin9_03',
+                'skin10_01', 'skin10_02', 'skin10_03',
+                'skin11_01', 'skin11_02', 'skin11_03',
+                'skin12_01', 'skin12_02', 'skin12_03',
+                'skin13_01', 'skin13_02', 'skin13_03',
+                'skin14_01', 'skin14_02', 'skin14_03',
+                'skin15_01', 'skin15_02', 'skin15_03',
+                'skin16_01', 'skin16_02', 'skin16_03',
+                'bonus_skin_2', 'bonus_skin_4', 'bonus_skin_6',
+                'bonus_skin_8', 'bonus_skin_10', 'bonus_skin_12',
+                'bonus_skin_14', 'bonus_skin_sec'
+            ];
+            player.activeSkin = 'skin1_01';
+            Sherwood.saveGame();
+        }
 
+        // Золото/серебро — из player.resources
+        this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
+        this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
+
+        // Конвертация старых bagResources в предметы
         if (player.bagResources) {
-            this._resources = player.bagResources;
-            if (this._resources.gold === undefined) this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
-            if (this._resources.silver === undefined) this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
-            if (this._resources.portalToken1 === undefined) this._resources.portalToken1 = 0;
-            if (this._resources.portalToken2 === undefined) this._resources.portalToken2 = 0;
-            if (this._resources.portalToken3 === undefined) this._resources.portalToken3 = 0;
-        } else {
-            this._resources.gold = player.resources ? (player.resources.gold || 0) : 0;
-            this._resources.silver = player.resources ? (player.resources.silver || 0) : 0;
-        }
-
-        for (var i = this._inventory.length - 1; i >= 0; i--) {
-            var item = this._inventory[i];
-            var resKey = this._resourceIds[item.id];
-            if (resKey) {
-                this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
-                this._inventory.splice(i, 1);
+            var oldRes = player.bagResources;
+            var mapToDef = {
+                skins: 'skins',
+                entranceTickets: 'entranceTickets',
+                autoFightTickets: 'autoFightTickets',
+                amuletTablets: 'amuletTablets',
+                ringTablets: 'ringTablets',
+                skinTablets: 'skinTablets',
+                skinDrawings: 'skinDrawings',
+                portalToken1: 'portalToken1',
+                portalToken2: 'portalToken2',
+                portalToken3: 'portalToken3',
+                branchDamnedYew: 'branchDamnedYew'
+            };
+            for (var oldKey in mapToDef) {
+                var count = oldRes[oldKey] || 0;
+                if (count > 0) {
+                    this._addAsItem(mapToDef[oldKey], count);
+                }
             }
+            delete player.bagResources;
         }
 
+        // Стак не больше 100
         for (var i = 0; i < this._inventory.length; i++) {
-            if (!this._inventory[i].maxStack || this._inventory[i].maxStack < 100) {
+            if (!this._inventory[i].maxStack || this._inventory[i].maxStack > 100) {
                 this._inventory[i].maxStack = 100;
+            }
+            if (this._inventory[i].quantity > 100) {
+                var extra = this._inventory[i].quantity - 100;
+                this._inventory[i].quantity = 100;
+                this._addAsItem(this._inventory[i].resKey || null, extra);
             }
         }
 
         this._save();
-        console.log('🎒 Сумка инициализирована');
+        console.log('🎒 Сумка инициализирована: ' + this._maxSlots + ' слотов (уровень ' + (player.level || 1) + ')');
+    },
+
+    _recalcMaxSlots: function() {
+        var player = Sherwood.getPlayer();
+        if (!player) return;
+        var lvl = player.level || 1;
+        // База 20 + 5 за каждый уровень
+        this._maxSlots = 20 + (lvl - 1) * 5;
+        player.bagSize = this._maxSlots;
+    },
+
+    // Добавить "ресурс" как предмет в ячейки (стак 100)
+    _addAsItem: function(defKey, amount) {
+        if (!amount || amount <= 0) return;
+        var def = this._resourceDefs[defKey];
+        if (!def) return;
+
+        var remaining = amount;
+        var maxStack = 100;
+
+        // Сначала доливаем в существующие стаки
+        for (var i = 0; i < this._inventory.length && remaining > 0; i++) {
+            var it = this._inventory[i];
+            if (it.id === def.id && (it.quantity || 1) < maxStack) {
+                var space = maxStack - (it.quantity || 1);
+                var add = Math.min(remaining, space);
+                it.quantity = (it.quantity || 1) + add;
+                remaining -= add;
+            }
+        }
+
+        // Новые ячейки
+        while (remaining > 0) {
+            if (this._inventory.length >= this._maxSlots) {
+                // Сумка полна — остаток теряем
+                if (Sherwood.dispatch) Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: def } });
+                break;
+            }
+            var put = Math.min(remaining, maxStack);
+            this._inventory.push({
+                id: def.id,
+                name: def.name,
+                icon: def.icon,
+                quantity: put,
+                maxStack: maxStack,
+                sellPrice: def.sellPrice,
+                resKey: defKey
+            });
+            remaining -= put;
+        }
     },
 
     getItems: function() { return this._inventory; },
@@ -119,8 +178,29 @@ Sherwood.Bag = {
 
     addResource: function(type, amount) {
         if (!amount || amount <= 0) return;
-        if (this._resources[type] === undefined) this._resources[type] = 0;
-        this._resources[type] += amount;
+
+        // Золото/серебро — в player.resources
+        if (type === 'gold' || type === 'silver') {
+            this._resources[type] = (this._resources[type] || 0) + amount;
+            var player = Sherwood.getPlayer();
+            if (player) {
+                if (!player.resources) player.resources = {};
+                player.resources[type] = (player.resources[type] || 0) + amount;
+            }
+            this._save();
+            return;
+        }
+
+        // Остальное — как предметы в ячейки
+        if (this._resourceDefs[type]) {
+            this._addAsItem(type, amount);
+            this._save();
+            if (Sherwood.dispatch) Sherwood.dispatch({ type: 'RESOURCE_CHANGED' });
+            return;
+        }
+
+        // Неизвестный ресурс — просто в _resources
+        this._resources[type] = (this._resources[type] || 0) + amount;
         this._save();
     },
 
@@ -132,52 +212,39 @@ Sherwood.Bag = {
     },
 
     getExpansionInfo: function() {
-        var costSkin = 1000 + this._expansionLevel * 500;
-        var costSilver = 5000 + this._expansionLevel * 2500;
+        // Расширения больше нет — слоты растут только с уровнем
         return {
             current: this._maxSlots,
             level: this._expansionLevel,
-            canExpand: this._maxSlots < 150,
-            costSkin: costSkin,
-            costSilver: costSilver,
-            nextSlots: Math.min(this._maxSlots + 10, 150)
+            canExpand: false,
+            costSkin: 0,
+            costSilver: 0,
+            nextSlots: this._maxSlots
         };
     },
 
     expandBag: function() {
-        var info = this.getExpansionInfo();
-        if (!info.canExpand) return { success: false, reason: 'Максимум 150 слотов' };
-        if (this._resources.skins < info.costSkin) {
-            return { success: false, reason: 'Нужно ' + info.costSkin + ' шкур (у вас ' + this._resources.skins + ')' };
-        }
-        if (this._resources.silver < info.costSilver) {
-            return { success: false, reason: 'Нужно ' + info.costSilver + ' серебра' };
-        }
-        this._resources.silver -= info.costSilver;
-        this._resources.skins -= info.costSkin;
-        this._expansionLevel++;
-        this._maxSlots = 10 + this._expansionLevel * 10;
-        var player = Sherwood.getPlayer();
-        player.bagSize = this._maxSlots;
-        player.bagExpansion = this._expansionLevel;
-        this._save();
-        Sherwood.saveGame();
-        return { success: true, newSlots: this._maxSlots, level: this._expansionLevel };
+        return { success: false, reason: 'Ячейки расширяются автоматически при повышении уровня (+5 за уровень)' };
     },
 
     addItem: function(item) {
         if (!item) return false;
-        var resKey = this._resourceIds[item.id];
-        if (resKey) {
-            this._resources[resKey] = (this._resources[resKey] || 0) + (item.quantity || 1);
-            this._save();
-            Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
-            return true;
+
+        // Если это известный ресурс по id — кладём как наш стандартный предмет
+        for (var key in this._resourceDefs) {
+            if (this._resourceDefs[key].id === item.id) {
+                this._addAsItem(key, item.quantity || 1);
+                this._save();
+                if (Sherwood.dispatch) Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
+                return true;
+            }
         }
 
-        var maxStack = item.maxStack || 150;
+        var maxStack = item.maxStack || 100;
+        if (maxStack > 100) maxStack = 100;
         var quantity = item.quantity || 1;
 
+        // Сначала доливаем в существующие стаки
         if (item.id) {
             for (var i = 0; i < this._inventory.length; i++) {
                 var existing = this._inventory[i];
@@ -188,7 +255,7 @@ Sherwood.Bag = {
                     quantity -= add;
                     if (quantity <= 0) {
                         this._save();
-                        Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
+                        if (Sherwood.dispatch) Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
                         return true;
                     }
                 }
@@ -197,7 +264,7 @@ Sherwood.Bag = {
 
         while (quantity > 0) {
             if (this.isFull()) {
-                Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
+                if (Sherwood.dispatch) Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
                 return false;
             }
             var addQty = Math.min(quantity, maxStack);
@@ -209,7 +276,7 @@ Sherwood.Bag = {
         }
 
         this._save();
-        Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
+        if (Sherwood.dispatch) Sherwood.dispatch({ type: 'ITEM_ACQUIRED', payload: { item: item } });
         return true;
     },
 
@@ -236,25 +303,9 @@ Sherwood.Bag = {
         var part = item.part;
         var oldItem = this._equipment[part];
 
-        if (part === 'ring' || part === 'amulet') {
-            if (oldItem) {
-                if (this.isFull()) {
-                    Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
-                    return false;
-                }
-                this._inventory.push(oldItem);
-            }
-            this._equipment[part] = item;
-            this._inventory.splice(index, 1);
-            if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
-            Sherwood.dispatch({ type: 'ITEM_EQUIPPED', payload: { part: part, item: item } });
-            this._save();
-            return true;
-        }
-
         if (oldItem) {
             if (this.isFull()) {
-                Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
+                if (Sherwood.dispatch) Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: oldItem } });
                 return false;
             }
             this._inventory.push(oldItem);
@@ -263,7 +314,7 @@ Sherwood.Bag = {
         this._equipment[part] = item;
         this._inventory.splice(index, 1);
         if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
-        Sherwood.dispatch({ type: 'ITEM_EQUIPPED', payload: { part: part, item: item } });
+        if (Sherwood.dispatch) Sherwood.dispatch({ type: 'ITEM_EQUIPPED', payload: { part: part, item: item } });
         this._save();
         return true;
     },
@@ -272,7 +323,7 @@ Sherwood.Bag = {
         if (!part || !this._equipment[part]) return false;
         var item = this._equipment[part];
         if (this.isFull()) {
-            Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
+            if (Sherwood.dispatch) Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: item } });
             return false;
         }
         this._inventory.push(item);
@@ -297,6 +348,11 @@ Sherwood.Bag = {
         var qty = item.quantity || 1;
         var totalPrice = price * qty;
         this._resources.silver += totalPrice;
+        var player = Sherwood.getPlayer();
+        if (player) {
+            if (!player.resources) player.resources = {};
+            player.resources.silver = (player.resources.silver || 0) + totalPrice;
+        }
         this._inventory.splice(index, 1);
         this._save();
         return { success: true, price: totalPrice };
@@ -304,28 +360,40 @@ Sherwood.Bag = {
 
     addLoot: function(loot) {
         if (!loot) return;
-        if (loot.gold) this._resources.gold += loot.gold;
-        if (loot.silver) this._resources.silver += loot.silver;
-        if (loot.exp) Sherwood.addExp(loot.exp);
+        if (loot.gold) this.addResource('gold', loot.gold);
+        if (loot.silver) this.addResource('silver', loot.silver);
+        if (loot.exp && Sherwood.addExp) Sherwood.addExp(loot.exp);
+
+        // Ресурсы — как предметы
+        if (loot.skins)           this._addAsItem('skins', loot.skins);
+        if (loot.entranceTickets) this._addAsItem('entranceTickets', loot.entranceTickets);
+        if (loot.autoFightTickets)this._addAsItem('autoFightTickets', loot.autoFightTickets);
+        if (loot.amuletTablets)   this._addAsItem('amuletTablets', loot.amuletTablets);
+        if (loot.ringTablets)     this._addAsItem('ringTablets', loot.ringTablets);
+        if (loot.skinTablets)     this._addAsItem('skinTablets', loot.skinTablets);
+        if (loot.skinDrawings)    this._addAsItem('skinDrawings', loot.skinDrawings);
+        if (loot.portalToken1)    this._addAsItem('portalToken1', loot.portalToken1);
+        if (loot.portalToken2)    this._addAsItem('portalToken2', loot.portalToken2);
+        if (loot.portalToken3)    this._addAsItem('portalToken3', loot.portalToken3);
+        if (loot.branchDamnedYew) this._addAsItem('branchDamnedYew', loot.branchDamnedYew);
+
+        // Произвольные предметы
         if (loot.items && loot.items.length > 0) {
             for (var i = 0; i < loot.items.length; i++) {
                 this.addItem(loot.items[i]);
             }
         }
-        if (loot.skins) this._resources.skins += loot.skins;
-        if (loot.entranceTickets) this._resources.entranceTickets += loot.entranceTickets;
-        if (loot.autoFightTickets) this._resources.autoFightTickets += loot.autoFightTickets;
-        if (loot.amuletTablets) this._resources.amuletTablets += loot.amuletTablets;
-        if (loot.ringTablets) this._resources.ringTablets += loot.ringTablets;
-        if (loot.skinTablets) this._resources.skinTablets += loot.skinTablets;
-        if (loot.portalToken1) this._resources.portalToken1 += loot.portalToken1;
-        if (loot.portalToken2) this._resources.portalToken2 += loot.portalToken2;
-        if (loot.portalToken3) this._resources.portalToken3 += loot.portalToken3;
         this._save();
     },
 
     getSkinCount: function() {
-        return this._resources.skins;
+        var total = 0;
+        for (var i = 0; i < this._inventory.length; i++) {
+            if (this._inventory[i].id === 'skin_of_the_sherwood_creature') {
+                total += this._inventory[i].quantity || 0;
+            }
+        }
+        return total;
     },
 
     _save: function() {
@@ -334,8 +402,6 @@ Sherwood.Bag = {
         player.inventory = this._inventory;
         player.equipment = this._equipment;
         player.bagSize = this._maxSlots;
-        player.bagExpansion = this._expansionLevel;
-        player.bagResources = this._resources;
         if (player.resources) {
             player.resources.gold = this._resources.gold;
             player.resources.silver = this._resources.silver;
@@ -344,64 +410,32 @@ Sherwood.Bag = {
     },
 
     // ========== UI ==========
-
     showUI: function() {
         if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') {
-                showGenericScreen('Сумка', '🎒');
-            }
+            if (typeof showGenericScreen === 'function') showGenericScreen('Сумка', '🎒');
             return;
         }
         UI._playSound('click');
 
+        // Пересчёт слотов (если уровень изменился)
+        this._recalcMaxSlots();
+
         var items = this._inventory;
         var max = this._maxSlots;
-        var resources = this._resources;
-        var expInfo = this.getExpansionInfo();
 
         var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
-        // Ресурсы
-        var resDefs = [
-            { key: 'gold', icon: 'assets/interface/resource_gold.png' },
-            { key: 'silver', icon: 'assets/interface/resource_silver.png' },
-            { key: 'skins', icon: 'assets/interface/skin_of_the_sherwood_creature.png' },
-            { key: 'entranceTickets', icon: 'assets/interface/resource_key_to_locked_levels.png' },
-            { key: 'autoFightTickets', icon: 'assets/interface/ticket_autofight.png' },
-            { key: 'amuletTablets', icon: 'assets/interface/amulet_crafting_tablet_resource.png' },
-            { key: 'ringTablets', icon: 'assets/interface/ring_crafting_tablet_resource.png' },
-            { key: 'skinTablets', icon: 'assets/interface/resource_appearance_crafting_tablet.png' },
-            { key: 'portalToken1', icon: 'assets/interface/resource_token_on_entrance_portal_1.png' },
-            { key: 'portalToken2', icon: 'assets/interface/resource_token_on_entrance_portal_2.png' },
-            { key: 'portalToken3', icon: 'assets/interface/resource_token_on_entrance_portal_3.png' }
-        ];
-
-        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;">';
-        for (var r = 0; r < resDefs.length; r++) {
-            var rd = resDefs[r];
-            var count = resources[rd.key] || 0;
-            h += '<div style="position:relative;width:50px;height:50px;"><img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;"><img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'"><span style="position:absolute;top:0;right:2px;color:#fff;font-size:0.5em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span></div>';
-        }
-        h += '</div>';
-
-        h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:6px;">📦 ' + items.length + '/' + max + ' ячеек</div>';
-
-        // Расширение
-        if (expInfo.canExpand) {
-            h += '<button onclick="Sherwood.Bag._expandFromUI()" class="btn btn-gold" style="width:100%;padding:6px;font-size:0.75em;margin-bottom:10px;">⬆ Расширить +10 (' + expInfo.costSilver + ' сер. + ' + expInfo.costSkin + ' шкур)</button>';
-        } else {
-            h += '<div style="color:#666;font-size:0.7em;text-align:center;margin-bottom:10px;">Максимум 150 слотов</div>';
-        }
+        h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:10px;">📦 ' + items.length + ' / ' + max + ' ячеек</div>';
 
         // Сетка предметов
         h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
         for (var i = 0; i < max; i++) {
             var item = items[i];
             if (item) {
-                var gc = Sherwood.GradeColors ? Sherwood.GradeColors[item.grade] : '#9d9d9d';
+                var gc = Sherwood.GradeColors ? (Sherwood.GradeColors[item.grade] || '#9d9d9d') : '#9d9d9d';
                 h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="Sherwood.Bag._dragStart(event,' + i + ')" ondragover="Sherwood.Bag._dragOver(event)" ondrop="Sherwood.Bag._drop(event,' + i + ')" onclick="Sherwood.Bag._action(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;">';
-                h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;">';
-                if (item.quantity > 1) {
+                h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                if ((item.quantity || 1) > 1) {
                     h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + item.quantity + '</span>';
                 }
                 h += '</div>';
@@ -437,7 +471,7 @@ Sherwood.Bag = {
         var targetItem = items[targetIndex];
 
         if (targetItem && sourceItem.id === targetItem.id && sourceItem.name === targetItem.name) {
-            var maxStack = sourceItem.maxStack || 100;
+            var maxStack = Math.min(sourceItem.maxStack || 100, 100);
             var totalQty = (sourceItem.quantity || 1) + (targetItem.quantity || 1);
             if (totalQty <= maxStack) {
                 targetItem.quantity = totalQty;
@@ -452,19 +486,6 @@ Sherwood.Bag = {
         }
         this._save();
         this.showUI();
-    },
-
-    _expandFromUI: function() {
-        var r = this.expandBag();
-        var info = document.getElementById('bag-info');
-        if (r.success) {
-            if (info) info.textContent = '✅ Сумка расширена до ' + r.newSlots + ' ячеек!';
-            UI.updateDisplay();
-            this.showUI();
-        } else {
-            if (info) info.textContent = '❌ ' + (r.reason || 'Ошибка');
-            UI._showToast(r.reason || 'Ошибка');
-        }
     },
 
     _action: function(i) {
