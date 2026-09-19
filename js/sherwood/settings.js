@@ -7,6 +7,8 @@ if (typeof Settings === 'undefined') {
         data: {
             musicEnabled: true,
             soundEnabled: true,
+            musicVolume: 0.6,
+            soundVolume: 0.5,
             nameChanges: 0,
         },
 
@@ -19,6 +21,12 @@ if (typeof Settings === 'undefined') {
                     console.warn('⚠️ Ошибка загрузки настроек:', e);
                 }
             }
+            // Значения по умолчанию для новых полей
+            if (typeof this.data.musicVolume !== 'number') this.data.musicVolume = 0.6;
+            if (typeof this.data.soundVolume !== 'number') this.data.soundVolume = 0.5;
+
+            // Применяем громкость ко всем уже загруженным аудио
+            this._applyVolumes();
             console.log('⚙️ Настройки загружены');
         },
 
@@ -35,24 +43,33 @@ if (typeof Settings === 'undefined') {
             this.save();
         },
 
-        toggleMusic: function() {
-            this.data.musicEnabled = !this.data.musicEnabled;
-            this.save();
-            return this.data.musicEnabled;
-        },
+        isMusicEnabled: function() { return this.data.musicEnabled; },
+        isSoundEnabled: function() { return this.data.soundEnabled; },
+        getMusicVolume: function() { return this.data.musicVolume; },
+        getSoundVolume: function() { return this.data.soundVolume; },
 
-        toggleSound: function() {
-            this.data.soundEnabled = !this.data.soundEnabled;
-            this.save();
-            return this.data.soundEnabled;
-        },
+        // === ПРИМЕНЕНИЕ ГРОМКОСТИ КО ВСЕМ ЗВУКАМ И МУЗЫКЕ ===
+        _applyVolumes: function() {
+            var soundVol = this.data.soundEnabled ? this.data.soundVolume : 0;
+            var musicVol = this.data.musicEnabled ? this.data.musicVolume : 0;
 
-        isMusicEnabled: function() {
-            return this.data.musicEnabled;
-        },
+            // UI._sounds — объект Audio, используем в ui_screens.js
+            if (typeof UI !== 'undefined' && UI._sounds) {
+                for (var k in UI._sounds) {
+                    try {
+                        if (k.indexOf('dungeon_') === 0 || k.indexOf('main_theme') === 0 || k.indexOf('city_theme') === 0) {
+                            UI._sounds[k].volume = musicVol;
+                        } else {
+                            UI._sounds[k].volume = soundVol;
+                        }
+                    } catch(e) {}
+                }
+            }
 
-        isSoundEnabled: function() {
-            return this.data.soundEnabled;
+            // window.audioPlayer — старая музыка в main.js
+            if (typeof window.audioPlayer !== 'undefined' && window.audioPlayer) {
+                try { window.audioPlayer.volume = musicVol; } catch(e) {}
+            }
         },
 
         // ========== UI ==========
@@ -69,17 +86,17 @@ if (typeof Settings === 'undefined') {
             var p = Sherwood.getPlayer();
             var nm = p ? p.name : 'Охотник';
             var nameChanges = p ? (p.nameChanges || 0) : 0;
-            var musicEnabled = this.isMusicEnabled();
-            var soundEnabled = this.isSoundEnabled();
+            var soundVolume = Math.round((this.data.soundVolume || 0) * 100);
+            var musicVolume = Math.round((this.data.musicVolume || 0) * 100);
 
             var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
-            // Имя
+            // === ИМЯ ===
             h += '<div style="background:rgba(0,0,0,0.5);border-radius:8px;padding:12px;margin-bottom:10px;">';
             h += '<div style="color:#e0c080;font-weight:bold;margin-bottom:6px;">👤 Имя</div>';
             h += '<div style="display:flex;gap:8px;">';
             h += '<input id="settings-name-input" value="' + nm + '" style="flex:1;background:rgba(255,255,255,0.1);border:1px solid #555;border-radius:6px;padding:6px 10px;color:#fff;font-size:0.9em;">';
-            h += '<button onclick="Settings._changeNameFromUI()" class="btn" style="padding:4px 14px;font-size:0.8em;">Сохранить</button>';
+            h += '<button onclick="Settings._changeNameFromUI()" style="background:#c9a040;border:none;border-radius:6px;padding:6px 14px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;">Сохранить</button>';
             h += '</div>';
             if (nameChanges === 0) {
                 h += '<div style="color:#4caf50;font-size:0.65em;margin-top:4px;">✅ Первая смена имени — бесплатно</div>';
@@ -89,28 +106,73 @@ if (typeof Settings === 'undefined') {
             h += '<div id="settings-name-status" style="color:#aaa;font-size:0.65em;margin-top:4px;"></div>';
             h += '</div>';
 
-            // Звук и музыка
+            // === ЗВУК И МУЗЫКА (ПОЛЗУНКИ) ===
             h += '<div style="background:rgba(0,0,0,0.5);border-radius:8px;padding:12px;margin-bottom:10px;">';
-            h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
-            h += '<span style="color:#e0c080;">🔊 Звуки</span>';
-            h += '<button onclick="Settings._toggleSoundFromUI()" style="width:50px;height:26px;background:' + (soundEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:13px;cursor:pointer;position:relative;">';
-            h += '<span style="position:absolute;top:3px;' + (soundEnabled ? 'right:3px;' : 'left:3px;') + 'width:20px;height:20px;background:#fff;border-radius:50%;transition:0.2s;"></span>';
-            h += '</button>';
+
+            // Звуки
+            h += '<div style="margin-bottom:12px;">';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+            h += '<span style="color:#e0c080;font-size:0.9em;">🔊 Звуки</span>';
+            h += '<span id="sound-vol-label" style="color:#fff;font-size:0.8em;font-weight:bold;">' + soundVolume + '%</span>';
             h += '</div>';
-            h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-            h += '<span style="color:#e0c080;">🎵 Музыка</span>';
-            h += '<button onclick="Settings._toggleMusicFromUI()" style="width:50px;height:26px;background:' + (musicEnabled ? '#4caf50' : '#555') + ';border:none;border-radius:13px;cursor:pointer;position:relative;">';
-            h += '<span style="position:absolute;top:3px;' + (musicEnabled ? 'right:3px;' : 'left:3px;') + 'width:20px;height:20px;background:#fff;border-radius:50%;transition:0.2s;"></span>';
-            h += '</button>';
-            h += '</div>';
+            h += '<input type="range" min="0" max="100" value="' + soundVolume + '" id="sound-volume-slider" oninput="Settings._onSoundVolumeChange(this.value)" style="width:100%;cursor:pointer;">';
             h += '</div>';
 
-            // Кнопки
-            h += '<button onclick="Settings._saveProgressFromUI()" class="btn btn-success" style="width:100%;padding:8px;margin-bottom:6px;font-size:0.9em;">💾 Сохранить прогресс</button>';
-            h += '<button onclick="Settings._resetFromUI()" class="btn btn-danger" style="width:100%;padding:8px;font-size:0.9em;">🔄 Сбросить персонажа (5000 золота)</button>';
+            // Музыка
+            h += '<div>';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+            h += '<span style="color:#e0c080;font-size:0.9em;">🎵 Музыка</span>';
+            h += '<span id="music-vol-label" style="color:#fff;font-size:0.8em;font-weight:bold;">' + musicVolume + '%</span>';
+            h += '</div>';
+            h += '<input type="range" min="0" max="100" value="' + musicVolume + '" id="music-volume-slider" oninput="Settings._onMusicVolumeChange(this.value)" style="width:100%;cursor:pointer;">';
+            h += '</div>';
+
+            h += '</div>';
+
+            // === КНОПКИ ===
+            h += '<button onclick="Settings._saveProgressFromUI()" style="width:100%;background:#4caf50;border:none;border-radius:8px;padding:10px;color:#fff;font-weight:bold;font-size:0.9em;cursor:pointer;margin-bottom:8px;">💾 Сохранить прогресс</button>';
+            h += '<button onclick="Settings._deleteCharacterFromUI()" style="width:100%;background:#f44336;border:none;border-radius:8px;padding:10px;color:#fff;font-weight:bold;font-size:0.9em;cursor:pointer;">🗑️ Удалить персонажа</button>';
+
             h += '</div>';
 
             UI._openScreenScrollable('⚙️ Настройки', 'settings', h);
+        },
+
+        // === ПОЛЗУНОК ЗВУКА ===
+        _onSoundVolumeChange: function(val) {
+            var v = parseInt(val, 10) / 100;
+            this.data.soundVolume = v;
+            if (v > 0 && !this.data.soundEnabled) this.data.soundEnabled = true;
+            if (v === 0) this.data.soundEnabled = false;
+            this.save();
+
+            // Обновить метку
+            var label = document.getElementById('sound-vol-label');
+            if (label) label.textContent = Math.round(v * 100) + '%';
+
+            // Применить к звукам
+            this._applyVolumes();
+
+            // Проиграть тестовый звук (если громкость > 0)
+            if (v > 0 && typeof UI !== 'undefined' && UI._playSound) {
+                UI._playSound('click');
+            }
+        },
+
+        // === ПОЛЗУНОК МУЗЫКИ ===
+        _onMusicVolumeChange: function(val) {
+            var v = parseInt(val, 10) / 100;
+            this.data.musicVolume = v;
+            if (v > 0 && !this.data.musicEnabled) this.data.musicEnabled = true;
+            if (v === 0) this.data.musicEnabled = false;
+            this.save();
+
+            // Обновить метку
+            var label = document.getElementById('music-vol-label');
+            if (label) label.textContent = Math.round(v * 100) + '%';
+
+            // Применить к музыке
+            this._applyVolumes();
         },
 
         _changeNameFromUI: function() {
@@ -154,23 +216,6 @@ if (typeof Settings === 'undefined') {
             this.showUI();
         },
 
-        _toggleSoundFromUI: function() {
-            this.toggleSound();
-            this.showUI();
-        },
-
-        _toggleMusicFromUI: function() {
-            this.toggleMusic();
-            if (typeof UI !== 'undefined') {
-                if (this.isMusicEnabled()) {
-                    UI._playMusic('main_theme');
-                } else {
-                    UI._stopMusic();
-                }
-            }
-            this.showUI();
-        },
-
         _saveProgressFromUI: function() {
             if (Sherwood.saveGameNow) {
                 Sherwood.saveGameNow();
@@ -181,32 +226,49 @@ if (typeof Settings === 'undefined') {
             }
         },
 
-        _resetFromUI: function() {
-            var p = Sherwood.getPlayer();
-            if (!p) return;
+        // === ПОЛНОЕ УДАЛЕНИЕ ПЕРСОНАЖА ===
+        _deleteCharacterFromUI: function() {
+            var confirmed = confirm('⚠️ УДАЛИТЬ ПЕРСОНАЖА?\n\nВесь прогресс будет удалён БЕЗВОЗВРАТНО:\n• Уровень, опыт, статы\n• Ресурсы, сумка, оборудование\n• Прогресс подземок, порталов, рейда\n• Трофеи, облики, таланты\n• Все сохранения\n\nПродолжить?');
+            if (!confirmed) return;
 
-            if ((p.resources.gold || 0) < 5000) {
-                UI._showToast('❌ Нужно 5000 золота для сброса');
-                return;
-            }
+            var confirmed2 = confirm('⚠️ ПОСЛЕДНЕЕ ПРЕДУПРЕЖДЕНИЕ\n\nТочно удалить? Это нельзя отменить!');
+            if (!confirmed2) return;
 
-            if (!confirm('⚠️ Сбросить персонажа за 5000 золота? Весь прогресс будет удалён!')) return;
+            try {
+                // 1. Удаляем сохранение игры
+                localStorage.removeItem('sherwood_save_data');
+                localStorage.removeItem('sherwood_save');
+                localStorage.removeItem('sherwood_settings');
+                localStorage.removeItem('active_skin');
 
-            var remainingGold = (p.resources.gold || 0) - 5000;
-            var remainingSilver = p.resources.silver || 0;
+                // 2. Удаляем активного игрока из памяти
+                if (Sherwood._player) {
+                    Sherwood._player = null;
+                }
 
-            Sherwood._createNewPlayer();
-            p = Sherwood.getPlayer();
-            p.resources.gold = remainingGold;
-            p.resources.silver = remainingSilver;
-            p.nameChanges = 0;
+                // 3. Создаём нового (чистого) игрока
+                Sherwood._createNewPlayer();
 
-            Sherwood._recalcStats();
-            Sherwood.saveGameNow();
+                // 4. Сохраняем чистого игрока
+                if (Sherwood.saveGameNow) Sherwood.saveGameNow();
+                else if (Sherwood.saveGame) Sherwood.saveGame();
 
-            UI._showToast('🔄 Персонаж сброшен!');
-            if (typeof UI !== 'undefined' && UI.loadHome) {
-                UI.loadHome();
+                // 5. Обновляем UI
+                if (typeof UI !== 'undefined') {
+                    if (UI.updateDisplay) UI.updateDisplay();
+                    UI._showToast('🗑️ Персонаж удалён. Начинаем с нуля!');
+                }
+
+                // 6. Возвращаемся на главный экран (перезагрузка гарантирует полную очистку)
+                setTimeout(function() {
+                    try {
+                        if (typeof UI !== 'undefined' && UI._stopMusic) UI._stopMusic();
+                    } catch(e) {}
+                    location.reload();
+                }, 800);
+            } catch(e) {
+                console.error('Ошибка удаления персонажа:', e);
+                UI._showToast('❌ Ошибка при удалении');
             }
         }
     };
