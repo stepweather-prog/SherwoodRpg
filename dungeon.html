@@ -11,7 +11,6 @@
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
 
-        /* ================== МИНИКАРТА ================== */
         #minimap {
             position: fixed;
             top: 12px;
@@ -37,7 +36,6 @@
             z-index: 2;
             background: transparent;
         }
-        /* ============================================== */
 
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
 
@@ -145,33 +143,15 @@
         if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
 
         // ============================================================
-        //  ПУЛЫ ВРАГОВ ПО ЭТАЖАМ 1-Й ПОДЗЕМКИ
+        //  ПУЛЫ ВРАГОВ ПО ЭТАЖАМ
         // ============================================================
         var ENEMY_POOLS = {
-            1: {
-                normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'],
-                boss: 'forest_strangler.png'
-            },
-            2: {
-                normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'],
-                boss: 'shard_back.png'
-            },
-            3: {
-                normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'],
-                boss: 'blight_lord_beetle.png'
-            },
-            4: {
-                normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'],
-                boss: 'bog_brute.png'
-            },
-            5: {
-                normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'],
-                boss: 'root_executioner.png'
-            },
-            6: {
-                normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'],
-                boss: 'blight_lord_leshy.png'
-            }
+            1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
+            2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
+            3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
+            4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' },
+            5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
+            6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
         };
         var currentPool = ENEMY_POOLS[currentFloor] || ENEMY_POOLS[1];
         var DIFF_MULT = { 1: 1.0, 2: 1.5, 3: 2.5 };
@@ -236,9 +216,6 @@
         }
         window.exitDungeon = exitDungeon;
 
-        // ============================================================
-        //  ТЕКСТ ПО ЦЕНТРУ ЭКРАНА
-        // ============================================================
         function showCenterText(text, color) {
             var el = document.createElement('div');
             el.textContent = text;
@@ -313,15 +290,12 @@
                 }
             }
             map[size - 2][size - 2] = 0;
-            if (map[size - 3][size - 2] === 1 && map[size - 2][size - 3] === 1) {
-                map[size - 3][size - 2] = 0;
-            }
         }
         generateMaze();
 
-        // ============================================================
-        //  ДВЕРИ
-        // ============================================================
+        // Делаем ПРОЁМ для выхода: клетка справа от size-2,size-2 становится полом
+        map[size - 2][size - 1] = 0;
+
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
             return map[y][x] === 1;
@@ -450,11 +424,13 @@
         ];
 
         var objects = [];
+        var lootBags = [];
+        var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
 
-        // Накопленный за забег лут — для экрана победы/поражения
+        // Что игрок собрал за текущий забег
         var runLoot = {
             gold: 0, silver: 0, exp: 0,
-            skin: 0, amuletTablets: 0, ringTablets: 0,
+            skins: 0, amuletTablets: 0, ringTablets: 0,
             skinTablets: 0, skinDrawings: 0,
             portalToken1: 0, branchDamnedYew: 0
         };
@@ -536,7 +512,8 @@
             if (obj.type === 'enemy') {
                 var scale = obj.isBoss ? 1.8 : 1.3;
                 sprite.scale.set(scale, scale, 1);
-                sprite.position.y = 0.55;
+                // центр спрайта = половина высоты, чтобы "ноги" были на полу
+                sprite.position.y = scale / 2 + 0.05;
             } else {
                 sprite.scale.set(0.55, 0.55, 1);
                 sprite.position.y = 0.35;
@@ -547,37 +524,46 @@
         }
 
         // ============================================================
-        //  ДВЕРЬ-ВЫХОД — стоит в стене, не в клетке пола
+        //  ДВЕРЬ-ВЫХОД — плоские меши в проёме, не спрайты
         // ============================================================
-        var exitCell = { gx: size - 2, gy: size - 2 };
-        var exitWallCell = { gx: size - 1, gy: size - 2 };
-        var exitW = gridToWorld(exitWallCell.gx, exitWallCell.gy);
+        var exitCell = { gx: size - 1, gy: size - 2 };
+        var exitW = gridToWorld(exitCell.gx, exitCell.gy);
 
-        var exitHoriz = isWallCell(exitWallCell.gx - 1, exitWallCell.gy) && isWallCell(exitWallCell.gx + 1, exitWallCell.gy);
+        // Убираем стену, если она была на клетке выхода
+        for (var wi = wallMeshes.length - 1; wi >= 0; wi--) {
+            var wm = wallMeshes[wi];
+            if (wm.userData.gridX === size - 1 && wm.userData.gridY === size - 2) {
+                group.remove(wm);
+                wallMeshes.splice(wi, 1);
+            }
+        }
 
+        // Дверь
         var exitDoorMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(cellSize, wallHeight),
             new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide })
         );
-        if (!exitHoriz) exitDoorMesh.rotation.y = Math.PI / 2;
+        exitDoorMesh.rotation.y = Math.PI / 2;
         exitDoorMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
         exitDoorMesh.userData = { isExitDoor: true };
         group.add(exitDoorMesh);
 
+        // Замок — плоский меш
         var exitLockMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.6, 0.6),
-            new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true, depthTest: false, side: THREE.DoubleSide })
+            new THREE.PlaneGeometry(0.55, 0.55),
+            new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true, alphaTest: 0.1 })
         );
-        if (!exitHoriz) exitLockMesh.rotation.y = Math.PI / 2;
-        exitLockMesh.position.set(exitW.x, wallHeight / 2 + 0.05, exitW.z);
+        exitLockMesh.rotation.y = Math.PI / 2;
+        exitLockMesh.position.set(exitW.x - 0.01, wallHeight / 2, exitW.z);
         exitLockMesh.userData = { isExitLock: true };
         group.add(exitLockMesh);
 
+        // Открытая дверь
         var exitOpenMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(cellSize * 1.1, wallHeight * 1.1),
-            new THREE.MeshBasicMaterial({ map: openDoorTex, transparent: true, depthTest: false, side: THREE.DoubleSide })
+            new THREE.PlaneGeometry(cellSize * 1.05, wallHeight * 1.05),
+            new THREE.MeshBasicMaterial({ map: openDoorTex, transparent: true, alphaTest: 0.1 })
         );
-        if (!exitHoriz) exitOpenMesh.rotation.y = Math.PI / 2;
+        exitOpenMesh.rotation.y = Math.PI / 2;
         exitOpenMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
         exitOpenMesh.userData = { isExitOpen: true };
         exitOpenMesh.visible = false;
@@ -598,10 +584,8 @@
         }
 
         // ============================================================
-        //  МЕШКИ С ЛУТОМ
+        //  ЛУТ
         // ============================================================
-        var lootBags = [];
-
         function spawnLootBag(gx, gy) {
             var w = gridToWorld(gx, gy);
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -663,16 +647,10 @@
             var silver = 5 + Math.floor(Math.random() * 15);
 
             if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
-            if (!p.resources) p.resources = {};
-            p.resources.gold = (p.resources.gold || 0) + gold;
-            p.resources.silver = (p.resources.silver || 0) + silver;
 
-            runLoot.exp += exp;
-            runLoot.gold += gold;
-            runLoot.silver += silver;
-
+            // Ресурсы: ключи как в UI.bag — skins, amuletTablets, ringTablets, skinTablets, portalToken1
             var resources = {
-                skin: 1,
+                skins: 1,
                 amuletTablets: Math.random() < 0.3 ? 1 : 0,
                 ringTablets: Math.random() < 0.3 ? 1 : 0,
                 skinTablets: Math.random() < 0.25 ? 1 : 0,
@@ -680,17 +658,37 @@
                 portalToken1: Math.random() < 0.15 ? 1 : 0,
                 branchDamnedYew: Math.random() < 0.3 ? 1 : 0
             };
-            for (var key in resources) {
-                if (resources[key] > 0) {
-                    p.resources[key] = (p.resources[key] || 0) + resources[key];
-                    runLoot[key] += resources[key];
+
+            // Используем Sherwood.addResource, если доступен — он и в сумку положит, и UI обновит
+            if (parent.Sherwood.addResource) {
+                parent.Sherwood.addResource('gold', gold);
+                parent.Sherwood.addResource('silver', silver);
+                for (var key in resources) {
+                    if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]);
                 }
+            } else {
+                // fallback — прямое прибавление
+                if (!p.resources) p.resources = {};
+                p.resources.gold = (p.resources.gold || 0) + gold;
+                p.resources.silver = (p.resources.silver || 0) + silver;
+                for (var key in resources) {
+                    if (resources[key] > 0) {
+                        p.resources[key] = (p.resources[key] || 0) + resources[key];
+                    }
+                }
+            }
+
+            runLoot.exp += exp;
+            runLoot.gold += gold;
+            runLoot.silver += silver;
+            for (var key in resources) {
+                if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key];
             }
 
             var icons = [];
             icons.push({ icon: 'assets/interface/resource_gold.png' });
             icons.push({ icon: 'assets/interface/resource_silver.png' });
-            if (resources.skin) icons.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png' });
+            if (resources.skins) icons.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png' });
             if (resources.amuletTablets) icons.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png' });
             if (resources.ringTablets) icons.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png' });
             if (resources.skinTablets) icons.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png' });
@@ -767,7 +765,6 @@
             };
         }
 
-        // === «ПЕРЕД ИГРОКОМ» ===
         function getFrontCell() {
             const dx = -Math.sin(playerYaw);
             const dz = -Math.cos(playerYaw);
@@ -1011,7 +1008,6 @@
                 }
             }
 
-            // Клик по полу/стене = шаг вперёд по направлению взгляда (как стрелка ▲)
             moveForward();
         });
 
@@ -1067,14 +1063,12 @@
         var battleTimer = null;
         var pushTimer = null;
         var playerHitFirst = false;
-        var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
 
         var hitSprites = [
             'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
             'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
         ];
 
-        // Отталкивание врага при ударе
         var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
         var cameraShake = 0;
 
@@ -1286,7 +1280,6 @@
                 hitFlashSprite.visible = true;
                 clearTimeout(pushTimer);
                 pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
-                // Отталкивание врага
                 knockbackEnemy(currentEnemySprite, playerPos.x, playerPos.z);
                 cameraShake = 0.06;
             }
@@ -1343,7 +1336,7 @@
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += 0.55;   // ниже — было 0.9
+            worldPos.y += 0.55;
             worldPos.project(camera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
@@ -1354,33 +1347,47 @@
         // ============================================================
         //  ПОБЕДА / ПОРАЖЕНИЕ
         // ============================================================
+        function grantCupBoth(floor, diff) {
+            try {
+                // 1. Пишем в UI-структуру (byDungeon)
+                if (parent.UI && parent.UI._grantCup) {
+                    parent.UI._grantCup(currentDungeon, floor, diff);
+                }
+                // 2. Дублируем в старую структуру Sherwood.Dungeon (floors)
+                if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) {
+                    parent.Sherwood.Dungeon.grantCup(floor, diff);
+                }
+            } catch(e) { console.warn('grantCup error', e); }
+        }
+
         function winDungeon() {
             stopSteps();
             playSound(soundVictory);
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
 
-            try {
-                if (parent.UI && parent.UI._grantCup) {
-                    parent.UI._grantCup(currentDungeon, currentFloor, currentDiff);
-                }
-            } catch(e){}
+            // Кубок — дублируем в обе структуры
+            grantCupBoth(currentFloor, currentDiff);
+
+            var rewardItems = [];
+            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
+            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
 
             var rewards = {
                 cupEarned: true,
                 exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp,
                 gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold,
                 silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver,
-                skin: runLoot.skin,
-                amuletTablets: runLoot.amuletTablets,
-                ringTablets: runLoot.ringTablets,
-                skinTablets: runLoot.skinTablets,
-                skinDrawings: runLoot.skinDrawings,
-                portalToken1: runLoot.portalToken1,
-                branchDamnedYew: runLoot.branchDamnedYew
+                items: rewardItems
             };
 
             try {
                 if (parent.UI && parent.UI._showVictoryScreen) {
+                    parent.UI._lastDungeon = currentDungeon;
                     parent.UI._afterRewardAction = function() {
                         try {
                             if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
@@ -1400,21 +1407,25 @@
             playSound(soundDefeat);
             try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
 
+            var rewardItems = [];
+            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
+            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
+
             var rewards = {
                 exp: 50 + runLoot.exp,
                 gold: 0 + runLoot.gold,
                 silver: 20 + runLoot.silver,
-                skin: runLoot.skin,
-                amuletTablets: runLoot.amuletTablets,
-                ringTablets: runLoot.ringTablets,
-                skinTablets: runLoot.skinTablets,
-                skinDrawings: runLoot.skinDrawings,
-                portalToken1: runLoot.portalToken1,
-                branchDamnedYew: runLoot.branchDamnedYew
+                items: rewardItems
             };
 
             try {
                 if (parent.UI && parent.UI._showDefeatScreen) {
+                    parent.UI._lastDungeon = currentDungeon;
                     parent.UI._afterRewardAction = function() {
                         try {
                             if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
@@ -1718,7 +1729,6 @@
             syncPlayerGrid();
             updateLootButton();
 
-            // Отталкивание врага при ударе
             if (enemyKnockback.active && enemyKnockback.sprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
@@ -1759,7 +1769,6 @@
         function drawMinimap() {
             mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
-            // Клетки
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
                     const idx = row * size + col;
@@ -1776,19 +1785,17 @@
                 }
             }
 
-            // Тропинка — где прошёл
-            mmCtx.fillStyle = 'rgba(255, 215, 0, 0.35)';
+            mmCtx.fillStyle = 'rgba(255, 215, 0, 0.55)';
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
                     if (walked[row * size + col]) {
                         mmCtx.beginPath();
-                        mmCtx.arc(col * minimapCell + minimapCell / 2, row * minimapCell + minimapCell / 2, minimapCell * 0.35, 0, Math.PI * 2);
+                        mmCtx.arc(col * minimapCell + minimapCell / 2, row * minimapCell + minimapCell / 2, minimapCell * 0.45, 0, Math.PI * 2);
                         mmCtx.fill();
                     }
                 }
             }
 
-            // Выход на миникарте — если рядом с ним что-то исследовано
             var exitKnown = false;
             for (var ddy = -1; ddy <= 1 && !exitKnown; ddy++) {
                 for (var ddx = -1; ddx <= 1 && !exitKnown; ddx++) {
@@ -1805,14 +1812,12 @@
                 mmCtx.strokeRect(exitCell.gx * minimapCell + 2, exitCell.gy * minimapCell + 2, minimapCell - 4, minimapCell - 4);
             }
 
-            // Игрок
             const pg = worldToGrid(playerPos.x, playerPos.z);
             mmCtx.fillStyle = '#ffd700';
             mmCtx.beginPath();
             mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
             mmCtx.fill();
 
-            // Стрелка направления
             const cx = pg.gx * minimapCell + minimapCell/2;
             const cy = pg.gy * minimapCell + minimapCell/2;
             const len = minimapCell * 3;
