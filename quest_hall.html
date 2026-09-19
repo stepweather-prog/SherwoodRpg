@@ -413,13 +413,19 @@
             'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
         ];
 
-        function knockbackEnemy() {
-            if (!enemySprite) return;
+        function knockbackEnemy(sprite, fromX, fromZ) {
+            if (!sprite) return;
             enemyKnockback.active = true;
+            enemyKnockback.sprite = sprite;
+            enemyKnockback.originalX = sprite.position.x;
+            enemyKnockback.originalZ = sprite.position.z;
+            var dx = sprite.position.x - fromX;
+            var dz = sprite.position.z - fromZ;
+            var len = Math.hypot(dx, dz) || 1;
+            var power = 0.35;
+            enemyKnockback.dx = (dx / len) * power;
+            enemyKnockback.dz = (dz / len) * power;
             enemyKnockback.t = 0;
-            enemyKnockback.ox = enemySprite.position.x;
-            enemyKnockback.oz = enemySprite.position.z;
-            enemyKnockback.dz = 0.15;   // отлетает назад (по Z, в сторону игрока)
         }
 
         function attackEnemy() {
@@ -677,14 +683,18 @@
             var dt = Math.min(clock.getDelta(), 0.05);
 
             // Отталкивание врага
-            if (enemyKnockback.active && enemySprite) {
+            if (enemyKnockback.active && enemyKnockback.sprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
                 var ease = Math.sin(kk * Math.PI);
-                enemySprite.position.z = enemyKnockback.oz + enemyKnockback.dz * ease;
+                var spr = enemyKnockback.sprite;
+                spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease;
+                spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
                 if (kk >= 1) {
-                    enemySprite.position.z = enemyKnockback.oz;
+                    spr.position.x = enemyKnockback.originalX;
+                    spr.position.z = enemyKnockback.originalZ;
                     enemyKnockback.active = false;
+                    enemyKnockback.sprite = null;
                 }
             }
 
