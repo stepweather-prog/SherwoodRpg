@@ -3,6 +3,7 @@
  *  — вход за portalToken1 (общие для всех порталов)
  *  — чем старше портал, тем больше токенов (id * 3)
  *  — бой ведётся в portal_battle.html (iframe)
+ *  — после победы/поражения возвращаемся к списку порталов
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -37,6 +38,8 @@ Sherwood.Portal = {
         var player = Sherwood.getPlayer();
         if (!player) return;
         if (!player.portal) player.portal = { completed: [], difficulty: {}, deaths: 0 };
+        if (!player.portal.completed) player.portal.completed = [];
+        if (!player.portal.difficulty) player.portal.difficulty = {};
         console.log('🌀 Порталы инициализированы');
     },
 
@@ -67,7 +70,7 @@ Sherwood.Portal = {
     getPortalDifficulty: function(id) {
         var player = Sherwood.getPlayer();
         if (!player || !player.portal) return 0;
-        return player.portal.difficulty[id] || 0;
+        return (player.portal.difficulty && player.portal.difficulty[id]) || 0;
     },
 
     // Считает portalToken1 в сумке (id === 'portal_token_1')
@@ -329,6 +332,10 @@ Sherwood.Portal = {
         if (!r.success) { UI._showToast(r.reason || 'Не удалось войти в портал'); return; }
         UI._stopMusic();
         UI._playSound('trap');
+
+        // Запоминаем, что мы в портале — для фолбэка возврата
+        UI._lastPortal = id;
+        UI._lastDungeon = null;
 
         // Открываем боевую сцену в iframe
         var iframe = document.createElement('iframe');
