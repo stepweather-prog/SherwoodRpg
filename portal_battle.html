@@ -31,7 +31,6 @@
             background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
         }
 
-        /* === HP врага как в подземке — привязан к спрайту === */
         #mob-hp {
             position: absolute;
             width: 300px;
@@ -167,7 +166,7 @@
         var portalId = parseInt(urlParams.get('portal') || '1');
 
         // ============================================================
-        //  СЦЕНА (прозрачный фон, quest.png — это CSS-фон на body)
+        //  СЦЕНА (прозрачный фон, quest.png — CSS-фон body)
         // ============================================================
         const scene = new THREE.Scene();
 
@@ -179,10 +178,9 @@
         const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setClearColor(0x000000, 0);   // прозрачный — видно CSS-фон
+        renderer.setClearColor(0x000000, 0);
         document.body.appendChild(renderer.domElement);
 
-        // Свет
         scene.add(new THREE.AmbientLight(0xffffff, 0.9));
         var keyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
         keyLight.position.set(2, 4, 3);
@@ -191,12 +189,11 @@
         scene.add(fillLight);
 
         // ============================================================
-        //  СПРАЙТ ВРАГА
+        //  СПРАЙТ ВРАГА — нормализация по высоте + сохранение пропорций
         // ============================================================
         var enemySprite = null;
         var enemyTexture = null;
         var enemyBaseY = 0.85;
-        var enemyOriginalScale = 2.4;
 
         var BEAST_DIRS = [
             'assets/portal_beasts/visual_portals/',
@@ -232,15 +229,33 @@
                 scene.remove(enemySprite);
                 enemySprite = null;
             }
-            var scale = isBoss ? enemyOriginalScale * 1.25 : enemyOriginalScale;
+            // Фиксированная ВЫСОТА на сцене, ширина по аспекту картинки
+            var baseHeight = isBoss ? 3.0 : 2.4;
+
             loadEnemyTexture(imageName, function(tex) {
                 if (!tex) return;
                 enemyTexture = tex;
+
+                var aspect = 1;
+                if (tex.image && tex.image.width && tex.image.height) {
+                    aspect = tex.image.width / tex.image.height;
+                }
+                var h = baseHeight;
+                var w = h * aspect;
+
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
                     map: enemyTexture, transparent: true, alphaTest: 0.05
                 }));
-                enemySprite.scale.set(scale, scale, 1);
-                enemySprite.position.set(0, enemyBaseY, 0);
+                enemySprite.scale.set(w, h, 1);
+
+                // "Ноги" спрайта на полу: центр = h/2
+                var centerY = h / 2;
+                enemySprite.position.set(0, centerY, 0);
+                enemyBaseY = centerY;
+
+                // Полувысота — для HP-бара и «дыхания»
+                enemySprite.userData.baseHalfHeight = h / 2;
+
                 scene.add(enemySprite);
             });
         }
@@ -254,7 +269,7 @@
         var enemyKnockback = { active: false, t: 0, duration: 0.22, dx: 0, dz: 0, ox: 0, oz: 0 };
         var cameraShake = 0;
 
-        var activeEffects = [];       // эффекты от скиллов
+        var activeEffects = [];
         var skillCooldowns = {};
 
         var hitFlash = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -297,7 +312,7 @@
         });
 
         // ============================================================
-        //  ЗАГРУЗКА БОЯ ИЗ РОДИТЕЛЯ
+        //  ЗАГРУЗКА БОЯ
         // ============================================================
         function loadBattle() {
             if (!parent.Sherwood || !parent.Sherwood.Portal) {
@@ -322,7 +337,7 @@
         }
 
         // ============================================================
-        //  АТАКА ИГРОКА
+        //  АТАКА
         // ============================================================
         function attackEnemy() {
             if (!isBattleActive || !battleData) return;
@@ -447,15 +462,11 @@
                     break;
             }
 
-            // Урон по врагу через родительский portalAttack
             if (dmg > 0) {
-                // временно бустим атаку, чтобы урон прошёл больший — не обязательно, но так честнее
                 var r = parent.Sherwood.Portal.portalAttack();
                 if (r) {
                     if (r.enemyHp !== undefined) updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
                     if (r.enemyDead) {
-                        // Смерть врага — обрабатывается в attackEnemy через следующий вызов, но здесь
-                        // тоже надо переключить на следующего
                         isBattleActive = false;
                         setTimeout(function() {
                             var next = parent.Sherwood.Portal.getCurrentBattle();
@@ -472,7 +483,6 @@
                 }
             }
 
-            // Кулдаун
             var cdMap = {
                 'poisoning': 5000, 'vampirism': 5000, 'stunning': 8000, 'ricochet': 10000,
                 'riot': 6000, 'evil_eye': 7000, 'healing': 10000, 'healer': 12000,
@@ -531,8 +541,13 @@
 
         function updateMobHpBarPosition() {
             if (!battleData || !enemySprite) return;
+
+            // Верхняя граница спрайта = центр + половина высоты
+            var halfH = (enemySprite.userData && enemySprite.userData.baseHalfHeight) || (enemySprite.scale.y / 2);
+
             var worldPos = enemySprite.position.clone();
-            worldPos.y += 0.85;
+            worldPos.y += halfH + 0.15;   // 0.15 — отступ над головой
+
             worldPos.project(camera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
@@ -566,7 +581,7 @@
         setInterval(updateHeroSpheres, 800);
 
         // ============================================================
-        //  ЭФФЕКТЫ СКИЛЛОВ — тик
+        //  ТИК ЭФФЕКТОВ
         // ============================================================
         setInterval(function() {
             if (!isBattleActive || !battleData) return;
@@ -579,7 +594,6 @@
                     if (!ef._lastTick || now - ef._lastTick >= 1000) {
                         ef._lastTick = now;
                         ef.ticks--;
-                        // нанести урон
                         if (battleData && battleData.enemy) {
                             battleData.enemy.hp = Math.max(0, battleData.enemy.hp - ef.dmg);
                             updateMobHpBarFill(battleData.enemy.hp, battleData.enemy.maxHp);
@@ -707,7 +721,7 @@
         });
 
         // ============================================================
-        //  СКИЛЛЫ — рендер иконок с onclick
+        //  СКИЛЛЫ — рендер иконок
         // ============================================================
         function renderTalents() {
             var leftCol = document.getElementById('skills-left');
@@ -791,6 +805,7 @@
                 cameraShake = 0;
             }
 
+            // Лёгкое "дыхание" врага — вокруг его центра
             if (enemySprite && !enemyKnockback.active) {
                 var t = clock.elapsedTime;
                 enemySprite.position.y = enemyBaseY + Math.sin(t * 2.5) * 0.02;
