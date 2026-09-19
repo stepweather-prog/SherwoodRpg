@@ -15,10 +15,10 @@ Sherwood.Raid = {
     _raidsToday: 0,
     _maxRaidsPerDay: 0,
     _currentStage: 0,
-    _totalStages: 2, // 1 волна + 1 босс
+    _totalStages: 2,
     _playerAlive: true,
-    _isUnlocked: true, // Открыт всегда для теста
-    _raidEnemies: [], // Список уникальных врагов (без дублей)
+    _isUnlocked: true,
+    _raidEnemies: [],
 
     RAID_BOSSES: [{
         id: 'primordial_dread',
@@ -89,12 +89,8 @@ Sherwood.Raid = {
         console.log('⚔️ Рейд инициализирован');
     },
 
-    _checkUnlock: function() {
-        return true;
-    },
-
+    _checkUnlock: function() { return true; },
     isUnlocked: function() { return this._isUnlocked; },
-
     getAvailableRaids: function() { return this.RAID_BOSSES; },
 
     canJoinRaid: function() {
@@ -117,7 +113,6 @@ Sherwood.Raid = {
         this._currentStage = 0;
         this._playerAlive = true;
 
-        // Перемешиваем уникальных врагов из волны
         var enemies = this._raidBoss.stages[0].enemies;
         this._raidEnemies = enemies.slice().sort(function() { return Math.random() - 0.5; });
 
@@ -334,8 +329,6 @@ Sherwood.Raid = {
         var raids = this.getAvailableRaids();
         var check = this.canJoinRaid();
         var player = Sherwood.getPlayer();
-        var raidsToday = player.raid ? (player.raid.raidsToday || 0) : 0;
-        var maxRaids = 0; // Безлимит
         var completed = player.raid ? player.raid.completed : false;
 
         if (!this._isUnlocked) {
@@ -360,25 +353,28 @@ Sherwood.Raid = {
             return;
         }
 
-        var h = '<div style="text-align:center;padding:20px;">';
-        h += '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:4px;">⚔️ Мировой Рейд</div>';
-        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:16px;">Доступно: ∞ (безлимит)</div>';
+        // Один рейд — карточка босса в рамке, как в квесте
+        var raid = raids[0];
 
-        for (var i = 0; i < raids.length; i++) {
-            var raid = raids[i];
-            h += '<div style="background:rgba(255,255,255,0.05);padding:15px;border-radius:10px;border:2px solid #ff6b35;margin-bottom:15px;max-width:400px;margin-left:auto;margin-right:auto;">';
-            h += '<div style="color:#ff6b35;font-size:1.1em;font-weight:bold;">' + raid.name + '</div>';
-            h += '<img src="assets/beast_quest/the_primordial_core.png" style="width:120px;height:120px;object-fit:contain;display:block;margin:10px auto;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-            h += '<div style="color:#aaa;font-size:0.7em;">HP ' + raid.hp.toLocaleString() + ' | АТК ' + raid.attack + ' | ' + raid.stages.length + ' этапа</div>';
-            h += '<div style="color:#ffd700;font-size:0.65em;">🏆 Награда: +' + raid.exp + ' XP +' + raid.gold + ' золота</div>';
-            if (check.can) {
-                h += '<button onclick="Sherwood.Raid._startRaid()" class="btn btn-danger" style="margin-top:10px;padding:10px 30px;font-size:1.1em;font-weight:bold;">⚔️ НАЧАТЬ РЕЙД</button>';
-            } else {
-                h += '<div style="color:#f44336;font-size:0.7em;margin-top:8px;">' + check.reason + '</div>';
-            }
-            h += '</div>';
-        }
+        var h = '<div style="display:flex;flex-direction:column;align-items:center;padding:20px 12px;text-align:center;">';
+
+        h += '<div style="position:relative;width:280px;max-width:85%;aspect-ratio:1/1;background:url(\'assets/assets2/game_details/labyrinth_asset.png\') center/contain no-repeat;display:flex;align-items:center;justify-content:center;">';
+        h += '<img src="assets/beast_quest/the_primordial_core.png" style="width:72%;height:72%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
         h += '</div>';
+
+        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ff6b35;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:12px;margin-bottom:12px;max-width:90%;">' + raid.name + '</div>';
+
+        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:6px;">HP ' + raid.hp.toLocaleString() + ' | АТК ' + raid.attack + ' | ' + raid.stages.length + ' этапа</div>';
+        h += '<div style="color:#ffd700;font-size:0.7em;margin-bottom:16px;">🏆 Награда: +' + raid.exp + ' XP, +' + raid.gold + ' золота</div>';
+
+        if (check.can) {
+            h += '<button onclick="Sherwood.Raid._startRaid()" style="background:linear-gradient(180deg,#c0392b,#7a0000);border:2px solid #6b5a3a;border-radius:8px;padding:12px 40px;color:#fff;font-weight:bold;cursor:pointer;font-size:1em;letter-spacing:1px;box-shadow:0 4px 12px rgba(0,0,0,0.6);">⚔️ НАЧАТЬ РЕЙД</button>';
+        } else {
+            h += '<div style="color:#f44336;font-size:0.85em;">' + check.reason + '</div>';
+        }
+
+        h += '</div>';
+
         UI._openScreenScrollable('⚔️ Рейд', 'raid', h);
     },
 
@@ -425,7 +421,7 @@ Sherwood.Raid = {
         }
 
         if (r.stageComplete) {
-            // Этап пройден (переход к боссу)
+            // Этап пройден (переход к боссу) — пересоздаём iframe
             if (UI._screenLayer) {
                 UI._screenLayer.innerHTML = '';
             }
@@ -433,10 +429,16 @@ Sherwood.Raid = {
             return;
         }
 
-        // Враг убит, волна не пройдена - подгружаем следующего врага
+        // Враг убит, волна не пройдена → подгружаем следующего врага
         var iframe = document.getElementById('raid-iframe');
-        if (iframe) {
+        if (iframe && iframe.contentWindow && typeof iframe.contentWindow.updateEnemy === 'function') {
             iframe.contentWindow.updateEnemy();
+        } else if (iframe) {
+            // Фолбэк: пересоздаём iframe, чтобы обновление гарантированно сработало
+            if (UI._screenLayer) {
+                UI._screenLayer.innerHTML = '';
+            }
+            this._showRaidBattle();
         }
     },
 
