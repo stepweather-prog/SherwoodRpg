@@ -626,7 +626,159 @@ UI.profile = function() {
         }, { passive: true });
     }
 };
+// ============================================================
+//  ВСЕ ТРОФЕИ
+// ============================================================
+UI._showAllTrophies = function() {
+    UI._playSound('click');
+    var p = Sherwood.getPlayer();
+    var trophies = (p && p.trophies) || [];
 
+    var h = '<div style="text-align:center;padding:10px;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:12px;">🏆 Трофеи: ' + trophies.length + '</div>';
+
+    if (trophies.length === 0) {
+        h += '<div style="text-align:center;color:#888;padding:40px 20px;">Пока нет трофеев.<br>Побеждай боссов и проходи подземелья.</div>';
+    } else {
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:400px;margin:0 auto;">';
+        for (var i = 0; i < trophies.length; i++) {
+            var t = trophies[i];
+            var icon = t.icon || 'assets/interface/labyrinth_of_icons.png';
+            h += '<div onclick="UI._showTrophyInfo(' + i + ')" style="background:rgba(0,0,0,0.5);border:2px solid #c9a040;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;cursor:pointer;">';
+            h += '<img src="' + icon + '" style="width:70px;height:70px;object-fit:contain;border-radius:4px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="color:#ffd27a;font-size:0.65em;text-align:center;margin-top:6px;line-height:1.3;">' + (t.name || 'Трофей') + '</div>';
+            h += '</div>';
+        }
+        h += '</div>';
+    }
+
+    UI._openScreenScrollable('🏆 Трофеи', 'profile', h, 'UI.profile()');
+};
+
+UI._showTrophyInfo = function(index) {
+    var p = Sherwood.getPlayer();
+    if (!p || !p.trophies || !p.trophies[index]) return;
+    var t = p.trophies[index];
+
+    var bonusText = '';
+    if (t.bonus) {
+        if (t.bonus.attack) bonusText += '⚔️ Атака +' + t.bonus.attack + '<br>';
+        if (t.bonus.defense) bonusText += '🛡️ Защита +' + t.bonus.defense + '<br>';
+        if (t.bonus.hp) bonusText += '❤️ HP +' + t.bonus.hp + '<br>';
+    }
+
+    var h = '<div style="display:flex;flex-direction:column;align-items:center;padding:20px;text-align:center;">';
+    h += '<img src="' + (t.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:160px;height:160px;object-fit:contain;margin-bottom:20px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+    h += '<div style="color:#ffd27a;font-size:1.2em;font-weight:bold;margin-bottom:10px;">' + (t.name || 'Трофей') + '</div>';
+    h += '<div style="color:#aaa;font-size:0.8em;margin-bottom:16px;">' + (t.category || 'chapter') + '</div>';
+    if (bonusText) {
+        h += '<div style="color:#fff;font-size:0.9em;line-height:1.8;text-shadow:0 2px 4px #000;">' + bonusText + '</div>';
+    }
+    h += '</div>';
+
+    UI._openScreen(t.name || 'Трофей', 'profile', h, 'UI._showAllTrophies()');
+};
+
+// ============================================================
+//  ВСЕ КОЛЬЦА
+// ============================================================
+UI._showAllRings = function() {
+    UI._playSound('click');
+    var p = Sherwood.getPlayer();
+    var ownedRings = [];
+
+    var bag = Sherwood.Bag;
+    if (bag) {
+        var items = bag.getItems();
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].part === 'ring') ownedRings.push(items[i]);
+        }
+        var eq = bag.getEquipment();
+        if (eq && eq.ring) ownedRings.push(eq.ring);
+    }
+    if (p && p.marketData && p.marketData.ownedJewelry && p.marketData.ownedJewelry.rings) {
+        for (var k = 0; k < p.marketData.ownedJewelry.rings.length; k++) {
+            var rid = p.marketData.ownedJewelry.rings[k];
+            if (typeof Sherwood.BlackMarket !== 'undefined') {
+                var info = Sherwood.BlackMarket.getRingInfo ? Sherwood.BlackMarket.getRingInfo(rid) : null;
+                if (info) ownedRings.push(info);
+            }
+        }
+    }
+
+    var h = '<div style="text-align:center;padding:10px;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:12px;">💍 Кольца: ' + ownedRings.length + '</div>';
+
+    if (ownedRings.length === 0) {
+        h += '<div style="text-align:center;color:#888;padding:40px 20px;">Нет кольца.<br>Выкуй в кузнице или купи на рынке.</div>';
+    } else {
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;max-width:400px;margin:0 auto;">';
+        for (var i = 0; i < ownedRings.length; i++) {
+            var r = ownedRings[i];
+            h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #c9a040;border-radius:8px;padding:10px;width:90%;display:flex;align-items:center;gap:12px;">';
+            h += '<img src="' + (r.icon || 'assets/interface/ring_first_level.png') + '" style="width:64px;height:64px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="flex:1;text-align:left;">';
+            h += '<div style="color:#ffd27a;font-size:0.9em;font-weight:bold;">' + (r.name || 'Кольцо') + '</div>';
+            if (r.stats) {
+                h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">АТК +' + (r.stats.attack || 0) + ' | ЗЩТ +' + (r.stats.defense || 0) + '</div>';
+            }
+            h += '</div>';
+            h += '</div>';
+        }
+        h += '</div>';
+    }
+
+    UI._openScreenScrollable('💍 Кольца', 'profile', h, 'UI.profile()');
+};
+
+// ============================================================
+//  ВСЕ АМУЛЕТЫ
+// ============================================================
+UI._showAllAmulets = function() {
+    UI._playSound('click');
+    var p = Sherwood.getPlayer();
+    var ownedAmulets = [];
+
+    var bag = Sherwood.Bag;
+    if (bag) {
+        var items = bag.getItems();
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].part === 'amulet') ownedAmulets.push(items[i]);
+        }
+        var eq = bag.getEquipment();
+        if (eq && eq.amulet) ownedAmulets.push(eq.amulet);
+    }
+    if (p && p.marketData && p.marketData.ownedJewelry && p.marketData.ownedJewelry.amulets) {
+        for (var k = 0; k < p.marketData.ownedJewelry.amulets.length; k++) {
+            var aid = p.marketData.ownedJewelry.amulets[k];
+            if (typeof Sherwood.BlackMarket !== 'undefined') {
+                var info = Sherwood.BlackMarket.getAmuletInfo ? Sherwood.BlackMarket.getAmuletInfo(aid) : null;
+                if (info) ownedAmulets.push(info);
+            }
+        }
+    }
+
+    var h = '<div style="text-align:center;padding:10px;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:12px;">📿 Амулеты: ' + ownedAmulets.length + '</div>';
+
+    if (ownedAmulets.length === 0) {
+        h += '<div style="text-align:center;color:#888;padding:40px 20px;">Нет амулета.<br>Выкуй в кузнице или купи на рынке.</div>';
+    } else {
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;max-width:400px;margin:0 auto;">';
+        for (var i = 0; i < ownedAmulets.length; i++) {
+            var a = ownedAmulets[i];
+            h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #c9a040;border-radius:8px;padding:10px;width:90%;display:flex;align-items:center;gap:12px;">';
+            h += '<img src="' + (a.icon || 'assets/interface/sherwood_amulet_level_one.png') + '" style="width:64px;height:64px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '<div style="flex:1;text-align:left;">';
+            h += '<div style="color:#ffd27a;font-size:0.9em;font-weight:bold;">' + (a.name || 'Амулет') + '</div>';
+            if (a.stats) {
+                h += '<div style="color:#aaa;font-size:0.7em;margin-top:4px;">HP +' + (a.stats.hp || 0) + ' | ЗЩТ +' + (a.stats.defense || 0) + '</div>';
+            }
+            h += '</div>';
+            h += '</div>';
+        }
+        h += '</div>';
+    }
+
+    UI._openScreenScrollable('📿 Амулеты', 'profile', h, 'UI.profile()');
+};
 // ============================================================
 //  КУЗНИЦА
 // ============================================================
@@ -1004,47 +1156,52 @@ UI._exitGame = function() {
 };
 
 // ============================================================
-//  СУМКА
+//  СУМКА — новая версия (без верхних ресурсов, фон fixed)
 // ============================================================
 UI.bag = function() {
     UI._playSound('click');
-    var bag = Sherwood.Bag;
-    var items = bag ? bag.getItems() : [];
-    var max = bag ? bag.getMaxSlots() : 10;
-    var resources = bag ? bag.getResources() : {};
-    var h = '';
-    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px;">';
-    var resDefs = [
-        { key: 'gold', icon: 'assets/interface/resource_gold.png' }, { key: 'silver', icon: 'assets/interface/resource_silver.png' },
-        { key: 'skins', icon: 'assets/interface/skin_of_the_sherwood_creature.png' }, { key: 'entranceTickets', icon: 'assets/interface/resource_key_to_locked_levels.png' },
-        { key: 'autoFightTickets', icon: 'assets/interface/ticket_autofight.png' }, { key: 'amuletTablets', icon: 'assets/interface/amulet_crafting_tablet_resource.png' },
-        { key: 'ringTablets', icon: 'assets/interface/ring_crafting_tablet_resource.png' }, { key: 'skinTablets', icon: 'assets/interface/resource_appearance_crafting_tablet.png' },
-        { key: 'portalToken1', icon: 'assets/interface/resource_token_on_entrance_portal_1.png' }, { key: 'portalToken2', icon: 'assets/interface/resource_token_on_entrance_portal_2.png' }, { key: 'portalToken3', icon: 'assets/interface/resource_token_on_entrance_portal_3.png' }
-    ];
-    for (var r = 0; r < resDefs.length; r++) {
-        var rd = resDefs[r];
-        var count = resources[rd.key] || 0;
-        h += '<div style="position:relative;width:70px;height:70px;"><img src="assets/interface/visual_resource.png" style="width:100%;height:100%;object-fit:contain;"><img src="' + rd.icon + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'"><span style="position:absolute;top:2px;right:6px;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;">' + count + '</span></div>';
+
+    // Пересчёт слотов
+    if (Sherwood.Bag && Sherwood.Bag._recalcMaxSlots) {
+        try { Sherwood.Bag._recalcMaxSlots(); } catch(e) {}
     }
-    h += '</div>';
-    h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-bottom:6px;">' + items.length + '/' + max + ' ячеек</div>';
-    var expInfo = bag.getExpansionInfo();
-    var expBtn = expInfo.canExpand ? '<button onclick="UI._expandBag()" style="margin-top:10px;background:#c9a040;border:none;border-radius:8px;padding:8px 18px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;">Расширить +10 (' + expInfo.costSilver + ' серебра + ' + expInfo.costSkin + ' шкур)</button>' : '<span style="color:#666;font-size:0.7em;">Максимум для вашего уровня</span>';
-    h += expBtn;
-    h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:260px;margin:16px auto 0;">';
+
+    var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
+    var max = Sherwood.Bag ? Sherwood.Bag.getMaxSlots() : 25;
+
+    // Свой фон + своя сетка со скроллом
+    var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/bag.png\') center/cover no-repeat fixed;overflow:hidden;">';
+
+    // Шапка со счётчиком
+    h += '<div style="position:absolute;top:56px;left:0;right:0;text-align:center;color:#e0c080;font-size:0.9em;font-weight:bold;text-shadow:0 2px 4px #000;z-index:5;padding:6px 0;">📦 ' + items.length + ' / ' + max + ' ячеек</div>';
+
+    // Скролл-контейнер только для сетки
+    h += '<div class="bag-scroll" style="position:absolute;top:96px;left:0;right:0;bottom:0;overflow-y:auto;padding:10px 12px 20px 12px;">';
+    h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;justify-items:center;">';
+
     for (var i = 0; i < max; i++) {
         var item = items[i];
         if (item) {
-            var gc = Sherwood.GradeColors ? Sherwood.GradeColors[item.grade] : '#9d9d9d';
-            h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="UI._bagDragStart(event,' + i + ')" ondragover="UI._bagDragOver(event)" ondrop="UI._bagDrop(event,' + i + ')" onclick="UI._bagAction(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;"><img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:44px;height:44px;object-fit:contain;">';
-            if (item.quantity > 1) { h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.65em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + item.quantity + '</span>'; }
+            var gc = Sherwood.GradeColors ? (Sherwood.GradeColors[item.grade] || '#9d9d9d') : '#9d9d9d';
+            h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="UI._bagDragStart(event,' + i + ')" ondragover="UI._bagDragOver(event)" ondrop="UI._bagDrop(event,' + i + ')" onclick="UI._bagAction(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;">';
+            h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            if ((item.quantity || 1) > 1) {
+                h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + item.quantity + '</span>';
+            }
             h += '</div>';
         } else {
-            h += '<div data-bag-index="' + i + '" ondragover="UI._bagDragOver(event)" ondrop="UI._bagDrop(event,' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid #555;border-radius:8px;display:flex;align-items:center;justify-content:center;"></div>';
+            h += '<div data-bag-index="' + i + '" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid #555;border-radius:8px;"></div>';
         }
     }
-    h += '</div><div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:14px;min-height:24px;">Нажми на предмет</div>';
-    UI._openScreenScrollable('Сумка', 'bag', h);
+    h += '</div>';
+    h += '<div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:12px;min-height:24px;">Нажми на предмет</div>';
+    h += '</div>';
+    h += '</div>';
+
+    // Отключаем скролл родительского слоя
+    try { if (UI._screenLayer) UI._screenLayer.style.overflow = 'hidden'; } catch(e) {}
+
+    UI._openScreenScrollable('🎒 Сумка', null, h);
 };
 
 UI._bagDragStart = function(e, index) { e.dataTransfer.setData('text/plain', index); e.dataTransfer.effectAllowed = 'move'; };
@@ -1058,20 +1215,20 @@ UI._bagDrop = function(e, targetIndex) {
     var sourceItem = items[sourceIndex];
     var targetItem = items[targetIndex];
     if (targetItem && sourceItem.id === targetItem.id && sourceItem.name === targetItem.name) {
-        var maxStack = sourceItem.maxStack || 100;
+        var maxStack = Math.min(sourceItem.maxStack || 100, 100);
         var totalQty = (sourceItem.quantity || 1) + (targetItem.quantity || 1);
-        if (totalQty <= maxStack) { targetItem.quantity = totalQty; items.splice(sourceIndex, 1); } else { targetItem.quantity = maxStack; sourceItem.quantity = totalQty - maxStack; }
-    } else { items[sourceIndex] = targetItem; items[targetIndex] = sourceItem; }
+        if (totalQty <= maxStack) { targetItem.quantity = totalQty; items.splice(sourceIndex, 1); }
+        else { targetItem.quantity = maxStack; sourceItem.quantity = totalQty - maxStack; }
+    } else {
+        items[sourceIndex] = targetItem;
+        items[targetIndex] = sourceItem;
+    }
     Sherwood.Bag._save();
     UI.bag();
 };
 
 UI._expandBag = function() {
-    var r = Sherwood.Bag.expandBag();
-    var info = document.getElementById('bag-info');
-    if (r.success) { if (info) info.textContent = 'Сумка расширена до ' + r.newSlots + ' ячеек!'; UI.updateDisplay(); } else { if (info) info.textContent = (r.reason || 'Ошибка'); }
-    var self = UI;
-    setTimeout(function() { self.bag(); }, 800);
+    UI._showToast('Ячейки расширяются автоматически при повышении уровня (+5 за уровень)');
 };
 
 UI._bagAction = function(i) {
