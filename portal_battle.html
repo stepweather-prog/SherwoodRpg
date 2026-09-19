@@ -149,7 +149,7 @@
         var portalId = parseInt(urlParams.get('portal') || '1');
 
         // ============================================================
-        //  СЦЕНА + ФОН quest.png
+        //  СЦЕНА
         // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
@@ -178,11 +178,10 @@
         bgLoader.load('assets/assets2/backgrounds/quest.png', function(tex) {
             tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
-            const aspect = tex.image.width / tex.image.height;
-            // Плоскость за врагом, подобранная по aspect
-            const h = 8;
-            const w = h * aspect;
-            const bgPlane = new THREE.Mesh(
+            var aspect = tex.image.width / tex.image.height;
+            var h = 8;
+            var w = h * aspect;
+            var bgPlane = new THREE.Mesh(
                 new THREE.PlaneGeometry(w, h),
                 new THREE.MeshBasicMaterial({ map: tex })
             );
@@ -198,33 +197,63 @@
         var enemyBaseY = 0.85;
         var enemyOriginalScale = 2.4;
 
-        function createEnemySprite(imagePath, isBoss) {
+        // Возможные папки со спрайтами врагов портала
+        var BEAST_DIRS = [
+            'assets/portal_beasts/visual_portals/',
+            'assets/portal_beasts/',
+            'assets/all_beasts/'
+        ];
+
+        function loadEnemyTexture(imageName, onLoaded) {
+            var idx = 0;
+            function tryNext() {
+                if (idx >= BEAST_DIRS.length) {
+                    console.warn('Не нашёл спрайт врага: ' + imageName);
+                    if (onLoaded) onLoaded(null);
+                    return;
+                }
+                var url = BEAST_DIRS[idx] + imageName;
+                idx++;
+                var tex = new THREE.TextureLoader().load(url,
+                    function(t) {
+                        t.minFilter = THREE.LinearFilter;
+                        t.magFilter = THREE.LinearFilter;
+                        if (onLoaded) onLoaded(t);
+                    },
+                    undefined,
+                    function() { tryNext(); }
+                );
+            }
+            tryNext();
+        }
+
+        function createEnemySprite(imageName, isBoss) {
             if (enemySprite) {
                 scene.remove(enemySprite);
                 enemySprite = null;
             }
             var scale = isBoss ? enemyOriginalScale * 1.25 : enemyOriginalScale;
-            var loader = new THREE.TextureLoader();
-            enemyTexture = loader.load(imagePath, function(tex) {
-                tex.minFilter = THREE.LinearFilter;
-                tex.magFilter = THREE.LinearFilter;
+            loadEnemyTexture(imageName, function(tex) {
+                if (!tex) return;
+                enemyTexture = tex;
+                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: enemyTexture, transparent: true, alphaTest: 0.05
+                }));
+                enemySprite.scale.set(scale, scale, 1);
+                enemySprite.position.set(0, enemyBaseY, 0);
+                scene.add(enemySprite);
             });
-            enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: enemyTexture, transparent: true, alphaTest: 0.05
-            }));
-            enemySprite.scale.set(scale, scale, 1);
-            enemySprite.position.set(0, enemyBaseY, 0);
-            scene.add(enemySprite);
         }
 
         // ============================================================
         //  ГЛОБАЛЬНЫЕ СОСТОЯНИЯ
         // ============================================================
-        var battleData = null;      // { portal, level, totalLevels, enemy, isBoss }
+        var battleData = null;
         var isBattleActive = false;
         var playerHitFirst = false;
         var enemyKnockback = { active: false, t: 0, duration: 0.22, dx: 0, dz: 0, ox: 0, oz: 0 };
         var cameraShake = 0;
+
         var hitFlash = new THREE.Sprite(new THREE.SpriteMaterial({
             transparent: true, opacity: 0.85, depthTest: false, depthWrite: false
         }));
@@ -251,7 +280,6 @@
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
-        var soundSteps = new Audio('assets/assets2/tune/steps.wav');
         var portalMusic = new Audio('assets/assets2/music/dungeon_2.ogg');
         portalMusic.loop = true;
         portalMusic.volume = 0.35;
@@ -285,8 +313,7 @@
             document.getElementById('wave-label').textContent =
                 battleData.portal.name + ' — Волна ' + battleData.level + '/' + battleData.totalLevels;
 
-            var imgPath = 'assets/portal_beasts/' + (e.image || 'plague_crow.png');
-            createEnemySprite(imgPath, !!e.isBoss);
+            createEnemySprite(e.image || 'plague_crow.png', !!e.isBoss);
             isBattleActive = true;
             playerHitFirst = false;
         }
@@ -300,7 +327,6 @@
             playSound(soundHit);
             playerHitFirst = true;
 
-            // Отталкивание
             if (enemySprite) {
                 knockbackEnemy();
                 hitFlash.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
@@ -313,7 +339,6 @@
                 cameraShake = 0.06;
             }
 
-            // Всплывающий эффект удара
             showHitEffect();
 
             if (!r) return;
@@ -323,7 +348,6 @@
             if (r.dead && r.resurrected) { onPlayerDeath(r); return; }
 
             if (r.enemyDead) {
-                // Убит — переходим к следующему
                 isBattleActive = false;
                 setTimeout(function() {
                     var next = parent.Sherwood.Portal.getCurrentBattle();
@@ -333,16 +357,15 @@
                     document.getElementById('mob-hp-name').textContent = e2.name;
                     document.getElementById('wave-label').textContent =
                         next.portal.name + ' — Волна ' + next.level + '/' + next.totalLevels;
-                    var imgPath2 = 'assets/portal_beasts/' + (e2.image || 'plague_crow.png');
-                    createEnemySprite(imgPath2, !!e2.isBoss);
+                    createEnemySprite(e2.image || 'plague_crow.png', !!e2.isBoss);
                     updateMobHpBar(e2.hp, e2.maxHp);
+                    document.getElementById('mob-hp-text').textContent = 'HP: ' + e2.hp + '/' + e2.maxHp;
                     isBattleActive = true;
                     playerHitFirst = false;
                 }, 700);
                 return;
             }
 
-            // Обновляем HP врага
             if (r.enemyHp !== undefined) {
                 updateMobHpBar(r.enemyHp, r.enemyMaxHp);
                 document.getElementById('mob-hp-text').textContent = 'HP: ' + r.enemyHp + '/' + r.enemyMaxHp;
@@ -362,7 +385,6 @@
             enemyKnockback.t = 0;
             enemyKnockback.ox = enemySprite.position.x;
             enemyKnockback.oz = enemySprite.position.z;
-            // Отталкиваем назад (по Z, в сторону от игрока)
             enemyKnockback.dx = 0;
             enemyKnockback.dz = 0.35;
         }
@@ -388,6 +410,7 @@
         //  HP-БАР ВРАГА
         // ============================================================
         function updateMobHpBar(hp, maxHp) {
+            if (!maxHp) maxHp = 1;
             var pct = Math.max(0, Math.min(1, hp / maxHp));
             document.getElementById('mob-hp-fill').style.width = (pct * 100) + '%';
         }
@@ -430,7 +453,12 @@
                 silver: r.rewards.silver,
                 items: []
             };
-            if (r.trophy) rewards.items.push({ icon: 'assets/all_trophies/portal_trophies/1_wolf_fang.png', name: r.trophy, quantity: 1 });
+            if (r.trophy) {
+                rewards.items.push({
+                    icon: r.trophyIcon || 'assets/all_trophies/portal_trophies/1_wolf_fang.png',
+                    name: r.trophy, quantity: 1
+                });
+            }
 
             try {
                 if (parent.UI && parent.UI._showVictoryScreen) {
@@ -452,6 +480,7 @@
 
             try {
                 if (parent.UI && parent.UI._showDefeatScreen) {
+                    parent.UI._lastPortal = portalId;
                     parent.UI._afterRewardAction = function() {
                         try { parent.Sherwood.Portal.showUI(); } catch(e) { exitPortal(); }
                     };
@@ -463,7 +492,6 @@
         }
 
         function onPlayerDeath(r) {
-            // Воскрешение
             updateHeroSpheres();
             var w = document.getElementById('wave-label');
             if (w) {
@@ -480,15 +508,15 @@
         function exitPortal() {
             try {
                 if (parent.Sherwood.Portal) {
-                    // если бой не завершён — считаем как флеш-выход
                     if (parent.Sherwood.Portal.isInPortal()) parent.Sherwood.Portal.fleePortal();
                 }
             } catch(e){}
             try {
-                if (parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(1);
-                else if (parent.Sherwood && parent.Sherwood.Portal && parent.Sherwood.Portal.showUI) {
+                if (parent.Sherwood && parent.Sherwood.Portal && parent.Sherwood.Portal.showUI) {
                     parent.Sherwood.Portal.showUI();
-                } else if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                } else if (parent.UI && parent.UI.dungeon) {
+                    parent.UI.dungeon();
+                }
             } catch(e){}
         }
         window.exitPortal = exitPortal;
@@ -513,7 +541,7 @@
         });
 
         // ============================================================
-        //  СКИЛЛЫ (простые кнопки, используют ту же систему, что dungeon)
+        //  СКИЛЛЫ
         // ============================================================
         function renderTalents() {
             var leftCol = document.getElementById('skills-left');
@@ -559,14 +587,12 @@
             requestAnimationFrame(animate);
             var dt = Math.min(clock.getDelta(), 0.05);
 
-            // Отталкивание врага
             if (enemyKnockback.active && enemySprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
                 var ease = Math.sin(kk * Math.PI);
                 enemySprite.position.x = enemyKnockback.ox + enemyKnockback.dx * ease;
                 enemySprite.position.z = enemyKnockback.oz + enemyKnockback.dz * ease;
-                // "качание" — лёгкое покачивание врага
                 enemySprite.material.rotation = Math.sin(kk * Math.PI * 4) * 0.06;
                 if (kk >= 1) {
                     enemySprite.position.x = enemyKnockback.ox;
@@ -576,7 +602,6 @@
                 }
             }
 
-            // Тряска камеры
             if (cameraShake > 0.001) {
                 camera.position.x = (Math.random() - 0.5) * cameraShake;
                 camera.position.y = 0.8 + (Math.random() - 0.5) * cameraShake;
@@ -589,7 +614,6 @@
                 cameraShake = 0;
             }
 
-            // Лёгкое "дыхание" врага
             if (enemySprite && !enemyKnockback.active) {
                 var t = clock.elapsedTime;
                 enemySprite.position.y = enemyBaseY + Math.sin(t * 2.5) * 0.02;
