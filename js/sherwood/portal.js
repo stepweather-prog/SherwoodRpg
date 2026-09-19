@@ -4,6 +4,7 @@
  *  — чем старше портал, тем больше токенов (id * 3)
  *  — бой ведётся в portal_battle.html (iframe)
  *  — после победы/поражения возвращаемся к списку порталов
+ *  — пройденные порталы можно перепроходить (кнопка "В бой снова")
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -291,10 +292,19 @@ Sherwood.Portal = {
             h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + portal.name + '</div>';
 
             h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Токены: ' + tokens + ' / ' + requiredTokens + '</div>';
-            if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-bottom:10px;">✅ Пройден</div>';
-            else if (isUnlocked && canEnter) h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">⚔️ В бой</button>';
-            else if (isUnlocked && !canEnter) h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно токенов</div>';
-            else h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
+
+            // === Новая логика: показываем кнопку для ЛЮБОГО открытого портала (и пройденного тоже) ===
+            if (!isUnlocked) {
+                h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
+            } else if (!canEnter) {
+                h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно токенов</div>';
+                if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
+            } else {
+                var btnLabel = isCompleted ? '⚔️ В бой снова' : '⚔️ В бой';
+                h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">' + btnLabel + '</button>';
+                if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
+            }
+
             h += '</div>';
         }
         h += '</div>';
