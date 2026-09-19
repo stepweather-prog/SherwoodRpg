@@ -35,17 +35,14 @@ Sherwood.Tavern = {
         var p = Sherwood.getPlayer();
         if (!p) return;
 
-        // ===== ЕДИНЫЙ ИСТОЧНИК ПРАВДЫ — questProgress =====
         if (!p.questProgress) {
             p.questProgress = { completed: [], currentChapter: 1 };
         }
 
-        // Синхронизируем Tavern с questProgress
         this._completedChapters = p.questProgress.completed || [];
         this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
         this._isSecretUnlocked = this._completedChapters.length >= 15;
 
-        // Записываем обратно в p.tavern (для совместимости)
         if (!p.tavern) p.tavern = {};
         p.tavern.completedChapters = this._completedChapters;
         p.tavern.currentChapter = this._currentChapterIndex;
@@ -55,6 +52,7 @@ Sherwood.Tavern = {
     },
 
     getAllChapters: function() { return this.CHAPTERS; },
+
     getCurrentChapter: function() {
         if (this._currentChapterIndex < this.CHAPTERS.length) {
             return this.CHAPTERS[this._currentChapterIndex];
@@ -94,7 +92,6 @@ Sherwood.Tavern = {
         var p = Sherwood.getPlayer();
         if (!p) return;
 
-        // ОБНОВЛЯЕМ ОБА ХРАНИЛИЩА
         if (!p.questProgress) p.questProgress = { completed: [], currentChapter: 1 };
         p.questProgress.completed = this._completedChapters.slice();
         p.questProgress.currentChapter = this._currentChapterIndex + 1;
@@ -107,12 +104,36 @@ Sherwood.Tavern = {
         Sherwood.saveGame();
     },
 
+    // ============================================================
+    //  ВЫЗЫВАЕТСЯ ИЗ quests.js ПРИ ПОБЕДЕ В ГЛАВЕ
+    // ============================================================
+    markChapterComplete: function(chapterId) {
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+
+        if (!p.questProgress) p.questProgress = { completed: [], currentChapter: 1 };
+        if (p.questProgress.completed.indexOf(chapterId) === -1) {
+            p.questProgress.completed.push(chapterId);
+        }
+        p.questProgress.currentChapter = chapterId + 1;
+
+        this._completedChapters = p.questProgress.completed.slice();
+        this._currentChapterIndex = p.questProgress.currentChapter - 1;
+        this._currentQuest = null;
+
+        if (!p.tavern) p.tavern = {};
+        p.tavern.completedChapters = this._completedChapters;
+        p.tavern.currentChapter = this._currentChapterIndex;
+
+        Sherwood.saveGame();
+    },
+
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
             return;
         }
-        
+
         UI._playSound('click');
 
         // ПЕРЕСИНХРОНИЗАЦИЯ ПЕРЕД ОТКРЫТИЕМ
@@ -120,6 +141,17 @@ Sherwood.Tavern = {
         if (p && p.questProgress) {
             this._completedChapters = p.questProgress.completed || [];
             this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
+
+            // === СБРОС "принятого квеста", если глава уже пройдена,
+            //      или если quests.js перешагнул на новую главу ===
+            if (this._currentQuest) {
+                var cqId = this._currentQuest.id;
+                if (this._completedChapters.indexOf(cqId) !== -1) {
+                    this._currentQuest = null;
+                } else if ((p.questProgress.currentChapter || 1) > cqId) {
+                    this._currentQuest = null;
+                }
+            }
         }
 
         var current = this.getCurrentChapter();
@@ -132,7 +164,6 @@ Sherwood.Tavern = {
 
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;">';
 
-        // Видео егеря
         h += '<div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:60%;height:60%;pointer-events:none;">';
         h += '<video src="assets/assets2/animation/Garret.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>';
         h += '</div>';
@@ -142,34 +173,34 @@ Sherwood.Tavern = {
         h += '<div style="margin-bottom:20px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
 
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:40px;pointer-events:auto;">';
-        
+
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
         h += '</div>';
-        
+
         h += '<div onclick="Sherwood.Training.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
         h += '</div>';
-        
+
         h += '</div>';
 
         h += '<div style="width:90%;margin:0 auto;margin-top:180px;pointer-events:auto;">';
         h += '<div style="width:100%;height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
-        
+
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
-            var isAccepted = this._currentQuest !== null;
-            
+            var isAccepted = this._currentQuest !== null && this._currentQuest.id === current.id;
+
             h += '<div style="text-align:center;color:#ffa500;font-size:14px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.6;">' + current.title + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
-            
+
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
-            
+
             if (isCompleted) {
                 h += '<div style="text-align:center;color:#52b788;margin-top:15px;font-size:16px;font-weight:bold;">Глава пройдена!</div>';
             } else if (isAccepted) {
-                h += '<div style="text-align:center;color:#ffa500;margin-top:15px;font-size:16px;font-weight:bold;">Квест принят!</div>';
+                h += '<div style="text-align:center;color:#ffa500;margin-top:15px;font-size:16px;font-weight:bold;">Квест принят!<br><span style="font-size:12px;color:#ccc;">Зайди в раздел «Квесты» на главном экране</span></div>';
             } else {
                 h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:15px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
             }
@@ -178,7 +209,7 @@ Sherwood.Tavern = {
         }
         h += '</div>';
         h += '</div>';
-        
+
         h += '</div>';
         h += '</div>';
 
