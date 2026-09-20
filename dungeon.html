@@ -613,60 +613,58 @@
             obj.mesh = sprite;
         }
 
-        // ============================================================
-//  ВЫХОД ИЗ ЛАБИРИНТА
+   // ============================================================
+//  ВЫХОД ИЗ ЛАБИРИНТА — дверь в проёме
 // ============================================================
 var exitCell = { gx: size - 2, gy: size - 2 };
+map[exitCell.gy][exitCell.gx] = 0;  // пол под дверью
 
-// Убедимся, что клетка выхода проходима
-map[exitCell.gy][exitCell.gx] = 0;
+// Пробиваем гарантированный коридор к выходу (L-образный)
+(function carvePathToExit() {
+    var ex = exitCell.gx, ey = exitCell.gy;
+    var horizontalFirst = Math.random() < 0.5;
+    if (horizontalFirst) {
+        for (var x = 1; x <= ex; x++) if (map[1][x] === 1) map[1][x] = 0;
+        for (var y = 1; y <= ey; y++) if (map[y][ex] === 1) map[y][ex] = 0;
+    } else {
+        for (var y = 1; y <= ey; y++) if (map[y][1] === 1) map[y][1] = 0;
+        for (var x = 1; x <= ex; x++) if (map[ey][x] === 1) map[ey][x] = 0;
+    }
+    map[ey][ex] = 0;
+})();
 
 var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
 
-// Замок (закрытая дверь)
-var exitLockMesh = new THREE.Sprite(new THREE.SpriteMaterial({
+// Определяем ориентацию двери: стены слева/справа или сверху/снизу
+var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy);
+var exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
+var exitHoriz = exitWL && exitWR;  // если стены по бокам — дверь "горизонтальная"
+
+var exitDoorMat = new THREE.MeshStandardMaterial({
     map: closedLockTex,
     transparent: true,
-    depthTest: true
-}));
-exitLockMesh.scale.set(0.9, 0.9, 1);
-exitLockMesh.position.set(exitPos.x, 0.45, exitPos.z);
-exitLockMesh.userData = { exit: true };
-group.add(exitLockMesh);
+    alphaTest: 0.4,
+    side: THREE.DoubleSide,
+    roughness: 0.85
+});
 
-// Открытая дверь (появляется после убийства всех врагов)
-var exitOpenMesh = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: openDoorTex,
-    transparent: true,
-    depthTest: true
-}));
-exitOpenMesh.scale.set(0.9, 0.9, 1);
-exitOpenMesh.position.set(exitPos.x, 0.45, exitPos.z);
-exitOpenMesh.visible = false;
-exitOpenMesh.userData = { exit: true };
-group.add(exitOpenMesh);
-
-// Невидимый меш для клика (чтобы можно было кликнуть по выходу)
-var exitDoorMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.9, 1.1, 0.9),
-    new THREE.MeshBasicMaterial({ visible: false })
-);
-exitDoorMesh.position.set(exitPos.x, 0.55, exitPos.z);
-exitDoorMesh.userData = { exit: true };
-group.add(exitDoorMesh);
+var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), exitDoorMat);
+if (!exitHoriz) exitDoor.rotation.y = Math.PI / 2;
+exitDoor.position.set(exitPos.x, wallHeight / 2, exitPos.z);
+exitDoor.userData = { exit: true };
+group.add(exitDoor);
 
 var exitIsOpen = false;
 
 function checkExitDoor() {
-    // Проверяем, остались ли живые враги
-    var aliveEnemies = 0;
+    var alive = 0;
     for (var i = 0; i < objects.length; i++) {
-        if (objects[i].type === 'enemy' && !objects[i].collected) aliveEnemies++;
+        if (objects[i].type === 'enemy' && !objects[i].collected) alive++;
     }
-    if (aliveEnemies === 0 && !exitIsOpen) {
+    if (alive === 0 && !exitIsOpen) {
         exitIsOpen = true;
-        exitLockMesh.visible = false;
-        exitOpenMesh.visible = true;
+        exitDoor.material.map = openDoorTex;
+        exitDoor.material.needsUpdate = true;
         showCenterText('Выход открыт!', '#4caf50');
     }
 }
@@ -1029,12 +1027,12 @@ function checkExitDoor() {
                 return;
             }
 
-            var exitHits = raycaster.intersectObjects([exitDoorMesh, exitLockMesh, exitOpenMesh], false);
+                       var exitHits = raycaster.intersectObject(exitDoor, false);
             if (exitHits.length && exitHits[0].distance < 8) {
                 if (exitIsOpen) {
                     winDungeon();
                 } else {
-                    if (parent.UI && parent.UI._showToast) parent.UI._showToast(' Дверь закрыта! Убей всех врагов.');
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Дверь закрыта! Убей всех врагов.');
                 }
                 return;
             }
