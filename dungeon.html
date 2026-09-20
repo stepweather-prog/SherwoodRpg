@@ -629,12 +629,10 @@
         var exitHoriz = exitWL && exitWR;
 
         var exitDoorMat = new THREE.MeshStandardMaterial({
-            map: closedLockTex,
-            transparent: true,
-            alphaTest: 0.4,
-            side: THREE.DoubleSide,
-            roughness: 0.85
-        });
+    map: closedLockTex,
+    side: THREE.DoubleSide,
+    roughness: 0.85
+});
 
         var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), exitDoorMat);
         if (!exitHoriz) exitDoor.rotation.y = Math.PI / 2;
