@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Проклятая чаща</title>
 
     <!-- Мобильный CSS: применяется только при max-width: 600px -->
@@ -45,6 +45,22 @@
         #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; transition: all 0.2s; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; }
         #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+
+        /* === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН (когда враг бьёт игрока) === */
+        #blood-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 150;
+            pointer-events: none;
+            opacity: 0;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            transition: opacity 0.1s ease-out;
+        }
 
         /* ============================================================
            МОБИЛЬНАЯ ВЁРСТКА DUNGEON.HTML
@@ -126,10 +142,12 @@
     <div id="crosshair">✚</div>
     <div id="loot-fly-layer"></div>
 
+    <div id="blood-overlay"></div>
+
     <div id="mob-hp">
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
-        <span id="mob-hp-text">HP: 1000/1000</span>
+        <span id="mob-hp-text">HP: 1000</span>
     </div>
 
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
@@ -278,6 +296,34 @@
             }, 900);
             setTimeout(function() { el.remove(); }, 1900);
         }
+
+        // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН ===
+        var bloodOverlayTextures = [
+            'assets/assets2/animation/Fine_blood_spray_texture.png',
+            'assets/assets2/animation/Fine_blood_spray_texture (1).png',
+            'assets/assets2/animation/Fine_blood_spray_texture (2).png'
+        ];
+        var bloodOverlayTimeout1 = null;
+        var bloodOverlayTimeout2 = null;
+
+        function showBloodOverlay() {
+            var el = document.getElementById('blood-overlay');
+            if (!el) return;
+            var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)];
+            el.style.backgroundImage = 'url("' + tex + '")';
+            el.style.transition = 'opacity 0.1s ease-out';
+            el.style.opacity = '1';
+            clearTimeout(bloodOverlayTimeout1);
+            clearTimeout(bloodOverlayTimeout2);
+            bloodOverlayTimeout1 = setTimeout(function() {
+                el.style.transition = 'opacity 0.4s ease-out';
+                el.style.opacity = '0';
+            }, 400);
+            bloodOverlayTimeout2 = setTimeout(function() {
+                el.style.backgroundImage = '';
+            }, 900);
+        }
+        window.showBloodOverlay = showBloodOverlay;
 
         // ============================================================
         //  СЦЕНА
@@ -555,7 +601,6 @@
             var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
             sprite.position.set(x, 0.1, z);
             if (obj.type === 'enemy') {
-                // === УМЕНЬШЕНО и НИЖЕ (ноги на полу) ===
                 var scale = obj.isBoss ? 1.5 : 1.05;
                 sprite.scale.set(scale, scale, 1);
                 sprite.position.y = scale / 2;
@@ -1122,7 +1167,7 @@
             var dx = sprite.position.x - fromX;
             var dz = sprite.position.z - fromZ;
             var len = Math.hypot(dx, dz) || 1;
-            var power = 0.35;
+            var power = 0.10;
             enemyKnockback.dx = (dx / len) * power;
             enemyKnockback.dz = (dz / len) * power;
             enemyKnockback.t = 0;
@@ -1253,6 +1298,8 @@
                 p.stats.hp = Math.max(0, p.stats.hp - edmg);
                 if (parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
+                // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН ===
+                showBloodOverlay();
                 if (p.stats.hp <= 0) { stopBattle(); loseDungeon(); }
             }, 1500);
         }
@@ -1316,7 +1363,6 @@
                 // === КРОВЬ В СЛУЧАЙНОЙ ТОЧКЕ СПРАЙТА (не в центре) ===
                 var spriteW = currentEnemySprite.scale.x;
                 var spriteH = currentEnemySprite.scale.y;
-                // случайное смещение внутри радиуса ~40% от размера спрайта
                 var ox = (Math.random() - 0.5) * spriteW * 0.7;
                 var oy = (Math.random() - 0.5) * spriteH * 0.7;
 
@@ -1374,6 +1420,9 @@
             p.stats.hp = Math.max(0, p.stats.hp - edmg);
             if (parent.UI.updateDisplay) parent.UI.updateDisplay();
             updateHeroSpheres();
+
+            // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН (при ответном ударе) ===
+            showBloodOverlay();
 
             if (p.stats.hp <= 0) {
                 playSound(soundDefeat);
