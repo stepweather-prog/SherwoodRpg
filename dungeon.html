@@ -613,14 +613,63 @@
             obj.mesh = sprite;
         }
 
-        // Выходная стена
-        var exitWall = new THREE.Mesh(
-            new THREE.BoxGeometry(1, 1.1, 1),
-            new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
-        );
-        exitWall.position.set(size-2 - Math.floor(size/2), 0.55, size-2 - Math.floor(size/2));
-        exitWall.userData = { exit: true, locked: true };
-        group.add(exitWall);
+        // ============================================================
+//  ВЫХОД ИЗ ЛАБИРИНТА
+// ============================================================
+var exitCell = { gx: size - 2, gy: size - 2 };
+
+// Убедимся, что клетка выхода проходима
+map[exitCell.gy][exitCell.gx] = 0;
+
+var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
+
+// Замок (закрытая дверь)
+var exitLockMesh = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: closedLockTex,
+    transparent: true,
+    depthTest: true
+}));
+exitLockMesh.scale.set(0.9, 0.9, 1);
+exitLockMesh.position.set(exitPos.x, 0.45, exitPos.z);
+exitLockMesh.userData = { exit: true };
+group.add(exitLockMesh);
+
+// Открытая дверь (появляется после убийства всех врагов)
+var exitOpenMesh = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: openDoorTex,
+    transparent: true,
+    depthTest: true
+}));
+exitOpenMesh.scale.set(0.9, 0.9, 1);
+exitOpenMesh.position.set(exitPos.x, 0.45, exitPos.z);
+exitOpenMesh.visible = false;
+exitOpenMesh.userData = { exit: true };
+group.add(exitOpenMesh);
+
+// Невидимый меш для клика (чтобы можно было кликнуть по выходу)
+var exitDoorMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.9, 1.1, 0.9),
+    new THREE.MeshBasicMaterial({ visible: false })
+);
+exitDoorMesh.position.set(exitPos.x, 0.55, exitPos.z);
+exitDoorMesh.userData = { exit: true };
+group.add(exitDoorMesh);
+
+var exitIsOpen = false;
+
+function checkExitDoor() {
+    // Проверяем, остались ли живые враги
+    var aliveEnemies = 0;
+    for (var i = 0; i < objects.length; i++) {
+        if (objects[i].type === 'enemy' && !objects[i].collected) aliveEnemies++;
+    }
+    if (aliveEnemies === 0 && !exitIsOpen) {
+        exitIsOpen = true;
+        exitLockMesh.visible = false;
+        exitOpenMesh.visible = true;
+        showCenterText('Выход открыт!', '#4caf50');
+    }
+}
         // ============================================================
         //  МЕШКИ С ЛУТОМ
         // ============================================================
