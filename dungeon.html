@@ -316,12 +316,12 @@
             clearTimeout(bloodOverlayTimeout1);
             clearTimeout(bloodOverlayTimeout2);
             bloodOverlayTimeout1 = setTimeout(function() {
-                el.style.transition = 'opacity 0.4s ease-out';
+                el.style.transition = 'opacity 0.2s ease-out';
                 el.style.opacity = '0';
-            }, 400);
+            }, 200);
             bloodOverlayTimeout2 = setTimeout(function() {
                 el.style.backgroundImage = '';
-            }, 900);
+            }, 200);
         }
         window.showBloodOverlay = showBloodOverlay;
 
