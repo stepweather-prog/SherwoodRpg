@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Проклятая чаща</title>
 
-    <!-- Мобильный CSS: применяется только при max-width: 600px -->
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
 
     <style>
@@ -46,7 +45,6 @@
         #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
-        /* === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН (когда враг бьёт игрока) === */
         #blood-overlay {
             position: fixed;
             top: 0;
@@ -62,9 +60,6 @@
             transition: opacity 0.1s ease-out;
         }
 
-        /* ============================================================
-           МОБИЛЬНАЯ ВЁРСТКА DUNGEON.HTML
-           ============================================================ */
         @media (max-width: 600px) {
             button[onclick="exitDungeon();"] {
                 padding: 6px 12px !important;
@@ -193,9 +188,6 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // ============================================================
-        //  ПАРАМЕТРЫ ИЗ URL
-        // ============================================================
         var urlParams = new URLSearchParams(window.location.search);
         var currentDungeon = parseInt(urlParams.get('dungeon') || '1');
         var currentFloor = parseInt(urlParams.get('floor') || '1');
@@ -215,9 +207,6 @@
         var DIFF_MULT = { 1: 1.0, 2: 1.5, 3: 2.5 };
         var mult = DIFF_MULT[currentDiff] || 1.0;
 
-        // ============================================================
-        //  ЗВУКИ
-        // ============================================================
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -297,7 +286,6 @@
             setTimeout(function() { el.remove(); }, 1900);
         }
 
-        // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН ===
         var bloodOverlayTextures = [
             'assets/assets2/animation/Fine_blood_spray_texture.png',
             'assets/assets2/animation/Fine_blood_spray_texture (1).png',
@@ -325,9 +313,6 @@
         }
         window.showBloodOverlay = showBloodOverlay;
 
-        // ============================================================
-        //  СЦЕНА
-        // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
         scene.fog = new THREE.Fog(0x0a0805, 4, 12);
@@ -344,9 +329,6 @@
         scene.add(new THREE.AmbientLight(0x554433, 0.9));
         scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
-        // ============================================================
-        //  КАРТА
-        // ============================================================
         const size = 16;
         const wallHeight = 1.4;
         const cellSize = 1;
@@ -385,7 +367,20 @@
             map[size - 2][size - 2] = 0;
         }
         generateMaze();
-        
+
+        // ============================================================
+        //  КЛЕТКА ВЫХОДА + ГАРАНТИРОВАННЫЙ КОРИДОР (ДО дверей!)
+        // ============================================================
+        var exitCell = { gx: size - 2, gy: size - 2 };
+
+        (function carvePathToExit() {
+            var ex = exitCell.gx, ey = exitCell.gy;
+            for (var x = 1; x <= ex; x++) map[1][x] = 0;
+            for (var y = 1; y <= ey; y++) map[y][ex] = 0;
+            for (var x = 1; x <= ex; x++) map[ey][x] = 0;
+            for (var y = 1; y <= ey; y++) map[y][1] = 0;
+            map[ey][ex] = 0;
+        })();
 
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
@@ -396,6 +391,8 @@
             for (let y = 1; y < size - 1; y++) {
                 for (let x = 1; x < size - 1; x++) {
                     if (map[y][x] !== 0) continue;
+                    if (x === 1 && y === 1) continue;
+                    if (x === exitCell.gx && y === exitCell.gy) continue;
                     const wL = isWallCell(x - 1, y), wR = isWallCell(x + 1, y);
                     const wU = isWallCell(x, y - 1), wD = isWallCell(x, y + 1);
                     if (wL && wR && !wU && !wD) candidates.push({ x, y });
@@ -416,9 +413,6 @@
         }
         placeDoors();
 
-        // ============================================================
-        //  ТЕКСТУРЫ
-        // ============================================================
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
         const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
@@ -474,6 +468,7 @@
                     group.add(wall);
                     wallMeshes.push(wall);
                 } else if (map[row][col] === 2) {
+                    if (col === exitCell.gx && row === exitCell.gy) { map[row][col] = 0; continue; }
                     const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
                     const leaf = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), doorMat);
                     if (!horiz) leaf.rotation.y = Math.PI / 2;
@@ -490,9 +485,6 @@
             }
         }
 
-        // ============================================================
-        //  ИГРОК
-        // ============================================================
         const playerStart = { cx: 1, cy: 1 };
         let playerGX = playerStart.cx;
         let playerGY = playerStart.cy;
@@ -503,9 +495,6 @@
         heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
         scene.add(heroGlow);
 
-        // ============================================================
-        //  ОБЪЕКТЫ
-        // ============================================================
         var objectTypes = [
             { type: 'enemy', count: 15 },
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -613,64 +602,46 @@
             obj.mesh = sprite;
         }
 
-   // ============================================================
-//  ВЫХОД ИЗ ЛАБИРИНТА — дверь в проёме
-// ============================================================
-var exitCell = { gx: size - 2, gy: size - 2 };
-map[exitCell.gy][exitCell.gx] = 0;  // пол под дверью
-
-// Пробиваем гарантированный коридор к выходу (L-образный)
-(function carvePathToExit() {
-    var ex = exitCell.gx, ey = exitCell.gy;
-    var horizontalFirst = Math.random() < 0.5;
-    if (horizontalFirst) {
-        for (var x = 1; x <= ex; x++) if (map[1][x] === 1) map[1][x] = 0;
-        for (var y = 1; y <= ey; y++) if (map[y][ex] === 1) map[y][ex] = 0;
-    } else {
-        for (var y = 1; y <= ey; y++) if (map[y][1] === 1) map[y][1] = 0;
-        for (var x = 1; x <= ex; x++) if (map[ey][x] === 1) map[ey][x] = 0;
-    }
-    map[ey][ex] = 0;
-})();
-
-var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
-
-// Определяем ориентацию двери: стены слева/справа или сверху/снизу
-var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy);
-var exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
-var exitHoriz = exitWL && exitWR;  // если стены по бокам — дверь "горизонтальная"
-
-var exitDoorMat = new THREE.MeshStandardMaterial({
-    map: closedLockTex,
-    transparent: true,
-    alphaTest: 0.4,
-    side: THREE.DoubleSide,
-    roughness: 0.85
-});
-
-var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), exitDoorMat);
-if (!exitHoriz) exitDoor.rotation.y = Math.PI / 2;
-exitDoor.position.set(exitPos.x, wallHeight / 2, exitPos.z);
-exitDoor.userData = { exit: true };
-group.add(exitDoor);
-
-var exitIsOpen = false;
-
-function checkExitDoor() {
-    var alive = 0;
-    for (var i = 0; i < objects.length; i++) {
-        if (objects[i].type === 'enemy' && !objects[i].collected) alive++;
-    }
-    if (alive === 0 && !exitIsOpen) {
-        exitIsOpen = true;
-        exitDoor.material.map = openDoorTex;
-        exitDoor.material.needsUpdate = true;
-        showCenterText('Выход открыт!', '#4caf50');
-    }
-}
         // ============================================================
-        //  МЕШКИ С ЛУТОМ
+        //  ВЫХОД ИЗ ЛАБИРИНТА — дверь в проёме
         // ============================================================
+        // exitCell и коридор уже созданы выше, после generateMaze()
+
+        var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
+
+        var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy);
+        var exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
+        var exitHoriz = exitWL && exitWR;
+
+        var exitDoorMat = new THREE.MeshStandardMaterial({
+            map: closedLockTex,
+            transparent: true,
+            alphaTest: 0.4,
+            side: THREE.DoubleSide,
+            roughness: 0.85
+        });
+
+        var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), exitDoorMat);
+        if (!exitHoriz) exitDoor.rotation.y = Math.PI / 2;
+        exitDoor.position.set(exitPos.x, wallHeight / 2, exitPos.z);
+        exitDoor.userData = { exit: true };
+        group.add(exitDoor);
+
+        var exitIsOpen = false;
+
+        function checkExitDoor() {
+            var alive = 0;
+            for (var i = 0; i < objects.length; i++) {
+                if (objects[i].type === 'enemy' && !objects[i].collected) alive++;
+            }
+            if (alive === 0 && !exitIsOpen) {
+                exitIsOpen = true;
+                exitDoor.material.map = openDoorTex;
+                exitDoor.material.needsUpdate = true;
+                showCenterText('Выход открыт!', '#4caf50');
+            }
+        }
+
         function spawnLootBag(gx, gy) {
             var w = gridToWorld(gx, gy);
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -785,9 +756,6 @@ function checkExitDoor() {
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
         }
 
-        // ============================================================
-        //  КРОВЬ — уменьшена вдвое
-        // ============================================================
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
             'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
@@ -798,14 +766,10 @@ function checkExitDoor() {
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false
         }));
-        // было 0.8 — стало 0.4
         hitFlashSprite.scale.set(0.4, 0.4, 1);
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
 
-        // ============================================================
-        //  ДВИЖЕНИЕ
-        // ============================================================
         const MOVE_SPEED = 2.0;
         const rotationSpeed = Math.PI / 2;
 
@@ -815,10 +779,10 @@ function checkExitDoor() {
         let pendingLoot = null;
 
         function isWalkable(gx, gy) {
-    if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
-    const v = map[gy][gx];
-    return v === 0 || v === 3;
-}
+            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
+            const v = map[gy][gx];
+            return v === 0 || v === 3;
+        }
         function isEnemyAt(gx, gy) {
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
@@ -996,9 +960,6 @@ function checkExitDoor() {
             }
         });
 
-        // ============================================================
-        //  МИНИКАРТА
-        // ============================================================
         const minimapSize = size;
         const minimapCell = 11;
         const minimapCanvas = document.getElementById('minimap-canvas');
@@ -1008,9 +969,6 @@ function checkExitDoor() {
         const explored = new Uint8Array(size * size);
         const walked = new Uint8Array(size * size);
 
-        // ============================================================
-        //  КЛИК
-        // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
@@ -1027,7 +985,7 @@ function checkExitDoor() {
                 return;
             }
 
-                       var exitHits = raycaster.intersectObject(exitDoor, false);
+            var exitHits = raycaster.intersectObject(exitDoor, false);
             if (exitHits.length && exitHits[0].distance < 8) {
                 if (exitIsOpen) {
                     winDungeon();
@@ -1096,9 +1054,6 @@ function checkExitDoor() {
             moveForward();
         });
 
-        // ============================================================
-        //  КНОПКА ЛУТА
-        // ============================================================
         function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img');
             if (!iconImg) return;
@@ -1138,9 +1093,6 @@ function checkExitDoor() {
             }
         });
 
-        // ============================================================
-        //  БОЙ
-        // ============================================================
         var currentEnemySprite = null;
         var currentEnemyStats = null;
         var currentEnemyObj = null;
@@ -1297,7 +1249,6 @@ function checkExitDoor() {
                 p.stats.hp = Math.max(0, p.stats.hp - edmg);
                 if (parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
-                // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН ===
                 showBloodOverlay();
                 if (p.stats.hp <= 0) { stopBattle(); loseDungeon(); }
             }, 1500);
@@ -1359,7 +1310,6 @@ function checkExitDoor() {
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
 
             if (currentEnemySprite) {
-                // === КРОВЬ В СЛУЧАЙНОЙ ТОЧКЕ СПРАЙТА (не в центре) ===
                 var spriteW = currentEnemySprite.scale.x;
                 var spriteH = currentEnemySprite.scale.y;
                 var ox = (Math.random() - 0.5) * spriteW * 0.7;
@@ -1420,7 +1370,6 @@ function checkExitDoor() {
             if (parent.UI.updateDisplay) parent.UI.updateDisplay();
             updateHeroSpheres();
 
-            // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН (при ответном ударе) ===
             showBloodOverlay();
 
             if (p.stats.hp <= 0) {
@@ -1441,9 +1390,6 @@ function checkExitDoor() {
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        // ============================================================
-        //  ПОБЕДА / ПОРАЖЕНИЕ
-        // ============================================================
         function grantCupBoth(floor, diff) {
             try {
                 if (parent.UI && parent.UI._grantCup) {
@@ -1535,9 +1481,6 @@ function checkExitDoor() {
             } catch(e) { exitDungeon(); }
         }
 
-        // ============================================================
-        //  СКИЛЛЫ
-        // ============================================================
         var talentData = {
             'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
             'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
@@ -1687,9 +1630,6 @@ function checkExitDoor() {
             }
         }
 
-        // ============================================================
-        //  AI ВРАГОВ
-        // ============================================================
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 5.0;
         const ENEMY_STOP_DIST = 1.2;
@@ -1759,9 +1699,6 @@ function checkExitDoor() {
             });
         }
 
-        // ============================================================
-        //  КАМЕРА
-        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -1779,9 +1716,6 @@ function checkExitDoor() {
             playerGY = g.gy;
         }
 
-        // ============================================================
-        //  ЦИКЛ
-        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
