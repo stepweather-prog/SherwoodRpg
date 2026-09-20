@@ -613,62 +613,14 @@
             obj.mesh = sprite;
         }
 
-        // ============================================================
-        //  ДВЕРЬ-ВЫХОД — плоские меши в проёме
-        // ============================================================
-        var exitCell = { gx: size - 2, gy: size - 2 };
-        var exitW = gridToWorld(exitCell.gx, exitCell.gy);
-
-        for (var wi = wallMeshes.length - 1; wi >= 0; wi--) {
-            var wm = wallMeshes[wi];
-            if (wm.userData.gridX === size - 1 && wm.userData.gridY === size - 2) {
-                group.remove(wm);
-                wallMeshes.splice(wi, 1);
-            }
-        }
-
-        var exitDoorMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(cellSize, wallHeight),
-            new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide })
+        // Выходная стена
+        var exitWall = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1.1, 1),
+            new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load('assets/assets2/game_details/closed_level_lock_icon.png'), transparent: true })
         );
-        exitDoorMesh.rotation.y = Math.PI / 2;
-        exitDoorMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
-        exitDoorMesh.userData = { isExitDoor: true };
-        group.add(exitDoorMesh);
-
-        var exitLockMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.55, 0.55),
-            new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true, alphaTest: 0.1 })
-        );
-        exitLockMesh.rotation.y = Math.PI / 2;
-        exitLockMesh.position.set(exitW.x - 0.01, wallHeight / 2, exitW.z);
-        exitLockMesh.userData = { isExitLock: true };
-        group.add(exitLockMesh);
-
-        var exitOpenMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(cellSize * 1.05, wallHeight * 1.05),
-            new THREE.MeshBasicMaterial({ map: openDoorTex, transparent: true, alphaTest: 0.1 })
-        );
-        exitOpenMesh.rotation.y = Math.PI / 2;
-        exitOpenMesh.position.set(exitW.x, wallHeight / 2, exitW.z);
-        exitOpenMesh.userData = { isExitOpen: true };
-        exitOpenMesh.visible = false;
-        group.add(exitOpenMesh);
-
-        var exitIsOpen = false;
-
-        function checkExitDoor() {
-            var enemiesLeft = 0;
-            for (var i = 0; i < objects.length; i++) {
-                if (!objects[i].collected && objects[i].type === 'enemy') enemiesLeft++;
-            }
-            if (enemiesLeft === 0 && !exitIsOpen) {
-                exitIsOpen = true;
-                exitLockMesh.visible = false;
-                exitOpenMesh.visible = true;
-            }
-        }
-
+        exitWall.position.set(size-2 - Math.floor(size/2), 0.55, size-2 - Math.floor(size/2));
+        exitWall.userData = { exit: true, locked: true };
+        group.add(exitWall);
         // ============================================================
         //  МЕШКИ С ЛУТОМ
         // ============================================================
