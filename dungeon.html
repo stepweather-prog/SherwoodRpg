@@ -377,8 +377,6 @@
             var ex = exitCell.gx, ey = exitCell.gy;
             for (var x = 1; x <= ex; x++) map[1][x] = 0;
             for (var y = 1; y <= ey; y++) map[y][ex] = 0;
-            for (var x = 1; x <= ex; x++) map[ey][x] = 0;
-            for (var y = 1; y <= ey; y++) map[y][1] = 0;
             map[ey][ex] = 0;
         })();
 
