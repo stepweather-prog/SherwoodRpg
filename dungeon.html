@@ -385,7 +385,7 @@
             map[size - 2][size - 2] = 0;
         }
         generateMaze();
-        map[size - 2][size - 1] = 0;
+        
 
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
@@ -616,7 +616,7 @@
         // ============================================================
         //  ДВЕРЬ-ВЫХОД — плоские меши в проёме
         // ============================================================
-        var exitCell = { gx: size - 1, gy: size - 2 };
+        var exitCell = { gx: size - 2, gy: size - 2 };
         var exitW = gridToWorld(exitCell.gx, exitCell.gy);
 
         for (var wi = wallMeshes.length - 1; wi >= 0; wi--) {
@@ -816,10 +816,10 @@
         let pendingLoot = null;
 
         function isWalkable(gx, gy) {
-            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
-            const v = map[gy][gx];
-            return v === 0 || v === 3;
-        }
+    if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
+    const v = map[gy][gx];
+    return v === 0 || v === 3;
+}
         function isEnemyAt(gx, gy) {
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
