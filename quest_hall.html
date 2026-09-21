@@ -13,7 +13,6 @@
         #quest-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #ffa500; font: 18px "Times New Roman", serif; background: rgba(0, 0, 0, 0.7); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; }
         #quest-title .enemy-name { display: block; color: #fff; font-size: 16px; margin-top: 4px; }
 
-        /* === HP-КАРТОЧКА ВРАГА — как в подземке === */
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
@@ -31,6 +30,8 @@
 
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
+
+        #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
 
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 160px; height: 160px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.9); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 22px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
@@ -79,6 +80,7 @@
     </div>
 
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
+    <div id="blood-overlay"></div>
 
     <div id="skills-left" style="position:absolute; bottom:130px; left:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45;"></div>
 
@@ -101,7 +103,7 @@
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
         <div class="arrow-btn" id="btn-back">▼</div>
-        <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" style="width:90%;height:90%;object-fit:contain;"></div>
+        <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:90%;height:90%;object-fit:contain;"></div>
     </div>
 
     <button onclick="dungeonMusic.pause(); parent.Sherwood.Quests._questFlee()" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;">←</button>
@@ -132,23 +134,24 @@
         window.playSound = playSound;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0e0a06);
-        scene.fog = new THREE.Fog(0x0e0a06, 4, 10);
+        scene.background = new THREE.Color(0x0a0805);
+        scene.fog = new THREE.Fog(0x0a0805, 4, 12);
 
-        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 25);
-        camera.position.set(0, 0.8, 2.5);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
+        camera.position.set(0, 0.75, 0);
         camera.rotation.order = 'YXZ';
 
         const renderer = new THREE.WebGLRenderer({ antialias: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setClearColor(0x0e0a06, 1);
+        renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0x887766, 1.0));
-        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.2);
-        mainLight.position.set(5, 10, 5);
-        scene.add(mainLight);
+        scene.add(new THREE.AmbientLight(0x554433, 0.9));
+        scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
+
+        const wallHeight = 1.4;
+        const cellSize = 1;
 
         // ===== ТЕКСТУРЫ КВЕСТА =====
         const floorTex = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/floors_quest.png');
@@ -157,44 +160,49 @@
 
         const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.9 });
         const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8 });
-        const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9 });
+        const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, roughness: 0.9, side: THREE.DoubleSide });
 
         // ===== КОРИДОР =====
-        const corridorWidth = 1;
-        const corridorLength = 5;
-        const wallHeight = 1.1;
+        const corridorLength = 6;
+        const group = new THREE.Group();
+        scene.add(group);
 
-        for (let z = 0; z < corridorLength; z++) {
+        // Пол/потолок от z=1 до z=-4 (длина 5)
+        for (let z = 0; z < corridorLength - 1; z++) {
             const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
             floorTile.rotation.x = -Math.PI / 2;
-            floorTile.position.set(0, 0, z - corridorLength / 2 + 0.5);
-            scene.add(floorTile);
+            floorTile.position.set(0, 0, 1 - z);
+            group.add(floorTile);
 
             const ceilTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), ceilMat);
             ceilTile.rotation.x = Math.PI / 2;
-            ceilTile.position.set(0, wallHeight, z - corridorLength / 2 + 0.5);
-            scene.add(ceilTile);
+            ceilTile.position.set(0, wallHeight, 1 - z);
+            group.add(ceilTile);
         }
 
-        for (let z = 0; z < corridorLength; z++) {
+        // Стены
+        for (let z = 0; z < corridorLength - 1; z++) {
             const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, 1), wallMat);
-            wallLeft.position.set(-0.6, wallHeight / 2, z - corridorLength / 2 + 0.5);
-            scene.add(wallLeft);
+            wallLeft.position.set(-0.6, wallHeight / 2, 1 - z);
+            group.add(wallLeft);
 
             const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, wallHeight, 1), wallMat);
-            wallRight.position.set(0.6, wallHeight / 2, z - corridorLength / 2 + 0.5);
-            scene.add(wallRight);
+            wallRight.position.set(0.6, wallHeight / 2, 1 - z);
+            group.add(wallRight);
         }
 
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 0.2), wallMat);
-        backWall.position.set(0, wallHeight / 2, -corridorLength / 2);
-        scene.add(backWall);
+        // Задняя стена (сзади игрока) и передняя стена (перед игроком, там где раньше был враг)
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(1.4, wallHeight, 0.2), wallMat);
+        backWall.position.set(0, wallHeight / 2, 1.5);
+        group.add(backWall);
 
-        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(1, wallHeight, 0.2), wallMat);
-        frontWall.position.set(0, wallHeight / 2, corridorLength / 2);
-        scene.add(frontWall);
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(1.4, wallHeight, 0.2), wallMat);
+        frontWall.position.set(0, wallHeight / 2, -corridorLength + 1.5);
+        group.add(frontWall);
 
-        // ===== СПРАЙТ ВРАГА — как в подземке =====
+        // ============================================================
+        //  СПРАЙТ ВРАГА — как в подземке
+        // ============================================================
         var enemySprite = null;
         var enemyData = parent.Sherwood.Quests._currentEnemy;
         var chapterData = parent.Sherwood.Quests._currentQuest;
@@ -202,10 +210,12 @@
         var enemyHp = 1000;
         var enemyMaxHp = 1000;
         var pushTimer = null;
+        var playerHitFirst = false;
+        var battleTimer = null;
 
-        var enemyPos = new THREE.Vector3(0, 0, -1.5);   // Y считаем от scale
+        var enemyPos = new THREE.Vector3(0, 0, -2.5);
         var enemyBaseY = 0.55;
-        var enemyKnockback = { active: false, t: 0, duration: 0.25, ox: 0, oz: 0, dz: 0 };
+        var enemyKnockback = { active: false, t: 0, duration: 0.25, ox: 0, oz: 0, dx: 0, dz: 0, sprite: null, originalX: 0, originalZ: 0 };
         var cameraShake = 0;
 
         if (chapterData) {
@@ -229,10 +239,7 @@
         function loadEnemyTexture(imageName, onLoaded) {
             var idx = 0;
             function tryNext() {
-                if (idx >= BEAST_DIRS.length) {
-                    if (onLoaded) onLoaded(null);
-                    return;
-                }
+                if (idx >= BEAST_DIRS.length) { if (onLoaded) onLoaded(null); return; }
                 var url = BEAST_DIRS[idx] + imageName;
                 idx++;
                 var tex = new THREE.TextureLoader().load(url,
@@ -250,14 +257,10 @@
 
         function createEnemySprite(imageName) {
             if (enemySprite) scene.remove(enemySprite);
-            // === ТЕ ЖЕ ЗНАЧЕНИЯ ЧТО В ПОДЗЕМКЕ ===
             var scale = 1.05;
-
             loadEnemyTexture(imageName, function(tex) {
                 if (!tex) return;
-                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: tex, transparent: true, alphaTest: 0.05
-                }));
+                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
                 enemySprite.scale.set(scale, scale, 1);
                 enemyBaseY = scale / 2;
                 enemySprite.position.set(enemyPos.x, enemyBaseY, enemyPos.z);
@@ -267,7 +270,7 @@
 
         createEnemySprite(enemyData ? enemyData.image : 'plague_crow.png');
 
-        // ===== КРОВЬ — 0.4 + случайная текстура ====
+        // ===== КРОВЬ 0.4 + случайная текстура =====
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png',
             'assets/assets2/animation/blood_2.png',
@@ -280,9 +283,29 @@
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false
         }));
-        hitFlashSprite.scale.set(0.4, 0.4, 1);   // 0.4
+        hitFlashSprite.scale.set(0.4, 0.4, 1);
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
+
+        // ===== КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН =====
+        var bloodOverlayTextures = [
+            'assets/assets2/animation/Fine_blood_spray_texture.png',
+            'assets/assets2/animation/Fine_blood_spray_texture (1).png',
+            'assets/assets2/animation/Fine_blood_spray_texture (2).png'
+        ];
+        var bloodOverlayTimeout1 = null, bloodOverlayTimeout2 = null;
+        function showBloodOverlay() {
+            var el = document.getElementById('blood-overlay');
+            if (!el) return;
+            var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)];
+            el.style.backgroundImage = 'url("' + tex + '")';
+            el.style.transition = 'opacity 0.1s ease-out';
+            el.style.opacity = '1';
+            clearTimeout(bloodOverlayTimeout1); clearTimeout(bloodOverlayTimeout2);
+            bloodOverlayTimeout1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
+            bloodOverlayTimeout2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
+        }
+        window.showBloodOverlay = showBloodOverlay;
 
         document.getElementById('mob-hp').style.display = 'none';
 
@@ -361,32 +384,34 @@
         }
 
         function moveForward() {
-            if (isMoving || isTurning) return;
+            if (isMoving || isTurning || isBattleActive) return;
             const forward = new THREE.Vector3(0, 0, -1);
             forward.applyQuaternion(camera.quaternion);
             forward.y = 0; forward.normalize();
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
-            if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
-            if (targetZ < enemyPos.z + 2.0) return;
+            if (targetX < -0.35 || targetX > 0.35) return;
+            if (targetZ < -corridorLength + 2 || targetZ > 1.0) return;
+            if (targetZ < enemyPos.z + 1.5) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
 
         function moveBackward() {
-            if (isMoving || isTurning) return;
+            if (isMoving || isTurning || isBattleActive) return;
             const forward = new THREE.Vector3(0, 0, 1);
             forward.applyQuaternion(camera.quaternion);
             forward.y = 0; forward.normalize();
             const targetX = camera.position.x + Math.round(forward.x);
             const targetZ = camera.position.z + Math.round(forward.z);
-            if (targetX < -0.35 || targetX > 0.35 || targetZ < -corridorLength / 2 + 0.3 || targetZ > corridorLength / 2 - 0.3) return;
+            if (targetX < -0.35 || targetX > 0.35) return;
+            if (targetZ < -corridorLength + 2 || targetZ > 1.0) return;
             isMoving = true;
             animateStep(targetX, targetZ);
         }
 
-        function turnLeft() { if (!isMoving && !isTurning) animateTurn(yaw + rotationSpeed); }
-        function turnRight() { if (!isMoving && !isTurning) animateTurn(yaw - rotationSpeed); }
+        function turnLeft() { if (!isMoving && !isTurning && !isBattleActive) animateTurn(yaw + rotationSpeed); }
+        function turnRight() { if (!isMoving && !isTurning && !isBattleActive) animateTurn(yaw - rotationSpeed); }
 
         document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
         document.getElementById('btn-back').addEventListener('touchstart', (e) => { e.preventDefault(); moveBackward(); });
@@ -405,14 +430,15 @@
             }
         });
 
-        // ===== БОЙ =====
-        document.getElementById('attack-icon').addEventListener('click', function() { attackEnemy(); });
-
+        // ============================================================
+        //  БОЙ — КАК В ПОДЗЕМКЕ
+        // ============================================================
         var hitSprites = [
             'strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png',
             'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
         ];
 
+        // Отскок врага — почти незаметный (0.02 вместо 0.10)
         function knockbackEnemy(sprite, fromX, fromZ) {
             if (!sprite) return;
             enemyKnockback.active = true;
@@ -422,103 +448,48 @@
             var dx = sprite.position.x - fromX;
             var dz = sprite.position.z - fromZ;
             var len = Math.hypot(dx, dz) || 1;
-            var power = 0.35;
+            var power = 0.02; // было 0.10 — почти незаметно
             enemyKnockback.dx = (dx / len) * power;
             enemyKnockback.dz = (dz / len) * power;
             enemyKnockback.t = 0;
         }
 
-        function attackEnemy() {
-            if (!isBattleActive) return;
-            var playerStats = parent.Sherwood.getPlayer();
+        function startBattle() {
+            if (isBattleActive) return;
+            isBattleActive = true;
+            playerHitFirst = false;
+            document.getElementById('mob-hp').style.display = 'block';
+            if (enemyData) {
+                enemyHp = enemyData.hp;
+                enemyMaxHp = enemyData.hp;
+                updateMobHpBarFill(enemyHp, enemyMaxHp);
+            }
             playSound(soundHit);
 
-            var baseDmg = Math.max(50, Math.floor(playerStats.stats.attack * 1.5) - Math.floor(enemyData.def * 0.1) + Math.floor(Math.random() * 20));
-            if (playerStats.talents && playerStats.talents['ignore']) baseDmg += Math.floor(baseDmg * playerStats.talents['ignore'] * 0.05);
+            if (battleTimer) clearInterval(battleTimer);
+            battleTimer = setInterval(function() {
+                if (!isBattleActive) return;
+                if (!playerHitFirst) return;
+                var p = parent.Sherwood.getPlayer();
+                if (!p) return;
+                var edmg = Math.max(1, Math.floor(enemyData.atk * 0.3));
+                if (p.talents) {
+                    if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                    if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+                }
+                p.stats.hp = Math.max(0, p.stats.hp - edmg);
+                if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+                updateHeroSpheres();
+                showBloodOverlay();
+                if (p.stats.hp <= 0) { stopBattle(); onDefeat(); }
+            }, 1500);
+        }
 
-            var now = Date.now();
-            for (var i = activeEffects.length - 1; i >= 0; i--) {
-                var ef = activeEffects[i];
-                if (ef.endsAt < now) { activeEffects.splice(i, 1); continue; }
-                if (ef.type === 'ricochet' || ef.type === 'riot' || ef.type === 'inspiration') baseDmg = Math.floor(baseDmg * (1 + ef.bonus));
-            }
-            var dmg = baseDmg;
-
-            if (playerStats.talents && playerStats.talents['vampirism'] && Math.random() < 0.3) {
-                playerStats.stats.hp = Math.min(playerStats.stats.maxHp, playerStats.stats.hp + 10 * playerStats.talents['vampirism']);
-            }
-
-            enemyHp = Math.max(0, enemyHp - dmg);
-            updateMobHpBarFill(enemyHp, enemyMaxHp);
-
-            // === КРОВЬ В СЛУЧАЙНОЙ ЧАСТИ СПРАЙТА ===
-            if (enemySprite) {
-                knockbackEnemy();
-                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
-                hitFlashSprite.material.needsUpdate = true;
-                hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
-                var spriteW = enemySprite.scale.x;
-                var spriteH = enemySprite.scale.y;
-                var ox = (Math.random() - 0.5) * spriteW * 0.7;
-                var oy = (Math.random() - 0.5) * spriteH * 0.7;
-                hitFlashSprite.position.copy(enemySprite.position);
-                hitFlashSprite.position.x += ox;
-                hitFlashSprite.position.y += oy;
-                hitFlashSprite.visible = true;
-                clearTimeout(pushTimer);
-                pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
-                cameraShake = 0.06;
-            }
-
-            var hitEffect = document.getElementById('hit-effect');
-            var hitEffectImg = document.getElementById('hit-effect-img');
-            if (hitEffect && hitEffectImg && enemySprite) {
-                hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
-                var screenPos = enemySprite.position.clone();
-                screenPos.project(camera);
-                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                var side = Math.random() < 0.5 ? -1 : 1;
-                hitEffect.style.left = (x + side * 120) + 'px';
-                hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
-                hitEffect.style.display = 'block';
-                setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
-            }
-
-            if (enemyHp <= 0) { onEnemyKilled(); return; }
-
-            var skipEnemyTurn = false;
-            for (var i = activeEffects.length - 1; i >= 0; i--) {
-                if (activeEffects[i].type === 'stun' || activeEffects[i].type === 'knot') skipEnemyTurn = true;
-            }
-            if (skipEnemyTurn) { updateHeroSpheres(); return; }
-
-            if (playerStats.talents) {
-                if (playerStats.talents['parry'] && Math.random() < 0.05 * playerStats.talents['parry']) return;
-                if (playerStats.talents['silence'] && Math.random() < 0.1 * playerStats.talents['silence']) return;
-            }
-
-            var edmg = Math.max(1, Math.floor(enemyData.atk * 0.02) - Math.floor(playerStats.stats.defense * 0.1) + Math.floor(Math.random() * 3));
-            if (playerStats.talents) {
-                if (playerStats.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * playerStats.talents['blocking']));
-                if (playerStats.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * playerStats.talents['numbness']));
-            }
-            for (var i = 0; i < activeEffects.length; i++) {
-                if (activeEffects[i].type === 'funnel') edmg = Math.floor(edmg * (1 - activeEffects[i].debuff));
-            }
-
-            playerStats.stats.hp = Math.max(0, playerStats.stats.hp - edmg);
-            if (typeof parent.UI !== 'undefined' && parent.UI.updateDisplay) parent.UI.updateDisplay();
-            updateHeroSpheres();
-
-            if (playerStats.stats.hp <= 0) {
-                playSound(soundDefeat);
-                dungeonMusic.pause();
-                isBattleActive = false;
-                document.getElementById('mob-hp').style.display = 'none';
-                if (enemySprite) scene.remove(enemySprite);
-                parent.Sherwood.Quests._onQuestDefeat();
-            }
+        function stopBattle() {
+            isBattleActive = false;
+            playerHitFirst = false;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
         }
 
         function updateMobHpBarFill(hp, maxHp) {
@@ -542,16 +513,128 @@
         }
 
         function checkEnemy() {
+            if (!enemySprite) return;
             var dist = camera.position.distanceTo(enemyPos);
             if (dist < 3.0 && !isBattleActive) {
-                isBattleActive = true;
-                document.getElementById('mob-hp').style.display = 'block';
-                if (enemyData) {
-                    enemyHp = enemyData.hp;
-                    enemyMaxHp = enemyData.hp;
-                    updateMobHpBarFill(enemyHp, enemyMaxHp);
-                }
+                startBattle();
             }
+        }
+
+        document.getElementById('attack-icon').addEventListener('click', function() {
+            if (isBattleActive) attackEnemy();
+        });
+
+        function attackEnemy() {
+            if (!isBattleActive || !enemyData) return;
+            playerHitFirst = true;
+            var p = parent.Sherwood.getPlayer();
+            playSound(soundHit);
+
+            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(enemyData.def * 0.5) + Math.floor(Math.random() * 20));
+            if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
+
+            var now = Date.now();
+            for (var i = activeEffects.length - 1; i >= 0; i--) {
+                var ef = activeEffects[i];
+                if (ef.endsAt < now) { activeEffects.splice(i, 1); continue; }
+                if (ef.type === 'ricochet' || ef.type === 'riot' || ef.type === 'inspiration') baseDmg = Math.floor(baseDmg * (1 + ef.bonus));
+            }
+            var dmg = baseDmg;
+
+            if (p.talents && p.talents['vampirism'] && Math.random() < 0.3) {
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 10 * p.talents['vampirism']);
+            }
+
+            enemyHp = Math.max(0, enemyHp - dmg);
+            updateMobHpBarFill(enemyHp, enemyMaxHp);
+
+            // Кровь в случайной точке спрайта
+            if (enemySprite) {
+                var spriteW = enemySprite.scale.x;
+                var spriteH = enemySprite.scale.y;
+                var ox = (Math.random() - 0.5) * spriteW * 0.7;
+                var oy = (Math.random() - 0.5) * spriteH * 0.7;
+
+                hitFlashSprite.position.copy(enemySprite.position);
+                hitFlashSprite.position.x += ox;
+                hitFlashSprite.position.y += oy;
+                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
+                hitFlashSprite.material.needsUpdate = true;
+                hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
+                hitFlashSprite.visible = true;
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+
+                knockbackEnemy(enemySprite, camera.position.x, camera.position.z);
+                cameraShake = 0.06;
+            }
+
+            var hitEffect = document.getElementById('hit-effect');
+            var hitEffectImg = document.getElementById('hit-effect-img');
+            if (hitEffect && hitEffectImg && enemySprite) {
+                hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                var screenPos = enemySprite.position.clone();
+                screenPos.y += 0.1;
+                screenPos.project(camera);
+                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                var side = Math.random() < 0.5 ? -1 : 1;
+                hitEffect.style.left = (x + side * 120) + 'px';
+                hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
+                hitEffect.style.display = 'block';
+                setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
+            }
+
+            if (enemyHp <= 0) { onEnemyKilled(); return; }
+
+            // Пропуск хода врага
+            var skipEnemyTurn = false;
+            for (var i = activeEffects.length - 1; i >= 0; i--) {
+                if (activeEffects[i].type === 'stun' || activeEffects[i].type === 'knot') skipEnemyTurn = true;
+            }
+            if (skipEnemyTurn) { updateHeroSpheres(); return; }
+
+            if (p.talents) {
+                if (p.talents['parry'] && Math.random() < 0.05 * p.talents['parry']) return;
+                if (p.talents['silence'] && Math.random() < 0.1 * p.talents['silence']) return;
+            }
+
+            var edmg = Math.max(1, Math.floor(enemyData.atk * 0.3));
+            if (p.talents) {
+                if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+            }
+            for (var i = 0; i < activeEffects.length; i++) {
+                if (activeEffects[i].type === 'funnel') edmg = Math.floor(edmg * (1 - activeEffects[i].debuff));
+            }
+
+            p.stats.hp = Math.max(0, p.stats.hp - edmg);
+            if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateHeroSpheres();
+            showBloodOverlay();
+
+            if (p.stats.hp <= 0) {
+                playSound(soundDefeat);
+                stopBattle();
+                onDefeat();
+            }
+        }
+
+        function onEnemyKilled() {
+            if (!isBattleActive) return;
+            stopBattle();
+            playSound(soundVictory);
+            dungeonMusic.pause();
+            dungeonMusic.currentTime = 0;
+            if (enemySprite) scene.remove(enemySprite);
+            parent.Sherwood.Quests._onQuestWin();
+        }
+
+        function onDefeat() {
+            playSound(soundDefeat);
+            dungeonMusic.pause();
+            if (enemySprite) scene.remove(enemySprite);
+            parent.Sherwood.Quests._onQuestDefeat();
         }
 
         // ===== СКИЛЛЫ =====
@@ -663,26 +746,13 @@
             }
         }
 
-        function onEnemyKilled() {
-            if (!isBattleActive) return;
-            soundVictory.currentTime = 0;
-            soundVictory.volume = 1.0;
-            soundVictory.play();
-            dungeonMusic.pause();
-            dungeonMusic.currentTime = 0;
-            isBattleActive = false;
-            document.getElementById('mob-hp').style.display = 'none';
-            if (enemySprite) scene.remove(enemySprite);
-            parent.Sherwood.Quests._onQuestWin();
-        }
-
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
             var dt = Math.min(clock.getDelta(), 0.05);
 
-            // Отталкивание врага
+            // Отскок врага (едва заметный)
             if (enemyKnockback.active && enemyKnockback.sprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
@@ -700,14 +770,11 @@
 
             // Тряска камеры
             if (cameraShake > 0.001) {
-                camera.position.x = (Math.random() - 0.5) * cameraShake;
-                camera.position.y = 0.8 + (Math.random() - 0.5) * cameraShake;
-                camera.position.z = 2.5 + (Math.random() - 0.5) * cameraShake;
+                camera.position.x += (Math.random() - 0.5) * cameraShake;
+                camera.position.z += (Math.random() - 0.5) * cameraShake;
+                camera.position.y = 0.75 + (Math.random() - 0.5) * cameraShake;
                 cameraShake *= 0.85;
             } else if (cameraShake !== 0) {
-                camera.position.x = 0;
-                camera.position.y = 0.8;
-                camera.position.z = 2.5;
                 cameraShake = 0;
             }
 
@@ -717,7 +784,6 @@
                 enemySprite.position.y = enemyBaseY + Math.sin(t * 2.5) * 0.015;
             }
 
-            // Камера
             camera.rotation.set(0, yaw, 0);
 
             renderer.render(scene, camera);
