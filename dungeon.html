@@ -123,21 +123,56 @@
             if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) {
                 totalCups = parent.Sherwood.Dungeon.getTotalCups();
             }
+            if (!totalCups && parent.UI && parent.UI._getDungeonFloorsData) {
+                // fallback: считаем по всем подземкам из UI
+                var byD = parent.UI._ensureDungeonProgress && parent.UI._ensureDungeonProgress();
+                if (byD && byD.byDungeon) {
+                    for (var dk in byD.byDungeon) {
+                        var arr = byD.byDungeon[dk];
+                        for (var i = 0; i < arr.length; i++) totalCups += (arr[i].cups || 0);
+                    }
+                }
+            }
         } catch(e) {}
         var difficultyLevel = totalCups + 1;
 
+        // ============================================================
+        //  МОБЫ — ПО ПОДЗЕМЕЛЬЯМ И ЭТАЖАМ
+        // ============================================================
         var ENEMY_POOLS = {
-            1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
-            2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
-            3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
-            4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' },
-            5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
-            6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
+            1: {
+                1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
+                2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
+                3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
+                4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' },
+                5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
+                6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
+            },
+            2: {
+                1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' },
+                2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' },
+                3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' },
+                4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' },
+                5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' },
+                6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' }
+            },
+            3: {
+                1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' },
+                2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' },
+                3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' },
+                4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
+                5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' },
+                6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' }
+            }
         };
-        var currentPool = ENEMY_POOLS[currentFloor] || ENEMY_POOLS[1];
+
+        var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor])
+            || ENEMY_POOLS[1][1];
 
         // +20% HP/ATK/DEF мобов за каждый кубок
         var mult = 1.0 + (difficultyLevel - 1) * 0.2;
+
+        var MOB_PATH = 'assets/all_beasts/';
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
@@ -264,13 +299,9 @@
                     stack.push({ x: next.x, y: next.y });
                 } else { stack.pop(); }
             }
-            // map[size - 2][size - 2] = 0; — УДАЛЕНО (клетка вне лабиринта)
         }
         generateMaze();
 
-        // ============================================================
-        //  ВЫХОД — САМАЯ ДАЛЬНЯЯ КЛЕТКА ОТ СТАРТА (BFS)
-        // ============================================================
         var exitCell = (function findFarthestCell() {
             var startGX = 1, startGY = 1;
             var visited = {};
@@ -326,9 +357,6 @@
 
         const loader = new THREE.TextureLoader();
 
-        // ============================================================
-        //  ТЕКСТУРЫ ПО ПОДЗЕМЕЛЬЯМ (одинаковы для всех 6 этажей внутри)
-        // ============================================================
         var wallTexturePath, floorTexturePath, ceilTexturePath;
 
         if (currentDungeon === 2) {
@@ -458,10 +486,10 @@
         }
 
         var enemyImgList = [];
-        enemyImgList.push('assets/assets2/mobs/dungeon_mobs/' + currentPool.boss);
+        enemyImgList.push(MOB_PATH + currentPool.boss);
         for (var ei = 0; ei < 14; ei++) {
             var enName = currentPool.normal[Math.floor(Math.random() * currentPool.normal.length)];
-            enemyImgList.push('assets/assets2/mobs/dungeon_mobs/' + enName);
+            enemyImgList.push(MOB_PATH + enName);
         }
         enemyImgList.sort(function() { return Math.random() - 0.5; });
         var enemyIndex = 0;
@@ -510,9 +538,6 @@
             obj.mesh = sprite;
         }
 
-        // ============================================================
-        //  ВЫХОД — обычная дверь в клетке exitCell
-        // ============================================================
         var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
         var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy);
         var exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
@@ -831,9 +856,6 @@
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
-        // ============================================================
-        //  КЛИК — берём БЛИЖАЙШЕЕ пересечение среди ВСЕХ объектов
-        // ============================================================
         renderer.domElement.addEventListener('click', (e) => {
             ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -848,19 +870,15 @@
             }
 
             var candidates = [];
-
             var exitHits = raycaster.intersectObject(exitDoor, false);
             if (exitHits.length) candidates.push({ dist: exitHits[0].distance, kind: 'exit' });
-
             var doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
             if (doorHits.length) candidates.push({ dist: doorHits[0].distance, kind: 'door', obj: doorHits[0].object });
-
             var bagMeshes = lootBags.map(b => b.mesh);
             if (bagMeshes.length) {
                 var bagHits = raycaster.intersectObjects(bagMeshes, false);
                 if (bagHits.length) candidates.push({ dist: bagHits[0].distance, kind: 'bag', obj: bagHits[0].object });
             }
-
             var spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
             if (spriteMeshes.length) {
                 var spriteHits = raycaster.intersectObjects(spriteMeshes, false);
@@ -870,7 +888,6 @@
             if (candidates.length > 0) {
                 candidates.sort(function(a, b) { return a.dist - b.dist; });
                 var best = candidates[0];
-
                 if (best.kind === 'exit') {
                     if (best.dist < 8) {
                         if (exitIsOpen) { winDungeon(); }
@@ -915,7 +932,6 @@
                     }
                 }
             }
-
             moveForward();
         });
 
