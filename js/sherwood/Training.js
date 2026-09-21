@@ -28,21 +28,21 @@ Sherwood.Training = {
         var current = levels[stat] || 0;
         var nextLevel = current + 1;
         var cost = 1;   // 1 очко = 1 улучшение
-        var bonus = { attack: 25, defense: 25, hp: 25 };
+        var bonus = { attack: 50, defense: 50, hp: 50 };
         return {
             stat: stat,
             level: current,
             nextLevel: nextLevel,
             cost: cost,
             bonus: bonus[stat] || 0,
-            isMax: current >= 1000
+            isMax: current >= 30000
         };
     },
 
     train: function(stat) {
         var info = this.getStatInfo(stat);
         if (info.isMax) {
-            return { success: false, reason: 'Максимальный уровень (1000)' };
+            return { success: false, reason: 'Максимальный уровень (30000)' };
         }
 
         var p = Sherwood.getPlayer();
