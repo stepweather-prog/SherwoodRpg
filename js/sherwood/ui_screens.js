@@ -1350,7 +1350,12 @@ UI._dungeonShowFloors = function(dungeonId) {
         var f2 = UI._isFloorAvailable(dungeonId, n, 2);
         var f3 = UI._isFloorAvailable(dungeonId, n, 3);
 
-        h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
+        var floorTile;
+if (dungeonId === 2) floorTile = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
+else if (dungeonId === 3) floorTile = 'assets/assets2/Sherwood_Square/ceiling_raid.png';
+else floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
+
+h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
         h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
 
         if (!f1) {
