@@ -8,7 +8,17 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; font-family: Georgia, serif; }
-        canvas { display: block; background: #000; touch-action: none; }
+        canvas { display: block; background: transparent; touch-action: none; position: relative; z-index: 2; }
+
+        /* ===== ФОН ПОРТАЛА ===== */
+        #portal-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('assets/assets2/Sherwood_Square/ceiling_quest.png') center center / cover no-repeat;
+            z-index: 0;
+            pointer-events: none;
+        }
 
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.75) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
@@ -46,7 +56,6 @@
 
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
-        /* === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН === */
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
 
         #wave-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 14px; font-weight: bold; text-shadow: 0 0 6px #000; z-index: 40; letter-spacing: 1px; text-align: center; }
@@ -67,6 +76,9 @@
     </style>
 </head>
 <body>
+    <!-- ФОН ПОРТАЛА -->
+    <div id="portal-bg"></div>
+
     <div id="wave-label"></div>
 
     <div id="mob-hp">
@@ -136,11 +148,15 @@
         var enemyTexture = null;
         var enemyBaseY = 0.55;
 
+        // ============================================================
+        //  Боссы порталов лежат в assets/portal_beasts/
+        // ============================================================
         var BEAST_DIRS = [
+            'assets/portal_beasts/',
             'assets/assets2/mobs/portal_mobs/',
             'assets/portal_beasts/visual_portals/',
-            'assets/portal_beasts/',
             'assets/all_beasts/',
+            'assets/beast_quest/',
             'assets/assets2/mobs/dungeon_mobs/'
         ];
 
@@ -212,7 +228,6 @@
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
 
-        // === КРОВАВЫЕ БРЫЗГИ ВО ВЕСЬ ЭКРАН ===
         var bloodOverlayTextures = [
             'assets/assets2/animation/Fine_blood_spray_texture.png',
             'assets/assets2/animation/Fine_blood_spray_texture (1).png',
@@ -263,7 +278,6 @@
             isBattleActive = true;
             playerHitFirst = false;
 
-            // === АВТОБОЙ — враг бьёт сам каждые 1.5 сек (как в подземке) ===
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
                 if (!isBattleActive) return;
@@ -340,12 +354,8 @@
                 return;
             }
 
-            if (r.enemyHp !== undefined) {
-                updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
-            }
-            if (r.playerHp !== undefined) {
-                updateHeroSpheres();
-            }
+            if (r.enemyHp !== undefined) updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
+            if (r.playerHp !== undefined) updateHeroSpheres();
         }
 
         function useSkill(skillId) {
@@ -408,7 +418,6 @@
             if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd); }
         }
 
-        // === ОТСКОК — почти незаметный 0.02 (было 0.35) ===
         function knockbackEnemy() {
             if (!enemySprite) return;
             enemyKnockback.active = true;
@@ -641,6 +650,7 @@
 
         addEventListener('resize', function() {
             camera.aspect = innerWidth / innerHeight;
+            camera.lookAt(0, 0.45, 0);
             camera.updateProjectionMatrix();
             renderer.setSize(innerWidth, innerHeight);
         });
