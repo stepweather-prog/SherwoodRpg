@@ -115,6 +115,17 @@
         if (currentFloor < 1 || currentFloor > 6) currentFloor = 1;
         if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
 
+        // ============================================================
+        //  СЛОЖНОСТЬ = СУММА ВСЕХ КУБКОВ + 1 (сквозная нумерация заходов)
+        // ============================================================
+        var totalCups = 0;
+        try {
+            if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) {
+                totalCups = parent.Sherwood.Dungeon.getTotalCups();
+            }
+        } catch(e) {}
+        var difficultyLevel = totalCups + 1;
+
         var ENEMY_POOLS = {
             1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
             2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
@@ -124,8 +135,9 @@
             6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
         };
         var currentPool = ENEMY_POOLS[currentFloor] || ENEMY_POOLS[1];
-        var DIFF_MULT = { 1: 1.0, 2: 1.5, 3: 2.5 };
-        var mult = DIFF_MULT[currentDiff] || 1.0;
+
+        // +20% HP/ATK/DEF мобов за каждый кубок
+        var mult = 1.0 + (difficultyLevel - 1) * 0.2;
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
@@ -252,12 +264,12 @@
                     stack.push({ x: next.x, y: next.y });
                 } else { stack.pop(); }
             }
-            // ⚠️ УДАЛЕНО: map[size - 2][size - 2] = 0; — эта клетка была ВНЕ лабиринта
+            // map[size - 2][size - 2] = 0; — УДАЛЕНО (клетка вне лабиринта)
         }
         generateMaze();
 
         // ============================================================
-        //  ВЫХОД — САМАЯ ДАЛЬНЯЯ КЛЕТКА ОТ СТАРТА (BFS по существующим коридорам)
+        //  ВЫХОД — САМАЯ ДАЛЬНЯЯ КЛЕТКА ОТ СТАРТА (BFS)
         // ============================================================
         var exitCell = (function findFarthestCell() {
             var startGX = 1, startGY = 1;
@@ -313,9 +325,30 @@
         placeDoors();
 
         const loader = new THREE.TextureLoader();
-        const wallTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/wall_5.png');
-        const floorTexture = loader.load('assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png');
-        const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png');
+
+        // ============================================================
+        //  ТЕКСТУРЫ ПО ПОДЗЕМЕЛЬЯМ (одинаковы для всех 6 этажей внутри)
+        // ============================================================
+        var wallTexturePath, floorTexturePath, ceilTexturePath;
+
+        if (currentDungeon === 2) {
+            floorTexturePath = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
+            wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/swamp_wall_6.png';
+            ceilTexturePath  = 'assets/dungeon_tiles/visual_dungeon/grotto_ceiling_dungeon_1.png';
+        } else if (currentDungeon === 3) {
+            floorTexturePath = 'assets/assets2/Sherwood_Square/ceiling_raid.png';
+            wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/grotto_wall_6.png';
+            ceilTexturePath  = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_5.png';
+        } else {
+            floorTexturePath = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
+            wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/wall_5.png';
+            ceilTexturePath  = 'assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png';
+        }
+
+        const wallTexture  = loader.load(wallTexturePath);
+        const floorTexture = loader.load(floorTexturePath);
+        const ceilTexture  = loader.load(ceilTexturePath);
+
         const doorTexture  = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
         const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
@@ -571,7 +604,6 @@
                 branchDamnedYew: Math.random() < 0.3 ? 1 : 0
             };
 
-            // ⚠️ ГЛАВНОЕ: весь лут идёт через Bag.addLoot — попадает в ячейки
             if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) {
                 parent.Sherwood.Bag.addLoot({
                     gold: gold,
@@ -587,7 +619,6 @@
                     branchDamnedYew: resources.branchDamnedYew
                 });
             } else {
-                // fallback
                 if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
                 if (parent.Sherwood.addResource) {
                     parent.Sherwood.addResource('gold', gold);
@@ -816,7 +847,6 @@
                 return;
             }
 
-            // Собираем ВСЕ кандидаты на клик: выход, двери, мешки, спрайты объектов
             var candidates = [];
 
             var exitHits = raycaster.intersectObject(exitDoor, false);
@@ -837,7 +867,6 @@
                 if (spriteHits.length) candidates.push({ dist: spriteHits[0].distance, kind: 'sprite', obj: spriteHits[0].object });
             }
 
-            // Берём ближайший
             if (candidates.length > 0) {
                 candidates.sort(function(a, b) { return a.dist - b.dist; });
                 var best = candidates[0];
