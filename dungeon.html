@@ -169,9 +169,6 @@
 
         var MOB_PATH = 'assets/all_beasts/';
 
-        // ============================================================
-        //  РУССКИЕ ИМЕНА МОБОВ
-        // ============================================================
         var MOB_NAMES = {
             'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник',
             'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси',
@@ -467,12 +464,19 @@
         }
 
         const doorTexture  = loader.load('assets/assets2/game_details/labyrinth_asset.png');
-        const lootBagTex   = loader.load(lockedChestPath);
-        const emptyBagTex  = loader.load(openChestPath);
+
+        // Мешки (для обычных врагов)
+        const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
+        const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
+
+        // Сундуки (для боссов) — по подземке
+        const lockedChestTex = loader.load(lockedChestPath);
+        const openChestTex   = loader.load(openChestPath);
+
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex  = loader.load(openDoorPath);
 
-        [lootBagTex, emptyBagTex, closedLockTex, openDoorTex].forEach(function(t) {
+        [lootBagTex, emptyBagTex, lockedChestTex, openChestTex, closedLockTex, openDoorTex].forEach(function(t) {
             t.minFilter = THREE.LinearFilter;
             t.magFilter = THREE.LinearFilter;
         });
@@ -659,14 +663,16 @@
             }
         }
 
-        function spawnLootBag(gx, gy) {
+        function spawnLootBag(gx, gy, isBoss) {
             var w = gridToWorld(gx, gy);
-            var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: lootBagTex, transparent: true, alphaTest: 0.1, depthWrite: false }));
-            spr.scale.set(0.65, 0.65, 1);
-            spr.position.set(w.x, 0.15, w.z);
-            spr.userData = { type: 'loot_bag', gx: gx, gy: gy };
+            var texture = isBoss ? lockedChestTex : lootBagTex;
+            var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1, depthWrite: false }));
+            var sc = isBoss ? 0.85 : 0.65;
+            spr.scale.set(sc, sc, 1);
+            spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
+            spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss };
             group.add(spr);
-            var bag = { mesh: spr, gx: gx, gy: gy, opened: false };
+            var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss };
             spr.userData.objRef = bag;
             lootBags.push(bag);
         }
@@ -694,9 +700,11 @@
         function openLootBag(bag) {
             if (!bag || bag.opened) return;
             bag.opened = true;
-            bag.mesh.material.map = emptyBagTex;
+            var openTex = bag.isBoss ? openChestTex : emptyBagTex;
+            bag.mesh.material.map = openTex;
             bag.mesh.material.needsUpdate = true;
-            bag.mesh.scale.set(0.65, 0.65, 1);
+            if (bag.isBoss) bag.mesh.scale.set(0.85, 0.85, 1);
+            else bag.mesh.scale.set(0.65, 0.65, 1);
             playSound(soundChest);
 
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -1207,7 +1215,7 @@
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
             if (currentEnemyObj) {
-                spawnLootBag(currentEnemyObj.x, currentEnemyObj.y);
+                spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
                 currentEnemyObj.collected = true;
                 if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
             }
