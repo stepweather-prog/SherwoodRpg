@@ -252,13 +252,12 @@
                     stack.push({ x: next.x, y: next.y });
                 } else { stack.pop(); }
             }
-            map[size - 2][size - 2] = 0;
+            // ⚠️ УДАЛЕНО: map[size - 2][size - 2] = 0; — эта клетка была ВНЕ лабиринта
         }
         generateMaze();
 
         // ============================================================
-        //  ВЫХОД — САМАЯ ДАЛЬНЯЯ КЛЕТКА ОТ СТАРТА (через BFS по лабиринту)
-        //  Лабиринт НЕ ТРОГАЕМ. BFS идёт только по существующим коридорам.
+        //  ВЫХОД — САМАЯ ДАЛЬНЯЯ КЛЕТКА ОТ СТАРТА (BFS по существующим коридорам)
         // ============================================================
         var exitCell = (function findFarthestCell() {
             var startGX = 1, startGY = 1;
@@ -552,13 +551,15 @@
             bag.mesh.material.needsUpdate = true;
             bag.mesh.scale.set(0.55, 0.55, 1);
             playSound(soundChest);
+
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
             var p = parent.Sherwood.getPlayer();
             if (!p) return;
+
             var exp = 50 + Math.floor(Math.random() * 100);
             var gold = 15 + Math.floor(Math.random() * 25);
             var silver = 5 + Math.floor(Math.random() * 15);
-            if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
+
             var resources = {
                 skins: 1,
                 entranceTickets: Math.random() < 0.25 ? 1 : 0,
@@ -569,20 +570,41 @@
                 portalToken1: Math.random() < 0.3 ? 1 : 0,
                 branchDamnedYew: Math.random() < 0.3 ? 1 : 0
             };
-            if (parent.Sherwood.addResource) {
-                parent.Sherwood.addResource('gold', gold);
-                parent.Sherwood.addResource('silver', silver);
-                for (var key in resources) { if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]); }
+
+            // ⚠️ ГЛАВНОЕ: весь лут идёт через Bag.addLoot — попадает в ячейки
+            if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) {
+                parent.Sherwood.Bag.addLoot({
+                    gold: gold,
+                    silver: silver,
+                    exp: exp,
+                    skins: resources.skins,
+                    entranceTickets: resources.entranceTickets,
+                    amuletTablets: resources.amuletTablets,
+                    ringTablets: resources.ringTablets,
+                    skinTablets: resources.skinTablets,
+                    skinDrawings: resources.skinDrawings,
+                    portalToken1: resources.portalToken1,
+                    branchDamnedYew: resources.branchDamnedYew
+                });
             } else {
-                if (!p.resources) p.resources = {};
-                p.resources.gold = (p.resources.gold || 0) + gold;
-                p.resources.silver = (p.resources.silver || 0) + silver;
-                for (var key in resources) { if (resources[key] > 0) p.resources[key] = (p.resources[key] || 0) + resources[key]; }
+                // fallback
+                if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
+                if (parent.Sherwood.addResource) {
+                    parent.Sherwood.addResource('gold', gold);
+                    parent.Sherwood.addResource('silver', silver);
+                    for (var key in resources) {
+                        if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]);
+                    }
+                }
             }
+
             runLoot.exp += exp;
             runLoot.gold += gold;
             runLoot.silver += silver;
-            for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
+            for (var key in resources) {
+                if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key];
+            }
+
             var icons = [];
             icons.push({ icon: 'assets/interface/resource_gold.png' });
             icons.push({ icon: 'assets/interface/resource_silver.png' });
@@ -595,6 +617,7 @@
             if (resources.portalToken1) icons.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png' });
             if (resources.branchDamnedYew) icons.push({ icon: 'assets/interface/branch_of_the_damned_yew.png' });
             showLootIcons(icons);
+
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
         }
@@ -777,6 +800,9 @@
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
+        // ============================================================
+        //  КЛИК — берём БЛИЖАЙШЕЕ пересечение среди ВСЕХ объектов
+        // ============================================================
         renderer.domElement.addEventListener('click', (e) => {
             ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -790,53 +816,77 @@
                 return;
             }
 
+            // Собираем ВСЕ кандидаты на клик: выход, двери, мешки, спрайты объектов
+            var candidates = [];
+
             var exitHits = raycaster.intersectObject(exitDoor, false);
-            if (exitHits.length && exitHits[0].distance < 8) {
-                if (exitIsOpen) { winDungeon(); }
-                else { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Дверь закрыта! Убей всех врагов.'); }
-                return;
+            if (exitHits.length) candidates.push({ dist: exitHits[0].distance, kind: 'exit' });
+
+            var doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
+            if (doorHits.length) candidates.push({ dist: doorHits[0].distance, kind: 'door', obj: doorHits[0].object });
+
+            var bagMeshes = lootBags.map(b => b.mesh);
+            if (bagMeshes.length) {
+                var bagHits = raycaster.intersectObjects(bagMeshes, false);
+                if (bagHits.length) candidates.push({ dist: bagHits[0].distance, kind: 'bag', obj: bagHits[0].object });
             }
 
-            const doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
-            if (doorHits.length && doorHits[0].distance < 3) {
-                const ud = doorHits[0].object.userData;
-                if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
+            var spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
+            if (spriteMeshes.length) {
+                var spriteHits = raycaster.intersectObjects(spriteMeshes, false);
+                if (spriteHits.length) candidates.push({ dist: spriteHits[0].distance, kind: 'sprite', obj: spriteHits[0].object });
             }
 
-            const bagMeshes = lootBags.map(b => b.mesh);
-            const bagHits = raycaster.intersectObjects(bagMeshes, false);
-            if (bagHits.length && bagHits[0].distance < 8) {
-                const ud = bagHits[0].object.userData;
-                if (ud && ud.objRef) {
-                    var cur = worldToGrid(playerPos.x, playerPos.z);
-                    var dist = Math.abs(cur.gx - ud.gx) + Math.abs(cur.gy - ud.gy);
-                    if (dist <= 1) { openLootBag(ud.objRef); }
-                    else {
-                        var path = buildPath(cur.gx, cur.gy, ud.gx, ud.gy);
-                        if (path.length > 0) { waypoints = path; moving = true; startSteps(); }
-                    }
-                    return;
-                }
-            }
+            // Берём ближайший
+            if (candidates.length > 0) {
+                candidates.sort(function(a, b) { return a.dist - b.dist; });
+                var best = candidates[0];
 
-            const spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
-            const spriteHits = raycaster.intersectObjects(spriteMeshes, false);
-            if (spriteHits.length && spriteHits[0].distance < 8) {
-                const ud = spriteHits[0].object.userData;
-                if (ud) {
-                    if (ud.type === 'enemy') { ud.objRef.attacking = true; startBattle(ud.objRef); return; }
-                    if (LOOT_TYPES.indexOf(ud.type) !== -1) {
-                        const ccur = worldToGrid(playerPos.x, playerPos.z);
-                        const d = Math.abs(ccur.gx - ud.gridX) + Math.abs(ccur.gy - ud.gridY);
-                        if (d <= 1) { applyLootEffect(ud.objRef); }
-                        else {
-                            const path = buildPath(ccur.gx, ccur.gy, ud.gridX, ud.gridY);
-                            if (path.length > 0) { waypoints = path; moving = true; pendingLoot = ud.objRef; startSteps(); }
-                        }
+                if (best.kind === 'exit') {
+                    if (best.dist < 8) {
+                        if (exitIsOpen) { winDungeon(); }
+                        else { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Дверь закрыта! Убей всех врагов.'); }
                         return;
                     }
+                } else if (best.kind === 'door') {
+                    if (best.dist < 3) {
+                        var ud = best.obj.userData;
+                        if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
+                    }
+                } else if (best.kind === 'bag') {
+                    if (best.dist < 8) {
+                        var ud2 = best.obj.userData;
+                        if (ud2 && ud2.objRef) {
+                            var cur = worldToGrid(playerPos.x, playerPos.z);
+                            var dist = Math.abs(cur.gx - ud2.gx) + Math.abs(cur.gy - ud2.gy);
+                            if (dist <= 1) { openLootBag(ud2.objRef); }
+                            else {
+                                var path = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
+                                if (path.length > 0) { waypoints = path; moving = true; startSteps(); }
+                            }
+                            return;
+                        }
+                    }
+                } else if (best.kind === 'sprite') {
+                    if (best.dist < 8) {
+                        var ud3 = best.obj.userData;
+                        if (ud3) {
+                            if (ud3.type === 'enemy') { ud3.objRef.attacking = true; startBattle(ud3.objRef); return; }
+                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
+                                const ccur = worldToGrid(playerPos.x, playerPos.z);
+                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY);
+                                if (d <= 1) { applyLootEffect(ud3.objRef); }
+                                else {
+                                    const path = buildPath(ccur.gx, ccur.gy, ud3.gridX, ud3.gridY);
+                                    if (path.length > 0) { waypoints = path; moving = true; pendingLoot = ud3.objRef; startSteps(); }
+                                }
+                                return;
+                            }
+                        }
+                    }
                 }
             }
+
             moveForward();
         });
 
