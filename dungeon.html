@@ -19,6 +19,7 @@
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+        #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
@@ -59,6 +60,7 @@
             #hero-life span, #hero-mana span { font-size: 13px !important; }
             #mob-hp { width: 220px !important; height: 150px !important; }
             #mob-hp-text { font-size: 15px !important; }
+            #mob-hp-name { font-size: 13px !important; top: -12px !important; }
             #skills-left, #skills-right { bottom: 110px !important; width: 80px !important; }
             #skills-left img, #skills-right img { width: 38px !important; height: 38px !important; }
             #hit-effect-img { width: 130px !important; height: 130px !important; }
@@ -71,6 +73,7 @@
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
     <div id="mob-hp">
+        <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000</span>
@@ -115,17 +118,13 @@
         if (currentFloor < 1 || currentFloor > 6) currentFloor = 1;
         if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
 
-        // ============================================================
-        //  СЛОЖНОСТЬ = СУММА ВСЕХ КУБКОВ + 1 (сквозная нумерация заходов)
-        // ============================================================
         var totalCups = 0;
         try {
             if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) {
                 totalCups = parent.Sherwood.Dungeon.getTotalCups();
             }
-            if (!totalCups && parent.UI && parent.UI._getDungeonFloorsData) {
-                // fallback: считаем по всем подземкам из UI
-                var byD = parent.UI._ensureDungeonProgress && parent.UI._ensureDungeonProgress();
+            if (!totalCups && parent.UI && parent.UI._ensureDungeonProgress) {
+                var byD = parent.UI._ensureDungeonProgress();
                 if (byD && byD.byDungeon) {
                     for (var dk in byD.byDungeon) {
                         var arr = byD.byDungeon[dk];
@@ -136,9 +135,6 @@
         } catch(e) {}
         var difficultyLevel = totalCups + 1;
 
-        // ============================================================
-        //  МОБЫ — ПО ПОДЗЕМЕЛЬЯМ И ЭТАЖАМ
-        // ============================================================
         var ENEMY_POOLS = {
             1: {
                 1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
@@ -169,10 +165,75 @@
         var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor])
             || ENEMY_POOLS[1][1];
 
-        // +20% HP/ATK/DEF мобов за каждый кубок
         var mult = 1.0 + (difficultyLevel - 1) * 0.2;
 
         var MOB_PATH = 'assets/all_beasts/';
+
+        // ============================================================
+        //  РУССКИЕ ИМЕНА МОБОВ
+        // ============================================================
+        var MOB_NAMES = {
+            'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник',
+            'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси',
+            'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб',
+            'warped_imp.png': 'Искажённый Бес', 'bristle_boar.png': 'Шипастый Секач',
+            'quill_beast.png': 'Кристальный Иглобрюх', 'grave_borer.png': 'Личинка Короеда',
+            'acid_devourer.png': 'Кислотный Короед-Пожиратель', 'shard_back.png': 'Шервудский Дикобраз',
+            'bone_borer.png': 'Костяной Короед-Трупоед', 'bark_beetle.png': 'Жук-Короед',
+            'blight_beetle_warden.png': 'Чумной Короед-Страж', 'armored_beetle.png': 'Бронированный Короед',
+            'blighted_werewolf.png': 'Осквернённый Оборотень', 'blight_lord_beetle.png': 'Повелитель Гнили',
+            'blight_alpha.png': 'Альфа-Скверноискатель', 'yew_blight_wolf.png': 'Волк Тисовой Скверны',
+            'swamp_slugmouth.png': 'Болотный Слизнерот', 'swamp_gorgymouth.png': 'Скверножаб',
+            'swamp_drowner.png': 'Болотный Утопленник', 'bog_brute.png': 'Торфяной Труп',
+            'blighted_oak_golem.png': 'Голем Скверного Дуба', 'oak_golem.png': 'Голем Дуба',
+            'twigtangle.png': 'Хворост', 'woodland_terror.png': 'Древесный Ужас',
+            'leshy.png': 'Леший', 'root_executioner.png': 'Корневой Палач',
+            'leshy_servant.png': 'Слуга Лешего', 'spectral_stag.png': 'Призрачный Олень',
+            'forest_blight_cyclops.png': 'Лесное Лихо', 'blight_troglodyte.png': 'Лихо-Троглодит',
+            'blight_oozemouth.png': 'Слизнерот-Громила', 'blight_lord_leshy.png': 'Древний Владыка',
+            'bog_trapper.png': 'Болотный Капкан', 'blight_spitter.png': 'Скверноплюй',
+            'swamp_spider.png': 'Болотный Паук', 'ocular_arachnid.png': 'Окулярный Арахнид',
+            'blight_horn_worm.png': 'Болотный Рогохвост', 'searing_arachnid.png': 'Выжигающий Арахнид',
+            'swamp_centipede.png': 'Болотная Сколопендра', 'water_hag.png': 'Водная Баба',
+            'marsh_witch.png': 'Болотная Ведунья', 'blight_snail.png': 'Улитка Скверны',
+            'ancient_blight_snail.png': 'Древняя Улитка Скверны', 'sherwood_lizard.png': 'Шервудский Ящер',
+            'peat_lord.png': 'Торфяной Владыка', 'lost_maiden.png': 'Заблудшая Дева',
+            'bog_witch.png': 'Болотная Ведьма', 'swamp_kikimora.png': 'Болотная Кикимора',
+            'blight_boletus.png': 'Боровик Скверны', 'swamp_vodyanoy.png': 'Водяной Скверны',
+            'swamp_drake.png': 'Болотный Дракончик', 'blight_cerberus.png': 'Цербер Скверны',
+            'putrid_wolf.png': 'Гниющий Волк', 'ripper_wolf.png': 'Волк-Потрошитель',
+            'blight_fox.png': 'Гнилостная Лиса', 'fox_pack_lord.png': 'Повелитель Стаи',
+            'swamp_viper.png': 'Болотная Гадюка', 'putrid_rat.png': 'Гнилостная Крыса',
+            'oppressor_firefly.png': 'Светляк-Угнетатель', 'executioner_cricket.png': 'Сверчок-Палач',
+            'thorn_moth.png': 'Терновый Мотыль', 'plague_bat.png': 'Чумная Летучая Мышь',
+            'ash_stalker.png': 'Пепельный Охотник', 'ash_assassin.png': 'Пепельный Ассасин',
+            'bone_keeper.png': 'Хранитель Костей', 'blight_blade.png': 'Клинок Скверны',
+            'ash_wraith.png': 'Призрак Пепла', 'ash_overlord.png': 'Владыка Пепла',
+            'basalt_devourer.png': 'Базальтовый Пожиратель', 'grotto_brute.png': 'Громила Грота',
+            'cave_watcher.png': 'Пещерный Наблюдатель', 'runic_sentinel.png': 'Рунический Страж',
+            'ancient_watcher.png': 'Древний Наблюдатель', 'lost_treasure_hunter.png': 'Пропавший Кладоискатель',
+            'blight_moss_ogre.png': 'Огр Скверного Мха', 'warped_worm.png': 'Искажённый Червь',
+            'grotto_slug.png': 'Гротный Слизень', 'underground_terror.png': 'Подземный Ужас',
+            'shadow_maiden.png': 'Теневая Дева', 'cursed_priestess.png': 'Проклятая Жрица',
+            'mistress_of_the_roots.png': 'Повелительница Корней', 'bone_arachnid.png': 'Костяной Арахнид',
+            'necromantic_arachnid.png': 'Арахнид-Некромант', 'root_daughter.png': 'Дочь Корней',
+            'animated_yew.png': 'Оживший Тис', 'rusty_servant.png': 'Ржавый Слуга',
+            'tormentor.png': 'Истязатель', 'grave_archer.png': 'Могильный Лучник',
+            'rusty_dread.png': 'Ржавый Страх', 'chaos_swordsman.png': 'Мечник Хаоса',
+            'chaos_knight.png': 'Рыцарь Хаоса', 'chaos_lord.png': 'Лорд Хаоса',
+            'chaos_harpy.png': 'Гарпия Хаоса', 'blight_kite.png': 'Коршун Скверны',
+            'harpy_witch.png': 'Гарпия-Ведьма', 'harpy_hatchling.png': 'Птенец Гарпии',
+            'harpy_chieftain.png': 'Вождь Гарпий', 'lord_of_the_feathered.png': 'Хозяин Пернатых',
+            'cave_tormentor.png': 'Пещерный Терзатель', 'blight_keeper.png': 'Хранитель Скверны',
+            'blight_king.png': 'Скверный Король', 'underground_guardian.png': 'Страж Преисподней',
+            'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель'
+        };
+
+        function getMobName(imgPath) {
+            if (!imgPath) return 'Враг';
+            var fname = imgPath.split('/').pop();
+            return MOB_NAMES[fname] || 'Враг';
+        }
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
@@ -358,7 +419,6 @@
         const loader = new THREE.TextureLoader();
 
         var wallTexturePath, floorTexturePath, ceilTexturePath;
-
         if (currentDungeon === 2) {
             floorTexturePath = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
             wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/swamp_wall_6.png';
@@ -377,11 +437,40 @@
         const floorTexture = loader.load(floorTexturePath);
         const ceilTexture  = loader.load(ceilTexturePath);
 
+        var openDoorPath;
+        if (currentDungeon === 2) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level2.png';
+        else if (currentDungeon === 3) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level3.png';
+        else openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level1.png';
+
+        var lockedChestPath, openChestPath;
+        if (currentDungeon === 2) {
+            lockedChestPath = 'assets/assets2/game_details/locked_chest_second_dungeon.png';
+            openChestPath   = 'assets/assets2/game_details/open_chest_of_the_second_dungeon.png';
+        } else if (currentDungeon === 3) {
+            lockedChestPath = 'assets/assets2/game_details/locked_chest_third_dungeon.png';
+            openChestPath   = 'assets/assets2/game_details/open_chest_third_dungeon.png';
+        } else {
+            lockedChestPath = 'assets/assets2/game_details/locked_chest_first_dungeon.png';
+            openChestPath   = 'assets/assets2/game_details/open_chest_first_dungeon.png';
+        }
+
+        var cauldronImg, altarImg;
+        if (currentDungeon === 2) {
+            cauldronImg = 'assets/assets2/game_details/cauldron_of_the_second_dungeon.png';
+            altarImg    = 'assets/assets2/game_details/altar_of_the_second_dungeon.png';
+        } else if (currentDungeon === 3) {
+            cauldronImg = 'assets/assets2/game_details/the_third_cauldron_of_the_dungeon.png';
+            altarImg    = 'assets/assets2/game_details/the_third_altar_of_the_dungeon.png';
+        } else {
+            cauldronImg = 'assets/assets2/game_details/cauldron_first_dungeon.png';
+            altarImg    = 'assets/assets2/game_details/altar_of_the_first_dungeon.png';
+        }
+
         const doorTexture  = loader.load('assets/assets2/game_details/labyrinth_asset.png');
-        const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
-        const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
+        const lootBagTex   = loader.load(lockedChestPath);
+        const emptyBagTex  = loader.load(openChestPath);
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
-        const openDoorTex  = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
+        const openDoorTex  = loader.load(openDoorPath);
 
         [lootBagTex, emptyBagTex, closedLockTex, openDoorTex].forEach(function(t) {
             t.minFilter = THREE.LinearFilter;
@@ -453,8 +542,8 @@
             { type: 'enemy', count: 15 },
             { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
             { type: 'potion_mana', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
-            { type: 'cauldron', count: 4, img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
-            { type: 'altar', count: 4, img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' }
+            { type: 'cauldron', count: 4, img: cauldronImg },
+            { type: 'altar', count: 4, img: altarImg }
         ];
         var objects = [];
         var lootBags = [];
@@ -607,7 +696,7 @@
             bag.opened = true;
             bag.mesh.material.map = emptyBagTex;
             bag.mesh.material.needsUpdate = true;
-            bag.mesh.scale.set(0.55, 0.55, 1);
+            bag.mesh.scale.set(0.65, 0.65, 1);
             playSound(soundChest);
 
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -1077,6 +1166,8 @@
             waypoints = []; moving = false; stopSteps();
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            var nameEl = document.getElementById('mob-hp-name');
+            if (nameEl) nameEl.textContent = getMobName(obj.img);
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
             playSound(soundHit);
             if (battleTimer) clearInterval(battleTimer);
