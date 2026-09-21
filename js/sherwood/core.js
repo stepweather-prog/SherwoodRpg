@@ -63,11 +63,11 @@ Sherwood._ensureDefaults = function() {
         level: 1, exp: 0, expToLevel: 500,
         experiencePoints: 0,
         talentPoints: 0,
-        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200, mana: 200, maxMana: 200 },
-        resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
+        stats: { attack: 150, defense: 150, hp: 150, maxHp: 150, mana: 150, maxMana: 150 },
+        resources: { gold: 100, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
-        dungeon: { tickets: 15, maxTickets: 15, autoTickets: 3 },
-        bagSize: 10, bestiary: {},
+        dungeon: { tickets: 10, maxTickets: 15, autoTickets: 10 },
+        bagSize: 5, bestiary: {},
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
         trainingLevels: { attack: 0, defense: 0, hp: 0 },
@@ -146,14 +146,14 @@ Sherwood._createNewPlayer = function() {
         level: 1, exp: 0, expToLevel: 500,
         experiencePoints: 0,
         talentPoints: 0,
-        stats: { attack: 50, defense: 50, hp: 200, maxHp: 200, mana: 200, maxMana: 200 },
-        resources: { gold: 0, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
+        stats: { attack: 150, defense: 150, hp: 150, maxHp: 150, mana: 150, maxMana: 150 },
+        resources: { gold: 100, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
         inventory: [], equipment: {},
-        dungeon: { tickets: 100, maxTickets: 100, autoTickets: 25 },
-        bagSize: 10, bestiary: {},
+        dungeon: { tickets: 10, maxTickets: 15, autoTickets: 10 },
+        bagSize: 5, bestiary: {},
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
-        trainingLevels: { attack: 0, defense: 0, hp: 0 },
+        trainingLevels: { attack: 10, defense: 10, hp: 10 },
         unlockedSkins: ['skin1_01'], activeSkin: 'skin1_01',
         questEnergy: { current: 50, max: 50 },
         portal: { completed: [], difficulty: {} },
@@ -239,8 +239,8 @@ Sherwood.addExp = function(amount) {
         p.level++;
         
         // НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
-        p.experiencePoints = (p.experiencePoints || 0) + 5;
-        p.talentPoints = (p.talentPoints || 0) + 5;
+        p.experiencePoints = (p.experiencePoints || 0) + 15;
+        p.talentPoints = (p.talentPoints || 0) + 15;
         
         p.expToLevel = Math.min(Math.floor(p.expToLevel * 1.3), 999999);
         this.dispatch({ type: 'PLAYER_LEVEL_UP', payload: { level: p.level } });
@@ -454,17 +454,13 @@ Sherwood._recalcStats = function() {
     var totalSkinBonus = p.unlockedSkins ? p.unlockedSkins.length : 0;
     var totalMultiplier = 1 + totalSkinBonus / 100;
 
-    var MAX = 999999;
-    var baseAttack = Math.min(Math.floor(50 + (p.level - 1) * 5 + ba), MAX);
-    var baseDefense = Math.min(Math.floor(50 + (p.level - 1) * 5 + bd), MAX);
+       var MAX = 999999;
+    var levelBonus = (p.level - 1) * 50;   // +50 за каждый уровень после 1-го
 
-    // ===== НОВАЯ ФОРМУЛА HP И МАНЫ (ПРОГРЕССИЯ) =====
-    // Прибавка за уровень: level * 10
-    // Сумма за N уровней: 10 * (1 + 2 + ... + level) = 10 * level * (level + 1) / 2
-    // Вычитаем единицу за 1-й уровень, чтобы на 1-м было 200
-    var levelBonus = Math.floor(p.level * (p.level + 1) / 2 - 1) * 10;
-    var baseMaxHp = Math.min(200 + levelBonus + bh, MAX);
-    var baseMaxMana = Math.min(200 + levelBonus, MAX);
+    var baseAttack = Math.min(150 + levelBonus + ba, MAX);
+    var baseDefense = Math.min(150 + levelBonus + bd, MAX);
+    var baseMaxHp = Math.min(150 + levelBonus + bh, MAX);
+    var baseMaxMana = Math.min(150 + levelBonus, MAX);
 
     p.stats.attack = Math.min(Math.floor(baseAttack * totalMultiplier), MAX);
     p.stats.defense = Math.min(Math.floor(baseDefense * totalMultiplier), MAX);
