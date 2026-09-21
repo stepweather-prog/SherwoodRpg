@@ -55,7 +55,18 @@ Sherwood.Dungeon = {
         var cur = prog.floors[floor - 1].cups || 0;
         if (diff > cur) prog.floors[floor - 1].cups = diff;
         Sherwood.saveGame();
-        console.log('🏆 Кубок выдан: этаж ' + floor + ', сложность ' + diff + ', чаш теперь: ' + prog.floors[floor - 1].cups);
+        console.log('🏆 Кубок выдан: этаж ' + floor + ', сложность ' + diff + ', всего кубков: ' + this.getTotalCups());
+    },
+
+    // === СУММА ВСЕХ КУБКОВ (сквозная сложность) ===
+    getTotalCups: function() {
+        var prog = this._ensureProgress();
+        if (!prog) return 0;
+        var total = 0;
+        for (var i = 0; i < prog.floors.length; i++) {
+            total += prog.floors[i].cups || 0;
+        }
+        return total;
     },
 
     init: function() {
