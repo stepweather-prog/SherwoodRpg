@@ -61,7 +61,7 @@ Sherwood._ensureDefaults = function() {
     var defaults = {
         name: 'Охотник',
         level: 1, exp: 0, expToLevel: 500,
-        experiencePoints: 0,
+        experiencePoints: 20,
         talentPoints: 0,
         stats: { attack: 150, defense: 150, hp: 150, maxHp: 150, mana: 150, maxMana: 150 },
         resources: { gold: 100, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
@@ -144,7 +144,7 @@ Sherwood._createNewPlayer = function() {
     this._player = {
         name: 'Охотник',
         level: 1, exp: 0, expToLevel: 500,
-        experiencePoints: 0,
+        experiencePoints: 20,
         talentPoints: 0,
         stats: { attack: 150, defense: 150, hp: 150, maxHp: 150, mana: 150, maxMana: 150 },
         resources: { gold: 100, silver: 100, scrolls: 0, ingots: 0, wood: 0, feathers: 0, branches: 0, bones: 0 },
@@ -153,7 +153,7 @@ Sherwood._createNewPlayer = function() {
         bagSize: 5, bestiary: {},
         questProgress: { completed: [], currentChapter: 1 },
         trophies: [],
-        trainingLevels: { attack: 10, defense: 10, hp: 10 },
+        trainingLevels: { attack: 0, defense: 0, hp: 0 },
         unlockedSkins: ['skin1_01'], activeSkin: 'skin1_01',
         questEnergy: { current: 50, max: 50 },
         portal: { completed: [], difficulty: {} },
@@ -239,8 +239,8 @@ Sherwood.addExp = function(amount) {
         p.level++;
         
         // НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
-        p.experiencePoints = (p.experiencePoints || 0) + 15;
-        p.talentPoints = (p.talentPoints || 0) + 15;
+        p.experiencePoints = (p.experiencePoints || 0) + 20;
+        p.talentPoints = (p.talentPoints || 0) + 20;
         
         p.expToLevel = Math.min(Math.floor(p.expToLevel * 1.3), 999999);
         this.dispatch({ type: 'PLAYER_LEVEL_UP', payload: { level: p.level } });
@@ -431,9 +431,9 @@ Sherwood._recalcStats = function() {
     }
 
     var tl = p.trainingLevels || {};
-    ba += (tl.attack || 0) * 2;
-    bd += (tl.defense || 0) * 2;
-    bh += (tl.hp || 0) * 10;
+    ba += (tl.attack || 0) * 25;
+    bd += (tl.defense || 0) * 25;
+    bh += (tl.hp || 0) * 25;
 
     for (var i = 0; i < (p.trophies || []).length; i++) {
         var t = p.trophies[i];
@@ -454,7 +454,7 @@ Sherwood._recalcStats = function() {
     var totalSkinBonus = p.unlockedSkins ? p.unlockedSkins.length : 0;
     var totalMultiplier = 1 + totalSkinBonus / 100;
 
-       var MAX = 999999;
+    var MAX = 999999;
     var levelBonus = (p.level - 1) * 50;   // +50 за каждый уровень после 1-го
 
     var baseAttack = Math.min(150 + levelBonus + ba, MAX);
