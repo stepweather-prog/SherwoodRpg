@@ -1149,6 +1149,29 @@ UI._bagAction = function(i) {
 // ============================================================
 //  ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ
 // ============================================================
+UI.camp = function() {
+    UI._playSound('click');
+    UI._stopMusic();
+
+    try {
+        if (window.stopMainMusic) window.stopMainMusic();
+        if (window.audioPlayer) {
+            window.audioPlayer.pause();
+            window.audioPlayer.currentTime = 0;
+            window.audioPlayer.src = '';
+        }
+        if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
+    } catch(e){}
+
+    var iframe = document.createElement('iframe');
+    iframe.src = 'camp.html';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+    if (UI._screenLayer) {
+        UI._screenLayer.innerHTML = '';
+        UI._screenLayer.appendChild(iframe);
+        UI._screenLayer.style.display = 'block';
+    }
+};
 UI.quests = function() {
     UI._playSound('click');
     if (typeof Sherwood.Quests !== 'undefined' && Sherwood.Quests.showUI) {
