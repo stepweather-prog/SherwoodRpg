@@ -288,7 +288,7 @@ UI._hideDungeonVideo = function() {
 //  ЭКРАНЫ — ЕДИНАЯ ФУНКЦИЯ (ИСПРАВЛЕННАЯ ШАПКА)
 // ============================================================
 UI._openScreen = function(title, bgKey, html, backFn) {
-    var goBack = backFn || (UI._cameFromCamp ? 'UI.camp()' : 'UI.loadHome()');
+    var goBack = UI._cameFromCamp ? 'UI.camp()' : (backFn || 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
@@ -324,7 +324,7 @@ UI._openScreen = function(title, bgKey, html, backFn) {
 };
 
 UI._openScreenScrollable = function(title, bgKey, html, backFn) {
-   var goBack = backFn || (UI._cameFromCamp ? 'UI.camp()' : 'UI.loadHome()');
+   var goBack = UI._cameFromCamp ? 'UI.camp()' : (backFn || 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
@@ -1153,25 +1153,30 @@ UI._bagAction = function(i) {
 UI.camp = function() {
     UI._playSound('click');
     UI._stopMusic();
-
+    try { if (window.stopMainMusic) window.stopMainMusic(); } catch(e){}
     try {
-        if (window.stopMainMusic) window.stopMainMusic();
-        if (window.audioPlayer) {
-            window.audioPlayer.pause();
-            window.audioPlayer.currentTime = 0;
-            window.audioPlayer.src = '';
-        }
+        if (window.audioPlayer) { window.audioPlayer.pause(); window.audioPlayer.currentTime = 0; window.audioPlayer.src = ''; }
         if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
     } catch(e){}
-UI._cameFromCamp = true; 
+
+    UI._cameFromCamp = true;
+
+    var url = 'camp.html';
+    if (UI._campReturnInfo && UI._campReturnInfo.gx !== undefined) {
+        url += '?returnGX=' + UI._campReturnInfo.gx + '&returnGY=' + UI._campReturnInfo.gy;
+    }
+
     var iframe = document.createElement('iframe');
-    iframe.src = 'camp.html';
+    iframe.src = url;
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
     if (UI._screenLayer) {
         UI._screenLayer.innerHTML = '';
         UI._screenLayer.appendChild(iframe);
         UI._screenLayer.style.display = 'block';
     }
+
+    // После возврата — очищаем инфо, чтобы в следующий заход с главной не передавать
+    setTimeout(function() { UI._campReturnInfo = null; }, 100);
 };
 UI.quests = function() {
     UI._playSound('click');
