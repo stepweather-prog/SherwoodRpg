@@ -138,17 +138,17 @@
         window.exitCamp = exitCamp;
 
         // ============================================================
-        //  8 РАЗДЕЛОВ — 4 в верхних нишах (x=3,6,9,12), 4 в нижних
+        //  8 РАЗДЕЛОВ — 4 ниши сверху (x=3,5,7,9), 4 ниши снизу
         // ============================================================
         var SECTIONS = [
             { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 5,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 6,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 12, doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 7,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
             { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 11, open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 6,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
-            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 12, doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 7,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -181,9 +181,9 @@
         }
 
         // ============================================================
-        //  КАРТА: КОРИДОР 3 КЛЕТКИ + 4+4 НИШИ С ПРОСТЕНКАМИ
-        //  Простенки: x = 2, 4, 7, 10, 13 — 5 штук (с вазонами)
-        //  Ниши: x = 3, 6, 9, 12 — 4 штуки (с дверями)
+        //  КАРТА: КОРИДОР 3 КЛЕТКИ + 4+4 НИШИ С ПРОСТЕНКАМИ 1 КЛЕТКА
+        //  Ниши: x = 3, 5, 7, 9
+        //  Простенки: x = 4, 6, 8 (1 клетка между нишами)
         // ============================================================
         function generateCamp() {
             for (var yy = 0; yy < size; yy++) {
@@ -192,22 +192,22 @@
                 }
             }
 
-            // Коридор — 3 клетки в ширину: y=7, y=8, y=9, x от 2 до 13
-            for (var x = 2; x <= 13; x++) {
+            // Коридор — 3 клетки ширины: y=7, y=8, y=9, x от 2 до 10
+            for (var x = 2; x <= 10; x++) {
                 map[7][x] = 0;
                 map[8][x] = 0;
                 map[9][x] = 0;
             }
 
-            // Верхние ниши — x = 3, 6, 9, 12 (y=6 проход, y=5 ниша)
-            var topNiches = [3, 6, 9, 12];
+            // Верхние ниши — x = 3, 5, 7, 9 (y=6 проход, y=5 ниша)
+            var topNiches = [3, 5, 7, 9];
             for (var i = 0; i < topNiches.length; i++) {
                 map[6][topNiches[i]] = 0;
                 map[5][topNiches[i]] = 0;
             }
 
-            // Нижние ниши — x = 3, 6, 9, 12 (y=10 проход, y=11 ниша)
-            var botNiches = [3, 6, 9, 12];
+            // Нижние ниши — x = 3, 5, 7, 9 (y=10 проход, y=11 ниша)
+            var botNiches = [3, 5, 7, 9];
             for (var i = 0; i < botNiches.length; i++) {
                 map[10][botNiches[i]] = 0;
                 map[11][botNiches[i]] = 0;
@@ -262,22 +262,13 @@
         }
 
         // ============================================================
-        //  БРАЗИЕРЫ — 5 сверху (y=7) + 5 снизу (y=9)
-        //  В простенках: x = 2, 4, 7, 10, 13
+        //  БРАЗИЕРЫ — 4 штуки (в начале и в конце коридора)
         // ============================================================
         const brazierPositions = [
-            // Верхний ряд (y=7)
             { gx: 2,  gy: 7 },
-            { gx: 4,  gy: 7 },
-            { gx: 7,  gy: 7 },
-            { gx: 10, gy: 7 },
-            { gx: 13, gy: 7 },
-            // Нижний ряд (y=9)
             { gx: 2,  gy: 9 },
-            { gx: 4,  gy: 9 },
-            { gx: 7,  gy: 9 },
-            { gx: 10, gy: 9 },
-            { gx: 13, gy: 9 }
+            { gx: 10, gy: 7 },
+            { gx: 10, gy: 9 }
         ];
         const braziers = [];
 
@@ -305,9 +296,10 @@
             fireLight.position.set(bx, 0.55, bz);
             scene.add(fireLight);
 
+            // Разрешение canvas уменьшено до 128×128 для производительности
             var bCanvas = document.createElement('canvas');
-            bCanvas.width = 256;
-            bCanvas.height = 256;
+            bCanvas.width = 128;
+            bCanvas.height = 128;
             var bCtx = bCanvas.getContext('2d', { willReadFrequently: true });
 
             var bVideo = document.createElement('video');
@@ -539,7 +531,7 @@
         // ============================================================
         //  ИГРОК — центр коридора
         // ============================================================
-        let playerGX = 7, playerGY = 8;
+        let playerGX = 6, playerGY = 8;
         const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
         let playerYaw = -Math.PI / 2;
 
