@@ -249,7 +249,6 @@ function showHomeElements() {
 // ============================================================
 //  ВХОД В РАЗДЕЛ
 // ============================================================
-
 function enterSection() {
     const section = sections[currentSectionIndex];
     if (!section) return;
@@ -265,17 +264,18 @@ function enterSection() {
     }
 
     switch(section.name) {
-    case 'Профиль':
-        UI.profile();
-        break;
-    case 'Лагерь':
-        UI.camp();
-        break;
-    case 'Настройки':
-        UI.settings();
-        break;
-    default:
-        showGenericScreen(section.name, '📌');
+        case 'Профиль':
+            UI.profile();
+            break;
+        case 'Лагерь':
+            UI.camp();
+            break;
+        case 'Настройки':
+            UI.settings();
+            break;
+        default:
+            showGenericScreen(section.name, '📌');
+    }
 }
 
 // ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
