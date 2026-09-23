@@ -1163,7 +1163,7 @@ UI.camp = function() {
         }
         if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
     } catch(e){}
-
+UI._cameFromCamp = true; 
     var iframe = document.createElement('iframe');
     iframe.src = 'camp.html';
     iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
