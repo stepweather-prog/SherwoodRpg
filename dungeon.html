@@ -158,7 +158,15 @@
                 3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' },
                 4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
                 5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' },
-                6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underworld_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' }
+                6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' }
+            },
+            4: {
+                1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' },
+                2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' },
+                3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' },
+                4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' },
+                5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' },
+                6: { normal: ['chaos_knight.png','ash_overlord.png','underworld_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' }
             }
         };
 
@@ -168,6 +176,7 @@
         var mult = 1.0 + (difficultyLevel - 1) * 0.2;
 
         var MOB_PATH = 'assets/all_beasts/';
+        var BOSS_PATH = (currentDungeon === 4) ? 'assets/beast_quest/' : 'assets/all_beasts/';
 
         var MOB_NAMES = {
             'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник',
@@ -223,7 +232,13 @@
             'harpy_chieftain.png': 'Вождь Гарпий', 'lord_of_the_feathered.png': 'Хозяин Пернатых',
             'cave_tormentor.png': 'Пещерный Терзатель', 'blight_keeper.png': 'Хранитель Скверны',
             'blight_king.png': 'Скверный Король', 'underground_guardian.png': 'Страж Преисподней',
-            'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель'
+            'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель',
+            'the_cursed_outlaw_king.png': 'Проклятый Король Разбойников',
+            'ancient_crypt_warden.png': 'Древний Хранитель Склепа',
+            'echo_of_the_triumvirate.png': 'Эхо Трех Порталов',
+            'sacred_tree_executioner.png': 'Палач Священного Древа',
+            'sherwood_abomination.png': 'Шервудское Отродье',
+            'the_primordial_core.png': 'Изначальный Стержень'
         };
 
         function getMobName(imgPath) {
@@ -424,6 +439,10 @@
             floorTexturePath = 'assets/assets2/Sherwood_Square/ceiling_raid.png';
             wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/grotto_wall_6.png';
             ceilTexturePath  = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_5.png';
+        } else if (currentDungeon === 4) {
+            floorTexturePath = 'assets/assets2/Sherwood_Square/floors_quest.png';
+            wallTexturePath  = 'assets/assets2/Sherwood_Square/walls_quest.png';
+            ceilTexturePath  = 'assets/assets2/Sherwood_Square/ceiling_quest.png';
         } else {
             floorTexturePath = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
             wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/wall_5.png';
@@ -437,13 +456,14 @@
         var openDoorPath;
         if (currentDungeon === 2) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level2.png';
         else if (currentDungeon === 3) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level3.png';
+        else if (currentDungeon === 4) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level3.png';
         else openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level1.png';
 
         var lockedChestPath, openChestPath;
         if (currentDungeon === 2) {
             lockedChestPath = 'assets/assets2/game_details/locked_chest_second_dungeon.png';
             openChestPath   = 'assets/assets2/game_details/open_chest_of_the_second_dungeon.png';
-        } else if (currentDungeon === 3) {
+        } else if (currentDungeon === 3 || currentDungeon === 4) {
             lockedChestPath = 'assets/assets2/game_details/locked_chest_third_dungeon.png';
             openChestPath   = 'assets/assets2/game_details/open_chest_third_dungeon.png';
         } else {
@@ -455,7 +475,7 @@
         if (currentDungeon === 2) {
             cauldronImg = 'assets/assets2/game_details/cauldron_of_the_second_dungeon.png';
             altarImg    = 'assets/assets2/game_details/altar_of_the_second_dungeon.png';
-        } else if (currentDungeon === 3) {
+        } else if (currentDungeon === 3 || currentDungeon === 4) {
             cauldronImg = 'assets/assets2/game_details/the_third_cauldron_of_the_dungeon.png';
             altarImg    = 'assets/assets2/game_details/the_third_altar_of_the_dungeon.png';
         } else {
@@ -465,11 +485,9 @@
 
         const doorTexture  = loader.load('assets/assets2/game_details/labyrinth_asset.png');
 
-        // Мешки (для обычных врагов)
         const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
         const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
 
-        // Сундуки (для боссов) — по подземке
         const lockedChestTex = loader.load(lockedChestPath);
         const openChestTex   = loader.load(openChestPath);
 
@@ -579,7 +597,7 @@
         }
 
         var enemyImgList = [];
-        enemyImgList.push(MOB_PATH + currentPool.boss);
+        enemyImgList.push(BOSS_PATH + currentPool.boss);
         for (var ei = 0; ei < 14; ei++) {
             var enName = currentPool.normal[Math.floor(Math.random() * currentPool.normal.length)];
             enemyImgList.push(MOB_PATH + enName);
@@ -630,7 +648,10 @@
             group.add(sprite);
             obj.mesh = sprite;
         }
-
+        
+        // ============================================================
+        //  ВЫХОД
+        // ============================================================
         var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
         var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy);
         var exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
