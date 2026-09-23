@@ -140,17 +140,17 @@
         // ============================================================
         //  8 РАЗДЕЛОВ — 4 верхние ниши (y=6), 4 нижние (y=10)
         // ============================================================
-        var SECTIONS = [
-            // ВЕРХНИЕ НИШИ
-            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 6,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 6,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 9,  doorY: 6,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 11, doorY: 6,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-            // НИЖНИЕ НИШИ
-            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 10, open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 10, open: function() { try { parent.UI.forge(); } catch(e) {} } },
-            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 9,  doorY: 10, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 11, doorY: 10, open: function() { try { parent.UI.settings(); } catch(e) {} } }
+               var SECTIONS = [
+            // ВЕРХНИЕ НИШИ (y=5)
+            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 5,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 11, doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+            // НИЖНИЕ НИШИ (y=11)
+            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 11, open: function() { try { parent.UI.market(); } catch(e) {} } },
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 11, doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -185,7 +185,7 @@
         // ============================================================
         //  КАРТА: ГОРИЗОНТАЛЬНЫЙ КОРИДОР + НИШИ СВЕРХУ И СНИЗУ
         // ============================================================
-        function generateCamp() {
+                function generateCamp() {
             // Всё стены
             for (var yy = 0; yy < size; yy++) {
                 for (var xx = 0; xx < size; xx++) {
@@ -193,25 +193,27 @@
                 }
             }
 
-            // Коридор — y=8, x от 2 до 13
+            // Коридор — 3 клетки в ширину: y=7, y=8, y=9, x от 2 до 13
             for (var x = 2; x <= 13; x++) {
+                map[7][x] = 0;
                 map[8][x] = 0;
+                map[9][x] = 0;
             }
 
-            // Верхние ниши — y=6 (ниша), y=7 (проход)
+            // Верхние ниши — y=5 (ниша), y=6 (проход)
             var topNiches = [3, 5, 9, 11];
             for (var i = 0; i < topNiches.length; i++) {
                 var nx = topNiches[i];
-                map[7][nx] = 0;
                 map[6][nx] = 0;
+                map[5][nx] = 0;
             }
 
-            // Нижние ниши — y=10 (ниша), y=9 (проход)
+            // Нижние ниши — y=10 (проход), y=11 (ниша)
             var botNiches = [3, 5, 9, 11];
             for (var i = 0; i < botNiches.length; i++) {
                 var nx = botNiches[i];
-                map[9][nx] = 0;
                 map[10][nx] = 0;
+                map[11][nx] = 0;
             }
         }
         generateCamp();
@@ -268,12 +270,13 @@
         //  Между нишами верхней стены (y=7): x=4, 6, 8, 10, 12
         //  Между нишами нижней стены (y=9): x=4, 6, 8, 10, 12
         // ============================================================
-        const brazierPositions = [
-            // 4 бразиера — по краям коридора, в стене
-            { gx: 6, gy: 7 },   // верхняя стена, между нишами 5 и 9
-            { gx: 10, gy: 7 },  // верхняя стена, между нишами 9 и 11
-            { gx: 6, gy: 9 },   // нижняя стена, между нишами 5 и 9
-            { gx: 10, gy: 9 }   // нижняя стена, между нишами 9 и 11
+                const brazierPositions = [
+            // Верхний ряд — у верхней стены коридора (y=7)
+            { gx: 6, gy: 7 },
+            { gx: 10, gy: 7 },
+            // Нижний ряд — у нижней стены коридора (y=9)
+            { gx: 6, gy: 9 },
+            { gx: 10, gy: 9 }
         ];
         const braziers = [];
 
