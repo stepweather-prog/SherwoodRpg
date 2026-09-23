@@ -27,6 +27,20 @@
         #btn-right { top: 41px; left: 82px; }
         #btn-back { top: 82px; left: 41px; }
 
+        /* Анимация шага в центре джойстика */
+        #step-anim {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px; height: 44px;
+            pointer-events: none;
+            display: none;
+            z-index: 35;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        #step-anim.playing { display: block; }
+
         @media (max-width: 600px) {
             #camp-exit-btn { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
             #camp-title { top: 8px !important; font-size: 14px !important; padding: 4px 12px !important; }
@@ -37,6 +51,7 @@
             #btn-left    { top: 38px !important; left: 0 !important; }
             #btn-right   { top: 38px !important; left: 76px !important; }
             #btn-back    { top: 76px !important; left: 38px !important; }
+            #step-anim { width: 40px !important; height: 40px !important; }
         }
     </style>
 </head>
@@ -50,6 +65,7 @@
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
         <div class="arrow-btn" id="btn-back">▼</div>
+        <video id="step-anim" src="assets/assets2/animation/step_up.webm" muted playsinline preload="auto"></video>
     </div>
 
     <div id="vignette"></div>
@@ -68,18 +84,18 @@
         window.exitCamp = exitCamp;
 
         // ============================================================
-        //  РАЗДЕЛЫ ЛАГЕРЯ — дверь открывает раздел в родителе
+        //  РАЗДЕЛЫ ЛАГЕРЯ
         // ============================================================
         var SECTIONS = [
-            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png', open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'quests',   name: 'Квесты',    icon: 'assets/assets2/icons/quest.png',          open: function() { try { parent.UI.quests(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',         open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',         open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',         open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png',open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',          open: function() { try { parent.UI.forge(); } catch(e) {} } },
-            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',       open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',       open: function() { try { parent.UI.settings(); } catch(e) {} } }
+            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  open: function() { try { parent.UI.profile(); } catch(e) {} } },
+            { key: 'quests',   name: 'Квесты',    icon: 'assets/assets2/icons/quest.png',           open: function() { try { parent.UI.quests(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          open: function() { try { parent.UI.portals(); } catch(e) {} } },
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', open: function() { try { parent.UI.market(); } catch(e) {} } },
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -111,49 +127,76 @@
             for (let j = 0; j < size; j++) { map[i][j] = 1; }
         }
 
-        // Простой лабиринт для лагеря — колонны/стены в шахматном порядке + проходы
+        // === ЛАГЕРЬ: центральная площадь + крестовые проходы + внешнее кольцо ===
         function generateCamp() {
-            // Центральная площадь (где стартует игрок)
+            // Центральная площадь 3×3
             for (var dx = -1; dx <= 1; dx++) {
                 for (var dy = -1; dy <= 1; dy++) {
                     map[8 + dy][8 + dx] = 0;
                 }
             }
-            // Проходы крестом от центра
+            // Крестовые проходы от центра во все стороны
             for (var x = 1; x < size - 1; x++) {
                 map[8][x] = 0;
                 map[x][8] = 0;
             }
-            // Кольцо-проход вокруг
+            // Внешнее кольцо (полный прямоугольник по периметру)
             for (var i = 3; i < size - 3; i++) {
                 map[3][i] = 0;
                 map[size - 4][i] = 0;
                 map[i][3] = 0;
                 map[i][size - 4] = 0;
             }
-            // Соединяем центр с кольцом — вертикаль/горизонталь
+            // Соединяем центр с кольцом
             for (var y = 3; y <= 8; y++) map[y][3] = 0;
             for (var y = 8; y <= size - 4; y++) map[y][size - 4] = 0;
             for (var x = 3; x <= 8; x++) map[3][x] = 0;
             for (var x = 8; x <= size - 4; x++) map[size - 4][x] = 0;
-
-            // Внутренние стены (для атмосферы лабиринта)
-            var blocks = [
-                { x: 5, y: 5 }, { x: 10, y: 5 }, { x: 5, y: 10 }, { x: 10, y: 10 },
-                { x: 6, y: 6 }, { x: 9, y: 6 }, { x: 6, y: 9 }, { x: 9, y: 9 },
-                { x: 5, y: 8 }, { x: 10, y: 8 }, { x: 8, y: 5 }, { x: 8, y: 10 }
-            ];
-            for (var b = 0; b < blocks.length; b++) {
-                // Ставим стену-блок, только если она не закроет проходы
-                var bx = blocks[b].x, by = blocks[b].y;
-                if (map[by][bx] === 0) map[by][bx] = 1;
-            }
         }
         generateCamp();
 
         // ============================================================
-        //  ТЕКСТУРЫ
+        //  ДВЕРИ — СТАВИМ ТОЛЬКО В ПРОХОДАХ (map === 0)
         // ============================================================
+        // Автоматический выбор клеток для дверей: берём клетки с картой 0,
+        // которые имеют стену с одной стороны (тупик лагеря).
+        var doorLeaves = [];
+        var usedSectionIndex = 0;
+
+        function isWallCell(x, y) {
+            if (x < 0 || y < 0 || x >= size || y >= size) return true;
+            return map[y][x] === 1;
+        }
+
+        // Кандидаты-клетки: там где map === 0 и есть стена слева или справа (для вертикальной двери)
+        // или стена сверху/снизу (для горизонтальной).
+        var candidates = [];
+        for (var y = 1; y < size - 1; y++) {
+            for (var x = 1; x < size - 1; x++) {
+                if (map[y][x] !== 0) continue;
+                if (x === 8 && y === 8) continue; // не в самом центре
+                var wL = isWallCell(x - 1, y);
+                var wR = isWallCell(x + 1, y);
+                var wU = isWallCell(x, y - 1);
+                var wD = isWallCell(x, y + 1);
+                // Дверь подходит, если с двух сторон стены (узкое место) — но нам нужны клетки у стены
+                if ((wL || wR) && !(wL && wR)) candidates.push({ x: x, y: y, vertical: wL || wR });
+                else if ((wU || wD) && !(wU && wD)) candidates.push({ x: x, y: y, vertical: false });
+            }
+        }
+
+        // Ставим 9 дверей, равномерно раскиданных по кандидатам
+        var placed = [];
+        for (var c = 0; c < candidates.length && placed.length < 9; c++) {
+            var cand = candidates[c];
+            // проверяем, что эта дверь не слишком близко к уже поставленным
+            var ok = true;
+            for (var p = 0; p < placed.length; p++) {
+                if (Math.abs(placed[p].x - cand.x) + Math.abs(placed[p].y - cand.y) < 3) { ok = false; break; }
+            }
+            if (ok) placed.push(cand);
+        }
+
         const loader = new THREE.TextureLoader();
         const wallTex  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
@@ -193,24 +236,6 @@
             }
         }
 
-        // ============================================================
-        //  ДВЕРИ-ИКОНКИ РАЗДЕЛОВ
-        // ============================================================
-        var doorLeaves = [];
-        var doorPositions = [
-            // 9 дверей в разных клетках лагеря, вдоль стен
-            { gx: 3, gy: 3,  sectionIndex: 0 }, // Профиль
-            { gx: 8, gy: 3,  sectionIndex: 1 }, // Квесты
-            { gx: 12, gy: 3, sectionIndex: 2 }, // Таверна
-            { gx: 3, gy: 8,  sectionIndex: 3 }, // Порталы
-            { gx: 12, gy: 8, sectionIndex: 4 }, // Подземка
-            { gx: 3, gy: 12, sectionIndex: 5 }, // Рынок
-            { gx: 8, gy: 12, sectionIndex: 6 }, // Кузница
-            { gx: 12, gy: 12, sectionIndex: 7 }, // Бестиарий
-            { gx: 6, gy: 6,  sectionIndex: 8 }  // Настройки (в центре-левее)
-        ];
-
-        // Отдельный материал для дверей-иконок (прозрачный)
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
             tex.minFilter = THREE.LinearFilter;
@@ -226,38 +251,40 @@
             });
         }
 
-        for (var d = 0; d < doorPositions.length; d++) {
-            var dp = doorPositions[d];
-            var sec = SECTIONS[dp.sectionIndex];
-            if (!sec) continue;
+        for (var d = 0; d < placed.length; d++) {
+            var dp = placed[d];
+            var sec = SECTIONS[usedSectionIndex % SECTIONS.length];
+            usedSectionIndex++;
 
-            var w = dp.gx - Math.floor(size / 2);
-            var wz = dp.gy - Math.floor(size / 2);
+            var wx = dp.x - Math.floor(size / 2);
+            var wz = dp.y - Math.floor(size / 2);
+
+            // Определяем ориентацию двери — если стена слева/справа, дверь вертикальная (вдоль оси Z)
+            var wL = isWallCell(dp.x - 1, dp.y);
+            var wR = isWallCell(dp.x + 1, dp.y);
 
             var leaf = new THREE.Mesh(
                 new THREE.PlaneGeometry(cellSize, wallHeight),
                 makeDoorMaterial(sec.icon)
             );
-            // Дверь поворачиваем лицом в проход — в клетке на кольце лагеря
-            // Смотрим по соседям: если стены сверху/снизу — дверь вертикальная, иначе горизонтальная
-            var wL = (map[dp.gy][dp.gx - 1] === 1);
-            var wR = (map[dp.gy][dp.gx + 1] === 1);
-            var horiz = wL && wR;
-            if (!horiz) leaf.rotation.y = Math.PI / 2;
+            if (wL || wR) {
+                // стены слева/справа → дверь ориентирована вдоль Z (не поворачиваем)
+            } else {
+                leaf.rotation.y = Math.PI / 2;
+            }
 
-            leaf.position.set(w, wallHeight / 2, wz);
+            leaf.position.set(wx, wallHeight / 2, wz);
             leaf.userData = {
                 isDoor: true,
-                doorGX: dp.gx,
-                doorGY: dp.gy,
-                sectionIndex: dp.sectionIndex,
+                doorGX: dp.x,
+                doorGY: dp.y,
                 section: sec
             };
             group.add(leaf);
 
             doorLeaves.push({
                 mesh: leaf,
-                gx: dp.gx, gy: dp.gy,
+                gx: dp.x, gy: dp.y,
                 open: false, t: 0,
                 closedY: wallHeight / 2,
                 openY: -wallHeight / 2 - 0.15,
@@ -265,8 +292,10 @@
             });
         }
 
+        console.log('🚪 Дверей размещено:', doorLeaves.length);
+
         // ============================================================
-        //  ЗВУКИ
+        //  ЗВУКИ И АНИМАЦИЯ ШАГА
         // ============================================================
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
@@ -274,9 +303,28 @@
         campMusic.loop = true;
         campMusic.volume = 0.35;
 
+        var stepAnimEl = document.getElementById('step-anim');
+        var stepsPlaying = false;
+
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function(){}); } catch(e) {} }
-        function startSteps() { try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} }
-        function stopSteps() { try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
+
+        function startSteps() {
+            if (stepsPlaying) return;
+            stepsPlaying = true;
+            try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){}
+            if (stepAnimEl) {
+                stepAnimEl.classList.add('playing');
+                try { stepAnimEl.currentTime = 0; stepAnimEl.play().catch(function(){}); } catch(e){}
+            }
+        }
+        function stopSteps() {
+            stepsPlaying = false;
+            try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){}
+            if (stepAnimEl) {
+                stepAnimEl.classList.remove('playing');
+                try { stepAnimEl.pause(); stepAnimEl.currentTime = 0; } catch(e){}
+            }
+        }
 
         setTimeout(function() { try { campMusic.play().catch(function(){}); } catch(e){} }, 300);
         window.addEventListener('click', function() { try { campMusic.play().catch(function(){}); } catch(e){} });
@@ -319,7 +367,6 @@
             doorObj.open = true;
             doorObj.t = 0;
             playSound(soundAltar);
-            // Открываем раздел в родителе
             setTimeout(function() {
                 if (doorObj.section && doorObj.section.open) {
                     doorObj.section.open();
@@ -437,18 +484,19 @@
                     var cur = worldToGrid(playerPos.x, playerPos.z);
                     var dist = Math.abs(cur.gx - ud.doorGX) + Math.abs(cur.gy - ud.doorGY);
                     if (dist <= 1) {
-                        // Ищем объект двери в doorLeaves и открываем
                         for (var i = 0; i < doorLeaves.length; i++) {
                             if (doorLeaves[i].gx === ud.doorGX && doorLeaves[i].gy === ud.doorGY) {
                                 openDoor(doorLeaves[i]);
                                 break;
                             }
                         }
+                    } else {
+                        // Слишком далеко — просто шаг вперёд
+                        moveForward();
                     }
                     return;
                 }
             }
-            // Иначе — шаг вперёд
             moveForward();
         });
 
@@ -456,7 +504,6 @@
         //  КАМЕРА
         // ============================================================
         const clock = new THREE.Clock();
-        var cameraShake = 0;
 
         function updateCamera() {
             camera.position.x = playerPos.x;
@@ -498,7 +545,7 @@
                 }
             }
 
-            // Анимация дверей (уезжают вниз)
+            // Анимация дверей
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
                 if (d.open && d.t < 1) {
