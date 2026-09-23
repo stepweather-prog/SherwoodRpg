@@ -148,18 +148,24 @@
         }
         window.exitCamp = exitCamp;
 
+        // ============================================================
+        //  8 РАЗДЕЛОВ (без "Квесты")
+        //  Каждый со своей клеткой двери
+        // ============================================================
         var SECTIONS = [
-            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'quests',   name: 'Квесты',    icon: 'assets/assets2/icons/quest.png',           open: function() { try { parent.UI.quests(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           open: function() { try { parent.UI.forge(); } catch(e) {} } },
-            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        open: function() { try { parent.UI.settings(); } catch(e) {} } }
+            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 8,  doorY: 6,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 8,  doorY: 10, open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 6,  doorY: 8,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 10, doorY: 8,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 6,  doorY: 6,  open: function() { try { parent.UI.market(); } catch(e) {} } },
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 10, doorY: 6,  open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 6,  doorY: 10, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 10, doorY: 10, open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
+        // ============================================================
+        //  СЦЕНА
+        // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
         scene.fog = new THREE.Fog(0x0a0805, 5, 14);
@@ -186,83 +192,45 @@
             for (let j = 0; j < size; j++) { map[i][j] = 1; }
         }
 
-        function generateCamp() {
-            for (var dx = -1; dx <= 1; dx++) {
-                for (var dy = -1; dy <= 1; dy++) {
-                    map[8 + dy][8 + dx] = 0;
-                }
-            }
-            for (var x = 1; x < size - 1; x++) {
-                map[8][x] = 0;
-                map[x][8] = 0;
-            }
-            for (var i = 3; i < size - 3; i++) {
-                map[3][i] = 0;
-                map[size - 4][i] = 0;
-                map[i][3] = 0;
-                map[i][size - 4] = 0;
-            }
-            for (var y = 3; y <= 8; y++) map[y][3] = 0;
-            for (var y = 8; y <= size - 4; y++) map[y][size - 4] = 0;
-            for (var x = 3; x <= 8; x++) map[3][x] = 0;
-            for (var x = 8; x <= size - 4; x++) map[size - 4][x] = 0;
+        // ============================================================
+        //  КАРТА: ЦЕНТР + 8 ЛУЧЕЙ ПО 2 КЛЕТКИ
+        // ============================================================
+        // Центр
+        map[8][8] = 0;
+
+        // 8 лучей: проход (рядом с центром) → дверь (конец луча)
+        var CORRIDOR = [
+            // вверх
+            { x: 8, y: 7 }, { x: 8, y: 6 },
+            // вниз
+            { x: 8, y: 9 }, { x: 8, y: 10 },
+            // влево
+            { x: 7, y: 8 }, { x: 6, y: 8 },
+            // вправо
+            { x: 9, y: 8 }, { x: 10, y: 8 },
+            // вверх-влево
+            { x: 7, y: 7 }, { x: 6, y: 6 },
+            // вверх-вправо
+            { x: 9, y: 7 }, { x: 10, y: 6 },
+            // вниз-влево
+            { x: 7, y: 9 }, { x: 6, y: 10 },
+            // вниз-вправо
+            { x: 9, y: 9 }, { x: 10, y: 10 }
+        ];
+
+        for (var i = 0; i < CORRIDOR.length; i++) {
+            var c = CORRIDOR[i];
+            map[c.y][c.x] = 0;
         }
-        generateCamp();
 
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
             return map[y][x] === 1;
         }
 
-                var candidates = [];
-        for (var y = 1; y < size - 1; y++) {
-            for (var x = 1; x < size - 1; x++) {
-                if (map[y][x] !== 0) continue;
-                if (x === 8 && y === 8) continue;
-
-                var wL = isWallCell(x - 1, y);
-                var wR = isWallCell(x + 1, y);
-                var wU = isWallCell(x, y - 1);
-                var wD = isWallCell(x, y + 1);
-                var walls = (wL?1:0) + (wR?1:0) + (wU?1:0) + (wD?1:0);
-
-                if (walls === 2 && ((wL && wR) || (wU && wD))) {
-                    candidates.push({ x: x, y: y, horiz: wL && wR });
-                }
-            }
-        }
-
-        // Перемешиваем кандидатов, чтобы двери раскидались по всему лабиринту
-        for (var sh = candidates.length - 1; sh > 0; sh--) {
-            var j = Math.floor(Math.random() * (sh + 1));
-            var tmp = candidates[sh];
-            candidates[sh] = candidates[j];
-            candidates[j] = tmp;
-        }
-
-        // Раскидываем 9 дверей по всей карте: сначала пробуем с мин. дистанцией 4,
-        // если не хватает — 3, потом 2
-        var placed = [];
-        var minDistances = [4, 3, 2];
-        for (var md = 0; md < minDistances.length && placed.length < 9; md++) {
-            var needDist = minDistances[md];
-            for (var c = 0; c < candidates.length && placed.length < 9; c++) {
-                var cand = candidates[c];
-                // пропускаем тех, кого уже взяли
-                var already = false;
-                for (var pp = 0; pp < placed.length; pp++) {
-                    if (placed[pp] === cand) { already = true; break; }
-                }
-                if (already) continue;
-
-                var ok = true;
-                for (var p = 0; p < placed.length; p++) {
-                    if (Math.abs(placed[p].x - cand.x) + Math.abs(placed[p].y - cand.y) < needDist) { ok = false; break; }
-                }
-                if (ok) placed.push(cand);
-            }
-        }
-
+        // ============================================================
+        //  ТЕКСТУРЫ
+        // ============================================================
         const loader = new THREE.TextureLoader();
         const wallTex  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
@@ -276,6 +244,7 @@
         const group = new THREE.Group();
         scene.add(group);
 
+        // Стены, пол, потолок
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const x = col - Math.floor(size / 2);
@@ -302,7 +271,7 @@
         }
 
         // ============================================================
-        //  БРАЗИЕРЫ С ОГНЁМ — CHROMA-KEY
+        //  БРАЗИЕРЫ С ОГНЁМ — CHROMA-KEY, 4 в центре
         // ============================================================
         const brazierPositions = [
             { gx: 7, gy: 7 },
@@ -391,7 +360,7 @@
         }
 
         // ============================================================
-        //  ДВЕРИ — плоскость в проёме
+        //  ДВЕРИ — в конце каждого луча
         // ============================================================
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
@@ -409,26 +378,33 @@
 
         var doorLeaves = [];
 
-        for (var d = 0; d < placed.length; d++) {
-            var dp = placed[d];
-            var sec = SECTIONS[d % SECTIONS.length];
+        for (var d = 0; d < SECTIONS.length; d++) {
+            var sec = SECTIONS[d];
+            var gx = sec.doorX;
+            var gy = sec.doorY;
 
-            var wx = dp.x - Math.floor(size / 2);
-            var wz = dp.y - Math.floor(size / 2);
+            // Ориентация двери: если стены слева/справа — не поворачиваем,
+            // если стены сверху/снизу — поворот 90°
+            var wL = isWallCell(gx - 1, gy);
+            var wR = isWallCell(gx + 1, gy);
+            var horiz = wL && wR;
+
+            var wx = gx - Math.floor(size / 2);
+            var wz = gy - Math.floor(size / 2);
 
             var leaf = new THREE.Mesh(
                 new THREE.PlaneGeometry(cellSize, wallHeight),
                 makeDoorMaterial(sec.icon)
             );
-            if (!dp.horiz) leaf.rotation.y = Math.PI / 2;
+            if (!horiz) leaf.rotation.y = Math.PI / 2;
 
             leaf.position.set(wx, wallHeight / 2, wz);
-            leaf.userData = { isDoor: true, doorGX: dp.x, doorGY: dp.y, section: sec };
+            leaf.userData = { isDoor: true, doorGX: gx, doorGY: gy, section: sec };
             group.add(leaf);
 
             doorLeaves.push({
                 mesh: leaf,
-                gx: dp.x, gy: dp.y,
+                gx: gx, gy: gy,
                 open: false, t: 0,
                 closedY: wallHeight / 2,
                 openY: -wallHeight / 2 - 0.15,
@@ -506,7 +482,7 @@
         }
 
         // ============================================================
-        //  HTML-ПОДПИСИ НАД ДВЕРЯМИ
+        //  ПОДПИСИ НАД ДВЕРЯМИ
         // ============================================================
         var labelsLayer = document.getElementById('door-labels-layer');
         for (var i = 0; i < doorLeaves.length; i++) {
@@ -544,7 +520,7 @@
         window.addEventListener('click', function() { try { campMusic.play().catch(function(){}); } catch(e){} });
 
         // ============================================================
-        //  СФЕРЫ HP/МАНЫ
+        //  СФЕРЫ
         // ============================================================
         function updateHeroSpheres() {
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -575,33 +551,32 @@
         let playerYaw = 0;
 
         if (returnGX !== null && returnGY !== null && !isNaN(returnGX) && !isNaN(returnGY)) {
-            var neighbours = [
-                { x: returnGX + 1, y: returnGY },
-                { x: returnGX - 1, y: returnGY },
-                { x: returnGX, y: returnGY + 1 },
-                { x: returnGX, y: returnGY - 1 }
-            ];
-            var spawn = null;
-            for (var n = 0; n < neighbours.length; n++) {
-                var nx = neighbours[n].x, ny = neighbours[n].y;
-                if (nx >= 0 && ny >= 0 && nx < size && ny < size && map[ny][nx] === 0) {
-                    spawn = { x: nx, y: ny };
-                    break;
-                }
-            }
-            if (spawn) {
-                playerGX = spawn.x;
-                playerGY = spawn.y;
+            // Ищем клетку ПЕРЕД дверью — та, что на линии от центра к двери
+            // Вектор от центра к двери
+            var ddx = returnGX - 8;
+            var ddy = returnGY - 8;
+            var len = Math.max(Math.abs(ddx), Math.abs(ddy));
+            var stepX = len > 0 ? ddx / len : 0;
+            var stepY = len > 0 ? ddy / len : 0;
+            // Клетка перед дверью = дверь минус один шаг
+            var spawnX = returnGX - Math.round(stepX);
+            var spawnY = returnGY - Math.round(stepY);
+
+            if (spawnX >= 0 && spawnY >= 0 && spawnX < size && spawnY < size && map[spawnY][spawnX] === 0) {
+                playerGX = spawnX;
+                playerGY = spawnY;
                 playerPos.x = playerGX - Math.floor(size / 2);
                 playerPos.z = playerGY - Math.floor(size / 2);
-                var ddx = returnGX - playerGX;
-                var ddy = returnGY - playerGY;
-                if (ddx === 1) playerYaw = -Math.PI / 2;
-                else if (ddx === -1) playerYaw = Math.PI / 2;
-                else if (ddy === 1) playerYaw = Math.PI;
-                else if (ddy === -1) playerYaw = 0;
+                // Разворачиваем игрока лицом к двери
+                var faceX = returnGX - playerGX;
+                var faceY = returnGY - playerGY;
+                if (faceX === 1) playerYaw = -Math.PI / 2;
+                else if (faceX === -1) playerYaw = Math.PI / 2;
+                else if (faceY === 1) playerYaw = Math.PI;
+                else if (faceY === -1) playerYaw = 0;
             }
 
+            // Открываем дверь обратно (подъём снизу вверх)
             for (var dl = 0; dl < doorLeaves.length; dl++) {
                 if (doorLeaves[dl].gx === returnGX && doorLeaves[dl].gy === returnGY) {
                     var dd = doorLeaves[dl];
@@ -659,6 +634,9 @@
             }, 350);
         }
 
+        // ============================================================
+        //  УПРАВЛЕНИЕ
+        // ============================================================
         function animateTurn(targetYaw, duration) {
             if (isTurning) return;
             duration = duration || 400;
@@ -726,6 +704,9 @@
             }
         });
 
+        // ============================================================
+        //  КЛИК ПО ДВЕРИ (только в упор)
+        // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
@@ -748,15 +729,15 @@
                                 break;
                             }
                         }
-                    } else {
-                        moveForward();
                     }
                     return;
                 }
             }
-            moveForward();
         });
 
+        // ============================================================
+        //  МИНИКАРТА
+        // ============================================================
         const minimapCell = 11;
         const minimapCanvas = document.getElementById('minimap-canvas');
         minimapCanvas.width = size * minimapCell;
@@ -800,6 +781,9 @@
             mmCtx.stroke();
         }
 
+        // ============================================================
+        //  КАМЕРА + ПОДПИСИ
+        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -809,16 +793,14 @@
             camera.rotation.set(0, playerYaw, 0);
         }
 
-                function updateDoorLabels() {
+        function updateDoorLabels() {
             var forwardX = -Math.sin(playerYaw);
             var forwardZ = -Math.cos(playerYaw);
 
-            // Сначала скрываем все подписи
             for (var i = 0; i < doorLeaves.length; i++) {
                 if (doorLeaves[i].labelEl) doorLeaves[i].labelEl.style.display = 'none';
             }
 
-            // Ищем ОДНУ лучшую дверь: в поле зрения (dot > 0.9) и ближайшую
             var best = null;
             var bestScore = -1;
             for (var i = 0; i < doorLeaves.length; i++) {
@@ -839,7 +821,6 @@
 
                 if (dot < 0.9) continue;
 
-                // Компромисс: чем ближе дверь и чем точнее смотрим — тем лучше
                 var score = dot * 2 + (5 - dist) / 5;
                 if (score > bestScore) {
                     bestScore = score;
@@ -849,7 +830,6 @@
 
             if (!best) return;
 
-            // Показываем подпись только у лучшей двери
             var worldPos = new THREE.Vector3(best.mesh.position.x, best.mesh.position.y + 0.7, best.mesh.position.z);
             worldPos.project(camera);
 
@@ -870,6 +850,9 @@
             best.labelEl.style.opacity = opacity;
         }
 
+        // ============================================================
+        //  ЦИКЛ
+        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
@@ -926,14 +909,12 @@
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
             heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
 
-            // Бразиеры
             updateBrazierFrames();
             for (var bi = 0; bi < braziers.length; bi++) {
                 var bb = braziers[bi];
                 bb.light.intensity = 0.75 + Math.sin(t * 5.5 + bb.phase) * 0.18 + Math.sin(t * 13.7 + bb.phase) * 0.08;
             }
 
-            // Светлячки
             for (var fi = 0; fi < fireflies.length; fi++) {
                 var f = fireflies[fi];
                 f.angle += dt * f.speed * 0.6;
