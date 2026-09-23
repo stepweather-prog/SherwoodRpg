@@ -19,7 +19,6 @@
 
         #camp-hint { position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 13px; text-shadow: 0 0 6px #000; z-index: 20; pointer-events: none; opacity: 0.85; letter-spacing: 1px; text-align: center; }
 
-        /* HTML-подписи над дверями */
         #door-labels-layer {
             position: fixed;
             top: 0; left: 0;
@@ -149,9 +148,6 @@
         }
         window.exitCamp = exitCamp;
 
-        // ============================================================
-        //  РАЗДЕЛЫ
-        // ============================================================
         var SECTIONS = [
             { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  open: function() { try { parent.UI.profile(); } catch(e) {} } },
             { key: 'quests',   name: 'Квесты',    icon: 'assets/assets2/icons/quest.png',           open: function() { try { parent.UI.quests(); } catch(e) {} } },
@@ -164,9 +160,6 @@
             { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
-        // ============================================================
-        //  СЦЕНА
-        // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
         scene.fog = new THREE.Fog(0x0a0805, 5, 14);
@@ -221,9 +214,6 @@
             return map[y][x] === 1;
         }
 
-        // ============================================================
-        //  ДВЕРИ — только в узких проходах (2 стены по бокам)
-        // ============================================================
         var candidates = [];
         for (var y = 1; y < size - 1; y++) {
             for (var x = 1; x < size - 1; x++) {
@@ -237,7 +227,6 @@
                 var walls = (wL?1:0) + (wR?1:0) + (wU?1:0) + (wD?1:0);
 
                 if (walls === 2 && ((wL && wR) || (wU && wD))) {
-                    // horiz = стены СЛЕВА и СПРАВА → дверь не поворачиваем
                     candidates.push({ x: x, y: y, horiz: wL && wR });
                 }
             }
@@ -253,9 +242,6 @@
             if (ok) placed.push(cand);
         }
 
-        // ============================================================
-        //  ТЕКСТУРЫ
-        // ============================================================
         const loader = new THREE.TextureLoader();
         const wallTex  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
@@ -295,7 +281,96 @@
         }
 
         // ============================================================
-        //  ДВЕРИ — плоскость в проёме, как в подземке
+        //  БРАЗИЕРЫ С ОГНЁМ — CHROMA-KEY
+        // ============================================================
+        const brazierPositions = [
+            { gx: 7, gy: 7 },
+            { gx: 9, gy: 7 },
+            { gx: 7, gy: 9 },
+            { gx: 9, gy: 9 }
+        ];
+        const braziers = [];
+
+        function chromaKeyImageData(imgData) {
+            var d = imgData.data;
+            for (var i = 0; i < d.length; i += 4) {
+                var r = d[i], g = d[i+1], b = d[i+2];
+                if (g > 80 && g > r * 1.35 && g > b * 1.35) {
+                    var greenness = (g - Math.max(r, b)) / g;
+                    if (greenness > 0.25) {
+                        d[i+3] = 0;
+                    } else {
+                        d[i+3] = Math.floor(255 * (1 - greenness / 0.25));
+                    }
+                }
+            }
+        }
+
+        for (var b = 0; b < brazierPositions.length; b++) {
+            var bp = brazierPositions[b];
+            var bx = bp.gx - Math.floor(size / 2);
+            var bz = bp.gy - Math.floor(size / 2);
+
+            var fireLight = new THREE.PointLight(0xff7a2a, 0.85, 4.5, 2);
+            fireLight.position.set(bx, 0.55, bz);
+            scene.add(fireLight);
+
+            var bCanvas = document.createElement('canvas');
+            bCanvas.width = 256;
+            bCanvas.height = 256;
+            var bCtx = bCanvas.getContext('2d', { willReadFrequently: true });
+
+            var bVideo = document.createElement('video');
+            bVideo.src = 'assets/assets2/animation/stone_brazier_fire.webm';
+            bVideo.autoplay = true;
+            bVideo.loop = true;
+            bVideo.muted = true;
+            bVideo.playsInline = true;
+            bVideo.preload = 'auto';
+            bVideo.play().catch(function(){});
+
+            var bTex = new THREE.CanvasTexture(bCanvas);
+            bTex.minFilter = THREE.LinearFilter;
+            bTex.magFilter = THREE.LinearFilter;
+
+            var bSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: bTex,
+                transparent: true,
+                depthTest: true,
+                depthWrite: false
+            }));
+            bSprite.scale.set(0.7, 0.7, 1);
+            bSprite.position.set(bx, 0.35, bz);
+            scene.add(bSprite);
+
+            braziers.push({
+                video: bVideo,
+                canvas: bCanvas,
+                ctx: bCtx,
+                texture: bTex,
+                sprite: bSprite,
+                light: fireLight,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        function updateBrazierFrames() {
+            for (var i = 0; i < braziers.length; i++) {
+                var br = braziers[i];
+                var v = br.video;
+                if (!v || v.readyState < 2) continue;
+                try {
+                    br.ctx.drawImage(v, 0, 0, br.canvas.width, br.canvas.height);
+                    var imgData = br.ctx.getImageData(0, 0, br.canvas.width, br.canvas.height);
+                    chromaKeyImageData(imgData);
+                    br.ctx.putImageData(imgData, 0, 0);
+                    br.texture.needsUpdate = true;
+                } catch (e) {}
+            }
+        }
+
+        // ============================================================
+        //  ДВЕРИ — плоскость в проёме
         // ============================================================
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
@@ -347,7 +422,6 @@
         //  СВЕТЛЯЧКИ ВОКРУГ ДВЕРЕЙ
         // ============================================================
         var fireflies = [];
-
         var fireflyTex = (function() {
             var canvas = document.createElement('canvas');
             canvas.width = 64;
@@ -423,7 +497,7 @@
         }
 
         // ============================================================
-        //  ЗВУКИ + АНИМАЦИЯ ШАГА
+        //  ЗВУКИ
         // ============================================================
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
@@ -564,9 +638,6 @@
             }, 350);
         }
 
-        // ============================================================
-        //  УПРАВЛЕНИЕ
-        // ============================================================
         function animateTurn(targetYaw, duration) {
             if (isTurning) return;
             duration = duration || 400;
@@ -634,9 +705,6 @@
             }
         });
 
-        // ============================================================
-        //  КЛИК ПО ДВЕРИ
-        // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
@@ -668,9 +736,6 @@
             moveForward();
         });
 
-        // ============================================================
-        //  МИНИКАРТА
-        // ============================================================
         const minimapCell = 11;
         const minimapCanvas = document.getElementById('minimap-canvas');
         minimapCanvas.width = size * minimapCell;
@@ -714,9 +779,6 @@
             mmCtx.stroke();
         }
 
-        // ============================================================
-        //  КАМЕРА + ПОДПИСИ В SCREEN-SPACE
-        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -726,57 +788,67 @@
             camera.rotation.set(0, playerYaw, 0);
         }
 
-        function updateDoorLabels() {
+                function updateDoorLabels() {
             var forwardX = -Math.sin(playerYaw);
             var forwardZ = -Math.cos(playerYaw);
 
+            // Сначала скрываем все подписи
+            for (var i = 0; i < doorLeaves.length; i++) {
+                if (doorLeaves[i].labelEl) doorLeaves[i].labelEl.style.display = 'none';
+            }
+
+            // Ищем ОДНУ лучшую дверь: в поле зрения (dot > 0.9) и ближайшую
+            var best = null;
+            var bestScore = -1;
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
                 if (!d.labelEl) continue;
-                if (!d.mesh.visible && d.open) {
-                    d.labelEl.style.display = 'none';
-                    continue;
-                }
+                if (!d.mesh.visible && d.open) continue;
 
                 var dx = d.mesh.position.x - playerPos.x;
                 var dz = d.mesh.position.z - playerPos.z;
                 var dist = Math.hypot(dx, dz);
 
-                if (dist > 6) { d.labelEl.style.display = 'none'; continue; }
+                if (dist > 5) continue;
+                if (dist < 0.001) continue;
 
-                if (dist > 0.001) {
-                    var nx = dx / dist;
-                    var nz = dz / dist;
-                    var dot = nx * forwardX + nz * forwardZ;
-                    if (dot < 0.75) { d.labelEl.style.display = 'none'; continue; }
+                var nx = dx / dist;
+                var nz = dz / dist;
+                var dot = nx * forwardX + nz * forwardZ;
+
+                if (dot < 0.9) continue;
+
+                // Компромисс: чем ближе дверь и чем точнее смотрим — тем лучше
+                var score = dot * 2 + (5 - dist) / 5;
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = d;
                 }
-
-                var worldPos = new THREE.Vector3(d.mesh.position.x, d.mesh.position.y + 0.7, d.mesh.position.z);
-                worldPos.project(camera);
-
-                if (worldPos.z > 1) { d.labelEl.style.display = 'none'; continue; }
-
-                var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
-                var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-
-                if (x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) {
-                    d.labelEl.style.display = 'none';
-                    continue;
-                }
-
-                var opacity = 1;
-                if (dist > 4) opacity = Math.max(0, 1 - (dist - 4) / 2);
-
-                d.labelEl.style.display = 'block';
-                d.labelEl.style.left = x + 'px';
-                d.labelEl.style.top = y + 'px';
-                d.labelEl.style.opacity = opacity;
             }
+
+            if (!best) return;
+
+            // Показываем подпись только у лучшей двери
+            var worldPos = new THREE.Vector3(best.mesh.position.x, best.mesh.position.y + 0.7, best.mesh.position.z);
+            worldPos.project(camera);
+
+            if (worldPos.z > 1) return;
+
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+
+            if (x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) return;
+
+            var dist2 = Math.hypot(best.mesh.position.x - playerPos.x, best.mesh.position.z - playerPos.z);
+            var opacity = 1;
+            if (dist2 > 3) opacity = Math.max(0, 1 - (dist2 - 3) / 2);
+
+            best.labelEl.style.display = 'block';
+            best.labelEl.style.left = x + 'px';
+            best.labelEl.style.top = y + 'px';
+            best.labelEl.style.opacity = opacity;
         }
 
-        // ============================================================
-        //  ЦИКЛ
-        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
@@ -833,7 +905,14 @@
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
             heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
 
-            // Обновление светлячков
+            // Бразиеры
+            updateBrazierFrames();
+            for (var bi = 0; bi < braziers.length; bi++) {
+                var bb = braziers[bi];
+                bb.light.intensity = 0.75 + Math.sin(t * 5.5 + bb.phase) * 0.18 + Math.sin(t * 13.7 + bb.phase) * 0.08;
+            }
+
+            // Светлячки
             for (var fi = 0; fi < fireflies.length; fi++) {
                 var f = fireflies[fi];
                 f.angle += dt * f.speed * 0.6;
