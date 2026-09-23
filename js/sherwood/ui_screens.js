@@ -373,7 +373,8 @@ UI._showPlaceholder = function(title, bgKey, backAction) {
 UI.loadHome = function() {
     UI._hideDungeonVideo();
     UI._cameFromCamp = false;
-    
+    UI._campReturnInfo = null;   // ← вот сюда переносим сброс
+
     try {
         if (UI._screenLayer) {
             UI._screenLayer.style.display = 'none';
@@ -1153,9 +1154,14 @@ UI._bagAction = function(i) {
 UI.camp = function() {
     UI._playSound('click');
     UI._stopMusic();
-    try { if (window.stopMainMusic) window.stopMainMusic(); } catch(e){}
+
     try {
-        if (window.audioPlayer) { window.audioPlayer.pause(); window.audioPlayer.currentTime = 0; window.audioPlayer.src = ''; }
+        if (window.stopMainMusic) window.stopMainMusic();
+        if (window.audioPlayer) {
+            window.audioPlayer.pause();
+            window.audioPlayer.currentTime = 0;
+            window.audioPlayer.src = '';
+        }
         if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
     } catch(e){}
 
@@ -1175,8 +1181,8 @@ UI.camp = function() {
         UI._screenLayer.style.display = 'block';
     }
 
-    // После возврата — очищаем инфо, чтобы в следующий заход с главной не передавать
-    setTimeout(function() { UI._campReturnInfo = null; }, 100);
+    // НЕ сбрасываем _campReturnInfo — он нужен для следующего возврата
+    // Сброс происходит только в UI.loadHome()
 };
 UI.quests = function() {
     UI._playSound('click');
