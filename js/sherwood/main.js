@@ -160,6 +160,7 @@ function updateTopBar() {
 // ---------- КАРУСЕЛЬ ----------
 let currentSectionIndex = 0;
 const sections = [
+    { name: 'Лагерь',    icon: 'sherwood_camp.png' },
     { name: 'Профиль', icon: 'player_profile.png' },
     { name: 'Квесты', icon: 'quest.png' },
     { name: 'Таверна', icon: 'tavern.png' },
@@ -272,6 +273,9 @@ function enterSection() {
     }
 
     switch(section.name) {
+       case 'Лагерь':
+    UI.camp();
+    break; 
         case 'Профиль':
             UI.profile();
             break;
