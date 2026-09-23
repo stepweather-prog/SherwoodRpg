@@ -160,16 +160,8 @@ function updateTopBar() {
 // ---------- КАРУСЕЛЬ ----------
 let currentSectionIndex = 0;
 const sections = [
-    { name: 'Лагерь',    icon: 'sherwood_camp.png' },
-    { name: 'Профиль', icon: 'player_profile.png' },
-    { name: 'Квесты', icon: 'quest.png' },
-    { name: 'Таверна', icon: 'tavern.png' },
-    { name: 'Порталы', icon: 'portal.png' },
-    { name: 'Подземка', icon: 'subway.png' },
-    { name: 'Рынок', icon: 'sherwood_market.png' },
-    { name: 'Кузница', icon: 'forge.png' },
-    { name: 'Бестиарий', icon: 'bestiary.png' },
-    { name: 'Рейд', icon: 'raid.png' },
+    { name: 'Профиль',  icon: 'player_profile.png' },
+    { name: 'Лагерь',   icon: 'sherwood_camp.png' },
     { name: 'Настройки', icon: 'settings.png' }
 ];
 
@@ -273,42 +265,17 @@ function enterSection() {
     }
 
     switch(section.name) {
-       case 'Лагерь':
-    UI.camp();
-    break; 
-        case 'Профиль':
-            UI.profile();
-            break;
-        case 'Квесты':
-            UI.quests();
-            break;
-        case 'Таверна':
-            UI.tavern();
-            break;
-        case 'Порталы':
-            UI.portals();
-            break;
-        case 'Подземка':
-            UI.dungeon();
-            break;
-        case 'Рынок':
-            UI.market();
-            break;
-        case 'Кузница':
-            UI.forge();
-            break;
-        case 'Бестиарий':
-            UI.bestiary();
-            break;
-        case 'Рейд':
-            UI.raid();
-            break;
-        case 'Настройки':
-            UI.settings();
-            break;
-        default:
-            showGenericScreen(section.name, '📌');
-    }
+    case 'Профиль':
+        UI.profile();
+        break;
+    case 'Лагерь':
+        UI.camp();
+        break;
+    case 'Настройки':
+        UI.settings();
+        break;
+    default:
+        showGenericScreen(section.name, '📌');
 }
 
 // ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
