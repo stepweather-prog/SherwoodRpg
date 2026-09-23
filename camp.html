@@ -214,7 +214,7 @@
             return map[y][x] === 1;
         }
 
-        var candidates = [];
+                var candidates = [];
         for (var y = 1; y < size - 1; y++) {
             for (var x = 1; x < size - 1; x++) {
                 if (map[y][x] !== 0) continue;
@@ -232,14 +232,35 @@
             }
         }
 
+        // Перемешиваем кандидатов, чтобы двери раскидались по всему лабиринту
+        for (var sh = candidates.length - 1; sh > 0; sh--) {
+            var j = Math.floor(Math.random() * (sh + 1));
+            var tmp = candidates[sh];
+            candidates[sh] = candidates[j];
+            candidates[j] = tmp;
+        }
+
+        // Раскидываем 9 дверей по всей карте: сначала пробуем с мин. дистанцией 4,
+        // если не хватает — 3, потом 2
         var placed = [];
-        for (var c = 0; c < candidates.length && placed.length < 9; c++) {
-            var cand = candidates[c];
-            var ok = true;
-            for (var p = 0; p < placed.length; p++) {
-                if (Math.abs(placed[p].x - cand.x) + Math.abs(placed[p].y - cand.y) < 3) { ok = false; break; }
+        var minDistances = [4, 3, 2];
+        for (var md = 0; md < minDistances.length && placed.length < 9; md++) {
+            var needDist = minDistances[md];
+            for (var c = 0; c < candidates.length && placed.length < 9; c++) {
+                var cand = candidates[c];
+                // пропускаем тех, кого уже взяли
+                var already = false;
+                for (var pp = 0; pp < placed.length; pp++) {
+                    if (placed[pp] === cand) { already = true; break; }
+                }
+                if (already) continue;
+
+                var ok = true;
+                for (var p = 0; p < placed.length; p++) {
+                    if (Math.abs(placed[p].x - cand.x) + Math.abs(placed[p].y - cand.y) < needDist) { ok = false; break; }
+                }
+                if (ok) placed.push(cand);
             }
-            if (ok) placed.push(cand);
         }
 
         const loader = new THREE.TextureLoader();
