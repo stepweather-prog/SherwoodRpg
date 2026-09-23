@@ -47,7 +47,7 @@ UI._arenaVictoryShown = false;
 UI._currentArenaOpponents = null; 
 UI._currentArenaOpponentIndex = 0;
 UI._arenaCooldownInterval = null;
-
+UI._cameFromCamp = false;
 UI._audioFiles = {
     'click': 'assets/assets2/tune/click.wav',
     'hit': 'assets/assets2/tune/hit.wav',
@@ -288,7 +288,7 @@ UI._hideDungeonVideo = function() {
 //  ЭКРАНЫ — ЕДИНАЯ ФУНКЦИЯ (ИСПРАВЛЕННАЯ ШАПКА)
 // ============================================================
 UI._openScreen = function(title, bgKey, html, backFn) {
-    var goBack = backFn || 'UI.loadHome()';
+    var goBack = backFn || (UI._cameFromCamp ? 'UI.camp()' : 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
@@ -324,7 +324,7 @@ UI._openScreen = function(title, bgKey, html, backFn) {
 };
 
 UI._openScreenScrollable = function(title, bgKey, html, backFn) {
-    var goBack = backFn || 'UI.loadHome()';
+   var goBack = backFn || (UI._cameFromCamp ? 'UI.camp()' : 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
@@ -372,6 +372,7 @@ UI._showPlaceholder = function(title, bgKey, backAction) {
 
 UI.loadHome = function() {
     UI._hideDungeonVideo();
+    UI._cameFromCamp = false;
     
     try {
         if (UI._screenLayer) {
