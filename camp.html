@@ -19,7 +19,29 @@
 
         #camp-hint { position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 13px; text-shadow: 0 0 6px #000; z-index: 20; pointer-events: none; opacity: 0.85; letter-spacing: 1px; text-align: center; }
 
-        /* === СФЕРЫ HP/МАНЫ === */
+        /* HTML-подписи над дверями (screen-space) */
+        #door-labels-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 15;
+        }
+        .door-label {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.78);
+            border: 2px solid #c8a050;
+            border-radius: 8px;
+            padding: 4px 12px;
+            color: #ffd27a;
+            font: bold 14px "Times New Roman", serif;
+            text-shadow: 0 0 6px #000, 0 2px 4px #000;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            display: none;
+        }
+
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; pointer-events: none; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
@@ -30,7 +52,6 @@
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        /* === МИНИКАРТА === */
         #minimap { position: fixed; top: 12px; right: 12px; width: 180px; height: 180px; z-index: 30; pointer-events: none; }
         #minimap-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 1; }
         #minimap-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; }
@@ -43,18 +64,19 @@
         #btn-right { top: 41px; left: 82px; }
         #btn-back { top: 82px; left: 41px; }
 
+        /* Анимация шага — всегда видна, крупнее */
         #step-anim {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 44px; height: 44px;
+            width: 76px; height: 76px;
             pointer-events: none;
-            display: none;
             z-index: 35;
             border-radius: 50%;
             object-fit: cover;
+            opacity: 0.85;
+            filter: drop-shadow(0 0 8px rgba(200,160,80,0.6));
         }
-        #step-anim.playing { display: block; }
 
         @media (max-width: 600px) {
             #camp-exit-btn { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
@@ -66,11 +88,12 @@
             #btn-left    { top: 38px !important; left: 0 !important; }
             #btn-right   { top: 38px !important; left: 76px !important; }
             #btn-back    { top: 76px !important; left: 38px !important; }
-            #step-anim { width: 40px !important; height: 40px !important; }
+            #step-anim { width: 60px !important; height: 60px !important; }
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
             #minimap { width: 130px !important; height: 130px !important; top: 8px !important; right: 8px !important; }
             #minimap-frame, #minimap-canvas { width: 100% !important; height: 100% !important; }
+            .door-label { font-size: 12px !important; padding: 3px 8px !important; }
         }
     </style>
 </head>
@@ -78,6 +101,9 @@
     <div id="camp-title">🏕️ ЛАГЕРЬ ШЕРВУДА</div>
     <div id="camp-exit-btn" onclick="exitCamp();">←</div>
     <div id="camp-hint">Подойди к двери и кликни по ней</div>
+
+    <!-- HTML-подписи над дверями -->
+    <div id="door-labels-layer"></div>
 
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
@@ -101,7 +127,7 @@
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
         <div class="arrow-btn" id="btn-back">▼</div>
-        <video id="step-anim" src="assets/assets2/animation/step_up.webm" muted playsinline preload="auto"></video>
+        <video id="step-anim" src="assets/assets2/animation/step_up.webm" muted playsinline autoplay loop preload="auto"></video>
     </div>
 
     <div id="vignette"></div>
@@ -113,6 +139,15 @@
 
     <script type="module">
         import * as THREE from 'three';
+
+        // ============================================================
+        //  URL-параметры: возврат к двери
+        // ============================================================
+        var urlParams = new URLSearchParams(window.location.search);
+        var returnGX = urlParams.get('returnGX');
+        var returnGY = urlParams.get('returnGY');
+        if (returnGX !== null) returnGX = parseInt(returnGX);
+        if (returnGY !== null) returnGY = parseInt(returnGY);
 
         function exitCamp() {
             try { if (parent.UI && parent.UI.loadHome) parent.UI.loadHome(); } catch(e) {}
@@ -191,21 +226,30 @@
             return map[y][x] === 1;
         }
 
-        // Кандидаты под двери — там где map === 0 и рядом стена
+        // ============================================================
+        //  ДВЕРИ — только в УЗКИХ ПРОХОДАХ (стены с двух сторон)
+        //  В приоритете — места с внешней стороны кольца, где точно нет соседних дверей
+        // ============================================================
         var candidates = [];
         for (var y = 1; y < size - 1; y++) {
             for (var x = 1; x < size - 1; x++) {
                 if (map[y][x] !== 0) continue;
                 if (x === 8 && y === 8) continue;
+
                 var wL = isWallCell(x - 1, y);
                 var wR = isWallCell(x + 1, y);
                 var wU = isWallCell(x, y - 1);
                 var wD = isWallCell(x, y + 1);
-                if ((wL || wR) && !(wL && wR)) candidates.push({ x: x, y: y });
-                else if ((wU || wD) && !(wU && wD)) candidates.push({ x: x, y: y });
+                var walls = (wL?1:0) + (wR?1:0) + (wU?1:0) + (wD?1:0);
+
+                // узкий проход ровно с 2 стенами с боков
+                if (walls === 2 && ((wL && wR) || (wU && wD))) {
+                    candidates.push({ x: x, y: y, horiz: wU && wD ? true : false });
+                }
             }
         }
 
+        // Разложим по 9 дверям, не ближе 3 клеток друг к другу
         var placed = [];
         for (var c = 0; c < candidates.length && placed.length < 9; c++) {
             var cand = candidates[c];
@@ -257,12 +301,6 @@
             }
         }
 
-        // ============================================================
-        //  ДВЕРИ + ПОДПИСИ
-        // ============================================================
-        var doorLeaves = [];
-        var doorLabels = [];
-
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
             tex.minFilter = THREE.LinearFilter;
@@ -278,41 +316,7 @@
             });
         }
 
-        // Рисует текстовую табличку на canvas → возвращает спрайт
-        function makeLabelSprite(text) {
-            var canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 64;
-            var ctx = canvas.getContext('2d');
-
-            // Фон-табличка
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-            ctx.strokeStyle = '#c8a050';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            if (ctx.roundRect) {
-                ctx.roundRect(4, 4, 248, 56, 10);
-            } else {
-                ctx.rect(4, 4, 248, 56);
-            }
-            ctx.fill();
-            ctx.stroke();
-
-            // Текст
-            ctx.fillStyle = '#ffd27a';
-            ctx.font = 'bold 32px "Times New Roman", serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, 128, 34);
-
-            var tex = new THREE.CanvasTexture(canvas);
-            tex.minFilter = THREE.LinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-            var mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true });
-            var sprite = new THREE.Sprite(mat);
-            sprite.scale.set(0.9, 0.225, 1);
-            return sprite;
-        }
+        var doorLeaves = [];
 
         for (var d = 0; d < placed.length; d++) {
             var dp = placed[d];
@@ -321,15 +325,17 @@
             var wx = dp.x - Math.floor(size / 2);
             var wz = dp.y - Math.floor(size / 2);
 
-            var wL = isWallCell(dp.x - 1, dp.y);
-            var wR = isWallCell(dp.x + 1, dp.y);
-
             var leaf = new THREE.Mesh(
                 new THREE.PlaneGeometry(cellSize, wallHeight),
                 makeDoorMaterial(sec.icon)
             );
-            var isVertical = !(wL || wR); // если НЕТ стен по бокам → дверь вдоль X (смотрит вверх-вниз)
-            if (isVertical) leaf.rotation.y = Math.PI / 2;
+            // Если стены сверху/снизу — дверь горизонтальная (по X), смотрит по Z
+            // Если стены слева/справа — дверь вертикальная (по Z), смотрит по X
+            if (dp.horiz) {
+                // стены сверху и снизу → дверь "вдоль X"
+            } else {
+                leaf.rotation.y = Math.PI / 2;
+            }
 
             leaf.position.set(wx, wallHeight / 2, wz);
             leaf.userData = { isDoor: true, doorGX: dp.x, doorGY: dp.y, section: sec };
@@ -340,22 +346,24 @@
                 open: false, t: 0,
                 closedY: wallHeight / 2,
                 openY: -wallHeight / 2 - 0.15,
-                section: sec
-            });
-
-            // Подпись над дверью
-            var label = makeLabelSprite(sec.name);
-            label.position.set(wx, wallHeight + 0.18, wz);
-            group.add(label);
-
-            doorLabels.push({
-                sprite: label,
-                baseY: wallHeight + 0.18,
-                phase: Math.random() * Math.PI * 2
+                section: sec,
+                labelEl: null
             });
         }
 
         console.log('🚪 Дверей размещено:', doorLeaves.length);
+
+        // ============================================================
+        //  HTML-ПОДПИСИ НАД ДВЕРЯМИ
+        // ============================================================
+        var labelsLayer = document.getElementById('door-labels-layer');
+        for (var i = 0; i < doorLeaves.length; i++) {
+            var el = document.createElement('div');
+            el.className = 'door-label';
+            el.textContent = doorLeaves[i].section.name;
+            labelsLayer.appendChild(el);
+            doorLeaves[i].labelEl = el;
+        }
 
         // ============================================================
         //  ЗВУКИ + АНИМАЦИЯ ШАГА
@@ -367,33 +375,25 @@
         campMusic.volume = 0.35;
 
         var stepAnimEl = document.getElementById('step-anim');
-        var stepsPlaying = false;
+        // видео крутится всегда, но пауза/play управляется startSteps/stopSteps
+        stepAnimEl.pause();
 
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function(){}); } catch(e) {} }
 
         function startSteps() {
-            if (stepsPlaying) return;
-            stepsPlaying = true;
             try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){}
-            if (stepAnimEl) {
-                stepAnimEl.classList.add('playing');
-                try { stepAnimEl.currentTime = 0; stepAnimEl.play().catch(function(){}); } catch(e){}
-            }
+            try { stepAnimEl.play().catch(function(){}); } catch(e){}
         }
         function stopSteps() {
-            stepsPlaying = false;
             try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){}
-            if (stepAnimEl) {
-                stepAnimEl.classList.remove('playing');
-                try { stepAnimEl.pause(); stepAnimEl.currentTime = 0; } catch(e){}
-            }
+            try { stepAnimEl.pause(); } catch(e){}
         }
 
         setTimeout(function() { try { campMusic.play().catch(function(){}); } catch(e){} }, 300);
         window.addEventListener('click', function() { try { campMusic.play().catch(function(){}); } catch(e){} });
 
         // ============================================================
-        //  СФЕРЫ HP/МАНЫ
+        //  СФЕРЫ
         // ============================================================
         function updateHeroSpheres() {
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -422,6 +422,53 @@
         let playerGX = 8, playerGY = 8;
         const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
         let playerYaw = 0;
+
+        // Если задан возврат к двери — ставим игрока рядом с ней
+        if (returnGX !== null && returnGY !== null && !isNaN(returnGX) && !isNaN(returnGY)) {
+            // ищем соседнюю проходимую клетку
+            var neighbours = [
+                { x: returnGX + 1, y: returnGY },
+                { x: returnGX - 1, y: returnGY },
+                { x: returnGX, y: returnGY + 1 },
+                { x: returnGX, y: returnGY - 1 }
+            ];
+            var spawn = null;
+            for (var n = 0; n < neighbours.length; n++) {
+                var nx = neighbours[n].x, ny = neighbours[n].y;
+                if (nx >= 0 && ny >= 0 && nx < size && ny < size && map[ny][nx] === 0) {
+                    spawn = { x: nx, y: ny };
+                    break;
+                }
+            }
+            if (spawn) {
+                playerGX = spawn.x;
+                playerGY = spawn.y;
+                playerPos.x = playerGX - Math.floor(size / 2);
+                playerPos.z = playerGY - Math.floor(size / 2);
+                // разворачиваем игрока в сторону двери
+                var dx = returnGX - playerGX;
+                var dy = returnGY - playerGY;
+                if (dx === 1) playerYaw = -Math.PI / 2;
+                else if (dx === -1) playerYaw = Math.PI / 2;
+                else if (dy === 1) playerYaw = Math.PI;
+                else if (dy === -1) playerYaw = 0;
+            }
+
+            // Открываем эту дверь обратно (поднимаем её снизу вверх) со звуком
+            for (var dl = 0; dl < doorLeaves.length; dl++) {
+                if (doorLeaves[dl].gx === returnGX && doorLeaves[dl].gy === returnGY) {
+                    var dd = doorLeaves[dl];
+                    // начинаем с открытого состояния
+                    dd.mesh.position.y = dd.openY;
+                    dd.mesh.visible = true;
+                    dd.t = 0;
+                    dd._reverse = true; // специальный флаг — анимация закрытия (подъём)
+                    break;
+                }
+            }
+            // Играем звук
+            setTimeout(function() { playSound(soundAltar); }, 400);
+        }
 
         const heroGlow = new THREE.PointLight(0xffb060, 0.7, 6, 2);
         heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
@@ -453,7 +500,14 @@
             if (!doorObj || doorObj.open) return;
             doorObj.open = true;
             doorObj.t = 0;
+            doorObj._reverse = false;
             playSound(soundAltar);
+
+            // Сообщаем родителю, в какую дверь зашли
+            try {
+                if (parent.UI) parent.UI._campReturnInfo = { gx: doorObj.gx, gy: doorObj.gy };
+            } catch(e) {}
+
             setTimeout(function() {
                 if (doorObj.section && doorObj.section.open) {
                     doorObj.section.open();
@@ -586,7 +640,6 @@
                     mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
                 }
             }
-            // Двери — жёлтые точки
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
                 mmCtx.fillStyle = d.open ? '#4caf50' : '#ffd700';
@@ -594,13 +647,11 @@
                 mmCtx.arc(d.gx * minimapCell + minimapCell/2, d.gy * minimapCell + minimapCell/2, minimapCell * 0.4, 0, Math.PI * 2);
                 mmCtx.fill();
             }
-            // Игрок
             const pg = worldToGrid(playerPos.x, playerPos.z);
             mmCtx.fillStyle = '#ffd700';
             mmCtx.beginPath();
             mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
             mmCtx.fill();
-            // Направление
             const cx = pg.gx * minimapCell + minimapCell/2;
             const cy = pg.gy * minimapCell + minimapCell/2;
             const len = minimapCell * 3;
@@ -615,7 +666,7 @@
         }
 
         // ============================================================
-        //  КАМЕРА + ЦИКЛ
+        //  КАМЕРА + HTML-ПОДПИСИ В SCREEN-SPACE
         // ============================================================
         const clock = new THREE.Clock();
 
@@ -624,6 +675,33 @@
             camera.position.z = playerPos.z;
             camera.position.y = 0.75;
             camera.rotation.set(0, playerYaw, 0);
+        }
+
+        // Проекция мировой позиции в экран и обновление HTML-подписи
+        function updateDoorLabels() {
+            for (var i = 0; i < doorLeaves.length; i++) {
+                var d = doorLeaves[i];
+                if (!d.labelEl) continue;
+                if (!d.mesh.visible && d.open) {
+                    // дверь уехала — скрываем и подпись
+                    d.labelEl.style.display = 'none';
+                    continue;
+                }
+                var worldPos = new THREE.Vector3(d.mesh.position.x, d.mesh.position.y + 1.0, d.mesh.position.z);
+                worldPos.project(camera);
+                // Проверка, что перед камерой
+                if (worldPos.z > 1) { d.labelEl.style.display = 'none'; continue; }
+                var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+                var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+                // Проверка на видимость в экране
+                if (x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) {
+                    d.labelEl.style.display = 'none';
+                    continue;
+                }
+                d.labelEl.style.display = 'block';
+                d.labelEl.style.left = x + 'px';
+                d.labelEl.style.top = y + 'px';
+            }
         }
 
         function animate() {
@@ -659,19 +737,26 @@
             // Анимация дверей
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
-                if (d.open && d.t < 1) {
+                if (d._reverse) {
+                    // обратная анимация — подъём из открытого в закрытое
+                    if (d.t < 1) {
+                        d.t += dt / 0.45;
+                        var k = Math.min(d.t, 1);
+                        var e = k * k * (3 - 2 * k);
+                        d.mesh.position.y = d.openY + (d.closedY - d.openY) * e;
+                        if (k >= 1) {
+                            d.mesh.position.y = d.closedY;
+                            d._reverse = false;
+                            d.open = false;
+                        }
+                    }
+                } else if (d.open && d.t < 1) {
                     d.t += dt / 0.45;
-                    var k = Math.min(d.t, 1);
-                    var e = k * k * (3 - 2 * k);
-                    d.mesh.position.y = d.closedY + (d.openY - d.closedY) * e;
-                    if (k >= 1) d.mesh.visible = false;
+                    var k2 = Math.min(d.t, 1);
+                    var e2 = k2 * k2 * (3 - 2 * k2);
+                    d.mesh.position.y = d.closedY + (d.openY - d.closedY) * e2;
+                    if (k2 >= 1) d.mesh.visible = false;
                 }
-            }
-
-            // Покачивание подписей
-            for (var j = 0; j < doorLabels.length; j++) {
-                var lbl = doorLabels[j];
-                lbl.sprite.position.y = lbl.baseY + Math.sin(t * 1.8 + lbl.phase) * 0.03;
             }
 
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
@@ -680,6 +765,7 @@
             updateCamera();
             renderer.render(scene, camera);
             drawMinimap();
+            updateDoorLabels();
         }
 
         animate();
