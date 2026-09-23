@@ -51,10 +51,6 @@
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        #minimap { position: fixed; top: 12px; right: 12px; width: 180px; height: 180px; z-index: 30; pointer-events: none; }
-        #minimap-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 1; }
-        #minimap-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; }
-
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -89,8 +85,6 @@
             #step-anim { width: 60px !important; height: 60px !important; }
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
-            #minimap { width: 130px !important; height: 130px !important; top: 8px !important; right: 8px !important; }
-            #minimap-frame, #minimap-canvas { width: 100% !important; height: 100% !important; }
             .door-label { font-size: 12px !important; padding: 3px 8px !important; }
         }
     </style>
@@ -98,7 +92,7 @@
 <body>
     <div id="camp-title">🏕️ ЛАГЕРЬ ШЕРВУДА</div>
     <div id="camp-exit-btn" onclick="exitCamp();">←</div>
-    <div id="camp-hint">Подойди к двери и кликни по ней</div>
+    <div id="camp-hint">Иди по коридору, поворачивай в ниши и кликай по дверям</div>
 
     <div id="door-labels-layer"></div>
 
@@ -112,11 +106,6 @@
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">MP: 0</span>
-    </div>
-
-    <div id="minimap">
-        <img id="minimap-frame" src="assets/assets2/game_details/maps_maps.png" alt="">
-        <canvas id="minimap-canvas"></canvas>
     </div>
 
     <div id="joystick">
@@ -149,18 +138,19 @@
         window.exitCamp = exitCamp;
 
         // ============================================================
-        //  8 РАЗДЕЛОВ (без "Квесты")
-        //  Каждый со своей клеткой двери
+        //  8 РАЗДЕЛОВ — 4 верхние ниши (y=6), 4 нижние (y=10)
         // ============================================================
         var SECTIONS = [
-            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 8,  doorY: 6,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 8,  doorY: 10, open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 6,  doorY: 8,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 10, doorY: 8,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 6,  doorY: 6,  open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 10, doorY: 6,  open: function() { try { parent.UI.forge(); } catch(e) {} } },
-            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 6,  doorY: 10, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 10, doorY: 10, open: function() { try { parent.UI.settings(); } catch(e) {} } }
+            // ВЕРХНИЕ НИШИ
+            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 6,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 6,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 9,  doorY: 6,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 11, doorY: 6,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+            // НИЖНИЕ НИШИ
+            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 10, open: function() { try { parent.UI.market(); } catch(e) {} } },
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 10, open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 9,  doorY: 10, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 11, doorY: 10, open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -193,35 +183,38 @@
         }
 
         // ============================================================
-        //  КАРТА: ЦЕНТР + 8 ЛУЧЕЙ ПО 2 КЛЕТКИ
+        //  КАРТА: ГОРИЗОНТАЛЬНЫЙ КОРИДОР + НИШИ СВЕРХУ И СНИЗУ
         // ============================================================
-        // Центр
-        map[8][8] = 0;
+        function generateCamp() {
+            // Всё стены
+            for (var yy = 0; yy < size; yy++) {
+                for (var xx = 0; xx < size; xx++) {
+                    map[yy][xx] = 1;
+                }
+            }
 
-        // 8 лучей: проход (рядом с центром) → дверь (конец луча)
-        var CORRIDOR = [
-            // вверх
-            { x: 8, y: 7 }, { x: 8, y: 6 },
-            // вниз
-            { x: 8, y: 9 }, { x: 8, y: 10 },
-            // влево
-            { x: 7, y: 8 }, { x: 6, y: 8 },
-            // вправо
-            { x: 9, y: 8 }, { x: 10, y: 8 },
-            // вверх-влево
-            { x: 7, y: 7 }, { x: 6, y: 6 },
-            // вверх-вправо
-            { x: 9, y: 7 }, { x: 10, y: 6 },
-            // вниз-влево
-            { x: 7, y: 9 }, { x: 6, y: 10 },
-            // вниз-вправо
-            { x: 9, y: 9 }, { x: 10, y: 10 }
-        ];
+            // Коридор — y=8, x от 2 до 13
+            for (var x = 2; x <= 13; x++) {
+                map[8][x] = 0;
+            }
 
-        for (var i = 0; i < CORRIDOR.length; i++) {
-            var c = CORRIDOR[i];
-            map[c.y][c.x] = 0;
+            // Верхние ниши — y=6 (ниша), y=7 (проход)
+            var topNiches = [3, 5, 9, 11];
+            for (var i = 0; i < topNiches.length; i++) {
+                var nx = topNiches[i];
+                map[7][nx] = 0;
+                map[6][nx] = 0;
+            }
+
+            // Нижние ниши — y=10 (ниша), y=9 (проход)
+            var botNiches = [3, 5, 9, 11];
+            for (var i = 0; i < botNiches.length; i++) {
+                var nx = botNiches[i];
+                map[9][nx] = 0;
+                map[10][nx] = 0;
+            }
         }
+        generateCamp();
 
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
@@ -244,7 +237,6 @@
         const group = new THREE.Group();
         scene.add(group);
 
-        // Стены, пол, потолок
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const x = col - Math.floor(size / 2);
@@ -271,13 +263,17 @@
         }
 
         // ============================================================
-        //  БРАЗИЕРЫ С ОГНЁМ — CHROMA-KEY, 4 в центре
+        //  БРАЗИЕРЫ — 4 штуки у стен, между нишами
+        //  Верхняя стена (y=7): x=4, 6, 10, 12 → но это ПРОХОДЫ в ниши, значит не сюда
+        //  Между нишами верхней стены (y=7): x=4, 6, 8, 10, 12
+        //  Между нишами нижней стены (y=9): x=4, 6, 8, 10, 12
         // ============================================================
         const brazierPositions = [
-            { gx: 7, gy: 7 },
-            { gx: 9, gy: 7 },
-            { gx: 7, gy: 9 },
-            { gx: 9, gy: 9 }
+            // 4 бразиера — по краям коридора, в стене
+            { gx: 6, gy: 7 },   // верхняя стена, между нишами 5 и 9
+            { gx: 10, gy: 7 },  // верхняя стена, между нишами 9 и 11
+            { gx: 6, gy: 9 },   // нижняя стена, между нишами 5 и 9
+            { gx: 10, gy: 9 }   // нижняя стена, между нишами 9 и 11
         ];
         const braziers = [];
 
@@ -329,7 +325,7 @@
                 depthTest: true,
                 depthWrite: false
             }));
-            bSprite.scale.set(0.7, 0.7, 1);
+            bSprite.scale.set(0.6, 0.6, 1);
             bSprite.position.set(bx, 0.35, bz);
             scene.add(bSprite);
 
@@ -360,7 +356,7 @@
         }
 
         // ============================================================
-        //  ДВЕРИ — в конце каждого луча
+        //  ДВЕРИ — плоскость в нише, лицом к коридору
         // ============================================================
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
@@ -383,20 +379,17 @@
             var gx = sec.doorX;
             var gy = sec.doorY;
 
-            // Ориентация двери: если стены слева/справа — не поворачиваем,
-            // если стены сверху/снизу — поворот 90°
-            var wL = isWallCell(gx - 1, gy);
-            var wR = isWallCell(gx + 1, gy);
-            var horiz = wL && wR;
-
             var wx = gx - Math.floor(size / 2);
             var wz = gy - Math.floor(size / 2);
 
+            // Дверь в плоскости XY, нормаль +Z (смотрит на юг) — для верхних ниш (y<8)
+            // Дверь для нижних ниш (y>8) — тоже в плоскости XY, но двусторонняя,
+            // значит видно с обеих сторон. rotation.y = 0.
             var leaf = new THREE.Mesh(
                 new THREE.PlaneGeometry(cellSize, wallHeight),
                 makeDoorMaterial(sec.icon)
             );
-            if (!horiz) leaf.rotation.y = Math.PI / 2;
+            // rotation.y = 0 по умолчанию
 
             leaf.position.set(wx, wallHeight / 2, wz);
             leaf.userData = { isDoor: true, doorGX: gx, doorGY: gy, section: sec };
@@ -544,30 +537,33 @@
         setInterval(updateHeroSpheres, 1000);
 
         // ============================================================
-        //  ИГРОК
+        //  ИГРОК — спавн в центре коридора
         // ============================================================
-        let playerGX = 8, playerGY = 8;
+        let playerGX = 7, playerGY = 8;
         const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
-        let playerYaw = 0;
+        let playerYaw = -Math.PI / 2; // смотрит вправо (+X) — по коридору
 
         if (returnGX !== null && returnGY !== null && !isNaN(returnGX) && !isNaN(returnGY)) {
-            // Ищем клетку ПЕРЕД дверью — та, что на линии от центра к двери
-            // Вектор от центра к двери
-            var ddx = returnGX - 8;
-            var ddy = returnGY - 8;
-            var len = Math.max(Math.abs(ddx), Math.abs(ddy));
-            var stepX = len > 0 ? ddx / len : 0;
-            var stepY = len > 0 ? ddy / len : 0;
-            // Клетка перед дверью = дверь минус один шаг
-            var spawnX = returnGX - Math.round(stepX);
-            var spawnY = returnGY - Math.round(stepY);
-
-            if (spawnX >= 0 && spawnY >= 0 && spawnX < size && spawnY < size && map[spawnY][spawnX] === 0) {
-                playerGX = spawnX;
-                playerGY = spawnY;
+            // Спавн — соседняя клетка с дверью (обычно это проход в нишу)
+            var neighbours = [
+                { x: returnGX, y: returnGY + 1 },
+                { x: returnGX, y: returnGY - 1 },
+                { x: returnGX + 1, y: returnGY },
+                { x: returnGX - 1, y: returnGY }
+            ];
+            var spawn = null;
+            for (var n = 0; n < neighbours.length; n++) {
+                var nx = neighbours[n].x, ny = neighbours[n].y;
+                if (nx >= 0 && ny >= 0 && nx < size && ny < size && map[ny][nx] === 0) {
+                    spawn = { x: nx, y: ny };
+                    break;
+                }
+            }
+            if (spawn) {
+                playerGX = spawn.x;
+                playerGY = spawn.y;
                 playerPos.x = playerGX - Math.floor(size / 2);
                 playerPos.z = playerGY - Math.floor(size / 2);
-                // Разворачиваем игрока лицом к двери
                 var faceX = returnGX - playerGX;
                 var faceY = returnGY - playerGY;
                 if (faceX === 1) playerYaw = -Math.PI / 2;
@@ -575,8 +571,6 @@
                 else if (faceY === 1) playerYaw = Math.PI;
                 else if (faceY === -1) playerYaw = 0;
             }
-
-            // Открываем дверь обратно (подъём снизу вверх)
             for (var dl = 0; dl < doorLeaves.length; dl++) {
                 if (doorLeaves[dl].gx === returnGX && doorLeaves[dl].gy === returnGY) {
                     var dd = doorLeaves[dl];
@@ -705,7 +699,7 @@
         });
 
         // ============================================================
-        //  КЛИК ПО ДВЕРИ (только в упор)
+        //  КЛИК ПО ДВЕРИ
         // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
@@ -734,52 +728,6 @@
                 }
             }
         });
-
-        // ============================================================
-        //  МИНИКАРТА
-        // ============================================================
-        const minimapCell = 11;
-        const minimapCanvas = document.getElementById('minimap-canvas');
-        minimapCanvas.width = size * minimapCell;
-        minimapCanvas.height = size * minimapCell;
-        const mmCtx = minimapCanvas.getContext('2d');
-
-        function drawMinimap() {
-            mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
-            for (let row = 0; row < size; row++) {
-                for (let col = 0; col < size; col++) {
-                    const v = map[row][col];
-                    let color;
-                    if (v === 1) color = 'rgba(42,26,10,0.85)';
-                    else color = 'rgba(139,115,85,0.75)';
-                    mmCtx.fillStyle = color;
-                    mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
-                }
-            }
-            for (var i = 0; i < doorLeaves.length; i++) {
-                var d = doorLeaves[i];
-                mmCtx.fillStyle = d.open ? '#4caf50' : '#ffd700';
-                mmCtx.beginPath();
-                mmCtx.arc(d.gx * minimapCell + minimapCell/2, d.gy * minimapCell + minimapCell/2, minimapCell * 0.4, 0, Math.PI * 2);
-                mmCtx.fill();
-            }
-            const pg = worldToGrid(playerPos.x, playerPos.z);
-            mmCtx.fillStyle = '#ffd700';
-            mmCtx.beginPath();
-            mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
-            mmCtx.fill();
-            const cx = pg.gx * minimapCell + minimapCell/2;
-            const cy = pg.gy * minimapCell + minimapCell/2;
-            const len = minimapCell * 3;
-            const dx = -Math.sin(playerYaw) * len;
-            const dy = -Math.cos(playerYaw) * len;
-            mmCtx.strokeStyle = '#ffd700';
-            mmCtx.lineWidth = 2;
-            mmCtx.beginPath();
-            mmCtx.moveTo(cx, cy);
-            mmCtx.lineTo(cx + dx, cy + dy);
-            mmCtx.stroke();
-        }
 
         // ============================================================
         //  КАМЕРА + ПОДПИСИ
@@ -931,7 +879,6 @@
 
             updateCamera();
             renderer.render(scene, camera);
-            drawMinimap();
             updateDoorLabels();
         }
 
