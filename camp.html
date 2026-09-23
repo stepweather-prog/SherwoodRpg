@@ -678,29 +678,59 @@
         }
 
         // Проекция мировой позиции в экран и обновление HTML-подписи
-        function updateDoorLabels() {
+                function updateDoorLabels() {
+            // Направление взгляда игрока в плоскости XZ
+            var forwardX = -Math.sin(playerYaw);
+            var forwardZ = -Math.cos(playerYaw);
+
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
                 if (!d.labelEl) continue;
                 if (!d.mesh.visible && d.open) {
-                    // дверь уехала — скрываем и подпись
                     d.labelEl.style.display = 'none';
                     continue;
                 }
+
+                // Вектор от игрока к двери
+                var dx = d.mesh.position.x - playerPos.x;
+                var dz = d.mesh.position.z - playerPos.z;
+                var dist = Math.hypot(dx, dz);
+
+                // 1. Слишком далеко? Скрываем (чтобы не засорять экран)
+                if (dist > 6) { d.labelEl.style.display = 'none'; continue; }
+
+                // 2. Проверка "смотрит ли игрок на дверь":
+                // нормализуем вектор к двери и сравниваем со взглядом через dot product
+                if (dist > 0.001) {
+                    var nx = dx / dist;
+                    var nz = dz / dist;
+                    var dot = nx * forwardX + nz * forwardZ;
+                    // dot > 0.75 ≈ угол ~40° от центра взгляда
+                    if (dot < 0.75) { d.labelEl.style.display = 'none'; continue; }
+                }
+
+                // 3. Проекция в экран
                 var worldPos = new THREE.Vector3(d.mesh.position.x, d.mesh.position.y + 1.0, d.mesh.position.z);
                 worldPos.project(camera);
-                // Проверка, что перед камерой
+
                 if (worldPos.z > 1) { d.labelEl.style.display = 'none'; continue; }
+
                 var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
                 var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-                // Проверка на видимость в экране
+
                 if (x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) {
                     d.labelEl.style.display = 'none';
                     continue;
                 }
+
+                // Плавное затухание с расстоянием
+                var opacity = 1;
+                if (dist > 4) opacity = Math.max(0, 1 - (dist - 4) / 2);
+
                 d.labelEl.style.display = 'block';
                 d.labelEl.style.left = x + 'px';
                 d.labelEl.style.top = y + 'px';
+                d.labelEl.style.opacity = opacity;
             }
         }
 
