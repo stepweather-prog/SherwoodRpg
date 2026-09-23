@@ -19,6 +19,22 @@
 
         #camp-hint { position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 13px; text-shadow: 0 0 6px #000; z-index: 20; pointer-events: none; opacity: 0.85; letter-spacing: 1px; text-align: center; }
 
+        /* === СФЕРЫ HP/МАНЫ === */
+        #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; pointer-events: none; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+
+        #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; pointer-events: none; }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+
+        /* === МИНИКАРТА === */
+        #minimap { position: fixed; top: 12px; right: 12px; width: 180px; height: 180px; z-index: 30; pointer-events: none; }
+        #minimap-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 1; }
+        #minimap-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; }
+
         #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
         .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -27,7 +43,6 @@
         #btn-right { top: 41px; left: 82px; }
         #btn-back { top: 82px; left: 41px; }
 
-        /* Анимация шага в центре джойстика */
         #step-anim {
             position: absolute;
             top: 50%; left: 50%;
@@ -52,6 +67,10 @@
             #btn-right   { top: 38px !important; left: 76px !important; }
             #btn-back    { top: 76px !important; left: 38px !important; }
             #step-anim { width: 40px !important; height: 40px !important; }
+            #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
+            #hero-life span, #hero-mana span { font-size: 13px !important; }
+            #minimap { width: 130px !important; height: 130px !important; top: 8px !important; right: 8px !important; }
+            #minimap-frame, #minimap-canvas { width: 100% !important; height: 100% !important; }
         }
     </style>
 </head>
@@ -59,6 +78,23 @@
     <div id="camp-title">🏕️ ЛАГЕРЬ ШЕРВУДА</div>
     <div id="camp-exit-btn" onclick="exitCamp();">←</div>
     <div id="camp-hint">Подойди к двери и кликни по ней</div>
+
+    <div id="hero-life">
+        <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
+        <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
+        <span id="hp-text">HP: 0</span>
+    </div>
+
+    <div id="hero-mana">
+        <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
+        <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
+        <span id="mana-text">MP: 0</span>
+    </div>
+
+    <div id="minimap">
+        <img id="minimap-frame" src="assets/assets2/game_details/maps_maps.png" alt="">
+        <canvas id="minimap-canvas"></canvas>
+    </div>
 
     <div id="joystick">
         <div class="arrow-btn" id="btn-forward">▲</div>
@@ -84,7 +120,7 @@
         window.exitCamp = exitCamp;
 
         // ============================================================
-        //  РАЗДЕЛЫ ЛАГЕРЯ
+        //  РАЗДЕЛЫ
         // ============================================================
         var SECTIONS = [
             { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  open: function() { try { parent.UI.profile(); } catch(e) {} } },
@@ -127,27 +163,22 @@
             for (let j = 0; j < size; j++) { map[i][j] = 1; }
         }
 
-        // === ЛАГЕРЬ: центральная площадь + крестовые проходы + внешнее кольцо ===
         function generateCamp() {
-            // Центральная площадь 3×3
             for (var dx = -1; dx <= 1; dx++) {
                 for (var dy = -1; dy <= 1; dy++) {
                     map[8 + dy][8 + dx] = 0;
                 }
             }
-            // Крестовые проходы от центра во все стороны
             for (var x = 1; x < size - 1; x++) {
                 map[8][x] = 0;
                 map[x][8] = 0;
             }
-            // Внешнее кольцо (полный прямоугольник по периметру)
             for (var i = 3; i < size - 3; i++) {
                 map[3][i] = 0;
                 map[size - 4][i] = 0;
                 map[i][3] = 0;
                 map[i][size - 4] = 0;
             }
-            // Соединяем центр с кольцом
             for (var y = 3; y <= 8; y++) map[y][3] = 0;
             for (var y = 8; y <= size - 4; y++) map[y][size - 4] = 0;
             for (var x = 3; x <= 8; x++) map[3][x] = 0;
@@ -155,41 +186,29 @@
         }
         generateCamp();
 
-        // ============================================================
-        //  ДВЕРИ — СТАВИМ ТОЛЬКО В ПРОХОДАХ (map === 0)
-        // ============================================================
-        // Автоматический выбор клеток для дверей: берём клетки с картой 0,
-        // которые имеют стену с одной стороны (тупик лагеря).
-        var doorLeaves = [];
-        var usedSectionIndex = 0;
-
         function isWallCell(x, y) {
             if (x < 0 || y < 0 || x >= size || y >= size) return true;
             return map[y][x] === 1;
         }
 
-        // Кандидаты-клетки: там где map === 0 и есть стена слева или справа (для вертикальной двери)
-        // или стена сверху/снизу (для горизонтальной).
+        // Кандидаты под двери — там где map === 0 и рядом стена
         var candidates = [];
         for (var y = 1; y < size - 1; y++) {
             for (var x = 1; x < size - 1; x++) {
                 if (map[y][x] !== 0) continue;
-                if (x === 8 && y === 8) continue; // не в самом центре
+                if (x === 8 && y === 8) continue;
                 var wL = isWallCell(x - 1, y);
                 var wR = isWallCell(x + 1, y);
                 var wU = isWallCell(x, y - 1);
                 var wD = isWallCell(x, y + 1);
-                // Дверь подходит, если с двух сторон стены (узкое место) — но нам нужны клетки у стены
-                if ((wL || wR) && !(wL && wR)) candidates.push({ x: x, y: y, vertical: wL || wR });
-                else if ((wU || wD) && !(wU && wD)) candidates.push({ x: x, y: y, vertical: false });
+                if ((wL || wR) && !(wL && wR)) candidates.push({ x: x, y: y });
+                else if ((wU || wD) && !(wU && wD)) candidates.push({ x: x, y: y });
             }
         }
 
-        // Ставим 9 дверей, равномерно раскиданных по кандидатам
         var placed = [];
         for (var c = 0; c < candidates.length && placed.length < 9; c++) {
             var cand = candidates[c];
-            // проверяем, что эта дверь не слишком близко к уже поставленным
             var ok = true;
             for (var p = 0; p < placed.length; p++) {
                 if (Math.abs(placed[p].x - cand.x) + Math.abs(placed[p].y - cand.y) < 3) { ok = false; break; }
@@ -197,6 +216,9 @@
             if (ok) placed.push(cand);
         }
 
+        // ============================================================
+        //  ТЕКСТУРЫ
+        // ============================================================
         const loader = new THREE.TextureLoader();
         const wallTex  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
@@ -210,7 +232,6 @@
         const group = new THREE.Group();
         scene.add(group);
 
-        // Стены, пол, потолок
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const x = col - Math.floor(size / 2);
@@ -236,6 +257,12 @@
             }
         }
 
+        // ============================================================
+        //  ДВЕРИ + ПОДПИСИ
+        // ============================================================
+        var doorLeaves = [];
+        var doorLabels = [];
+
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
             tex.minFilter = THREE.LinearFilter;
@@ -251,15 +278,49 @@
             });
         }
 
+        // Рисует текстовую табличку на canvas → возвращает спрайт
+        function makeLabelSprite(text) {
+            var canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            var ctx = canvas.getContext('2d');
+
+            // Фон-табличка
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.strokeStyle = '#c8a050';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(4, 4, 248, 56, 10);
+            } else {
+                ctx.rect(4, 4, 248, 56);
+            }
+            ctx.fill();
+            ctx.stroke();
+
+            // Текст
+            ctx.fillStyle = '#ffd27a';
+            ctx.font = 'bold 32px "Times New Roman", serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 128, 34);
+
+            var tex = new THREE.CanvasTexture(canvas);
+            tex.minFilter = THREE.LinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            var mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true });
+            var sprite = new THREE.Sprite(mat);
+            sprite.scale.set(0.9, 0.225, 1);
+            return sprite;
+        }
+
         for (var d = 0; d < placed.length; d++) {
             var dp = placed[d];
-            var sec = SECTIONS[usedSectionIndex % SECTIONS.length];
-            usedSectionIndex++;
+            var sec = SECTIONS[d % SECTIONS.length];
 
             var wx = dp.x - Math.floor(size / 2);
             var wz = dp.y - Math.floor(size / 2);
 
-            // Определяем ориентацию двери — если стена слева/справа, дверь вертикальная (вдоль оси Z)
             var wL = isWallCell(dp.x - 1, dp.y);
             var wR = isWallCell(dp.x + 1, dp.y);
 
@@ -267,35 +328,37 @@
                 new THREE.PlaneGeometry(cellSize, wallHeight),
                 makeDoorMaterial(sec.icon)
             );
-            if (wL || wR) {
-                // стены слева/справа → дверь ориентирована вдоль Z (не поворачиваем)
-            } else {
-                leaf.rotation.y = Math.PI / 2;
-            }
+            var isVertical = !(wL || wR); // если НЕТ стен по бокам → дверь вдоль X (смотрит вверх-вниз)
+            if (isVertical) leaf.rotation.y = Math.PI / 2;
 
             leaf.position.set(wx, wallHeight / 2, wz);
-            leaf.userData = {
-                isDoor: true,
-                doorGX: dp.x,
-                doorGY: dp.y,
-                section: sec
-            };
+            leaf.userData = { isDoor: true, doorGX: dp.x, doorGY: dp.y, section: sec };
             group.add(leaf);
 
             doorLeaves.push({
-                mesh: leaf,
-                gx: dp.x, gy: dp.y,
+                mesh: leaf, gx: dp.x, gy: dp.y,
                 open: false, t: 0,
                 closedY: wallHeight / 2,
                 openY: -wallHeight / 2 - 0.15,
                 section: sec
+            });
+
+            // Подпись над дверью
+            var label = makeLabelSprite(sec.name);
+            label.position.set(wx, wallHeight + 0.18, wz);
+            group.add(label);
+
+            doorLabels.push({
+                sprite: label,
+                baseY: wallHeight + 0.18,
+                phase: Math.random() * Math.PI * 2
             });
         }
 
         console.log('🚪 Дверей размещено:', doorLeaves.length);
 
         // ============================================================
-        //  ЗВУКИ И АНИМАЦИЯ ШАГА
+        //  ЗВУКИ + АНИМАЦИЯ ШАГА
         // ============================================================
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
@@ -328,6 +391,30 @@
 
         setTimeout(function() { try { campMusic.play().catch(function(){}); } catch(e){} }, 300);
         window.addEventListener('click', function() { try { campMusic.play().catch(function(){}); } catch(e){} });
+
+        // ============================================================
+        //  СФЕРЫ HP/МАНЫ
+        // ============================================================
+        function updateHeroSpheres() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            var hpPercent = p.stats.hp / p.stats.maxHp;
+            var lifeFill = document.getElementById('life-fill');
+            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            var hpText = document.getElementById('hp-text');
+            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+
+            var mana = p.stats.mana || 0;
+            var maxMana = p.stats.maxMana || 100;
+            var manaPercent = mana / maxMana;
+            var manaFill = document.getElementById('mana-fill');
+            if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - manaPercent) * 100) + '% 0 0 0)';
+            var manaText = document.getElementById('mana-text');
+            if (manaText) manaText.textContent = 'MP: ' + Math.floor(mana);
+        }
+        setTimeout(updateHeroSpheres, 400);
+        setInterval(updateHeroSpheres, 1000);
 
         // ============================================================
         //  ИГРОК
@@ -377,29 +464,6 @@
         // ============================================================
         //  УПРАВЛЕНИЕ
         // ============================================================
-        function animateStep(targetX, targetZ) {
-            const startX = playerPos.x;
-            const startZ = playerPos.z;
-            const duration = 400;
-            const startTime = performance.now();
-            startSteps();
-            function stepLoop() {
-                const elapsed = performance.now() - startTime;
-                const t = Math.min(elapsed / duration, 1);
-                const smoothT = t * t * (3 - 2 * t);
-                playerPos.x = startX + (targetX - startX) * smoothT;
-                playerPos.z = startZ + (targetZ - startZ) * smoothT;
-                if (t < 1) requestAnimationFrame(stepLoop);
-                else {
-                    playerPos.x = targetX;
-                    playerPos.z = targetZ;
-                    moving = false;
-                    stopSteps();
-                }
-            }
-            stepLoop();
-        }
-
         function animateTurn(targetYaw, duration) {
             if (isTurning) return;
             duration = duration || 400;
@@ -431,6 +495,7 @@
             const to = gridToWorld(nx, ny);
             waypoints = [{ x: to.x, z: to.z }];
             moving = true;
+            startSteps();
         }
         function moveBackward() {
             if (moving || isTurning) return;
@@ -443,6 +508,7 @@
             const to = gridToWorld(nx, ny);
             waypoints = [{ x: to.x, z: to.z }];
             moving = true;
+            startSteps();
         }
         function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
         function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
@@ -491,7 +557,6 @@
                             }
                         }
                     } else {
-                        // Слишком далеко — просто шаг вперёд
                         moveForward();
                     }
                     return;
@@ -501,7 +566,56 @@
         });
 
         // ============================================================
-        //  КАМЕРА
+        //  МИНИКАРТА
+        // ============================================================
+        const minimapCell = 11;
+        const minimapCanvas = document.getElementById('minimap-canvas');
+        minimapCanvas.width = size * minimapCell;
+        minimapCanvas.height = size * minimapCell;
+        const mmCtx = minimapCanvas.getContext('2d');
+
+        function drawMinimap() {
+            mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const v = map[row][col];
+                    let color;
+                    if (v === 1) color = 'rgba(42,26,10,0.85)';
+                    else color = 'rgba(139,115,85,0.75)';
+                    mmCtx.fillStyle = color;
+                    mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
+                }
+            }
+            // Двери — жёлтые точки
+            for (var i = 0; i < doorLeaves.length; i++) {
+                var d = doorLeaves[i];
+                mmCtx.fillStyle = d.open ? '#4caf50' : '#ffd700';
+                mmCtx.beginPath();
+                mmCtx.arc(d.gx * minimapCell + minimapCell/2, d.gy * minimapCell + minimapCell/2, minimapCell * 0.4, 0, Math.PI * 2);
+                mmCtx.fill();
+            }
+            // Игрок
+            const pg = worldToGrid(playerPos.x, playerPos.z);
+            mmCtx.fillStyle = '#ffd700';
+            mmCtx.beginPath();
+            mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
+            mmCtx.fill();
+            // Направление
+            const cx = pg.gx * minimapCell + minimapCell/2;
+            const cy = pg.gy * minimapCell + minimapCell/2;
+            const len = minimapCell * 3;
+            const dx = -Math.sin(playerYaw) * len;
+            const dy = -Math.cos(playerYaw) * len;
+            mmCtx.strokeStyle = '#ffd700';
+            mmCtx.lineWidth = 2;
+            mmCtx.beginPath();
+            mmCtx.moveTo(cx, cy);
+            mmCtx.lineTo(cx + dx, cy + dy);
+            mmCtx.stroke();
+        }
+
+        // ============================================================
+        //  КАМЕРА + ЦИКЛ
         // ============================================================
         const clock = new THREE.Clock();
 
@@ -512,9 +626,6 @@
             camera.rotation.set(0, playerYaw, 0);
         }
 
-        // ============================================================
-        //  ЦИКЛ
-        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
@@ -557,11 +668,18 @@
                 }
             }
 
+            // Покачивание подписей
+            for (var j = 0; j < doorLabels.length; j++) {
+                var lbl = doorLabels[j];
+                lbl.sprite.position.y = lbl.baseY + Math.sin(t * 1.8 + lbl.phase) * 0.03;
+            }
+
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
             heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
 
             updateCamera();
             renderer.render(scene, camera);
+            drawMinimap();
         }
 
         animate();
