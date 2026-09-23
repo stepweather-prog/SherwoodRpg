@@ -138,19 +138,17 @@
         window.exitCamp = exitCamp;
 
         // ============================================================
-        //  8 РАЗДЕЛОВ — 4 верхние ниши (y=6), 4 нижние (y=10)
+        //  8 РАЗДЕЛОВ — 4 в верхних нишах (x=3,6,9,12), 4 в нижних
         // ============================================================
-               var SECTIONS = [
-            // ВЕРХНИЕ НИШИ (y=5)
+        var SECTIONS = [
             { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 5,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 6,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
             { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 11, doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-            // НИЖНИЕ НИШИ (y=11)
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 12, doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
             { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 11, open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 6,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
             { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 11, doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 12, doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -183,10 +181,11 @@
         }
 
         // ============================================================
-        //  КАРТА: ГОРИЗОНТАЛЬНЫЙ КОРИДОР + НИШИ СВЕРХУ И СНИЗУ
+        //  КАРТА: КОРИДОР 3 КЛЕТКИ + 4+4 НИШИ С ПРОСТЕНКАМИ
+        //  Простенки: x = 2, 4, 7, 10, 13 — 5 штук (с вазонами)
+        //  Ниши: x = 3, 6, 9, 12 — 4 штуки (с дверями)
         // ============================================================
-                function generateCamp() {
-            // Всё стены
+        function generateCamp() {
             for (var yy = 0; yy < size; yy++) {
                 for (var xx = 0; xx < size; xx++) {
                     map[yy][xx] = 1;
@@ -200,20 +199,18 @@
                 map[9][x] = 0;
             }
 
-            // Верхние ниши — y=5 (ниша), y=6 (проход)
-            var topNiches = [3, 5, 9, 11];
+            // Верхние ниши — x = 3, 6, 9, 12 (y=6 проход, y=5 ниша)
+            var topNiches = [3, 6, 9, 12];
             for (var i = 0; i < topNiches.length; i++) {
-                var nx = topNiches[i];
-                map[6][nx] = 0;
-                map[5][nx] = 0;
+                map[6][topNiches[i]] = 0;
+                map[5][topNiches[i]] = 0;
             }
 
-            // Нижние ниши — y=10 (проход), y=11 (ниша)
-            var botNiches = [3, 5, 9, 11];
+            // Нижние ниши — x = 3, 6, 9, 12 (y=10 проход, y=11 ниша)
+            var botNiches = [3, 6, 9, 12];
             for (var i = 0; i < botNiches.length; i++) {
-                var nx = botNiches[i];
-                map[10][nx] = 0;
-                map[11][nx] = 0;
+                map[10][botNiches[i]] = 0;
+                map[11][botNiches[i]] = 0;
             }
         }
         generateCamp();
@@ -265,18 +262,22 @@
         }
 
         // ============================================================
-        //  БРАЗИЕРЫ — 4 штуки у стен, между нишами
-        //  Верхняя стена (y=7): x=4, 6, 10, 12 → но это ПРОХОДЫ в ниши, значит не сюда
-        //  Между нишами верхней стены (y=7): x=4, 6, 8, 10, 12
-        //  Между нишами нижней стены (y=9): x=4, 6, 8, 10, 12
+        //  БРАЗИЕРЫ — 5 сверху (y=7) + 5 снизу (y=9)
+        //  В простенках: x = 2, 4, 7, 10, 13
         // ============================================================
-                const brazierPositions = [
-            // Верхний ряд — у верхней стены коридора (y=7)
-            { gx: 6, gy: 7 },
+        const brazierPositions = [
+            // Верхний ряд (y=7)
+            { gx: 2,  gy: 7 },
+            { gx: 4,  gy: 7 },
+            { gx: 7,  gy: 7 },
             { gx: 10, gy: 7 },
-            // Нижний ряд — у нижней стены коридора (y=9)
-            { gx: 6, gy: 9 },
-            { gx: 10, gy: 9 }
+            { gx: 13, gy: 7 },
+            // Нижний ряд (y=9)
+            { gx: 2,  gy: 9 },
+            { gx: 4,  gy: 9 },
+            { gx: 7,  gy: 9 },
+            { gx: 10, gy: 9 },
+            { gx: 13, gy: 9 }
         ];
         const braziers = [];
 
@@ -328,8 +329,8 @@
                 depthTest: true,
                 depthWrite: false
             }));
-            bSprite.scale.set(0.6, 0.6, 1);
-            bSprite.position.set(bx, 0.35, bz);
+            bSprite.scale.set(0.55, 0.55, 1);
+            bSprite.position.set(bx, 0.3, bz);
             scene.add(bSprite);
 
             braziers.push({
@@ -359,7 +360,7 @@
         }
 
         // ============================================================
-        //  ДВЕРИ — плоскость в нише, лицом к коридору
+        //  ДВЕРИ — в нишах
         // ============================================================
         function makeDoorMaterial(iconPath) {
             var tex = loader.load(iconPath);
@@ -385,14 +386,10 @@
             var wx = gx - Math.floor(size / 2);
             var wz = gy - Math.floor(size / 2);
 
-            // Дверь в плоскости XY, нормаль +Z (смотрит на юг) — для верхних ниш (y<8)
-            // Дверь для нижних ниш (y>8) — тоже в плоскости XY, но двусторонняя,
-            // значит видно с обеих сторон. rotation.y = 0.
             var leaf = new THREE.Mesh(
                 new THREE.PlaneGeometry(cellSize, wallHeight),
                 makeDoorMaterial(sec.icon)
             );
-            // rotation.y = 0 по умолчанию
 
             leaf.position.set(wx, wallHeight / 2, wz);
             leaf.userData = { isDoor: true, doorGX: gx, doorGY: gy, section: sec };
@@ -412,7 +409,7 @@
         console.log('🚪 Дверей размещено:', doorLeaves.length);
 
         // ============================================================
-        //  СВЕТЛЯЧКИ ВОКРУГ ДВЕРЕЙ
+        //  СВЕТЛЯЧКИ
         // ============================================================
         var fireflies = [];
         var fireflyTex = (function() {
@@ -478,7 +475,7 @@
         }
 
         // ============================================================
-        //  ПОДПИСИ НАД ДВЕРЯМИ
+        //  ПОДПИСИ
         // ============================================================
         var labelsLayer = document.getElementById('door-labels-layer');
         for (var i = 0; i < doorLeaves.length; i++) {
@@ -540,14 +537,13 @@
         setInterval(updateHeroSpheres, 1000);
 
         // ============================================================
-        //  ИГРОК — спавн в центре коридора
+        //  ИГРОК — центр коридора
         // ============================================================
         let playerGX = 7, playerGY = 8;
         const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
-        let playerYaw = -Math.PI / 2; // смотрит вправо (+X) — по коридору
+        let playerYaw = -Math.PI / 2;
 
         if (returnGX !== null && returnGY !== null && !isNaN(returnGX) && !isNaN(returnGY)) {
-            // Спавн — соседняя клетка с дверью (обычно это проход в нишу)
             var neighbours = [
                 { x: returnGX, y: returnGY + 1 },
                 { x: returnGX, y: returnGY - 1 },
@@ -631,9 +627,6 @@
             }, 350);
         }
 
-        // ============================================================
-        //  УПРАВЛЕНИЕ
-        // ============================================================
         function animateTurn(targetYaw, duration) {
             if (isTurning) return;
             duration = duration || 400;
@@ -701,9 +694,6 @@
             }
         });
 
-        // ============================================================
-        //  КЛИК ПО ДВЕРИ
-        // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
 
@@ -732,9 +722,6 @@
             }
         });
 
-        // ============================================================
-        //  КАМЕРА + ПОДПИСИ
-        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -801,9 +788,6 @@
             best.labelEl.style.opacity = opacity;
         }
 
-        // ============================================================
-        //  ЦИКЛ
-        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
