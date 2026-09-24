@@ -1264,10 +1264,11 @@ UI.dungeon = function() {
     UI._stopMusic();
 
     var dungeons = [
-        { id: 1, name: 'Проклятая чаща', icon: 'assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png' },
-        { id: 2, name: 'Первородное болото', icon: 'assets/dungeon_tiles/visual_dungeon/primordial_swamp.png' },
-        { id: 3, name: 'Базальтовый грот', icon: 'assets/dungeon_tiles/visual_dungeon/basalt_grotto.png' }
-    ];
+    { id: 1, name: 'Проклятая чаща', icon: 'assets/dungeon_tiles/visual_dungeon/the_cursed_thicket.png' },
+    { id: 2, name: 'Первородное болото', icon: 'assets/dungeon_tiles/visual_dungeon/primordial_swamp.png' },
+    { id: 3, name: 'Базальтовый грот', icon: 'assets/dungeon_tiles/visual_dungeon/basalt_grotto.png' },
+    { id: 4, name: 'Разлом времени', icon: 'assets/assets2/game_details/rift_in_time.png' }
+];
 
     var h = '<div id="dungeon-carousel" style="position:relative;height:500px;overflow:hidden;touch-action:pan-y;margin:0 -12px;width:calc(100% + 24px);">';
 
@@ -1385,9 +1386,10 @@ UI._dungeonShowFloors = function(dungeonId) {
         var f2 = UI._isFloorAvailable(dungeonId, n, 2);
         var f3 = UI._isFloorAvailable(dungeonId, n, 3);
 
-        var floorTile;
+       var floorTile;
 if (dungeonId === 2) floorTile = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
 else if (dungeonId === 3) floorTile = 'assets/assets2/Sherwood_Square/ceiling_raid.png';
+else if (dungeonId === 4) floorTile = 'assets/assets2/Sherwood_Square/floors_quest.png';
 else floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
 
 h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
