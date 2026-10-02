@@ -47,13 +47,10 @@ Sherwood.Portal = {
     getAllPortals: function() { return this.PORTALS; },
 
     isPortalUnlocked: function(id) {
-        var portal = this.getPortal(id);
-        if (!portal) return false;
-        if (typeof Sherwood.Tavern !== 'undefined' && Sherwood.Tavern.getCompletedCount) {
-            return Sherwood.Tavern.getCompletedCount() >= portal.requiredChapter;
-        }
-        return true;
-    },
+    var portal = this.getPortal(id);
+    if (!portal) return false;
+    return true; 
+},
 
     isPortalCompleted: function(id) {
         var player = Sherwood.getPlayer();
@@ -101,15 +98,14 @@ Sherwood.Portal = {
     },
 
     canEnter: function(id) {
-        var portal = this.getPortal(id);
-        if (!portal) return { can: false, reason: 'Портал не найден' };
-        if (!this.isPortalUnlocked(id)) return { can: false, reason: 'Портал ещё не открыт. Пройди главу ' + portal.requiredChapter };
-        if (this._inPortal) return { can: false, reason: 'Ты уже в портале!' };
-        var required = this.getRequiredTokens(id);
-        var tokens = this.countTokens();
-        if (tokens < required) return { can: false, reason: 'Нужно ' + required + ' токенов портала (у тебя ' + tokens + ')' };
-        return { can: true };
-    },
+    var portal = this.getPortal(id);
+    if (!portal) return { can: false, reason: 'Портал не найден' };
+    if (this._inPortal) return { can: false, reason: 'Ты уже в портале!' };
+    var required = this.getRequiredTokens(id);
+    var tokens = this.countTokens();
+    if (tokens < required) return { can: false, reason: 'Нужно ' + required + ' токенов портала (у тебя ' + tokens + ')' };
+    return { can: true };
+},
 
     enterPortal: function(id) {
         var check = this.canEnter(id);
@@ -300,7 +296,7 @@ Sherwood.Portal = {
             h += '<div class="portal-slide" data-index="' + i + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;">';
 
             // Иконка портала сверху
-            h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;' + (isUnlocked ? '' : 'filter:grayscale(1);opacity:0.4;') + '">';
+            h += '<img src="assets/portal_beasts/visual_portals/' + iconFile + '" style="width:150px;height:150px;object-fit:contain;margin:0 auto 30px;display:block;">';
 
             // Плашка с названием портала (как в подземке)
             h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + portal.name + '</div>';
@@ -309,16 +305,14 @@ Sherwood.Portal = {
             h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:10px;">Токены: ' + tokens + ' / ' + requiredTokens + '</div>';
 
             // Статус / кнопка
-            if (!isUnlocked) {
-                h += '<div style="color:#555;font-size:0.8em;">🔒 Закрыт (Глава ' + portal.requiredChapter + ')</div>';
-            } else if (!canEnter) {
-                h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно токенов</div>';
-                if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
-            } else {
-                var btnLabel = isCompleted ? '⚔️ В бой снова' : '⚔️ В бой';
-                h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:10px;">' + btnLabel + '</button>';
-                if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
-            }
+            if (!canEnter) {
+    h += '<div style="color:#ff6b6b;font-size:0.8em;">❌ Недостаточно токенов</div>';
+    if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
+} else {
+    var btnLabel = isCompleted ? '⚔️ В бой снова' : '⚔️ В бой';
+    h += '<button onclick="Sherwood.Portal._enterPortal(' + portal.id + ')" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;margin-top:10px;">' + btnLabel + '</button>';
+    if (isCompleted) h += '<div style="color:#52b788;font-weight:bold;margin-top:6px;">✅ Пройден</div>';
+}
 
             h += '</div>'; // конец слайда
         }
