@@ -161,35 +161,41 @@
         ];
 
         function loadEnemyTexture(imageName, onLoaded) {
-            var idx = 0;
-            function tryNext() {
-                if (idx >= BEAST_DIRS.length) {
-                    console.warn('Не нашёл спрайт врага: ' + imageName);
-                    if (onLoaded) onLoaded(null);
-                    return;
-                }
-                var url = BEAST_DIRS[idx] + imageName;
-                idx++;
-                var tex = new THREE.TextureLoader().load(url,
-                    function(t) {
-                        t.minFilter = THREE.LinearFilter;
-                        t.magFilter = THREE.LinearFilter;
-                        if (onLoaded) onLoaded(t);
-                    },
-                    undefined,
-                    function() { tryNext(); }
-                );
-            }
-            tryNext();
+    // Боссы порталов лежат в assets/portal_beasts/,
+    // guard'ы — в assets/all_beasts/.
+    var dirs = [
+        'assets/portal_beasts/',
+        'assets/all_beasts/'
+    ];
+    var idx = 0;
+    function tryNext() {
+        if (idx >= dirs.length) {
+            console.warn('Не нашёл спрайт врага: ' + imageName);
+            if (onLoaded) onLoaded(null);
+            return;
         }
-
+        var url = dirs[idx] + imageName;
+        idx++;
+        var tex = new THREE.TextureLoader().load(url,
+            function(t) {
+                t.minFilter = THREE.LinearFilter;
+                t.magFilter = THREE.LinearFilter;
+                if (onLoaded) onLoaded(t);
+            },
+            undefined,
+            function() { tryNext(); }
+        );
+    }
+    tryNext();
+}
         function createEnemySprite(imageName, isBoss) {
-            if (enemySprite) {
-                scene.remove(enemySprite);
-                enemySprite = null;
-            }
-            var scale = isBoss ? 1.5 : 1.05;
-            loadEnemyTexture(imageName, function(tex) {
+    if (enemySprite) {
+        scene.remove(enemySprite);
+        enemySprite = null;
+    }
+    var scale = isBoss ? 1.5 : 1.05;
+    var dir = isBoss ? 'assets/portal_beasts/' : 'assets/all_beasts/';
+    loadEnemyTexture(dir + imageName, function(tex) {
                 if (!tex) return;
                 enemyTexture = tex;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
