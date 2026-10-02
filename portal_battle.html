@@ -149,53 +149,37 @@
         var enemyBaseY = 0.55;
 
         // ============================================================
-        //  Боссы порталов лежат в assets/portal_beasts/
+        //  Пути к спрайтам:
+        //   - боссы порталов  → assets/assets2/mobs/portal_mobs/
+        //   - guard'ы порталов → assets/all_beasts/
         // ============================================================
-        var BEAST_DIRS = [
-            'assets/portal_beasts/',
-            'assets/assets2/mobs/portal_mobs/',
-            'assets/portal_beasts/visual_portals/',
-            'assets/all_beasts/',
-            'assets/beast_quest/',
-            'assets/assets2/mobs/dungeon_mobs/'
-        ];
+        var BOSS_DIR  = 'assets/assets2/mobs/portal_mobs/';
+        var GUARD_DIR = 'assets/all_beasts/';
 
-        function loadEnemyTexture(imageName, onLoaded) {
-    // Боссы порталов лежат в assets/portal_beasts/,
-    // guard'ы — в assets/all_beasts/.
-    var dirs = [
-        'assets/portal_beasts/',
-        'assets/all_beasts/'
-    ];
-    var idx = 0;
-    function tryNext() {
-        if (idx >= dirs.length) {
-            console.warn('Не нашёл спрайт врага: ' + imageName);
-            if (onLoaded) onLoaded(null);
-            return;
+        function loadEnemyTexture(url, onLoaded) {
+            var tex = new THREE.TextureLoader().load(url,
+                function(t) {
+                    t.minFilter = THREE.LinearFilter;
+                    t.magFilter = THREE.LinearFilter;
+                    if (onLoaded) onLoaded(t);
+                },
+                undefined,
+                function() {
+                    console.warn('Не нашёл спрайт врага: ' + url);
+                    if (onLoaded) onLoaded(null);
+                }
+            );
         }
-        var url = dirs[idx] + imageName;
-        idx++;
-        var tex = new THREE.TextureLoader().load(url,
-            function(t) {
-                t.minFilter = THREE.LinearFilter;
-                t.magFilter = THREE.LinearFilter;
-                if (onLoaded) onLoaded(t);
-            },
-            undefined,
-            function() { tryNext(); }
-        );
-    }
-    tryNext();
-}
+
         function createEnemySprite(imageName, isBoss) {
-    if (enemySprite) {
-        scene.remove(enemySprite);
-        enemySprite = null;
-    }
-    var scale = isBoss ? 1.5 : 1.05;
-    var dir = isBoss ? 'assets/portal_beasts/' : 'assets/all_beasts/';
-    loadEnemyTexture(dir + imageName, function(tex) {
+            if (enemySprite) {
+                scene.remove(enemySprite);
+                enemySprite = null;
+            }
+            // Размер увеличен вдвое: было 1.5 / 1.05, стало 3.0 / 2.1
+            var scale = isBoss ? 3.0 : 2.1;
+            var dir = isBoss ? BOSS_DIR : GUARD_DIR;
+            loadEnemyTexture(dir + imageName, function(tex) {
                 if (!tex) return;
                 enemyTexture = tex;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
