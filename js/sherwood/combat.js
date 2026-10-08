@@ -198,6 +198,7 @@ Sherwood.Combat = {
 
         b.enemy.hp -= rawDamage;
         if (b.enemy.hp < 0) b.enemy.hp = 0;
+
         var result = {
             damage: rawDamage,
             crit: crit,
@@ -207,10 +208,19 @@ Sherwood.Combat = {
             enemyImage: b.enemy.image
         };
         this.addBattleLog('💢 ' + (crit ? '💥 КРИТ! ' : '') + rawDamage + ' урона!');
+
         if (b.enemy.hp <= 0) {
             result.win = true;
             result.exp = Math.floor(b.enemy.maxHp * 0.3);
             result.gold = Math.floor(b.enemy.maxHp * 0.1);
+
+            // 🆕 Открываем бестию в бестиарии
+            try {
+                if (Sherwood.Bestiary && Sherwood.Bestiary.registerKill && b.enemy.image) {
+                    Sherwood.Bestiary.registerKill(b.enemy.image);
+                }
+            } catch(e) { console.warn('Bestiary.registerKill error:', e); }
+
             this.addBattleLog('🏆 Победа! +' + result.exp + ' опыта, +' + result.gold + ' золота');
             this._battle = null;
             this._closeBattleUI();
@@ -363,6 +373,14 @@ Sherwood.Combat = {
             result.win = true;
             result.exp = Math.floor(b.enemy.maxHp * 0.3);
             result.gold = Math.floor(b.enemy.maxHp * 0.1);
+
+            // 🆕 Открываем бестию в бестиарии
+            try {
+                if (Sherwood.Bestiary && Sherwood.Bestiary.registerKill && b.enemy.image) {
+                    Sherwood.Bestiary.registerKill(b.enemy.image);
+                }
+            } catch(e) { console.warn('Bestiary.registerKill error:', e); }
+
             this.addBattleLog('🏆 Победа! +' + result.exp + ' опыта, +' + result.gold + ' золота');
             this._battle = null;
             this._closeBattleUI();
@@ -455,7 +473,6 @@ Sherwood.Combat = {
         }
     },
 
-    // ========== НОВЫЙ UI: Через UI._showBattleScreen ==========
     _showBattleUI: function() {
         var b = this._battle;
         if (!b) return;
@@ -513,7 +530,6 @@ Sherwood.Combat = {
         }
     },
 
-    // ========== UI ХЭНДЛЕРЫ ==========
     attackFromUI: function() {
         var result = this.attack();
         if (result && result.error) {
