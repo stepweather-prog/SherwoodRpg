@@ -99,29 +99,29 @@ Sherwood.Bestiary = {
     // ============================================================
     //  РЕГИСТРАЦИЯ УБИЙСТВА
     // ============================================================
-    registerKill: function(beastImage) {
-        if (!beastImage) return;
+   registerKill: function(beastImage) {
+    if (!beastImage) return;
 
-        // Если пришло без .png — пробуем добавить
-        var key = beastImage;
-        if (!this.BEASTS[key] && this.BEASTS[key + '.png']) key = key + '.png';
+    // Если пришло без .png — пробуем добавить
+    var key = beastImage;
+    if (!this.BEASTS[key] && this.BEASTS[key + '.png']) key = key + '.png';
 
-        var beast = this.BEASTS[key];
-        if (!beast) {
-            console.warn('📖 Бестиарий: неизвестная бестия', beastImage);
-            return;
-        }
-        if (!this._discovered[key]) {
-            this._discovered[key] = { kills: 0, rewardClaimed: false };
-        }
-        this._discovered[key].kills++;
-        var player = Sherwood.getPlayer();
-        if (player) {
-            player.bestiary = this._discovered;
-            Sherwood.saveGame();
-        }
-    },
-
+    var beast = this.BEASTS[key];
+    if (!beast) {
+        console.warn('📖 Бестиарий: неизвестная бестия', beastImage);
+        return;
+    }
+    if (!this._discovered[key]) {
+        this._discovered[key] = { kills: 0, rewardClaimed: false };
+    }
+    this._discovered[key].kills++;
+    var player = Sherwood.getPlayer();
+    if (player) {
+        player.bestiary = this._discovered;
+        Sherwood.saveGame();
+    }
+    console.log('📖 Открыта бестия:', beast.name, '(всего убийств:', this._discovered[key].kills + ')');
+},
     // ============================================================
     //  ПОЛУЧЕНИЕ ДАННЫХ
     // ============================================================
@@ -200,26 +200,53 @@ Sherwood.Bestiary = {
     },
 
     claimReward: function(beastId) {
-        var beast = this.getBeast(beastId);
-        if (!beast) return { success: false, reason: 'Бестия не найдена' };
-        if (beast.kills <= 0) return { success: false, reason: 'Бестия не убита' };
-        if (beast.rewardClaimed) return { success: false, reason: 'Награда уже получена' };
+    var beast = this.getBeast(beastId);
+    if (!beast) return { success: false, reason: 'Бестия не найдена' };
+    if (beast.kills <= 0) return { success: false, reason: 'Бестия не убита' };
+    if (beast.rewardClaimed) return { success: false, reason: 'Награда уже получена' };
 
-        var rewards = this._rollRewards(beast.rarity);
+    var rewards = this._rollRewards(beast.rarity);
 
-        if (rewards.gold > 0) Sherwood.addResource('gold', rewards.gold);
-        if (rewards.exp > 0) Sherwood.addExp(rewards.exp);
-        if (rewards.tablets > 0 && rewards.tabletType) {
-            Sherwood.addResource(rewards.tabletType, rewards.tablets);
-        }
+    if (rewards.gold > 0) Sherwood.addResource('gold', rewards.gold);
+    if (rewards.exp > 0) Sherwood.addExp(rewards.exp);
+    if (rewards.tablets > 0 && rewards.tabletType) {
+        Sherwood.addResource(rewards.tabletType, rewards.tablets);
+    }
 
-        this._discovered[beastId].rewardClaimed = true;
-        var player = Sherwood.getPlayer();
-        if (player) player.bestiary = this._discovered;
-        Sherwood.saveGame();
+    this._discovered[beastId].rewardClaimed = true;
+    var player = Sherwood.getPlayer();
+    if (player) player.bestiary = this._discovered;
+    Sherwood.saveGame();
 
-        return { success: true, rewards: rewards };
-    },
+    return { success: true, rewards: rewards };
+},
+
+_rollRewards: function(rarity) {
+    var table = {
+        common:    { gold: [0, 5],     exp: [10, 20],   tabletChance: 0    },
+        uncommon:  { gold: [5, 10],    exp: [20, 35],   tabletChance: 0.05 },
+        rare:      { gold: [10, 25],   exp: [40, 60],   tabletChance: 0.10 },
+        epic:      { gold: [25, 50],   exp: [80, 120],  tabletChance: 0.20 },
+        legendary: { gold: [50, 100],  exp: [150, 250], tabletChance: 0.35 },
+        mythic:    { gold: [100, 200], exp: [300, 500], tabletChance: 0.50 }
+    };
+    var r = table[rarity] || table.common;
+
+    function randRange(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+
+    var rewards = {
+        gold: randRange(r.gold[0], r.gold[1]),
+        exp: randRange(r.exp[0], r.exp[1]),
+        tablets: 0,
+        tabletType: null
+    };
+
+    if (Math.random() < r.tabletChance) {
+        rewards.tablets = 1 + Math.floor(Math.random() * 2);
+        rewards.tabletType = Math.random() < 0.5 ? 'ringTablets' : 'amuletTablets';
+    }
+    return rewards;
+},
 
     // ============================================================
     //  УТИЛИТЫ
