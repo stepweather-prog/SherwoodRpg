@@ -1,5 +1,5 @@
 /**
- * Sherwood Bestiary — Бестиарий Шервуда (Ведьмак-стиль)
+ * Sherwood Bestiary — Бестиарий Шервуда 
  * Две вкладки: Боссы / Бестии Шервуда
  * Вертикальная карусель, только открытые, награды-сюрпризы
  */
@@ -99,29 +99,30 @@ Sherwood.Bestiary = {
     // ============================================================
     //  РЕГИСТРАЦИЯ УБИЙСТВА
     // ============================================================
-   registerKill: function(beastImage) {
-    if (!beastImage) return;
+    registerKill: function(beastImage) {
+        if (!beastImage) return;
 
-    // Если пришло без .png — пробуем добавить
-    var key = beastImage;
-    if (!this.BEASTS[key] && this.BEASTS[key + '.png']) key = key + '.png';
+        // Если пришло без .png — пробуем добавить
+        var key = beastImage;
+        if (!this.BEASTS[key] && this.BEASTS[key + '.png']) key = key + '.png';
 
-    var beast = this.BEASTS[key];
-    if (!beast) {
-        console.warn('📖 Бестиарий: неизвестная бестия', beastImage);
-        return;
-    }
-    if (!this._discovered[key]) {
-        this._discovered[key] = { kills: 0, rewardClaimed: false };
-    }
-    this._discovered[key].kills++;
-    var player = Sherwood.getPlayer();
-    if (player) {
-        player.bestiary = this._discovered;
-        Sherwood.saveGame();
-    }
-    console.log('📖 Открыта бестия:', beast.name, '(всего убийств:', this._discovered[key].kills + ')');
-},
+        var beast = this.BEASTS[key];
+        if (!beast) {
+            console.warn('📖 Бестиарий: неизвестная бестия', beastImage);
+            return;
+        }
+        if (!this._discovered[key]) {
+            this._discovered[key] = { kills: 0, rewardClaimed: false };
+        }
+        this._discovered[key].kills++;
+        var player = Sherwood.getPlayer();
+        if (player) {
+            player.bestiary = this._discovered;
+            Sherwood.saveGame();
+        }
+        console.log('📖 Открыта бестия:', beast.name, '(всего убийств:', this._discovered[key].kills + ')');
+    },
+
     // ============================================================
     //  ПОЛУЧЕНИЕ ДАННЫХ
     // ============================================================
@@ -152,11 +153,26 @@ Sherwood.Bestiary = {
             var b = this.getBeast(id);
             if (b && tab.filter(b)) result.push(b);
         }
-        // Сортировка: сначала с незабранной наградой, потом по зоне/этажу
         result.sort(function(a, b) {
             if (a.rewardClaimed !== b.rewardClaimed) return a.rewardClaimed ? 1 : -1;
             return 0;
         });
+        return result;
+    },
+
+    // Бестии по этажу подземки (для страховки в dungeon.html)
+    getBeastsByFloor: function(dungeonId, floor) {
+        var zoneMap = { 1: 'Проклятая чаща', 2: 'Первородное болото', 3: 'Базальтовый грот', 4: 'Разлом времени' };
+        var zone = zoneMap[dungeonId];
+        if (!zone) return [];
+        var floorStr = 'Этаж ' + floor;
+        var result = [];
+        for (var id in this.BEASTS) {
+            var b = this.BEASTS[id];
+            if (b.zone === zone && b.floor === floorStr) {
+                result.push({ id: id, name: b.name, type: b.type });
+            }
+        }
         return result;
     },
 
@@ -193,60 +209,33 @@ Sherwood.Bestiary = {
         };
 
         if (Math.random() < r.tabletChance) {
-            rewards.tablets = 1 + Math.floor(Math.random() * 2); // 1-2
+            rewards.tablets = 1 + Math.floor(Math.random() * 2);
             rewards.tabletType = Math.random() < 0.5 ? 'ringTablets' : 'amuletTablets';
         }
         return rewards;
     },
 
     claimReward: function(beastId) {
-    var beast = this.getBeast(beastId);
-    if (!beast) return { success: false, reason: 'Бестия не найдена' };
-    if (beast.kills <= 0) return { success: false, reason: 'Бестия не убита' };
-    if (beast.rewardClaimed) return { success: false, reason: 'Награда уже получена' };
+        var beast = this.getBeast(beastId);
+        if (!beast) return { success: false, reason: 'Бестия не найдена' };
+        if (beast.kills <= 0) return { success: false, reason: 'Бестия не убита' };
+        if (beast.rewardClaimed) return { success: false, reason: 'Награда уже получена' };
 
-    var rewards = this._rollRewards(beast.rarity);
+        var rewards = this._rollRewards(beast.rarity);
 
-    if (rewards.gold > 0) Sherwood.addResource('gold', rewards.gold);
-    if (rewards.exp > 0) Sherwood.addExp(rewards.exp);
-    if (rewards.tablets > 0 && rewards.tabletType) {
-        Sherwood.addResource(rewards.tabletType, rewards.tablets);
-    }
+        if (rewards.gold > 0) Sherwood.addResource('gold', rewards.gold);
+        if (rewards.exp > 0) Sherwood.addExp(rewards.exp);
+        if (rewards.tablets > 0 && rewards.tabletType) {
+            Sherwood.addResource(rewards.tabletType, rewards.tablets);
+        }
 
-    this._discovered[beastId].rewardClaimed = true;
-    var player = Sherwood.getPlayer();
-    if (player) player.bestiary = this._discovered;
-    Sherwood.saveGame();
+        this._discovered[beastId].rewardClaimed = true;
+        var player = Sherwood.getPlayer();
+        if (player) player.bestiary = this._discovered;
+        Sherwood.saveGame();
 
-    return { success: true, rewards: rewards };
-},
-
-_rollRewards: function(rarity) {
-    var table = {
-        common:    { gold: [0, 5],     exp: [10, 20],   tabletChance: 0    },
-        uncommon:  { gold: [5, 10],    exp: [20, 35],   tabletChance: 0.05 },
-        rare:      { gold: [10, 25],   exp: [40, 60],   tabletChance: 0.10 },
-        epic:      { gold: [25, 50],   exp: [80, 120],  tabletChance: 0.20 },
-        legendary: { gold: [50, 100],  exp: [150, 250], tabletChance: 0.35 },
-        mythic:    { gold: [100, 200], exp: [300, 500], tabletChance: 0.50 }
-    };
-    var r = table[rarity] || table.common;
-
-    function randRange(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
-
-    var rewards = {
-        gold: randRange(r.gold[0], r.gold[1]),
-        exp: randRange(r.exp[0], r.exp[1]),
-        tablets: 0,
-        tabletType: null
-    };
-
-    if (Math.random() < r.tabletChance) {
-        rewards.tablets = 1 + Math.floor(Math.random() * 2);
-        rewards.tabletType = Math.random() < 0.5 ? 'ringTablets' : 'amuletTablets';
-    }
-    return rewards;
-},
+        return { success: true, rewards: rewards };
+    },
 
     // ============================================================
     //  УТИЛИТЫ
@@ -292,7 +281,6 @@ _rollRewards: function(rarity) {
         var currentTab = this._currentTab || 0;
         var beasts = this.getDiscoveredBeasts(currentTab);
 
-        // Сброс индекса если он вышел за границы
         if (this._currentIndex >= beasts.length) this._currentIndex = 0;
         if (this._currentIndex < 0) this._currentIndex = 0;
 
@@ -326,7 +314,6 @@ _rollRewards: function(rarity) {
                 var b = beasts[i];
                 var rarityColor = this.getRarityColor(b.rarity);
                 var imgPath = this._beastImagePath(b);
-                var active = (i === this._currentIndex);
 
                 h += '<div class="beast-slide" data-index="' + i + '" ' +
                      'style="position:absolute;top:0;left:0;width:100%;height:100%;' +
@@ -336,7 +323,6 @@ _rollRewards: function(rarity) {
                      'cursor:pointer;" ' +
                      'onclick="if(!Sherwood.Bestiary._wasDragging)Sherwood.Bestiary._showBeastInfo(\'' + b.id + '\');">';
 
-                // Картинка с рамкой редкости
                 h += '<div style="position:relative;width:260px;height:260px;max-width:80vw;max-height:80vw;' +
                      'background:radial-gradient(circle at 50% 50%, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.4) 100%);' +
                      'border:3px solid ' + rarityColor + ';border-radius:16px;' +
@@ -346,29 +332,25 @@ _rollRewards: function(rarity) {
                      'onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
 
-                // Имя
                 h += '<div style="margin-top:20px;color:#ffd27a;font:bold 22px \'Times New Roman\',serif;' +
                      'text-shadow:0 0 12px #000,0 3px 6px #000;text-align:center;padding:0 20px;letter-spacing:1px;">' +
                      b.name + '</div>';
 
-                // Индикатор награды
                 if (!b.rewardClaimed) {
                     h += '<div style="margin-top:8px;color:#ffa500;font-size:0.85em;font-weight:bold;text-shadow:0 0 8px #000;">✦ Награда доступна ✦</div>';
                 } else {
                     h += '<div style="margin-top:8px;color:#4caf50;font-size:0.85em;">✓ Награда получена</div>';
                 }
 
-                h += '</div>'; // .beast-slide
+                h += '</div>';
             }
             h += '</div>';
 
-            // Подсказка свайпа
             if (beasts.length > 1) {
                 h += '<div style="text-align:center;color:#6b5a3a;font-size:0.75em;margin-top:6px;">▲ свайп вверх / вниз ▼</div>';
             }
         }
 
-        // Фон — отдельным блоком
         UI._screenLayer.innerHTML = '';
         var bgStyle = 'background-image:url(\'' + (UI._bg.bestiary || '') + '\');' +
                       'background-size:cover;background-position:center;background-repeat:no-repeat;';
@@ -457,7 +439,6 @@ _rollRewards: function(rarity) {
 
         var h = '<div style="padding:16px 4px;max-width:520px;margin:0 auto;">';
 
-        // Картинка + инфо
         h += '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;">';
 
         h += '<div style="flex-shrink:0;width:160px;height:160px;' +
@@ -476,13 +457,11 @@ _rollRewards: function(rarity) {
         h += '</div>';
         h += '</div>';
 
-        // Лор
         h += '<div style="margin-top:18px;padding:14px;background:rgba(0,0,0,0.5);' +
              'border-left:3px solid #6b5a3a;border-radius:6px;' +
              'color:#c0b090;font-style:italic;font-size:0.9em;line-height:1.6;">' +
              b.lore + '</div>';
 
-        // Награда
         h += '<div style="margin-top:18px;text-align:center;">';
         if (b.rewardClaimed) {
             h += '<div style="color:#4caf50;font-size:1em;padding:12px;">✓ Награда уже получена</div>';
@@ -498,7 +477,6 @@ _rollRewards: function(rarity) {
 
         h += '</div>';
 
-        // Фон + шапка
         UI._screenLayer.innerHTML = '';
         var bgStyle = 'background-image:url(\'' + (UI._bg.bestiary || '') + '\');' +
                       'background-size:cover;background-position:center;background-repeat:no-repeat;';
@@ -572,4 +550,4 @@ _rollRewards: function(rarity) {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Bestiary = Sherwood.Bestiary;
 
-console.log('📖 Бестиарий загружен (Ведьмак-стиль)');
+console.log('📖 Бестиарий загружен ');
