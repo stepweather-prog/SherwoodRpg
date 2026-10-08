@@ -352,8 +352,8 @@ Sherwood.Bestiary = {
         var bgStyle = 'background-image:url(\'' + (UI._bg.bestiary || '') + '\');' +
                       'background-size:cover;background-position:center;background-repeat:no-repeat;';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;' + bgStyle +
-                                'display:flex;flex-direction:column;overflow:hidden;z-index:100;';
+        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
+                                'display:flex;flex-direction:column;overflow:hidden;';
         wrapper.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
                             '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
                             '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">📖 Бестиарий</span>' +
@@ -361,11 +361,8 @@ Sherwood.Bestiary = {
                             '<div style="flex:1;overflow-y:auto;padding:70px 12px 20px;box-sizing:border-box;">' + h + '</div>';
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
-        UI._screenLayer.style.position = 'fixed';
-        UI._screenLayer.style.top = '0';
-        UI._screenLayer.style.left = '0';
-        UI._screenLayer.style.width = '100vw';
-        UI._screenLayer.style.height = '100vh';
+        UI._screenLayer.style.width = '100%';
+        UI._screenLayer.style.height = '100%';
         UI._screenLayer.style.overflow = 'hidden';
 
         // --- Свайп ---
@@ -471,24 +468,15 @@ Sherwood.Bestiary = {
         var bgStyle = 'background-image:url(\'' + (UI._bg.bestiary || '') + '\');' +
                       'background-size:cover;background-position:center;background-repeat:no-repeat;';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;' + bgStyle +
-                                'display:flex;flex-direction:column;overflow:hidden;z-index:100;';
+        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
+                                'display:flex;flex-direction:column;overflow:hidden;';
         wrapper.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
                             '<button onclick="Sherwood.Bestiary.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
                             '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + b.name + '</span>' +
                             '</div>' +
-                            '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;">' +
-                                '<div style="width:100%;max-width:520px;box-sizing:border-box;">' +
-                                    h +
-                                '</div>' +
-                            '</div>';
+                            '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;">' + h + '</div>';
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
-        UI._screenLayer.style.position = 'fixed';
-        UI._screenLayer.style.top = '0';
-        UI._screenLayer.style.left = '0';
-        UI._screenLayer.style.width = '100vw';
-        UI._screenLayer.style.height = '100vh';
         UI._screenLayer.style.overflow = 'hidden';
     },
 
@@ -535,17 +523,12 @@ Sherwood.Bestiary = {
 
         UI._screenLayer.innerHTML = '';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;' +
+        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' +
                                 'background:radial-gradient(circle, rgba(30,20,10,0.95), rgba(0,0,0,0.98));' +
-                                'display:flex;align-items:center;justify-content:center;z-index:100;';
+                                'display:flex;align-items:center;justify-content:center;';
         wrapper.innerHTML = h;
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
-        UI._screenLayer.style.position = 'fixed';
-        UI._screenLayer.style.top = '0';
-        UI._screenLayer.style.left = '0';
-        UI._screenLayer.style.width = '100vw';
-        UI._screenLayer.style.height = '100vh';
         UI._screenLayer.style.overflow = 'hidden';
     }
 };
