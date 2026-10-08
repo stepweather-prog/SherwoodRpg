@@ -1,5 +1,5 @@
 /**
- * Sherwood Bestiary — Бестиарий Шервуда 
+ * Sherwood Bestiary — Бестиарий Шервуда (Ведьмак-стиль)
  * Две вкладки: Боссы / Бестии Шервуда
  * Вертикальная карусель, только открытые, награды-сюрпризы
  */
@@ -102,7 +102,6 @@ Sherwood.Bestiary = {
     registerKill: function(beastImage) {
         if (!beastImage) return;
 
-        // Если пришло без .png — пробуем добавить
         var key = beastImage;
         if (!this.BEASTS[key] && this.BEASTS[key + '.png']) key = key + '.png';
 
@@ -143,7 +142,6 @@ Sherwood.Bestiary = {
         };
     },
 
-    // Только открытые, отфильтрованные по вкладке
     getDiscoveredBeasts: function(tabIndex) {
         var tab = this.TABS[tabIndex];
         if (!tab) return [];
@@ -160,7 +158,6 @@ Sherwood.Bestiary = {
         return result;
     },
 
-    // Бестии по этажу подземки (для страховки в dungeon.html)
     getBeastsByFloor: function(dungeonId, floor) {
         var zoneMap = { 1: 'Проклятая чаща', 2: 'Первородное болото', 3: 'Базальтовый грот', 4: 'Разлом времени' };
         var zone = zoneMap[dungeonId];
@@ -271,7 +268,7 @@ Sherwood.Bestiary = {
     },
 
     // ============================================================
-    //  UI
+    //  UI — СПИСОК (карусель)
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
@@ -355,8 +352,8 @@ Sherwood.Bestiary = {
         var bgStyle = 'background-image:url(\'' + (UI._bg.bestiary || '') + '\');' +
                       'background-size:cover;background-position:center;background-repeat:no-repeat;';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
-                                'display:flex;flex-direction:column;overflow:hidden;';
+        wrapper.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;' + bgStyle +
+                                'display:flex;flex-direction:column;overflow:hidden;z-index:100;';
         wrapper.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
                             '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
                             '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">📖 Бестиарий</span>' +
@@ -364,8 +361,11 @@ Sherwood.Bestiary = {
                             '<div style="flex:1;overflow-y:auto;padding:70px 12px 20px;box-sizing:border-box;">' + h + '</div>';
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
-        UI._screenLayer.style.width = '100%';
-        UI._screenLayer.style.height = '100%';
+        UI._screenLayer.style.position = 'fixed';
+        UI._screenLayer.style.top = '0';
+        UI._screenLayer.style.left = '0';
+        UI._screenLayer.style.width = '100vw';
+        UI._screenLayer.style.height = '100vh';
         UI._screenLayer.style.overflow = 'hidden';
 
         // --- Свайп ---
@@ -426,7 +426,7 @@ Sherwood.Bestiary = {
     },
 
     // ============================================================
-    //  ДЕТАЛЬНАЯ КАРТОЧКА
+    //  ДЕТАЛЬНАЯ КАРТОЧКА (без картинки, текст по центру)
     // ============================================================
     _showBeastInfo: function(beastId) {
         var b = this.getBeast(beastId);
@@ -435,33 +435,24 @@ Sherwood.Bestiary = {
         UI._playSound('click');
         var rarityColor = this.getRarityColor(b.rarity);
         var rarityName = this.getRarityName(b.rarity);
-        var imgPath = this._beastImagePath(b);
 
-        var h = '<div style="padding:16px 4px;max-width:520px;margin:0 auto;">';
+        var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;">';
 
-        h += '<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;">';
-
-        h += '<div style="flex-shrink:0;width:160px;height:160px;' +
-             'border:3px solid ' + rarityColor + ';border-radius:12px;' +
-             'box-shadow:0 0 24px ' + rarityColor + '66, inset 0 0 30px rgba(0,0,0,0.7);' +
-             'background:radial-gradient(circle, rgba(0,0,0,0.2), rgba(0,0,0,0.6));' +
-             'display:flex;align-items:center;justify-content:center;overflow:hidden;">';
-        h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+        // Имя, редкость, тип, зона — по центру, без картинки
+        h += '<div style="text-align:center;padding:8px 0;">';
+        h += '<div style="color:#ffd27a;font:bold 24px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:8px;">' + b.name + '</div>';
+        h += '<div style="color:' + rarityColor + ';font-size:0.95em;font-weight:bold;margin-bottom:8px;">' + rarityName + '</div>';
+        h += '<div style="color:#aaa;font-size:0.85em;line-height:1.6;">' + b.type + '<br>' + b.zone + ' · ' + b.floor + '</div>';
+        h += '<div style="color:#c8a050;font-size:0.9em;margin-top:10px;">Убито: ' + b.kills + '</div>';
         h += '</div>';
 
-        h += '<div style="flex:1;min-width:180px;">';
-        h += '<div style="color:#ffd27a;font:bold 20px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:6px;">' + b.name + '</div>';
-        h += '<div style="color:' + rarityColor + ';font-size:0.85em;font-weight:bold;margin-bottom:4px;">' + rarityName + '</div>';
-        h += '<div style="color:#aaa;font-size:0.8em;line-height:1.6;">' + b.type + '<br>' + b.zone + ' · ' + b.floor + '</div>';
-        h += '<div style="color:#c8a050;font-size:0.85em;margin-top:8px;">Убито: ' + b.kills + '</div>';
-        h += '</div>';
-        h += '</div>';
-
-        h += '<div style="margin-top:18px;padding:14px;background:rgba(0,0,0,0.5);' +
+        // Лор
+        h += '<div style="margin-top:18px;padding:14px;background:rgba(0,0,0,0.7);' +
              'border-left:3px solid #6b5a3a;border-radius:6px;' +
              'color:#c0b090;font-style:italic;font-size:0.9em;line-height:1.6;">' +
              b.lore + '</div>';
 
+        // Награда
         h += '<div style="margin-top:18px;text-align:center;">';
         if (b.rewardClaimed) {
             h += '<div style="color:#4caf50;font-size:1em;padding:12px;">✓ Награда уже получена</div>';
@@ -474,22 +465,30 @@ Sherwood.Bestiary = {
                  'ЗАБРАТЬ НАГРАДУ</button>';
         }
         h += '</div>';
-
         h += '</div>';
 
         UI._screenLayer.innerHTML = '';
         var bgStyle = 'background-image:url(\'' + (UI._bg.bestiary || '') + '\');' +
                       'background-size:cover;background-position:center;background-repeat:no-repeat;';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
-                                'display:flex;flex-direction:column;overflow:hidden;';
+        wrapper.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;' + bgStyle +
+                                'display:flex;flex-direction:column;overflow:hidden;z-index:100;';
         wrapper.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
                             '<button onclick="Sherwood.Bestiary.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
                             '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + b.name + '</span>' +
                             '</div>' +
-                            '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;">' + h + '</div>';
+                            '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;">' +
+                                '<div style="width:100%;max-width:520px;box-sizing:border-box;">' +
+                                    h +
+                                '</div>' +
+                            '</div>';
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
+        UI._screenLayer.style.position = 'fixed';
+        UI._screenLayer.style.top = '0';
+        UI._screenLayer.style.left = '0';
+        UI._screenLayer.style.width = '100vw';
+        UI._screenLayer.style.height = '100vh';
         UI._screenLayer.style.overflow = 'hidden';
     },
 
@@ -508,7 +507,6 @@ Sherwood.Bestiary = {
     },
 
     _showRewardPopup: function(rewards) {
-        var self = this;
         var h = '';
         h += '<div style="text-align:center;padding:20px;color:#ffd27a;">';
         h += '<div style="font-size:2.4em;margin-bottom:12px;">✨</div>';
@@ -537,12 +535,17 @@ Sherwood.Bestiary = {
 
         UI._screenLayer.innerHTML = '';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' +
+        wrapper.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;' +
                                 'background:radial-gradient(circle, rgba(30,20,10,0.95), rgba(0,0,0,0.98));' +
-                                'display:flex;align-items:center;justify-content:center;';
+                                'display:flex;align-items:center;justify-content:center;z-index:100;';
         wrapper.innerHTML = h;
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
+        UI._screenLayer.style.position = 'fixed';
+        UI._screenLayer.style.top = '0';
+        UI._screenLayer.style.left = '0';
+        UI._screenLayer.style.width = '100vw';
+        UI._screenLayer.style.height = '100vh';
         UI._screenLayer.style.overflow = 'hidden';
     }
 };
@@ -550,4 +553,4 @@ Sherwood.Bestiary = {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Bestiary = Sherwood.Bestiary;
 
-console.log('📖 Бестиарий загружен ');
+console.log('📖 Бестиарий загружен (Ведьмак-стиль)');
