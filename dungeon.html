@@ -1230,21 +1230,32 @@
         }
 
         function onEnemyKilled() {
-            if (!isBattleActive) return;
-            isBattleActive = false;
-            playerHitFirst = false;
-            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
-            document.getElementById('mob-hp').style.display = 'none';
-            if (currentEnemyObj) {
-                spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
-                currentEnemyObj.collected = true;
-                if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
+    if (!isBattleActive) return;
+    isBattleActive = false;
+    playerHitFirst = false;
+    if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+    document.getElementById('mob-hp').style.display = 'none';
+
+    if (currentEnemyObj) {
+        spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
+
+        // 🆕 ОТКРЫВАЕМ БЕСТИЮ В БЕСТИАРИИ
+        try {
+            if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
+                var imgFile = currentEnemyObj.img.split('/').pop();  // 'plague_crow.png'
+                parent.Sherwood.Bestiary.registerKill(imgFile);
             }
-            currentEnemySprite = null;
-            currentEnemyStats = null;
-            currentEnemyObj = null;
-            checkObjects();
-        }
+        } catch(e) {}
+
+        currentEnemyObj.collected = true;
+        if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
+    }
+
+    currentEnemySprite = null;
+    currentEnemyStats = null;
+    currentEnemyObj = null;
+    checkObjects();
+}
 
         function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats) return;
@@ -1344,11 +1355,20 @@
         }
 
         function winDungeon() {
-            stopSteps();
-            playSound(soundVictory);
-            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            grantCupBoth(currentFloor, currentDiff);
-            var rewardItems = [];
+    stopSteps();
+    playSound(soundVictory);
+    try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+    grantCupBoth(currentFloor, currentDiff);
+
+    // 🆕 СТРАХОВКА: открыть босса этого этажа (если по какой-то причине не открылся при убийстве)
+    try {
+        if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
+            var bossFile = currentPool.boss;  // например 'forest_strangler.png'
+            if (bossFile) parent.Sherwood.Bestiary.registerKill(bossFile);
+        }
+    } catch(e) {}
+
+    var rewardItems = [];
             if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
             if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
             if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
