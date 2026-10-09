@@ -140,16 +140,17 @@
         // ============================================================
         //  8 РАЗДЕЛОВ — 4 ниши сверху (x=3,5,7,9), 4 ниши снизу
         // ============================================================
-        var SECTIONS = [
-            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 5,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 7,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
-            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 11, open: function() { try { parent.UI.market(); } catch(e) {} } },
-            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
-            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 7,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
-        ];
+       var SECTIONS = [
+    { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 5,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
+    { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+    { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 7,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
+    { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+    { key: 'thicket',  name: 'Шервудская чащоба', icon: 'assets/assets2/icons/quest.png',   doorX: 11, doorY: 5,  open: function() { try { parent.UI.thicket(); } catch(e) {} } },
+    { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 11, open: function() { try { parent.UI.market(); } catch(e) {} } },
+    { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
+    { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 7,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+    { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
+];
 
         // ============================================================
         //  СЦЕНА
@@ -199,12 +200,12 @@
                 map[9][x] = 0;
             }
 
-            // Верхние ниши — x = 3, 5, 7, 9 (y=6 проход, y=5 ниша)
-            var topNiches = [3, 5, 7, 9];
-            for (var i = 0; i < topNiches.length; i++) {
-                map[6][topNiches[i]] = 0;
-                map[5][topNiches[i]] = 0;
-            }
+           // Верхние ниши — x = 3, 5, 7, 9, 11 (y=6 проход, y=5 ниша)
+var topNiches = [3, 5, 7, 9, 11];
+for (var i = 0; i < topNiches.length; i++) {
+    map[6][topNiches[i]] = 0;
+    map[5][topNiches[i]] = 0;
+}
 
             // Нижние ниши — x = 3, 5, 7, 9 (y=10 проход, y=11 ниша)
             var botNiches = [3, 5, 7, 9];
