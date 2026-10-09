@@ -366,61 +366,114 @@ Sherwood.Bestiary = {
         UI._screenLayer.style.overflow = 'hidden';
 
         // --- Свайп ---
-        this._wasDragging = false;
-        var carousel = document.getElementById('beast-carousel');
-        if (carousel && beasts.length > 1) {
-            var startY = 0;
-            var currentY = 0;
-            var dragging = false;
-            var slides = carousel.querySelectorAll('.beast-slide');
+this._wasDragging = false;
+var carousel = document.getElementById('beast-carousel');
+if (carousel && beasts.length > 1) {
+    var startY = 0;
+    var currentY = 0;
+    var dragging = false;
+    var slides = carousel.querySelectorAll('.beast-slide');
 
-            function updateSlides(deltaY) {
-                for (var s = 0; s < slides.length; s++) {
-                    var offset = (s - self._currentIndex) * 100;
-                    var extraPx = deltaY;
-                    slides[s].style.transition = 'none';
-                    slides[s].style.transform = 'translateY(calc(' + offset + '% + ' + extraPx + 'px))';
-                }
-            }
-            function snapToIndex() {
-                for (var s = 0; s < slides.length; s++) {
-                    var offset = (s - self._currentIndex) * 100;
-                    slides[s].style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
-                    slides[s].style.transform = 'translateY(' + offset + '%)';
-                }
-            }
-
-            carousel.addEventListener('touchstart', function(e) {
-                startY = e.touches[0].clientY;
-                currentY = startY;
-                dragging = true;
-                self._wasDragging = false;
-            }, { passive: true });
-
-            carousel.addEventListener('touchmove', function(e) {
-                if (!dragging) return;
-                currentY = e.touches[0].clientY;
-                var delta = currentY - startY;
-                if (Math.abs(delta) > 8) self._wasDragging = true;
-                updateSlides(delta);
-            }, { passive: true });
-
-            carousel.addEventListener('touchend', function() {
-                if (!dragging) return;
-                dragging = false;
-                var delta = currentY - startY;
-                if (Math.abs(delta) > 50) {
-                    if (delta < 0 && self._currentIndex < beasts.length - 1) {
-                        self._currentIndex++;
-                    } else if (delta > 0 && self._currentIndex > 0) {
-                        self._currentIndex--;
-                    }
-                }
-                snapToIndex();
-                setTimeout(function() { self._wasDragging = false; }, 100);
-            }, { passive: true });
+    function updateSlides(deltaY) {
+        for (var s = 0; s < slides.length; s++) {
+            var offset = (s - self._currentIndex) * 100;
+            var extraPx = deltaY;
+            slides[s].style.transition = 'none';
+            slides[s].style.transform = 'translateY(calc(' + offset + '% + ' + extraPx + 'px))';
         }
-    },
+    }
+    function snapToIndex() {
+        for (var s = 0; s < slides.length; s++) {
+            var offset = (s - self._currentIndex) * 100;
+            slides[s].style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
+            slides[s].style.transform = 'translateY(' + offset + '%)';
+        }
+    }
+    function goNext() {
+        if (self._currentIndex < beasts.length - 1) {
+            self._currentIndex++;
+            snapToIndex();
+        }
+    }
+    function goPrev() {
+        if (self._currentIndex > 0) {
+            self._currentIndex--;
+            snapToIndex();
+        }
+    }
+
+    // --- Тач (мобилка) ---
+    carousel.addEventListener('touchstart', function(e) {
+        startY = e.touches[0].clientY;
+        currentY = startY;
+        dragging = true;
+        self._wasDragging = false;
+    }, { passive: true });
+
+    carousel.addEventListener('touchmove', function(e) {
+        if (!dragging) return;
+        currentY = e.touches[0].clientY;
+        var delta = currentY - startY;
+        if (Math.abs(delta) > 8) self._wasDragging = true;
+        updateSlides(delta);
+    }, { passive: true });
+
+    carousel.addEventListener('touchend', function() {
+        if (!dragging) return;
+        dragging = false;
+        var delta = currentY - startY;
+        if (Math.abs(delta) > 50) {
+            if (delta < 0) goNext();
+            else goPrev();
+        }
+        snapToIndex();
+        setTimeout(function() { self._wasDragging = false; }, 100);
+    }, { passive: true });
+
+    // --- Мышь (ПК) ---
+    var mouseStartY = 0;
+    var mouseDown = false;
+
+    carousel.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        mouseStartY = e.clientY;
+        mouseDown = true;
+        self._wasDragging = false;
+    });
+
+    carousel.addEventListener('mousemove', function(e) {
+        if (!mouseDown) return;
+        var delta = e.clientY - mouseStartY;
+        if (Math.abs(delta) > 8) self._wasDragging = true;
+        updateSlides(delta);
+    });
+
+    carousel.addEventListener('mouseup', function(e) {
+        if (!mouseDown) return;
+        mouseDown = false;
+        var delta = e.clientY - mouseStartY;
+        if (Math.abs(delta) > 50) {
+            if (delta < 0) goNext();
+            else goPrev();
+        }
+        snapToIndex();
+        setTimeout(function() { self._wasDragging = false; }, 100);
+    });
+
+    carousel.addEventListener('mouseleave', function() {
+        if (!mouseDown) return;
+        mouseDown = false;
+        snapToIndex();
+    });
+
+    // --- Колесо мыши (ПК) ---
+    carousel.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        if (Math.abs(e.deltaY) < 20) return;
+        if (e.deltaY > 0) goNext();
+        else goPrev();
+    }, { passive: false });
+}
 
     // ============================================================
     //  ДЕТАЛЬНАЯ КАРТОЧКА (без картинки, текст по центру)
