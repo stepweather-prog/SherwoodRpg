@@ -119,11 +119,17 @@
         var enemyData = null;
         var nodeData = null;
         try {
-            enemyData = parent.Sherwood.Thicket.getCurrentEnemy();
-            nodeData = parent.Sherwood.Thicket.getNode(nodeId);
-        } catch(e) {
-            console.error('Не удалось получить данные узла:', e);
-        }
+    console.log('🎯 thicket_hall URL:', window.location.href);
+    console.log('🎯 nodeId:', nodeId, 'diff:', diff);
+    console.log('🎯 parent.Sherwood?', !!parent.Sherwood);
+    console.log('🎯 parent.Sherwood.Thicket?', !!(parent.Sherwood && parent.Sherwood.Thicket));
+    enemyData = parent.Sherwood.Thicket.getCurrentEnemy();
+    nodeData = parent.Sherwood.Thicket.getNode(nodeId);
+    console.log('🎯 enemyData:', enemyData);
+    console.log('🎯 nodeData:', nodeData);
+} catch(e) {
+    console.error('❌ Не удалось получить данные узла:', e);
+}
 
         // ============================================================
         //  ЗВУКИ
