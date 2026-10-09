@@ -43,7 +43,7 @@ Sherwood.Bestiary = {
         'lord_of_the_feathered.png':{ name: 'Хозяин Пернатых',         zone: 'Базальтовый грот',   floor: 'Этаж 5', type: 'Босс',      rarity: 'epic',      lore: 'Древний птице-человек с огромным размахом крыльев...' },
         'corruption_raccoon.png':  { name: 'Енот Порчи',               zone: 'Базальтовый грот',   floor: 'Этаж 6', type: 'Босс',      rarity: 'legendary', lore: 'Симбиот Бездны...' },
 
-        // ========== ПОДЗЕМКА 4: Разлом времени (бывшие квесты) ==========
+        // ========== ПОДЗЕМКА 4: Разлом времени ==========
         'fallen_forester.png':        { name: 'Лесничий-Отступник',          zone: 'Разлом времени', floor: 'Глава 1',        type: 'Босс', rarity: 'rare',      lore: 'Бывший лесничий, предавший Шервуд ради золота...' },
         'blight_alpha_stag.png':      { name: 'Вожак Искаженной Стаи',       zone: 'Разлом времени', floor: 'Глава 2',        type: 'Босс', rarity: 'rare',      lore: 'Олень-вожак, поглощённый скверной...' },
         'huntsman_alpha_hound.png':   { name: 'Альфа-Гончая Егеря',          zone: 'Разлом времени', floor: 'Глава 3',        type: 'Босс', rarity: 'rare',      lore: 'Верный пёс егеря, превращённый скверной в безжалостного убийцу...' },
@@ -73,9 +73,6 @@ Sherwood.Bestiary = {
         'original_horror.png': { name: 'Изначальный Ужас', zone: 'Рейд', floor: 'Мировой рейд', type: 'Босс', rarity: 'mythic', lore: 'Спящий в Корнях...' }
     },
 
-    // ============================================================
-    //  ВКЛАДКИ
-    // ============================================================
     TABS: [
         { key: 'bosses', name: 'Боссы',          filter: function(b) { return b.type === 'Босс'; } },
         { key: 'beasts', name: 'Бестии Шервуда', filter: function(b) { return b.type !== 'Босс'; } }
@@ -85,9 +82,6 @@ Sherwood.Bestiary = {
     _currentIndex: 0,
     _discovered: {},
 
-    // ============================================================
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ============================================================
     init: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
@@ -96,15 +90,10 @@ Sherwood.Bestiary = {
         console.log('📖 Бестиарий инициализирован');
     },
 
-    // ============================================================
-    //  РЕГИСТРАЦИЯ УБИЙСТВА
-    // ============================================================
     registerKill: function(beastImage) {
         if (!beastImage) return;
-
         var key = beastImage;
         if (!this.BEASTS[key] && this.BEASTS[key + '.png']) key = key + '.png';
-
         var beast = this.BEASTS[key];
         if (!beast) {
             console.warn('📖 Бестиарий: неизвестная бестия', beastImage);
@@ -122,9 +111,6 @@ Sherwood.Bestiary = {
         console.log('📖 Открыта бестия:', beast.name, '(всего убийств:', this._discovered[key].kills + ')');
     },
 
-    // ============================================================
-    //  ПОЛУЧЕНИЕ ДАННЫХ
-    // ============================================================
     getBeast: function(beastId) {
         var beastData = this.BEASTS[beastId];
         if (!beastData) return null;
@@ -158,21 +144,6 @@ Sherwood.Bestiary = {
         return result;
     },
 
-    getBeastsByFloor: function(dungeonId, floor) {
-        var zoneMap = { 1: 'Проклятая чаща', 2: 'Первородное болото', 3: 'Базальтовый грот', 4: 'Разлом времени' };
-        var zone = zoneMap[dungeonId];
-        if (!zone) return [];
-        var floorStr = 'Этаж ' + floor;
-        var result = [];
-        for (var id in this.BEASTS) {
-            var b = this.BEASTS[id];
-            if (b.zone === zone && b.floor === floorStr) {
-                result.push({ id: id, name: b.name, type: b.type });
-            }
-        }
-        return result;
-    },
-
     getDiscoveryProgress: function() {
         var total = Object.keys(this.BEASTS).length;
         var discovered = 0;
@@ -182,9 +153,6 @@ Sherwood.Bestiary = {
         return { total: total, discovered: discovered, percent: total > 0 ? Math.round((discovered / total) * 100) : 0 };
     },
 
-    // ============================================================
-    //  НАГРАДЫ
-    // ============================================================
     _rollRewards: function(rarity) {
         var table = {
             common:    { gold: [0, 5],     exp: [10, 20],   tabletChance: 0    },
@@ -234,9 +202,6 @@ Sherwood.Bestiary = {
         return { success: true, rewards: rewards };
     },
 
-    // ============================================================
-    //  УТИЛИТЫ
-    // ============================================================
     getRarityColor: function(rarity) {
         var colors = {
             'common':    '#888888',
@@ -283,7 +248,7 @@ Sherwood.Bestiary = {
 
         var h = '';
 
-        // --- Табы ---
+        // Табы
         h += '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px;padding:0 8px;">';
         for (var t = 0; t < this.TABS.length; t++) {
             var tab = this.TABS[t];
@@ -297,7 +262,6 @@ Sherwood.Bestiary = {
         }
         h += '</div>';
 
-        // --- Карусель или пустой экран ---
         if (beasts.length === 0) {
             h += '<div style="text-align:center;padding:80px 24px;color:#c8a050;">';
             h += '<div style="font-size:3em;margin-bottom:16px;opacity:0.6;">📖</div>';
@@ -305,7 +269,7 @@ Sherwood.Bestiary = {
             h += '<div style="color:#888;font-size:0.9em;line-height:1.5;">Победи первую бестию в бою —<br>и она появится здесь.</div>';
             h += '</div>';
         } else {
-            h += '<div id="beast-carousel" style="position:relative;width:100%;height:calc(100vh - 220px);min-height:420px;overflow:hidden;touch-action:pan-y;user-select:none;">';
+            h += '<div id="beast-carousel" style="position:relative;width:100%;height:calc(100vh - 220px);min-height:420px;overflow:hidden;touch-action:pan-y;user-select:none;cursor:grab;">';
 
             for (var i = 0; i < beasts.length; i++) {
                 var b = beasts[i];
@@ -324,19 +288,19 @@ Sherwood.Bestiary = {
                      'background:radial-gradient(circle at 50% 50%, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.4) 100%);' +
                      'border:3px solid ' + rarityColor + ';border-radius:16px;' +
                      'box-shadow:0 0 30px ' + rarityColor + '44, inset 0 0 40px rgba(0,0,0,0.8);' +
-                     'display:flex;align-items:center;justify-content:center;overflow:hidden;">';
-                h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" ' +
+                     'display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;">';
+                h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;pointer-events:none;" ' +
                      'onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
 
                 h += '<div style="margin-top:20px;color:#ffd27a;font:bold 22px \'Times New Roman\',serif;' +
-                     'text-shadow:0 0 12px #000,0 3px 6px #000;text-align:center;padding:0 20px;letter-spacing:1px;">' +
+                     'text-shadow:0 0 12px #000,0 3px 6px #000;text-align:center;padding:0 20px;letter-spacing:1px;pointer-events:none;">' +
                      b.name + '</div>';
 
                 if (!b.rewardClaimed) {
-                    h += '<div style="margin-top:8px;color:#ffa500;font-size:0.85em;font-weight:bold;text-shadow:0 0 8px #000;">✦ Награда доступна ✦</div>';
+                    h += '<div style="margin-top:8px;color:#ffa500;font-size:0.85em;font-weight:bold;text-shadow:0 0 8px #000;pointer-events:none;">✦ Награда доступна ✦</div>';
                 } else {
-                    h += '<div style="margin-top:8px;color:#4caf50;font-size:0.85em;">✓ Награда получена</div>';
+                    h += '<div style="margin-top:8px;color:#4caf50;font-size:0.85em;pointer-events:none;">✓ Награда получена</div>';
                 }
 
                 h += '</div>';
@@ -344,7 +308,7 @@ Sherwood.Bestiary = {
             h += '</div>';
 
             if (beasts.length > 1) {
-                h += '<div style="text-align:center;color:#6b5a3a;font-size:0.75em;margin-top:6px;">▲ свайп вверх / вниз ▼</div>';
+                h += '<div style="text-align:center;color:#6b5a3a;font-size:0.75em;margin-top:6px;">▲ свайп / колесо вверх-вниз ▼</div>';
             }
         }
 
@@ -365,118 +329,96 @@ Sherwood.Bestiary = {
         UI._screenLayer.style.height = '100%';
         UI._screenLayer.style.overflow = 'hidden';
 
-        // --- Свайп ---
-this._wasDragging = false;
-var carousel = document.getElementById('beast-carousel');
-if (carousel && beasts.length > 1) {
-    var startY = 0;
-    var currentY = 0;
-    var dragging = false;
-    var slides = carousel.querySelectorAll('.beast-slide');
+        // --- Свайп + мышь + колесо ---
+        this._wasDragging = false;
+        var carousel = document.getElementById('beast-carousel');
+        if (carousel && beasts.length > 1) {
+            var startY = 0, currentY = 0, dragging = false;
+            var slides = carousel.querySelectorAll('.beast-slide');
 
-    function updateSlides(deltaY) {
-        for (var s = 0; s < slides.length; s++) {
-            var offset = (s - self._currentIndex) * 100;
-            var extraPx = deltaY;
-            slides[s].style.transition = 'none';
-            slides[s].style.transform = 'translateY(calc(' + offset + '% + ' + extraPx + 'px))';
+            function updateSlides(deltaY) {
+                for (var s = 0; s < slides.length; s++) {
+                    var offset = (s - self._currentIndex) * 100;
+                    slides[s].style.transition = 'none';
+                    slides[s].style.transform = 'translateY(calc(' + offset + '% + ' + deltaY + 'px))';
+                }
+            }
+            function snapToIndex() {
+                for (var s = 0; s < slides.length; s++) {
+                    var offset = (s - self._currentIndex) * 100;
+                    slides[s].style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
+                    slides[s].style.transform = 'translateY(' + offset + '%)';
+                }
+            }
+            function goNext() { if (self._currentIndex < beasts.length - 1) { self._currentIndex++; snapToIndex(); } }
+            function goPrev() { if (self._currentIndex > 0) { self._currentIndex--; snapToIndex(); } }
+
+            // Тач
+            carousel.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY; currentY = startY;
+                dragging = true; self._wasDragging = false;
+            }, { passive: true });
+            carousel.addEventListener('touchmove', function(e) {
+                if (!dragging) return;
+                currentY = e.touches[0].clientY;
+                var delta = currentY - startY;
+                if (Math.abs(delta) > 8) self._wasDragging = true;
+                updateSlides(delta);
+            }, { passive: true });
+            carousel.addEventListener('touchend', function() {
+                if (!dragging) return;
+                dragging = false;
+                var delta = currentY - startY;
+                if (Math.abs(delta) > 50) { if (delta < 0) goNext(); else goPrev(); }
+                snapToIndex();
+                setTimeout(function() { self._wasDragging = false; }, 100);
+            }, { passive: true });
+
+            // Мышь — drag
+            var mouseStartY = 0, mouseDown = false;
+            carousel.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                mouseStartY = e.clientY; mouseDown = true;
+                self._wasDragging = false;
+                carousel.style.cursor = 'grabbing';
+            });
+            carousel.addEventListener('mousemove', function(e) {
+                if (!mouseDown) return;
+                var delta = e.clientY - mouseStartY;
+                if (Math.abs(delta) > 8) self._wasDragging = true;
+                updateSlides(delta);
+            });
+            carousel.addEventListener('mouseup', function(e) {
+                if (!mouseDown) return;
+                mouseDown = false;
+                carousel.style.cursor = 'grab';
+                var delta = e.clientY - mouseStartY;
+                if (Math.abs(delta) > 50) { if (delta < 0) goNext(); else goPrev(); }
+                snapToIndex();
+                setTimeout(function() { self._wasDragging = false; }, 100);
+            });
+            carousel.addEventListener('mouseleave', function() {
+                if (!mouseDown) return;
+                mouseDown = false;
+                carousel.style.cursor = 'grab';
+                snapToIndex();
+            });
+
+            // Колесо мыши
+            var wheelLock = false;
+            carousel.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (wheelLock) return;
+                if (Math.abs(e.deltaY) < 10) return;
+                wheelLock = true;
+                if (e.deltaY > 0) goNext(); else goPrev();
+                setTimeout(function() { wheelLock = false; }, 350);
+            }, { passive: false });
         }
-    }
-    function snapToIndex() {
-        for (var s = 0; s < slides.length; s++) {
-            var offset = (s - self._currentIndex) * 100;
-            slides[s].style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
-            slides[s].style.transform = 'translateY(' + offset + '%)';
-        }
-    }
-    function goNext() {
-        if (self._currentIndex < beasts.length - 1) {
-            self._currentIndex++;
-            snapToIndex();
-        }
-    }
-    function goPrev() {
-        if (self._currentIndex > 0) {
-            self._currentIndex--;
-            snapToIndex();
-        }
-    }
-
-    // --- Тач (мобилка) ---
-    carousel.addEventListener('touchstart', function(e) {
-        startY = e.touches[0].clientY;
-        currentY = startY;
-        dragging = true;
-        self._wasDragging = false;
-    }, { passive: true });
-
-    carousel.addEventListener('touchmove', function(e) {
-        if (!dragging) return;
-        currentY = e.touches[0].clientY;
-        var delta = currentY - startY;
-        if (Math.abs(delta) > 8) self._wasDragging = true;
-        updateSlides(delta);
-    }, { passive: true });
-
-    carousel.addEventListener('touchend', function() {
-        if (!dragging) return;
-        dragging = false;
-        var delta = currentY - startY;
-        if (Math.abs(delta) > 50) {
-            if (delta < 0) goNext();
-            else goPrev();
-        }
-        snapToIndex();
-        setTimeout(function() { self._wasDragging = false; }, 100);
-    }, { passive: true });
-
-    // --- Мышь (ПК) ---
-    var mouseStartY = 0;
-    var mouseDown = false;
-
-    carousel.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        mouseStartY = e.clientY;
-        mouseDown = true;
-        self._wasDragging = false;
-    });
-
-    carousel.addEventListener('mousemove', function(e) {
-        if (!mouseDown) return;
-        var delta = e.clientY - mouseStartY;
-        if (Math.abs(delta) > 8) self._wasDragging = true;
-        updateSlides(delta);
-    });
-
-    carousel.addEventListener('mouseup', function(e) {
-        if (!mouseDown) return;
-        mouseDown = false;
-        var delta = e.clientY - mouseStartY;
-        if (Math.abs(delta) > 50) {
-            if (delta < 0) goNext();
-            else goPrev();
-        }
-        snapToIndex();
-        setTimeout(function() { self._wasDragging = false; }, 100);
-    });
-
-    carousel.addEventListener('mouseleave', function() {
-        if (!mouseDown) return;
-        mouseDown = false;
-        snapToIndex();
-    });
-
-    // --- Колесо мыши (ПК) ---
-    carousel.addEventListener('wheel', function(e) {
-        e.preventDefault();
-        if (Math.abs(e.deltaY) < 20) return;
-        if (e.deltaY > 0) goNext();
-        else goPrev();
-    }, { passive: false });
-}
+    },
 
     // ============================================================
-    //  ДЕТАЛЬНАЯ КАРТОЧКА (без картинки, текст по центру)
+    //  ДЕТАЛЬНАЯ КАРТОЧКА
     // ============================================================
     _showBeastInfo: function(beastId) {
         var b = this.getBeast(beastId);
@@ -488,7 +430,6 @@ if (carousel && beasts.length > 1) {
 
         var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;">';
 
-        // Имя, редкость, тип, зона — по центру, без картинки
         h += '<div style="text-align:center;padding:8px 0;">';
         h += '<div style="color:#ffd27a;font:bold 24px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:8px;">' + b.name + '</div>';
         h += '<div style="color:' + rarityColor + ';font-size:0.95em;font-weight:bold;margin-bottom:8px;">' + rarityName + '</div>';
@@ -496,13 +437,11 @@ if (carousel && beasts.length > 1) {
         h += '<div style="color:#c8a050;font-size:0.9em;margin-top:10px;">Убито: ' + b.kills + '</div>';
         h += '</div>';
 
-        // Лор
         h += '<div style="margin-top:18px;padding:14px;background:rgba(0,0,0,0.7);' +
              'border-left:3px solid #6b5a3a;border-radius:6px;' +
              'color:#c0b090;font-style:italic;font-size:0.9em;line-height:1.6;">' +
              b.lore + '</div>';
 
-        // Награда
         h += '<div style="margin-top:18px;text-align:center;">';
         if (b.rewardClaimed) {
             h += '<div style="color:#4caf50;font-size:1em;padding:12px;">✓ Награда уже получена</div>';
@@ -533,15 +472,9 @@ if (carousel && beasts.length > 1) {
         UI._screenLayer.style.overflow = 'hidden';
     },
 
-    // ============================================================
-    //  ПОЛУЧЕНИЕ НАГРАДЫ
-    // ============================================================
     _claimFromUI: function(beastId) {
         var r = this.claimReward(beastId);
-        if (!r.success) {
-            UI._showToast(r.reason || 'Ошибка');
-            return;
-        }
+        if (!r.success) { UI._showToast(r.reason || 'Ошибка'); return; }
         UI._playSound('loot_fly');
         UI.updateDisplay();
         this._showRewardPopup(r.rewards);
