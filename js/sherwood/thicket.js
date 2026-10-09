@@ -109,7 +109,7 @@ Sherwood.Thicket = {
         { id: 64, chapter: 16, chapterName: 'Шрам, который не заживёт', name: 'Изначальный Стержень', image: 'the_primordial_core.png',  imagePath: 'assets/beast_quest/the_primordial_core.png', hp: 560000,atk: 36000, def: 29000, exp: 1600, gold: 1300, isBoss: true },
 
         // ========== РЕЙД-БОСС (финальный узел) ==========
-        { id: 65, chapter: 0, chapterName: 'Рейд', name: 'Изначальный Ужас', image: 'original_horror.png', imagePath: 'assets/beast_quest/original_horror.png', hp: 580000, atk: 38000, def: 30000, exp: 20000, gold: 15000, isBoss: true, isRaidBoss: true }
+        { id: 65, chapter: 0, chapterName: 'Рейд', name: 'Изначальный Ужас', image: 'original_horror.png', imagePath: 'assets/assets2/mobs/raid_mobs/original_horror.png', hp: 580000, atk: 38000, def: 30000, exp: 20000, gold: 15000, isBoss: true, isRaidBoss: true }
     ],
 
     // Множители сложности: [лёгкая, средняя, сложная]
@@ -540,85 +540,96 @@ Sherwood.Thicket = {
     //  ПАНЕЛЬ УЗЛА — 3 сложности
     // ============================================================
     _showNodePanel: function(nodeId) {
-        var self = this;
-        var node = this.getNode(nodeId);
-        if (!node) return;
+    var self = this;
+    var node = this.getNode(nodeId);
+    if (!node) return;
 
-        this.setLastViewed(nodeId);
+    this.setLastViewed(nodeId);
 
-        var cups = this.getCups(nodeId);
-        var imgPath = this.getImagePath(node);
+    var cups = this.getCups(nodeId);
+    var imgPath = this.getImagePath(node);
 
-        var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;text-align:center;">';
+    var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;text-align:center;position:relative;">';
 
-        h += '<div style="margin:0 auto 16px;width:200px;height:200px;' +
-             'border:3px solid #c9a040;border-radius:16px;' +
-             'box-shadow:0 0 30px rgba(201,160,64,0.4), inset 0 0 40px rgba(0,0,0,0.8);' +
-             'background:radial-gradient(circle, rgba(0,0,0,0.2), rgba(0,0,0,0.7));' +
-             'display:flex;align-items:center;justify-content:center;overflow:hidden;">';
-        h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+    // === СЛОЙ 1: картинка врага (z-index 1, не кликабельна) ===
+    h += '<div style="position:relative;z-index:1;margin:0 auto 16px;width:200px;height:200px;' +
+         'border:3px solid #c9a040;border-radius:16px;' +
+         'box-shadow:0 0 30px rgba(201,160,64,0.4), inset 0 0 40px rgba(0,0,0,0.8);' +
+         'background:radial-gradient(circle, rgba(0,0,0,0.2), rgba(0,0,0,0.7));' +
+         'display:flex;align-items:center;justify-content:center;overflow:hidden;' +
+         'pointer-events:none;">';
+    h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;" onerror="this.style.display=\'none\'">';
+    h += '</div>';
+
+    // === СЛОЙ 2: текст + кнопки (z-index 10, всегда сверху) ===
+    h += '<div style="position:relative;z-index:10;">';
+
+    h += '<div style="color:#ffd27a;font:bold 22px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:6px;">' + node.name + '</div>';
+
+    if (node.chapter > 0) {
+        h += '<div style="color:#aaa;font-size:0.85em;margin-bottom:4px;">Глава ' + node.chapter + ' — ' + node.chapterName + '</div>';
+    } else {
+        h += '<div style="color:#ff6b35;font-size:0.9em;font-weight:bold;margin-bottom:4px;">' + node.chapterName + '</div>';
+    }
+    if (node.isBoss) {
+        h += '<div style="color:#ff6b35;font-size:0.8em;font-weight:bold;margin-bottom:8px;">' + (node.isRaidBoss ? '👑 РЕЙД-БОСС' : '☠ БОСС') + '</div>';
+    }
+
+    h += '<div style="color:#c8a050;font-size:0.9em;margin-bottom:16px;">Кубков: ' + cups + ' / 3</div>';
+
+    h += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">';
+    for (var d = 1; d <= 3; d++) {
+        var available = this.isNodeAvailable(nodeId, d);
+        var passed = cups >= d;
+        var mult = this.DIFF_MULT[d - 1];
+        var diffName = this.DIFF_NAMES[d - 1];
+
+        var bg = passed ? 'linear-gradient(180deg,#5a4020,#3a2a10)' :
+                 (available ? 'linear-gradient(180deg,#3a2a10,#1a1208)' : 'rgba(20,20,20,0.7)');
+        var border = passed ? '#ffd700' : (available ? '#c9a040' : '#333');
+        var color = passed ? '#ffd700' : (available ? '#ffd27a' : '#666');
+        var cursor = available ? 'pointer' : 'not-allowed';
+
+        // onclick ВСЕГДА вешаем — внутри _enterNode проверка
+        var clickAttr = ' onclick="Sherwood.Thicket._enterNode(' + nodeId + ',' + d + ')"';
+
+        h += '<div' + clickAttr + ' style="position:relative;z-index:20;' +
+             'background:' + bg + ';border:2px solid ' + border + ';border-radius:10px;' +
+             'padding:14px 20px;cursor:' + cursor + ';' +
+             'display:flex;justify-content:space-between;align-items:center;' +
+             'pointer-events:auto;user-select:none;">';
+        h += '<div style="text-align:left;color:' + color + ';font:bold 15px \'Times New Roman\',serif;letter-spacing:1px;pointer-events:none;">' + diffName + '</div>';
+        h += '<div style="color:' + color + ';font-size:0.85em;pointer-events:none;">';
+        if (passed) h += '✓ Пройдено';
+        else if (available) h += '×' + mult.toFixed(1) + ' HP/ATK';
+        else h += '🔒 Закрыто';
         h += '</div>';
-
-        h += '<div style="color:#ffd27a;font:bold 22px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:6px;">' + node.name + '</div>';
-
-        if (node.chapter > 0) {
-            h += '<div style="color:#aaa;font-size:0.85em;margin-bottom:4px;">Глава ' + node.chapter + ' — ' + node.chapterName + '</div>';
-        } else {
-            h += '<div style="color:#ff6b35;font-size:0.9em;font-weight:bold;margin-bottom:4px;">' + node.chapterName + '</div>';
-        }
-        if (node.isBoss) {
-            h += '<div style="color:#ff6b35;font-size:0.8em;font-weight:bold;margin-bottom:8px;">' + (node.isRaidBoss ? '👑 РЕЙД-БОСС' : '☠ БОСС') + '</div>';
-        }
-
-        h += '<div style="color:#c8a050;font-size:0.9em;margin-bottom:16px;">Кубков: ' + cups + ' / 3</div>';
-
-        h += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">';
-        for (var d = 1; d <= 3; d++) {
-            var available = this.isNodeAvailable(nodeId, d);
-            var passed = cups >= d;
-            var mult = this.DIFF_MULT[d - 1];
-            var diffName = this.DIFF_NAMES[d - 1];
-
-            var bg = passed ? 'linear-gradient(180deg,#5a4020,#3a2a10)' :
-                     (available ? 'linear-gradient(180deg,#3a2a10,#1a1208)' : 'rgba(20,20,20,0.7)');
-            var border = passed ? '#ffd700' : (available ? '#c9a040' : '#333');
-            var color = passed ? '#ffd700' : (available ? '#ffd27a' : '#666');
-            var cursor = available ? 'pointer' : 'not-allowed';
-
-            var clickAttr = available ? ' onclick="Sherwood.Thicket._enterNode(' + nodeId + ',' + d + ')"' : '';
-
-            h += '<div' + clickAttr + ' style="background:' + bg + ';border:2px solid ' + border + ';border-radius:10px;padding:14px 20px;cursor:' + cursor + ';display:flex;justify-content:space-between;align-items:center;">';
-            h += '<div style="text-align:left;color:' + color + ';font:bold 15px \'Times New Roman\',serif;letter-spacing:1px;">' + diffName + '</div>';
-            h += '<div style="color:' + color + ';font-size:0.85em;">';
-            if (passed) h += '✓ Пройдено';
-            else if (available) h += '×' + mult.toFixed(1) + ' HP/ATK';
-            else h += '🔒 Закрыто';
-            h += '</div>';
-            h += '</div>';
-        }
         h += '</div>';
+    }
+    h += '</div>';
 
-        h += '<button onclick="Sherwood.Thicket.showUI()" style="background:transparent;border:2px solid #6b5a3a;border-radius:8px;padding:10px 24px;color:#c8a050;font:bold 14px \'Times New Roman\',serif;cursor:pointer;letter-spacing:1px;">← К ТРОПЕ</button>';
+    h += '<button onclick="Sherwood.Thicket.showUI()" style="position:relative;z-index:20;background:transparent;border:2px solid #6b5a3a;border-radius:8px;padding:10px 24px;color:#c8a050;font:bold 14px \'Times New Roman\',serif;cursor:pointer;letter-spacing:1px;pointer-events:auto;">← К ТРОПЕ</button>';
 
-        h += '</div>';
+    h += '</div>'; // конец слоя 2
 
-        UI._screenLayer.innerHTML = '';
-        var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');' +
-                      'background-size:cover;background-position:center;background-repeat:no-repeat;';
-        var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
-                                'display:flex;flex-direction:column;overflow:hidden;';
-        wrapper.innerHTML =
-            '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
-                '<button onclick="Sherwood.Thicket.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
-                '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + node.name + '</span>' +
-            '</div>' +
-            '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;">' + h + '</div>';
-        UI._screenLayer.appendChild(wrapper);
-        UI._screenLayer.style.display = 'block';
-        UI._screenLayer.style.overflow = 'hidden';
-    },
+    h += '</div>'; // конец обёртки
 
+    UI._screenLayer.innerHTML = '';
+    var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');' +
+                  'background-size:cover;background-position:center;background-repeat:no-repeat;';
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
+                            'display:flex;flex-direction:column;overflow:hidden;';
+    wrapper.innerHTML =
+        '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
+            '<button onclick="Sherwood.Thicket.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
+            '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + node.name + '</span>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;">' + h + '</div>';
+    UI._screenLayer.appendChild(wrapper);
+    UI._screenLayer.style.display = 'block';
+    UI._screenLayer.style.overflow = 'hidden';
+},
     // ============================================================
     //  ВХОД В УЗЕЛ
     // ============================================================
