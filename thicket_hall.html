@@ -221,7 +221,7 @@
         }
         generateMaze();
 
-        // Самый дальний угол — для спавна врага
+        // Дальняя клетка — для спавна врага
         var enemyCell = (function findFarthestCell() {
             var startGX = 1, startGY = 1;
             var visited = {};
@@ -284,7 +284,7 @@
             }
         }
 
-        // Светильники-точки в чётных клетках
+        // Светильники-точки
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 if (map[row][col] === 0 && row % 2 === 0 && col % 2 === 0) {
@@ -315,7 +315,7 @@
         scene.add(heroGlow);
 
         // ============================================================
-        //  ВРАГ — 1 штука в самой дальней точке
+        //  ВРАГ
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -395,15 +395,14 @@
         }
 
         // ============================================================
-        //  СУНДУКИ (2 штуки с врага) + ДВЕРЬ ВЫХОДА
+        //  СУНДУКИ + ДВЕРЬ ВЫХОДА
         // ============================================================
-        var chestSprites = [];   // массив — 2 сундука
+        var chestSprites = [];
         var chestOpened = false;
         var lockedChestTex, openChestTex;
         var exitDoor = null;
         var exitIsOpen = false;
 
-        // Сундук — босс = third dungeon, обычный = first dungeon
         if (enemyData && enemyData.isBoss) {
             lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_third_dungeon.png');
             openChestTex   = loader.load('assets/assets2/game_details/open_chest_third_dungeon.png');
@@ -412,7 +411,6 @@
             openChestTex   = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
         }
 
-        // Дверь выхода — как в подземке
         var closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         var openDoorTex = loader.load(
             (enemyData && enemyData.isBoss)
@@ -420,7 +418,6 @@
                 : 'assets/assets2/game_details/completion_of_the_second_underground_level1.png'
         );
 
-        // Найти свободную клетку рядом с врагом
         function findFreeAdjacent(gx, gy) {
             var dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
             for (var i = 0; i < dirs.length; i++) {
@@ -431,7 +428,6 @@
             return { gx: gx, gy: gy };
         }
 
-        // Два сундука — рядом с врагом
         function spawnChests(gx, gy) {
             var pos1 = { gx: gx, gy: gy };
             var adj = findFreeAdjacent(gx, gy);
@@ -448,7 +444,6 @@
             });
         }
 
-        // Дверь выхода — на месте врага (как в подземке exitDoor)
         function spawnExitDoor(gx, gy) {
             var w = gridToWorld(gx, gy);
             var wL = (gx - 1 >= 0 && map[gy][gx - 1] === 1);
@@ -476,7 +471,6 @@
             exitDoor.material.needsUpdate = true;
         }
 
-        // Открыть все сундуки разом (при клике по любому из них)
         function openAllChests() {
             if (chestOpened) return;
             chestOpened = true;
@@ -488,7 +482,6 @@
                 }
             });
             playSound(soundChest);
-            // Открываем дверь выхода
             openExitDoor();
         }
 
@@ -609,7 +602,7 @@
         });
 
         // ============================================================
-        //  КЛИК ПО СЦЕНЕ (сундуки, дверь выхода)
+        //  КЛИК ПО СЦЕНЕ (враг → бой, сундуки, дверь)
         // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
@@ -619,13 +612,31 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
+            // 🆕 Клик по врагу — начинаем бой (как в подземке)
+            if (enemySprite && !isBattleActive) {
+                var enemyHits = raycaster.intersectObject(enemySprite, false);
+                if (enemyHits.length) {
+                    var cur = worldToGrid(playerPos.x, playerPos.z);
+                    var eGx = Math.round(enemyPos.x + Math.floor(size / 2));
+                    var eGy = Math.round(enemyPos.z + Math.floor(size / 2));
+                    var eDist = Math.abs(cur.gx - eGx) + Math.abs(cur.gy - eGy);
+                    if (eDist <= 3) {   // в пределах 3 клеток можно атаковать
+                        startBattle();
+                        return;
+                    } else {
+                        if (parent.UI && parent.UI._showToast) parent.UI._showToast('Слишком далеко');
+                        return;
+                    }
+                }
+            }
+
             // Сундуки
             if (chestSprites.length && !chestOpened) {
                 var chestHits = raycaster.intersectObjects(chestSprites, false);
                 if (chestHits.length) {
-                    var cur = worldToGrid(playerPos.x, playerPos.z);
+                    var cur2 = worldToGrid(playerPos.x, playerPos.z);
                     var ud = chestHits[0].object.userData;
-                    var dist = Math.abs(cur.gx - ud.gx) + Math.abs(cur.gy - ud.gy);
+                    var dist = Math.abs(cur2.gx - ud.gx) + Math.abs(cur2.gy - ud.gy);
                     if (dist <= 1) { openAllChests(); return; }
                 }
             }
@@ -723,18 +734,9 @@
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        function checkEnemy() {
-            if (!enemySprite) return;
-            var dist = camera.position.distanceTo(enemyPos);
-            if (dist < 3.0 && !isBattleActive) {
-                startBattle();
-            }
-        }
-
         document.getElementById('attack-icon').addEventListener('click', function(e) {
             e.stopPropagation();
             if (isBattleActive) { attackEnemy(); return; }
-            // Открыть сундуки, если стоим в 1 клетке от любого
             if (chestSprites.length && !chestOpened) {
                 var cur = worldToGrid(playerPos.x, playerPos.z);
                 for (var i = 0; i < chestSprites.length; i++) {
@@ -743,7 +745,6 @@
                     if (dist <= 1) { openAllChests(); return; }
                 }
             }
-            // Войти в открытую дверь
             if (exitDoor && exitIsOpen) {
                 var cur2 = worldToGrid(playerPos.x, playerPos.z);
                 var exG = Math.round(exitDoor.position.x + Math.floor(size / 2));
@@ -853,20 +854,16 @@
             stopBattle();
             playSound(soundVictory);
 
-            // Регистрируем убийство в бестиарии
             try {
                 if (parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill && enemyData && enemyData.image) {
                     parent.Sherwood.Bestiary.registerKill(enemyData.image);
                 }
             } catch(e) {}
 
-            // Убираем врага
             var cur = worldToGrid(enemyPos.x, enemyPos.z);
             if (enemySprite) { scene.remove(enemySprite); enemySprite = null; }
 
-            // Спавним 2 сундука рядом
             spawnChests(cur.gx, cur.gy);
-            // Спавним дверь выхода
             spawnExitDoor(cur.gx, cur.gy);
         }
 
@@ -1055,14 +1052,12 @@
             var cur = worldToGrid(playerPos.x, playerPos.z);
             var nearLoot = false;
 
-            // Сундуки
             if (chestSprites.length && !chestOpened) {
                 for (var i = 0; i < chestSprites.length; i++) {
                     var ud = chestSprites[i].userData;
                     if (Math.abs(cur.gx - ud.gx) + Math.abs(cur.gy - ud.gy) <= 1) { nearLoot = true; break; }
                 }
             }
-            // Открытая дверь
             if (!nearLoot && exitDoor && exitIsOpen) {
                 var exG = Math.round(exitDoor.position.x + Math.floor(size / 2));
                 var exG2 = Math.round(exitDoor.position.z + Math.floor(size / 2));
@@ -1115,7 +1110,7 @@
                 if (!waypoints.length) {
                     moving = false;
                     stopSteps();
-                    checkEnemy();
+                    // checkEnemy() УБРАН — бой запускается только кликом по врагу
                 }
             }
 
