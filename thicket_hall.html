@@ -119,17 +119,11 @@
         var enemyData = null;
         var nodeData = null;
         try {
-    console.log('🎯 thicket_hall URL:', window.location.href);
-    console.log('🎯 nodeId:', nodeId, 'diff:', diff);
-    console.log('🎯 parent.Sherwood?', !!parent.Sherwood);
-    console.log('🎯 parent.Sherwood.Thicket?', !!(parent.Sherwood && parent.Sherwood.Thicket));
-    enemyData = parent.Sherwood.Thicket.getCurrentEnemy();
-    nodeData = parent.Sherwood.Thicket.getNode(nodeId);
-    console.log('🎯 enemyData:', enemyData);
-    console.log('🎯 nodeData:', nodeData);
-} catch(e) {
-    console.error('❌ Не удалось получить данные узла:', e);
-}
+            enemyData = parent.Sherwood.Thicket.getCurrentEnemy();
+            nodeData = parent.Sherwood.Thicket.getNode(nodeId);
+        } catch(e) {
+            console.error('❌ Не удалось получить данные узла:', e);
+        }
 
         // ============================================================
         //  ЗВУКИ
@@ -139,7 +133,6 @@
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
         var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
-        var soundLoot = new Audio('assets/assets2/tune/loot_fly.wav');
         var thicketMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
         thicketMusic.loop = true;
         thicketMusic.volume = 0.4;
@@ -151,7 +144,6 @@
                     if (typeof parent.stopMainMusic === 'function') { try { parent.stopMainMusic(); } catch(e){} }
                     if (parent.UI) {
                         try { if (parent.UI._currentMusic) { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; parent.UI._currentMusic = null; } } catch(e){}
-                        try { if (parent.UI._sounds) { for (var k in parent.UI._sounds) { try { parent.UI._sounds[k].pause(); parent.UI._sounds[k].currentTime = 0; } catch(e){} } } } catch(e){}
                     }
                 }
             } catch(e){}
@@ -190,7 +182,7 @@
         scene.add(new THREE.AmbientLight(0x554433, 0.9));
         scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
-        const size = 9;
+        const size = 7;
         const wallHeight = 1.4;
         const cellSize = 1;
 
@@ -201,7 +193,7 @@
         }
 
         // ============================================================
-        //  ГЕНЕРАЦИЯ ЛАБИРИНТА 9×9
+        //  ГЕНЕРАЦИЯ ЛАБИРИНТА 7×7
         // ============================================================
         function generateMaze() {
             const stack = [];
@@ -343,9 +335,9 @@
         }
 
         function createEnemySprite() {
-            if (!enemyData || !enemyData.imagePath) return;
-            var scale = enemyData.isBoss ? 1.5 : 1.05;
-            var tex = new THREE.TextureLoader().load(enemyData.imagePath,
+            var path = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
+            var scale = (enemyData && enemyData.isBoss) ? 1.5 : 1.05;
+            var tex = loader.load(path,
                 function(t) {
                     t.minFilter = THREE.LinearFilter;
                     t.magFilter = THREE.LinearFilter;
@@ -354,9 +346,18 @@
                     enemyBaseY = scale / 2;
                     enemySprite.position.set(enemyPos.x, enemyBaseY, enemyPos.z);
                     scene.add(enemySprite);
+                    console.log('✅ Враг создан:', path);
                 },
                 undefined,
-                function() { console.warn('❌ Не загрузилась текстура врага:', enemyData.imagePath); }
+                function() {
+                    console.warn('❌ Не загрузилась текстура врага:', path);
+                    var fallback = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.8, 0.8),
+                        new THREE.MeshBasicMaterial({ color: 0x8b0000 })
+                    );
+                    fallback.position.set(enemyPos.x, 0.5, enemyPos.z);
+                    scene.add(fallback);
+                }
             );
         }
         createEnemySprite();
@@ -369,7 +370,7 @@
             'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
             'assets/assets2/animation/blood_5.png'
         ];
-        var bloodTextures = bloodSprites.map(function(path) { return new THREE.TextureLoader().load(path); });
+        var bloodTextures = bloodSprites.map(function(path) { return loader.load(path); });
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
         hitFlashSprite.scale.set(0.4, 0.4, 1);
         hitFlashSprite.visible = false;
@@ -394,12 +395,15 @@
         }
 
         // ============================================================
-        //  СУНДУК
+        //  СУНДУКИ (2 штуки с врага) + ДВЕРЬ ВЫХОДА
         // ============================================================
-        var chestSprite = null;
+        var chestSprites = [];   // массив — 2 сундука
         var chestOpened = false;
         var lockedChestTex, openChestTex;
+        var exitDoor = null;
+        var exitIsOpen = false;
 
+        // Сундук — босс = third dungeon, обычный = first dungeon
         if (enemyData && enemyData.isBoss) {
             lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_third_dungeon.png');
             openChestTex   = loader.load('assets/assets2/game_details/open_chest_third_dungeon.png');
@@ -408,34 +412,84 @@
             openChestTex   = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
         }
 
-        function spawnChest(gx, gy) {
-            var w = { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) };
-            chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: lockedChestTex, transparent: true, alphaTest: 0.1, depthWrite: false }));
-            var sc = 0.85;
-            chestSprite.scale.set(sc, sc, 1);
-            chestSprite.position.set(w.x, 0.2, w.z);
-            chestSprite.userData = { type: 'chest', gx: gx, gy: gy };
-            group.add(chestSprite);
+        // Дверь выхода — как в подземке
+        var closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
+        var openDoorTex = loader.load(
+            (enemyData && enemyData.isBoss)
+                ? 'assets/assets2/game_details/completion_of_the_second_underground_level3.png'
+                : 'assets/assets2/game_details/completion_of_the_second_underground_level1.png'
+        );
+
+        // Найти свободную клетку рядом с врагом
+        function findFreeAdjacent(gx, gy) {
+            var dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+            for (var i = 0; i < dirs.length; i++) {
+                var nx = gx + dirs[i].x;
+                var ny = gy + dirs[i].y;
+                if (nx >= 0 && ny >= 0 && nx < size && ny < size && map[ny][nx] === 0) return { gx: nx, gy: ny };
+            }
+            return { gx: gx, gy: gy };
         }
 
-        function openChest() {
-            if (chestOpened || !chestSprite) return;
+        // Два сундука — рядом с врагом
+        function spawnChests(gx, gy) {
+            var pos1 = { gx: gx, gy: gy };
+            var adj = findFreeAdjacent(gx, gy);
+            var pos2 = adj;
+
+            [pos1, pos2].forEach(function(p) {
+                var w = gridToWorld(p.gx, p.gy);
+                var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: lockedChestTex, transparent: true, alphaTest: 0.1, depthWrite: false }));
+                spr.scale.set(0.7, 0.7, 1);
+                spr.position.set(w.x, 0.2, w.z);
+                spr.userData = { type: 'chest', gx: p.gx, gy: p.gy, opened: false };
+                group.add(spr);
+                chestSprites.push(spr);
+            });
+        }
+
+        // Дверь выхода — на месте врага (как в подземке exitDoor)
+        function spawnExitDoor(gx, gy) {
+            var w = gridToWorld(gx, gy);
+            var wL = (gx - 1 >= 0 && map[gy][gx - 1] === 1);
+            var wR = (gx + 1 < size && map[gy][gx + 1] === 1);
+            var horiz = wL && wR;
+
+            var mat = new THREE.MeshStandardMaterial({
+                map: closedLockTex,
+                transparent: true,
+                alphaTest: 0.4,
+                side: THREE.DoubleSide,
+                roughness: 0.85
+            });
+            exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), mat);
+            if (!horiz) exitDoor.rotation.y = Math.PI / 2;
+            exitDoor.position.set(w.x, wallHeight / 2, w.z);
+            exitDoor.userData = { exit: true };
+            group.add(exitDoor);
+        }
+
+        function openExitDoor() {
+            if (exitIsOpen || !exitDoor) return;
+            exitIsOpen = true;
+            exitDoor.material.map = openDoorTex;
+            exitDoor.material.needsUpdate = true;
+        }
+
+        // Открыть все сундуки разом (при клике по любому из них)
+        function openAllChests() {
+            if (chestOpened) return;
             chestOpened = true;
-            chestSprite.material.map = openChestTex;
-            chestSprite.material.needsUpdate = true;
-            playSound(soundChest);
-            // Небольшая задержка перед возвратом
-            setTimeout(function() {
-                try {
-                    thicketMusic.pause();
-                    thicketMusic.currentTime = 0;
-                } catch(e){}
-                try {
-                    parent.Sherwood.Thicket._onWin(nodeId, diff);
-                } catch(e) {
-                    console.error('Ошибка при _onWin:', e);
+            chestSprites.forEach(function(spr) {
+                if (!spr.userData.opened) {
+                    spr.userData.opened = true;
+                    spr.material.map = openChestTex;
+                    spr.material.needsUpdate = true;
                 }
-            }, 500);
+            });
+            playSound(soundChest);
+            // Открываем дверь выхода
+            openExitDoor();
         }
 
         // ============================================================
@@ -555,7 +609,7 @@
         });
 
         // ============================================================
-        //  КЛИК ПО СЦЕНЕ (враг, сундук)
+        //  КЛИК ПО СЦЕНЕ (сундуки, дверь выхода)
         // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
@@ -565,22 +619,28 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // Сундук
-            if (chestSprite) {
-                var chestHits = raycaster.intersectObject(chestSprite, false);
+            // Сундуки
+            if (chestSprites.length && !chestOpened) {
+                var chestHits = raycaster.intersectObjects(chestSprites, false);
                 if (chestHits.length) {
                     var cur = worldToGrid(playerPos.x, playerPos.z);
-                    var ud = chestSprite.userData;
+                    var ud = chestHits[0].object.userData;
                     var dist = Math.abs(cur.gx - ud.gx) + Math.abs(cur.gy - ud.gy);
-                    if (dist <= 1) { openChest(); return; }
+                    if (dist <= 1) { openAllChests(); return; }
                 }
             }
 
-            // Враг — при клике подходим ближе (как в подземке — клик на пол)
-            if (isBattleActive) {
-                attackEnemy();
-                return;
+            // Дверь выхода
+            if (exitDoor) {
+                var exitHits = raycaster.intersectObject(exitDoor, false);
+                if (exitHits.length) {
+                    if (exitIsOpen) { finishThicket(); return; }
+                    else { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Сначала собери лут'); return; }
+                }
             }
+
+            // Атака при бое
+            if (isBattleActive) { attackEnemy(); return; }
         });
 
         // ============================================================
@@ -608,6 +668,8 @@
             isBattleActive = true;
             playerHitFirst = false;
             document.getElementById('mob-hp').style.display = 'block';
+            var nameEl = document.getElementById('mob-hp-name');
+            if (nameEl && enemyData) nameEl.textContent = enemyData.name;
             if (enemyData) {
                 enemyHp = enemyData.hp;
                 enemyMaxHp = enemyData.hp;
@@ -620,7 +682,7 @@
                 if (!isBattleActive) return;
                 if (!playerHitFirst) return;
                 var p = parent.Sherwood.getPlayer();
-                if (!p) return;
+                if (!p || !enemyData) return;
                 var edmg = Math.max(1, Math.floor(enemyData.atk * 0.3));
                 if (p.talents) {
                     if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
@@ -669,9 +731,36 @@
             }
         }
 
-        document.getElementById('attack-icon').addEventListener('click', function() {
-            if (isBattleActive) attackEnemy();
+        document.getElementById('attack-icon').addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (isBattleActive) { attackEnemy(); return; }
+            // Открыть сундуки, если стоим в 1 клетке от любого
+            if (chestSprites.length && !chestOpened) {
+                var cur = worldToGrid(playerPos.x, playerPos.z);
+                for (var i = 0; i < chestSprites.length; i++) {
+                    var ud = chestSprites[i].userData;
+                    var dist = Math.abs(cur.gx - ud.gx) + Math.abs(cur.gy - ud.gy);
+                    if (dist <= 1) { openAllChests(); return; }
+                }
+            }
+            // Войти в открытую дверь
+            if (exitDoor && exitIsOpen) {
+                var cur2 = worldToGrid(playerPos.x, playerPos.z);
+                var exG = Math.round(exitDoor.position.x + Math.floor(size / 2));
+                var exG2 = Math.round(exitDoor.position.z + Math.floor(size / 2));
+                var dist2 = Math.abs(cur2.gx - exG) + Math.abs(cur2.gy - exG2);
+                if (dist2 <= 1) { finishThicket(); return; }
+            }
         });
+
+        function finishThicket() {
+            stopSteps();
+            playSound(soundVictory);
+            try { thicketMusic.pause(); thicketMusic.currentTime = 0; } catch(e){}
+            setTimeout(function() {
+                try { parent.Sherwood.Thicket._onWin(nodeId, diff); } catch(e) { console.error('Ошибка _onWin:', e); }
+            }, 300);
+        }
 
         function attackEnemy() {
             if (!isBattleActive || !enemyData) return;
@@ -772,11 +861,13 @@
             } catch(e) {}
 
             // Убираем врага
+            var cur = worldToGrid(enemyPos.x, enemyPos.z);
             if (enemySprite) { scene.remove(enemySprite); enemySprite = null; }
 
-            // Спавним сундук на месте врага
-            var cur = worldToGrid(enemyPos.x, enemyPos.z);
-            spawnChest(cur.gx, cur.gy);
+            // Спавним 2 сундука рядом
+            spawnChests(cur.gx, cur.gy);
+            // Спавним дверь выхода
+            spawnExitDoor(cur.gx, cur.gy);
         }
 
         function onDefeat() {
@@ -902,7 +993,7 @@
         // ============================================================
         //  МИНИ-КАРТА
         // ============================================================
-        const minimapCell = 11;
+        const minimapCell = 16;
         const minimapCanvas = document.getElementById('minimap-canvas');
         minimapCanvas.width  = size * minimapCell;
         minimapCanvas.height = size * minimapCell;
@@ -919,25 +1010,24 @@
                     mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
                 }
             }
-            // Враг — красная точка
             if (enemySprite) {
                 mmCtx.fillStyle = '#f44336';
                 mmCtx.beginPath();
-                mmCtx.arc(enemyCell.gx * minimapCell + minimapCell/2, enemyCell.gy * minimapCell + minimapCell/2, minimapCell * 0.8, 0, Math.PI * 2);
+                mmCtx.arc(enemyCell.gx * minimapCell + minimapCell/2, enemyCell.gy * minimapCell + minimapCell/2, minimapCell * 0.4, 0, Math.PI * 2);
                 mmCtx.fill();
             }
-            // Сундук — жёлтая точка
-            if (chestSprite) {
-                mmCtx.fillStyle = '#ffd700';
+            if (exitDoor) {
+                var exG = Math.round(exitDoor.position.x + Math.floor(size / 2));
+                var exG2 = Math.round(exitDoor.position.z + Math.floor(size / 2));
+                mmCtx.fillStyle = exitIsOpen ? '#4caf50' : '#c0392b';
                 mmCtx.beginPath();
-                mmCtx.arc(chestSprite.userData.gx * minimapCell + minimapCell/2, chestSprite.userData.gy * minimapCell + minimapCell/2, minimapCell * 0.7, 0, Math.PI * 2);
+                mmCtx.arc(exG * minimapCell + minimapCell/2, exG2 * minimapCell + minimapCell/2, minimapCell * 0.4, 0, Math.PI * 2);
                 mmCtx.fill();
             }
-            // Игрок
             const pg = worldToGrid(playerPos.x, playerPos.z);
             mmCtx.fillStyle = '#ffd700';
             mmCtx.beginPath();
-            mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 0.7, 0, Math.PI * 2);
+            mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 0.4, 0, Math.PI * 2);
             mmCtx.fill();
         }
 
@@ -953,6 +1043,34 @@
                     explored[gy * size + gx] = 1;
                 }
             }
+        }
+
+        // ============================================================
+        //  КНОПКА ЛУТА (как в подземке)
+        // ============================================================
+        function updateLootButton() {
+            var iconImg = document.getElementById('attack-icon-img');
+            if (!iconImg) return;
+            if (isBattleActive) { iconImg.src = 'assets/assets2/talents/simple_attack.png'; return; }
+            var cur = worldToGrid(playerPos.x, playerPos.z);
+            var nearLoot = false;
+
+            // Сундуки
+            if (chestSprites.length && !chestOpened) {
+                for (var i = 0; i < chestSprites.length; i++) {
+                    var ud = chestSprites[i].userData;
+                    if (Math.abs(cur.gx - ud.gx) + Math.abs(cur.gy - ud.gy) <= 1) { nearLoot = true; break; }
+                }
+            }
+            // Открытая дверь
+            if (!nearLoot && exitDoor && exitIsOpen) {
+                var exG = Math.round(exitDoor.position.x + Math.floor(size / 2));
+                var exG2 = Math.round(exitDoor.position.z + Math.floor(size / 2));
+                if (Math.abs(cur.gx - exG) + Math.abs(cur.gy - exG2) <= 1) nearLoot = true;
+            }
+
+            if (nearLoot) iconImg.src = 'assets/assets2/icons/take.png';
+            else iconImg.src = 'assets/assets2/talents/simple_attack.png';
         }
 
         // ============================================================
@@ -975,7 +1093,6 @@
             const dt = Math.min(clock.getDelta(), 0.05);
             const t = clock.elapsedTime;
 
-            // Движение
             if (moving && waypoints.length && !isBattleActive) {
                 let budget = MOVE_SPEED * dt;
                 while (budget > 0 && waypoints.length) {
@@ -1002,7 +1119,6 @@
                 }
             }
 
-            // Отскок врага
             if (enemyKnockback.active && enemyKnockback.sprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
@@ -1018,7 +1134,6 @@
                 }
             }
 
-            // Тряска камеры
             if (cameraShake > 0.001) {
                 camera.position.x += (Math.random() - 0.5) * cameraShake;
                 camera.position.z += (Math.random() - 0.5) * cameraShake;
@@ -1028,7 +1143,6 @@
                 cameraShake = 0;
             }
 
-            // Дыхание врага
             if (enemySprite && !enemyKnockback.active) {
                 enemySprite.position.y = enemyBaseY + Math.sin(t * 2.5) * 0.015;
             }
@@ -1041,6 +1155,7 @@
             if (isBattleActive) updateMobHpBar();
             updateExplored();
             drawMinimap();
+            updateLootButton();
         }
 
         animate();
