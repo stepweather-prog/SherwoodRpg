@@ -1138,12 +1138,12 @@ UI.camp = function() {
     // НЕ сбрасываем _campReturnInfo — он нужен для следующего возврата
     // Сброс происходит только в UI.loadHome()
 };
-UI.quests = function() {
+UI.thicket = function() {
     UI._playSound('click');
-    if (typeof Sherwood.Quests !== 'undefined' && Sherwood.Quests.showUI) {
-        Sherwood.Quests.showUI();
+    if (typeof Sherwood !== 'undefined' && Sherwood.Thicket && Sherwood.Thicket.showUI) {
+        Sherwood.Thicket.showUI();
     } else {
-        UI._showPlaceholder('Квесты', 'quests');
+        UI._showPlaceholder('Шервудская чащоба', 'quests');
     }
 };
 
@@ -1165,51 +1165,7 @@ UI.portals = function() {
     }
 };
 
-UI.raid = function() {
-    UI._playSound('click');
-    
-    // Если рейд активен - показываем без видео
-    if (Sherwood.Raid.isRaidActive && Sherwood.Raid.isRaidActive()) {
-        Sherwood.Raid.showUI();
-        return;
-    }
-    
-    // Проигрываем видео
-    var video = document.createElement('video');
-    video.src = 'assets/assets2/animation/raid_entrance.webm';
-    video.autoplay = true;
-    video.muted = true;
-    video.playsInline = true;
-    
-    var videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
-    
-    if (window.innerWidth < 480) {
-        video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
-    } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
-        video.style.cssText = videoStyles + 'width:480px;height:100vh;';
-    } else {
-        video.style.cssText = videoStyles + 'width:480px;height:800px;';
-    }
-    
-    document.body.appendChild(video);
-    
-    video.onended = function() {
-        video.remove();
-        Sherwood.Raid.showUI();
-    };
-    
-    video.onerror = function() {
-        video.remove();
-        Sherwood.Raid.showUI();
-    };
-    
-    setTimeout(function() {
-        if (document.body.contains(video)) {
-            video.remove();
-            Sherwood.Raid.showUI();
-        }
-    }, 5000);
-};
+
 // ============================================================
 //  ПОДЗЕМКА — КАРУСЕЛЬ
 // ============================================================
