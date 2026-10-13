@@ -1193,6 +1193,8 @@
         var currentEnemyObj = null;
         var isBattleActive = false;
         var battleTimer = null;
+        var playerAttackCooldown = 0;   // сек до следующего удара героя
+        var PLAYER_ATTACK_CD = 1.0;     // откат 1.0 сек (как у врага)
         var pushTimer = null;
         var playerHitFirst = false;
         var hitSprites = ['strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png', 'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'];
@@ -1322,6 +1324,8 @@
 
             // оглушение игрока
             if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
+                        // откат удара героя
+            if (playerAttackCooldown > 0) playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
             // оглушение врага
             if (enemyStunned > 0) enemyStunned = Math.max(0, enemyStunned - dt);
             // ярость-баффы
@@ -1413,7 +1417,7 @@
                 if (enemyStunned > 0) return;   // враг оглушён — не бьёт
                 if (playerStunned > 0) return;  // игрок оглушён — пропускает
 
-                var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
+                var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
                 if (p.talents) {
                     if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
                     if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
@@ -1438,13 +1442,14 @@
                 updateHeroSpheres();
                 showBloodOverlay();
                 if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
-            }, 1500);
+            }, 1000);
         }
 
         function stopBattle() {
             isBattleActive = false;
             playerHitFirst = false;
             enemyStunned = 0;
+            playerAttackCooldown = 0;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
             currentEnemySprite = null;
@@ -1503,10 +1508,13 @@
         // ============================================================
         //  АТАКА ИГРОКА
         // ============================================================
-        function attackEnemy() {
+               function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats) return;
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
             if (playerStunned > 0) { showCenterText('ОГЛУШЁН!', '#888'); return; }
+            // откат удара героя
+            if (playerAttackCooldown > 0) return;
+            playerAttackCooldown = PLAYER_ATTACK_CD;
             playerHitFirst = true;
             var p = parent.Sherwood.getPlayer();
             playSound(soundHit);
@@ -1588,7 +1596,7 @@
             if (enemyStunned > 0) { updateHeroSpheres(); return; }
 
             // ответный удар врага (в attackEnemy)
-            var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
+            var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
             if (p.talents) {
                 if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
                 if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
