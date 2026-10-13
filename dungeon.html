@@ -1254,10 +1254,11 @@
             var manaText = document.getElementById('mana-text');
             if (manaText) {
                 if (filth >= maxFilth) {
-                    var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
-                    manaText.textContent = '⚠ ' + left + 'с';
-                    manaText.style.color = '#ff4444';
-                } else {
+    var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
+    if (left < 0) left = 0;
+    manaText.textContent = '⚠ ' + left + 'с';
+    manaText.style.color = '#ff4444';
+} else {
                     manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%';
                     manaText.style.color = '#fff';
                 }
