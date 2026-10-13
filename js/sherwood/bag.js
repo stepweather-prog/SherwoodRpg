@@ -40,7 +40,8 @@ Sherwood.Bag = {
         portalToken1:     { id: 'portal_token_1', name: 'Токен портала I', icon: 'assets/interface/resource_token_on_entrance_portal_1.png', maxStack: 100, sellPrice: 20 },
         portalToken2:     { id: 'portal_token_2', name: 'Токен портала II', icon: 'assets/interface/resource_token_on_entrance_portal_2.png', maxStack: 100, sellPrice: 40 },
         portalToken3:     { id: 'portal_token_3', name: 'Токен портала III', icon: 'assets/interface/resource_token_on_entrance_portal_3.png', maxStack: 100, sellPrice: 80 },
-        branchDamnedYew:  { id: 'branch_damned_yew', name: 'Ветвь проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png', maxStack: 100, sellPrice: 15 }
+        branchDamnedYew:  { id: 'branch_damned_yew', name: 'Ветвь проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png', maxStack: 100, sellPrice: 15 },
+        arrows:           { id: 'sherwood_arrow', name: 'Шервудская стрела', icon: 'assets/interface/sherwood_hollow_arrow.png', maxStack: 100, sellPrice: 2 }
     },
 
     init: function() {
@@ -381,6 +382,7 @@ Sherwood.Bag = {
         if (loot.portalToken2)    this._addAsItem('portalToken2', loot.portalToken2);
         if (loot.portalToken3)    this._addAsItem('portalToken3', loot.portalToken3);
         if (loot.branchDamnedYew) this._addAsItem('branchDamnedYew', loot.branchDamnedYew);
+        if (loot.arrows)          this._addAsItem('arrows', loot.arrows);
 
         // Произвольные предметы
         if (loot.items && loot.items.length > 0) {
