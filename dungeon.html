@@ -926,6 +926,19 @@
             var arrowDrop = 2 + Math.floor(Math.random() * 2);
             addArrows(arrowDrop);
 
+                        // Ветки тиса: за этаж (15 мобов + босс + мешок) должно набраться 10-15
+            // Обычный моб: 60% шанс, 1 ветка
+            // Босс: гарантированно 3 ветки
+            // Мешок с лутом: +1-2 ветки
+            var branchDrop = 0;
+            if (bag.isBoss) {
+                branchDrop = 3;
+            } else {
+                branchDrop = Math.random() < 0.6 ? 1 : 0;
+            }
+            // мешок тоже даёт 0-2 ветки
+            branchDrop += Math.floor(Math.random() * 3);
+
             var resources = {
                 skins: 1,
                 entranceTickets: Math.random() < 0.25 ? 1 : 0,
@@ -934,7 +947,7 @@
                 skinTablets: Math.random() < 0.25 ? 1 : 0,
                 skinDrawings: Math.random() < 0.2 ? 1 : 0,
                 portalToken1: Math.random() < 0.3 ? 1 : 0,
-                branchDamnedYew: Math.random() < 0.3 ? 1 : 0
+                branchDamnedYew: branchDrop
             };
 
             if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) {
@@ -1255,6 +1268,8 @@
         // ============================================================
         //  СКВЕРНА — обновление
         // ============================================================
+                var filthDamageTimer = 0;   // таймер урона от скверны (5 сек)
+
         function updateFilth(dt) {
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
             var p = parent.Sherwood.getPlayer();
@@ -1262,6 +1277,7 @@
             if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
             if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
 
+            // +2% каждые 15 сек
             filthTimer += dt;
             if (filthTimer >= FILTH_SELF_RATE) {
                 filthTimer -= FILTH_SELF_RATE;
@@ -1271,16 +1287,36 @@
                 }
             }
 
+            // Проверка полной сферы
             if (p.stats.filth >= p.stats.maxFilth) {
                 if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
                 var elapsed = performance.now() / 1000 - filthFullSince;
                 if (elapsed >= FILTH_DEATH_TIME) {
-                    filthFullSince = 0;
-                    dieFromFilth();
-                    return;
+                    // Таймер истёк — начинаем терять HP по 50 каждые 5 сек
+                    filthDamageTimer += dt;
+                    if (filthDamageTimer >= 5) {
+                        filthDamageTimer -= 5;
+                        // урон
+                        p.stats.hp = Math.max(0, p.stats.hp - 50);
+                        // анимация крови, как при ударе врага
+                        showBloodOverlay();
+                        // всплывающий текст
+                        showCenterText('-50 HP (скверна)', '#ff2020');
+                        updateHeroSpheres();
+                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                        // если умерли — видео + экран
+                        if (p.stats.hp <= 0) {
+                            filthFullSince = 0;
+                            filthDamageTimer = 0;
+                            dieFromFilth();
+                            return;
+                        }
+                    }
                 }
             } else {
+                // сфера не полная — сбрасываем таймеры
                 filthFullSince = 0;
+                filthDamageTimer = 0;
             }
 
             // оглушение игрока
