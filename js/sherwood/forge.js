@@ -1,6 +1,6 @@
 /**
  * Sherwood Forge — Кузница
- * Улучшение предметов, крафт стрел, скины, кольца, амулеты
+ * Улучшение предметов, крафт стрел (3 ветки тиса = 1 стрела), скины, кольца, амулеты
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -25,6 +25,9 @@ Sherwood.Forge = {
         { level: 14, chance: 3, break: true },
         { level: 15, chance: 1, break: true }
     ],
+
+    // Сколько веток тиса на 1 стрелу
+    BRANCHES_PER_ARROW: 3,
 
     _enhanceCosts: function(level) {
         return { gold: 10 + level * 15, silver: 50 + level * 30 };
@@ -191,70 +194,86 @@ Sherwood.Forge = {
         return 0;
     },
 
+    // ============================================================
+    //  КРАФТ СТРЕЛ ИЗ ВЕТВЕЙ ПРОКЛЯТОГО ТИСА
+    //  3 ветки = 1 стрела
+    // ============================================================
     getArrowCraftInfo: function() {
         var bag = Sherwood.Bag;
-        if (!bag) return { branches: 0, feathers: 0, bones: 0, canCraft: 0 };
+        if (!bag) return { branches: 0, canCraft: 0, branchesPerArrow: this.BRANCHES_PER_ARROW, arrowsCount: 0 };
         var items = bag.getItems();
-        var branches = 0, feathers = 0, bones = 0;
+        var branches = 0;
+        var arrows = 0;
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
-            if (item.id && item.id.indexOf('branch') === 0) branches += item.quantity || 1;
-            if (item.id && item.id.indexOf('feather') === 0) feathers += item.quantity || 1;
-            if (item.id && item.id.indexOf('bone') === 0) bones += item.quantity || 1;
+            if (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew') {
+                branches += item.quantity || 1;
+            }
+            if (item.id === 'sherwood_arrow') {
+                arrows += item.quantity || 1;
+            }
         }
-        var canCraft = Math.min(branches, feathers, bones);
-        return { branches: branches, feathers: feathers, bones: bones, canCraft: canCraft };
+        return {
+            branches: branches,
+            canCraft: Math.floor(branches / this.BRANCHES_PER_ARROW),
+            branchesPerArrow: this.BRANCHES_PER_ARROW,
+            arrowsCount: arrows
+        };
     },
 
     craftArrow: function() {
         var info = this.getArrowCraftInfo();
         if (info.canCraft <= 0) {
-            return { success: false, reason: 'Недостаточно ингредиентов' };
+            return { success: false, reason: 'Нужно ' + this.BRANCHES_PER_ARROW + ' ветки проклятого тиса' };
         }
         var bag = Sherwood.Bag;
         if (!bag) return { success: false, reason: 'Сумка не найдена' };
 
-        var removed = { branch: false, feather: false, bone: false };
+        // Списываем 3 ветки
+        var need = this.BRANCHES_PER_ARROW;
         var items = bag.getItems();
-        for (var i = items.length - 1; i >= 0; i--) {
+        for (var i = items.length - 1; i >= 0 && need > 0; i--) {
             var item = items[i];
-            if (!removed.branch && item.id && item.id.indexOf('branch') === 0) {
-                bag.removeItem(i, 1);
-                removed.branch = true;
-            } else if (!removed.feather && item.id && item.id.indexOf('feather') === 0) {
-                bag.removeItem(i, 1);
-                removed.feather = true;
-            } else if (!removed.bone && item.id && item.id.indexOf('bone') === 0) {
-                bag.removeItem(i, 1);
-                removed.bone = true;
+            if (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew') {
+                var qty = item.quantity || 1;
+                if (qty <= need) {
+                    need -= qty;
+                    bag.removeItem(i, qty);
+                } else {
+                    bag.removeItem(i, need);
+                    need = 0;
+                }
             }
-            if (removed.branch && removed.feather && removed.bone) break;
         }
+        if (need > 0) return { success: false, reason: 'Не удалось списать ветки' };
 
+        // Даём 1 стрелу
         bag.addItem({
-            id: 'arrow_' + Date.now(),
-            name: 'Стрела Шервудской лощины',
+            id: 'sherwood_arrow',
+            name: 'Шервудская стрела',
             icon: 'assets/interface/sherwood_hollow_arrow.png',
             grade: 'rare',
             type: 'resource',
             quantity: 1,
-            maxStack: 999,
-            sellPrice: 25
+            maxStack: 100,
+            sellPrice: 2
         });
         Sherwood.saveGame();
-        return { success: true };
+        return { success: true, crafted: 1 };
     },
 
     craftArrowBatch: function(count) {
         var info = this.getArrowCraftInfo();
         count = Math.min(count || 1, info.canCraft);
         if (count <= 0) {
-            return { success: false, reason: 'Недостаточно ингредиентов' };
+            return { success: false, reason: 'Нужно ' + this.BRANCHES_PER_ARROW + ' ветки на 1 стрелу' };
         }
+        var totalArrows = 0;
         for (var i = 0; i < count; i++) {
-            this.craftArrow();
+            var r = this.craftArrow();
+            if (r.success) totalArrows += r.crafted;
         }
-        return { success: true, crafted: count };
+        return { success: true, crafted: totalArrows, branchesUsed: count * this.BRANCHES_PER_ARROW };
     },
 
     getArrowCount: function() {
@@ -263,13 +282,16 @@ Sherwood.Forge = {
         var items = bag.getItems();
         var count = 0;
         for (var i = 0; i < items.length; i++) {
-            if (items[i].id && items[i].id.indexOf('arrow_') === 0) {
+            if (items[i].id === 'sherwood_arrow') {
                 count += items[i].quantity || 1;
             }
         }
         return count;
     },
 
+    // ============================================================
+    //  СКИНЫ
+    // ============================================================
     getCraftSkins: function() {
         var allSkins = [
             'skin1_01','skin1_02','skin1_03',
@@ -396,6 +418,9 @@ Sherwood.Forge = {
         return null;
     },
 
+    // ============================================================
+    //  КОЛЬЦО
+    // ============================================================
     getRingCraftInfo: function() {
         var bag = Sherwood.Bag;
         if (!bag) return { currentLevel: 1, maxLevel: 50, cost: 5, tablets: 0, gold: 0, canCraft: false };
@@ -478,6 +503,9 @@ Sherwood.Forge = {
         return { success: true, newLevel: newLevel, bonus: bonus };
     },
 
+    // ============================================================
+    //  АМУЛЕТ
+    // ============================================================
     getAmuletCraftInfo: function() {
         var bag = Sherwood.Bag;
         if (!bag) return { currentLevel: 1, maxLevel: 50, cost: 5, tablets: 0, gold: 0, canCraft: false };
@@ -556,7 +584,9 @@ Sherwood.Forge = {
         return { success: true, newLevel: newLevel, bonus: bonus };
     },
 
-    // ========== UI ==========
+    // ============================================================
+    //  UI КУЗНИЦЫ
+    // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') {
             if (typeof showGenericScreen === 'function') {
@@ -571,7 +601,6 @@ Sherwood.Forge = {
         var skinDrawings = resources.skinTablets || 0;
         var ringTablets = resources.ringTablets || 0;
         var amuletTablets = resources.amuletTablets || 0;
-        var arrowCount = this.getArrowCount ? this.getArrowCount() : 0;
 
         var ringInfo = this.getRingCraftInfo();
         var amuletInfo = this.getAmuletCraftInfo();
@@ -582,13 +611,14 @@ Sherwood.Forge = {
         // Стрелы
         h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
         h += '<div style="color:#ffa500;font-weight:bold;">🏹 Стрелы</div>';
-        h += '<div style="color:#888;font-size:11px;">Ветки: ' + arrowInfo.branches + ' | Перья: ' + arrowInfo.feathers + ' | Кости: ' + arrowInfo.bones + '</div>';
+        h += '<div style="color:#888;font-size:11px;">Ветвей тиса: ' + arrowInfo.branches + ' | На 1 стрелу: ' + arrowInfo.branchesPerArrow + '</div>';
+        h += '<div style="color:#888;font-size:11px;">Можно сделать: ' + arrowInfo.canCraft + '</div>';
         h += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">';
         h += '<button onclick="Sherwood.Forge._craftArrowFromUI(1)" class="btn btn-success" style="padding:4px 12px;font-size:11px;">Сделать 1</button>';
-        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(10)" class="btn btn-gold" style="padding:4px 12px;font-size:11px;">Сделать 10</button>';
-        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(50)" class="btn btn-danger" style="padding:4px 12px;font-size:11px;">Сделать 50</button>';
+        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(5)" class="btn btn-gold" style="padding:4px 12px;font-size:11px;">Сделать 5</button>';
+        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(10)" class="btn btn-danger" style="padding:4px 12px;font-size:11px;">Сделать 10</button>';
         h += '</div>';
-        h += '<div style="color:#888;font-size:10px;margin-top:4px;">Всего стрел: ' + arrowCount + '</div>';
+        h += '<div style="color:#888;font-size:10px;margin-top:4px;">Всего стрел в сумке: ' + arrowInfo.arrowsCount + '</div>';
         h += '</div>';
 
         // Кольцо
@@ -629,7 +659,7 @@ Sherwood.Forge = {
     _craftArrowFromUI: function(count) {
         var r = this.craftArrowBatch(count);
         if (r.success) {
-            UI._showToast('✅ Сделано ' + r.crafted + ' стрел!');
+            UI._showToast('✅ Сделано стрел: ' + r.crafted + ' (веток: ' + r.branchesUsed + ')');
             this.showUI();
         } else {
             UI._showToast('❌ ' + r.reason);
