@@ -44,6 +44,10 @@
         #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
+        #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+        #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
+        #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
+        @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
         @media (max-width: 600px) {
             button[onclick="exitDungeon();"] { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
             #joystick { bottom: 20px !important; width: 110px !important; height: 110px !important; }
@@ -64,6 +68,8 @@
             #skills-left, #skills-right { bottom: 110px !important; width: 80px !important; }
             #skills-left img, #skills-right img { width: 38px !important; height: 38px !important; }
             #hit-effect-img { width: 130px !important; height: 130px !important; }
+            #arrow-counter { font-size: 13px !important; padding: 3px 10px !important; }
+            #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
     </style>
 </head>
@@ -72,6 +78,10 @@
     <div id="crosshair">✚</div>
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
+    <div id="arrow-counter">
+        <img src="assets/interface/sherwood_hollow_arrow.png" alt="">
+        <span id="arrow-count-text">25</span>
+    </div>
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
@@ -89,7 +99,7 @@
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
-        <span id="mana-text">1000</span>
+        <span id="mana-text">Скверна: 0%</span>
     </div>
     <div id="joystick">
         <div class="arrow-btn" id="btn-forward">▲</div>
@@ -247,6 +257,97 @@
             return MOB_NAMES[fname] || 'Враг';
         }
 
+        // ============================================================
+        //  СТРЕЛЫ ИГРОКА (из сумки, макс 25 в начале)
+        // ============================================================
+        var playerArrows = 25;
+        var ARROWS_MAX_START = 25;
+        function loadArrowsFromBag() {
+            try {
+                if (!parent.Sherwood || !parent.Sherwood.Bag) { playerArrows = 0; updateArrowCounter(); return; }
+                var p = parent.Sherwood.getPlayer();
+                if (!p) { playerArrows = 0; updateArrowCounter(); return; }
+                // пробуем ресурс arrows
+                var cnt = 0;
+                if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows;
+                // или предмет в сумке
+                if (!cnt && parent.Sherwood.Bag.getItems) {
+                    var items = parent.Sherwood.Bag.getItems();
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].id === 'arrow' || items[i].id === 'arrows' || items[i].id === 'sherwood_arrow') {
+                            cnt += (items[i].quantity || 1);
+                        }
+                    }
+                }
+                playerArrows = Math.min(ARROWS_MAX_START, cnt);
+            } catch(e) { playerArrows = 0; }
+            updateArrowCounter();
+        }
+        function updateArrowCounter() {
+            var el = document.getElementById('arrow-count-text');
+            if (el) el.textContent = playerArrows;
+            var counter = document.getElementById('arrow-counter');
+            if (counter) {
+                if (playerArrows <= 3) counter.classList.add('low');
+                else counter.classList.remove('low');
+            }
+        }
+        function useArrow(n) {
+            n = n || 1;
+            if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; }
+            return false;
+        }
+        function addArrows(n) {
+            playerArrows += n;
+            updateArrowCounter();
+        }
+        setTimeout(loadArrowsFromBag, 700);
+
+        // ============================================================
+        //  СКВЕРНА
+        // ============================================================
+        var filthTimer = 0;
+        var filthFullSince = 0;
+        var FILTH_DEATH_TIME = 60;
+        var FILTH_SELF_RATE = 15;
+        var FILTH_SELF_AMOUNT = 2;
+        var FILTH_HIT_AMOUNT = 5;
+
+        function getFilth() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return { cur: 0, max: 100 };
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return { cur: 0, max: 100 };
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            return { cur: p.stats.filth, max: p.stats.maxFilth };
+        }
+        function setFilth(v) {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (!p.stats.maxFilth) p.stats.maxFilth = 100;
+            p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v));
+            if (p.stats.filth >= p.stats.maxFilth) {
+                if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
+            } else {
+                filthFullSince = 0;
+            }
+            updateHeroSpheres();
+        }
+        function addFilth(amount) {
+            var f = getFilth();
+            setFilth(f.cur + amount);
+        }
+        function spendFilth(amount) {
+            var f = getFilth();
+            if (f.cur < amount) return false;
+            setFilth(f.cur - amount);
+            return true;
+        }
+
+        // ============================================================
+        //  ЗВУКИ
+        // ============================================================
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -255,6 +356,7 @@
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var soundCauldron = new Audio('assets/assets2/tune/cauldron.wav');
         var soundLoot = new Audio('assets/assets2/tune/loot_fly.wav');
+        var soundArrowPick = new Audio('assets/assets2/tune/loot_fly.wav');
         var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
         dungeonMusic.loop = true;
         dungeonMusic.volume = 0.4;
@@ -427,8 +529,7 @@
             }
         }
         placeDoors();
-
-        const loader = new THREE.TextureLoader();
+                const loader = new THREE.TextureLoader();
 
         var wallTexturePath, floorTexturePath, ceilTexturePath;
         if (currentDungeon === 2) {
@@ -484,17 +585,18 @@
         }
 
         const doorTexture  = loader.load('assets/assets2/game_details/labyrinth_asset.png');
-
         const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
         const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
-
         const lockedChestTex = loader.load(lockedChestPath);
         const openChestTex   = loader.load(openChestPath);
-
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex  = loader.load(openDoorPath);
+        const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
+        const potionHpTex    = loader.load('assets/assets2/game_details/resource_life_potion.png');
+        const potionFilthTex = loader.load('assets/assets2/game_details/potion_of_filth.png');
+        const potionHighTex  = loader.load('assets/assets2/game_details/resource_high_level_health_potion.png');
 
-        [lootBagTex, emptyBagTex, lockedChestTex, openChestTex, closedLockTex, openDoorTex].forEach(function(t) {
+        [lootBagTex, emptyBagTex, lockedChestTex, openChestTex, closedLockTex, openDoorTex, arrowPickupTex, potionHpTex, potionFilthTex, potionHighTex].forEach(function(t) {
             t.minFilter = THREE.LinearFilter;
             t.magFilter = THREE.LinearFilter;
         });
@@ -560,16 +662,21 @@
         heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
         scene.add(heroGlow);
 
+        // ============================================================
+        //  ОБЪЕКТЫ НА ЭТАЖЕ
+        // ============================================================
         var objectTypes = [
-            { type: 'enemy', count: 15 },
-            { type: 'potion_hp', count: 3, img: 'assets/assets2/game_details/resource_life_potion.png' },
-            { type: 'potion_mana', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
-            { type: 'cauldron', count: 4, img: cauldronImg },
-            { type: 'altar', count: 4, img: altarImg }
+            { type: 'enemy',      count: 15 },
+            { type: 'potion_hp',  count: 3,  img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_filth', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'potion_high',  count: 3, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
+            { type: 'cauldron',   count: 3,  img: cauldronImg },
+            { type: 'altar',      count: 3,  img: altarImg },
+            { type: 'arrow_pickup', count: 6, img: 'assets/interface/sherwood_hollow_arrow.png' }
         ];
         var objects = [];
         var lootBags = [];
-        var LOOT_TYPES = ['potion_hp', 'potion_mana', 'cauldron', 'altar'];
+        var LOOT_TYPES = ['potion_hp', 'potion_filth', 'potion_high', 'cauldron', 'altar', 'arrow_pickup'];
         var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0 };
 
         function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
@@ -648,7 +755,7 @@
             group.add(sprite);
             obj.mesh = sprite;
         }
-        
+
         // ============================================================
         //  ВЫХОД
         // ============================================================
@@ -698,6 +805,85 @@
             lootBags.push(bag);
         }
 
+        // ============================================================
+        //  ПОДБОР СТРЕЛ НА ЭТАЖЕ
+        // ============================================================
+        function pickArrowFromFloor(obj) {
+            if (!obj || obj.collected) return;
+            obj.collected = true;
+            addArrows(5);
+            showCenterText('+5 стрел', '#c9a040');
+            playSound(soundArrowPick);
+            if (obj.mesh) group.remove(obj.mesh);
+            updateLootButton();
+            checkObjects();
+        }
+
+        // ============================================================
+        //  ЗЕЛЬЯ / КОТЛЫ / АЛТАРИ
+        // ============================================================
+        function applyLootEffect(obj) {
+            if (!obj) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            if (obj.type === 'potion_hp') {
+                var curHp = Math.floor(p.stats.hp);
+                var maxHp = Math.floor(p.stats.maxHp);
+                if (curHp >= maxHp) { showCenterText('Запас полный', '#4caf50'); return; }
+                var addHp = Math.min(Math.floor(maxHp * 0.5), maxHp - curHp);
+                p.stats.hp = curHp + addHp;
+                showCenterText('+' + addHp + ' HP', '#4caf50');
+                obj.collected = true;
+                group.remove(obj.mesh);
+            } else if (obj.type === 'potion_filth') {
+                var f1 = getFilth();
+                if (f1.cur <= 0) { showCenterText('Скверны нет', '#4caf50'); return; }
+                setFilth(Math.max(0, f1.cur - f1.max * 0.5));
+                showCenterText('-50% скверны', '#4caf50');
+                obj.collected = true;
+                group.remove(obj.mesh);
+            } else if (obj.type === 'potion_high') {
+                var curHp2 = Math.floor(p.stats.hp);
+                var maxHp2 = Math.floor(p.stats.maxHp);
+                var heal2 = Math.min(Math.floor(maxHp2 * 0.5), maxHp2 - curHp2);
+                p.stats.hp = curHp2 + heal2;
+                var f2 = getFilth();
+                setFilth(Math.max(0, f2.cur - f2.max * 0.8));
+                showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50');
+                obj.collected = true;
+                group.remove(obj.mesh);
+            } else if (obj.type === 'cauldron') {
+                if (obj.used) { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Котёл уже использован'); return; }
+                obj.used = true;
+                var f3 = getFilth();
+                setFilth(Math.max(0, f3.cur - f3.max));
+                showCenterText('Скверна снята', '#4caf50');
+                playSound(soundCauldron);
+                if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
+            } else if (obj.type === 'altar') {
+                if (obj.used) { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Алтарь уже использован'); return; }
+                obj.used = true;
+                p.stats.hp = p.stats.maxHp;
+                if (parent.Sherwood.addExp) parent.Sherwood.addExp(200 + currentFloor * 50);
+                showCenterText('Полное HP + опыт', '#4caf50');
+                playSound(soundAltar);
+                if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
+            } else if (obj.type === 'arrow_pickup') {
+                pickArrowFromFloor(obj);
+                return;
+            }
+            updateHeroSpheres();
+            if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+            if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateLootButton();
+            checkObjects();
+        }
+
+        // ============================================================
+        //  ЛУТ ИЗ МЕШКОВ
+        // ============================================================
         function showLootIcons(items) {
             var layer = document.getElementById('loot-fly-layer');
             if (!layer) return;
@@ -736,6 +922,10 @@
             var gold = 15 + Math.floor(Math.random() * 25);
             var silver = 5 + Math.floor(Math.random() * 15);
 
+            // стрелы из мешка: 2-3
+            var arrowDrop = 2 + Math.floor(Math.random() * 2);
+            addArrows(arrowDrop);
+
             var resources = {
                 skins: 1,
                 entranceTickets: Math.random() < 0.25 ? 1 : 0,
@@ -749,9 +939,7 @@
 
             if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) {
                 parent.Sherwood.Bag.addLoot({
-                    gold: gold,
-                    silver: silver,
-                    exp: exp,
+                    gold: gold, silver: silver, exp: exp,
                     skins: resources.skins,
                     entranceTickets: resources.entranceTickets,
                     amuletTablets: resources.amuletTablets,
@@ -782,6 +970,7 @@
             var icons = [];
             icons.push({ icon: 'assets/interface/resource_gold.png' });
             icons.push({ icon: 'assets/interface/resource_silver.png' });
+            icons.push({ icon: 'assets/interface/sherwood_hollow_arrow.png' });
             if (resources.skins) icons.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png' });
             if (resources.entranceTickets) icons.push({ icon: 'assets/interface/resource_key_to_locked_levels.png' });
             if (resources.amuletTablets) icons.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png' });
@@ -792,10 +981,14 @@
             if (resources.branchDamnedYew) icons.push({ icon: 'assets/interface/branch_of_the_damned_yew.png' });
             showLootIcons(icons);
 
+            showCenterText('+' + arrowDrop + ' стрел', '#c9a040');
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
         }
 
+        // ============================================================
+        //  КРОВЬ И ХИТ-СПРАЙТЫ
+        // ============================================================
         var bloodSprites = [
             'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
             'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
@@ -807,6 +1000,9 @@
         hitFlashSprite.visible = false;
         scene.add(hitFlashSprite);
 
+        // ============================================================
+        //  УПРАВЛЕНИЕ ДВИЖЕНИЕМ
+        // ============================================================
         const MOVE_SPEED = 2.0;
         const rotationSpeed = Math.PI / 2;
         let waypoints = [];
@@ -962,6 +1158,9 @@
             }
         });
 
+        // ============================================================
+        //  МИНИКАРТА
+        // ============================================================
         const minimapSize = size;
         const minimapCell = 11;
         const minimapCanvas = document.getElementById('minimap-canvas');
@@ -973,7 +1172,428 @@
 
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
+                // ============================================================
+        //  БОЙ — состояние
+        // ============================================================
+        var currentEnemySprite = null;
+        var currentEnemyStats = null;
+        var currentEnemyObj = null;
+        var isBattleActive = false;
+        var battleTimer = null;
+        var pushTimer = null;
+        var playerHitFirst = false;
+        var hitSprites = ['strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png', 'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'];
+        var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
+        var cameraShake = 0;
 
+        // Новые состояния боя
+        var playerStunned = 0;           // сек, оглушение игрока
+        var enemyStunned = 0;            // сек, оглушение врага (наш скилл)
+        var rageCharges = 0;             // 3 заряда ярости
+        var vampirismBuff = 0;           // сек, длительность бафа вампиризма (20)
+        var vampirismReady = false;      // сработал ли уже шанс 30%
+        var vampLastCheckBattleId = 0;   // id боя, чтобы шанс проверялся раз за бой
+
+        // ============================================================
+        //  АНИМАЦИЯ ОТБРАСЫВАНИЯ
+        // ============================================================
+        function knockbackEnemy(sprite, fromX, fromZ) {
+            if (!sprite) return;
+            enemyKnockback.active = true;
+            enemyKnockback.sprite = sprite;
+            enemyKnockback.originalX = sprite.position.x;
+            enemyKnockback.originalZ = sprite.position.z;
+            var dx = sprite.position.x - fromX;
+            var dz = sprite.position.z - fromZ;
+            var len = Math.hypot(dx, dz) || 1;
+            var power = 0.10;
+            enemyKnockback.dx = (dx / len) * power;
+            enemyKnockback.dz = (dz / len) * power;
+            enemyKnockback.t = 0;
+        }
+
+        // ============================================================
+        //  СФЕРЫ HUD
+        // ============================================================
+        function updateHeroSpheres() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            var hpPercent = p.stats.hp / p.stats.maxHp;
+            var lifeFill = document.getElementById('life-fill');
+            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            var hpText = document.getElementById('hp-text');
+            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            var filth = p.stats.filth;
+            var maxFilth = p.stats.maxFilth;
+            var filthPercent = filth / maxFilth;
+
+            var manaFill = document.getElementById('mana-fill');
+            if (manaFill) {
+                manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filthPercent) * 100) + '% 0 0 0)';
+                if (filth >= maxFilth) manaFill.style.filter = 'hue-rotate(-30deg) brightness(1.3)';
+                else manaFill.style.filter = '';
+            }
+            var manaText = document.getElementById('mana-text');
+            if (manaText) {
+                if (filth >= maxFilth) {
+                    var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
+                    manaText.textContent = '⚠ ' + left + 'с';
+                    manaText.style.color = '#ff4444';
+                } else {
+                    manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%';
+                    manaText.style.color = '#fff';
+                }
+            }
+        }
+        setTimeout(updateHeroSpheres, 500);
+
+        // ============================================================
+        //  СКВЕРНА — обновление
+        // ============================================================
+        function updateFilth(dt) {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+
+            filthTimer += dt;
+            if (filthTimer >= FILTH_SELF_RATE) {
+                filthTimer -= FILTH_SELF_RATE;
+                if (p.stats.filth < p.stats.maxFilth) {
+                    p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT);
+                    updateHeroSpheres();
+                }
+            }
+
+            if (p.stats.filth >= p.stats.maxFilth) {
+                if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
+                var elapsed = performance.now() / 1000 - filthFullSince;
+                if (elapsed >= FILTH_DEATH_TIME) {
+                    filthFullSince = 0;
+                    dieFromFilth();
+                    return;
+                }
+            } else {
+                filthFullSince = 0;
+            }
+
+            // оглушение игрока
+            if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
+            // оглушение врага
+            if (enemyStunned > 0) enemyStunned = Math.max(0, enemyStunned - dt);
+            // ярость-баффы
+            if (vampirismBuff > 0) vampirismBuff = Math.max(0, vampirismBuff - dt);
+        }
+
+        // ============================================================
+        //  СМЕРТЬ ОТ СКВЕРНЫ
+        // ============================================================
+        function dieFromFilth() {
+            if (typeof isBattleActive !== 'undefined' && isBattleActive) stopBattle();
+            playSound(soundDefeat);
+            showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020');
+            try { dungeonMusic.pause(); } catch(e){}
+            showDeathVideoAndLose();
+        }
+
+        // ============================================================
+        //  ВИДЕО ПРИ СМЕРТИ
+        // ============================================================
+        function showDeathVideoAndLose() {
+            stopSteps();
+            try { if (dungeonMusic) dungeonMusic.pause(); } catch(e){}
+
+            var video = document.createElement('video');
+            video.src = 'assets/assets2/animation/background2.webm';
+            video.autoplay = true;
+            video.muted = false;
+            video.playsInline = true;
+            video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;';
+            document.body.appendChild(video);
+
+            var finished = false;
+            function finish() {
+                if (finished) return;
+                finished = true;
+                try { video.remove(); } catch(e){}
+                loseDungeon();
+            }
+            video.onended = finish;
+            video.onerror = finish;
+            setTimeout(finish, 15000);
+        }
+        window.showDeathVideoAndLose = showDeathVideoAndLose;
+
+        function checkObjects() { checkExitDoor(); }
+
+        // ============================================================
+        //  СТАРТ БОЯ
+        // ============================================================
+        var currentBattleId = 0;
+
+        function startBattle(obj) {
+            if (isBattleActive) return;
+            isBattleActive = true;
+            playerHitFirst = false;
+            currentBattleId++;
+            currentEnemySprite = obj.mesh;
+            currentEnemyObj = obj;
+            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def };
+            enemyStunned = 0;
+            waypoints = []; moving = false; stopSteps();
+
+            // проверка шанса вампиризма раз за бой
+            vampirismReady = false;
+            var p = parent.Sherwood.getPlayer();
+            if (p && p.talents && p.talents['vampirism'] > 0) {
+                if (Math.random() < 0.30) {
+                    vampirismReady = true;
+                    vampirismBuff = 20; // 20 сек
+                    showCenterText('ВАМПИРИЗМ!', '#a020f0');
+                }
+            }
+
+            document.getElementById('mob-hp').style.display = 'block';
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            var nameEl = document.getElementById('mob-hp-name');
+            if (nameEl) nameEl.textContent = getMobName(obj.img);
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
+            playSound(soundHit);
+
+            if (battleTimer) clearInterval(battleTimer);
+            battleTimer = setInterval(function() {
+                if (!isBattleActive) return;
+                if (!playerHitFirst) return;
+                if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+                var p = parent.Sherwood.getPlayer();
+                if (!p) return;
+                if (enemyStunned > 0) return;   // враг оглушён — не бьёт
+                if (playerStunned > 0) return;  // игрок оглушён — пропускает
+
+                var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
+                if (p.talents) {
+                    if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                    if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+                }
+                // ярость даёт защиту? нет
+                // рикошет 45% — возврат удара
+                if (p.talents && p.talents['ricochet'] > 0) {
+                    if (Math.random() < 0.45) {
+                        // возврат урона врагу, скверна не начисляется
+                        currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg);
+                        if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+                        document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+                        document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+                        showCenterText('РИКОШЕТ!', '#a020f0');
+                        if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+                        return;
+                    }
+                }
+                p.stats.hp = Math.max(0, p.stats.hp - edmg);
+                addFilth(FILTH_HIT_AMOUNT);
+                if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+                updateHeroSpheres();
+                showBloodOverlay();
+                if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
+            }, 1500);
+        }
+
+        function stopBattle() {
+            isBattleActive = false;
+            playerHitFirst = false;
+            enemyStunned = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+            currentEnemySprite = null;
+            currentEnemyStats = null;
+            currentEnemyObj = null;
+        }
+
+        // ============================================================
+        //  НОВЫЙ УРОВЕНЬ — лечит и снимает 70% скверны
+        // ============================================================
+        var lastKnownLevel = 0;
+        function checkLevelUp() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (!lastKnownLevel) lastKnownLevel = p.level || 1;
+            if (p.level > lastKnownLevel) {
+                lastKnownLevel = p.level;
+                p.stats.hp = p.stats.maxHp;
+                var f = getFilth();
+                setFilth(Math.max(0, f.cur - f.max * 0.7));
+                showCenterText('НОВЫЙ УРОВЕНЬ! HP полное, -70% скверны', '#ffd700');
+                updateHeroSpheres();
+            }
+        }
+        setInterval(checkLevelUp, 1000);
+
+        // ============================================================
+        //  УБИЙСТВО ВРАГА
+        // ============================================================
+        function onEnemyKilled() {
+            if (!isBattleActive) return;
+            isBattleActive = false;
+            playerHitFirst = false;
+            enemyStunned = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+
+            if (currentEnemyObj) {
+                spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
+                try {
+                    if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
+                        var imgFile = currentEnemyObj.img.split('/').pop();
+                        parent.Sherwood.Bestiary.registerKill(imgFile);
+                    }
+                } catch(e) {}
+                currentEnemyObj.collected = true;
+                if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
+            }
+            currentEnemySprite = null;
+            currentEnemyStats = null;
+            currentEnemyObj = null;
+            checkObjects();
+        }
+
+        // ============================================================
+        //  АТАКА ИГРОКА
+        // ============================================================
+        function attackEnemy() {
+            if (!isBattleActive || !currentEnemyStats) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            if (playerStunned > 0) { showCenterText('ОГЛУШЁН!', '#888'); return; }
+            playerHitFirst = true;
+            var p = parent.Sherwood.getPlayer();
+            playSound(soundHit);
+
+            // стрелы: ярость → 2 стрелы, иначе 1
+            var arrowsNeeded = (rageCharges > 0) ? 2 : 1;
+            var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) {
+                useArrow(arrowsNeeded);
+            } else {
+                // без стрел урон -50%
+                if (playerArrows > 0) useArrow(1);
+                else showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555');
+            }
+
+            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
+            if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
+            if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
+
+            // ярость +20% на 3 удара
+            if (rageCharges > 0) {
+                baseDmg = Math.floor(baseDmg * 1.2);
+                rageCharges--;
+                if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888');
+            }
+
+            var dmg = baseDmg;
+            currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
+            if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+
+            // вампиризм: 30% шанс, действует 20 сек в бою, 5% + 5%/ур., макс 50%
+            if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) {
+                var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100;
+                var heal = Math.floor(dmg * vampPercent);
+                if (heal > 0) {
+                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                    updateHeroSpheres();
+                }
+            }
+
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+
+            if (currentEnemySprite) {
+                var spriteW = currentEnemySprite.scale.x;
+                var spriteH = currentEnemySprite.scale.y;
+                var ox = (Math.random() - 0.5) * spriteW * 0.7;
+                var oy = (Math.random() - 0.5) * spriteH * 0.7;
+                hitFlashSprite.position.copy(currentEnemySprite.position);
+                hitFlashSprite.position.x += ox;
+                hitFlashSprite.position.y += oy;
+                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
+                hitFlashSprite.material.needsUpdate = true;
+                hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
+                hitFlashSprite.visible = true;
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+                knockbackEnemy(currentEnemySprite, playerPos.x, playerPos.z);
+                cameraShake = 0.06;
+            }
+            var hitEffect = document.getElementById('hit-effect');
+            var hitEffectImg = document.getElementById('hit-effect-img');
+            if (hitEffect && hitEffectImg && currentEnemySprite) {
+                hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                var screenPos = currentEnemySprite.position.clone();
+                screenPos.y += 0.1;
+                screenPos.project(camera);
+                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                var side = Math.random() < 0.5 ? -1 : 1;
+                hitEffect.style.left = (x + side * 120) + 'px';
+                hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
+                hitEffect.style.display = 'block';
+                setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
+            }
+            if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+
+            // враг оглушён — не отвечает
+            if (enemyStunned > 0) { updateHeroSpheres(); return; }
+
+            // ответный удар врага (в attackEnemy)
+            var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
+            if (p.talents) {
+                if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+            }
+            // рикошет
+            if (p.talents && p.talents['ricochet'] > 0) {
+                if (Math.random() < 0.45) {
+                    currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg);
+                    if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+                    document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+                    document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+                    showCenterText('РИКОШЕТ!', '#a020f0');
+                    if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+                    return;
+                }
+            }
+
+            p.stats.hp = Math.max(0, p.stats.hp - edmg);
+            addFilth(FILTH_HIT_AMOUNT);
+            if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateHeroSpheres();
+            showBloodOverlay();
+            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showDeathVideoAndLose(); }
+        }
+
+        // ============================================================
+        //  HP-БАР ВРАГА
+        // ============================================================
+        function updateMobHpBar() {
+            if (!isBattleActive || !currentEnemySprite) return;
+            var worldPos = currentEnemySprite.position.clone();
+            worldPos.y += 0.55;
+            worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            document.getElementById('mob-hp').style.left = x + 'px';
+            document.getElementById('mob-hp').style.top = y + 'px';
+        }
+
+        // ============================================================
+        //  КЛИК ПО СЦЕНЕ
+        // ============================================================
         renderer.domElement.addEventListener('click', (e) => {
             ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -1053,6 +1673,9 @@
             moveForward();
         });
 
+        // ============================================================
+        //  КНОПКА АТАКИ / ПОДБОРА
+        // ============================================================
         function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img');
             if (!iconImg) return;
@@ -1088,487 +1711,113 @@
                 if (isBagInFront(bag)) { openLootBag(bag); return; }
             }
         });
-
-        var currentEnemySprite = null;
-        var currentEnemyStats = null;
-        var currentEnemyObj = null;
-        var isBattleActive = false;
-        var battleTimer = null;
-        var pushTimer = null;
-        var playerHitFirst = false;
-        var hitSprites = ['strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png', 'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'];
-        var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
-        var cameraShake = 0;
-
-        function knockbackEnemy(sprite, fromX, fromZ) {
-            if (!sprite) return;
-            enemyKnockback.active = true;
-            enemyKnockback.sprite = sprite;
-            enemyKnockback.originalX = sprite.position.x;
-            enemyKnockback.originalZ = sprite.position.z;
-            var dx = sprite.position.x - fromX;
-            var dz = sprite.position.z - fromZ;
-            var len = Math.hypot(dx, dz) || 1;
-            var power = 0.10;
-            enemyKnockback.dx = (dx / len) * power;
-            enemyKnockback.dz = (dz / len) * power;
-            enemyKnockback.t = 0;
-        }
-
-        function updateHeroSpheres() {
-            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
-            var p = parent.Sherwood.getPlayer();
-            if (!p) return;
-            var hpPercent = p.stats.hp / p.stats.maxHp;
-            var lifeFill = document.getElementById('life-fill');
-            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
-            var hpText = document.getElementById('hp-text');
-            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
-            var mana = p.stats.mana || 0;
-            var maxMana = p.stats.maxMana || 100;
-            var manaPercent = mana / maxMana;
-            var manaFill = document.getElementById('mana-fill');
-            if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - manaPercent) * 100) + '% 0 0 0)';
-            var manaText = document.getElementById('mana-text');
-            if (manaText) manaText.textContent = 'MP: ' + Math.floor(mana);
-        }
-        setTimeout(updateHeroSpheres, 500);
-
-        function checkObjects() { checkExitDoor(); }
-
-        function applyLootEffect(obj) {
-            if (!obj) return;
-            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
-            var p = parent.Sherwood.getPlayer();
-            if (!p) return;
-            if (obj.type === 'potion_hp') {
-                var curHp = Math.floor(p.stats.hp);
-                var maxHp = Math.floor(p.stats.maxHp);
-                if (curHp >= maxHp) { showCenterText('Запас полный', '#4caf50'); return; }
-                var addHp = Math.min(50, maxHp - curHp);
-                p.stats.hp = curHp + addHp;
-                showCenterText('+' + addHp + ' HP', '#4caf50');
-                obj.collected = true;
-                group.remove(obj.mesh);
-            } else if (obj.type === 'potion_mana') {
-                var curMp = Math.floor(p.stats.mana || 0);
-                var maxMp = Math.floor(p.stats.maxMana || 100);
-                if (curMp >= maxMp) { showCenterText('Запас полный', '#4caf50'); return; }
-                var addMp = Math.min(50, maxMp - curMp);
-                p.stats.mana = curMp + addMp;
-                showCenterText('+' + addMp + ' MP', '#4caf50');
-                obj.collected = true;
-                group.remove(obj.mesh);
-            } else if (obj.type === 'cauldron') {
-                if (obj.used) { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Котёл уже использован'); return; }
-                obj.used = true;
-                var curHp2 = Math.floor(p.stats.hp); var maxHp2 = Math.floor(p.stats.maxHp);
-                var curMp2 = Math.floor(p.stats.mana || 0); var maxMp2 = Math.floor(p.stats.maxMana || 100);
-                var addHp2 = Math.min(25, maxHp2 - curHp2); var addMp2 = Math.min(25, maxMp2 - curMp2);
-                p.stats.hp = curHp2 + addHp2; p.stats.mana = curMp2 + addMp2;
-                showCenterText('+' + addHp2 + ' HP, +' + addMp2 + ' MP', '#4caf50');
-                playSound(soundCauldron);
-                if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
-            } else if (obj.type === 'altar') {
-                if (obj.used) { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Алтарь уже использован'); return; }
-                obj.used = true;
-                p.stats.hp = p.stats.maxHp;
-                p.stats.mana = p.stats.maxMana || 100;
-                showCenterText('Запас полный', '#4caf50');
-                playSound(soundAltar);
-                if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
-            }
-            updateHeroSpheres();
-            if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
-            if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
-            updateLootButton();
-            checkObjects();
-        }
-
-        function startBattle(obj) {
-            if (isBattleActive) return;
-            isBattleActive = true;
-            playerHitFirst = false;
-            currentEnemySprite = obj.mesh;
-            currentEnemyObj = obj;
-            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def };
-            waypoints = []; moving = false; stopSteps();
-            document.getElementById('mob-hp').style.display = 'block';
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
-            var nameEl = document.getElementById('mob-hp-name');
-            if (nameEl) nameEl.textContent = getMobName(obj.img);
-            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
-            playSound(soundHit);
-            if (battleTimer) clearInterval(battleTimer);
-            battleTimer = setInterval(function() {
-                if (!isBattleActive) return;
-                if (!playerHitFirst) return;
-                if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
-                var p = parent.Sherwood.getPlayer();
-                if (!p) return;
-                var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
-                if (p.talents) {
-                    if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
-                    if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
-                }
-                p.stats.hp = Math.max(0, p.stats.hp - edmg);
-                if (parent.UI.updateDisplay) parent.UI.updateDisplay();
-                updateHeroSpheres();
-                showBloodOverlay();
-                if (p.stats.hp <= 0) { stopBattle(); loseDungeon(); }
-            }, 1500);
-        }
-
-        function stopBattle() {
-            isBattleActive = false;
-            playerHitFirst = false;
-            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
-            document.getElementById('mob-hp').style.display = 'none';
-            currentEnemySprite = null;
-            currentEnemyStats = null;
-            currentEnemyObj = null;
-        }
-
-        function onEnemyKilled() {
-    if (!isBattleActive) return;
-    isBattleActive = false;
-    playerHitFirst = false;
-    if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
-    document.getElementById('mob-hp').style.display = 'none';
-
-    if (currentEnemyObj) {
-        spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
-
-        // 🆕 ОТКРЫВАЕМ БЕСТИЮ В БЕСТИАРИИ
-        try {
-            if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
-                var imgFile = currentEnemyObj.img.split('/').pop();  // 'plague_crow.png'
-                parent.Sherwood.Bestiary.registerKill(imgFile);
-            }
-        } catch(e) {}
-
-        currentEnemyObj.collected = true;
-        if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
-    }
-
-    currentEnemySprite = null;
-    currentEnemyStats = null;
-    currentEnemyObj = null;
-    checkObjects();
-}
-
-        function attackEnemy() {
-            if (!isBattleActive || !currentEnemyStats) return;
-            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
-            playerHitFirst = true;
-            var p = parent.Sherwood.getPlayer();
-            playSound(soundHit);
-            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
-            if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
-            var now = Date.now();
-            for (var i = activeEffects.length - 1; i >= 0; i--) {
-                var ef = activeEffects[i];
-                if (ef.endsAt < now) { activeEffects.splice(i, 1); continue; }
-                if (ef.type === 'ricochet' || ef.type === 'riot' || ef.type === 'inspiration') baseDmg = Math.floor(baseDmg * (1 + ef.bonus));
-            }
-            var dmg = baseDmg;
-            if (p.talents && p.talents['vampirism'] && Math.random() < 0.3) {
-                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 10 * p.talents['vampirism']);
-            }
-            currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
-            if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
-            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
-            if (currentEnemySprite) {
-                var spriteW = currentEnemySprite.scale.x;
-                var spriteH = currentEnemySprite.scale.y;
-                var ox = (Math.random() - 0.5) * spriteW * 0.7;
-                var oy = (Math.random() - 0.5) * spriteH * 0.7;
-                hitFlashSprite.position.copy(currentEnemySprite.position);
-                hitFlashSprite.position.x += ox;
-                hitFlashSprite.position.y += oy;
-                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
-                hitFlashSprite.material.needsUpdate = true;
-                hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
-                hitFlashSprite.visible = true;
-                clearTimeout(pushTimer);
-                pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
-                knockbackEnemy(currentEnemySprite, playerPos.x, playerPos.z);
-                cameraShake = 0.06;
-            }
-            var hitEffect = document.getElementById('hit-effect');
-            var hitEffectImg = document.getElementById('hit-effect-img');
-            if (hitEffect && hitEffectImg && currentEnemySprite) {
-                hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
-                var screenPos = currentEnemySprite.position.clone();
-                screenPos.y += 0.1;
-                screenPos.project(camera);
-                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                var side = Math.random() < 0.5 ? -1 : 1;
-                hitEffect.style.left = (x + side * 120) + 'px';
-                hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
-                hitEffect.style.display = 'block';
-                setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
-            }
-            if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
-            var skipEnemyTurn = false;
-            for (var i = activeEffects.length - 1; i >= 0; i--) {
-                if (activeEffects[i].type === 'stun' || activeEffects[i].type === 'knot') skipEnemyTurn = true;
-            }
-            if (skipEnemyTurn) { updateHeroSpheres(); return; }
-            if (p.talents) {
-                if (p.talents['parry'] && Math.random() < 0.05 * p.talents['parry']) return;
-                if (p.talents['silence'] && Math.random() < 0.1 * p.talents['silence']) return;
-            }
-            var edmg = Math.max(1, Math.floor(currentEnemyStats.atk * 0.3));
-            if (p.talents) {
-                if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
-                if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
-            }
-            for (var i = 0; i < activeEffects.length; i++) {
-                if (activeEffects[i].type === 'funnel') edmg = Math.floor(edmg * (1 - activeEffects[i].debuff));
-            }
-            p.stats.hp = Math.max(0, p.stats.hp - edmg);
-            if (parent.UI.updateDisplay) parent.UI.updateDisplay();
-            updateHeroSpheres();
-            showBloodOverlay();
-            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); loseDungeon(); }
-        }
-
-        function updateMobHpBar() {
-            if (!isBattleActive || !currentEnemySprite) return;
-            var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += 0.55;
-            worldPos.project(camera);
-            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
-            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-            document.getElementById('mob-hp').style.left = x + 'px';
-            document.getElementById('mob-hp').style.top = y + 'px';
-        }
-
-        function grantCupBoth(floor, diff) {
-            try {
-                if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, floor, diff);
-                if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(floor, diff);
-            } catch(e) {}
-        }
-
-        function winDungeon() {
-    stopSteps();
-    playSound(soundVictory);
-    try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-    grantCupBoth(currentFloor, currentDiff);
-
-    // 🆕 СТРАХОВКА: открыть босса этого этажа (если по какой-то причине не открылся при убийстве)
-    try {
-        if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
-            var bossFile = currentPool.boss;  // например 'forest_strangler.png'
-            if (bossFile) parent.Sherwood.Bestiary.registerKill(bossFile);
-        }
-    } catch(e) {}
-
-    var rewardItems = [];
-            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
-            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
-            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
-            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
-            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
-            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
-            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
-            var rewards = {
-                cupEarned: true,
-                exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp,
-                gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold,
-                silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver,
-                items: rewardItems
-            };
-            try {
-                if (parent.UI && parent.UI._showVictoryScreen) {
-                    parent.UI._lastPortal = null;
-                    parent.UI._lastDungeon = currentDungeon;
-                    parent.UI._afterRewardAction = function() {
-                        try {
-                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
-                            else if (parent.UI.dungeon) parent.UI.dungeon();
-                        } catch(e) { exitDungeon(); }
-                    };
-                    parent.UI._showVictoryScreen(rewards);
-                } else { exitDungeon(); }
-            } catch(e) { exitDungeon(); }
-        }
-        window.winDungeon = winDungeon;
-
-        function loseDungeon() {
-            stopSteps();
-            playSound(soundDefeat);
-            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            var rewardItems = [];
-            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
-            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
-            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
-            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
-            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
-            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
-            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
-            var rewards = { exp: 50 + runLoot.exp, gold: 0 + runLoot.gold, silver: 20 + runLoot.silver, items: rewardItems };
-            try {
-                if (parent.UI && parent.UI._showDefeatScreen) {
-                    parent.UI._lastPortal = null;
-                    parent.UI._lastDungeon = currentDungeon;
-                    parent.UI._afterRewardAction = function() {
-                        try {
-                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
-                            else if (parent.UI.dungeon) parent.UI.dungeon();
-                        } catch(e) { exitDungeon(); }
-                    };
-                    parent.UI._showDefeatScreen(rewards);
-                } else { exitDungeon(); }
-            } catch(e) { exitDungeon(); }
-        }
-
+                // ============================================================
+        //  СКИЛЛЫ (только 3 активных + вампиризм/рикошет пассивки)
+        // ============================================================
         var talentData = {
-            'poisoning': { icon: 'assets/assets2/talents/poisoning.png', side: 'left', cooldown: 5000, name: 'Отравление' },
-            'vampirism': { icon: 'assets/assets2/talents/vampirism.png', side: 'left', cooldown: 5000, name: 'Вампиризм' },
-            'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 8000, name: 'Оглушение' },
-            'ricochet': { icon: 'assets/assets2/talents/Ricochet.png', side: 'left', cooldown: 10000, name: 'Рикошет' },
-            'riot': { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 6000, name: 'Бунт' },
-            'force_of_elements': { icon: 'assets/assets2/talents/force of the elements.png', side: 'left', cooldown: 0, name: 'Сила стихий' },
-            'evil_eye': { icon: 'assets/assets2/talents/evil_eye.png', side: 'left', cooldown: 7000, name: 'Злой глаз' },
-            'healing': { icon: 'assets/assets2/talents/healing.png', side: 'right', cooldown: 10000, name: 'Исцеление' },
-            'healer': { icon: 'assets/assets2/talents/Healer.png', side: 'right', cooldown: 12000, name: 'Хилер' },
-            'funnel': { icon: 'assets/assets2/talents/funnel.png', side: 'right', cooldown: 8000, name: 'Воронка' },
-            'inspiration': { icon: 'assets/assets2/talents/inspiration.png', side: 'right', cooldown: 15000, name: 'Вдохновение' },
-            'knot': { icon: 'assets/assets2/talents/knot.png', side: 'right', cooldown: 10000, name: 'Узел' }
+            'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 20000, name: 'Оглушение' },
+            'rage':     { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 25000, name: 'Ярость' },
+            'healing':  { icon: 'assets/assets2/talents/healing.png', side: 'right', cooldown: 8000, name: 'Лечение' }
         };
         var skillCooldowns = {};
         var activeEffects = [];
-        var poisonTimer = null;
-        var healerTimer = null;
 
+        // ============================================================
+        //  РЕНДЕР ИКОНОК СКИЛЛОВ
+        // ============================================================
         function renderLearnedTalents() {
             var leftCol = document.getElementById('skills-left');
             var rightCol = document.getElementById('skills-right');
             if (!leftCol || !rightCol) return;
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
             var p = parent.Sherwood.getPlayer();
-            if (!p || !p.talents) return;
+            if (!p) return;
+            if (!p.talents) p.talents = {};
             leftCol.innerHTML = ''; rightCol.innerHTML = '';
-            for (var id in p.talents) {
-                var lvl = p.talents[id];
-                if (lvl > 0 && talentData[id]) {
-                    var img = document.createElement('img');
-                    img.src = talentData[id].icon;
-                    img.style.cssText = 'width:44px; height:44px; object-fit:contain;';
-                    img.title = talentData[id].name + ' (Ур. ' + lvl + ')';
-                    img.dataset.skillId = id;
-                    img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
-                    (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
-                }
+
+            // Стандартные скиллы — показываем всегда
+            for (var id in talentData) {
+                var img = document.createElement('img');
+                img.src = talentData[id].icon;
+                img.style.cssText = 'width:44px; height:44px; object-fit:contain;';
+                var lvl = (p.talents && p.talents[id]) ? p.talents[id] : 1;
+                img.title = talentData[id].name + ' (Ур. ' + lvl + ')';
+                img.dataset.skillId = id;
+                img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
+                (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
             }
         }
         setTimeout(renderLearnedTalents, 500);
 
+        // ============================================================
+        //  ИСПОЛЬЗОВАНИЕ СКИЛЛА
+        // ============================================================
         function useSkill(skillId) {
             if (!isBattleActive || !currentEnemyStats) return;
             if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
             var p = parent.Sherwood.getPlayer();
-            if (!p || !p.talents) return;
-            var lvl = p.talents[skillId] || 0;
-            if (lvl <= 0) return;
-            var manaCosts = {
-                'poisoning': 10, 'vampirism': 15, 'stunning': 20, 'ricochet': 25, 'riot': 15,
-                'force_of_elements': 10, 'evil_eye': 20, 'healing': 20, 'healer': 25,
-                'funnel': 15, 'inspiration': 30, 'knot': 20
-            };
-            var manaCost = (manaCosts[skillId] || 10) * lvl;
-            if (!p.stats.mana) p.stats.mana = 0;
-            if (p.stats.mana < manaCost) {
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast('Не хватает маны! Нужно ' + manaCost);
+            if (!p) return;
+            var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
+            if (lvl <= 0) lvl = 1;
+
+            // === ОГЛУШЕНИЕ ===
+            if (skillId === 'stunning') {
+                if (!spendFilth(20)) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Мало скверны! Нужно 20%');
+                    return;
+                }
+                enemyStunned = 10; // 10 секунд
+                showCenterText('ОГЛУШЕНИЕ! 10 сек', '#ffd700');
+                playSound(soundAltar);
+                skillCooldowns[skillId] = Date.now() + 20000;
+                var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, 20000); }
                 return;
             }
-            p.stats.mana -= manaCost;
-            updateHeroSpheres();
-            var dmg = 0, heal = 0;
-            switch (skillId) {
-                case 'poisoning':
-                    if (poisonTimer) clearInterval(poisonTimer);
-                    var poisonDmg = 20 * lvl;
-                    var poisonTicks = 3;
-                    poisonTimer = setInterval(function() {
-                        if (!isBattleActive) { clearInterval(poisonTimer); return; }
-                        currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - poisonDmg);
-                        document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
-                        document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
-                        if (currentEnemyStats.hp <= 0) { clearInterval(poisonTimer); onEnemyKilled(); }
-                        poisonTicks--;
-                        if (poisonTicks <= 0) clearInterval(poisonTimer);
-                    }, 1000);
-                    break;
-                case 'vampirism':
-                    dmg = 30 * lvl;
-                    currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
-                    heal = Math.floor(dmg * 0.5);
-                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-                    updateHeroSpheres();
-                    break;
-                case 'stunning':
-                    if (Math.random() < 0.2 * lvl) activeEffects.push({ type: 'stun', endsAt: Date.now() + 3000 });
-                    break;
-                case 'ricochet':
-                    activeEffects.push({ type: 'ricochet', endsAt: Date.now() + 3000, bonus: 0.3 * lvl, crit: 0.5 });
-                    break;
-                case 'riot':
-                    if (p.stats.hp / p.stats.maxHp < 0.5) activeEffects.push({ type: 'riot', endsAt: Date.now() + 6000, bonus: 0.25 * lvl });
-                    break;
-                case 'force_of_elements':
-                    dmg = 20 * lvl;
-                    currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
-                    break;
-                case 'evil_eye':
-                    activeEffects.push({ type: 'evil_eye', endsAt: Date.now() + 5000, debuff: 0.15 * lvl });
-                    break;
-                case 'healing':
-                    heal = 50 * lvl;
-                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-                    updateHeroSpheres();
-                    break;
-                case 'healer':
-                    if (healerTimer) clearInterval(healerTimer);
-                    var healerAmount = 5 * lvl;
-                    var healerTicks = 5;
-                    healerTimer = setInterval(function() {
-                        if (!isBattleActive) { clearInterval(healerTimer); return; }
-                        p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + healerAmount);
-                        updateHeroSpheres();
-                        healerTicks--;
-                        if (healerTicks <= 0) clearInterval(healerTimer);
-                    }, 1000);
-                    break;
-                case 'funnel':
-                    activeEffects.push({ type: 'funnel', endsAt: Date.now() + 4000, debuff: 0.3 * lvl });
-                    break;
-                case 'inspiration':
-                    activeEffects.push({ type: 'inspiration', endsAt: Date.now() + 5000, bonus: 0.2 * lvl });
-                    break;
-                case 'knot':
-                    activeEffects.push({ type: 'knot', endsAt: Date.now() + 3000 * lvl });
-                    break;
+
+            // === ЯРОСТЬ ===
+            if (skillId === 'rage') {
+                var f = getFilth();
+                if (f.cur < f.max) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Ярость только на полной сфере!');
+                    return;
+                }
+                if (!spendFilth(65)) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Мало скверны!');
+                    return;
+                }
+                rageCharges = 3;
+                showCenterText('ЯРОСТЬ! 3 удара +20%', '#ff4400');
+                playSound(soundHit);
+                skillCooldowns[skillId] = Date.now() + 25000;
+                var icon2 = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon2) { icon2.classList.add('on-cooldown'); setTimeout(function() { icon2.classList.remove('on-cooldown'); }, 25000); }
+                return;
             }
-            if (dmg > 0) {
-                document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
-                document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
-                if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
-            }
-            var cd = talentData[skillId].cooldown || 0;
-            if (cd > 0) {
-                skillCooldowns[skillId] = Date.now() + cd;
-                var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
-                if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd); }
+
+            // === ЛЕЧЕНИЕ ===
+            if (skillId === 'healing') {
+                var filthCost = 5 * lvl;
+                if (!spendFilth(filthCost)) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Мало скверны! Нужно ' + filthCost + '%');
+                    return;
+                }
+                var heal = 10 * lvl;
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                showCenterText('+' + heal + ' HP', '#4caf50');
+                updateHeroSpheres();
+                playSound(soundAltar);
+                skillCooldowns[skillId] = Date.now() + 8000;
+                var icon3 = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon3) { icon3.classList.add('on-cooldown'); setTimeout(function() { icon3.classList.remove('on-cooldown'); }, 8000); }
+                return;
             }
         }
 
+        // ============================================================
+        //  ВРАГИ — ДВИЖЕНИЕ
+        // ============================================================
         const ENEMY_SPEED = 0.55;
         const ENEMY_AGGRO_RANGE = 5.0;
         const ENEMY_STOP_DIST = 1.2;
@@ -1614,6 +1863,9 @@
             });
         }
 
+        // ============================================================
+        //  КАМЕРА
+        // ============================================================
         const clock = new THREE.Clock();
 
         function updateCamera() {
@@ -1629,10 +1881,14 @@
             playerGX = g.gx; playerGY = g.gy;
         }
 
+        // ============================================================
+        //  АНИМАЦИОННЫЙ ЦИКЛ
+        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
             const t = clock.elapsedTime;
+
             if (moving && waypoints.length && !isBattleActive) {
                 let budget = MOVE_SPEED * dt;
                 while (budget > 0 && waypoints.length) {
@@ -1662,9 +1918,14 @@
                     checkObjects();
                 }
             }
+
+            // СКВЕРНА + эффекты
+            updateFilth(dt);
+
             updateEnemies(dt);
             syncPlayerGrid();
             updateLootButton();
+
             if (enemyKnockback.active && enemyKnockback.sprite) {
                 enemyKnockback.t += dt;
                 var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
@@ -1679,6 +1940,7 @@
                     enemyKnockback.sprite = null;
                 }
             }
+
             heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
             heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
             for (const d of doorLeaves) {
@@ -1697,6 +1959,9 @@
             drawMinimap();
         }
 
+        // ============================================================
+        //  МИНИКАРТА
+        // ============================================================
         function drawMinimap() {
             mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
             for (let row = 0; row < size; row++) {
@@ -1756,6 +2021,9 @@
             mmCtx.stroke();
         }
 
+        // ============================================================
+        //  ТУМАН ВОЙНЫ
+        // ============================================================
         function updateExplored() {
             const pg = worldToGrid(playerPos.x, playerPos.z);
             const R = 3;
@@ -1772,9 +2040,113 @@
                 walked[pg.gy * size + pg.gx] = 1;
             }
         }
+                // ============================================================
+        //  ПОБЕДА
+        // ============================================================
+        function grantCupBoth(floor, diff) {
+            try {
+                if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, floor, diff);
+                if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(floor, diff);
+            } catch(e) {}
+        }
 
+        function winDungeon() {
+            stopSteps();
+            playSound(soundVictory);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+            grantCupBoth(currentFloor, currentDiff);
+
+            // сохранить оставшиеся стрелы обратно в сумку
+            try {
+                if (parent.Sherwood && parent.Sherwood.getPlayer) {
+                    var p = parent.Sherwood.getPlayer();
+                    if (p) {
+                        if (!p.resources) p.resources = {};
+                        p.resources.arrows = playerArrows;
+                    }
+                }
+            } catch(e) {}
+
+            try {
+                if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
+                    var bossFile = currentPool.boss;
+                    if (bossFile) parent.Sherwood.Bestiary.registerKill(bossFile);
+                }
+            } catch(e) {}
+
+            var rewardItems = [];
+            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
+            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
+
+            var rewards = {
+                cupEarned: true,
+                exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp,
+                gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold,
+                silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver,
+                items: rewardItems
+            };
+            try {
+                if (parent.UI && parent.UI._showVictoryScreen) {
+                    parent.UI._lastPortal = null;
+                    parent.UI._lastDungeon = currentDungeon;
+                    parent.UI._afterRewardAction = function() {
+                        try {
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                            else if (parent.UI.dungeon) parent.UI.dungeon();
+                        } catch(e) { exitDungeon(); }
+                    };
+                    parent.UI._showVictoryScreen(rewards);
+                } else { exitDungeon(); }
+            } catch(e) { exitDungeon(); }
+        }
+        window.winDungeon = winDungeon;
+
+        // ============================================================
+        //  ПОРАЖЕНИЕ (после видео)
+        // ============================================================
+        function loseDungeon() {
+            stopSteps();
+            playSound(soundDefeat);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+
+            // при поражении стрелы НЕ сохраняем — они потеряны
+            var rewardItems = [];
+            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
+            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
+
+            var rewards = { exp: 50 + runLoot.exp, gold: 0 + runLoot.gold, silver: 20 + runLoot.silver, items: rewardItems };
+            try {
+                if (parent.UI && parent.UI._showDefeatScreen) {
+                    parent.UI._lastPortal = null;
+                    parent.UI._lastDungeon = currentDungeon;
+                    parent.UI._afterRewardAction = function() {
+                        try {
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                            else if (parent.UI.dungeon) parent.UI.dungeon();
+                        } catch(e) { exitDungeon(); }
+                    };
+                    parent.UI._showDefeatScreen(rewards);
+                } else { exitDungeon(); }
+            } catch(e) { exitDungeon(); }
+        }
+
+        // ============================================================
+        //  ЗАПУСК
+        // ============================================================
         animate();
         setTimeout(checkObjects, 800);
+        setTimeout(updateArrowCounter, 900);
+
         addEventListener('resize', () => {
             camera.aspect = innerWidth / innerHeight;
             camera.updateProjectionMatrix();
