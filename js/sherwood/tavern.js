@@ -104,9 +104,6 @@ Sherwood.Tavern = {
         Sherwood.saveGame();
     },
 
-    // ============================================================
-    //  ВЫЗЫВАЕТСЯ ИЗ quests.js ПРИ ПОБЕДЕ В ГЛАВЕ
-    // ============================================================
     markChapterComplete: function(chapterId) {
         var p = Sherwood.getPlayer();
         if (!p) return;
@@ -128,6 +125,9 @@ Sherwood.Tavern = {
         Sherwood.saveGame();
     },
 
+    // ============================================================
+    //  UI ТАВЕРНЫ
+    // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
             console.error('UI не загружен!');
@@ -142,8 +142,6 @@ Sherwood.Tavern = {
             this._completedChapters = p.questProgress.completed || [];
             this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
 
-            // === СБРОС "принятого квеста", если глава уже пройдена,
-            //      или если quests.js перешагнул на новую главу ===
             if (this._currentQuest) {
                 var cqId = this._currentQuest.id;
                 if (this._completedChapters.indexOf(cqId) !== -1) {
@@ -162,17 +160,22 @@ Sherwood.Tavern = {
             UI._screenLayer.style.overflow = 'hidden';
         }
 
-        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;">';
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;scrollbar-width:none;-ms-overflow-style:none;">';
+        h += '<style>.tavern-scroll::-webkit-scrollbar{display:none;}.tavern-scroll{scrollbar-width:none;}</style>';
 
-        h += '<div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:60%;height:60%;pointer-events:none;">';
+        // Гаррет (видео) — фиксировано
+        h += '<div style="position:fixed;top:50%;left:55%;transform:translate(-50%,-50%);width:60%;height:60%;pointer-events:none;z-index:1;">';
         h += '<video src="assets/assets2/animation/Garret.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>';
         h += '</div>';
 
-        h += '<div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;overflow-y:hidden;scrollbar-width:none;padding-top:60px;pointer-events:none;">';
+        // Контент поверх
+        h += '<div class="tavern-scroll" style="position:relative;z-index:10;width:100%;min-height:100%;padding-top:60px;padding-bottom:40px;">';
 
+        // Прогресс
         h += '<div style="margin-bottom:20px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
 
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:40px;pointer-events:auto;">';
+        // === КНОПКИ РАЗДЕЛОВ (ТОЛЬКО 2) ===
+        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:30px;">';
 
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
@@ -184,8 +187,9 @@ Sherwood.Tavern = {
 
         h += '</div>';
 
-        h += '<div style="width:90%;margin:0 auto;margin-top:180px;pointer-events:auto;">';
-        h += '<div style="width:100%;height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
+        // === СВИТОК С КВЕСТОМ ===
+        h += '<div style="width:90%;max-width:460px;margin:0 auto 30px auto;">';
+        h += '<div style="width:100%;min-height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
 
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
@@ -194,7 +198,6 @@ Sherwood.Tavern = {
             h += '<div style="text-align:center;color:#ffa500;font-size:14px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.6;">' + current.title + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
-
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
 
             if (isCompleted) {
@@ -210,8 +213,8 @@ Sherwood.Tavern = {
         h += '</div>';
         h += '</div>';
 
-        h += '</div>';
-        h += '</div>';
+        h += '</div>'; // .tavern-scroll
+        h += '</div>'; // фон
 
         UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
     },
