@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Шервудская чащоба</title>
+    <title>Проклятая чаща</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,9 +27,17 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
+        #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; }
+        #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 45; }
+        #skills-left { left: 10px; }
+        #skills-right { right: 10px; }
+        #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; width: 44px; height: 44px; object-fit: contain; }
+        #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
-        #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; z-index: 40; cursor: pointer; }
-        #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
+        #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+        #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
+        #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
+        @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
         @media (max-width: 600px) {
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
@@ -37,50 +45,67 @@
             #mob-hp-text { font-size: 15px !important; }
             #mob-hp-name { font-size: 13px !important; top: -12px !important; }
             #hit-effect-img { width: 130px !important; height: 130px !important; }
-            #attack-icon { width: 50px !important; height: 50px !important; bottom: 20px !important; }
+            #skills-left, #skills-right { bottom: 100px !important; width: 60px !important; }
+            #skills-left img, #skills-right img { width: 34px !important; height: 34px !important; }
+            #attack-icon { width: 44px !important; height: 44px !important; bottom: 30px !important; }
+            #arrow-counter { font-size: 13px !important; padding: 3px 10px !important; }
+            #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
     </style>
 </head>
 <body>
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
+    <div id="arrow-counter">
+        <img src="assets/interface/sherwood_hollow_arrow.png" alt="">
+        <span id="arrow-count-text">25</span>
+    </div>
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
-        <span id="mob-hp-text">HP: 0/0</span>
+        <span id="mob-hp-text">HP: 1000</span>
     </div>
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
+    <div id="skills-left"></div>
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
+    <div id="skills-right"></div>
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
-        <span id="mana-text">0</span>
+        <span id="mana-text">Скверна: 0%</span>
     </div>
-    <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png"></div>
+    <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
     <div id="vignette"></div>
     <div id="scanlines"></div>
-    <button onclick="exitThicket();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
+    <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
 
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
     </script>
-
     <script type="module">
         import * as THREE from 'three';
 
         var urlParams = new URLSearchParams(window.location.search);
-        var nodeId = parseInt(urlParams.get('node') || '1');
-        var diff = parseInt(urlParams.get('diff') || '1');
-
-        var enemyData = null;
-        try {
-            enemyData = parent.Sherwood.Thicket.getCurrentEnemy();
-        } catch(e) { console.error('❌ Нет данных узла:', e); }
+        var currentDungeon = parseInt(urlParams.get('dungeon') || '1');
+        var currentFloor = parseInt(urlParams.get('floor') || '1');
+        var currentDiff = parseInt(urlParams.get('diff') || '1');
+        
+        // Пул врагов (сокращенный для примера, можно оставить твой полный)
+        var ENEMY_POOLS = {
+            1: { 1: { normal: ['plague_crow.png','bone_vulture.png'], boss: 'forest_strangler.png' } },
+            2: { 1: { normal: ['bog_trapper.png','blight_spitter.png'], boss: 'searing_arachnid.png' } },
+            3: { 1: { normal: ['basalt_devourer.png','grotto_brute.png'], boss: 'lost_treasure_hunter.png' } },
+            4: { 1: { normal: ['swamp_viper.png','necromantic_arachnid.png'], boss: 'the_cursed_outlaw_king.png' } }
+        };
+        var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor]) || ENEMY_POOLS[1][1];
+        var MOB_PATH = 'assets/all_beasts/';
+        var BOSS_PATH = (currentDungeon === 4) ? 'assets/beast_quest/' : 'assets/all_beasts/';
+        var mult = 1.0;
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
@@ -88,42 +113,53 @@
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
         var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
-        var thicketMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
-        thicketMusic.loop = true; thicketMusic.volume = 0.4;
+        var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
+        dungeonMusic.loop = true; dungeonMusic.volume = 0.4;
 
-        function stopParentMusic() {
+        setTimeout(function(){ dungeonMusic.play().catch(function(){}); }, 300);
+        function playSound(audio) { try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {} }
+        function exitDungeon() {
+            try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){}
             try {
-                if (parent) {
-                    if (parent.audioPlayer) { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; }
-                    if (typeof parent.stopMainMusic === 'function') parent.stopMainMusic();
-                    if (parent.UI && parent.UI._currentMusic) { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; }
-                }
-            } catch(e){}
+                if (parent && parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                else if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+            } catch(e) {}
         }
-        setTimeout(function(){ stopParentMusic(); thicketMusic.play().catch(function(){}); }, 300);
-        window.addEventListener('click', function(){ stopParentMusic(); thicketMusic.play().catch(function(){}); });
+        window.exitDungeon = exitDungeon;
 
-        function playSound(a) { try { a.currentTime = 0; a.play().catch(function() {}); } catch(e) {} }
-
-        function exitThicket() {
-            try { thicketMusic.pause(); thicketMusic.currentTime = 0; } catch(e){}
-            try { parent.Sherwood.Thicket._flee(); } catch(e) {}
+        function showCenterText(text, color) {
+            var el = document.createElement('div');
+            el.textContent = text;
+            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:24px;font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;';
+            document.body.appendChild(el);
+            requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; });
+            setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900);
+            setTimeout(function() { el.remove(); }, 1900);
         }
-        window.exitThicket = exitThicket;
+
+        var bloodTextures = ['assets/assets2/animation/Fine_blood_spray_texture.png'].map(function(path) { return new THREE.TextureLoader().load(path); });
+        function showBloodOverlay() {
+            var el = document.getElementById('blood-overlay');
+            if (!el) return;
+            el.style.backgroundImage = 'url("' + bloodTextures[0].image.src + '")';
+            el.style.transition = 'opacity 0.1s ease-out';
+            el.style.opacity = '1';
+            setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
+        }
 
         // ============================================================
-        //  THREE.JS СЦЕНА (вид сверху)
+        //  THREE.JS СЦЕНА (ВИД СВЕРХУ)
         // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0805);
-
+        
         const size = 16;
         const cellSize = 1;
         const center = Math.floor(size / 2);
-
-        // Ортографическая камера сверху
+        
+        // Зона видимости 5х5
+        const viewSize = 5;
         const aspect = window.innerWidth / window.innerHeight;
-        const viewSize = size * 1.15;   // немного запаса по краям
         const camera = new THREE.OrthographicCamera(-viewSize * aspect / 2, viewSize * aspect / 2, viewSize / 2, -viewSize / 2, 0.1, 100);
         camera.position.set(0, 20, 0);
         camera.lookAt(0, 0, 0);
@@ -133,8 +169,6 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
-
-        // Свет
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
         // ============================================================
@@ -172,7 +206,6 @@
         }
         generateMaze();
 
-        // Дальняя клетка для врага
         var enemyCell = (function findFarthest() {
             var visited = {};
             var queue = [{ x: 1, y: 1, dist: 0 }];
@@ -204,27 +237,18 @@
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
         
         var enemyTex = null;
-        var enemyImgPath = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
+        var enemyImgPath = 'assets/all_beasts/plague_crow.png';
         enemyTex = loader.load(enemyImgPath);
 
-        floorTex.minFilter = THREE.LinearFilter; floorTex.magFilter = THREE.LinearFilter;
-        doorTex.minFilter = THREE.LinearFilter; doorTex.magFilter = THREE.LinearFilter;
-        heroTex.minFilter = THREE.LinearFilter; heroTex.magFilter = THREE.LinearFilter;
-        enemyTex.minFilter = THREE.LinearFilter; enemyTex.magFilter = THREE.LinearFilter;
-
-        // ============================================================
-        //  ПОЛ, ДВЕРИ, ТУМАН
-        // ============================================================
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         
-        // Материалы дверей (3 уровня тумана)
         var doorMats = [
-            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.85 }),
-            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.4 }),
-            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.15, color: 0x555555 })
+            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }),
+            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }),
+            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })
         ];
         var wallMats = [
-            new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.9 }),
+            new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.95 }),
             new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.5 }),
             new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.2 })
         ];
@@ -232,7 +256,7 @@
         const group = new THREE.Group();
         scene.add(group);
 
-        var tileMeshes = []; // { mesh, x, y, isWall, isDoor, revealed, opened }
+        var tileMeshes = [];
 
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
@@ -240,25 +264,17 @@
                 const z = row - center;
                 const isWall = (map[row][col] === 1);
                 
-                // Пол (всегда)
                 const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(x, 0, z);
                 group.add(floor);
 
-                // Дверь сверху
-                const door = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), doorMats[2]);
+                const door = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.98, cellSize * 0.98), doorMats[2]);
                 door.rotation.x = -Math.PI / 2;
                 door.position.set(x, 0.05, z);
                 group.add(door);
 
-                tileMeshes.push({
-                    mesh: door,
-                    x: col, y: row,
-                    isWall: isWall,
-                    revealed: 0, // 0=не открыт, 1=исследован
-                    opened: false
-                });
+                tileMeshes.push({ mesh: door, x: col, y: row, isWall: isWall, opened: false });
             }
         }
 
@@ -266,31 +282,27 @@
         //  СВЕТЛЯЧКИ
         // ============================================================
         var fireflyTex = (function() {
-            var c = document.createElement('canvas');
-            c.width = 64; c.height = 64;
+            var c = document.createElement('canvas'); c.width = 64; c.height = 64;
             var ctx = c.getContext('2d');
             var g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
             g.addColorStop(0, 'rgba(255, 240, 160, 1)');
             g.addColorStop(0.5, 'rgba(255, 200, 80, 0.5)');
             g.addColorStop(1, 'rgba(255, 200, 80, 0)');
-            ctx.fillStyle = g;
-            ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI*2); ctx.fill();
-            var t = new THREE.CanvasTexture(c);
-            return t;
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI*2); ctx.fill();
+            return new THREE.CanvasTexture(c);
         })();
 
         var fireflies = [];
-        for (var i = 0; i < 40; i++) {
+        for (var i = 0; i < 20; i++) {
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireflyTex, transparent: true, blending: THREE.AdditiveBlending }));
             var s = 0.15 + Math.random() * 0.1;
-            spr.scale.set(s, s, 1);
-            spr.visible = false;
+            spr.scale.set(s, s, 1); spr.visible = false;
             scene.add(spr);
-            fireflies.push({ sprite: spr, baseX: 0, baseZ: 0, angle: Math.random() * Math.PI * 2, radius: 0.3, speed: 0.5 + Math.random() * 0.5, phase: Math.random() * Math.PI * 2 });
+            fireflies.push({ sprite: spr, baseX: 0, baseZ: 0, angle: Math.random() * Math.PI * 2, phase: Math.random() * Math.PI * 2 });
         }
 
         // ============================================================
-        //  ГЕРОЙ
+        //  ГЕРОЙ И ВРАГ
         // ============================================================
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
         heroSprite.scale.set(0.85, 0.85, 1);
@@ -299,26 +311,16 @@
         let playerGX = 1, playerGY = 1;
         heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
 
-        // ============================================================
-        //  ВРАГ
-        // ============================================================
         const enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: enemyTex, transparent: true }));
         enemySprite.scale.set(0.8, 0.8, 1);
         enemySprite.position.set(enemyCell.gx - center, 0.6, enemyCell.gy - center);
         scene.add(enemySprite);
 
-        // ============================================================
-        //  ОРЕОЛ ВОКРУГ ГЕРОЯ
-        // ============================================================
+        // Ореол
         var highlights = [];
         for (var i = 0; i < 4; i++) {
-            var hl = new THREE.Mesh(
-                new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95),
-                new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.4 })
-            );
-            hl.rotation.x = -Math.PI / 2;
-            hl.position.set(0, 0.1, 0);
-            hl.visible = false;
+            var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.4 }));
+            hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.1, 0); hl.visible = false;
             scene.add(hl);
             highlights.push(hl);
         }
@@ -326,56 +328,45 @@
         function updateHighlights() {
             var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
             for (var i = 0; i < 4; i++) {
-                var nx = playerGX + dirs[i].x;
-                var ny = playerGY + dirs[i].y;
+                var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y;
                 if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; }
                 highlights[i].position.set(nx - center, 0.1, ny - center);
                 highlights[i].visible = true;
             }
         }
 
-        // ============================================================
-        //  ТУМАН ВОЙНЫ
-        // ============================================================
+        // Туман войны (только в зоне видимости)
         function updateFog() {
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i];
-                var dx = Math.abs(t.x - playerGX);
-                var dy = Math.abs(t.y - playerGY);
-                var dist = Math.max(dx, dy);
+                var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
                 
-                if (dist > 3) t.revealed = 0;
-                else if (dist === 3) t.revealed = 1;
-                else if (dist === 2) t.revealed = 1;
-                else t.revealed = 2; // рядом
-
-                if (t.opened) {
-                    t.mesh.visible = false;
-                } else {
+                if (t.opened) { t.mesh.visible = false; }
+                else {
                     t.mesh.visible = true;
-                    if (t.isWall) {
-                        t.mesh.material = (dist <= 1) ? wallMats[0] : (dist <= 2 ? wallMats[1] : wallMats[2]);
+                    if (dist > 2) {
+                        t.mesh.material = t.isWall ? wallMats[2] : doorMats[2];
+                    } else if (dist === 2) {
+                        t.mesh.material = t.isWall ? wallMats[1] : doorMats[1];
                     } else {
-                        t.mesh.material = (dist <= 1) ? doorMats[0] : (dist <= 2 ? doorMats[1] : doorMats[2]);
+                        t.mesh.material = t.isWall ? wallMats[0] : doorMats[0];
                     }
                 }
             }
 
-            // Светлячки над соседними дверями
+            // Светлячки
             var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
-            var flyIndex = 0;
+            var flyIdx = 0;
             for (var i = 0; i < fireflies.length; i++) fireflies[i].sprite.visible = false;
             for (var i = 0; i < 4; i++) {
-                var nx = playerGX + dirs[i].x;
-                var ny = playerGY + dirs[i].y;
+                var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y;
                 if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
                 var t = tileMeshes[ny * size + nx];
                 if (t && !t.isWall && !t.opened) {
                     for (var k = 0; k < 3; k++) {
-                        if (flyIndex >= fireflies.length) break;
-                        var f = fireflies[flyIndex++];
-                        f.baseX = nx - center;
-                        f.baseZ = ny - center;
+                        if (flyIdx >= fireflies.length) break;
+                        var f = fireflies[flyIdx++];
+                        f.baseX = nx - center; f.baseZ = ny - center;
                         f.sprite.visible = true;
                     }
                 }
@@ -383,89 +374,129 @@
         }
 
         // ============================================================
-        //  HP/MP СФЕРЫ
+        //  СКВЕРНА (5% / 10 сек, смерть через 20 сек)
+        // ============================================================
+        var filthTimer = 0;
+        var filthFullSince = 0;
+        var FILTH_DEATH_TIME = 20;
+        var FILTH_SELF_RATE = 10;
+        var FILTH_SELF_AMOUNT = 5;
+        var filthDamageTimer = 0;
+
+        function getFilth() {
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return { cur: 0, max: 100 };
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            return { cur: p.stats.filth, max: p.stats.maxFilth };
+        }
+        function setFilth(v) {
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (!p.stats.maxFilth) p.stats.maxFilth = 100;
+            p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v));
+            if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; }
+            else { filthFullSince = 0; }
+            updateHeroSpheres();
+        }
+        function addFilth(amount) { var f = getFilth(); setFilth(f.cur + amount); }
+        function spendFilth(amount) { var f = getFilth(); if (f.cur < amount) return false; setFilth(f.cur - amount); return true; }
+
+        function updateFilth(dt) {
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+
+            filthTimer += dt;
+            if (filthTimer >= FILTH_SELF_RATE) {
+                filthTimer -= FILTH_SELF_RATE;
+                if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); }
+            }
+
+            if (p.stats.filth >= p.stats.maxFilth) {
+                if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
+                if (performance.now() / 1000 - filthFullSince >= FILTH_DEATH_TIME) {
+                    filthDamageTimer += dt;
+                    if (filthDamageTimer >= 3) {
+                        filthDamageTimer -= 3;
+                        p.stats.hp = Math.max(0, p.stats.hp - 150);
+                        showBloodOverlay();
+                        showCenterText('-150 HP (скверна)', '#ff2020');
+                        updateHeroSpheres();
+                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                        if (p.stats.hp <= 0) { dieFromFilth(); return; }
+                    }
+                }
+            } else { filthFullSince = 0; filthDamageTimer = 0; }
+        }
+
+        // ============================================================
+        //  HUD / СФЕРЫ
         // ============================================================
         function updateHeroSpheres() {
             var p = parent.Sherwood.getPlayer();
             if (!p || !p.stats) return;
-            var hpPercent = p.stats.hp / p.stats.maxHp;
+            var hpPct = p.stats.hp / p.stats.maxHp;
             var lifeFill = document.getElementById('life-fill');
-            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
-            var hpText = document.getElementById('hp-text');
-            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
-            var mana = p.stats.mana || 0;
-            var maxMana = p.stats.maxMana || 100;
-            var manaPercent = mana / maxMana;
+            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPct) * 100) + '% 0 0 0)';
+            document.getElementById('hp-text').textContent = 'HP: ' + Math.floor(p.stats.hp);
+
+            var filth = p.stats.filth || 0, maxF = p.stats.maxFilth || 100;
             var manaFill = document.getElementById('mana-fill');
-            if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - manaPercent) * 100) + '% 0 0 0)';
+            if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filth / maxF) * 100) + '% 0 0 0)';
             var manaText = document.getElementById('mana-text');
-            if (manaText) manaText.textContent = 'MP: ' + Math.floor(mana);
+            if (filth >= maxF) {
+                var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
+                manaText.textContent = '⚠ ' + Math.max(0, left) + 'с';
+                manaText.style.color = '#ff4444';
+            } else {
+                manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%';
+                manaText.style.color = '#fff';
+            }
         }
         setTimeout(updateHeroSpheres, 500);
-        setInterval(updateHeroSpheres, 1000);
 
         // ============================================================
-        //  КЛИК (тап по клетке)
+        //  УПРАВЛЕНИЕ (ТАП)
         // ============================================================
         const raycaster = new THREE.Raycaster();
         const ndc = new THREE.Vector2();
+        var isBattleActive = false;
 
         renderer.domElement.addEventListener('click', (e) => {
-            if (isBattleActive) {
-                // Атака, если бой
-                if (enemySprite && raycaster) {
-                    // клик в бою = атака
-                    attackEnemy();
-                }
-                return;
-            }
+            if (isBattleActive) { if (enemySprite) attackEnemy(); return; }
             ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // Клик по врагу?
+            // Клик по врагу
             if (enemySprite) {
-                var enemyHits = raycaster.intersectObject(enemySprite, false);
-                if (enemyHits.length) {
+                var eHits = raycaster.intersectObject(enemySprite, false);
+                if (eHits.length) {
                     var eDist = Math.abs(playerGX - enemyCell.gx) + Math.abs(playerGY - enemyCell.gy);
                     if (eDist <= 1) { startBattle(); return; }
-                    else { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Слишком далеко'); return; }
+                    else { showCenterText('Далеко', '#888'); return; }
                 }
             }
 
-            // Клик по клеткам-дверям/полу
+            // Клик по клеткам
             var hits = raycaster.intersectObjects(tileMeshes.map(t => t.mesh).filter(m => m.visible), false);
             if (hits.length > 0) {
                 var mesh = hits[0].object;
-                var tile = null;
-                for (var i = 0; i < tileMeshes.length; i++) {
-                    if (tileMeshes[i].mesh === mesh) { tile = tileMeshes[i]; break; }
-                }
+                var tile = tileMeshes.find(t => t.mesh === mesh);
                 if (!tile) return;
 
                 var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
-                if (dist !== 1) { return; } // только соседние
-
-                if (tile.isWall) {
-                    // Стена — нельзя открыть
-                    playSound(soundHit);
-                    return;
-                }
+                if (dist !== 1) { showCenterText('Только рядом', '#888'); return; }
+                if (tile.isWall) { playSound(soundHit); return; }
 
                 if (!tile.opened) {
-                    // Дверь — открываем
-                    tile.opened = true;
-                    tile.mesh.visible = false;
-                    playSound(soundAltar);
+                    tile.opened = true; tile.mesh.visible = false; playSound(soundAltar); updateFog();
                 } else {
-                    // Уже открыто — идём
-                    playerGX = tile.x;
-                    playerGY = tile.y;
+                    playerGX = tile.x; playerGY = tile.y;
                     heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
-                    playSound(soundSteps);
-                    updateHighlights();
-                    updateFog();
-                    checkEnemyProximity();
+                    playSound(soundSteps); updateHighlights(); updateFog();
                 }
             }
         });
@@ -473,115 +504,72 @@
         // ============================================================
         //  БОЙ
         // ============================================================
-        var isBattleActive = false;
-        var enemyHp = 0, enemyMaxHp = 0;
+        var currentEnemyStats = null;
         var battleTimer = null;
-        var playerHitFirst = false;
-
-        if (enemyData) { enemyHp = enemyData.hp; enemyMaxHp = enemyData.hp; }
-
-        function checkEnemyProximity() {
-            if (!enemyData) return;
-            var eDist = Math.abs(playerGX - enemyCell.gx) + Math.abs(playerGY - enemyCell.gy);
-            if (eDist <= 1 && !isBattleActive) {
-                // Автоматически не начинаем, но можно и начать. 
-                // В этой версии — ждём тапа.
-            }
-        }
+        var playerAttackCooldown = 0;
+        var enemyHp = 1000;
 
         function startBattle() {
-            if (isBattleActive || !enemyData) return;
+            if (isBattleActive) return;
             isBattleActive = true;
-            playerHitFirst = false;
             document.getElementById('mob-hp').style.display = 'block';
-            var nameEl = document.getElementById('mob-hp-name');
-            if (nameEl) nameEl.textContent = enemyData.name;
-            updateMobHpBarFill(enemyHp, enemyMaxHp);
+            document.getElementById('mob-hp-name').textContent = 'Враг';
+            enemyHp = 1000;
+            updateMobHpBarFill(enemyHp, 1000);
             playSound(soundHit);
 
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
                 if (!isBattleActive) return;
-                if (!playerHitFirst) return;
                 var p = parent.Sherwood.getPlayer();
                 if (!p) return;
-                var edmg = Math.max(1, Math.floor(enemyData.atk * 0.3));
+                var edmg = Math.max(5, Math.floor(50 * 0.5));
                 p.stats.hp = Math.max(0, p.stats.hp - edmg);
-                if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                addFilth(5);
                 updateHeroSpheres();
                 showBloodOverlay();
-                if (p.stats.hp <= 0) { stopBattle(); onDefeat(); }
+                if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
             }, 1500);
         }
 
         function stopBattle() {
             isBattleActive = false;
-            playerHitFirst = false;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
         }
 
-        function updateMobHpBarFill(hp, maxHp) {
-            if (!maxHp) maxHp = 1;
-            var pct = Math.max(0, Math.min(1, hp / maxHp));
-            var fill = document.getElementById('mob-hp-fill');
-            if (fill) fill.style.clipPath = 'inset(0 ' + (1 - pct) * 100 + '% 0 0)';
-            var txt = document.getElementById('mob-hp-text');
-            if (txt) txt.textContent = 'HP: ' + Math.max(0, hp) + '/' + maxHp;
+        function attackEnemy() {
+            if (!isBattleActive || playerAttackCooldown > 0) return;
+            playerAttackCooldown = 1.0;
+            playSound(soundHit);
+            enemyHp = Math.max(0, enemyHp - 100);
+            updateMobHpBarFill(enemyHp, 1000);
+            if (enemyHp <= 0) {
+                stopBattle();
+                scene.remove(enemySprite);
+                showCenterText('Победа!', '#4caf50');
+                setTimeout(() => { parent.Sherwood.Thicket._onWin(1, 1); }, 1000);
+            }
         }
 
-        document.getElementById('attack-icon').addEventListener('click', function(e) {
+        function updateMobHpBarFill(hp, max) {
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (1 - hp/max) * 100 + '% 0 0)';
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + hp + '/' + max;
+        }
+
+        document.getElementById('attack-icon').addEventListener('click', (e) => {
             e.stopPropagation();
             if (isBattleActive) attackEnemy();
         });
 
-        function attackEnemy() {
-            if (!isBattleActive || !enemyData) return;
-            playerHitFirst = true;
-            var p = parent.Sherwood.getPlayer();
-            playSound(soundHit);
-            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(enemyData.def * 0.5) + Math.floor(Math.random() * 20));
-            enemyHp = Math.max(0, enemyHp - baseDmg);
-            updateMobHpBarFill(enemyHp, enemyMaxHp);
-            if (enemyHp <= 0) { onEnemyKilled(); return; }
-
-            var edmg = Math.max(1, Math.floor(enemyData.atk * 0.3));
-            p.stats.hp = Math.max(0, p.stats.hp - edmg);
-            if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
-            updateHeroSpheres();
-            showBloodOverlay();
-            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
+        function dieFromFilth() {
+            stopBattle(); playSound(soundDefeat);
+            showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020');
+            try { dungeonMusic.pause(); } catch(e){}
+            setTimeout(() => { parent.Sherwood.Thicket._onDefeat(1); }, 1000);
         }
-
-        function onEnemyKilled() {
-            if (!isBattleActive) return;
-            stopBattle();
-            playSound(soundVictory);
-            try {
-                if (parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill && enemyData && enemyData.image) {
-                    parent.Sherwood.Bestiary.registerKill(enemyData.image);
-                }
-            } catch(e) {}
-            if (enemySprite) scene.remove(enemySprite);
-            setTimeout(function() {
-                try { parent.Sherwood.Thicket._onWin(nodeId, diff); } catch(e) {}
-            }, 500);
-        }
-
-        function onDefeat() {
-            playSound(soundDefeat);
-            try { thicketMusic.pause(); } catch(e) {}
-            setTimeout(function() {
-                try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e) {}
-            }, 500);
-        }
-
-        function showBloodOverlay() {
-            var el = document.getElementById('blood-overlay');
-            if (!el) return;
-            el.style.backgroundImage = 'url("assets/assets2/animation/Fine_blood_spray_texture.png")';
-            el.style.opacity = '1';
-            setTimeout(function() { el.style.opacity = '0'; }, 200);
+        function showDeathVideoAndLose() {
+            setTimeout(() => { parent.Sherwood.Thicket._onDefeat(1); }, 1000);
         }
 
         // ============================================================
@@ -590,35 +578,31 @@
         const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.05);
             const t = clock.elapsedTime;
-            
+
+            if (playerAttackCooldown > 0) playerAttackCooldown -= dt;
+            updateFilth(dt);
+
             // Светлячки
             for (var i = 0; i < fireflies.length; i++) {
                 var f = fireflies[i];
                 if (!f.sprite.visible) continue;
                 f.angle += 0.02;
-                var r = 0.3 + Math.sin(t * 1.5 + f.phase) * 0.1;
-                f.sprite.position.set(
-                    f.baseX + Math.cos(f.angle) * r,
-                    0.3 + Math.sin(t * 3 + f.phase) * 0.1,
-                    f.baseZ + Math.sin(f.angle) * r
-                );
+                f.sprite.position.set(f.baseX + Math.cos(f.angle) * 0.3, 0.3 + Math.sin(t * 3 + f.phase) * 0.1, f.baseZ + Math.sin(f.angle) * 0.3);
             }
 
-            // Ореол пульсация
+            // Ореол
             for (var i = 0; i < highlights.length; i++) {
-                if (highlights[i].visible) {
-                    highlights[i].material.opacity = 0.3 + Math.sin(t * 4) * 0.15;
-                }
+                if (highlights[i].visible) highlights[i].material.opacity = 0.3 + Math.sin(t * 4) * 0.15;
             }
 
-            // Герой — дыхание
+            // Герой
             heroSprite.position.y = 0.6 + Math.sin(t * 3) * 0.03;
 
             renderer.render(scene, camera);
         }
 
-        // Инициализация
         updateHighlights();
         updateFog();
         animate();
