@@ -56,10 +56,7 @@
 <body>
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
-    <div id="arrow-counter">
-        <img src="assets/interface/sherwood_hollow_arrow.png" alt="">
-        <span id="arrow-count-text">25</span>
-    </div>
+    <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
@@ -94,568 +91,608 @@
         var currentDungeon = parseInt(urlParams.get('dungeon') || '1');
         var currentFloor = parseInt(urlParams.get('floor') || '1');
         var currentDiff = parseInt(urlParams.get('diff') || '1');
-        
+        if (currentFloor < 1 || currentFloor > 6) currentFloor = 1;
+        if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
+
+        var totalCups = 0;
+        try {
+            if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) totalCups = parent.Sherwood.Dungeon.getTotalCups();
+        } catch(e) {}
+        var difficultyLevel = totalCups + 1;
+
         var ENEMY_POOLS = {
-            1: { 1: { normal: ['plague_crow.png','bone_vulture.png'], boss: 'forest_strangler.png' } },
-            2: { 1: { normal: ['bog_trapper.png','blight_spitter.png'], boss: 'searing_arachnid.png' } },
-            3: { 1: { normal: ['basalt_devourer.png','grotto_brute.png'], boss: 'lost_treasure_hunter.png' } },
-            4: { 1: { normal: ['swamp_viper.png','necromantic_arachnid.png'], boss: 'the_cursed_outlaw_king.png' } }
+            1: {
+                1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
+                2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
+                3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
+                4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' },
+                5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
+                6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
+            },
+            2: {
+                1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' },
+                2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' },
+                3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' },
+                4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' },
+                5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' },
+                6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' }
+            },
+            3: {
+                1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' },
+                2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' },
+                3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' },
+                4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
+                5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' },
+                6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' }
+            },
+            4: {
+                1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' },
+                2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' },
+                3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' },
+                4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' },
+                5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' },
+                6: { normal: ['chaos_knight.png','ash_overlord.png','underground_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' }
+            }
         };
+
         var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor]) || ENEMY_POOLS[1][1];
+        var mult = 1.0 + (difficultyLevel - 1) * 0.2;
         var MOB_PATH = 'assets/all_beasts/';
         var BOSS_PATH = (currentDungeon === 4) ? 'assets/beast_quest/' : 'assets/all_beasts/';
-        var mult = 1.0;
 
-        var soundHit = new Audio('assets/assets2/tune/hit.wav');
-        var soundVictory = new Audio('assets/assets2/tune/victory.wav');
-        var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
-        var soundSteps = new Audio('assets/assets2/tune/steps.wav');
-        var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
-        var soundAltar = new Audio('assets/assets2/tune/altar.wav');
-        var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
-        dungeonMusic.loop = true; dungeonMusic.volume = 0.4;
+        var MOB_NAMES = {
+            'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник', 'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси', 'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб', 'warped_imp.png': 'Искажённый Бес', 'bristle_boar.png': 'Шипастый Секач', 'quill_beast.png': 'Кристальный Иглобрюх', 'grave_borer.png': 'Личинка Короеда', 'acid_devourer.png': 'Кислотный Короед-Пожиратель', 'shard_back.png': 'Шервудский Дикобраз', 'bone_borer.png': 'Костяной Короед-Трупоед', 'bark_beetle.png': 'Жук-Короед', 'blight_beetle_warden.png': 'Чумной Короед-Страж', 'armored_beetle.png': 'Бронированный Короед', 'blighted_werewolf.png': 'Осквернённый Оборотень', 'blight_lord_beetle.png': 'Повелитель Гнили', 'blight_alpha.png': 'Альфа-Скверноискатель', 'yew_blight_wolf.png': 'Волк Тисовой Скверны', 'swamp_slugmouth.png': 'Болотный Слизнерот', 'swamp_gorgymouth.png': 'Скверножаб', 'swamp_drowner.png': 'Болотный Утопленник', 'bog_brute.png': 'Торфяной Труп', 'blighted_oak_golem.png': 'Голем Скверного Дуба', 'oak_golem.png': 'Голем Дуба', 'twigtangle.png': 'Хворост', 'woodland_terror.png': 'Древесный Ужас', 'leshy.png': 'Леший', 'root_executioner.png': 'Корневой Палач', 'leshy_servant.png': 'Слуга Лешего', 'spectral_stag.png': 'Призрачный Олень', 'forest_blight_cyclops.png': 'Лесное Лихо', 'blight_troglodyte.png': 'Лихо-Троглодит', 'blight_oozemouth.png': 'Слизнерот-Громила', 'blight_lord_leshy.png': 'Древний Владыка', 'bog_trapper.png': 'Болотный Капкан', 'blight_spitter.png': 'Скверноплюй', 'swamp_spider.png': 'Болотный Паук', 'ocular_arachnid.png': 'Окулярный Арахнид', 'blight_horn_worm.png': 'Болотный Рогохвост', 'searing_arachnid.png': 'Выжигающий Арахнид', 'swamp_centipede.png': 'Болотная Сколопендра', 'water_hag.png': 'Водная Баба', 'marsh_witch.png': 'Болотная Ведунья', 'blight_snail.png': 'Улитка Скверны', 'ancient_blight_snail.png': 'Древняя Улитка Скверны', 'sherwood_lizard.png': 'Шервудский Ящер', 'peat_lord.png': 'Торфяной Владыка', 'lost_maiden.png': 'Заблудшая Дева', 'bog_witch.png': 'Болотная Ведьма', 'swamp_kikimora.png': 'Болотная Кикимора', 'blight_boletus.png': 'Боровик Скверны', 'swamp_vodyanoy.png': 'Водяной Скверны', 'swamp_drake.png': 'Болотный Дракончик', 'blight_cerberus.png': 'Цербер Скверны', 'putrid_wolf.png': 'Гниющий Волк', 'ripper_wolf.png': 'Волк-Потрошитель', 'blight_fox.png': 'Гнилостная Лиса', 'fox_pack_lord.png': 'Повелитель Стаи', 'swamp_viper.png': 'Болотная Гадюка', 'putrid_rat.png': 'Гнилостная Крыса', 'oppressor_firefly.png': 'Светляк-Угнетатель', 'executioner_cricket.png': 'Сверчок-Палач', 'thorn_moth.png': 'Терновый Мотыль', 'plague_bat.png': 'Чумная Летучая Мышь', 'ash_stalker.png': 'Пепельный Охотник', 'ash_assassin.png': 'Пепельный Ассасин', 'bone_keeper.png': 'Хранитель Костей', 'blight_blade.png': 'Клинок Скверны', 'ash_wraith.png': 'Призрак Пепла', 'ash_overlord.png': 'Владыка Пепла', 'basalt_devourer.png': 'Базальтовый Пожиратель', 'grotto_brute.png': 'Громила Грота', 'cave_watcher.png': 'Пещерный Наблюдатель', 'runic_sentinel.png': 'Рунический Страж', 'ancient_watcher.png': 'Древний Наблюдатель', 'lost_treasure_hunter.png': 'Пропавший Кладоискатель', 'blight_moss_ogre.png': 'Огр Скверного Мха', 'warped_worm.png': 'Искажённый Червь', 'grotto_slug.png': 'Гротный Слизень', 'underground_terror.png': 'Подземный Ужас', 'shadow_maiden.png': 'Теневая Дева', 'cursed_priestess.png': 'Проклятая Жрица', 'mistress_of_the_roots.png': 'Повелительница Корней', 'bone_arachnid.png': 'Костяной Арахнид', 'necromantic_arachnid.png': 'Арахнид-Некромант', 'root_daughter.png': 'Дочь Корней', 'animated_yew.png': 'Оживший Тис', 'rusty_servant.png': 'Ржавый Слуга', 'tormentor.png': 'Истязатель', 'grave_archer.png': 'Могильный Лучник', 'rusty_dread.png': 'Ржавый Страх', 'chaos_swordsman.png': 'Мечник Хаоса', 'chaos_knight.png': 'Рыцарь Хаоса', 'chaos_lord.png': 'Лорд Хаоса', 'chaos_harpy.png': 'Гарпия Хаоса', 'blight_kite.png': 'Коршун Скверны', 'harpy_witch.png': 'Гарпия-Ведьма', 'harpy_hatchling.png': 'Птенец Гарпии', 'harpy_chieftain.png': 'Вождь Гарпий', 'lord_of_the_feathered.png': 'Хозяин Пернатых', 'cave_tormentor.png': 'Пещерный Терзатель', 'blight_keeper.png': 'Хранитель Скверны', 'blight_king.png': 'Скверный Король', 'underground_guardian.png': 'Страж Преисподней', 'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель', 'the_cursed_outlaw_king.png': 'Проклятый Король Разбойников', 'ancient_crypt_warden.png': 'Древний Хранитель Склепа', 'echo_of_the_triumvirate.png': 'Эхо Трех Порталов', 'sacred_tree_executioner.png': 'Палач Священного Древа', 'sherwood_abomination.png': 'Шервудское Отродье', 'the_primordial_core.png': 'Изначальный Стержень'
+        };
 
-        setTimeout(function(){ dungeonMusic.play().catch(function(){}); }, 300);
+        function getMobName(imgPath) { if (!imgPath) return 'Враг'; var fname = imgPath.split('/').pop(); return MOB_NAMES[fname] || 'Враг'; }
+
+        var playerArrows = 25; var ARROWS_MAX_START = 25;
+        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; updateArrowCounter(); return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; updateArrowCounter(); return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } updateArrowCounter(); }
+        function updateArrowCounter() { var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows; var counter = document.getElementById('arrow-counter'); if (counter) { if (playerArrows <= 3) counter.classList.add('low'); else counter.classList.remove('low'); } }
+        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; } return false; }
+        function addArrows(n) { playerArrows += n; updateArrowCounter(); }
+        setTimeout(loadArrowsFromBag, 700);
+
+        var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 5, FILTH_HIT_AMOUNT = 5;
+        function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
+        function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; } else { filthFullSince = 0; } updateHeroSpheres(); }
+        function addFilth(amount) { var f = getFilth(); setFilth(f.cur + amount); }
+        function spendFilth(amount) { var f = getFilth(); if (f.cur < amount) return false; setFilth(f.cur - amount); return true; }
+
+        var soundHit = new Audio('assets/assets2/tune/hit.wav'); var soundVictory = new Audio('assets/assets2/tune/victory.wav'); var soundDefeat = new Audio('assets/assets2/tune/defeat.wav'); var soundSteps = new Audio('assets/assets2/tune/steps.wav'); var soundChest = new Audio('assets/assets2/tune/chest_open.wav'); var soundAltar = new Audio('assets/assets2/tune/altar.wav'); var soundCauldron = new Audio('assets/assets2/tune/cauldron.wav'); var soundLoot = new Audio('assets/assets2/tune/loot_fly.wav'); var soundArrowPick = new Audio('assets/assets2/tune/loot_fly.wav'); var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg'); dungeonMusic.loop = true; dungeonMusic.volume = 0.4;
+
+        function stopAllParentMusic() { try { if (parent) { if (parent.audioPlayer) { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } if (typeof parent.stopMainMusic === 'function') parent.stopMainMusic(); if (parent.UI && parent.UI._currentMusic) { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; } } } catch(e){} }
+        setTimeout(function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); }, 300);
+        window.addEventListener('click', function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); });
+        setInterval(stopAllParentMusic, 500);
+
         function playSound(audio) { try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {} }
-        function exitDungeon() {
-            try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){}
-            try {
-                if (parent && parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
-                else if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon();
-            } catch(e) {}
-        }
+        var stepsPlaying = false; function startSteps() { if (stepsPlaying) return; stepsPlaying = true; try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} } function stopSteps() { stepsPlaying = false; try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
+
+        function exitDungeon() { stopSteps(); try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){} try { if (parent.UI) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; } } catch(e){} try { if (parent && parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon(); } catch(e) {} }
         window.exitDungeon = exitDungeon;
 
-        function showCenterText(text, color) {
-            var el = document.createElement('div');
-            el.textContent = text;
-            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:24px;font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;';
-            document.body.appendChild(el);
-            requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; });
-            setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900);
-            setTimeout(function() { el.remove(); }, 1900);
-        }
+        function showCenterText(text, color) { var el = document.createElement('div'); var fontSize = window.innerWidth <= 600 ? '22px' : '36px'; el.textContent = text; el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:' + fontSize + ';font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;'; document.body.appendChild(el); requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; }); setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900); setTimeout(function() { el.remove(); }, 1900); }
 
-        var bloodTextures = ['assets/assets2/animation/Fine_blood_spray_texture.png'].map(function(path) { return new THREE.TextureLoader().load(path); });
-        function showBloodOverlay() {
-            var el = document.getElementById('blood-overlay');
-            if (!el) return;
-            el.style.backgroundImage = 'url("' + bloodTextures[0].image.src + '")';
-            el.style.transition = 'opacity 0.1s ease-out';
-            el.style.opacity = '1';
-            setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
-        }
+        var bloodOverlayTextures = ['assets/assets2/animation/Fine_blood_spray_texture.png', 'assets/assets2/animation/Fine_blood_spray_texture (1).png', 'assets/assets2/animation/Fine_blood_spray_texture (2).png'];
+        var bloodOverlayTimeout1 = null, bloodOverlayTimeout2 = null;
+        function showBloodOverlay() { var el = document.getElementById('blood-overlay'); if (!el) return; var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)]; el.style.backgroundImage = 'url("' + tex + '")'; el.style.transition = 'opacity 0.1s ease-out'; el.style.opacity = '1'; clearTimeout(bloodOverlayTimeout1); clearTimeout(bloodOverlayTimeout2); bloodOverlayTimeout1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200); bloodOverlayTimeout2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200); }
 
-        // ============================================================
-        //  THREE.JS СЦЕНА (ВИД СВЕРХУ)
-        // ============================================================
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0805);
-        
-        const size = 16;
-        const cellSize = 1;
-        const center = Math.floor(size / 2);
-        
-        const viewSize = 5;
-        const aspect = window.innerWidth / window.innerHeight;
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0805);
+        const size = 16; const cellSize = 1; const center = Math.floor(size / 2);
+        const viewSize = 5; const aspect = window.innerWidth / window.innerHeight;
         const camera = new THREE.OrthographicCamera(-viewSize * aspect / 2, viewSize * aspect / 2, viewSize / 2, -viewSize / 2, 0.1, 100);
-        camera.position.set(0, 20, 0);
-        camera.lookAt(0, 0, 0);
+        camera.position.set(0, 20, 0); camera.lookAt(0, 0, 0);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: false });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setClearColor(0x0a0805, 1);
+        const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
-        // ============================================================
-        //  ЛАБИРИНТ
-        // ============================================================
-        const map = [];
-        for (let i = 0; i < size; i++) {
-            map[i] = [];
-            for (let j = 0; j < size; j++) { map[i][j] = 1; }
-        }
-
+        const map = []; for (let i = 0; i < size; i++) { map[i] = []; for (let j = 0; j < size; j++) { map[i][j] = 1; } }
         function generateMaze() {
-            const stack = [];
-            const startX = 1, startY = 1;
-            map[startY][startX] = 0;
-            stack.push({ x: startX, y: startY });
+            const stack = []; const startX = 1, startY = 1; map[startY][startX] = 0; stack.push({ x: startX, y: startY });
             const dirs = [{ x: 0, y: -2 }, { x: 0, y: 2 }, { x: -2, y: 0 }, { x: 2, y: 0 }];
             while (stack.length > 0) {
-                const current = stack[stack.length - 1];
-                const neighbors = [];
+                const current = stack[stack.length - 1]; const neighbors = [];
                 for (const dir of dirs) {
-                    const nx = current.x + dir.x;
-                    const ny = current.y + dir.y;
-                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) {
-                        neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 });
-                    }
+                    const nx = current.x + dir.x, ny = current.y + dir.y;
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) { neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 }); }
                 }
                 if (neighbors.length > 0) {
                     const next = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    map[next.y][next.x] = 0;
-                    map[current.y + next.dy][current.x + next.dx] = 0;
-                    stack.push({ x: next.x, y: next.y });
+                    map[next.y][next.x] = 0; map[current.y + next.dy][current.x + next.dx] = 0; stack.push({ x: next.x, y: next.y });
                 } else { stack.pop(); }
             }
         }
         generateMaze();
 
-        var enemyCell = (function findFarthest() {
-            var visited = {};
-            var queue = [{ x: 1, y: 1, dist: 0 }];
-            visited[1 * size + 1] = true;
-            var farthest = { x: 1, y: 1, dist: 0 };
-            var dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+        var exitCell = (function findFarthestCell() {
+            var startGX = 1, startGY = 1, visited = {}; var queue = [{ x: startGX, y: startGY, dist: 0 }]; visited[startGY * size + startGX] = true;
+            var farthest = { x: startGX, y: startGY, dist: 0 }; var dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
             while (queue.length) {
-                var cur = queue.shift();
-                if (cur.dist > farthest.dist) farthest = cur;
+                var cur = queue.shift(); if (cur.dist > farthest.dist) farthest = cur;
                 for (var d = 0; d < dirs.length; d++) {
                     var nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y;
                     if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
-                    if (map[ny][nx] !== 0) continue;
-                    var key = ny * size + nx;
-                    if (visited[key]) continue;
-                    visited[key] = true;
-                    queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
+                    var v = map[ny][nx]; if (v !== 0 && v !== 3) continue; var key = ny * size + nx; if (visited[key]) continue;
+                    visited[key] = true; queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
                 }
-            }
-            return { gx: farthest.x, gy: farthest.y };
+            } return { gx: farthest.x, gy: farthest.y };
         })();
 
-        // ============================================================
-        //  ТЕКСТУРЫ
-        // ============================================================
+        function isWallCell(x, y) { if (x < 0 || y < 0 || x >= size || y >= size) return true; return map[y][x] === 1; }
+        
         const loader = new THREE.TextureLoader();
-        const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
-        
-        var enemyTex = null;
-        var enemyImgPath = 'assets/all_beasts/plague_crow.png';
-        enemyTex = loader.load(enemyImgPath);
+        const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
+        const lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
+        const openChestTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
+        const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
+        const potionHpTex = loader.load('assets/assets2/game_details/resource_life_potion.png');
+        const potionFilthTex = loader.load('assets/assets2/game_details/potion_of_filth.png');
+        const cauldronImg = loader.load('assets/assets2/game_details/cauldron_first_dungeon.png');
+        const altarImg = loader.load('assets/assets2/game_details/altar_of_the_first_dungeon.png');
+        const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
+        const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
 
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
-        
-        var doorMats = [
-            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }),
-            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }),
-            new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })
-        ];
-        var wallMats = [
-            new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.95 }),
-            new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.5 }),
-            new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.2 })
-        ];
+        var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
+        var wallMats = [new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.2 })];
 
-        const group = new THREE.Group();
-        scene.add(group);
-
+        const group = new THREE.Group(); scene.add(group);
         var tileMeshes = [];
-
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
-                const x = col - center;
-                const z = row - center;
-                const isWall = (map[row][col] === 1);
-                
+                const x = col - center, z = row - center, isWall = (map[row][col] === 1);
                 const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-                floor.rotation.x = -Math.PI / 2;
-                floor.position.set(x, 0, z);
-                floor.visible = false;
-                floor.userData = { isFloor: true, gridX: col, gridY: row };
-                group.add(floor);
+                floor.rotation.x = -Math.PI / 2; floor.position.set(x, 0, z); floor.visible = false;
+                floor.userData = { isFloor: true, gridX: col, gridY: row }; group.add(floor);
 
                 const door = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.98, cellSize * 0.98), doorMats[2]);
-                door.rotation.x = -Math.PI / 2;
-                door.position.set(x, 0.05, z);
-                door.userData = { isDoor: true, gridX: col, gridY: row };
-                group.add(door);
+                door.rotation.x = -Math.PI / 2; door.position.set(x, 0.05, z);
+                door.userData = { isDoor: true, gridX: col, gridY: row }; group.add(door);
 
                 var isStartCell = (col === 1 && row === 1);
-                if (isStartCell) {
-                    door.visible = false;
-                    floor.visible = true;
-                }
+                if (isStartCell) { door.visible = false; floor.visible = true; }
+                tileMeshes.push({ mesh: door, floorMesh: floor, x: col, y: row, isWall: isWall, opened: isStartCell });
+            }
+        }
+        
+        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
+        heroSprite.scale.set(0.85, 0.85, 1); scene.add(heroSprite);
+        let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
+        
+        var playerPos = new THREE.Vector3(playerGX - center, 0, playerGY - center);
+        var playerYaw = 0;
 
-                tileMeshes.push({ 
-                    mesh: door, 
-                    floorMesh: floor,
-                    x: col, 
-                    y: row, 
-                    isWall: isWall, 
-                    opened: isStartCell 
+        var highlights = []; for (var i = 0; i < 4; i++) { var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 })); hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.08, 0); hl.visible = false; scene.add(hl); highlights.push(hl); }
+        function updateHighlights() { var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]; for (var i = 0; i < 4; i++) { var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; } highlights[i].position.set(nx - center, 0.08, ny - center); highlights[i].visible = true; } }
+        function updateFog() {
+            for (var i = 0; i < tileMeshes.length; i++) {
+                var t = tileMeshes[i]; var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
+                if (t.opened) { t.mesh.visible = false; if (t.floorMesh) t.floorMesh.visible = true; }
+                else { t.mesh.visible = true; if (t.floorMesh) t.floorMesh.visible = false; if (dist > 2) t.mesh.material = t.isWall ? wallMats[2] : doorMats[2]; else if (dist === 2) t.mesh.material = t.isWall ? wallMats[1] : doorMats[1]; else t.mesh.material = t.isWall ? wallMats[0] : doorMats[0]; }
+            }
+        }
+
+        var objects = []; var lootBags = []; var LOOT_TYPES = ['potion_hp', 'potion_filth', 'cauldron', 'altar', 'arrow_pickup'];
+        var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0 };
+        
+        function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
+        function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
+
+        function getRandomFreeCell() {
+            var attempts = 0;
+            while (attempts < 300) {
+                attempts++;
+                var x = 1 + Math.floor(Math.random() * (size - 2));
+                var y = 1 + Math.floor(Math.random() * (size - 2));
+                if (map[y][x] === 0) {
+                    if (x === 1 && y === 1) continue;
+                    if (x === exitCell.gx && y === exitCell.gy) continue;
+                    var tooClose = false;
+                    var pg = worldToGrid(playerPos.x, playerPos.z);
+                    if (Math.abs(pg.gx - x) + Math.abs(pg.gy - y) < 3) tooClose = true;
+                    for (var i = 0; i < objects.length && !tooClose; i++) {
+                        if (Math.abs(objects[i].x - x) + Math.abs(objects[i].y - y) < 2) { tooClose = true; break; }
+                    }
+                    if (!tooClose) return { x: x, y: y };
+                }
+            }
+            return { x: 1, y: 1 };
+        }
+
+        var objectTypes = [
+            { type: 'enemy',      count: 15 },
+            { type: 'potion_hp',  count: 3,  img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_filth', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'potion_high',  count: 3, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
+            { type: 'cauldron',   count: 3,  img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'altar',      count: 3,  img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
+            { type: 'arrow_pickup', count: 6, img: 'assets/interface/sherwood_hollow_arrow.png' }
+        ];
+
+        var enemyImgList = []; enemyImgList.push(BOSS_PATH + currentPool.boss);
+        for (var ei = 0; ei < 14; ei++) { var enName = currentPool.normal[Math.floor(Math.random() * currentPool.normal.length)]; enemyImgList.push(MOB_PATH + enName); }
+        enemyImgList.sort(function() { return Math.random() - 0.5; });
+        var enemyIndex = 0;
+
+        for (var t = 0; t < objectTypes.length; t++) {
+            var typeDef = objectTypes[t];
+            for (var i = 0; i < typeDef.count; i++) {
+                var pos = getRandomFreeCell();
+                var imgPath = typeDef.img;
+                var isBoss = false;
+                if (typeDef.type === 'enemy') {
+                    imgPath = enemyImgList[enemyIndex];
+                    if (imgPath.indexOf(currentPool.boss) !== -1) isBoss = true;
+                    enemyIndex++;
+                }
+                var baseHp = 1000 + Math.floor(Math.random() * 500);
+                var baseAtk = 50 + Math.floor(Math.random() * 20);
+                var baseDef = 10 + Math.floor(Math.random() * 10);
+                if (isBoss) { baseHp *= 3; baseAtk *= 2; baseDef *= 2; }
+                objects.push({
+                    type: typeDef.type, x: pos.x, y: pos.y, img: imgPath, collected: false, attacking: false, stepTimer: 0,
+                    hp: Math.floor(baseHp * mult), maxHp: Math.floor(baseHp * mult), atk: Math.floor(baseAtk * mult), def: Math.floor(baseDef * mult),
+                    isBoss: isBoss, fleeTimer: 0, fleeCooldown: 0, _chasing: false, used: false
                 });
             }
         }
 
-        // ============================================================
-        //  СВЕТЛЯЧКИ
-        // ============================================================
-        var fireflyTex = (function() {
-            var c = document.createElement('canvas'); c.width = 64; c.height = 64;
-            var ctx = c.getContext('2d');
-            var g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            g.addColorStop(0, 'rgba(255, 240, 160, 1)');
-            g.addColorStop(0.5, 'rgba(255, 200, 80, 0.5)');
-            g.addColorStop(1, 'rgba(255, 200, 80, 0)');
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI*2); ctx.fill();
-            return new THREE.CanvasTexture(c);
-        })();
-
-        var fireflies = [];
-        for (var i = 0; i < 20; i++) {
-            var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireflyTex, transparent: true, blending: THREE.AdditiveBlending }));
-            var s = 0.15 + Math.random() * 0.1;
-            spr.scale.set(s, s, 1); spr.visible = false;
-            scene.add(spr);
-            fireflies.push({ sprite: spr, baseX: 0, baseZ: 0, angle: Math.random() * Math.PI * 2, phase: Math.random() * Math.PI * 2 });
+        for (var i = 0; i < objects.length; i++) {
+            var obj = objects[i]; var x = obj.x - Math.floor(size / 2); var z = obj.y - Math.floor(size / 2);
+            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
+            sprite.position.set(x, 0.1, z);
+            if (obj.type === 'enemy') { var scale = obj.isBoss ? 1.5 : 1.05; sprite.scale.set(scale, scale, 1); sprite.position.y = scale / 2; }
+            else { sprite.scale.set(0.55, 0.55, 1); sprite.position.y = 0.35; }
+            sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
+            group.add(sprite); obj.mesh = sprite;
         }
 
-        // ============================================================
-        //  ГЕРОЙ И ВРАГ
-        // ============================================================
-        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
-        heroSprite.scale.set(0.85, 0.85, 1);
-        scene.add(heroSprite);
+        var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
+        var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy), exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
+        var exitHoriz = exitWL && exitWR;
+        var exitDoorMat = new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true });
+        var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), exitDoorMat);
+        exitDoor.rotation.x = -Math.PI / 2; exitDoor.position.set(exitPos.x, 0.06, exitPos.z); group.add(exitDoor);
 
-        let playerGX = 1, playerGY = 1;
-        heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
-
-        const enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: enemyTex, transparent: true }));
-        enemySprite.scale.set(0.8, 0.8, 1);
-        enemySprite.position.set(enemyCell.gx - center, 0.6, enemyCell.gy - center);
-        scene.add(enemySprite);
-
-        // Ореол (сделан мягким и полупрозрачным)
-        var highlights = [];
-        for (var i = 0; i < 4; i++) {
-            var hl = new THREE.Mesh(
-                new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), 
-                new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 }) // 👈 Мягкое золото
-            );
-            hl.rotation.x = -Math.PI / 2; 
-            hl.position.set(0, 0.08, 0); 
-            hl.visible = false;
-            scene.add(hl);
-            highlights.push(hl);
+        var exitIsOpen = false;
+        function checkExitDoor() {
+            var alive = 0;
+            for (var i = 0; i < objects.length; i++) { if (objects[i].type === 'enemy' && !objects[i].collected) alive++; }
+            if (alive === 0 && !exitIsOpen) { exitIsOpen = true; exitDoor.material.map = openDoorTex; exitDoor.material.needsUpdate = true; showCenterText('Выход открыт!', '#4caf50'); }
         }
 
-        function updateHighlights() {
-            var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
-            for (var i = 0; i < 4; i++) {
-                var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y;
-                if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; }
-                highlights[i].position.set(nx - center, 0.08, ny - center);
-                highlights[i].visible = true;
-            }
+        var lootBagTex = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
+        var emptyBagTex = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
+
+        function spawnLootBag(gx, gy, isBoss) {
+            var w = gridToWorld(gx, gy); var texture = isBoss ? lockedChestTex : lootBagTex;
+            var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1, depthWrite: false }));
+            var sc = isBoss ? 0.85 : 0.65; spr.scale.set(sc, sc, 1); spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
+            spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss }; group.add(spr);
+            var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss }; spr.userData.objRef = bag; lootBags.push(bag);
         }
 
-        function updateFog() {
-            var startTile = tileMeshes[1 * size + 1];
-            if (startTile) {
-                startTile.opened = true;
-                startTile.mesh.visible = false;
-                if (startTile.floorMesh) startTile.floorMesh.visible = true;
-            }
-            for (var i = 0; i < tileMeshes.length; i++) {
-                var t = tileMeshes[i];
-                var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
-                
-                if (t.opened) { 
-                    t.mesh.visible = false; 
-                    if (t.floorMesh) t.floorMesh.visible = true;
-                }
-                else {
-                    t.mesh.visible = true;
-                    if (t.floorMesh) t.floorMesh.visible = false;
-                    
-                    if (dist > 2) {
-                        t.mesh.material = t.isWall ? wallMats[2] : doorMats[2];
-                    } else if (dist === 2) {
-                        t.mesh.material = t.isWall ? wallMats[1] : doorMats[1];
-                    } else {
-                        t.mesh.material = t.isWall ? wallMats[0] : doorMats[0];
-                    }
-                }
-            }
-
-            var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
-            var flyIdx = 0;
-            for (var i = 0; i < fireflies.length; i++) fireflies[i].sprite.visible = false;
-            for (var i = 0; i < 4; i++) {
-                var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y;
-                if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
-                var t = tileMeshes[ny * size + nx];
-                if (t && !t.isWall && !t.opened) {
-                    for (var k = 0; k < 3; k++) {
-                        if (flyIdx >= fireflies.length) break;
-                        var f = fireflies[flyIdx++];
-                        f.baseX = nx - center; f.baseZ = ny - center;
-                        f.sprite.visible = true;
-                    }
-                }
-            }
+        function pickArrowFromFloor(obj) {
+            if (!obj || obj.collected) return; obj.collected = true; addArrows(5); showCenterText('+5 стрел', '#c9a040'); playSound(soundArrowPick);
+            if (obj.mesh) group.remove(obj.mesh); updateLootButton(); checkObjects();
         }
 
-        // ============================================================
-        //  СКВЕРНА
-        // ============================================================
-        var filthTimer = 0;
-        var filthFullSince = 0;
-        var FILTH_DEATH_TIME = 20;
-        var FILTH_SELF_RATE = 10;
-        var FILTH_SELF_AMOUNT = 5;
+        function applyLootEffect(obj) {
+            if (!obj) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
+            if (obj.type === 'potion_hp') { var addHp = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += addHp; showCenterText('+' + addHp + ' HP', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
+            else if (obj.type === 'potion_filth') { var f1 = getFilth(); setFilth(Math.max(0, f1.cur - f1.max * 0.5)); showCenterText('-50% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
+            else if (obj.type === 'potion_high') { var heal2 = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += heal2; setFilth(Math.max(0, getFilth().cur - getFilth().max * 0.8)); showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
+            else if (obj.type === 'cauldron') { if (obj.used) return; obj.used = true; setFilth(0); showCenterText('Скверна снята', '#4caf50'); playSound(soundCauldron); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
+            else if (obj.type === 'altar') { if (obj.used) return; obj.used = true; p.stats.hp = p.stats.maxHp; if (parent.Sherwood.addExp) parent.Sherwood.addExp(200 + currentFloor * 50); showCenterText('Полное HP + опыт', '#4caf50'); playSound(soundAltar); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
+            else if (obj.type === 'arrow_pickup') { pickArrowFromFloor(obj); return; }
+            updateHeroSpheres(); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); updateLootButton(); checkObjects();
+        }
+
+        function openLootBag(bag) {
+            if (!bag || bag.opened) return; bag.opened = true; var openTex = bag.isBoss ? openChestTex : emptyBagTex;
+            bag.mesh.material.map = openTex; bag.mesh.material.needsUpdate = true; playSound(soundChest);
+            var p = parent.Sherwood.getPlayer(); if (!p) return;
+            var exp = 50 + Math.floor(Math.random() * 100), gold = 15 + Math.floor(Math.random() * 25), silver = 5 + Math.floor(Math.random() * 15);
+            var arrowDrop = 2 + Math.floor(Math.random() * 2); addArrows(arrowDrop);
+            var resources = { skins: 1, entranceTickets: Math.random() < 0.25 ? 1 : 0, amuletTablets: Math.random() < 0.3 ? 1 : 0, ringTablets: Math.random() < 0.3 ? 1 : 0, skinTablets: Math.random() < 0.25 ? 1 : 0, skinDrawings: Math.random() < 0.2 ? 1 : 0, portalToken1: Math.random() < 0.3 ? 1 : 0, branchDamnedYew: Math.random() < 0.3 ? 1 : 0 };
+            if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) { parent.Sherwood.Bag.addLoot({ gold: gold, silver: silver, exp: exp, skins: resources.skins, entranceTickets: resources.entranceTickets, amuletTablets: resources.amuletTablets, ringTablets: resources.ringTablets, skinTablets: resources.skinTablets, skinDrawings: resources.skinDrawings, portalToken1: resources.portalToken1, branchDamnedYew: resources.branchDamnedYew }); }
+            else { if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp); if (parent.Sherwood.addResource) { parent.Sherwood.addResource('gold', gold); parent.Sherwood.addResource('silver', silver); for (var key in resources) { if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]); } } }
+            runLoot.exp += exp; runLoot.gold += gold; runLoot.silver += silver;
+            for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
+            showCenterText('+' + arrowDrop + ' стрел', '#c9a040'); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+        }
+
+        var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png', 'assets/assets2/animation/blood_5.png'];
+        var bloodTextures = bloodSprites.map(function(path) { return loader.load(path); });
+        var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+        hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false; scene.add(hitFlashSprite);
+
+        var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
+        var battleTimer = null, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0, playerHitFirst = false, enemyStunned = 0, playerStunned = 0, rageCharges = 0;
+        var vampirismBuff = 0, vampirismReady = false;
+        var hitSprites = ['strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png', 'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'];
+        var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
+        var cameraShake = 0;
+
+        function knockbackEnemy(sprite, fromX, fromZ) {
+            if (!sprite) return; enemyKnockback.active = true; enemyKnockback.sprite = sprite; enemyKnockback.originalX = sprite.position.x; enemyKnockback.originalZ = sprite.position.z;
+            var dx = sprite.position.x - fromX, dz = sprite.position.z - fromZ, len = Math.hypot(dx, dz) || 1, power = 0.10;
+            enemyKnockback.dx = (dx / len) * power; enemyKnockback.dz = (dz / len) * power; enemyKnockback.t = 0;
+        }
+
+        function updateHeroSpheres() {
+            var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
+            var hpPercent = p.stats.hp / p.stats.maxHp; var lifeFill = document.getElementById('life-fill'); if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            var hpText = document.getElementById('hp-text'); if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            var filth = p.stats.filth, maxFilth = p.stats.maxFilth, filthPercent = filth / maxFilth;
+            var manaFill = document.getElementById('mana-fill'); if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filthPercent) * 100) + '% 0 0 0)';
+            var manaText = document.getElementById('mana-text');
+            if (manaText) {
+                if (filth >= maxFilth) { var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince)); if (left < 0) left = 0; manaText.textContent = '⚠ ' + left + 'с'; manaText.style.color = '#ff4444'; }
+                else { manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%'; manaText.style.color = '#fff'; }
+            }
+        }
+        setTimeout(updateHeroSpheres, 500);
+
         var filthDamageTimer = 0;
-
-        function getFilth() {
-            var p = parent.Sherwood.getPlayer();
-            if (!p) return { cur: 0, max: 100 };
-            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
-            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
-            return { cur: p.stats.filth, max: p.stats.maxFilth };
-        }
-        function setFilth(v) {
-            var p = parent.Sherwood.getPlayer();
-            if (!p) return;
-            if (!p.stats.maxFilth) p.stats.maxFilth = 100;
-            p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v));
-            if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; }
-            else { filthFullSince = 0; }
-            updateHeroSpheres();
-        }
-        function addFilth(amount) { var f = getFilth(); setFilth(f.cur + amount); }
-        function spendFilth(amount) { var f = getFilth(); if (f.cur < amount) return false; setFilth(f.cur - amount); return true; }
-
         function updateFilth(dt) {
-            var p = parent.Sherwood.getPlayer();
-            if (!p) return;
-            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
-            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
-
+            var p = parent.Sherwood.getPlayer(); if (!p) return;
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
             filthTimer += dt;
-            if (filthTimer >= FILTH_SELF_RATE) {
-                filthTimer -= FILTH_SELF_RATE;
-                if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); }
-            }
-
+            if (filthTimer >= FILTH_SELF_RATE) { filthTimer -= FILTH_SELF_RATE; if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); } }
             if (p.stats.filth >= p.stats.maxFilth) {
                 if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
                 if (performance.now() / 1000 - filthFullSince >= FILTH_DEATH_TIME) {
                     filthDamageTimer += dt;
                     if (filthDamageTimer >= 3) {
-                        filthDamageTimer -= 3;
-                        p.stats.hp = Math.max(0, p.stats.hp - 150);
-                        showBloodOverlay();
-                        showCenterText('-150 HP (скверна)', '#ff2020');
-                        updateHeroSpheres();
-                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
-                        if (p.stats.hp <= 0) { dieFromFilth(); return; }
+                        filthDamageTimer -= 3; p.stats.hp = Math.max(0, p.stats.hp - 150); showBloodOverlay(); showCenterText('-150 HP (скверна)', '#ff2020'); updateHeroSpheres();
+                        if (p.stats.hp <= 0) { filthFullSince = 0; filthDamageTimer = 0; dieFromFilth(); return; }
                     }
                 }
             } else { filthFullSince = 0; filthDamageTimer = 0; }
+            if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
+            if (playerAttackCooldown > 0) playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
+            if (enemyStunned > 0) enemyStunned = Math.max(0, enemyStunned - dt);
+            if (vampirismBuff > 0) vampirismBuff = Math.max(0, vampirismBuff - dt);
         }
 
-        // ============================================================
-        //  HUD / СФЕРЫ
-        // ============================================================
-        function updateHeroSpheres() {
-            var p = parent.Sherwood.getPlayer();
-            if (!p || !p.stats) return;
-            var hpPct = p.stats.hp / p.stats.maxHp;
-            var lifeFill = document.getElementById('life-fill');
-            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPct) * 100) + '% 0 0 0)';
-            document.getElementById('hp-text').textContent = 'HP: ' + Math.floor(p.stats.hp);
+        function dieFromFilth() { if (isBattleActive) stopBattle(); playSound(soundDefeat); showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020'); try { dungeonMusic.pause(); } catch(e){} showDeathVideoAndLose(); }
+        function showDeathVideoAndLose() {
+            stopSteps(); try { if (dungeonMusic) dungeonMusic.pause(); } catch(e){}
+            var video = document.createElement('video'); video.src = 'assets/assets2/animation/background2.webm'; video.autoplay = true; video.muted = false; video.playsInline = true;
+            video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;'; document.body.appendChild(video);
+            var finished = false; function finish() { if (finished) return; finished = true; try { video.remove(); } catch(e){} loseDungeon(); }
+            video.onended = finish; video.onerror = finish; setTimeout(finish, 15000);
+        }
 
-            var filth = p.stats.filth || 0, maxF = p.stats.maxFilth || 100;
-            var manaFill = document.getElementById('mana-fill');
-            if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filth / maxF) * 100) + '% 0 0 0)';
-            var manaText = document.getElementById('mana-text');
-            if (filth >= maxF) {
-                var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
-                manaText.textContent = '⚠ ' + Math.max(0, left) + 'с';
-                manaText.style.color = '#ff4444';
-            } else {
-                manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%';
-                manaText.style.color = '#fff';
+        function checkObjects() { checkExitDoor(); }
+
+        function startBattle(obj) {
+            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
+            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
+            waypoints = []; moving = false; stopSteps();
+
+            vampirismReady = false; var p = parent.Sherwood.getPlayer();
+            if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
+            document.getElementById('mob-hp').style.display = 'block';
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            var nameEl = document.getElementById('mob-hp-name'); if (nameEl) nameEl.textContent = getMobName(obj.img);
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)'; playSound(soundHit);
+
+            if (battleTimer) clearInterval(battleTimer);
+            battleTimer = setInterval(function() {
+                if (!isBattleActive || !playerHitFirst) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
+                if (enemyStunned > 0 || playerStunned > 0) return;
+                var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
+                if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
+                if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp; document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
+                p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay();
+                if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
+            }, 1000);
+        }
+
+        function stopBattle() { isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0; if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none'; currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; }
+
+        function onEnemyKilled() {
+            if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
+            if (currentEnemyObj) {
+                spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
+                try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
+                currentEnemyObj.collected = true; if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
             }
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; checkObjects();
         }
-        setTimeout(updateHeroSpheres, 500);
+
+        function attackEnemy() {
+            if (!isBattleActive || !currentEnemyStats || !parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            if (playerStunned > 0) { showCenterText('ОГЛУШЁН!', '#888'); return; }
+            if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
+            var p = parent.Sherwood.getPlayer(); playSound(soundHit);
+            var arrowsNeeded = (rageCharges > 0) ? 2 : 1; var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) { useArrow(arrowsNeeded); } else { if (playerArrows > 0) useArrow(1); else showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
+            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
+            if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
+            if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
+            if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
+            var dmg = baseDmg; currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+            if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) { var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100; var heal = Math.floor(dmg * vampPercent); if (heal > 0) { p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); updateHeroSpheres(); } }
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+            if (currentEnemySprite) {
+                var spriteW = currentEnemySprite.scale.x, spriteH = currentEnemySprite.scale.y; var ox = (Math.random() - 0.5) * spriteW * 0.7, oy = (Math.random() - 0.5) * spriteH * 0.7;
+                hitFlashSprite.position.copy(currentEnemySprite.position); hitFlashSprite.position.x += ox; hitFlashSprite.position.y += oy;
+                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)]; hitFlashSprite.material.needsUpdate = true;
+                hitFlashSprite.visible = true; clearTimeout(pushTimer); pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+                knockbackEnemy(currentEnemySprite, playerPos.x, playerPos.z); cameraShake = 0.06;
+            }
+            if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+            if (enemyStunned > 0) { updateHeroSpheres(); return; }
+            var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
+            if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
+            if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp; document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
+            p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay();
+            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showDeathVideoAndLose(); }
+        }
+
+        function updateMobHpBar() {
+            if (!isBattleActive || !currentEnemySprite) return; var worldPos = currentEnemySprite.position.clone(); worldPos.y += 0.55; worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth; var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            document.getElementById('mob-hp').style.left = x + 'px'; document.getElementById('mob-hp').style.top = y + 'px';
+        }
 
         // ============================================================
-        //  УПРАВЛЕНИЕ (ТАП) — ИСПРАВЛЕНО
+        //  ТАПЫ И ДВИЖЕНИЕ
         // ============================================================
-        const raycaster = new THREE.Raycaster();
-        const ndc = new THREE.Vector2();
-        var isBattleActive = false;
+        const raycaster = new THREE.Raycaster(); const ndc = new THREE.Vector2();
+        var waypoints = []; var moving = false; const MOVE_SPEED = 2.0;
 
         renderer.domElement.addEventListener('click', (e) => {
-            if (isBattleActive) { if (enemySprite) attackEnemy(); return; }
-            ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
-            ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(ndc, camera);
+            if (isBattleActive) { if (currentEnemySprite) attackEnemy(); return; }
+            ndc.x = (e.clientX / window.innerWidth) * 2 - 1; ndc.y = -(e.clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(ndc, camera);
 
-            if (enemySprite) {
-                var eHits = raycaster.intersectObject(enemySprite, false);
-                if (eHits.length) {
-                    var eDist = Math.abs(playerGX - enemyCell.gx) + Math.abs(playerGY - enemyCell.gy);
-                    if (eDist <= 1) { startBattle(); return; }
-                    else { showCenterText('Далеко', '#888'); return; }
+            var candidates = [];
+            var bagMeshes = lootBags.map(b => b.mesh);
+            if (bagMeshes.length) { var bagHits = raycaster.intersectObjects(bagMeshes, false); if (bagHits.length) candidates.push({ dist: bagHits[0].distance, kind: 'bag', obj: bagHits[0].object }); }
+            var spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
+            if (spriteMeshes.length) { var spriteHits = raycaster.intersectObjects(spriteMeshes, false); if (spriteHits.length) candidates.push({ dist: spriteHits[0].distance, kind: 'sprite', obj: spriteHits[0].object }); }
+            var exitHits = raycaster.intersectObject(exitDoor, false); if (exitHits.length) candidates.push({ dist: exitHits[0].distance, kind: 'exit' });
+
+            if (candidates.length > 0) {
+                candidates.sort(function(a, b) { return a.dist - b.dist; });
+                var best = candidates[0];
+                if (best.kind === 'exit') {
+                    if (best.dist < 4) { if (exitIsOpen) { winDungeon(); } else { showCenterText('Выход закрыт!', '#f44336'); } return; }
+                } else if (best.kind === 'bag') {
+                    if (best.dist < 8) { var ud2 = best.obj.userData; if (ud2 && ud2.objRef) { var cur = worldToGrid(playerPos.x, playerPos.z); var dist = Math.abs(cur.gx - ud2.gx) + Math.abs(cur.gy - ud2.gy); if (dist <= 1) { openLootBag(ud2.objRef); } else { showCenterText('Далеко', '#888'); } return; } }
+                } else if (best.kind === 'sprite') {
+                    if (best.dist < 8) {
+                        var ud3 = best.obj.userData;
+                        if (ud3) {
+                            if (ud3.type === 'enemy') { var cur = worldToGrid(playerPos.x, playerPos.z); var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY); if (dist <= 1) { startBattle(ud3.objRef); } else { showCenterText('Далеко', '#888'); } return; }
+                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) { const ccur = worldToGrid(playerPos.x, playerPos.z); const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY); if (d <= 1) { applyLootEffect(ud3.objRef); } else { showCenterText('Далеко', '#888'); } return; }
+                        }
+                    }
                 }
             }
 
-            // 👇 ИСПРАВЛЕНО: Ищем и в дверях, и в полу.
-            var allMeshes = [];
-            tileMeshes.forEach(t => { 
-                if (t.mesh.visible) allMeshes.push(t.mesh); 
-                if (t.floorMesh.visible) allMeshes.push(t.floorMesh); 
-            });
-
+            var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
             var hits = raycaster.intersectObjects(allMeshes, false);
             if (hits.length > 0) {
-                var hitObj = hits[0].object;
-                var gridX = hitObj.userData.gridX;
-                var gridY = hitObj.userData.gridY;
-
-                var tile = tileMeshes.find(t => t.x === gridX && t.y === gridY);
+                var hitObj = hits[0].object; var tile = tileMeshes.find(t => t.x === hitObj.userData.gridX && t.y === hitObj.userData.gridY);
                 if (!tile) return;
-
                 var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
-                
                 if (dist === 1) {
                     if (tile.isWall) { playSound(soundHit); return; }
                     if (!tile.opened) {
-                        tile.opened = true; 
-                        tile.mesh.visible = false; 
-                        if (tile.floorMesh) tile.floorMesh.visible = true; 
-                        playSound(soundAltar); 
-                        updateFog();
+                        tile.opened = true; tile.mesh.visible = false; if (tile.floorMesh) tile.floorMesh.visible = true; playSound(soundAltar); updateFog();
                     } else {
-                        playerGX = tile.x; playerGY = tile.y;
-                        heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
-                        playSound(soundSteps); updateHighlights(); updateFog();
+                        const to = gridToWorld(tile.x, tile.y); waypoints = [{ x: to.x, z: to.z }]; moving = true; startSteps();
                     }
                 }
             }
         });
 
-        // ============================================================
-        //  БОЙ
-        // ============================================================
-        var currentEnemyStats = null;
-        var battleTimer = null;
-        var playerAttackCooldown = 0;
-        var enemyHp = 1000;
-
-        function startBattle() {
-            if (isBattleActive) return;
-            isBattleActive = true;
-            document.getElementById('mob-hp').style.display = 'block';
-            document.getElementById('mob-hp-name').textContent = 'Враг';
-            enemyHp = 1000;
-            updateMobHpBarFill(enemyHp, 1000);
-            playSound(soundHit);
-
-            if (battleTimer) clearInterval(battleTimer);
-            battleTimer = setInterval(function() {
-                if (!isBattleActive) return;
-                var p = parent.Sherwood.getPlayer();
-                if (!p) return;
-                var edmg = Math.max(5, Math.floor(50 * 0.5));
-                p.stats.hp = Math.max(0, p.stats.hp - edmg);
-                addFilth(5);
-                updateHeroSpheres();
-                showBloodOverlay();
-                if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
-            }, 1500);
-        }
-
-        function stopBattle() {
-            isBattleActive = false;
-            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
-            document.getElementById('mob-hp').style.display = 'none';
-        }
-
-        function attackEnemy() {
-            if (!isBattleActive || playerAttackCooldown > 0) return;
-            playerAttackCooldown = 1.0;
-            playSound(soundHit);
-            enemyHp = Math.max(0, enemyHp - 100);
-            updateMobHpBarFill(enemyHp, 1000);
-            if (enemyHp <= 0) {
-                stopBattle();
-                scene.remove(enemySprite);
-                showCenterText('Победа!', '#4caf50');
-                setTimeout(() => { parent.Sherwood.Thicket._onWin(1, 1); }, 1000);
-            }
-        }
-
-        function updateMobHpBarFill(hp, max) {
-            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (1 - hp/max) * 100 + '% 0 0)';
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + hp + '/' + max;
+        function updateLootButton() {
+            var iconImg = document.getElementById('attack-icon-img'); if (!iconImg) return;
+            if (isBattleActive) { iconImg.src = 'assets/assets2/talents/simple_attack.png'; return; }
+            var cur = worldToGrid(playerPos.x, playerPos.z); var nearLoot = false;
+            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; } }
+            if (!nearLoot) { for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; } } }
+            iconImg.src = nearLoot ? 'assets/assets2/icons/take.png' : 'assets/assets2/talents/simple_attack.png';
         }
 
         document.getElementById('attack-icon').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (isBattleActive) attackEnemy();
+            e.stopPropagation(); if (isBattleActive) { attackEnemy(); return; }
+            var cur = worldToGrid(playerPos.x, playerPos.z);
+            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } }
+            for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } }
         });
 
-        function dieFromFilth() {
-            stopBattle(); playSound(soundDefeat);
-            showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020');
-            try { dungeonMusic.pause(); } catch(e){}
-            setTimeout(() => { parent.Sherwood.Thicket._onDefeat(1); }, 1000);
+        var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 20000, name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 25000, name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', side: 'right', cooldown: 8000, name: 'Лечение' } };
+        var skillCooldowns = {};
+        function renderLearnedTalents() {
+            var leftCol = document.getElementById('skills-left'), rightCol = document.getElementById('skills-right'); if (!leftCol || !rightCol) return;
+            var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.talents) p.talents = {}; leftCol.innerHTML = ''; rightCol.innerHTML = '';
+            for (var id in talentData) {
+                var img = document.createElement('img'); img.src = talentData[id].icon; img.style.cssText = 'width:44px; height:44px; object-fit:contain;'; img.dataset.skillId = id;
+                img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
+                (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
+            }
         }
-        function showDeathVideoAndLose() {
-            setTimeout(() => { parent.Sherwood.Thicket._onDefeat(1); }, 1000);
+        setTimeout(renderLearnedTalents, 500);
+
+        function useSkill(skillId) {
+            if (!isBattleActive || !currentEnemyStats) return; if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
+            var p = parent.Sherwood.getPlayer(); if (!p) return; var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
+            if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 20000; }
+            else if (skillId === 'rage') { var f = getFilth(); if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; } if (!spendFilth(65)) return; rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
+            else if (skillId === 'healing') { if (!spendFilth(5)) return; var heal = 10; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
+            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown); }
         }
 
-        // ============================================================
-        //  АНИМАЦИЯ
-        // ============================================================
         const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
             const t = clock.elapsedTime;
 
-            if (playerAttackCooldown > 0) playerAttackCooldown -= dt;
+            if (moving && waypoints.length && !isBattleActive) {
+                let budget = MOVE_SPEED * dt;
+                while (budget > 0 && waypoints.length) {
+                    const tgt = waypoints[0];
+                    const dx = tgt.x - playerPos.x; const dz = tgt.z - playerPos.z; const dist = Math.hypot(dx, dz);
+                    if (dist <= budget) { playerPos.x = tgt.x; playerPos.z = tgt.z; budget -= dist; waypoints.shift(); }
+                    else { const nx = dx / dist, nz = dz / dist; playerPos.x += nx * budget; playerPos.z += nz * budget; budget = 0; }
+                }
+                if (!waypoints.length) { moving = false; stopSteps(); syncPlayerGrid(); updateFog(); }
+            }
+
             updateFilth(dt);
+            if (isBattleActive) updateMobHpBar();
+            updateLootButton();
+            camera.position.x = playerPos.x; camera.position.z = playerPos.z;
+            heroSprite.position.set(playerPos.x, 0.6, playerPos.z);
 
-            for (var i = 0; i < fireflies.length; i++) {
-                var f = fireflies[i];
-                if (!f.sprite.visible) continue;
-                f.angle += 0.02;
-                f.sprite.position.set(f.baseX + Math.cos(f.angle) * 0.3, 0.3 + Math.sin(t * 3 + f.phase) * 0.1, f.baseZ + Math.sin(f.angle) * 0.3);
+            if (enemyKnockback.active && enemyKnockback.sprite) {
+                enemyKnockback.t += dt; var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1); var ease = Math.sin(kk * Math.PI); var spr = enemyKnockback.sprite;
+                spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease; spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
+                if (kk >= 1) { spr.position.x = enemyKnockback.originalX; spr.position.z = enemyKnockback.originalZ; enemyKnockback.active = false; enemyKnockback.sprite = null; }
             }
 
-            for (var i = 0; i < highlights.length; i++) {
-                // Мягкая пульсация от 0.05 до 0.15
-                if (highlights[i].visible) highlights[i].material.opacity = 0.1 + Math.sin(t * 3) * 0.05;
-            }
-
-            heroSprite.position.y = 0.6 + Math.sin(t * 3) * 0.03;
-            camera.position.x = heroSprite.position.x;
-            camera.position.z = heroSprite.position.z;
             renderer.render(scene, camera);
         }
 
-        updateHighlights();
-        updateFog();
-        animate();
+        function syncPlayerGrid() { const g = worldToGrid(playerPos.x, playerPos.z); playerGX = g.gx; playerGY = g.gy; updateHighlights(); }
+
+        updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
 
         addEventListener('resize', () => {
-            const aspect = window.innerWidth / window.innerHeight;
-            camera.left = -viewSize * aspect / 2;
-            camera.right = viewSize * aspect / 2;
-            camera.top = viewSize / 2;
-            camera.bottom = -viewSize / 2;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            const aspect = window.innerWidth / window.innerHeight; camera.left = -viewSize * aspect / 2; camera.right = viewSize * aspect / 2; camera.top = viewSize / 2; camera.bottom = -viewSize / 2;
+            camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        function winDungeon() {
+            stopSteps(); playSound(soundVictory); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+            try { if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, currentFloor, currentDiff); if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(currentFloor, currentDiff); } catch(e) {}
+            if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows; } }
+            try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { parent.Sherwood.Bestiary.registerKill(currentPool.boss); } } catch(e) {}
+            var rewards = { cupEarned: true, exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp, gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold, silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver, items: [] };
+            try { if (parent.UI && parent.UI._showVictoryScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showVictoryScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
+        }
+        window.winDungeon = winDungeon;
+
+        function loseDungeon() {
+            stopSteps(); playSound(soundDefeat); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+            var rewards = { exp: 50 + runLoot.exp, gold: runLoot.gold, silver: 20 + runLoot.silver, items: [] };
+            try { if (parent.UI && parent.UI._showDefeatScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showDefeatScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
+        }
     </script>
 </body>
 </html>
