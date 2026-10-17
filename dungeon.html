@@ -274,9 +274,13 @@
                 door.position.set(x, 0.05, z);
                 group.add(door);
 
-                tileMeshes.push({ mesh: door, x: col, y: row, isWall: isWall, opened: false });
-            }
-        }
+                // 👇 ДОБАВЬ ВОТ ЭТУ ПРОВЕРКУ 👇
+                var isStartCell = (col === 1 && row === 1);
+                if (isStartCell) {
+                    door.visible = false; // Сразу скрываем дверь на старте
+                }
+
+                tileMeshes.push({ mesh: door, x: col, y: row, isWall: isWall, opened: isStartCell }); // ставим opened: true для старта
 
         // ============================================================
         //  СВЕТЛЯЧКИ
@@ -337,6 +341,12 @@
 
         // Туман войны (только в зоне видимости)
         function updateFog() {
+            // 👇 ДОБАВЬ ЭТО, ЧТОБЫ СТАРТОВАЯ КЛЕТКА ВСЕГДА БЫЛА ОТКРЫТА 👇
+            var startTile = tileMeshes[1 * size + 1];
+            if (startTile) {
+                startTile.opened = true;
+                startTile.mesh.visible = false;
+            }
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i];
                 var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
@@ -599,7 +609,9 @@
 
             // Герой
             heroSprite.position.y = 0.6 + Math.sin(t * 3) * 0.03;
-
+            // Камера следует за героем
+            camera.position.x = heroSprite.position.x;
+            camera.position.z = heroSprite.position.z;
             renderer.render(scene, camera);
         }
 
