@@ -95,7 +95,6 @@
         var currentFloor = parseInt(urlParams.get('floor') || '1');
         var currentDiff = parseInt(urlParams.get('diff') || '1');
         
-        // Пул врагов (сокращенный для примера, можно оставить твой полный)
         var ENEMY_POOLS = {
             1: { 1: { normal: ['plague_crow.png','bone_vulture.png'], boss: 'forest_strangler.png' } },
             2: { 1: { normal: ['bog_trapper.png','blight_spitter.png'], boss: 'searing_arachnid.png' } },
@@ -264,23 +263,35 @@
                 const z = row - center;
                 const isWall = (map[row][col] === 1);
                 
+                // Пол (создаём, но скрываем)
                 const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
                 floor.rotation.x = -Math.PI / 2;
                 floor.position.set(x, 0, z);
+                floor.visible = false;
                 group.add(floor);
 
+                // Дверь
                 const door = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.98, cellSize * 0.98), doorMats[2]);
                 door.rotation.x = -Math.PI / 2;
                 door.position.set(x, 0.05, z);
                 group.add(door);
 
-                // 👇 ДОБАВЬ ВОТ ЭТУ ПРОВЕРКУ 👇
                 var isStartCell = (col === 1 && row === 1);
                 if (isStartCell) {
-                    door.visible = false; // Сразу скрываем дверь на старте
+                    door.visible = false;
+                    floor.visible = true;
                 }
 
-                tileMeshes.push({ mesh: door, x: col, y: row, isWall: isWall, opened: isStartCell }); // ставим opened: true для старта
+                tileMeshes.push({ 
+                    mesh: door, 
+                    floorMesh: floor,
+                    x: col, 
+                    y: row, 
+                    isWall: isWall, 
+                    opened: isStartCell 
+                });
+            }
+        }
 
         // ============================================================
         //  СВЕТЛЯЧКИ
@@ -339,21 +350,26 @@
             }
         }
 
-        // Туман войны (только в зоне видимости)
+        // Туман войны
         function updateFog() {
-            // 👇 ДОБАВЬ ЭТО, ЧТОБЫ СТАРТОВАЯ КЛЕТКА ВСЕГДА БЫЛА ОТКРЫТА 👇
             var startTile = tileMeshes[1 * size + 1];
             if (startTile) {
                 startTile.opened = true;
                 startTile.mesh.visible = false;
+                if (startTile.floorMesh) startTile.floorMesh.visible = true;
             }
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i];
                 var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
                 
-                if (t.opened) { t.mesh.visible = false; }
+                if (t.opened) { 
+                    t.mesh.visible = false; 
+                    if (t.floorMesh) t.floorMesh.visible = true;
+                }
                 else {
                     t.mesh.visible = true;
+                    if (t.floorMesh) t.floorMesh.visible = false;
+                    
                     if (dist > 2) {
                         t.mesh.material = t.isWall ? wallMats[2] : doorMats[2];
                     } else if (dist === 2) {
@@ -384,7 +400,7 @@
         }
 
         // ============================================================
-        //  СКВЕРНА (5% / 10 сек, смерть через 20 сек)
+        //  СКВЕРНА
         // ============================================================
         var filthTimer = 0;
         var filthFullSince = 0;
@@ -480,7 +496,6 @@
             ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(ndc, camera);
 
-            // Клик по врагу
             if (enemySprite) {
                 var eHits = raycaster.intersectObject(enemySprite, false);
                 if (eHits.length) {
@@ -490,7 +505,6 @@
                 }
             }
 
-            // Клик по клеткам
             var hits = raycaster.intersectObjects(tileMeshes.map(t => t.mesh).filter(m => m.visible), false);
             if (hits.length > 0) {
                 var mesh = hits[0].object;
@@ -502,7 +516,11 @@
                 if (tile.isWall) { playSound(soundHit); return; }
 
                 if (!tile.opened) {
-                    tile.opened = true; tile.mesh.visible = false; playSound(soundAltar); updateFog();
+                    tile.opened = true; 
+                    tile.mesh.visible = false; 
+                    if (tile.floorMesh) tile.floorMesh.visible = true; 
+                    playSound(soundAltar); 
+                    updateFog();
                 } else {
                     playerGX = tile.x; playerGY = tile.y;
                     heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
