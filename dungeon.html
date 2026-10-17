@@ -39,7 +39,6 @@
         #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
         #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
         @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
-
         @media (max-width: 600px) {
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
@@ -81,8 +80,6 @@
     </div>
     <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
     
-    <!-- Джойстик убран отсюда, он больше не нужен -->
-
     <div id="vignette"></div>
     <div id="scanlines"></div>
     <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
@@ -219,7 +216,6 @@
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
         var wallMats = [new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.2 })];
-        // Материал для прозрачных стен в бою
         var battleWallMat = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.1 });
 
         const group = new THREE.Group(); scene.add(group);
@@ -251,11 +247,37 @@
         var highlights = []; for (var i = 0; i < 4; i++) { var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 })); hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.08, 0); hl.visible = false; scene.add(hl); highlights.push(hl); }
         function updateHighlights() { var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]; for (var i = 0; i < 4; i++) { var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; } highlights[i].position.set(nx - center, 0.08, ny - center); highlights[i].visible = true; } }
         
+        // Функция обновления тумана и видимости объектов
         function updateFog() {
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i]; var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
-                if (t.opened) { t.mesh.visible = false; if (t.floorMesh) t.floorMesh.visible = true; }
-                else { t.mesh.visible = true; if (t.floorMesh) t.floorMesh.visible = false; if (dist > 2) t.mesh.material = t.isWall ? wallMats[2] : doorMats[2]; else if (dist === 2) t.mesh.material = t.isWall ? wallMats[1] : doorMats[1]; else t.mesh.material = t.isWall ? wallMats[0] : doorMats[0]; }
+                if (t.opened) { 
+                    t.mesh.visible = false; 
+                    if (t.floorMesh) t.floorMesh.visible = true; 
+                }
+                else { 
+                    t.mesh.visible = true; 
+                    if (t.floorMesh) t.floorMesh.visible = false; 
+                    if (dist > 2) t.mesh.material = t.isWall ? wallMats[2] : doorMats[2]; 
+                    else if (dist === 2) t.mesh.material = t.isWall ? wallMats[1] : doorMats[1]; 
+                    else t.mesh.material = t.isWall ? wallMats[0] : doorMats[0]; 
+                }
+            }
+
+            // СКРЫВАЕМ объекты, если клетка не открыта
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.collected || !o.mesh) continue;
+                var tile = tileMeshes[o.y * size + o.x];
+                if (tile) {
+                    o.mesh.visible = tile.opened;
+                }
+            }
+
+            for (var b = 0; b < lootBags.length; b++) {
+                var bag = lootBags[b];
+                var tile2 = tileMeshes[bag.gy * size + bag.gx];
+                if (tile2) bag.mesh.visible = tile2.opened;
             }
         }
 
@@ -460,7 +482,9 @@
                     camFPS.rotation.set(0, playerYaw, 0);
                 }
                 document.getElementById('crosshair').style.display = 'block';
-                document.getElementById('attack-icon').style.display = 'block'; // Атака внизу
+                document.getElementById('attack-icon').style.display = 'block';
+                document.getElementById('skills-left').style.display = 'flex';
+                document.getElementById('skills-right').style.display = 'flex';
                 
                 // Делаем стены прозрачными
                 tileMeshes.forEach(t => {
@@ -472,6 +496,8 @@
             } else {
                 activeCamera = camTop;
                 document.getElementById('crosshair').style.display = 'none';
+                document.getElementById('skills-left').style.display = 'none';
+                document.getElementById('skills-right').style.display = 'none';
                 
                 // Возвращаем стенам нормальный вид
                 tileMeshes.forEach(t => {
@@ -480,7 +506,7 @@
                         delete t._savedMaterial;
                     }
                 });
-                updateFog(); // Обновляем туман, чтобы всё встало на места
+                updateFog();
             }
         }
 
@@ -489,8 +515,8 @@
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
             
-            setBattleCamera(true); // <--- Переключаем камеру + делаем стены прозрачными
-            syncPlayerGrid(); updateFog(); // <--- Обновляем туман перед боем
+            setBattleCamera(true);
+            syncPlayerGrid(); updateFog();
 
             vampirismReady = false; var p = parent.Sherwood.getPlayer();
             if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
@@ -530,6 +556,7 @@
             currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
             checkObjects(); 
             setBattleCamera(false); 
+            updateFog(); // Скрываем/показываем объекты после боя
         }
 
         function attackEnemy() {
@@ -577,9 +604,9 @@
             ndc.x = (e.clientX / window.innerWidth) * 2 - 1; ndc.y = -(e.clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(ndc, activeCamera);
 
             var candidates = [];
-            var bagMeshes = lootBags.map(b => b.mesh);
+            var bagMeshes = lootBags.filter(b => b.mesh.visible).map(b => b.mesh);
             if (bagMeshes.length) { var bagHits = raycaster.intersectObjects(bagMeshes, false); if (bagHits.length) candidates.push({ dist: bagHits[0].distance, kind: 'bag', obj: bagHits[0].object }); }
-            var spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
+            var spriteMeshes = objects.filter(o => !o.collected && o.mesh && o.mesh.visible).map(o => o.mesh);
             if (spriteMeshes.length) { var spriteHits = raycaster.intersectObjects(spriteMeshes, false); if (spriteHits.length) candidates.push({ dist: spriteHits[0].distance, kind: 'sprite', obj: spriteHits[0].object }); }
             var exitHits = raycaster.intersectObject(exitDoor, false); if (exitHits.length) candidates.push({ dist: exitHits[0].distance, kind: 'exit' });
 
@@ -594,8 +621,20 @@
                     if (best.dist < 8) {
                         var ud3 = best.obj.userData;
                         if (ud3) {
-                            if (ud3.type === 'enemy') { var cur = worldToGrid(playerPos.x, playerPos.z); var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY); if (dist <= 1) { startBattle(ud3.objRef); } else { showCenterText('Далеко', '#888'); } return; }
-                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) { const ccur = worldToGrid(playerPos.x, playerPos.z); const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY); if (d <= 1) { applyLootEffect(ud3.objRef); } else { showCenterText('Далеко', '#888'); } return; }
+                            if (ud3.type === 'enemy') { 
+                                var cur = worldToGrid(playerPos.x, playerPos.z); 
+                                var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY); 
+                                if (dist <= 1) { startBattle(ud3.objRef); } 
+                                else { showCenterText('Далеко', '#888'); } 
+                                return; 
+                            }
+                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) { 
+                                const ccur = worldToGrid(playerPos.x, playerPos.z); 
+                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY); 
+                                if (d <= 1) { applyLootEffect(ud3.objRef); } 
+                                else { showCenterText('Далеко', '#888'); } 
+                                return; 
+                            }
                         }
                     }
                 }
@@ -685,11 +724,9 @@
             }
 
             if (isBattleActive) {
-                // В бою камера стоит на месте, только легкая тряска при ударах
                 camFPS.position.x = playerPos.x + (Math.random() - 0.5) * cameraShake;
                 camFPS.position.z = playerPos.z + (Math.random() - 0.5) * cameraShake;
                 camFPS.position.y = 0.9 + (Math.random() - 0.5) * cameraShake;
-                // Никаких поворотов, смотрим туда, куда развернулись при старте
                 cameraShake *= 0.85; if (cameraShake < 0.001) cameraShake = 0;
             } else {
                 camTop.position.x = playerPos.x; camTop.position.z = playerPos.z; camTop.position.y = 20; camTop.lookAt(playerPos.x, 0, playerPos.z);
