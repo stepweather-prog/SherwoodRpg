@@ -11,6 +11,7 @@
         canvas { display: block; background: #000; touch-action: none; cursor: pointer; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
@@ -28,7 +29,7 @@
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
         #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; }
-        #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 45; }
+        #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 45; display: none; }
         #skills-left { left: 10px; }
         #skills-right { right: 10px; }
         #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; width: 44px; height: 44px; object-fit: contain; }
@@ -38,6 +39,7 @@
         #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
         #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
         @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
+
         @media (max-width: 600px) {
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
@@ -54,6 +56,7 @@
     </style>
 </head>
 <body>
+    <div id="crosshair">✚</div>
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
     <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
@@ -77,6 +80,9 @@
         <span id="mana-text">Скверна: 0%</span>
     </div>
     <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    
+    <!-- Джойстик убран отсюда, он больше не нужен -->
+
     <div id="vignette"></div>
     <div id="scanlines"></div>
     <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
@@ -95,44 +101,14 @@
         if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
 
         var totalCups = 0;
-        try {
-            if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) totalCups = parent.Sherwood.Dungeon.getTotalCups();
-        } catch(e) {}
+        try { if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) totalCups = parent.Sherwood.Dungeon.getTotalCups(); } catch(e) {}
         var difficultyLevel = totalCups + 1;
 
         var ENEMY_POOLS = {
-            1: {
-                1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
-                2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
-                3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
-                4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' },
-                5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
-                6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
-            },
-            2: {
-                1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' },
-                2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' },
-                3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' },
-                4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' },
-                5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' },
-                6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' }
-            },
-            3: {
-                1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' },
-                2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' },
-                3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' },
-                4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
-                5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' },
-                6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' }
-            },
-            4: {
-                1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' },
-                2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' },
-                3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' },
-                4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' },
-                5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' },
-                6: { normal: ['chaos_knight.png','ash_overlord.png','underground_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' }
-            }
+            1: { 1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' }, 2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' }, 3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' }, 4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' }, 5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' }, 6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' } },
+            2: { 1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' }, 2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' }, 3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' }, 4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' }, 5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' }, 6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' } },
+            3: { 1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' }, 2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' }, 3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' }, 4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' }, 5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' }, 6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' } },
+            4: { 1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' }, 2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' }, 3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' }, 4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' }, 5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' }, 6: { normal: ['chaos_knight.png','ash_overlord.png','underworld_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' } }
         };
 
         var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor]) || ENEMY_POOLS[1][1];
@@ -181,14 +157,17 @@
         const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0805);
         const size = 16; const cellSize = 1; const center = Math.floor(size / 2);
         const viewSize = 5; const aspect = window.innerWidth / window.innerHeight;
-        const camera = new THREE.OrthographicCamera(-viewSize * aspect / 2, viewSize * aspect / 2, viewSize / 2, -viewSize / 2, 0.1, 100);
-        camera.position.set(0, 20, 0); camera.lookAt(0, 0, 0);
+        
+        const camTop = new THREE.OrthographicCamera(-viewSize * aspect / 2, viewSize * aspect / 2, viewSize / 2, -viewSize / 2, 0.1, 100);
+        camTop.position.set(0, 20, 0); camTop.lookAt(0, 0, 0);
+        const camFPS = new THREE.PerspectiveCamera(70, aspect, 0.1, 40); camFPS.rotation.order = 'YXZ';
+        let activeCamera = camTop;
 
         const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-
+        
         const map = []; for (let i = 0; i < size; i++) { map[i] = []; for (let j = 0; j < size; j++) { map[i][j] = 1; } }
         function generateMaze() {
             const stack = []; const startX = 1, startY = 1; map[startY][startX] = 0; stack.push({ x: startX, y: startY });
@@ -240,6 +219,8 @@
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
         var wallMats = [new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.2 })];
+        // Материал для прозрачных стен в бою
+        var battleWallMat = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.1 });
 
         const group = new THREE.Group(); scene.add(group);
         var tileMeshes = [];
@@ -269,6 +250,7 @@
 
         var highlights = []; for (var i = 0; i < 4; i++) { var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 })); hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.08, 0); hl.visible = false; scene.add(hl); highlights.push(hl); }
         function updateHighlights() { var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]; for (var i = 0; i < 4; i++) { var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; } highlights[i].position.set(nx - center, 0.08, ny - center); highlights[i].visible = true; } }
+        
         function updateFog() {
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i]; var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
@@ -279,7 +261,7 @@
 
         var objects = []; var lootBags = []; var LOOT_TYPES = ['potion_hp', 'potion_filth', 'cauldron', 'altar', 'arrow_pickup'];
         var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0 };
-        
+
         function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
         function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
 
@@ -433,10 +415,7 @@
             var filth = p.stats.filth, maxFilth = p.stats.maxFilth, filthPercent = filth / maxFilth;
             var manaFill = document.getElementById('mana-fill'); if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filthPercent) * 100) + '% 0 0 0)';
             var manaText = document.getElementById('mana-text');
-            if (manaText) {
-                if (filth >= maxFilth) { var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince)); if (left < 0) left = 0; manaText.textContent = '⚠ ' + left + 'с'; manaText.style.color = '#ff4444'; }
-                else { manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%'; manaText.style.color = '#fff'; }
-            }
+            if (manaText) { if (filth >= maxFilth) { var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince)); if (left < 0) left = 0; manaText.textContent = '⚠ ' + left + 'с'; manaText.style.color = '#ff4444'; } else { manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%'; manaText.style.color = '#fff'; } }
         }
         setTimeout(updateHeroSpheres, 500);
 
@@ -450,10 +429,7 @@
                 if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
                 if (performance.now() / 1000 - filthFullSince >= FILTH_DEATH_TIME) {
                     filthDamageTimer += dt;
-                    if (filthDamageTimer >= 3) {
-                        filthDamageTimer -= 3; p.stats.hp = Math.max(0, p.stats.hp - 150); showBloodOverlay(); showCenterText('-150 HP (скверна)', '#ff2020'); updateHeroSpheres();
-                        if (p.stats.hp <= 0) { filthFullSince = 0; filthDamageTimer = 0; dieFromFilth(); return; }
-                    }
+                    if (filthDamageTimer >= 3) { filthDamageTimer -= 3; p.stats.hp = Math.max(0, p.stats.hp - 150); showBloodOverlay(); showCenterText('-150 HP (скверна)', '#ff2020'); updateHeroSpheres(); if (p.stats.hp <= 0) { filthFullSince = 0; filthDamageTimer = 0; dieFromFilth(); return; } }
                 }
             } else { filthFullSince = 0; filthDamageTimer = 0; }
             if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
@@ -473,10 +449,48 @@
 
         function checkObjects() { checkExitDoor(); }
 
+        function setBattleCamera(on) {
+            if (on) {
+                activeCamera = camFPS;
+                camFPS.position.set(playerPos.x, 0.9, playerPos.z);
+                if (currentEnemySprite) {
+                    const dx = currentEnemySprite.position.x - playerPos.x;
+                    const dz = currentEnemySprite.position.z - playerPos.z;
+                    playerYaw = Math.atan2(-dx, -dz); // Смотрим на врага
+                    camFPS.rotation.set(0, playerYaw, 0);
+                }
+                document.getElementById('crosshair').style.display = 'block';
+                document.getElementById('attack-icon').style.display = 'block'; // Атака внизу
+                
+                // Делаем стены прозрачными
+                tileMeshes.forEach(t => {
+                    if (t.isWall && t.mesh.visible) {
+                        t._savedMaterial = t.mesh.material;
+                        t.mesh.material = battleWallMat;
+                    }
+                });
+            } else {
+                activeCamera = camTop;
+                document.getElementById('crosshair').style.display = 'none';
+                
+                // Возвращаем стенам нормальный вид
+                tileMeshes.forEach(t => {
+                    if (t._savedMaterial) {
+                        t.mesh.material = t._savedMaterial;
+                        delete t._savedMaterial;
+                    }
+                });
+                updateFog(); // Обновляем туман, чтобы всё встало на места
+            }
+        }
+
         function startBattle(obj) {
             if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
+            
+            setBattleCamera(true); // <--- Переключаем камеру + делаем стены прозрачными
+            syncPlayerGrid(); updateFog(); // <--- Обновляем туман перед боем
 
             vampirismReady = false; var p = parent.Sherwood.getPlayer();
             if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
@@ -497,7 +511,13 @@
             }, 1000);
         }
 
-        function stopBattle() { isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0; if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none'; currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; }
+        function stopBattle() { 
+            isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0; 
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } 
+            document.getElementById('mob-hp').style.display = 'none'; 
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
+            setBattleCamera(false); 
+        }
 
         function onEnemyKilled() {
             if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
@@ -507,7 +527,9 @@
                 try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
                 currentEnemyObj.collected = true; if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
             }
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; checkObjects();
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
+            checkObjects(); 
+            setBattleCamera(false); 
         }
 
         function attackEnemy() {
@@ -542,20 +564,17 @@
         }
 
         function updateMobHpBar() {
-            if (!isBattleActive || !currentEnemySprite) return; var worldPos = currentEnemySprite.position.clone(); worldPos.y += 0.55; worldPos.project(camera);
+            if (!isBattleActive || !currentEnemySprite) return; var worldPos = currentEnemySprite.position.clone(); worldPos.y += 0.55; worldPos.project(activeCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth; var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
             document.getElementById('mob-hp').style.left = x + 'px'; document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        // ============================================================
-        //  ТАПЫ И ДВИЖЕНИЕ
-        // ============================================================
         const raycaster = new THREE.Raycaster(); const ndc = new THREE.Vector2();
         var waypoints = []; var moving = false; const MOVE_SPEED = 2.0;
 
         renderer.domElement.addEventListener('click', (e) => {
             if (isBattleActive) { if (currentEnemySprite) attackEnemy(); return; }
-            ndc.x = (e.clientX / window.innerWidth) * 2 - 1; ndc.y = -(e.clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(ndc, camera);
+            ndc.x = (e.clientX / window.innerWidth) * 2 - 1; ndc.y = -(e.clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(ndc, activeCamera);
 
             var candidates = [];
             var bagMeshes = lootBags.map(b => b.mesh);
@@ -657,7 +676,6 @@
             updateFilth(dt);
             if (isBattleActive) updateMobHpBar();
             updateLootButton();
-            camera.position.x = playerPos.x; camera.position.z = playerPos.z;
             heroSprite.position.set(playerPos.x, 0.6, playerPos.z);
 
             if (enemyKnockback.active && enemyKnockback.sprite) {
@@ -666,7 +684,18 @@
                 if (kk >= 1) { spr.position.x = enemyKnockback.originalX; spr.position.z = enemyKnockback.originalZ; enemyKnockback.active = false; enemyKnockback.sprite = null; }
             }
 
-            renderer.render(scene, camera);
+            if (isBattleActive) {
+                // В бою камера стоит на месте, только легкая тряска при ударах
+                camFPS.position.x = playerPos.x + (Math.random() - 0.5) * cameraShake;
+                camFPS.position.z = playerPos.z + (Math.random() - 0.5) * cameraShake;
+                camFPS.position.y = 0.9 + (Math.random() - 0.5) * cameraShake;
+                // Никаких поворотов, смотрим туда, куда развернулись при старте
+                cameraShake *= 0.85; if (cameraShake < 0.001) cameraShake = 0;
+            } else {
+                camTop.position.x = playerPos.x; camTop.position.z = playerPos.z; camTop.position.y = 20; camTop.lookAt(playerPos.x, 0, playerPos.z);
+            }
+
+            renderer.render(scene, activeCamera);
         }
 
         function syncPlayerGrid() { const g = worldToGrid(playerPos.x, playerPos.z); playerGX = g.gx; playerGY = g.gy; updateHighlights(); }
@@ -674,8 +703,11 @@
         updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
 
         addEventListener('resize', () => {
-            const aspect = window.innerWidth / window.innerHeight; camera.left = -viewSize * aspect / 2; camera.right = viewSize * aspect / 2; camera.top = viewSize / 2; camera.bottom = -viewSize / 2;
-            camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+            const aspect = window.innerWidth / window.innerHeight;
+            camTop.left = -viewSize * aspect / 2; camTop.right = viewSize * aspect / 2; camTop.top = viewSize / 2; camTop.bottom = -viewSize / 2;
+            camTop.updateProjectionMatrix();
+            camFPS.aspect = aspect; camFPS.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
         function winDungeon() {
