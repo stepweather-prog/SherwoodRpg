@@ -203,6 +203,8 @@
         const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
+                const wallBattleTex = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
+        const ceilBattleTex = loader.load('assets/assets2/Sherwood_Square/ceiling_quest.png');
                 const wallCustomTex = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         const lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
         const openChestTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
@@ -224,6 +226,53 @@
         var battleWallMat = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.1 });
 
         const group = new THREE.Group(); scene.add(group);
+                // ============================================================
+        //  ЛОКАЛЬНАЯ КОМНАТА ДЛЯ БОЯ (FPS-коридор)
+        // ============================================================
+        const battleRoom = new THREE.Group();
+        battleRoom.visible = false;
+        scene.add(battleRoom);
+
+        const bWallMat = new THREE.MeshBasicMaterial({ map: wallBattleTex, transparent: false });
+        const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
+        const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilBattleTex, transparent: false });
+        const bRoomLength = 6; // Длина коридора
+        const bCellSize = 1;
+        const bWallHeight = 1.4;
+
+        for (let z = 0; z < bRoomLength; z++) {
+            // Пол
+            const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bFloorMat);
+            bFloor.rotation.x = -Math.PI / 2;
+            bFloor.position.set(0, 0, -z);
+            battleRoom.add(bFloor);
+
+            // Потолок
+            const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bCeilMat);
+            bCeil.rotation.x = Math.PI / 2;
+            bCeil.position.set(0, bWallHeight, -z);
+            battleRoom.add(bCeil);
+
+            // Левая и правая стены
+            const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
+            bWallL.rotation.y = Math.PI / 2;
+            bWallL.position.set(-0.5, bWallHeight / 2, -z);
+            battleRoom.add(bWallL);
+
+            const bWallR = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
+            bWallR.rotation.y = -Math.PI / 2;
+            bWallR.position.set(0.5, bWallHeight / 2, -z);
+            battleRoom.add(bWallR);
+        }
+        // Задняя стена (за героем)
+        const bBackWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
+        bBackWall.position.set(0, bWallHeight / 2, 0.5);
+        battleRoom.add(bBackWall);
+
+        // Передняя стена (за врагом)
+        const bFrontWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
+        bFrontWall.position.set(0, bWallHeight / 2, -bRoomLength + 0.5);
+        battleRoom.add(bFrontWall);
         var tileMeshes = [];
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
@@ -464,39 +513,51 @@
 
         function checkObjects() { checkExitDoor(); }
 
-        function setBattleCamera(on) {
+                function setBattleCamera(on) {
             if (on) {
+                // ВКЛЮЧАЕМ БОЙ
+                battleRoom.visible = true; 
+                battleRoom.position.set(playerPos.x, 0, playerPos.z); 
+                
+                group.visible = false; // Скрываем лабиринт
+                
                 activeCamera = camFPS;
-                camFPS.position.set(playerPos.x, 0.9, playerPos.z);
+                
                 if (currentEnemySprite) {
+                    // Ставим врага на 2 клетки вперёд от героя
+                    currentEnemySprite.position.set(playerPos.x, currentEnemySprite.scale.y / 2, playerPos.z - 2);
+                    
+                    // Настраиваем камеру
                     const dx = currentEnemySprite.position.x - playerPos.x;
                     const dz = currentEnemySprite.position.z - playerPos.z;
                     playerYaw = Math.atan2(-dx, -dz); 
+                    
+                    camFPS.position.set(playerPos.x, 1.2, playerPos.z);
                     camFPS.rotation.set(0, playerYaw, 0);
+                } else {
+                    camFPS.position.set(playerPos.x, 1.2, playerPos.z);
                 }
+
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-left').style.display = 'flex';
                 document.getElementById('skills-right').style.display = 'flex';
                 
-                tileMeshes.forEach(t => {
-                    if (t.isWall && t.mesh.visible) {
-                        t._savedMaterial = t.mesh.material;
-                        t.mesh.material = battleWallMat;
-                    }
-                });
             } else {
+                // ВЫКЛЮЧАЕМ БОЙ
+                battleRoom.visible = false; 
+                group.visible = true; // Возвращаем лабиринт
+                
                 activeCamera = camTop;
                 document.getElementById('crosshair').style.display = 'none';
                 document.getElementById('skills-left').style.display = 'none';
                 document.getElementById('skills-right').style.display = 'none';
                 
-                tileMeshes.forEach(t => {
-                    if (t._savedMaterial) {
-                        t.mesh.material = t._savedMaterial;
-                        delete t._savedMaterial;
-                    }
-                });
+                // Возвращаем врага на его законное место в лабиринте
+                if (currentEnemyObj && currentEnemyObj.mesh) {
+                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, currentEnemyObj.mesh.scale.y / 2, currentEnemyObj.y - center);
+                }
+
                 updateFog();
             }
         }
