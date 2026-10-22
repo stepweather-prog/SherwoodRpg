@@ -79,7 +79,7 @@
         <span id="mana-text">Скверна: 0%</span>
     </div>
     <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
-    
+
     <div id="vignette"></div>
     <div id="scanlines"></div>
     <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
@@ -154,7 +154,7 @@
         const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0805);
         const size = 16; const cellSize = 1; const center = Math.floor(size / 2);
         const viewSize = 5; const aspect = window.innerWidth / window.innerHeight;
-        
+
         const camTop = new THREE.OrthographicCamera(-viewSize * aspect / 2, viewSize * aspect / 2, viewSize / 2, -viewSize / 2, 0.1, 100);
         camTop.position.set(0, 20, 0); camTop.lookAt(0, 0, 0);
         const camFPS = new THREE.PerspectiveCamera(70, aspect, 0.1, 40); camFPS.rotation.order = 'YXZ';
@@ -164,7 +164,7 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-        
+
         const map = []; for (let i = 0; i < size; i++) { map[i] = []; for (let j = 0; j < size; j++) { map[i][j] = 1; } }
         function generateMaze() {
             const stack = []; const startX = 1, startY = 1; map[startY][startX] = 0; stack.push({ x: startX, y: startY });
@@ -198,7 +198,7 @@
         })();
 
         function isWallCell(x, y) { if (x < 0 || y < 0 || x >= size || y >= size) return true; return map[y][x] === 1; }
-        
+
         const loader = new THREE.TextureLoader();
         const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
@@ -219,14 +219,13 @@
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
         var wallMats = [
-            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.95 }), 
-            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.5 }), 
+            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.95 }),
+            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.5 }),
             new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.2 })
         ];
-        var battleWallMat = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.1 });
 
         const group = new THREE.Group(); scene.add(group);
-        
+
         // ============================================================
         //  ЛОКАЛЬНАЯ КОМНАТА ДЛЯ БОЯ (FPS-коридор)
         // ============================================================
@@ -237,7 +236,7 @@
         const bWallMat = new THREE.MeshBasicMaterial({ map: wallBattleTex, transparent: false });
         const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilBattleTex, transparent: false });
-        const bRoomLength = 6; 
+        const bRoomLength = 6;
         const bCellSize = 1;
         const bWallHeight = 1.4;
 
@@ -287,17 +286,17 @@
                 tileMeshes.push({ mesh: door, floorMesh: floor, x: col, y: row, isWall: isWall, opened: isStartCell });
             }
         }
-        
+
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
         heroSprite.scale.set(0.85, 0.85, 1); scene.add(heroSprite);
         let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
-        
+
         var playerPos = new THREE.Vector3(playerGX - center, 0, playerGY - center);
         var playerYaw = 0;
 
         var highlights = []; for (var i = 0; i < 4; i++) { var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 })); hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.08, 0); hl.visible = false; scene.add(hl); highlights.push(hl); }
         function updateHighlights() { var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]; for (var i = 0; i < 4; i++) { var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; } highlights[i].position.set(nx - center, 0.08, ny - center); highlights[i].visible = true; } }
-        
+
         function updateFog() {
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i]; var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
@@ -395,8 +394,6 @@
         }
 
         var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
-        var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy), exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
-        var exitHoriz = exitWL && exitWR;
         var exitDoorMat = new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true });
         var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), exitDoorMat);
         exitDoor.rotation.x = -Math.PI / 2; exitDoor.position.set(exitPos.x, 0.06, exitPos.z); group.add(exitDoor);
@@ -510,52 +507,53 @@
 
         function checkObjects() { checkExitDoor(); }
 
+        // ============================================================
+        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + ПЕРЕНОС ВРАГА В БОЕВУЮ КОМНАТУ
+        // ============================================================
         function setBattleCamera(on) {
             if (on) {
-                // ВКЛЮЧАЕМ БОЙ
-                battleRoom.visible = true; 
-                battleRoom.position.set(playerPos.x, 0, playerPos.z); 
-                
-                group.visible = false; // Скрываем лабиринт
-                
+                battleRoom.visible = true;
+                battleRoom.position.set(0, 0, 0);
+                group.visible = false;
+
+                heroSprite.visible = false;
+                highlights.forEach(h => h.visible = false);
+
                 activeCamera = camFPS;
-                
+                camFPS.position.set(0, 1.2, 0);
+                camFPS.rotation.set(0, 0, 0);
+
                 if (currentEnemySprite) {
-                    // Ставим врага на 2 клетки вперёд от героя
-                    currentEnemySprite.position.set(playerPos.x, currentEnemySprite.scale.y / 2, playerPos.z - 2);
-                    currentEnemySprite.visible = true;   // 🆕 ПРИНУДИТЕЛЬНО ВИДИМ
-                    
-                    // Настраиваем камеру
-                    const dx = currentEnemySprite.position.x - playerPos.x;
-                    const dz = currentEnemySprite.position.z - playerPos.z;
-                    playerYaw = Math.atan2(-dx, -dz); 
-                    
-                    camFPS.position.set(playerPos.x, 1.2, playerPos.z);
-                    camFPS.rotation.set(0, playerYaw, 0);
-                } else {
-                    camFPS.position.set(playerPos.x, 1.2, playerPos.z);
+                    // переносим врага из лабиринта в боевую комнату
+                    battleRoom.add(currentEnemySprite);
+                    var sy = currentEnemySprite.scale.y;
+                    currentEnemySprite.position.set(0, sy / 2, -2);
+                    currentEnemySprite.visible = true;
                 }
 
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-left').style.display = 'flex';
                 document.getElementById('skills-right').style.display = 'flex';
-                
+
             } else {
-                // ВЫКЛЮЧАЕМ БОЙ
-                battleRoom.visible = false; 
-                group.visible = true; // Возвращаем лабиринт
-                
+                battleRoom.visible = false;
+                group.visible = true;
+
+                // возвращаем врага обратно в лабиринт
+                if (currentEnemyObj && currentEnemyObj.mesh) {
+                    group.add(currentEnemyObj.mesh);
+                    var sy2 = currentEnemyObj.mesh.scale.y;
+                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, sy2 / 2, currentEnemyObj.y - center);
+                }
+
                 activeCamera = camTop;
                 document.getElementById('crosshair').style.display = 'none';
                 document.getElementById('skills-left').style.display = 'none';
                 document.getElementById('skills-right').style.display = 'none';
-                
-                // Возвращаем врага на его законное место в лабиринте
-                if (currentEnemyObj && currentEnemyObj.mesh) {
-                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, currentEnemyObj.mesh.scale.y / 2, currentEnemyObj.y - center);
-                }
 
+                heroSprite.visible = true;
+                updateHighlights();
                 updateFog();
             }
         }
@@ -564,10 +562,10 @@
             if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
-            
-            syncPlayerGrid(); 
-            updateFog();           
-            setBattleCamera(true); 
+
+            syncPlayerGrid();
+            updateFog();
+            setBattleCamera(true);
 
             vampirismReady = false; var p = parent.Sherwood.getPlayer();
             if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
@@ -588,14 +586,14 @@
             }, 1000);
         }
 
-        function stopBattle() { 
-            isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0; 
-            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } 
-            document.getElementById('mob-hp').style.display = 'none'; 
-            
-            setBattleCamera(false);   // сначала вернуть врага на место
-            
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
+        function stopBattle() {
+            isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+
+            setBattleCamera(false);
+
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
         }
 
         function onEnemyKilled() {
@@ -604,11 +602,14 @@
             if (currentEnemyObj) {
                 spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
                 try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
-                currentEnemyObj.collected = true; if (currentEnemyObj.mesh) group.remove(currentEnemyObj.mesh);
+                currentEnemyObj.collected = true;
+                if (currentEnemyObj.mesh) {
+                    if (currentEnemyObj.mesh.parent) currentEnemyObj.mesh.parent.remove(currentEnemyObj.mesh);
+                }
             }
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
-            checkObjects(); 
-            setBattleCamera(false); 
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
+            checkObjects();
+            setBattleCamera(false);
         }
 
         function attackEnemy() {
@@ -631,7 +632,8 @@
                 hitFlashSprite.position.copy(currentEnemySprite.position); hitFlashSprite.position.x += ox; hitFlashSprite.position.y += oy;
                 hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)]; hitFlashSprite.material.needsUpdate = true;
                 hitFlashSprite.visible = true; clearTimeout(pushTimer); pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
-                knockbackEnemy(currentEnemySprite, playerPos.x, playerPos.z); cameraShake = 0.06;
+                knockbackEnemy(currentEnemySprite, 0, 0);
+                cameraShake = 0.06;
             }
             if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
             if (enemyStunned > 0) { updateHeroSpheres(); return; }
@@ -673,19 +675,19 @@
                     if (best.dist < 8) {
                         var ud3 = best.obj.userData;
                         if (ud3) {
-                            if (ud3.type === 'enemy') { 
-                                var cur = worldToGrid(playerPos.x, playerPos.z); 
-                                var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY); 
-                                if (dist <= 1) { startBattle(ud3.objRef); } 
-                                else { showCenterText('Далеко', '#888'); } 
-                                return; 
+                            if (ud3.type === 'enemy') {
+                                var cur = worldToGrid(playerPos.x, playerPos.z);
+                                var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY);
+                                if (dist <= 1) { startBattle(ud3.objRef); }
+                                else { showCenterText('Далеко', '#888'); }
+                                return;
                             }
-                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) { 
-                                const ccur = worldToGrid(playerPos.x, playerPos.z); 
-                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY); 
-                                if (d <= 1) { applyLootEffect(ud3.objRef); } 
-                                else { showCenterText('Далеко', '#888'); } 
-                                return; 
+                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
+                                const ccur = worldToGrid(playerPos.x, playerPos.z);
+                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY);
+                                if (d <= 1) { applyLootEffect(ud3.objRef); }
+                                else { showCenterText('Далеко', '#888'); }
+                                return;
                             }
                         }
                     }
@@ -698,38 +700,35 @@
                 var hitObj = hits[0].object; var tile = tileMeshes.find(t => t.x === hitObj.userData.gridX && t.y === hitObj.userData.gridY);
                 if (!tile) return;
                 var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
-                
+
                 if (dist === 1) {
                     if (tile.isWall) { return; }
 
-                    // 1. Если клетка ЗАКРЫТА — только открываем её (без боя)
                     if (!tile.opened) {
-                        tile.opened = true; 
-                        tile.mesh.visible = false; 
-                        if (tile.floorMesh) tile.floorMesh.visible = true; 
-                        playSound(soundAltar); 
+                        tile.opened = true;
+                        tile.mesh.visible = false;
+                        if (tile.floorMesh) tile.floorMesh.visible = true;
+                        playSound(soundAltar);
                         updateFog();
-                        return; // ВАЖНО: выходим, чтобы не запустить бой в тот же клик
+                        return;
                     }
 
-                    // 2. Клетка ОТКРЫТА. Проверяем, есть ли там враг
                     var enemyOnTile = null;
                     for (var i = 0; i < objects.length; i++) {
                         if (objects[i].type === 'enemy' && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
-                            enemyOnTile = objects[i]; 
+                            enemyOnTile = objects[i];
                             break;
                         }
                     }
 
                     if (enemyOnTile) {
-                        startBattle(enemyOnTile); // Запускаем бой (только по открытой клетке)
+                        startBattle(enemyOnTile);
                         return;
                     }
 
-                    // 3. Открыто, врага нет — идём
-                    const to = gridToWorld(tile.x, tile.y); 
-                    waypoints = [{ x: to.x, z: to.z }]; 
-                    moving = true; 
+                    const to = gridToWorld(tile.x, tile.y);
+                    waypoints = [{ x: to.x, z: to.z }];
+                    moving = true;
                     startSteps();
                 }
             }
@@ -777,7 +776,6 @@
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
-            const t = clock.elapsedTime;
 
             if (moving && waypoints.length && !isBattleActive) {
                 let budget = MOVE_SPEED * dt;
@@ -793,18 +791,27 @@
             updateFilth(dt);
             if (isBattleActive) updateMobHpBar();
             updateLootButton();
-            heroSprite.position.set(playerPos.x, 0.6, playerPos.z);
+
+            if (!isBattleActive) {
+                heroSprite.position.set(playerPos.x, 0.6, playerPos.z);
+            }
 
             if (enemyKnockback.active && enemyKnockback.sprite) {
                 enemyKnockback.t += dt; var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1); var ease = Math.sin(kk * Math.PI); var spr = enemyKnockback.sprite;
-                spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease; spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
-                if (kk >= 1) { spr.position.x = enemyKnockback.originalX; spr.position.z = enemyKnockback.originalZ; enemyKnockback.active = false; enemyKnockback.sprite = null; }
+                spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease;
+                spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
+                if (kk >= 1) {
+                    spr.position.x = enemyKnockback.originalX;
+                    spr.position.z = enemyKnockback.originalZ;
+                    enemyKnockback.active = false;
+                    enemyKnockback.sprite = null;
+                }
             }
 
             if (isBattleActive) {
-                camFPS.position.x = playerPos.x + (Math.random() - 0.5) * cameraShake;
-                camFPS.position.z = playerPos.z + (Math.random() - 0.5) * cameraShake;
-                camFPS.position.y = 0.9 + (Math.random() - 0.5) * cameraShake;
+                camFPS.position.x = (Math.random() - 0.5) * cameraShake;
+                camFPS.position.z = (Math.random() - 0.5) * cameraShake;
+                camFPS.position.y = 1.2 + (Math.random() - 0.5) * cameraShake;
                 cameraShake *= 0.85; if (cameraShake < 0.001) cameraShake = 0;
             } else {
                 camTop.position.x = playerPos.x; camTop.position.z = playerPos.z; camTop.position.y = 20; camTop.lookAt(playerPos.x, 0, playerPos.z);
