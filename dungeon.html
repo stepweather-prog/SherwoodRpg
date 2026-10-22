@@ -203,6 +203,7 @@
         const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
+                const wallCustomTex = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         const lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
         const openChestTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
         const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
@@ -215,7 +216,11 @@
 
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
-        var wallMats = [new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.2 })];
+               var wallMats = [
+            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.95 }), 
+            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.5 }), 
+            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.2 })
+        ];
         var battleWallMat = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.1 });
 
         const group = new THREE.Group(); scene.add(group);
