@@ -247,31 +247,18 @@
         var highlights = []; for (var i = 0; i < 4; i++) { var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 })); hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.08, 0); hl.visible = false; scene.add(hl); highlights.push(hl); }
         function updateHighlights() { var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]; for (var i = 0; i < 4; i++) { var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; } highlights[i].position.set(nx - center, 0.08, ny - center); highlights[i].visible = true; } }
         
-        // Функция обновления тумана и видимости объектов
         function updateFog() {
             for (var i = 0; i < tileMeshes.length; i++) {
                 var t = tileMeshes[i]; var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
-                if (t.opened) { 
-                    t.mesh.visible = false; 
-                    if (t.floorMesh) t.floorMesh.visible = true; 
-                }
-                else { 
-                    t.mesh.visible = true; 
-                    if (t.floorMesh) t.floorMesh.visible = false; 
-                    if (dist > 2) t.mesh.material = t.isWall ? wallMats[2] : doorMats[2]; 
-                    else if (dist === 2) t.mesh.material = t.isWall ? wallMats[1] : doorMats[1]; 
-                    else t.mesh.material = t.isWall ? wallMats[0] : doorMats[0]; 
-                }
+                if (t.opened) { t.mesh.visible = false; if (t.floorMesh) t.floorMesh.visible = true; }
+                else { t.mesh.visible = true; if (t.floorMesh) t.floorMesh.visible = false; if (dist > 2) t.mesh.material = t.isWall ? wallMats[2] : doorMats[2]; else if (dist === 2) t.mesh.material = t.isWall ? wallMats[1] : doorMats[1]; else t.mesh.material = t.isWall ? wallMats[0] : doorMats[0]; }
             }
 
-            // СКРЫВАЕМ объекты, если клетка не открыта
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
                 if (o.collected || !o.mesh) continue;
                 var tile = tileMeshes[o.y * size + o.x];
-                if (tile) {
-                    o.mesh.visible = tile.opened;
-                }
+                if (tile) o.mesh.visible = tile.opened;
             }
 
             for (var b = 0; b < lootBags.length; b++) {
@@ -478,7 +465,7 @@
                 if (currentEnemySprite) {
                     const dx = currentEnemySprite.position.x - playerPos.x;
                     const dz = currentEnemySprite.position.z - playerPos.z;
-                    playerYaw = Math.atan2(-dx, -dz); // Смотрим на врага
+                    playerYaw = Math.atan2(-dx, -dz); 
                     camFPS.rotation.set(0, playerYaw, 0);
                 }
                 document.getElementById('crosshair').style.display = 'block';
@@ -486,7 +473,6 @@
                 document.getElementById('skills-left').style.display = 'flex';
                 document.getElementById('skills-right').style.display = 'flex';
                 
-                // Делаем стены прозрачными
                 tileMeshes.forEach(t => {
                     if (t.isWall && t.mesh.visible) {
                         t._savedMaterial = t.mesh.material;
@@ -499,7 +485,6 @@
                 document.getElementById('skills-left').style.display = 'none';
                 document.getElementById('skills-right').style.display = 'none';
                 
-                // Возвращаем стенам нормальный вид
                 tileMeshes.forEach(t => {
                     if (t._savedMaterial) {
                         t.mesh.material = t._savedMaterial;
@@ -556,7 +541,6 @@
             currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
             checkObjects(); 
             setBattleCamera(false); 
-            updateFog(); // Скрываем/показываем объекты после боя
         }
 
         function attackEnemy() {
@@ -647,7 +631,7 @@
                 if (!tile) return;
                 var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
                 if (dist === 1) {
-                    if (tile.isWall) { playSound(soundHit); return; }
+                    if (tile.isWall) { return; } // Убрал звук, чтобы не мигало
                     if (!tile.opened) {
                         tile.opened = true; tile.mesh.visible = false; if (tile.floorMesh) tile.floorMesh.visible = true; playSound(soundAltar); updateFog();
                     } else {
