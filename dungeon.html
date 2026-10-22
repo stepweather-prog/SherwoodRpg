@@ -626,14 +626,29 @@
                 }
             }
 
-            var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
+                        var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
             var hits = raycaster.intersectObjects(allMeshes, false);
             if (hits.length > 0) {
                 var hitObj = hits[0].object; var tile = tileMeshes.find(t => t.x === hitObj.userData.gridX && t.y === hitObj.userData.gridY);
                 if (!tile) return;
                 var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
+                
                 if (dist === 1) {
-                    if (tile.isWall) { return; } // Убрал звук, чтобы не мигало
+                    if (tile.isWall) { return; }
+
+                    // 🆕 ПРОВЕРКА: Есть ли враг на этой клетке?
+                    var enemyOnTile = null;
+                    for (var i = 0; i < objects.length; i++) {
+                        if (objects[i].type === 'enemy' && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
+                            enemyOnTile = objects[i]; break;
+                        }
+                    }
+
+                    if (enemyOnTile) {
+                        startBattle(enemyOnTile); // Запускаем бой
+                        return;
+                    }
+
                     if (!tile.opened) {
                         tile.opened = true; tile.mesh.visible = false; if (tile.floorMesh) tile.floorMesh.visible = true; playSound(soundAltar); updateFog();
                     } else {
