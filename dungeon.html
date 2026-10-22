@@ -403,9 +403,10 @@
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
         hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false; scene.add(hitFlashSprite);
 
-        var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
+                var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
         var battleTimer = null, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0, playerHitFirst = false, enemyStunned = 0, playerStunned = 0, rageCharges = 0;
         var vampirismBuff = 0, vampirismReady = false;
+        var pushTimer = null;
         var hitSprites = ['strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png', 'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'];
         var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
         var cameraShake = 0;
@@ -500,8 +501,9 @@
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
             
-            setBattleCamera(true);
-            syncPlayerGrid(); updateFog();
+                        syncPlayerGrid(); 
+            updateFog();           
+            setBattleCamera(true); 
 
             vampirismReady = false; var p = parent.Sherwood.getPlayer();
             if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
