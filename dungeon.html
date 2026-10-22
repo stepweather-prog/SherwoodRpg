@@ -105,7 +105,7 @@
             1: { 1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' }, 2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' }, 3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' }, 4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' }, 5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' }, 6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' } },
             2: { 1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' }, 2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' }, 3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' }, 4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' }, 5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' }, 6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' } },
             3: { 1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' }, 2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' }, 3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' }, 4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' }, 5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' }, 6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' } },
-            4: { 1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' }, 2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' }, 3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' }, 4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' }, 5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' }, 6: { normal: ['chaos_knight.png','ash_overlord.png','underworld_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' } }
+            4: { 1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' }, 2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' }, 3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' }, 4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' }, 5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' }, 6: { normal: ['chaos_knight.png','ash_overlord.png','underground_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' } }
         };
 
         var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor]) || ENEMY_POOLS[1][1];
@@ -203,9 +203,9 @@
         const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-                const wallBattleTex = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
+        const wallBattleTex = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const ceilBattleTex = loader.load('assets/assets2/Sherwood_Square/ceiling_quest.png');
-                const wallCustomTex = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
+        const wallCustomTex = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         const lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
         const openChestTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
         const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
@@ -218,7 +218,7 @@
 
         const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
-               var wallMats = [
+        var wallMats = [
             new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.95 }), 
             new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.5 }), 
             new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.2 })
@@ -226,7 +226,8 @@
         var battleWallMat = new THREE.MeshBasicMaterial({ color: 0x1a1208, transparent: true, opacity: 0.1 });
 
         const group = new THREE.Group(); scene.add(group);
-                // ============================================================
+        
+        // ============================================================
         //  ЛОКАЛЬНАЯ КОМНАТА ДЛЯ БОЯ (FPS-коридор)
         // ============================================================
         const battleRoom = new THREE.Group();
@@ -236,24 +237,21 @@
         const bWallMat = new THREE.MeshBasicMaterial({ map: wallBattleTex, transparent: false });
         const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
         const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilBattleTex, transparent: false });
-        const bRoomLength = 6; // Длина коридора
+        const bRoomLength = 6; 
         const bCellSize = 1;
         const bWallHeight = 1.4;
 
         for (let z = 0; z < bRoomLength; z++) {
-            // Пол
             const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bFloorMat);
             bFloor.rotation.x = -Math.PI / 2;
             bFloor.position.set(0, 0, -z);
             battleRoom.add(bFloor);
 
-            // Потолок
             const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bCeilMat);
             bCeil.rotation.x = Math.PI / 2;
             bCeil.position.set(0, bWallHeight, -z);
             battleRoom.add(bCeil);
 
-            // Левая и правая стены
             const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
             bWallL.rotation.y = Math.PI / 2;
             bWallL.position.set(-0.5, bWallHeight / 2, -z);
@@ -264,15 +262,14 @@
             bWallR.position.set(0.5, bWallHeight / 2, -z);
             battleRoom.add(bWallR);
         }
-        // Задняя стена (за героем)
         const bBackWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
         bBackWall.position.set(0, bWallHeight / 2, 0.5);
         battleRoom.add(bBackWall);
 
-        // Передняя стена (за врагом)
         const bFrontWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
         bFrontWall.position.set(0, bWallHeight / 2, -bRoomLength + 0.5);
         battleRoom.add(bFrontWall);
+
         var tileMeshes = [];
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
@@ -457,7 +454,7 @@
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
         hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false; scene.add(hitFlashSprite);
 
-                var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
+        var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
         var battleTimer = null, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0, playerHitFirst = false, enemyStunned = 0, playerStunned = 0, rageCharges = 0;
         var vampirismBuff = 0, vampirismReady = false;
         var pushTimer = null;
@@ -513,7 +510,7 @@
 
         function checkObjects() { checkExitDoor(); }
 
-                function setBattleCamera(on) {
+        function setBattleCamera(on) {
             if (on) {
                 // ВКЛЮЧАЕМ БОЙ
                 battleRoom.visible = true; 
@@ -526,6 +523,7 @@
                 if (currentEnemySprite) {
                     // Ставим врага на 2 клетки вперёд от героя
                     currentEnemySprite.position.set(playerPos.x, currentEnemySprite.scale.y / 2, playerPos.z - 2);
+                    currentEnemySprite.visible = true;   // 🆕 ПРИНУДИТЕЛЬНО ВИДИМ
                     
                     // Настраиваем камеру
                     const dx = currentEnemySprite.position.x - playerPos.x;
@@ -567,7 +565,7 @@
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
             
-                        syncPlayerGrid(); 
+            syncPlayerGrid(); 
             updateFog();           
             setBattleCamera(true); 
 
@@ -594,8 +592,10 @@
             isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0; 
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } 
             document.getElementById('mob-hp').style.display = 'none'; 
+            
+            setBattleCamera(false);   // сначала вернуть врага на место
+            
             currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null; 
-            setBattleCamera(false); 
         }
 
         function onEnemyKilled() {
@@ -692,7 +692,7 @@
                 }
             }
 
-                        var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
+            var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
             var hits = raycaster.intersectObjects(allMeshes, false);
             if (hits.length > 0) {
                 var hitObj = hits[0].object; var tile = tileMeshes.find(t => t.x === hitObj.userData.gridX && t.y === hitObj.userData.gridY);
@@ -702,24 +702,35 @@
                 if (dist === 1) {
                     if (tile.isWall) { return; }
 
-                    // 🆕 ПРОВЕРКА: Есть ли враг на этой клетке?
+                    // 1. Если клетка ЗАКРЫТА — только открываем её (без боя)
+                    if (!tile.opened) {
+                        tile.opened = true; 
+                        tile.mesh.visible = false; 
+                        if (tile.floorMesh) tile.floorMesh.visible = true; 
+                        playSound(soundAltar); 
+                        updateFog();
+                        return; // ВАЖНО: выходим, чтобы не запустить бой в тот же клик
+                    }
+
+                    // 2. Клетка ОТКРЫТА. Проверяем, есть ли там враг
                     var enemyOnTile = null;
                     for (var i = 0; i < objects.length; i++) {
                         if (objects[i].type === 'enemy' && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
-                            enemyOnTile = objects[i]; break;
+                            enemyOnTile = objects[i]; 
+                            break;
                         }
                     }
 
                     if (enemyOnTile) {
-                        startBattle(enemyOnTile); // Запускаем бой
+                        startBattle(enemyOnTile); // Запускаем бой (только по открытой клетке)
                         return;
                     }
 
-                    if (!tile.opened) {
-                        tile.opened = true; tile.mesh.visible = false; if (tile.floorMesh) tile.floorMesh.visible = true; playSound(soundAltar); updateFog();
-                    } else {
-                        const to = gridToWorld(tile.x, tile.y); waypoints = [{ x: to.x, z: to.z }]; moving = true; startSteps();
-                    }
+                    // 3. Открыто, врага нет — идём
+                    const to = gridToWorld(tile.x, tile.y); 
+                    waypoints = [{ x: to.x, z: to.z }]; 
+                    moving = true; 
+                    startSteps();
                 }
             }
         });
