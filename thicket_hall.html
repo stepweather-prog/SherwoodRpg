@@ -38,7 +38,7 @@
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         /* Кнопка действия (центральная) */
-        #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; display: none; }
+        #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; z-index: 40; cursor: pointer; display: none; background: rgba(0,0,0,0.5); border-radius: 50%; border: 2px solid #6b5a3a; padding: 5px; }
         
         /* Тач-управление для платформера */
         #touch-controls { position: fixed; bottom: 20px; left: 0; width: 100%; height: 120px; z-index: 55; pointer-events: none; display: none; }
@@ -50,7 +50,7 @@
         
         @media (max-width: 900px) {
             #touch-controls { display: block; }
-            #attack-icon { bottom: 100px; width: 44px; height: 44px; }
+            #attack-icon { bottom: 100px; width: 50px; height: 50px; }
             #skills-left, #skills-right { bottom: 180px; }
         }
     </style>
@@ -78,7 +78,7 @@
         <span id="mana-text">0</span>
     </div>
     
-    <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;filter: drop-shadow(0 0 5px #ffd700);"></div>
     
     <div id="touch-controls">
         <div class="touch-btn" id="btn-left">◀</div>
@@ -106,7 +106,6 @@
         var enemyData = null;
         try { enemyData = parent.Sherwood.Thicket.getCurrentEnemy(); } catch(e) {}
 
-        // Звуки
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -126,7 +125,7 @@
         scene.fog = new THREE.Fog(0x2a1e14, 10, 30);
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 6, 12);
+        camera.position.set(0, 5, 12); 
         camera.lookAt(0, 2, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -137,7 +136,7 @@
         // ============================================================
         //  СВЕТ
         // ============================================================
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.9));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5);
         scene.add(dirLight);
@@ -154,35 +153,37 @@
         
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(1, 1);
 
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(1, 1);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
 
         // ============================================================
-        //  УРОВЕНЬ
+        //  УРОВЕНЬ (Коридор 1 плитка)
         // ============================================================
         const LEVEL_W = 30;
-        const WALL_H = 8;
+        const WALL_H = 6;
 
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 2, 6), floorMat);
-        ground.position.set(LEVEL_W / 2, -1, 0);
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMat);
+        ground.position.set(LEVEL_W / 2, -0.5, 0);
         scene.add(ground);
 
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 1), wallMat);
-        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -3);
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
         scene.add(backWall);
 
-        const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 6), wallMat);
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
+        scene.add(frontWall);
+
+        const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
         startWall.position.set(-0.5, WALL_H / 2, 0);
         scene.add(startWall);
 
         // ============================================================
-        //  ИГРОК (Видео с удалением фона)
+        //  ИГРОК (Видео с Chroma Key как в Лагере)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 1, 0),
@@ -199,57 +200,51 @@
         const heroGroup = new THREE.Group();
         scene.add(heroGroup);
 
+        // Создаем видео
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
         video.loop = true;
         video.muted = true;
-        video.pause();
+        video.pause(); // Стоим при старте
 
-        const videoTexture = new THREE.VideoTexture(video);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
+        // Создаем Canvas для вырезания фона
+        const hCanvas = document.createElement('canvas');
+        hCanvas.width = 512; // Размер полотна
+        hCanvas.height = 512;
+        const hCtx = hCanvas.getContext('2d', { willReadFrequently: true });
 
-        // УМНЫЙ ШЕЙДЕР: Удаляет черный и белый фон
-        const heroMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                map: { value: videoTexture }
-            },
-            vertexShader: `
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        // Функция удаления черного фона
+        function chromaKeyHero(imgData) {
+            var d = imgData.data;
+            for (var i = 0; i < d.length; i += 4) {
+                var r = d[i], g = d[i+1], b = d[i+2];
+                // Если пиксель черный или очень темный
+                if (r < 20 && g < 20 && b < 20) {
+                    d[i+3] = 0; // Делаем прозрачным
                 }
-            `,
-            fragmentShader: `
-                uniform sampler2D map;
-                varying vec2 vUv;
-                void main() {
-                    vec4 color = texture2D(map, vUv);
-                    float brightness = (color.r + color.g + color.b) / 3.0;
-                    
-                    // Убираем черный (близкий к 0) и белый (близкий к 1)
-                    if (brightness < 0.1 || brightness > 0.9) {
-                        discard; // Полностью прозрачный
-                    }
-                    gl_FragColor = color;
-                }
-            `,
+            }
+        }
+
+        // Текстура из Canvas
+        const heroTex = new THREE.CanvasTexture(hCanvas);
+        heroTex.minFilter = THREE.LinearFilter;
+        heroTex.magFilter = THREE.LinearFilter;
+
+        const heroMaterial = new THREE.SpriteMaterial({ 
+            map: heroTex, 
             transparent: true,
             depthTest: false
         });
+        const heroSprite = new THREE.Sprite(heroMaterial);
+        heroSprite.scale.set(4.0, 4.0, 1);
+        heroSprite.position.set(0, 0, 0.2); 
+        heroGroup.add(heroSprite);
 
-        // Плоскость героя
-        const heroGeometry = new THREE.PlaneGeometry(4.0, 4.0); // Чуть больше
-        const heroMesh = new THREE.Mesh(heroGeometry, heroMaterial);
-        heroMesh.position.set(0, 0, 0.5);
-        heroGroup.add(heroMesh);
-
-        // Заглушка (картинка), пока видео не загрузилось
+        // Статичная заглушка
         const heroTexStatic = loader.load('assets/assets2/dungeon_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true }));
         staticSprite.scale.set(4.0, 4.0, 1);
-        staticSprite.position.set(0, 0, 0.6);
+        staticSprite.position.set(0, 0, 0.3);
         heroGroup.add(staticSprite);
 
         video.addEventListener('play', () => {
@@ -257,7 +252,7 @@
         });
 
         // ============================================================
-        //  ВРАГ (Исправлено положение)
+        //  ВРАГ
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -275,7 +270,7 @@
                 t.magFilter = THREE.LinearFilter;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
                 enemySprite.scale.set(scale, scale, 1);
-                // Ставим строго на пол (низ спрайта на y=0)
+                // Ставим на пол
                 enemySprite.position.set(enemyX, scale / 2, 0);
                 scene.add(enemySprite);
                 
@@ -309,14 +304,15 @@
                 var tex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
                 chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
                 chestSprite.scale.set(2.5, 2.5, 1);
-                chestSprite.position.set(enemyX, 1.2, 0);
+                chestSprite.position.set(enemyX, 1.25, 0);
                 scene.add(chestSprite);
             }
             if (!exitDoor) {
-                var doorMat = new THREE.MeshLambertMaterial({ color: 0x4a3a2a });
-                exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(2, 3), doorMat);
-                exitDoor.position.set(LEVEL_W - 1, 1.5, 0);
-                exitDoor.rotation.y = -Math.PI / 2;
+                // Картинка двери из подземки
+                var doorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
+                exitDoor = new THREE.Sprite(new THREE.SpriteMaterial({ map: doorTex, transparent: true }));
+                exitDoor.scale.set(3, 4, 1);
+                exitDoor.position.set(LEVEL_W - 1, 2, 0);
                 scene.add(exitDoor);
             }
         }
@@ -357,10 +353,8 @@
             if (moveX !== 0) {
                 p.facing = moveX;
                 heroGroup.scale.x = moveX > 0 ? 1 : -1; 
-                // Включаем видео при ходьбе
                 if (video.paused) video.play().catch(()=>{});
             } else {
-                // Останавливаем видео, когда стоим
                 if (!video.paused) video.pause();
             }
 
@@ -380,8 +374,8 @@
             const newY = p.pos.y + p.vel.y * dt;
             let onGround = false;
             
-            if (newY <= 1.0) {
-                p.pos.y = 1.0;
+            if (newY <= 0) {
+                p.pos.y = 0;
                 p.vel.y = 0;
                 onGround = true;
             } else {
@@ -405,16 +399,28 @@
             enemySprite.position.x = enemyX;
         }
 
+        // Проверка действия (Универсальная кнопка)
         function checkInteraction() {
-            if (enemySprite && enemyAlive && !isBattleActive) {
-                if (Math.abs(player.pos.x - enemyX) < 3) {
-                    document.getElementById('attack-icon').style.display = 'block';
-                } else {
-                    document.getElementById('attack-icon').style.display = 'none';
-                }
-            } else {
-                document.getElementById('attack-icon').style.display = 'none';
+            var icon = document.getElementById('attack-icon');
+            
+            if (enemyAlive && enemySprite && Math.abs(player.pos.x - enemyX) < 3) {
+                icon.style.display = 'block';
+                icon.dataset.action = 'attack';
+                return;
             }
+            if (!enemyAlive && chestSprite && Math.abs(player.pos.x - chestSprite.position.x) < 3) {
+                icon.style.display = 'block';
+                icon.dataset.action = 'chest';
+                return;
+            }
+            if (exitIsOpen && exitDoor && Math.abs(player.pos.x - exitDoor.position.x) < 3) {
+                icon.style.display = 'block';
+                icon.dataset.action = 'exit';
+                return;
+            }
+            
+            icon.style.display = 'none';
+            icon.dataset.action = '';
         }
 
         // ============================================================
@@ -511,21 +517,26 @@
         // ============================================================
         //  КНОПКА ДЕЙСТВИЯ
         // ============================================================
-        document.getElementById('attack-icon').addEventListener('click', () => {
-            if (enemyAlive && Math.abs(player.pos.x - enemyX) < 3) {
+        document.getElementById('attack-icon').addEventListener('click', (e) => {
+            var action = e.currentTarget.dataset.action;
+            
+            if (action === 'attack') {
                 attackEnemy();
-            } else if (!enemyAlive && chestSprite && Math.abs(player.pos.x - chestSprite.position.x) < 3) {
+            } else if (action === 'chest') {
                 playSound(soundChest);
                 scene.remove(chestSprite);
+                chestSprite = null;
                 exitIsOpen = true;
-            } else if (exitIsOpen && Math.abs(player.pos.x - (LEVEL_W - 1)) < 3) {
+            } else if (action === 'exit') {
                 playSound(soundVictory);
-                setTimeout(() => { parent.Sherwood.Thicket._onWin(nodeId, diff); }, 500);
+                setTimeout(() => { 
+                    try { parent.Sherwood.Thicket._onWin(nodeId, diff); } catch(err) {} 
+                }, 500);
             }
         });
 
         // ============================================================
-        //  ЦИКЛ
+        //  ЦИКЛ (Обновление кадров видео)
         // ============================================================
         let lastTime = performance.now();
 
@@ -533,6 +544,15 @@
             requestAnimationFrame(animate);
             const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
             lastTime = performance.now();
+
+            // Отрисовка видео на Canvas и удаление фона
+            if (video.readyState >= 2) {
+                hCtx.drawImage(video, 0, 0, hCanvas.width, hCanvas.height);
+                var imgData = hCtx.getImageData(0, 0, hCanvas.width, hCanvas.height);
+                chromaKeyHero(imgData);
+                hCtx.putImageData(imgData, 0, 0);
+                heroTex.needsUpdate = true;
+            }
 
             if (!isBattleActive) {
                 updatePlayer(dt);
@@ -542,7 +562,7 @@
 
             // Визуал игрока
             heroGroup.position.copy(player.pos);
-            heroGroup.position.y -= 1;
+            heroGroup.position.y -= 0.5; 
             playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
 
             // Камера
