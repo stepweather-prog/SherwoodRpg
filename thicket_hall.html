@@ -149,13 +149,10 @@
         // ============================================================
         const loader = new THREE.TextureLoader();
         
-        // Основные текстуры
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-        // Новая текстура для низа (торца)
         const floorRaidTexture = loader.load('assets/assets2/Sherwood_Square/floors_raid.png');
         
-        // Включаем повторение (Tiling) для всех
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
         
@@ -167,7 +164,6 @@
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
-        // Материал для боковой грани пола
         const sideFloorMat = new THREE.MeshLambertMaterial({ map: floorRaidTexture });
 
         // ============================================================
@@ -176,24 +172,19 @@
         const LEVEL_W = 30;
         const WALL_H = 6;
 
-        // Пол (материалы: [право, лево, верх, низ, перед, зад])
-        // Используем новую текстуру для боковых граней (право, лево, перед, зад)
         const floorMatsArray = [sideFloorMat, sideFloorMat, floorMat, sideFloorMat, sideFloorMat, sideFloorMat];
         const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMatsArray);
         ground.position.set(LEVEL_W / 2, -0.5, 0);
         scene.add(ground);
 
-        // Задняя стена
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
         scene.add(backWall);
 
-        // Передняя стена
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
         scene.add(frontWall);
 
-        // Начальная стена (за спиной)
         const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
         startWall.position.set(-0.5, WALL_H / 2, 0);
         scene.add(startWall);
@@ -234,11 +225,9 @@
                 var r = d[i], g = d[i+1], b = d[i+2];
                 var brightness = (r + g + b) / 3;
                 
-                // Убираем черный и артефакты сжатия
                 if (brightness < 25) {
                     d[i+3] = 0; 
                 } 
-                // Пограничные пиксели делаем мягкими (сглаживание)
                 else if (brightness < 60) {
                     d[i+3] = 255 * ((brightness - 25) / 35);
                 }
@@ -260,8 +249,8 @@
         heroSprite.position.set(0, 0, 0.2); 
         heroGroup.add(heroSprite);
 
-        // Заглушка, пока стоим
-        const heroTexStatic = loader.load('assets/assets2/dungeon_details/ezgif-frame-006.png');
+        // ИСПРАВЛЕННЫЙ ПУТЬ К СТАТИЧНОЙ КАРТИНКЕ
+        const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0);
         staticSprite.scale.set(4.0, 4.0, 1);
