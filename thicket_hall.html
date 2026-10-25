@@ -159,12 +159,16 @@
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
 
+        // Настраиваем текстуру для торца (низа), чтобы она повторялась 30 раз по длине и 1 раз по высоте
         floorRaidTexture.wrapS = THREE.RepeatWrapping;
         floorRaidTexture.wrapT = THREE.RepeatWrapping;
+        floorRaidTexture.repeat.set(30, 1); 
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
-        const sideFloorMat = new THREE.MeshLambertMaterial({ map: floorRaidTexture });
+        
+        // Материал для боковых граней (делаем чуть темнее, чтобы не сливалось с полом)
+        const sideFloorMat = new THREE.MeshLambertMaterial({ map: floorRaidTexture, color: 0x888888 });
 
         // ============================================================
         //  УРОВЕНЬ (Коридор 1 плитка)
@@ -172,19 +176,23 @@
         const LEVEL_W = 30;
         const WALL_H = 6;
 
+        // Пол (материалы: [право, лево, верх, низ, перед, зад])
         const floorMatsArray = [sideFloorMat, sideFloorMat, floorMat, sideFloorMat, sideFloorMat, sideFloorMat];
         const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMatsArray);
         ground.position.set(LEVEL_W / 2, -0.5, 0);
         scene.add(ground);
 
+        // Задняя стена
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
         scene.add(backWall);
 
+        // Передняя стена
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
         scene.add(frontWall);
 
+        // Начальная стена (за спиной)
         const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
         startWall.position.set(-0.5, WALL_H / 2, 0);
         scene.add(startWall);
@@ -249,7 +257,7 @@
         heroSprite.position.set(0, 0, 0.2); 
         heroGroup.add(heroSprite);
 
-        // ИСПРАВЛЕННЫЙ ПУТЬ К СТАТИЧНОЙ КАРТИНКЕ
+        // Статичная заглушка
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0);
