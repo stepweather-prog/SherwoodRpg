@@ -121,8 +121,8 @@
         //  СЦЕНА
         // ============================================================
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x2a1e14);
-        scene.fog = new THREE.Fog(0x2a1e14, 10, 30);
+        scene.background = new THREE.Color(0x1a1208); 
+        scene.fog = new THREE.Fog(0x1a1208, 10, 30);
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(0, 5, 12); 
@@ -136,7 +136,7 @@
         // ============================================================
         //  СВЕТ
         // ============================================================
-        scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5);
         scene.add(dirLight);
@@ -148,17 +148,27 @@
         //  ТЕКСТУРЫ И МАТЕРИАЛЫ
         // ============================================================
         const loader = new THREE.TextureLoader();
+        
+        // Основные текстуры
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
+        // Новая текстура для низа (торца)
+        const floorRaidTexture = loader.load('assets/assets2/Sherwood_Square/floors_raid.png');
         
+        // Включаем повторение (Tiling) для всех
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
-
+        
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
 
+        floorRaidTexture.wrapS = THREE.RepeatWrapping;
+        floorRaidTexture.wrapT = THREE.RepeatWrapping;
+
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
+        // Материал для боковой грани пола
+        const sideFloorMat = new THREE.MeshLambertMaterial({ map: floorRaidTexture });
 
         // ============================================================
         //  УРОВЕНЬ (Коридор 1 плитка)
@@ -166,27 +176,33 @@
         const LEVEL_W = 30;
         const WALL_H = 6;
 
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMat);
+        // Пол (материалы: [право, лево, верх, низ, перед, зад])
+        // Используем новую текстуру для боковых граней (право, лево, перед, зад)
+        const floorMatsArray = [sideFloorMat, sideFloorMat, floorMat, sideFloorMat, sideFloorMat, sideFloorMat];
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMatsArray);
         ground.position.set(LEVEL_W / 2, -0.5, 0);
         scene.add(ground);
 
+        // Задняя стена
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
         scene.add(backWall);
 
+        // Передняя стена
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
         scene.add(frontWall);
 
+        // Начальная стена (за спиной)
         const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
         startWall.position.set(-0.5, WALL_H / 2, 0);
         scene.add(startWall);
 
         // ============================================================
-        //  ИГРОК (Видео с Chroma Key как в Лагере)
+        //  ИГРОК (Видео + Плавный Chroma Key)
         // ============================================================
         const player = {
-            pos: new THREE.Vector3(2, 1, 0),
+            pos: new THREE.Vector3(2, 0, 0),
             vel: new THREE.Vector3(0, 0, 0),
             w: 1.0, h: 2.0,
             onGround: false,
@@ -200,32 +216,35 @@
         const heroGroup = new THREE.Group();
         scene.add(heroGroup);
 
-        // Создаем видео
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
         video.loop = true;
         video.muted = true;
-        video.pause(); // Стоим при старте
+        video.pause();
 
-        // Создаем Canvas для вырезания фона
         const hCanvas = document.createElement('canvas');
-        hCanvas.width = 512; // Размер полотна
+        hCanvas.width = 512;
         hCanvas.height = 512;
         const hCtx = hCanvas.getContext('2d', { willReadFrequently: true });
 
-        // Функция удаления черного фона
+        // ПЛАВНОЕ УДАЛЕНИЕ ЧЕРНОГО И АРТЕФАКТОВ
         function chromaKeyHero(imgData) {
             var d = imgData.data;
             for (var i = 0; i < d.length; i += 4) {
                 var r = d[i], g = d[i+1], b = d[i+2];
-                // Если пиксель черный или очень темный
-                if (r < 20 && g < 20 && b < 20) {
-                    d[i+3] = 0; // Делаем прозрачным
+                var brightness = (r + g + b) / 3;
+                
+                // Убираем черный и артефакты сжатия
+                if (brightness < 25) {
+                    d[i+3] = 0; 
+                } 
+                // Пограничные пиксели делаем мягкими (сглаживание)
+                else if (brightness < 60) {
+                    d[i+3] = 255 * ((brightness - 25) / 35);
                 }
             }
         }
 
-        // Текстура из Canvas
         const heroTex = new THREE.CanvasTexture(hCanvas);
         heroTex.minFilter = THREE.LinearFilter;
         heroTex.magFilter = THREE.LinearFilter;
@@ -236,13 +255,15 @@
             depthTest: false
         });
         const heroSprite = new THREE.Sprite(heroMaterial);
+        heroSprite.center.set(0.5, 0); 
         heroSprite.scale.set(4.0, 4.0, 1);
         heroSprite.position.set(0, 0, 0.2); 
         heroGroup.add(heroSprite);
 
-        // Статичная заглушка
+        // Заглушка, пока стоим
         const heroTexStatic = loader.load('assets/assets2/dungeon_details/ezgif-frame-006.png');
-        const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true }));
+        const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
+        staticSprite.center.set(0.5, 0);
         staticSprite.scale.set(4.0, 4.0, 1);
         staticSprite.position.set(0, 0, 0.3);
         heroGroup.add(staticSprite);
@@ -269,9 +290,9 @@
                 t.minFilter = THREE.LinearFilter;
                 t.magFilter = THREE.LinearFilter;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
+                enemySprite.center.set(0.5, 0); 
                 enemySprite.scale.set(scale, scale, 1);
-                // Ставим на пол
-                enemySprite.position.set(enemyX, scale / 2, 0);
+                enemySprite.position.set(enemyX, 0, 0); 
                 scene.add(enemySprite);
                 
                 if (enemyData) {
@@ -303,16 +324,17 @@
             if (!chestSprite) {
                 var tex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
                 chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                chestSprite.center.set(0.5, 0);
                 chestSprite.scale.set(2.5, 2.5, 1);
-                chestSprite.position.set(enemyX, 1.25, 0);
+                chestSprite.position.set(enemyX, 0, 0);
                 scene.add(chestSprite);
             }
             if (!exitDoor) {
-                // Картинка двери из подземки
                 var doorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
                 exitDoor = new THREE.Sprite(new THREE.SpriteMaterial({ map: doorTex, transparent: true }));
+                exitDoor.center.set(0.5, 0);
                 exitDoor.scale.set(3, 4, 1);
-                exitDoor.position.set(LEVEL_W - 1, 2, 0);
+                exitDoor.position.set(LEVEL_W - 1, 0, 0);
                 scene.add(exitDoor);
             }
         }
@@ -477,6 +499,7 @@
 
             if (enemySprite) {
                 hitFlashSprite.position.copy(enemySprite.position);
+                hitFlashSprite.position.y += 1.0;
                 hitFlashSprite.visible = true;
                 setTimeout(() => hitFlashSprite.visible = false, 150);
             }
@@ -536,7 +559,7 @@
         });
 
         // ============================================================
-        //  ЦИКЛ (Обновление кадров видео)
+        //  ЦИКЛ
         // ============================================================
         let lastTime = performance.now();
 
@@ -545,7 +568,7 @@
             const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
             lastTime = performance.now();
 
-            // Отрисовка видео на Canvas и удаление фона
+            // Отрисовка видео на Canvas
             if (video.readyState >= 2) {
                 hCtx.drawImage(video, 0, 0, hCanvas.width, hCanvas.height);
                 var imgData = hCtx.getImageData(0, 0, hCanvas.width, hCanvas.height);
@@ -562,7 +585,7 @@
 
             // Визуал игрока
             heroGroup.position.copy(player.pos);
-            heroGroup.position.y -= 0.5; 
+            heroGroup.position.y = player.pos.y; 
             playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
 
             // Камера
@@ -572,7 +595,7 @@
             // HP бар врага
             if (isBattleActive && enemySprite) {
                 var pos = enemySprite.position.clone();
-                pos.y += enemySprite.scale.y / 2 + 0.5;
+                pos.y += enemySprite.scale.y + 0.5; 
                 pos.project(camera);
                 document.getElementById('mob-hp').style.left = (pos.x * 0.5 + 0.5) * window.innerWidth + 'px';
                 document.getElementById('mob-hp').style.top = (-pos.y * 0.5 + 0.5) * window.innerHeight + 'px';
