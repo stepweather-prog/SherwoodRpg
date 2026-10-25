@@ -199,20 +199,33 @@
             jumpPressed: false
         };
 
-        // Визуал игрока
+        // Визуал игрока (Исправлено: CylinderGeometry вместо CapsuleGeometry)
         const heroGroup = new THREE.Group();
+        
+        // Тело
         const heroBody = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.4, 1.2, 4, 8),
+            new THREE.CylinderGeometry(0.4, 0.4, 1.6, 8),
             new THREE.MeshLambertMaterial({ color: 0xc8a050 })
         );
         heroBody.position.y = 1.0;
         heroGroup.add(heroBody);
+        
+        // Голова
+        const heroHead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.35, 8, 8),
+            new THREE.MeshLambertMaterial({ color: 0xe0c080 })
+        );
+        heroHead.position.y = 2.0;
+        heroGroup.add(heroHead);
+
+        // Плащ
         const cape = new THREE.Mesh(
-            new THREE.BoxGeometry(0.9, 1.2, 0.2),
+            new THREE.BoxGeometry(0.9, 1.4, 0.2),
             new THREE.MeshLambertMaterial({ color: 0x8b0000 })
         );
         cape.position.set(0, 1.0, -0.4);
         heroGroup.add(cape);
+        
         scene.add(heroGroup);
 
         // ============================================================
