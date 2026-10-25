@@ -318,11 +318,42 @@
             }
         }
 
-        var objects = []; var lootBags = []; var LOOT_TYPES = ['potion_hp', 'potion_filth', 'cauldron', 'altar', 'arrow_pickup'];
+        var objects = []; var lootBags = [];
+        var LOOT_TYPES = ['potion_hp', 'potion_filth', 'potion_high', 'cauldron', 'altar', 'arrow_pickup'];
         var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0 };
 
         function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
         function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
+
+        // ============================================================
+        //  BFS-ПУТЬ ПО ОТКРЫТЫМ КЛЕТКАМ
+        // ============================================================
+        function buildPath(startGX, startGY, goalGX, goalGY) {
+            if (goalGX < 0 || goalGY < 0 || goalGX >= size || goalGY >= size) return [];
+            if (map[goalGY][goalGX] !== 0 && map[goalGY][goalGX] !== 3) return [];
+            var keyFn = function(x, y) { return y * size + x; };
+            var prev = {}; var q = [{ x: startGX, y: startGY }]; prev[keyFn(startGX, startGY)] = null;
+            var dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+            var found = false;
+            while (q.length) {
+                var cur = q.shift();
+                if (cur.x === goalGX && cur.y === goalGY) { found = true; break; }
+                for (var d = 0; d < dirs.length; d++) {
+                    var nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y;
+                    if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+                    if (map[ny][nx] !== 0 && map[ny][nx] !== 3) continue;
+                    var k = keyFn(nx, ny);
+                    if (prev[k] !== undefined) continue;
+                    prev[k] = keyFn(cur.x, cur.y);
+                    q.push({ x: nx, y: ny });
+                }
+            }
+            if (!found) return [];
+            var out = []; var kk = keyFn(goalGX, goalGY);
+            while (kk !== null && kk !== undefined) { out.push({ gx: kk % size, gy: Math.floor(kk / size) }); kk = prev[kk]; }
+            out.reverse();
+            return out.slice(1).map(function(n) { return gridToWorld(n.gx, n.gy); });
+        }
 
         function getRandomFreeCell() {
             var attempts = 0;
@@ -524,7 +555,6 @@
                 camFPS.rotation.set(0, 0, 0);
 
                 if (currentEnemySprite) {
-                    // переносим врага из лабиринта в боевую комнату
                     battleRoom.add(currentEnemySprite);
                     var sy = currentEnemySprite.scale.y;
                     currentEnemySprite.position.set(0, sy / 2, -2);
@@ -540,7 +570,6 @@
                 battleRoom.visible = false;
                 group.visible = true;
 
-                // возвращаем врага обратно в лабиринт
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     group.add(currentEnemyObj.mesh);
                     var sy2 = currentEnemyObj.mesh.scale.y;
@@ -562,6 +591,7 @@
             if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
+            pendingBattle = null; pendingLoot = null;
 
             syncPlayerGrid();
             updateFog();
@@ -588,6 +618,7 @@
 
         function stopBattle() {
             isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0;
+            pendingBattle = null; pendingLoot = null;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
 
@@ -598,6 +629,7 @@
 
         function onEnemyKilled() {
             if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
+            pendingBattle = null; pendingLoot = null;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
             if (currentEnemyObj) {
                 spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
@@ -652,6 +684,7 @@
 
         const raycaster = new THREE.Raycaster(); const ndc = new THREE.Vector2();
         var waypoints = []; var moving = false; const MOVE_SPEED = 2.0;
+        var pendingBattle = null, pendingLoot = null;
 
         renderer.domElement.addEventListener('click', (e) => {
             if (isBattleActive) { if (currentEnemySprite) attackEnemy(); return; }
@@ -670,23 +703,34 @@
                 if (best.kind === 'exit') {
                     if (best.dist < 4) { if (exitIsOpen) { winDungeon(); } else { showCenterText('Выход закрыт!', '#f44336'); } return; }
                 } else if (best.kind === 'bag') {
-                    if (best.dist < 8) { var ud2 = best.obj.userData; if (ud2 && ud2.objRef) { var cur = worldToGrid(playerPos.x, playerPos.z); var dist = Math.abs(cur.gx - ud2.gx) + Math.abs(cur.gy - ud2.gy); if (dist <= 1) { openLootBag(ud2.objRef); } else { showCenterText('Далеко', '#888'); } return; } }
+                    if (best.dist < 8) {
+                        var ud2 = best.obj.userData;
+                        if (ud2 && ud2.objRef) {
+                            var cur = worldToGrid(playerPos.x, playerPos.z);
+                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { openLootBag(ud2.objRef); return; }
+                            var pathB = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
+                            if (pathB.length > 0) { waypoints = pathB; moving = true; pendingBattle = null; pendingLoot = { type: 'bag', bag: ud2.objRef }; startSteps(); }
+                            else { showCenterText('Нет пути', '#888'); }
+                            return;
+                        }
+                    }
                 } else if (best.kind === 'sprite') {
                     if (best.dist < 8) {
                         var ud3 = best.obj.userData;
                         if (ud3) {
+                            var curS = worldToGrid(playerPos.x, playerPos.z);
                             if (ud3.type === 'enemy') {
-                                var cur = worldToGrid(playerPos.x, playerPos.z);
-                                var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY);
-                                if (dist <= 1) { startBattle(ud3.objRef); }
-                                else { showCenterText('Далеко', '#888'); }
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { startBattle(ud3.objRef); return; }
+                                var pathE = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
+                                if (pathE.length > 0) { waypoints = pathE; moving = true; pendingBattle = ud3.objRef; pendingLoot = null; startSteps(); }
+                                else { showCenterText('Нет пути', '#888'); }
                                 return;
                             }
                             if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
-                                const ccur = worldToGrid(playerPos.x, playerPos.z);
-                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY);
-                                if (d <= 1) { applyLootEffect(ud3.objRef); }
-                                else { showCenterText('Далеко', '#888'); }
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { applyLootEffect(ud3.objRef); return; }
+                                var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
+                                if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
+                                else { showCenterText('Нет пути', '#888'); }
                                 return;
                             }
                         }
@@ -701,35 +745,51 @@
                 if (!tile) return;
                 var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
 
-                if (dist === 1) {
-                    if (tile.isWall) { return; }
+                if (tile.isWall) return;
 
-                    if (!tile.opened) {
+                if (!tile.opened) {
+                    if (dist === 1) {
                         tile.opened = true;
                         tile.mesh.visible = false;
                         if (tile.floorMesh) tile.floorMesh.visible = true;
                         playSound(soundAltar);
                         updateFog();
-                        return;
                     }
+                    return;
+                }
 
-                    var enemyOnTile = null;
-                    for (var i = 0; i < objects.length; i++) {
-                        if (objects[i].type === 'enemy' && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
-                            enemyOnTile = objects[i];
-                            break;
+                var cur2 = worldToGrid(playerPos.x, playerPos.z);
+                if (tile.x === cur2.gx && tile.y === cur2.gy) return;
+
+                var enemyOnTile = null;
+                for (var i = 0; i < objects.length; i++) {
+                    if (objects[i].type === 'enemy' && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
+                        enemyOnTile = objects[i]; break;
+                    }
+                }
+                var lootOnTile = null;
+                for (var i = 0; i < objects.length; i++) {
+                    if (LOOT_TYPES.indexOf(objects[i].type) !== -1 && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
+                        lootOnTile = objects[i]; break;
+                    }
+                }
+                if (!lootOnTile) {
+                    for (var b = 0; b < lootBags.length; b++) {
+                        if (!lootBags[b].opened && lootBags[b].gx === tile.x && lootBags[b].gy === tile.y) {
+                            lootOnTile = { type: 'bag', bag: lootBags[b] }; break;
                         }
                     }
+                }
 
-                    if (enemyOnTile) {
-                        startBattle(enemyOnTile);
-                        return;
-                    }
-
-                    const to = gridToWorld(tile.x, tile.y);
-                    waypoints = [{ x: to.x, z: to.z }];
+                var path = buildPath(cur2.gx, cur2.gy, tile.x, tile.y);
+                if (path.length > 0) {
+                    waypoints = path;
                     moving = true;
+                    pendingBattle = enemyOnTile || null;
+                    pendingLoot = lootOnTile || null;
                     startSteps();
+                } else {
+                    showCenterText('Нет пути', '#888');
                 }
             }
         });
@@ -785,7 +845,24 @@
                     if (dist <= budget) { playerPos.x = tgt.x; playerPos.z = tgt.z; budget -= dist; waypoints.shift(); }
                     else { const nx = dx / dist, nz = dz / dist; playerPos.x += nx * budget; playerPos.z += nz * budget; budget = 0; }
                 }
-                if (!waypoints.length) { moving = false; stopSteps(); syncPlayerGrid(); updateFog(); }
+                if (!waypoints.length) {
+                    moving = false; stopSteps(); syncPlayerGrid(); updateFog();
+                    if (pendingBattle) {
+                        var eObj = pendingBattle; pendingBattle = null;
+                        if (eObj && !eObj.collected) startBattle(eObj);
+                    }
+                    if (pendingLoot) {
+                        var L = pendingLoot; pendingLoot = null;
+                        var cg = worldToGrid(playerPos.x, playerPos.z);
+                        var dd;
+                        if (L.type === 'bag') dd = Math.abs(cg.gx - L.bag.gx) + Math.abs(cg.gy - L.bag.gy);
+                        else dd = Math.abs(cg.gx - L.x) + Math.abs(cg.gy - L.y);
+                        if (dd <= 1) {
+                            if (L.type === 'bag') openLootBag(L.bag);
+                            else applyLootEffect(L);
+                        }
+                    }
+                }
             }
 
             updateFilth(dt);
@@ -833,6 +910,21 @@
         });
 
         function winDungeon() {
+            // Восстанавливаем HP и сбрасываем скверну при победе
+            try {
+                if (parent.Sherwood && parent.Sherwood.getPlayer) {
+                    var pW = parent.Sherwood.getPlayer();
+                    if (pW && pW.stats) {
+                        pW.stats.hp = pW.stats.maxHp;
+                        pW.stats.filth = 0;
+                        filthFullSince = 0;
+                        filthDamageTimer = 0;
+                        if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                    }
+                }
+            } catch(e) {}
+
             stopSteps(); playSound(soundVictory); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
             try { if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, currentFloor, currentDiff); if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(currentFloor, currentDiff); } catch(e) {}
             if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows; } }
@@ -843,6 +935,21 @@
         window.winDungeon = winDungeon;
 
         function loseDungeon() {
+            // Восстанавливаем HP и сбрасываем скверну при поражении
+            try {
+                if (parent.Sherwood && parent.Sherwood.getPlayer) {
+                    var pL = parent.Sherwood.getPlayer();
+                    if (pL && pL.stats) {
+                        pL.stats.hp = pL.stats.maxHp;
+                        pL.stats.filth = 0;
+                        filthFullSince = 0;
+                        filthDamageTimer = 0;
+                        if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                    }
+                }
+            } catch(e) {}
+
             stopSteps(); playSound(soundDefeat); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
             var rewards = { exp: 50 + runLoot.exp, gold: runLoot.gold, silver: 20 + runLoot.silver, items: [] };
             try { if (parent.UI && parent.UI._showDefeatScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showDefeatScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
