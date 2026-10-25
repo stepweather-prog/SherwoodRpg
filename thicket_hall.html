@@ -182,7 +182,7 @@
         scene.add(startWall);
 
         // ============================================================
-        //  ИГРОК (Видео + Спрайт)
+        //  ИГРОК (Видео с удалением фона)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 1, 0),
@@ -199,42 +199,65 @@
         const heroGroup = new THREE.Group();
         scene.add(heroGroup);
 
-        // 1. Создаем HTML5 видео элемент для фона (чтобы работала прозрачность WebM)
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
         video.loop = true;
         video.muted = true;
-        video.play();
+        video.pause();
 
-        // 2. Создаем текстуру из видео
         const videoTexture = new THREE.VideoTexture(video);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
 
-        // 3. Спрайт героя
-        const heroMaterial = new THREE.SpriteMaterial({ 
-            map: videoTexture, 
+        // УМНЫЙ ШЕЙДЕР: Удаляет черный и белый фон
+        const heroMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                map: { value: videoTexture }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D map;
+                varying vec2 vUv;
+                void main() {
+                    vec4 color = texture2D(map, vUv);
+                    float brightness = (color.r + color.g + color.b) / 3.0;
+                    
+                    // Убираем черный (близкий к 0) и белый (близкий к 1)
+                    if (brightness < 0.1 || brightness > 0.9) {
+                        discard; // Полностью прозрачный
+                    }
+                    gl_FragColor = color;
+                }
+            `,
             transparent: true,
-            depthTest: false // Чтобы всегда был на переднем плане
+            depthTest: false
         });
-        const heroSprite = new THREE.Sprite(heroMaterial);
-        heroSprite.scale.set(3.5, 3.5, 1); // Размер персонажа (квадрат 1:1)
-        heroSprite.position.set(0, 0, 0.5); // Чуть впереди
-        heroGroup.add(heroSprite);
 
-        // 4. Заглушка (картинка), пока видео загружается
+        // Плоскость героя
+        const heroGeometry = new THREE.PlaneGeometry(4.0, 4.0); // Чуть больше
+        const heroMesh = new THREE.Mesh(heroGeometry, heroMaterial);
+        heroMesh.position.set(0, 0, 0.5);
+        heroGroup.add(heroMesh);
+
+        // Заглушка (картинка), пока видео не загрузилось
         const heroTexStatic = loader.load('assets/assets2/dungeon_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true }));
-        staticSprite.scale.set(3.5, 3.5, 1);
+        staticSprite.scale.set(4.0, 4.0, 1);
+        staticSprite.position.set(0, 0, 0.6);
         heroGroup.add(staticSprite);
 
-        // Как только видео начнет играть — убираем статичную картинку
         video.addEventListener('play', () => {
             staticSprite.visible = false;
         });
 
         // ============================================================
-        //  ВРАГ
+        //  ВРАГ (Исправлено положение)
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -245,13 +268,14 @@
 
         function createEnemySprite() {
             var path = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
-            var scale = (enemyData && enemyData.isBoss) ? 5.0 : 3.5; 
+            var scale = (enemyData && enemyData.isBoss) ? 4.0 : 2.5; 
             
             loader.load(path, function(t) {
                 t.minFilter = THREE.LinearFilter;
                 t.magFilter = THREE.LinearFilter;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
                 enemySprite.scale.set(scale, scale, 1);
+                // Ставим строго на пол (низ спрайта на y=0)
                 enemySprite.position.set(enemyX, scale / 2, 0);
                 scene.add(enemySprite);
                 
@@ -332,8 +356,12 @@
             p.vel.x = moveX * p.speed;
             if (moveX !== 0) {
                 p.facing = moveX;
-                // Разворачиваем видео-спрайт (если heroSprite - Sprite, это работает через scale.x)
                 heroGroup.scale.x = moveX > 0 ? 1 : -1; 
+                // Включаем видео при ходьбе
+                if (video.paused) video.play().catch(()=>{});
+            } else {
+                // Останавливаем видео, когда стоим
+                if (!video.paused) video.pause();
             }
 
             const jumpDown = keys['KeyW'] || keys['Space'] || keys['ArrowUp'] || touch.jump;
@@ -375,18 +403,11 @@
             if (enemyX >= patrolMax) { enemyX = patrolMax; enemyDir = -1; }
 
             enemySprite.position.x = enemyX;
-
-            // Поворот врага
-            if (enemyDir === -1) {
-                enemySprite.scale.x = Math.abs(enemySprite.scale.x);
-            } else {
-                enemySprite.scale.x = -Math.abs(enemySprite.scale.x);
-            }
         }
 
         function checkInteraction() {
             if (enemySprite && enemyAlive && !isBattleActive) {
-                if (Math.abs(player.pos.x - enemyX) < 2.5) {
+                if (Math.abs(player.pos.x - enemyX) < 3) {
                     document.getElementById('attack-icon').style.display = 'block';
                 } else {
                     document.getElementById('attack-icon').style.display = 'none';
@@ -542,7 +563,7 @@
 
         animate();
 
-        // Запуск музыки (с проверкой, чтобы не было ошибки, если parent недоступен)
+        // Запуск музыки
         setTimeout(() => {
             try { 
                 if (parent && parent.audioPlayer) parent.audioPlayer.pause(); 
