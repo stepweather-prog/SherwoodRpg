@@ -35,8 +35,8 @@
             bottom: 45px; 
             left: 50%; 
             transform: translateX(-50%); 
-            width: 60px; 
-            height: 60px; 
+            width: 65px; 
+            height: 65px; 
             z-index: 40; 
             cursor: pointer; 
             display: none; 
@@ -67,7 +67,7 @@
 
         @media (max-width: 900px) {
             #touch-controls { display: block; }
-            #attack-icon { bottom: 90px; width: 50px; height: 50px; }
+            #attack-icon { bottom: 90px; width: 55px; height: 55px; }
             #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
             #hero-life span, #hero-mana span { font-size: 13px; }
             #mob-hp { width: 220px; height: 150px; }
@@ -167,7 +167,7 @@
         scene.add(playerLight);
 
         // ============================================================
-        //  ТЕКСТУРЫ
+        //  ТЕКСТУРЫ (НАСТРОЙКА ПОВТОРЕНИЯ ПЛИТКОЙ)
         // ============================================================
         const loader = new THREE.TextureLoader();
         
@@ -175,9 +175,12 @@
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const floorRaidTexture = loader.load('assets/assets2/Sherwood_Square/floors_raid.png');
         
+        // Включаем повторение для стен (квадратики)
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(15, 3); // 15 плиток по ширине, 3 по высоте
         
+        // Включаем повторение для пола
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(30, 1);
@@ -208,6 +211,7 @@
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
         platformerGroup.add(backWall);
 
+        // Заполняем всё вокруг текстурой стены (чтобы не было коричневого дерева)
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
         platformerGroup.add(frontWall);
@@ -261,7 +265,7 @@
         battleRoom.add(bFrontWall);
 
         // ============================================================
-        //  ИГРОК (Напрямую VideoTexture без Canvas)
+        //  ИГРОК (Правильное вырезание фона и отзеркаливание в Canvas)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 0, 0),
@@ -285,18 +289,48 @@
         video.pause();
         video.crossOrigin = 'anonymous';
 
-        // Создаем видеотекстуру напрямую (она сохранит прозрачность!)
-        const videoTexture = new THREE.VideoTexture(video);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
+        const hCanvas = document.createElement('canvas');
+        hCanvas.width = 512;
+        hCanvas.height = 512;
+        const hCtx = hCanvas.getContext('2d', { willReadFrequently: true });
 
-        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: videoTexture, transparent: true, depthTest: false }));
+        // Вырезание фона и отзеркаливание
+        function processHeroFrame(flip) {
+            if (video.readyState < 2) return;
+            try {
+                hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+                hCtx.save();
+                if (flip) {
+                    hCtx.scale(-1, 1);
+                    hCtx.translate(-hCanvas.width, 0);
+                }
+                hCtx.drawImage(video, 0, 0, hCanvas.width, hCanvas.height);
+                hCtx.restore();
+                
+                var imgData = hCtx.getImageData(0, 0, hCanvas.width, hCanvas.height);
+                var d = imgData.data;
+                for (var i = 0; i < d.length; i += 4) {
+                    var r = d[i], g = d[i+1], b = d[i+2];
+                    // Убираем только чисто черный цвет (до 20)
+                    if (r < 20 && g < 20 && b < 20) {
+                        d[i+3] = 0; 
+                    }
+                }
+                hCtx.putImageData(imgData, 0, 0);
+                heroTex.needsUpdate = true;
+            } catch(e) {}
+        }
+
+        const heroTex = new THREE.CanvasTexture(hCanvas);
+        heroTex.minFilter = THREE.LinearFilter;
+        heroTex.magFilter = THREE.LinearFilter;
+
+        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
         heroSprite.center.set(0.5, 0); 
         heroSprite.scale.set(4.0, 4.0, 1);
         heroSprite.position.set(0, 0, 0.2); 
         heroGroup.add(heroSprite);
 
-        // Заглушка (картинка)
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0);
@@ -304,13 +338,12 @@
         staticSprite.position.set(0, 0, 0.3);
         heroGroup.add(staticSprite);
 
-        // Скрываем картинку, как только видео начнет играть
         video.addEventListener('play', () => {
             staticSprite.visible = false;
         });
 
         // ============================================================
-        //  ВРАГ И БОЕВЫЕ ПАРАМЕТРЫ
+        //  ВРАГ
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -404,7 +437,7 @@
         bindTouch('btn-right', 'right');
 
         // ============================================================
-        //  ЛОГИКА ПЛАТФОРМЕРА
+        //  ЛОГИКА
         // ============================================================
         function updatePlayer(dt) {
             const p = player;
@@ -415,7 +448,6 @@
             p.vel.x = moveX * p.speed;
             if (moveX !== 0) {
                 p.facing = moveX;
-                heroGroup.scale.x = moveX > 0 ? 1 : -1; 
                 if (video.paused) video.play().catch(()=>{});
             } else {
                 if (!video.paused) video.pause();
@@ -447,9 +479,6 @@
             p.onGround = onGround;
         }
 
-        // ============================================================
-        //  ПРОВЕРКА ВЗАИМОДЕЙСТВИЯ
-        // ============================================================
         function checkInteraction() {
             var icon = document.getElementById('attack-icon');
             var cdOverlay = document.getElementById('attack-cooldown-overlay');
@@ -635,6 +664,11 @@
             requestAnimationFrame(animate);
             const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
             lastTime = performance.now();
+
+            // Обновляем кадр видео (с отзеркаливанием, если идем влево)
+            if (video.readyState >= 2) {
+                processHeroFrame(player.facing < 0);
+            }
 
             if (!isBattleActive) {
                 updatePlayer(dt);
