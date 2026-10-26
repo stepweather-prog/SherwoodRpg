@@ -29,7 +29,7 @@
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        /* Кнопка действия */
+        /* Кнопка действия (По центру) */
         #attack-icon { 
             position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); 
             width: 65px; height: 65px; z-index: 40; cursor: pointer; display: none; 
@@ -43,18 +43,19 @@
             align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px;
         }
         
-        /* Тач-управление */
-        #touch-controls { position: fixed; bottom: 20px; left: 0; width: 100%; height: 120px; z-index: 55; pointer-events: none; display: none; }
-        .touch-btn { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: rgba(10,8,5,0.8); border: 2px solid #6b5a3a; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+        /* Тач-управление (Под кнопкой удара) */
+        #touch-controls { position: fixed; bottom: 15px; left: 0; width: 100%; height: 80px; z-index: 55; pointer-events: none; display: none; }
+        .touch-btn { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(10,8,5,0.8); border: 2px solid #6b5a3a; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
         .touch-btn:active { background: rgba(139,107,58,0.8); transform: scale(0.9); }
-        #btn-left  { left: 20px; bottom: 20px; }
-        #btn-right { left: 100px; bottom: 20px; }
-        
+        /* Ставим кнопки по бокам от центра, но ниже кнопки удара */
+        #btn-left  { left: calc(50% - 80px); bottom: 10px; }
+        #btn-right { left: calc(50% + 20px); bottom: 10px; }
+
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
 
         @media (max-width: 900px) {
             #touch-controls { display: block; }
-            #attack-icon { bottom: 90px; width: 55px; height: 55px; }
+            #attack-icon { bottom: 80px; width: 55px; height: 55px; }
             #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
             #hero-life span, #hero-mana span { font-size: 13px; }
             #mob-hp { width: 220px; height: 150px; }
@@ -129,9 +130,9 @@
         scene.background = new THREE.Color(0x1a1208); 
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
 
-        // КАМЕРА: БЛИЖЕ И НИЖЕ
+        // КАМЕРА (Как в подземке)
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camPlatformer.position.set(0, 3, 7); // Было 5, 12. Сделали 3, 7
+        camPlatformer.position.set(0, 2, 6); 
         camPlatformer.lookAt(0, 1, 0);
 
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
@@ -163,51 +164,49 @@
         
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(1, 1); 
+        wallTexture.repeat.set(15, 4); 
         
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(1, 1);
+        floorTexture.repeat.set(30, 1);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
 
         // ============================================================
-        //  ПЛАТФОРМЕР (СЕТКА)
+        //  ПЛАТФОРМЕР
         // ============================================================
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
         const LEVEL_W = 30;
-        const WALL_H = 4; 
+        const WALL_H = 6;
 
-        for (let i = 0; i < LEVEL_W; i++) {
-            const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
-            floorTile.rotation.x = -Math.PI / 2;
-            floorTile.position.set(i + 0.5, 0, 0);
-            platformerGroup.add(floorTile);
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMat);
+        ground.position.set(LEVEL_W / 2, -0.5, 0);
+        platformerGroup.add(ground);
 
-            for (let h = 0; h < WALL_H; h++) {
-                const wallTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat);
-                wallTile.position.set(i + 0.5, h + 0.5, -0.5);
-                platformerGroup.add(wallTile);
-            }
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
+        platformerGroup.add(backWall);
 
-            for (let h = 0; h < WALL_H; h++) {
-                const frontTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat);
-                frontTile.position.set(i + 0.5, h + 0.5, 0.5);
-                frontTile.rotation.y = Math.PI; 
-                platformerGroup.add(frontTile);
-            }
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
+        platformerGroup.add(frontWall);
 
-            const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
-            const seamMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), seamMat);
-            seamMesh.position.set(i + 0.5, -0.2, 0.55); 
-            platformerGroup.add(seamMesh);
-        }
+        const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
+        startWall.position.set(-0.5, WALL_H / 2, 0);
+        platformerGroup.add(startWall);
+
+        // Бордюр снизу
+        const seamGeo = new THREE.PlaneGeometry(LEVEL_W, 1.5);
+        const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
+        const seamMesh = new THREE.Mesh(seamGeo, seamMat);
+        seamMesh.position.set(LEVEL_W / 2, -0.2, 0.55); 
+        platformerGroup.add(seamMesh);
 
         // ============================================================
-        //  БОЕВАЯ КОМНАТА
+        //  БОЕВАЯ КОМНАТА (FPS)
         // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
@@ -251,7 +250,7 @@
         battleRoom.add(bFrontWall);
 
         // ============================================================
-        //  ИГРОК
+        //  ИГРОК (ЗЕЛЕНЫЙ ХРОМАКЕЙ)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 0, 0),
@@ -336,7 +335,7 @@
         });
 
         // ============================================================
-        //  ВРАГ
+        //  ВРАГ (ПРАВИЛЬНЫЙ РАЗМЕР)
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -352,7 +351,8 @@
 
         function createEnemySprite() {
             var path = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
-            var scale = (enemyData && enemyData.isBoss) ? 4.0 : 2.5; 
+            // ОДИНАКОВЫЙ РАЗМЕР ДЛЯ ВСЕХ
+            var scale = (enemyData && enemyData.isBoss) ? 3.0 : 2.0; 
             
             loader.load(path, function(t) {
                 t.minFilter = THREE.LinearFilter;
@@ -537,7 +537,8 @@
             if (enemySprite) {
                 battleRoom.add(enemySprite);
                 enemySprite.center.set(0.5, 0.5);
-                enemySprite.position.set(0, enemySprite.scale.y / 2, -2);
+                // СТАВИМ ВРАГА ДАЛЬШЕ, ЧТОБЫ ОН НЕ БЫЛ ОГРОМНЫМ
+                enemySprite.position.set(0, enemySprite.scale.y / 2, -3.5); 
             }
 
             camFPS.position.set(0, 1.2, 0);
@@ -613,7 +614,7 @@
             battleRoom.visible = false;
             platformerGroup.visible = true;
             activeCamera = camPlatformer;
-            camPlatformer.position.set(player.pos.x, 3, 7);
+            camPlatformer.position.set(player.pos.x, 2, 6);
             camPlatformer.lookAt(player.pos.x, 1, 0);
             
             if (enemySprite) {
@@ -679,7 +680,6 @@
                 updatePlayer(dt);
                 
                 camPlatformer.position.x += (player.pos.x - camPlatformer.position.x) * 0.1;
-                // Камера смотрит чуть ниже (на 1 юнит), чтобы видеть пол
                 camPlatformer.lookAt(camPlatformer.position.x, 1, 0);
                 
                 heroGroup.position.copy(player.pos);
