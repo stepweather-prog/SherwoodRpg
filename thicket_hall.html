@@ -238,10 +238,19 @@
         // Текстуры дверей
         const closedDoorTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level2.png');
+        
+        wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(8, 2);
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(8, 2);
+        ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
+        ceilTexture.repeat.set(8, 2);
 
-        // ============================================================
-        //  КОРИДОР (ПЛАТФОРМЕР)
-        // ============================================================
+        const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
+        const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
+        const ceilMat  = new THREE.MeshLambertMaterial({ map: ceilTexture });
+
+        // Коридор (ПЛАТФОРМЕР)
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
@@ -249,65 +258,38 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
-        // Настройки материалов без клонирования текстур
-        const pWallMat = new THREE.MeshLambertMaterial({ map: wallTexture });
-        const pFloorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
-        const pCeilMat = new THREE.MeshLambertMaterial({ map: ceilTexture });
-
-        // Задаем повторение
-        pWallMat.map.wrapS = pWallMat.map.wrapT = THREE.RepeatWrapping;
-        pWallMat.map.repeat.set(15, 1);
-        pFloorMat.map.wrapS = pFloorMat.map.wrapT = THREE.RepeatWrapping;
-        pFloorMat.map.repeat.set(8, 2);
-        pCeilMat.map.wrapS = pCeilMat.map.wrapT = THREE.RepeatWrapping;
-        pCeilMat.map.repeat.set(4, 4);
-
-        // Пол
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), pFloorMat);
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
         ground.position.set(LEVEL_W / 2, -0.5, 0); 
         platformerGroup.add(ground);
 
-        // Задняя стена
-        const backWall = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, WALL_H), pWallMat);
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        // Потолок
-        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), pCeilMat);
-        ceil.rotation.x = Math.PI / 2; 
+        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
-        // Выход (в конце) и Вход (в начале)
+        // Выход (в конце) и Вход (в начале) в виде дверей
         const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
-        exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, -CORRIDOR_DEPTH / 2 + 0.1); 
+        exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, 0);
+        exitDoor.rotation.y = -Math.PI / 2; // Смотрит внутрь коридора
         platformerGroup.add(exitDoor);
 
+        // Вход (в начале) - всегда закрыт
         const startDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
-        startDoor.position.set(1, WALL_H / 2, -CORRIDOR_DEPTH / 2 + 0.1); 
+        startDoor.position.set(1, WALL_H / 2, 0);
+        startDoor.rotation.y = Math.PI / 2; // Смотрит внутрь коридора
         platformerGroup.add(startDoor);
 
-        // ============================================================
-        //  БОЕВАЯ КОМНАТА
-        // ============================================================
+        // БОЕВАЯ КОМНАТА (КАК В ПОДЗЕМКЕ)
         const battleRoom = new THREE.Group();
         battleRoom.visible = false; scene.add(battleRoom);
         
-        // Создаем ОТДЕЛЬНЫЕ материалы для боевой комнаты, но используем ТЕ ЖЕ текстуры
         const bWallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.85 });
         const bFloorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95 });
         const bCeilMat = new THREE.MeshStandardMaterial({ map: ceilTexture, roughness: 0.95, side: THREE.DoubleSide });
         
-        // Настраиваем повторение для этих конкретных материалов
-        bWallMat.map.wrapS = bWallMat.map.wrapT = THREE.RepeatWrapping;
-        bWallMat.map.repeat.set(15, 1);
-        
-        bFloorMat.map.wrapS = bFloorMat.map.wrapT = THREE.RepeatWrapping;
-        bFloorMat.map.repeat.set(1, 15);
-        
-        bCeilMat.map.wrapS = bCeilMat.map.wrapT = THREE.RepeatWrapping;
-        bCeilMat.map.repeat.set(1, 15);
-
         const bRoomLength = 15; 
         const bWallHeight = 3;
         const bCorridorWidth = 4;
@@ -333,14 +315,12 @@
         battleRoom.add(bWallR);
 
         const bBack = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bWallHeight), bWallMat);
-        bBack.position.set(0, bWallHeight / 2, -bRoomLength);
+        bBack.position.set(0, bWallHeight / 2, 0);
         battleRoom.add(bBack);
 
-        // ============================================================
-        //  ИГРОК
-        // ============================================================
+        // Игрок
         const player = {
-            pos: new THREE.Vector3(3, 0, 0),
+            pos: new THREE.Vector3(3, 0, 0), // Начинаем чуть дальше от стены
             vel: new THREE.Vector3(0, 0, 0),
             onGround: false,
             facing: 1,
@@ -403,9 +383,7 @@
         heroGroup.add(staticSprite);
         video.addEventListener('play', () => { staticSprite.visible = false; });
 
-        // ============================================================
-        //  ВРАГ
-        // ============================================================
+        // Враг
         var enemyObj = null;
         var enemySprite = null;
         var enemyX = 25;
@@ -439,9 +417,7 @@
         }
         createEnemy();
 
-        // ============================================================
-        //  КРОВЬ
-        // ============================================================
+        // Кровь
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
         var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
@@ -449,9 +425,7 @@
         battleRoom.add(hitFlashSprite);
         var hitSprites = ['strike_claws.png','strike_claws_1.png','strike_claws_2.png','strike_claws_4.png','strike_claws_5.png','strike_claws_6.png'];
 
-        // ============================================================
-        //  СУНДУК
-        // ============================================================
+        // Сундук
         var chestSprite = null;
 
         function spawnChest() {
@@ -466,9 +440,7 @@
             }
         }
 
-        // ============================================================
-        //  ВВОД
-        // ============================================================
+        // Ввод
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
@@ -488,9 +460,7 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
-        // ============================================================
-        //  ЛОГИКА ИГРОКА
-        // ============================================================
+        // Логика игрока
         function updatePlayer(dt) {
             const p = player;
             let moveX = 0;
@@ -518,6 +488,7 @@
             if (p.vel.y < -25) p.vel.y = -25;
 
             const newX = p.pos.x + p.vel.x * dt;
+            // Ограничиваем ход, чтобы не заходить в двери
             p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
 
             const newY = p.pos.y + p.vel.y * dt;
@@ -525,9 +496,7 @@
             else { p.pos.y = newY; p.onGround = false; }
         }
 
-        // ============================================================
-        //  СОСТОЯНИЕ БОЯ
-        // ============================================================
+        // Состояние боя
         var isBattleActive = false;
         var battleTimer = null;
         var currentEnemyStats = null;
@@ -578,9 +547,7 @@
             try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){}
         }
 
-        // ============================================================
-        //  КАМЕРА БОЯ
-        // ============================================================
+        // КАМЕРА БОЯ (КАК В ПОДЗЕМКЕ)
         function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
@@ -613,9 +580,7 @@
             }
         }
 
-        // ============================================================
-        //  БОЙ
-        // ============================================================
+        // Бой
         function startBattle(obj) {
             if (isBattleActive || !obj) return;
             isBattleActive = true;
@@ -701,6 +666,7 @@
             setBattleCamera(false);
             playSound(soundVictory);
             
+            // Меняем дверь на открытую
             exitDoor.material.map = openDoorTex;
             exitDoor.material.needsUpdate = true;
 
@@ -803,9 +769,7 @@
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        // ============================================================
-        //  СКИЛЛЫ
-        // ============================================================
+        // Скиллы
         var talentData = {
             'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 20000, name: 'Оглушение' },
             'rage':     { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 25000, name: 'Ярость' },
@@ -861,9 +825,7 @@
             if (icon) { icon.classList.add('on-cooldown'); setTimeout(function(){ icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown); }
         }
 
-        // ============================================================
-        //  ВЗАИМОДЕЙСТВИЕ
-        // ============================================================
+        // Взаимодействие
         function checkInteraction() {
             var icon = document.getElementById('attack-icon');
             var img = document.getElementById('attack-icon-img');
@@ -896,6 +858,7 @@
                 img.src = 'assets/assets2/icons/take.png';
                 return;
             }
+            // Если дверь открыта (враг мертв)
             if (!enemyAlive && Math.abs(player.pos.x - exitDoor.position.x) < 3.5) {
                 icon.style.display = 'block';
                 icon.dataset.action = 'exit';
@@ -923,9 +886,7 @@
             }
         });
 
-        // ============================================================
-        //  ЦИКЛ
-        // ============================================================
+        // Цикл
         let lastTime = performance.now();
 
         function animate() {
