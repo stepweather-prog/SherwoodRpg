@@ -43,12 +43,13 @@
             align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px;
         }
         
-        /* Тач-управление (Под кнопкой удара) */
-        #touch-controls { position: fixed; bottom: 15px; left: 0; width: 100%; height: 80px; z-index: 55; pointer-events: none; display: none; }
+        /* Тач-управление (В самом низу, между сферами) */
+        #touch-controls { position: fixed; bottom: 10px; left: 0; width: 100%; height: 80px; z-index: 55; pointer-events: none; display: none; }
         .touch-btn { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(10,8,5,0.8); border: 2px solid #6b5a3a; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
         .touch-btn:active { background: rgba(139,107,58,0.8); transform: scale(0.9); }
-        #btn-left  { left: calc(50% - 80px); bottom: 10px; }
-        #btn-right { left: calc(50% + 20px); bottom: 10px; }
+        
+        #btn-left  { left: calc(50% - 80px); bottom: 5px; }
+        #btn-right { left: calc(50% + 20px); bottom: 5px; }
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
 
@@ -130,8 +131,9 @@
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
 
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camPlatformer.position.set(0, 2.5, 8); // Камера ниже и ближе
-        camPlatformer.lookAt(0, 1, 0);
+        // Камера опущена ниже, чтобы пол заполнял экран
+        camPlatformer.position.set(0, 1.5, 7); 
+        camPlatformer.lookAt(0, 0.5, 0);
 
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
         camFPS.rotation.order = 'YXZ';
@@ -152,7 +154,7 @@
         scene.add(playerLight);
 
         // ============================================================
-        //  ТЕКСТУРЫ (КАК В ЛАГЕРЕ, БЕЗ РЯБИ)
+        //  ТЕКСТУРЫ
         // ============================================================
         const loader = new THREE.TextureLoader();
         
@@ -160,42 +162,43 @@
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const seamTopTexture = loader.load('assets/assets2/game_details/seam_top.png');
         
-        // Настраиваем повторение: 4 огромных плитки на весь коридор
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(4, 1); // 4 плитки в длину, 1 в высоту
+        wallTexture.repeat.set(4, 1); // 4 огромных плитки
         
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(4, 1); // 4 плитки в длину
+        floorTexture.repeat.set(4, 1);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
 
         // ============================================================
-        //  ПЛАТФОРМЕР
+        //  ПЛАТФОРМЕР (БЕЗ СТЕНЫ СЗАДИ)
         // ============================================================
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
-        const LEVEL_W = 32; // 4 плитки по 8 юнитов
-        const WALL_H = 8;
+        const LEVEL_W = 32; // Длина коридора
+        const WALL_H = 4;   // Стена в высоту 4 юнита (меньше)
 
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMat);
+        // Пол (широкий)
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 2), floorMat);
         ground.position.set(LEVEL_W / 2, -0.5, 0);
         platformerGroup.add(ground);
 
+        // Задняя стена
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -1);
         platformerGroup.add(backWall);
 
+        // Передняя стена (скрывает низ, но не мешает)
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
+        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 1);
         platformerGroup.add(frontWall);
 
-        const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
-        startWall.position.set(-0.5, WALL_H / 2, 0);
-        platformerGroup.add(startWall);
+        // НИКАКОЙ СТЕНЫ ЗА СПИНОЙ. Коридор просто продолжается.
+        // Но игрок не сможет туда уйти из-за Math.max(1.0, ...) в логике.
 
         // Бордюр снизу
         const seamGeo = new THREE.PlaneGeometry(LEVEL_W, 1.5);
@@ -318,14 +321,14 @@
 
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
         heroSprite.center.set(0.5, 0); 
-        heroSprite.scale.set(3.0, 3.0, 1); // Герой немного меньше
+        heroSprite.scale.set(2.5, 2.5, 1); // Чуть меньше
         heroSprite.position.set(0, 0, 0.2); 
         heroGroup.add(heroSprite);
 
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0);
-        staticSprite.scale.set(3.0, 3.0, 1);
+        staticSprite.scale.set(2.5, 2.5, 1);
         staticSprite.position.set(0, 0, 0.3);
         heroGroup.add(staticSprite);
 
@@ -334,7 +337,7 @@
         });
 
         // ============================================================
-        //  ВРАГ (РАЗМЕР КАК У ГЕРОЯ)
+        //  ВРАГ
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -350,7 +353,7 @@
 
         function createEnemySprite() {
             var path = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
-            var scale = (enemyData && enemyData.isBoss) ? 3.2 : 2.8; // Размер как у героя
+            var scale = (enemyData && enemyData.isBoss) ? 3.0 : 2.5; // Такой же, как герой
             
             loader.load(path, function(t) {
                 t.minFilter = THREE.LinearFilter;
@@ -370,7 +373,7 @@
         createEnemySprite();
 
         // ============================================================
-        //  КРОВЬ И ЭФФЕКТЫ
+        //  КРОВЬ
         // ============================================================
         var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png'];
         var bloodTextures = bloodSprites.map(p => loader.load(p));
@@ -391,7 +394,7 @@
                 var tex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
                 chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
                 chestSprite.center.set(0.5, 0);
-                chestSprite.scale.set(2.5, 2.5, 1);
+                chestSprite.scale.set(2.0, 2.0, 1);
                 chestSprite.position.set(enemyX, 0, 0);
                 platformerGroup.add(chestSprite);
             }
@@ -463,6 +466,7 @@
             if (p.vel.y < -25) p.vel.y = -25;
 
             const newX = p.pos.x + p.vel.x * dt;
+            // Жесткая граница, чтобы не уйти за начало (даже без стены)
             p.pos.x = Math.max(1.0, Math.min(LEVEL_W - 1.5, newX));
 
             const newY = p.pos.y + p.vel.y * dt;
@@ -520,7 +524,7 @@
         }
 
         // ============================================================
-        //  БОЙ (ИСПРАВЛЕН)
+        //  БОЙ
         // ============================================================
         function startBattle() {
             if (isBattleActive || !enemyAlive) return;
@@ -535,7 +539,7 @@
             if (enemySprite) {
                 battleRoom.add(enemySprite);
                 enemySprite.center.set(0.5, 0.5);
-                enemySprite.position.set(0, enemySprite.scale.y / 2, -3.0); // Враг дальше
+                enemySprite.position.set(0, enemySprite.scale.y / 2, -3.0); 
             }
 
             camFPS.position.set(0, 1.2, 0);
@@ -611,8 +615,8 @@
             battleRoom.visible = false;
             platformerGroup.visible = true;
             activeCamera = camPlatformer;
-            camPlatformer.position.set(player.pos.x, 2.5, 8);
-            camPlatformer.lookAt(player.pos.x, 1, 0);
+            camPlatformer.position.set(player.pos.x, 1.5, 7);
+            camPlatformer.lookAt(player.pos.x, 0.5, 0);
             
             if (enemySprite) {
                 enemySprite.parent.remove(enemySprite);
@@ -676,8 +680,9 @@
             if (!isBattleActive) {
                 updatePlayer(dt);
                 
-                camPlatformer.position.x += (player.pos.x - camPlatformer.position.x) * 0.1;
-                camPlatformer.lookAt(camPlatformer.position.x, 1, 0);
+                // Камера жестко следует за игроком по X (без задержки)
+                camPlatformer.position.x = player.pos.x;
+                camPlatformer.lookAt(camPlatformer.position.x, 0.5, 0);
                 
                 heroGroup.position.copy(player.pos);
                 heroGroup.position.y = player.pos.y; 
