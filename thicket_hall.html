@@ -290,40 +290,61 @@
         startDoor.position.set(1, WALL_H / 2, -CORRIDOR_DEPTH / 2 + 0.1); 
         platformerGroup.add(startDoor);
 
-        // БОЕВАЯ КОМНАТА (КАК В ПОДЗЕМКЕ)
+        //  БОЕВАЯ КОМНАТА (КАК В ПОДЗЕМКЕ)
         const battleRoom = new THREE.Group();
         battleRoom.visible = false; scene.add(battleRoom);
         
-        const bWallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.85 });
-        const bFloorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95 });
-        const bCeilMat = new THREE.MeshStandardMaterial({ map: ceilTexture, roughness: 0.95, side: THREE.DoubleSide });
+        // Клонируем текстуры специально для боя
+        const bWallTex = wallTexture.clone();
+        bWallTex.needsUpdate = true;
+        bWallTex.wrapS = bWallTex.wrapT = THREE.RepeatWrapping;
+        bWallTex.repeat.set(15, 1); // 15 повторов по длине (вдаль), 1 по высоте
+
+        const bFloorTex = floorTexture.clone();
+        bFloorTex.needsUpdate = true;
+        bFloorTex.wrapS = bFloorTex.wrapT = THREE.RepeatWrapping;
+        bFloorTex.repeat.set(1, 15); // 1 по ширине, 15 по длине (вдаль)
+
+        const bCeilTex = ceilTexture.clone();
+        bCeilTex.needsUpdate = true;
+        bCeilTex.wrapS = bCeilTex.wrapT = THREE.RepeatWrapping;
+        bCeilTex.repeat.set(1, 15); // 1 по ширине, 15 по длине (вдаль)
+
+        const bWallMat = new THREE.MeshStandardMaterial({ map: bWallTex, roughness: 0.85 });
+        const bFloorMat = new THREE.MeshStandardMaterial({ map: bFloorTex, roughness: 0.95 });
+        const bCeilMat = new THREE.MeshStandardMaterial({ map: bCeilTex, roughness: 0.95, side: THREE.DoubleSide });
         
         const bRoomLength = 15; 
         const bWallHeight = 3;
         const bCorridorWidth = 4;
 
+        // Пол боевой комнаты
         const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bRoomLength), bFloorMat);
         bFloor.rotation.x = -Math.PI / 2;
         bFloor.position.set(0, 0, -bRoomLength / 2);
         battleRoom.add(bFloor);
 
+        // Потолок боевой комнаты
         const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bRoomLength), bCeilMat);
         bCeil.rotation.x = Math.PI / 2;
         bCeil.position.set(0, bWallHeight, -bRoomLength / 2);
         battleRoom.add(bCeil);
 
+        // Левая стена
         const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bRoomLength, bWallHeight), bWallMat);
         bWallL.rotation.y = Math.PI / 2;
         bWallL.position.set(-bCorridorWidth / 2, bWallHeight / 2, -bRoomLength / 2);
         battleRoom.add(bWallL);
 
+        // Правая стена
         const bWallR = new THREE.Mesh(new THREE.PlaneGeometry(bRoomLength, bWallHeight), bWallMat);
         bWallR.rotation.y = -Math.PI / 2;
         bWallR.position.set(bCorridorWidth / 2, bWallHeight / 2, -bRoomLength / 2);
         battleRoom.add(bWallR);
 
+        // Задняя стена (в конце коридора)
         const bBack = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bWallHeight), bWallMat);
-        bBack.position.set(0, bWallHeight / 2, 0);
+        bBack.position.set(0, bWallHeight / 2, -bRoomLength);
         battleRoom.add(bBack);
 
         // Игрок
