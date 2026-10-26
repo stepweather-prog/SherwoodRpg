@@ -18,13 +18,11 @@
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
         #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
         
-        /* Сфера жизни */
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
         
-        /* Сфера скверны (справа) */
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); }
@@ -33,13 +31,11 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         
-        /* Кнопка атаки */
         #attack-icon { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; z-index: 40; cursor: pointer; display: none; background: rgba(0,0,0,0.6); border-radius: 50%; border: 2px solid #c8a050; padding: 5px; box-shadow: 0 0 15px rgba(200, 160, 80, 0.5); transition: transform 0.1s; }
         #attack-icon:active { transform: translateX(-50%) scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
         #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
         
-        /* Скиллы */
         #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: none; flex-direction: column; align-items: center; gap: 6px; z-index: 45; }
         #skills-left { left: 10px; }
         #skills-right { right: 10px; }
@@ -48,7 +44,6 @@
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         
-        /* Джойстик */
         #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 55; pointer-events: none; display: none; }
         .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 20px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -130,7 +125,7 @@
         };
         function getMobName(p) { if (!p) return 'Враг'; var f = p.split('/').pop(); return MOB_NAMES[f] || 'Враг'; }
 
-        // СКВЕРНА (без урона при переполнении)
+        // СКВЕРНА
         var FILTH_HIT_AMOUNT = 5;
         function getFilth() { 
             var p = parent.Sherwood.getPlayer(); 
@@ -149,7 +144,6 @@
         function addFilth(a) { var f = getFilth(); setFilth(f.cur + a); }
         function spendFilth(a) { var f = getFilth(); if (f.cur < a) return false; setFilth(f.cur - a); return true; }
 
-        // Звуки
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
@@ -210,14 +204,13 @@
             boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
         }
 
-        // Сцена
+        // Сцена (фон не виден, так как всё закрыто текстурами)
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1208);
+        scene.background = new THREE.Color(0x2a1c10); 
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
 
-        // Камера платформера
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camPlatformer.position.set(0, 3.5, 8);
+        camPlatformer.position.set(0, 3.0, 8);
         camPlatformer.lookAt(0, 1.0, 0);
 
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
@@ -240,7 +233,7 @@
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-        const ceilTexture  = loader.load('assets/assets2/Sherwood_Square/ceiling_quest.png');
+        const ceilTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_5.png'); 
         
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
         wallTexture.repeat.set(8, 2);
@@ -259,40 +252,63 @@
 
         const LEVEL_W = 40; 
         const WALL_H = 6;   
+        const CORRIDOR_DEPTH = 4; 
 
-        // Пол
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 4), floorMat);
-        ground.position.set(LEVEL_W / 2, -0.5, 0); platformerGroup.add(ground);
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
+        ground.position.set(LEVEL_W / 2, -0.5, 0); 
+        platformerGroup.add(ground);
 
-        // Стена сзади
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -2); platformerGroup.add(backWall);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
+        platformerGroup.add(backWall);
 
-        // Потолок
-        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, 4), ceilMat);
-        ceil.position.set(LEVEL_W / 2, WALL_H, 0); platformerGroup.add(ceil);
+        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
+        ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
+        platformerGroup.add(ceil);
 
-        // Боевая комната
+        const endWall1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, WALL_H, CORRIDOR_DEPTH), wallMat);
+        endWall1.position.set(0, WALL_H / 2, 0);
+        platformerGroup.add(endWall1);
+
+        const endWall2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, WALL_H, CORRIDOR_DEPTH), wallMat);
+        endWall2.position.set(LEVEL_W, WALL_H / 2, 0);
+        platformerGroup.add(endWall2);
+
+        // БОЕВАЯ КОМНАТА (ВИЗУАЛ КАК В ПОДЗЕМКЕ)
         const battleRoom = new THREE.Group();
         battleRoom.visible = false; scene.add(battleRoom);
-        const bWallMat = new THREE.MeshBasicMaterial({ map: wallTexture });
-        const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTexture });
-        const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilTexture });
-        const bRoomLength = 6, bCellSize = 1, bWallHeight = 2.5;
-        for (let z = 0; z < bRoomLength; z++) {
-            const f = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bFloorMat);
-            f.rotation.x = -Math.PI / 2; f.position.set(0, 0, -z); battleRoom.add(f);
-            const c = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bCeilMat);
-            c.rotation.x = Math.PI / 2; c.position.set(0, bWallHeight, -z); battleRoom.add(c);
-            const wl = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-            wl.rotation.y = Math.PI / 2; wl.position.set(-0.5, bWallHeight / 2, -z); battleRoom.add(wl);
-            const wr = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-            wr.rotation.y = -Math.PI / 2; wr.position.set(0.5, bWallHeight / 2, -z); battleRoom.add(wr);
-        }
-        const bBack = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-        bBack.position.set(0, bWallHeight / 2, 0.5); battleRoom.add(bBack);
-        const bFront = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-        bFront.position.set(0, bWallHeight / 2, -bRoomLength + 0.5); battleRoom.add(bFront);
+        
+        const bWallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.85 });
+        const bFloorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95 });
+        const bCeilMat = new THREE.MeshStandardMaterial({ map: ceilTexture, roughness: 0.95, side: THREE.DoubleSide });
+        
+        const bRoomLength = 15; 
+        const bWallHeight = 3;
+        const bCorridorWidth = 4;
+
+        const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bRoomLength), bFloorMat);
+        bFloor.rotation.x = -Math.PI / 2;
+        bFloor.position.set(0, 0, -bRoomLength / 2);
+        battleRoom.add(bFloor);
+
+        const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bRoomLength), bCeilMat);
+        bCeil.rotation.x = Math.PI / 2;
+        bCeil.position.set(0, bWallHeight, -bRoomLength / 2);
+        battleRoom.add(bCeil);
+
+        const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bRoomLength, bWallHeight), bWallMat);
+        bWallL.rotation.y = Math.PI / 2;
+        bWallL.position.set(-bCorridorWidth / 2, bWallHeight / 2, -bRoomLength / 2);
+        battleRoom.add(bWallL);
+
+        const bWallR = new THREE.Mesh(new THREE.PlaneGeometry(bRoomLength, bWallHeight), bWallMat);
+        bWallR.rotation.y = -Math.PI / 2;
+        bWallR.position.set(bCorridorWidth / 2, bWallHeight / 2, -bRoomLength / 2);
+        battleRoom.add(bWallR);
+
+        const bBack = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bWallHeight), bWallMat);
+        bBack.position.set(0, bWallHeight / 2, 0);
+        battleRoom.add(bBack);
 
         // Игрок
         const player = {
@@ -508,22 +524,16 @@
 
         function updateHeroSpheres() {
             var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
-            
-            // HP
             var hpPct = p.stats.hp / p.stats.maxHp;
             var lf = document.getElementById('life-fill'); if (lf) lf.style.clipPath = 'inset(' + Math.max(0, (1 - hpPct) * 100) + '% 0 0 0)';
             var ht = document.getElementById('hp-text'); if (ht) ht.textContent = 'HP: ' + Math.floor(p.stats.hp);
             
-            // Скверна (без таймера смерти)
             if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
             if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
             var fPct = p.stats.filth / p.stats.maxFilth;
             var mf = document.getElementById('mana-fill'); if (mf) mf.style.clipPath = 'inset(' + Math.max(0, (1 - fPct) * 100) + '% 0 0 0)';
             var mt = document.getElementById('mana-text'); 
-            if (mt) { 
-                mt.textContent = 'Скверна: ' + Math.floor(p.stats.filth) + '%'; 
-                mt.style.color = '#fff'; 
-            }
+            if (mt) { mt.textContent = 'Скверна: ' + Math.floor(p.stats.filth) + '%'; mt.style.color = '#fff'; }
         }
         setTimeout(updateHeroSpheres, 500);
 
@@ -539,19 +549,20 @@
             try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){}
         }
 
-        // Камера боя
+        // КАМЕРА БОЯ (ВИД КАК В ПОДЗЕМКЕ)
         function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
                 platformerGroup.visible = false;
                 activeCamera = camFPS;
-                camFPS.position.set(0, 1.2, 0);
+                camFPS.position.set(0, 1.2, 0); 
                 camFPS.rotation.set(0, 0, 0);
+                
                 if (currentEnemySprite) {
                     battleRoom.add(currentEnemySprite);
                     var sy = currentEnemySprite.scale.y;
-                    currentEnemySprite.center.set(0.5, 0.5);
-                    currentEnemySprite.position.set(0, sy / 2, -3.0);
+                    currentEnemySprite.center.set(0.5, 0); 
+                    currentEnemySprite.position.set(0, 0, -8); 
                 }
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('attack-icon').style.display = 'block';
@@ -618,7 +629,7 @@
                     }
                 }
                 pp.stats.hp = Math.max(0, pp.stats.hp - edmg);
-                addFilth(FILTH_HIT_AMOUNT); // Скверна добавляется, но не убивает
+                addFilth(FILTH_HIT_AMOUNT);
                 if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
                 showBloodOverlay();
@@ -669,7 +680,6 @@
             playerHitFirst = true;
             playSound(soundHit);
 
-            // Урон без стрел
             var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
             if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
@@ -692,7 +702,7 @@
                 var oy = (Math.random() - 0.5) * spriteH * 0.7;
                 hitFlashSprite.position.copy(currentEnemySprite.position);
                 hitFlashSprite.position.x += ox;
-                hitFlashSprite.position.y += oy;
+                hitFlashSprite.position.y += oy + (spriteH/2);
                 hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
                 hitFlashSprite.material.needsUpdate = true;
                 hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
@@ -707,7 +717,7 @@
                 if (hitEffect && hitEffectImg) {
                     hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
                     var screenPos = currentEnemySprite.position.clone();
-                    screenPos.y += 0.1;
+                    screenPos.y += 1.0;
                     screenPos.project(activeCamera);
                     var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
                     var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
@@ -749,7 +759,7 @@
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += 0.55;
+            worldPos.y += 3.0; 
             worldPos.project(activeCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
