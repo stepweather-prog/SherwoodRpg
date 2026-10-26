@@ -204,14 +204,14 @@
             boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
         }
 
-        // Сцена (фон не виден, так как всё закрыто текстурами)
+        // Сцена
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x2a1c10); 
+        scene.background = new THREE.Color(0x000000); 
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
 
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camPlatformer.position.set(0, 3.0, 8);
-        camPlatformer.lookAt(0, 1.0, 0);
+        camPlatformer.position.set(0, 2.5, 6);
+        camPlatformer.lookAt(0, 0.5, 0);
 
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
         camFPS.rotation.order = 'YXZ';
@@ -233,7 +233,9 @@
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-        const ceilTexture  = loader.load('assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_5.png'); 
+        
+        // ПРАВИЛЬНАЯ ТЕКСТУРА ПОТОЛКА
+        const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
         
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
         wallTexture.repeat.set(8, 2);
@@ -246,26 +248,30 @@
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
         const ceilMat  = new THREE.MeshLambertMaterial({ map: ceilTexture });
 
-        // Коридор
+        // Коридор (ПЛАТФОРМЕР)
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
         const LEVEL_W = 40; 
         const WALL_H = 6;   
-        const CORRIDOR_DEPTH = 4; 
+        const CORRIDOR_DEPTH = 6; // Шире коридор
 
+        // Пол
         const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
         ground.position.set(LEVEL_W / 2, -0.5, 0); 
         platformerGroup.add(ground);
 
+        // Задняя стена (одна штука)
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
+        // Потолок
         const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
+        // Тупики по бокам, чтобы не было краев
         const endWall1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, WALL_H, CORRIDOR_DEPTH), wallMat);
         endWall1.position.set(0, WALL_H / 2, 0);
         platformerGroup.add(endWall1);
@@ -274,7 +280,7 @@
         endWall2.position.set(LEVEL_W, WALL_H / 2, 0);
         platformerGroup.add(endWall2);
 
-        // БОЕВАЯ КОМНАТА (ВИЗУАЛ КАК В ПОДЗЕМКЕ)
+        // БОЕВАЯ КОМНАТА (КАК В ПОДЗЕМКЕ)
         const battleRoom = new THREE.Group();
         battleRoom.visible = false; scene.add(battleRoom);
         
@@ -549,7 +555,7 @@
             try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){}
         }
 
-        // КАМЕРА БОЯ (ВИД КАК В ПОДЗЕМКЕ)
+        // КАМЕРА БОЯ (КАК В ПОДЗЕМКЕ)
         function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
@@ -560,7 +566,6 @@
                 
                 if (currentEnemySprite) {
                     battleRoom.add(currentEnemySprite);
-                    var sy = currentEnemySprite.scale.y;
                     currentEnemySprite.center.set(0.5, 0); 
                     currentEnemySprite.position.set(0, 0, -8); 
                 }
@@ -717,7 +722,7 @@
                 if (hitEffect && hitEffectImg) {
                     hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
                     var screenPos = currentEnemySprite.position.clone();
-                    screenPos.y += 1.0;
+                    screenPos.y += 1.0; 
                     screenPos.project(activeCamera);
                     var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
                     var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
