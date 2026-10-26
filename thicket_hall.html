@@ -332,10 +332,10 @@
 
         // Боевые таймеры
         var isBattleActive = false;
-        var playerAttackCd = 0;     // Кулдаун кнопки удара
-        var PLAYER_ATTACK_CD = 1.0; // 1 секунда до полного отката
-        var enemyAttackCd = 0;      // Таймер атаки врага
-        var ENEMY_ATTACK_CD = 1.5;  // Враг бьет раз в 1.5 сек
+        var playerAttackCd = 0;     
+        var PLAYER_ATTACK_CD = 1.0; 
+        var enemyAttackCd = 0;      
+        var ENEMY_ATTACK_CD = 1.5;  
 
         function createEnemySprite() {
             var path = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
@@ -428,6 +428,7 @@
             p.vel.x = moveX * p.speed;
             if (moveX !== 0) {
                 p.facing = moveX;
+                // ОТЗЕРКАЛИВАНИЕ СПРАЙТА ПРИ ХОДЬБЕ ВЛЕВО
                 heroGroup.scale.x = moveX > 0 ? 1 : -1; 
                 if (video.paused) video.play().catch(()=>{});
             } else {
@@ -467,7 +468,6 @@
             var icon = document.getElementById('attack-icon');
             var cdOverlay = document.getElementById('attack-cooldown-overlay');
             
-            // Логика в бою
             if (isBattleActive) {
                 icon.style.display = 'block';
                 icon.dataset.action = 'attack';
@@ -482,7 +482,6 @@
                 return;
             }
             
-            // Логика вне боя
             cdOverlay.style.display = 'none';
             document.getElementById('attack-icon-img').style.opacity = '1';
 
@@ -512,15 +511,13 @@
         function startBattle() {
             if (isBattleActive || !enemyAlive) return;
             isBattleActive = true;
-            playerAttackCd = 0; // Начинаем без кулдауна
-            enemyAttackCd = ENEMY_ATTACK_CD; // Враг не бьет сразу
+            playerAttackCd = 0; 
+            enemyAttackCd = ENEMY_ATTACK_CD; 
             
-            // Включаем боевую комнату
             battleRoom.visible = true;
             platformerGroup.visible = false;
             activeCamera = camFPS;
             
-            // Переносим врага в боевую комнату
             if (enemySprite) {
                 battleRoom.add(enemySprite);
                 enemySprite.position.set(0, enemySprite.scale.y / 2, -2);
@@ -543,32 +540,28 @@
             document.getElementById('mob-hp').style.display = 'none';
         }
 
-        // Игрок бьет по кнопке
         function attackEnemy() {
             if (!isBattleActive) {
                 startBattle();
                 return;
             }
             
-            // Проверка кулдауна
             if (playerAttackCd > 0) {
-                // Если жмет раньше времени, урон слабее (например, x0.3)
+                // Слабый удар при спаме
                 var weakDmg = 5;
                 enemyHp = Math.max(0, enemyHp - weakDmg);
                 updateMobHpBarFill(enemyHp, enemyMaxHp);
                 playSound(soundHit);
                 
-                // Эффект вспышки
                 if (enemySprite) {
                     hitFlashSprite.position.copy(enemySprite.position);
                     hitFlashSprite.visible = true;
                     setTimeout(() => hitFlashSprite.visible = false, 150);
                 }
                 if (enemyHp <= 0) onEnemyKilled();
-                return; // Не сбрасываем кулдаун, просто нанесли слабый урон
+                return; 
             }
             
-            // Полноценный удар
             playerAttackCd = PLAYER_ATTACK_CD;
             var p = parent.Sherwood.getPlayer();
             var dmg = Math.max(10, Math.floor(p.stats.attack * 1.5));
@@ -597,7 +590,6 @@
             enemyAlive = false;
             playSound(soundVictory);
             
-            // Возвращаемся в платформер
             battleRoom.visible = false;
             platformerGroup.visible = true;
             activeCamera = camPlatformer;
@@ -670,7 +662,6 @@
             if (!isBattleActive) {
                 updatePlayer(dt);
                 
-                // Камера платформера
                 camPlatformer.position.x += (player.pos.x - camPlatformer.position.x) * 0.1;
                 camPlatformer.lookAt(camPlatformer.position.x, player.pos.y + 1, 0);
                 
@@ -678,14 +669,12 @@
                 heroGroup.position.y = player.pos.y; 
                 playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
             } else {
-                // Логика таймеров боя
                 if (playerAttackCd > 0) playerAttackCd = Math.max(0, playerAttackCd - dt);
                 
                 enemyAttackCd -= dt;
                 if (enemyAttackCd <= 0) {
-                    enemyAttackCd = ENEMY_ATTACK_CD; // Сброс таймера врага
+                    enemyAttackCd = ENEMY_ATTACK_CD; 
                     
-                    // Враг бьет игрока
                     var p = parent.Sherwood.getPlayer();
                     if (p) {
                         var edmg = Math.max(1, Math.floor(enemyData.atk * 0.3));
@@ -698,7 +687,6 @@
                 }
             }
 
-            // Обновляем кнопку (кулдаун и показ)
             checkInteraction();
 
             if (isBattleActive && enemySprite) {
