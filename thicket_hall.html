@@ -261,7 +261,7 @@
         battleRoom.add(bFrontWall);
 
         // ============================================================
-        //  ИГРОК (Видео с Chroma Key как в Лагере)
+        //  ИГРОК (Напрямую VideoTexture без Canvas)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 0, 0),
@@ -283,33 +283,20 @@
         video.loop = true;
         video.muted = true;
         video.pause();
+        video.crossOrigin = 'anonymous';
 
-        const hCanvas = document.createElement('canvas');
-        hCanvas.width = 512;
-        hCanvas.height = 512;
-        const hCtx = hCanvas.getContext('2d', { willReadFrequently: true });
+        // Создаем видеотекстуру напрямую (она сохранит прозрачность!)
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
 
-        // Вырезание фона
-        function chromaKeyHero(imgData) {
-            var d = imgData.data;
-            for (var i = 0; i < d.length; i += 4) {
-                var r = d[i], g = d[i+1], b = d[i+2];
-                if (r < 25 && g < 25 && b < 25) {
-                    d[i+3] = 0; 
-                }
-            }
-        }
-
-        const heroTex = new THREE.CanvasTexture(hCanvas);
-        heroTex.minFilter = THREE.LinearFilter;
-        heroTex.magFilter = THREE.LinearFilter;
-
-        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
+        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: videoTexture, transparent: true, depthTest: false }));
         heroSprite.center.set(0.5, 0); 
         heroSprite.scale.set(4.0, 4.0, 1);
         heroSprite.position.set(0, 0, 0.2); 
         heroGroup.add(heroSprite);
 
+        // Заглушка (картинка)
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0);
@@ -317,6 +304,7 @@
         staticSprite.position.set(0, 0, 0.3);
         heroGroup.add(staticSprite);
 
+        // Скрываем картинку, как только видео начнет играть
         video.addEventListener('play', () => {
             staticSprite.visible = false;
         });
@@ -330,7 +318,6 @@
         var enemyX = 18;
         var enemyAlive = true;
 
-        // Боевые таймеры
         var isBattleActive = false;
         var playerAttackCd = 0;     
         var PLAYER_ATTACK_CD = 1.0; 
@@ -428,7 +415,6 @@
             p.vel.x = moveX * p.speed;
             if (moveX !== 0) {
                 p.facing = moveX;
-                // ОТЗЕРКАЛИВАНИЕ СПРАЙТА ПРИ ХОДЬБЕ ВЛЕВО
                 heroGroup.scale.x = moveX > 0 ? 1 : -1; 
                 if (video.paused) video.play().catch(()=>{});
             } else {
@@ -506,7 +492,7 @@
         }
 
         // ============================================================
-        //  БОЙ (Пошаговый, без автоатаки)
+        //  БОЙ
         // ============================================================
         function startBattle() {
             if (isBattleActive || !enemyAlive) return;
@@ -547,7 +533,6 @@
             }
             
             if (playerAttackCd > 0) {
-                // Слабый удар при спаме
                 var weakDmg = 5;
                 enemyHp = Math.max(0, enemyHp - weakDmg);
                 updateMobHpBarFill(enemyHp, enemyMaxHp);
@@ -650,14 +635,6 @@
             requestAnimationFrame(animate);
             const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
             lastTime = performance.now();
-
-            if (video.readyState >= 2) {
-                hCtx.drawImage(video, 0, 0, hCanvas.width, hCanvas.height);
-                var imgData = hCtx.getImageData(0, 0, hCanvas.width, hCanvas.height);
-                chromaKeyHero(imgData);
-                hCtx.putImageData(imgData, 0, 0);
-                heroTex.needsUpdate = true;
-            }
 
             if (!isBattleActive) {
                 updatePlayer(dt);
