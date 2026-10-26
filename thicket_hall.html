@@ -19,7 +19,7 @@
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
         #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
         
-        /* Сферы жизни и маны */
+        /* Сферы */
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
@@ -31,25 +31,12 @@
 
         /* Кнопка действия */
         #attack-icon { 
-            position: absolute; 
-            bottom: 45px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 65px; 
-            height: 65px; 
-            z-index: 40; 
-            cursor: pointer; 
-            display: none; 
-            background: rgba(0,0,0,0.6); 
-            border-radius: 50%; 
-            border: 2px solid #c8a050; 
-            padding: 5px; 
-            box-shadow: 0 0 15px rgba(200, 160, 80, 0.5);
-            transition: transform 0.1s;
+            position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); 
+            width: 65px; height: 65px; z-index: 40; cursor: pointer; display: none; 
+            background: rgba(0,0,0,0.6); border-radius: 50%; border: 2px solid #c8a050; padding: 5px; 
+            box-shadow: 0 0 15px rgba(200, 160, 80, 0.5); transition: transform 0.1s;
         }
         #attack-icon:active { transform: translateX(-50%) scale(0.9); }
-
-        /* Кулдаун */
         #attack-cooldown-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); border-radius: 50%; display: none;
@@ -128,7 +115,6 @@
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
         var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
-        
         var thicketMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
         thicketMusic.loop = true;
         thicketMusic.volume = 0.4;
@@ -137,7 +123,7 @@
         function exitThicket() { try { parent.Sherwood.Thicket._flee(); } catch(e) {} }
 
         // ============================================================
-        //  СЦЕНА И КАМЕРЫ
+        //  СЦЕНА
         // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x1a1208); 
@@ -157,9 +143,6 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
-        // ============================================================
-        //  СВЕТ
-        // ============================================================
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5);
@@ -169,7 +152,7 @@
         scene.add(playerLight);
 
         // ============================================================
-        //  ТЕКСТУРЫ
+        //  ТЕКСТУРЫ (ЦЕЛЬНЫЕ, БЕЗ КВАДРАТИКОВ)
         // ============================================================
         const loader = new THREE.TextureLoader();
         
@@ -179,52 +162,46 @@
         
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(1, 1); 
+        wallTexture.repeat.set(15, 3); // Нормальное повторение
         
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(1, 1);
+        floorTexture.repeat.set(30, 1);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
 
         // ============================================================
-        //  ПЛАТФОРМЕР (СБОРКА ИЗ ПЛИТОК)
+        //  ПЛАТФОРМЕР (ЦЕЛЬНЫЙ КОРИДОР)
         // ============================================================
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
-        const LEVEL_W = 30; 
-        const WALL_H = 4;   
-        
-        for (let i = 0; i < LEVEL_W; i++) {
-            // Пол (1 плитка)
-            const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
-            floorTile.rotation.x = -Math.PI / 2;
-            floorTile.position.set(i + 0.5, 0, 0);
-            platformerGroup.add(floorTile);
+        const LEVEL_W = 30;
+        const WALL_H = 6;
 
-            // Задняя стена (4 плитки в высоту)
-            for (let h = 0; h < WALL_H; h++) {
-                const wallTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat);
-                wallTile.position.set(i + 0.5, h + 0.5, -0.5);
-                platformerGroup.add(wallTile);
-            }
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMat);
+        ground.position.set(LEVEL_W / 2, -0.5, 0);
+        platformerGroup.add(ground);
 
-            // Передняя стена (для объема)
-            for (let h = 0; h < WALL_H; h++) {
-                const frontTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat);
-                frontTile.position.set(i + 0.5, h + 0.5, 0.5);
-                frontTile.rotation.y = Math.PI; 
-                platformerGroup.add(frontTile);
-            }
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
+        platformerGroup.add(backWall);
 
-            // Бордюр снизу
-            const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
-            const seamMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), seamMat);
-            seamMesh.position.set(i + 0.5, -0.2, 0.55); 
-            platformerGroup.add(seamMesh);
-        }
+        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
+        platformerGroup.add(frontWall);
+
+        const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
+        startWall.position.set(-0.5, WALL_H / 2, 0);
+        platformerGroup.add(startWall);
+
+        // Бордюр снизу
+        const seamGeo = new THREE.PlaneGeometry(LEVEL_W, 1.5);
+        const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
+        const seamMesh = new THREE.Mesh(seamGeo, seamMat);
+        seamMesh.position.set(LEVEL_W / 2, -0.2, 0.55); 
+        platformerGroup.add(seamMesh);
 
         // ============================================================
         //  БОЕВАЯ КОМНАТА (FPS)
@@ -271,7 +248,7 @@
         battleRoom.add(bFrontWall);
 
         // ============================================================
-        //  ИГРОК
+        //  ИГРОК (ЗЕЛЕНЫЙ ХРОМАКЕЙ)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 0, 0),
@@ -356,7 +333,7 @@
         });
 
         // ============================================================
-        //  ВРАГ (ВОЗВРАЩЕН В КОД)
+        //  ВРАГ
         // ============================================================
         var enemySprite = null;
         var enemyHp = 0;
@@ -389,7 +366,7 @@
                 }
             });
         }
-        createEnemySprite(); // <--- ВОТ ОН
+        createEnemySprite();
 
         // ============================================================
         //  КРОВЬ И ЭФФЕКТЫ
