@@ -29,7 +29,7 @@
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        /* Кнопка действия (по центру между сферами) */
+        /* Кнопка действия (по центру) */
         #attack-icon { 
             position: absolute; 
             bottom: 45px; 
@@ -145,6 +145,7 @@
         camPlatformer.position.set(0, 5, 12); 
         camPlatformer.lookAt(0, 2, 0);
 
+        // КАМЕРА ДЛЯ БОЯ (КАК В ПОДЗЕМКЕ)
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
         camFPS.rotation.order = 'YXZ';
 
@@ -167,7 +168,7 @@
         scene.add(playerLight);
 
         // ============================================================
-        //  ТЕКСТУРЫ (НАСТРОЙКА ПОВТОРЕНИЯ ПЛИТКОЙ)
+        //  ТЕКСТУРЫ
         // ============================================================
         const loader = new THREE.TextureLoader();
         
@@ -175,12 +176,10 @@
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const floorRaidTexture = loader.load('assets/assets2/Sherwood_Square/floors_raid.png');
         
-        // Включаем повторение для стен (квадратики)
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(15, 3); // 15 плиток по ширине, 3 по высоте
+        wallTexture.repeat.set(15, 3); 
         
-        // Включаем повторение для пола
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(30, 1);
@@ -211,7 +210,6 @@
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
         platformerGroup.add(backWall);
 
-        // Заполняем всё вокруг текстурой стены (чтобы не было коричневого дерева)
         const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
         frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
         platformerGroup.add(frontWall);
@@ -221,31 +219,36 @@
         platformerGroup.add(startWall);
 
         // ============================================================
-        //  БОЕВАЯ КОМНАТА (FPS-КОРИДОР)
+        //  БОЕВАЯ КОМНАТА (ИДЕНТИЧНАЯ ПОДЗЕМКЕ)
         // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
         scene.add(battleRoom);
 
+        // В подземке использовались MeshBasicMaterial и размер 1х1, 
+        // но с камерой FPS (70 градусов).
         const bWallMat = new THREE.MeshBasicMaterial({ map: wallTexture, transparent: false });
         const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTexture, transparent: false });
-        const bCeilMat = new THREE.MeshBasicMaterial({ color: 0x1a1208 });
+        const bCeilMat = new THREE.MeshBasicMaterial({ color: 0x0a0805 });
 
-        const bRoomLength = 6;
+        const bRoomLength = 6; // Длина коридора в подземке (6)
         const bCellSize = 1;
         const bWallHeight = 1.4;
 
         for (let z = 0; z < bRoomLength; z++) {
+            // Пол
             const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bFloorMat);
             bFloor.rotation.x = -Math.PI / 2;
             bFloor.position.set(0, 0, -z);
             battleRoom.add(bFloor);
 
+            // Потолок
             const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bCeilMat);
             bCeil.rotation.x = Math.PI / 2;
             bCeil.position.set(0, bWallHeight, -z);
             battleRoom.add(bCeil);
 
+            // Стены
             const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
             bWallL.rotation.y = Math.PI / 2;
             bWallL.position.set(-0.5, bWallHeight / 2, -z);
@@ -256,16 +259,18 @@
             bWallR.position.set(0.5, bWallHeight / 2, -z);
             battleRoom.add(bWallR);
         }
+        // Задняя стена
         const bBackWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
         bBackWall.position.set(0, bWallHeight / 2, 0.5);
         battleRoom.add(bBackWall);
 
+        // Передняя стена (за спиной врага)
         const bFrontWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
         bFrontWall.position.set(0, bWallHeight / 2, -bRoomLength + 0.5);
         battleRoom.add(bFrontWall);
 
         // ============================================================
-        //  ИГРОК (Правильное вырезание фона и отзеркаливание в Canvas)
+        //  ИГРОК
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 0, 0),
@@ -294,7 +299,6 @@
         hCanvas.height = 512;
         const hCtx = hCanvas.getContext('2d', { willReadFrequently: true });
 
-        // Вырезание фона и отзеркаливание
         function processHeroFrame(flip) {
             if (video.readyState < 2) return;
             try {
@@ -311,7 +315,6 @@
                 var d = imgData.data;
                 for (var i = 0; i < d.length; i += 4) {
                     var r = d[i], g = d[i+1], b = d[i+2];
-                    // Убираем только чисто черный цвет (до 20)
                     if (r < 20 && g < 20 && b < 20) {
                         d[i+3] = 0; 
                     }
@@ -521,7 +524,7 @@
         }
 
         // ============================================================
-        //  БОЙ
+        //  БОЙ (КАМЕРА КАК В ПОДЗЕМКЕ)
         // ============================================================
         function startBattle() {
             if (isBattleActive || !enemyAlive) return;
@@ -533,12 +536,16 @@
             platformerGroup.visible = false;
             activeCamera = camFPS;
             
+            // Ставим врага ровно по центру комнаты на 2 клетки вперед (как в подземке)
             if (enemySprite) {
                 battleRoom.add(enemySprite);
-                enemySprite.position.set(0, enemySprite.scale.y / 2, -2);
+                // КЛЮЧЕВОЙ МОМЕНТ: центр спрайта 0.5, 0.5 (по центру)
                 enemySprite.center.set(0.5, 0.5);
+                // Высота: половина размера, чтобы ноги были на полу
+                enemySprite.position.set(0, enemySprite.scale.y / 2, -2);
             }
 
+            // Камера на нулевой позиции (в начале коридора)
             camFPS.position.set(0, 1.2, 0);
             camFPS.rotation.set(0, 0, 0);
 
@@ -607,6 +614,8 @@
             battleRoom.visible = false;
             platformerGroup.visible = true;
             activeCamera = camPlatformer;
+            
+            // Возвращаем камеру в платформер
             camPlatformer.position.set(player.pos.x, 5, 12);
             camPlatformer.lookAt(player.pos.x, 2, 0);
             
@@ -665,7 +674,6 @@
             const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
             lastTime = performance.now();
 
-            // Обновляем кадр видео (с отзеркаливанием, если идем влево)
             if (video.readyState >= 2) {
                 processHeroFrame(player.facing < 0);
             }
@@ -700,9 +708,10 @@
 
             checkInteraction();
 
+            // Обновляем позицию HP-бара врага над его головой
             if (isBattleActive && enemySprite) {
                 var pos = enemySprite.position.clone();
-                pos.y += enemySprite.scale.y * 1.2; 
+                pos.y += enemySprite.scale.y * 1.2; // Поднимаем над головой
                 pos.project(camFPS);
                 document.getElementById('mob-hp').style.left = (pos.x * 0.5 + 0.5) * window.innerWidth + 'px';
                 document.getElementById('mob-hp').style.top = (-pos.y * 0.5 + 0.5) * window.innerHeight + 'px';
