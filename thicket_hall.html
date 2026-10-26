@@ -129,9 +129,10 @@
         scene.background = new THREE.Color(0x1a1208); 
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
 
+        // КАМЕРА: БЛИЖЕ И НИЖЕ
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camPlatformer.position.set(0, 5, 12); 
-        camPlatformer.lookAt(0, 2, 0);
+        camPlatformer.position.set(0, 3, 7); // Было 5, 12. Сделали 3, 7
+        camPlatformer.lookAt(0, 1, 0);
 
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
         camFPS.rotation.order = 'YXZ';
@@ -143,9 +144,6 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
-        // ============================================================
-        //  СВЕТ
-        // ============================================================
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5);
@@ -155,71 +153,61 @@
         scene.add(playerLight);
 
         // ============================================================
-        //  ТЕКСТУРЫ (КАК В ЛАГЕРЕ)
+        //  ТЕКСТУРЫ
         // ============================================================
         const loader = new THREE.TextureLoader();
         
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-        const ceilTexture  = loader.load('assets/assets2/Sherwood_Square/ceiling_area_9.png'); // Потолок как в лагере
         const seamTopTexture = loader.load('assets/assets2/game_details/seam_top.png');
         
         wallTexture.wrapS = THREE.RepeatWrapping;
         wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(1, 1); 
         
         floorTexture.wrapS = THREE.RepeatWrapping;
         floorTexture.wrapT = THREE.RepeatWrapping;
-
-        ceilTexture.wrapS = THREE.RepeatWrapping;
-        ceilTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(1, 1);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
-        const ceilMat  = new THREE.MeshLambertMaterial({ map: ceilTexture, side: THREE.DoubleSide });
 
         // ============================================================
-        //  ПЛАТФОРМЕР (ОБЪЁМНЫЙ КОРИДОР)
+        //  ПЛАТФОРМЕР (СЕТКА)
         // ============================================================
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
         const LEVEL_W = 30;
-        const WALL_H = 6;
+        const WALL_H = 4; 
 
-        // Пол
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 1), floorMat);
-        ground.position.set(LEVEL_W / 2, -0.5, 0);
-        platformerGroup.add(ground);
+        for (let i = 0; i < LEVEL_W; i++) {
+            const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), floorMat);
+            floorTile.rotation.x = -Math.PI / 2;
+            floorTile.position.set(i + 0.5, 0, 0);
+            platformerGroup.add(floorTile);
 
-        // Задняя стена (как блок)
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -0.75);
-        platformerGroup.add(backWall);
+            for (let h = 0; h < WALL_H; h++) {
+                const wallTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat);
+                wallTile.position.set(i + 0.5, h + 0.5, -0.5);
+                platformerGroup.add(wallTile);
+            }
 
-        // Передняя стена
-        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 0.75);
-        platformerGroup.add(frontWall);
+            for (let h = 0; h < WALL_H; h++) {
+                const frontTile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), wallMat);
+                frontTile.position.set(i + 0.5, h + 0.5, 0.5);
+                frontTile.rotation.y = Math.PI; 
+                platformerGroup.add(frontTile);
+            }
 
-        // Потолок
-        const ceiling = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, 1), ceilMat);
-        ceiling.position.set(LEVEL_W / 2, WALL_H, 0);
-        platformerGroup.add(ceiling);
-
-        // Начальная стена
-        const startWall = new THREE.Mesh(new THREE.BoxGeometry(1, WALL_H, 2), wallMat);
-        startWall.position.set(-0.5, WALL_H / 2, 0);
-        platformerGroup.add(startWall);
-
-        // Бордюр снизу (твой seam_top)
-        const seamGeo = new THREE.PlaneGeometry(LEVEL_W, 1.5);
-        const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
-        const seamMesh = new THREE.Mesh(seamGeo, seamMat);
-        seamMesh.position.set(LEVEL_W / 2, -0.2, 0.55); 
-        platformerGroup.add(seamMesh);
+            const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
+            const seamMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), seamMat);
+            seamMesh.position.set(i + 0.5, -0.2, 0.55); 
+            platformerGroup.add(seamMesh);
+        }
 
         // ============================================================
-        //  БОЕВАЯ КОМНАТА (FPS)
+        //  БОЕВАЯ КОМНАТА
         // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
@@ -227,7 +215,7 @@
 
         const bWallMat = new THREE.MeshBasicMaterial({ map: wallTexture, transparent: false });
         const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTexture, transparent: false });
-        const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilTexture, transparent: false });
+        const bCeilMat = new THREE.MeshBasicMaterial({ color: 0x1a1208 });
 
         const bRoomLength = 6;
         const bCellSize = 1;
@@ -263,7 +251,7 @@
         battleRoom.add(bFrontWall);
 
         // ============================================================
-        //  ИГРОК (ЗЕЛЕНЫЙ ХРОМАКЕЙ)
+        //  ИГРОК
         // ============================================================
         const player = {
             pos: new THREE.Vector3(2, 0, 0),
@@ -625,8 +613,8 @@
             battleRoom.visible = false;
             platformerGroup.visible = true;
             activeCamera = camPlatformer;
-            camPlatformer.position.set(player.pos.x, 5, 12);
-            camPlatformer.lookAt(player.pos.x, 2, 0);
+            camPlatformer.position.set(player.pos.x, 3, 7);
+            camPlatformer.lookAt(player.pos.x, 1, 0);
             
             if (enemySprite) {
                 enemySprite.parent.remove(enemySprite);
@@ -691,7 +679,8 @@
                 updatePlayer(dt);
                 
                 camPlatformer.position.x += (player.pos.x - camPlatformer.position.x) * 0.1;
-                camPlatformer.lookAt(camPlatformer.position.x, player.pos.y + 1, 0);
+                // Камера смотрит чуть ниже (на 1 юнит), чтобы видеть пол
+                camPlatformer.lookAt(camPlatformer.position.x, 1, 0);
                 
                 heroGroup.position.copy(player.pos);
                 heroGroup.position.y = player.pos.y; 
