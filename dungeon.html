@@ -6,7 +6,7 @@
     <title>Проклятая чаща</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
         canvas { display: block; background: #000; touch-action: none; cursor: pointer; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
@@ -416,10 +416,18 @@
 
         for (var i = 0; i < objects.length; i++) {
             var obj = objects[i]; var x = obj.x - Math.floor(size / 2); var z = obj.y - Math.floor(size / 2);
-            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
-            sprite.position.set(x, 0.1, z);
-            if (obj.type === 'enemy') { var scale = obj.isBoss ? 1.5 : 1.05; sprite.scale.set(scale, scale, 1); sprite.position.y = scale / 2; }
-            else { sprite.scale.set(0.55, 0.55, 1); sprite.position.y = 0.35; }
+            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
+                map: loader.load(obj.img), 
+                transparent: true,
+                depthTest: true, // Чтобы не рисовался поверх стен
+                depthWrite: false
+            }));
+            
+            // Делаем босса таким же, как обычный моб, только чуть плотнее
+            var scale = obj.isBoss ? 1.1 : 1.05; 
+            
+            sprite.scale.set(scale, scale, 1);
+            sprite.position.set(x, scale / 2, z); // Ставим ровно на пол
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
         }
