@@ -250,7 +250,7 @@
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
         const ceilMat  = new THREE.MeshLambertMaterial({ map: ceilTexture });
 
-        // Коридор (ПЛАТФОРМЕР)
+                // Коридор (ПЛАТФОРМЕР)
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
@@ -258,28 +258,36 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
+        // ПОЛ (оставляем объемным, так как тебя устраивает)
         const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
         ground.position.set(LEVEL_W / 2, -0.5, 0); 
         platformerGroup.add(ground);
 
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        // ЗАДНЯЯ СТЕНА (Плоская, чтобы не было видно верхней грани и "второго ряда")
+        const backWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(LEVEL_W, WALL_H), 
+            new THREE.MeshBasicMaterial({ map: wallTexture })
+        );
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
+        // ПОТОЛОК (Плоский, из твоей текстуры swamp_ceiling_dungeon_2.png)
+        const ceil = new THREE.Mesh(
+            new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), 
+            new THREE.MeshBasicMaterial({ map: ceilTexture })
+        );
+        ceil.rotation.x = Math.PI / 2; // Разворачиваем горизонтально
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
-        // Выход (в конце) и Вход (в начале) в виде дверей
+        // Выход (в конце) - плоская дверь
         const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
-        exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, 0);
-        exitDoor.rotation.y = -Math.PI / 2; // Смотрит внутрь коридора
+        exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, -CORRIDOR_DEPTH / 2 + 0.1); // Чуть ближе к камере, чем стена
         platformerGroup.add(exitDoor);
 
-        // Вход (в начале) - всегда закрыт
+        // Вход (в начале) - плоская дверь
         const startDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
-        startDoor.position.set(1, WALL_H / 2, 0);
-        startDoor.rotation.y = Math.PI / 2; // Смотрит внутрь коридора
+        startDoor.position.set(1, WALL_H / 2, -CORRIDOR_DEPTH / 2 + 0.1); 
         platformerGroup.add(startDoor);
 
         // БОЕВАЯ КОМНАТА (КАК В ПОДЗЕМКЕ)
