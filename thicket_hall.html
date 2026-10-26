@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Шервудская чащоба — Платформер</title>
+    <title>Шервудская чащоба</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -17,40 +17,50 @@
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
         #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
-        #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
-        #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
-        #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        
+        /* Сфера жизни */
+        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 110px; height: 110px; z-index: 50; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+        
+        /* Сфера скверны (справа) */
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
-        #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
-        #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
+
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
-        #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
+        
+        /* Кнопка атаки */
         #attack-icon { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; z-index: 40; cursor: pointer; display: none; background: rgba(0,0,0,0.6); border-radius: 50%; border: 2px solid #c8a050; padding: 5px; box-shadow: 0 0 15px rgba(200, 160, 80, 0.5); transition: transform 0.1s; }
         #attack-icon:active { transform: translateX(-50%) scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
         #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
+        
+        /* Скиллы */
         #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: none; flex-direction: column; align-items: center; gap: 6px; z-index: 45; }
         #skills-left { left: 10px; }
         #skills-right { right: 10px; }
         #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; width: 44px; height: 44px; object-fit: contain; }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
-        #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
-        #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
-        #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
-        @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
-        #touch-controls { position: fixed; bottom: 10px; left: 0; width: 100%; height: 80px; z-index: 55; pointer-events: none; display: none; }
-        .touch-btn { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: rgba(10,8,5,0.8); border: 2px solid #6b5a3a; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
-        .touch-btn:active { background: rgba(139,107,58,0.8); transform: scale(0.9); }
-        #btn-left  { left: calc(50% - 80px); bottom: 5px; }
-        #btn-right { left: calc(50% + 20px); bottom: 5px; }
+        
+        /* Джойстик */
+        #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 55; pointer-events: none; display: none; }
+        .arrow-btn { position: absolute; width: 50px; height: 50px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 20px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
+        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
+        #btn-left  { top: 35px; left: 0; }
+        #btn-right { top: 35px; left: 70px; }
+        
         @media (max-width: 900px) {
-            #touch-controls { display: block; }
+            #joystick { display: block; }
             #attack-icon { bottom: 80px; width: 55px; height: 55px; }
             #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
+            #hero-life { left: 6px; }
+            #hero-mana { right: 6px; }
             #hero-life span, #hero-mana span { font-size: 13px; }
             #mob-hp { width: 220px; height: 150px; }
             #mob-hp-text { font-size: 15px; }
@@ -63,15 +73,15 @@
 </head>
 <body>
     <div id="crosshair">✚</div>
-    <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
-    <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
+    
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 0/0</span>
     </div>
+    
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
     <div id="skills-left"></div>
     <div id="hero-life">
@@ -85,14 +95,17 @@
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">Скверна: 0%</span>
     </div>
+    
     <div id="attack-icon">
         <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
         <div id="attack-cooldown-overlay">0.0s</div>
     </div>
-    <div id="touch-controls">
-        <div class="touch-btn" id="btn-left">◀</div>
-        <div class="touch-btn" id="btn-right">▶</div>
+    
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
     </div>
+
     <div id="vignette"></div>
     <div id="scanlines"></div>
     <button onclick="exitThicket();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
@@ -117,31 +130,22 @@
         };
         function getMobName(p) { if (!p) return 'Враг'; var f = p.split('/').pop(); return MOB_NAMES[f] || 'Враг'; }
 
-        // Стрелы
-        var playerArrows = 25, ARROWS_MAX_START = 25;
-        function loadArrowsFromBag() {
-            try {
-                if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; updateArrowCounter(); return; }
-                var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; updateArrowCounter(); return; }
-                var cnt = 0;
-                if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows;
-                playerArrows = Math.min(ARROWS_MAX_START, cnt);
-            } catch(e) { playerArrows = 0; }
-            updateArrowCounter();
+        // СКВЕРНА (без урона при переполнении)
+        var FILTH_HIT_AMOUNT = 5;
+        function getFilth() { 
+            var p = parent.Sherwood.getPlayer(); 
+            if (!p) return { cur: 0, max: 100 }; 
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; 
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; 
+            return { cur: p.stats.filth, max: p.stats.maxFilth }; 
         }
-        function updateArrowCounter() {
-            var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows;
-            var c = document.getElementById('arrow-counter');
-            if (c) { if (playerArrows <= 3) c.classList.add('low'); else c.classList.remove('low'); }
+        function setFilth(v) { 
+            var p = parent.Sherwood.getPlayer(); 
+            if (!p) return; 
+            if (!p.stats.maxFilth) p.stats.maxFilth = 100; 
+            p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); 
+            updateHeroSpheres(); 
         }
-        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; } return false; }
-        function addArrows(n) { playerArrows += n; updateArrowCounter(); }
-        setTimeout(loadArrowsFromBag, 700);
-
-        // Скверна
-        var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 5, FILTH_HIT_AMOUNT = 5;
-        function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
-        function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; } else { filthFullSince = 0; } updateHeroSpheres(); }
         function addFilth(a) { var f = getFilth(); setFilth(f.cur + a); }
         function spendFilth(a) { var f = getFilth(); if (f.cur < a) return false; setFilth(f.cur - a); return true; }
 
@@ -211,9 +215,10 @@
         scene.background = new THREE.Color(0x1a1208);
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
 
+        // Камера платформера
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-        camPlatformer.position.set(0, 2.5, 7);
-        camPlatformer.lookAt(0, 0, 0);
+        camPlatformer.position.set(0, 3.5, 8);
+        camPlatformer.lookAt(0, 1.0, 0);
 
         const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
         camFPS.rotation.order = 'YXZ';
@@ -236,12 +241,13 @@
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const ceilTexture  = loader.load('assets/assets2/Sherwood_Square/ceiling_quest.png');
-        const seamTopTexture = loader.load('assets/assets2/game_details/seam_top.png');
-
+        
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(4, 1);
+        wallTexture.repeat.set(8, 2);
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(4, 1);
+        floorTexture.repeat.set(8, 2);
+        ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
+        ceilTexture.repeat.set(8, 2);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
@@ -251,39 +257,28 @@
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
-        const LEVEL_W = 32;
-        const WALL_H = 4;
+        const LEVEL_W = 40; 
+        const WALL_H = 6;   
 
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 2), floorMat);
+        // Пол
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, 4), floorMat);
         ground.position.set(LEVEL_W / 2, -0.5, 0); platformerGroup.add(ground);
 
+        // Стена сзади
         const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -1); platformerGroup.add(backWall);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -2); platformerGroup.add(backWall);
 
-        const frontWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
-        frontWall.position.set(LEVEL_W / 2, WALL_H / 2, 1); platformerGroup.add(frontWall);
-
-        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, 2), ceilMat);
+        // Потолок
+        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, 4), ceilMat);
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); platformerGroup.add(ceil);
-
-        const seamGeo = new THREE.PlaneGeometry(LEVEL_W, 1.5);
-        const seamMat = new THREE.MeshBasicMaterial({ map: seamTopTexture, transparent: true, depthWrite: false });
-        const seamMesh = new THREE.Mesh(seamGeo, seamMat);
-        seamMesh.position.set(LEVEL_W / 2, 0.01, 0.5); seamMesh.rotation.x = -Math.PI / 2;
-        platformerGroup.add(seamMesh);
 
         // Боевая комната
         const battleRoom = new THREE.Group();
         battleRoom.visible = false; scene.add(battleRoom);
-
         const bWallMat = new THREE.MeshBasicMaterial({ map: wallTexture });
         const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTexture });
         const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilTexture });
-
-        const bRoomLength = 6;
-        const bCellSize = 1;
-        const bWallHeight = 1.4;
-
+        const bRoomLength = 6, bCellSize = 1, bWallHeight = 2.5;
         for (let z = 0; z < bRoomLength; z++) {
             const f = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bFloorMat);
             f.rotation.x = -Math.PI / 2; f.position.set(0, 0, -z); battleRoom.add(f);
@@ -351,19 +346,23 @@
         heroTex.minFilter = heroTex.magFilter = THREE.LinearFilter;
 
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
-        heroSprite.center.set(0.5, 0); heroSprite.scale.set(2.2, 2.2, 1); heroSprite.position.set(0, 0, 0.2);
+        heroSprite.center.set(0.5, 0); 
+        heroSprite.scale.set(2.2, 2.2, 1); 
+        heroSprite.position.set(0, 0, 1.0); 
         heroGroup.add(heroSprite);
 
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
-        staticSprite.center.set(0.5, 0); staticSprite.scale.set(2.2, 2.2, 1); staticSprite.position.set(0, 0, 0.3);
+        staticSprite.center.set(0.5, 0); 
+        staticSprite.scale.set(2.2, 2.2, 1); 
+        staticSprite.position.set(0, 0, 1.0);
         heroGroup.add(staticSprite);
         video.addEventListener('play', () => { staticSprite.visible = false; });
 
-        // ОДИН ВРАГ
+        // Враг
         var enemyObj = null;
         var enemySprite = null;
-        var enemyX = 18;
+        var enemyX = 25;
         var enemyAlive = true;
 
         function createEnemy() {
@@ -385,9 +384,9 @@
             loader.load(path, function(t) {
                 t.minFilter = t.magFilter = THREE.LinearFilter;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: true }));
-                enemySprite.center.set(0.5, 0);
+                enemySprite.center.set(0.5, 0); 
                 enemySprite.scale.set(scale, scale, 1);
-                enemySprite.position.set(enemyX, 0, 0.2);
+                enemySprite.position.set(enemyX, 0, 0.8); 
                 platformerGroup.add(enemySprite);
                 enemyObj.mesh = enemySprite;
             });
@@ -400,7 +399,6 @@
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
         hitFlashSprite.scale.set(1.0, 1.0, 1); hitFlashSprite.visible = false;
         battleRoom.add(hitFlashSprite);
-
         var hitSprites = ['strike_claws.png','strike_claws_1.png','strike_claws_2.png','strike_claws_4.png','strike_claws_5.png','strike_claws_6.png'];
 
         // Сундук и дверь
@@ -414,7 +412,7 @@
                     chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
                     chestSprite.center.set(0.5, 0);
                     chestSprite.scale.set(2.0, 2.0, 1);
-                    chestSprite.position.set(enemyX, 0, 0.2);
+                    chestSprite.position.set(enemyX, 0, 0.8);
                     platformerGroup.add(chestSprite);
                 });
             }
@@ -423,7 +421,7 @@
                     exitDoor = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
                     exitDoor.center.set(0.5, 0);
                     exitDoor.scale.set(3, 4, 1);
-                    exitDoor.position.set(LEVEL_W - 1, 0, 0.2);
+                    exitDoor.position.set(LEVEL_W - 2, 0, 0.8);
                     platformerGroup.add(exitDoor);
                 });
             }
@@ -477,7 +475,7 @@
             if (p.vel.y < -25) p.vel.y = -25;
 
             const newX = p.pos.x + p.vel.x * dt;
-            p.pos.x = Math.max(1.0, Math.min(LEVEL_W - 1.5, newX));
+            p.pos.x = Math.max(1.0, Math.min(LEVEL_W - 2, newX));
 
             const newY = p.pos.y + p.vel.y * dt;
             if (newY <= 0) { p.pos.y = 0; p.vel.y = 0; p.onGround = true; }
@@ -510,51 +508,30 @@
 
         function updateHeroSpheres() {
             var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
+            
+            // HP
             var hpPct = p.stats.hp / p.stats.maxHp;
             var lf = document.getElementById('life-fill'); if (lf) lf.style.clipPath = 'inset(' + Math.max(0, (1 - hpPct) * 100) + '% 0 0 0)';
             var ht = document.getElementById('hp-text'); if (ht) ht.textContent = 'HP: ' + Math.floor(p.stats.hp);
+            
+            // Скверна (без таймера смерти)
             if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
             if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
             var fPct = p.stats.filth / p.stats.maxFilth;
             var mf = document.getElementById('mana-fill'); if (mf) mf.style.clipPath = 'inset(' + Math.max(0, (1 - fPct) * 100) + '% 0 0 0)';
-            var mt = document.getElementById('mana-text');
-            if (mt) {
-                if (p.stats.filth >= p.stats.maxFilth) {
-                    var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
-                    if (left < 0) left = 0;
-                    mt.textContent = '⚠ ' + left + 'с'; mt.style.color = '#ff4444';
-                } else { mt.textContent = 'Скверна: ' + Math.floor(p.stats.filth) + '%'; mt.style.color = '#fff'; }
+            var mt = document.getElementById('mana-text'); 
+            if (mt) { 
+                mt.textContent = 'Скверна: ' + Math.floor(p.stats.filth) + '%'; 
+                mt.style.color = '#fff'; 
             }
         }
         setTimeout(updateHeroSpheres, 500);
 
-        function updateFilth(dt) {
-            var p = parent.Sherwood.getPlayer(); if (!p) return;
-            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
-            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
-            filthTimer += dt;
-            if (filthTimer >= FILTH_SELF_RATE) {
-                filthTimer -= FILTH_SELF_RATE;
-                if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); }
-            }
-            if (p.stats.filth >= p.stats.maxFilth) {
-                if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
-                if (performance.now() / 1000 - filthFullSince >= FILTH_DEATH_TIME) {
-                    if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
-                }
-            } else { filthFullSince = 0; }
+        function updateTimers(dt) {
             if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
             if (playerAttackCooldown > 0) playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
             if (enemyStunned > 0) enemyStunned = Math.max(0, enemyStunned - dt);
             if (vampirismBuff > 0) vampirismBuff = Math.max(0, vampirismBuff - dt);
-        }
-
-        function dieFromFilth() {
-            if (isBattleActive) stopBattle();
-            playSound(soundDefeat);
-            showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020');
-            try { thicketMusic.pause(); } catch(e){}
-            setTimeout(function() { try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){} }, 1500);
         }
 
         function onDefeat() {
@@ -586,7 +563,7 @@
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     platformerGroup.add(currentEnemyObj.mesh);
                     currentEnemyObj.mesh.center.set(0.5, 0);
-                    currentEnemyObj.mesh.position.set(currentEnemyObj.x, 0, 0.2);
+                    currentEnemyObj.mesh.position.set(currentEnemyObj.x, 0, 0.8);
                 }
                 activeCamera = camPlatformer;
                 document.getElementById('crosshair').style.display = 'none';
@@ -641,7 +618,7 @@
                     }
                 }
                 pp.stats.hp = Math.max(0, pp.stats.hp - edmg);
-                addFilth(FILTH_HIT_AMOUNT);
+                addFilth(FILTH_HIT_AMOUNT); // Скверна добавляется, но не убивает
                 if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
                 showBloodOverlay();
@@ -692,13 +669,8 @@
             playerHitFirst = true;
             playSound(soundHit);
 
-            var arrowsNeeded = (rageCharges > 0) ? 2 : 1;
-            var hasArrows = (playerArrows >= arrowsNeeded);
-            if (hasArrows) { useArrow(arrowsNeeded); }
-            else { if (playerArrows > 0) useArrow(1); else showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
-
+            // Урон без стрел
             var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
-            if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
             if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
 
@@ -815,6 +787,7 @@
             if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
             var p = parent.Sherwood.getPlayer(); if (!p) return;
             var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
+            
             if (skillId === 'stunning') {
                 if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; }
                 enemyStunned = 10;
@@ -822,9 +795,7 @@
                 playSound(soundAltar);
                 skillCooldowns[skillId] = Date.now() + 20000;
             } else if (skillId === 'rage') {
-                var f = getFilth();
-                if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; }
-                if (!spendFilth(65)) return;
+                if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; }
                 rageCharges = 3;
                 showCenterText('ЯРОСТЬ! 3 удара +20%', '#ff4400');
                 playSound(soundHit);
@@ -916,17 +887,14 @@
             if (!isBattleActive) {
                 updatePlayer(dt);
                 camPlatformer.position.x = player.pos.x;
-                camPlatformer.lookAt(camPlatformer.position.x, 0, 0);
+                camPlatformer.lookAt(camPlatformer.position.x, 1.0, 0);
                 heroGroup.position.copy(player.pos);
-                heroGroup.position.y = player.pos.y;
+                heroGroup.position.y = player.pos.y; 
                 playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
             } else {
-                if (playerAttackCooldown > 0) playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
-                if (enemyStunned > 0) enemyStunned = Math.max(0, enemyStunned - dt);
-                if (vampirismBuff > 0) vampirismBuff = Math.max(0, vampirismBuff - dt);
+                updateTimers(dt);
             }
 
-            updateFilth(dt);
             checkInteraction();
             if (isBattleActive) updateMobHpBar();
 
