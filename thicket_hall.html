@@ -50,7 +50,6 @@
         #btn-left  { top: 35px; left: 0; }
         #btn-right { top: 35px; left: 70px; }
 
-        /* Фон боевой комнаты — swamp_tiles_6.png */
         #battle-bg {
             position: fixed;
             top: 0; left: 0;
@@ -138,7 +137,6 @@
         };
         function getMobName(p) { if (!p) return 'Враг'; var f = p.split('/').pop(); return MOB_NAMES[f] || 'Враг'; }
 
-        // СКВЕРНА
         var FILTH_HIT_AMOUNT = 5;
         function getFilth() { 
             var p = parent.Sherwood.getPlayer(); 
@@ -205,6 +203,23 @@
             'assets/assets2/animation/Fine_blood_spray_texture (2).png'
         ];
         var boT1 = null, boT2 = null;
+
+        // Эффект удара по герою: красная вспышка по краям
+        var heroHitFlashEl = document.createElement('div');
+        heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
+        document.body.appendChild(heroHitFlashEl);
+        var heroHitFlashTimer = null;
+        function showHeroHitFlash() {
+            heroHitFlashEl.style.transition = 'opacity 0.05s ease-out';
+            heroHitFlashEl.style.opacity = '1';
+            clearTimeout(heroHitFlashTimer);
+            heroHitFlashTimer = setTimeout(function() {
+                heroHitFlashEl.style.transition = 'opacity 0.25s ease-out';
+                heroHitFlashEl.style.opacity = '0';
+            }, 100);
+        }
+
+        // Кровь + вспышка + тряска камеры ВСЕГДА, когда враг бьёт по герою
         function showBloodOverlay() {
             var el = document.getElementById('blood-overlay'); if (!el) return;
             var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)];
@@ -214,9 +229,10 @@
             clearTimeout(boT1); clearTimeout(boT2);
             boT1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
             boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
+            showHeroHitFlash();
+            cameraShake = 0.12;
         }
 
-        // Сцена платформера
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000); 
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
@@ -236,13 +252,11 @@
         const playerLight = new THREE.PointLight(0xffaa55, 2.0, 15);
         playerLight.position.set(0, 2, 2); scene.add(playerLight);
 
-        // Текстуры
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
         
-        // Текстуры дверей
         const closedDoorTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level2.png');
         
@@ -257,7 +271,6 @@
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
         const ceilMat  = new THREE.MeshLambertMaterial({ map: ceilTexture });
 
-        // Коридор (ПЛАТФОРМЕР)
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
@@ -277,7 +290,6 @@
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
-        // Выход (в конце) и Вход (в начале) в виде дверей
         const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, 0);
         exitDoor.rotation.y = -Math.PI / 2;
@@ -288,9 +300,7 @@
         startDoor.rotation.y = Math.PI / 2;
         platformerGroup.add(startDoor);
 
-        // ============================================================
-        //  БОЕВАЯ КОМНАТА (фон + прозрачный canvas)
-        // ============================================================
+        // Боевая комната
         var battleBg = document.getElementById('battle-bg');
 
         const battleScene = new THREE.Scene();
@@ -317,7 +327,6 @@
         var bFillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
         battleScene.add(bFillLight);
 
-        // Кровь в бою
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
         var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
@@ -326,7 +335,6 @@
 
         var hitSprites = ['strike_claws.png','strike_claws_1.png','strike_claws_2.png','strike_claws_4.png','strike_claws_5.png','strike_claws_6.png'];
 
-        // Игрок
         const player = {
             pos: new THREE.Vector3(3, 0, 0),
             vel: new THREE.Vector3(0, 0, 0),
@@ -391,7 +399,6 @@
         heroGroup.add(staticSprite);
         video.addEventListener('play', () => { staticSprite.visible = false; });
 
-        // Враг
         var enemyObj = null;
         var enemySprite = null;
         var enemyX = 25;
@@ -425,7 +432,6 @@
         }
         createEnemy();
 
-        // Сундук (закрытый и открытый)
         var chestSprite = null;
         var chestOpenTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
         var chestClosedTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
@@ -440,7 +446,6 @@
             }
         }
 
-        // Ввод
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
@@ -460,7 +465,6 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
-        // Логика игрока
         function updatePlayer(dt) {
             const p = player;
             let moveX = 0;
@@ -495,7 +499,6 @@
             else { p.pos.y = newY; p.onGround = false; }
         }
 
-        // Состояние боя
         var isBattleActive = false;
         var battleTimer = null;
         var currentEnemyStats = null;
@@ -546,7 +549,6 @@
             try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){}
         }
 
-        // Камера боя
         function setBattleCamera(on) {
             if (on) {
                 battleBg.classList.add('active');
@@ -576,7 +578,6 @@
             }
         }
 
-        // Бой
         function startBattle(obj) {
             if (isBattleActive || !obj) return;
             isBattleActive = true;
@@ -620,6 +621,7 @@
                         document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
                         document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
                         showCenterText('РИКОШЕТ!', '#a020f0');
+                        showBloodOverlay(); // эффект удара по герою
                         if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
                         return;
                     }
@@ -628,9 +630,7 @@
                 addFilth(FILTH_HIT_AMOUNT);
                 if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
-                showBloodOverlay();        // <-- Кровь на экране
-                showHeroHitFlash();        // <-- Вспышка/эффект удара по герою
-                cameraShake = 0.12;        // <-- Тряска камеры
+                showBloodOverlay(); // кровь + вспышка + тряска
                 if (pp.stats.hp <= 0) { stopBattle(); onDefeat(); }
             }, 1000);
         }
@@ -746,6 +746,7 @@
                     document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
                     document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
                     showCenterText('РИКОШЕТ!', '#a020f0');
+                    showBloodOverlay(); // эффект удара по герою
                     if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
                     return;
                 }
@@ -754,9 +755,7 @@
             addFilth(FILTH_HIT_AMOUNT);
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
             updateHeroSpheres();
-            showBloodOverlay();
-            showHeroHitFlash();        // <-- Эффект удара по герою (и при ответном ударе)
-            cameraShake = 0.12;
+            showBloodOverlay(); // кровь + вспышка + тряска
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
 
@@ -771,22 +770,6 @@
             document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        // Эффект удара по герою: вспышка на весь экран (красная)
-        var heroHitFlashEl = document.createElement('div');
-        heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
-        document.body.appendChild(heroHitFlashEl);
-        var heroHitFlashTimer = null;
-        function showHeroHitFlash() {
-            heroHitFlashEl.style.transition = 'opacity 0.05s ease-out';
-            heroHitFlashEl.style.opacity = '1';
-            clearTimeout(heroHitFlashTimer);
-            heroHitFlashTimer = setTimeout(function() {
-                heroHitFlashEl.style.transition = 'opacity 0.25s ease-out';
-                heroHitFlashEl.style.opacity = '0';
-            }, 100);
-        }
-
-        // Скиллы
         var talentData = {
             'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 20000, name: 'Оглушение' },
             'rage':     { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 25000, name: 'Ярость' },
@@ -821,7 +804,6 @@
                 if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; }
                 enemyStunned = 10;
                 showCenterText('ОГЛУШЕНИЕ! 10 сек', '#ffd700');
-                // БЕЗ звука алтаря
                 skillCooldowns[skillId] = Date.now() + 20000;
             } else if (skillId === 'rage') {
                 if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; }
@@ -835,14 +817,12 @@
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
                 showCenterText('+' + heal + ' HP', '#4caf50');
                 updateHeroSpheres();
-                // БЕЗ звука алтаря
                 skillCooldowns[skillId] = Date.now() + 8000;
             }
             var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
             if (icon) { icon.classList.add('on-cooldown'); setTimeout(function(){ icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown); }
         }
 
-        // Взаимодействие
         function checkInteraction() {
             var icon = document.getElementById('attack-icon');
             var img = document.getElementById('attack-icon-img');
@@ -902,7 +882,6 @@
             }
         });
 
-        // Цикл
         let lastTime = performance.now();
 
         function animate() {
