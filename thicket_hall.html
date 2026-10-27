@@ -31,32 +31,32 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-        /* Боевые контролы (Кнопка удара + Скиллы) */
+        /* Боевые контролы */
         #battle-controls {
             position: absolute;
-            bottom: 30px; /* Чуть выше низа */
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             z-index: 45;
         }
         
         #attack-icon { 
             position: relative;
-            width: 120px; /* ЕЩЕ КРУПНЕЕ */
-            height: 120px; 
+            width: 140px; 
+            height: 140px; 
             cursor: pointer; 
             pointer-events: auto;
-            bottom: 150px; /* ЕЩЕ ВЫШЕ */
+            bottom: 180px; /* Высоко */
         }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
-        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 24px; }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 28px; }
         
-        .skills-row { display: flex; gap: 20px; justify-content: center; margin-top: -120px; /* Поднимаем скиллы под кнопку */ }
+        .skills-row { display: flex; gap: 20px; justify-content: center; margin-top: -160px; /* Скиллы под кнопку */ }
         #skills-left, #skills-right { display: flex; gap: 20px; justify-content: center; }
         
         .skill-btn { 
@@ -65,8 +65,8 @@
             border: 3px solid rgba(200, 160, 80, 0.8); 
             background: rgba(0, 0, 0, 0.6); 
             padding: 3px; 
-            width: 80px; /* ЕЩЕ КРУПНЕЕ */
-            height: 80px; 
+            width: 85px; 
+            height: 85px; 
             object-fit: contain; 
             transition: all 0.2s;
         }
@@ -91,10 +91,11 @@
             #mob-hp-text { font-size: 15px; }
             #mob-hp-name { font-size: 13px; top: -12px; }
             #hit-effect-img { width: 130px; height: 130px; }
+            
             #battle-controls { bottom: 10px; gap: 10px; }
-            #attack-icon { width: 100px; height: 100px; bottom: 120px; }
+            #attack-icon { width: 110px; height: 110px; bottom: 140px; }
             .skill-btn { width: 70px; height: 70px; }
-            .skills-row, #skills-left, #skills-right { gap: 15px; margin-top: -100px; }
+            .skills-row, #skills-left, #skills-right { gap: 15px; margin-top: -120px; }
         }
     </style>
 </head>
@@ -333,7 +334,7 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-        // ФОН БОЯ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ, ОПУЩЕН)
+        // ФОН БОЯ
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
         bgTexture.wrapS = THREE.RepeatWrapping;
         bgTexture.wrapT = THREE.RepeatWrapping;
@@ -584,7 +585,11 @@
                 }
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('battle-controls').style.display = 'flex';
-                document.getElementById('joystick').style.display = 'none'; // Скрываем джойстик
+                document.getElementById('joystick').style.display = 'none';
+                
+                // Показываем скиллы
+                document.getElementById('skills-left').style.display = 'flex';
+                document.getElementById('skills-right').style.display = 'flex';
             } else {
                 renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
@@ -594,7 +599,11 @@
                 }
                 document.getElementById('crosshair').style.display = 'none';
                 document.getElementById('battle-controls').style.display = 'none';
-                document.getElementById('joystick').style.display = 'block'; // Показываем джойстик
+                document.getElementById('joystick').style.display = 'block';
+                
+                // Скрываем скиллы
+                document.getElementById('skills-left').style.display = 'none';
+                document.getElementById('skills-right').style.display = 'none';
             }
         }
 
@@ -867,24 +876,18 @@
                 document.getElementById('battle-controls').style.display = 'flex';
                 icon.dataset.action = 'startBattle';
                 img.src = 'assets/assets2/talents/simple_attack.png';
-                document.getElementById('skills-left').style.display = 'none';
-                document.getElementById('skills-right').style.display = 'none';
                 return;
             }
             if (!enemyAlive && chestSprite && Math.abs(player.pos.x - chestSprite.position.x) < 3.5) {
                 document.getElementById('battle-controls').style.display = 'flex';
                 icon.dataset.action = 'chest';
                 img.src = 'assets/assets2/icons/take.png';
-                document.getElementById('skills-left').style.display = 'none';
-                document.getElementById('skills-right').style.display = 'none';
                 return;
             }
             if (!enemyAlive && Math.abs(player.pos.x - exitDoor.position.x) < 3.5) {
                 document.getElementById('battle-controls').style.display = 'flex';
                 icon.dataset.action = 'exit';
                 img.src = 'assets/assets2/icons/take.png';
-                document.getElementById('skills-left').style.display = 'none';
-                document.getElementById('skills-right').style.display = 'none';
                 return;
             }
             
