@@ -31,7 +31,7 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-              /* Боевые контролы */
+        /* Боевые контролы */
         #battle-controls {
             position: absolute;
             bottom: 120px;
@@ -44,9 +44,13 @@
             z-index: 45;
         }
         
-        /* Кнопка удара */
+        /* Кнопка удара — опущена на прежнее место и сдвинута влево на 5px */
         #attack-icon { 
-            position: relative; /* Возвращаем в поток */
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(calc(-50% - 5px));
+            margin-bottom: 70px;
             width: 85px; 
             height: 85px; 
             cursor: pointer; 
@@ -55,11 +59,8 @@
             border: none;
             background: none;
             flex-shrink: 0;
-            transform: translateY(-50px); /* Поднимаем вверх на 50 пикселей */
-            margin-bottom: -20px; /* Компенсируем пустое место, чтобы скиллы не уезжали вниз */
         }
-        #attack-icon:active { transform: translateY(-50px) scale(0.9); }
-        
+        #attack-icon:active { transform: translateX(calc(-50% - 5px)) scale(0.9); }
         #attack-icon img { 
             width: 85px; 
             height: 85px; 
@@ -113,7 +114,7 @@
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         
-                #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
+        #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
         .arrow-btn { position: absolute; width: 60px; height: 60px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
         #btn-left  { top: 40px; left: 0; }
