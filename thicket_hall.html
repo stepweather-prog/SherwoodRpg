@@ -297,12 +297,12 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-        // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ
+                // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ (ЗАКРЫВАЕТ ВЕСЬ ЭКРАН)
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
-        const bgGeometry = new THREE.PlaneGeometry(20, 12);
+        const bgGeometry = new THREE.PlaneGeometry(50, 30); // Огромная плоскость
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, 3, -6);
+        bgMesh.position.set(0, 5, -10); // Высоко и далеко, чтобы закрыть весь экран
         battleScene.add(bgMesh);
 
         battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
