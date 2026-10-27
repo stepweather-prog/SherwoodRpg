@@ -240,11 +240,15 @@
         camPlatformer.position.set(0, 2.5, 6);
         camPlatformer.lookAt(0, 0.5, 0);
 
-        // Основной рендерер (для платформера и боя)
+                // Основной рендерер (для платформера и боя)
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 1);
+        renderer.domElement.style.position = 'fixed';
+        renderer.domElement.style.top = '0';
+        renderer.domElement.style.left = '0';
+        renderer.domElement.style.zIndex = '1'; // Canvas ВЫШЕ фона
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
