@@ -548,7 +548,7 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
         // ============================================================
         //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + БОЕВАЯ КОМНАТА
         // ============================================================
-        function setBattleCamera(on) {
+                function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
                 battleRoom.position.set(0, 0, 0);
@@ -564,12 +564,15 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
                 if (currentEnemySprite) {
                     if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
                     battleRoom.add(currentEnemySprite);
-                    // FIX: центр спрайта в середине (как в платформере при входе в бой)
-                    // В бою враг должен быть огромным (1.4 * 2.5 = 3.5)
-var battleScale = 3.5; 
-currentEnemySprite.scale.set(battleScale, battleScale, 1);
-currentEnemySprite.center.set(0.5, 0.5);
-currentEnemySprite.position.set(0, battleScale / 2, 0); // Ставим ровно по центру
+                    
+                    // Берем размер как в платформере (боссы чуть больше)
+                    var scale = currentEnemyObj && currentEnemyObj.isBoss ? 2.8 : 2.4;
+                    currentEnemySprite.scale.set(scale, scale, 1);
+                    
+                    // Ставим ровно по центру
+                    currentEnemySprite.center.set(0.5, 0.5);
+                    currentEnemySprite.position.set(0, scale / 2, 0); 
+                    
                     currentEnemySprite.material.depthTest = false;
                     currentEnemySprite.material.depthWrite = false;
                     currentEnemySprite.renderOrder = 10;
@@ -577,11 +580,13 @@ currentEnemySprite.position.set(0, battleScale / 2, 0); // Ставим ровн
                 }
 
                 document.getElementById('crosshair').style.display = 'block';
+                // Показываем контролы
                 document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-row').style.display = 'flex';
 
             } else {
+                // Возврат в лабиринт
                 battleRoom.visible = false;
                 group.visible = true;
 
@@ -591,12 +596,14 @@ currentEnemySprite.position.set(0, battleScale / 2, 0); // Ставим ровн
                     currentEnemyObj.mesh.material.depthWrite = false;
                     currentEnemyObj.mesh.renderOrder = 0;
                     group.add(currentEnemyObj.mesh);
-                    // FIX: вернуть "низ в точке позиции" (как в платформере)
-                    var returnScale = 1.4;
-currentEnemyObj.mesh.scale.set(returnScale, returnScale, 1);
-currentEnemyObj.mesh.center.set(0.5, 0.5);
-var wPos = gridToWorld(currentEnemyObj.x, currentEnemyObj.y);
-currentEnemyObj.mesh.position.set(wPos.x, returnScale / 2 + 0.1, wPos.z);
+                    
+                    // Возвращаем маленький размер и ставим на клетку
+                    var returnScale = currentEnemyObj.isBoss ? 0.95 : 0.85;
+                    currentEnemyObj.mesh.scale.set(returnScale, returnScale, 1);
+                    currentEnemyObj.mesh.center.set(0.5, 0.5);
+                    
+                    var wPos = gridToWorld(currentEnemyObj.x, currentEnemyObj.y);
+                    currentEnemyObj.mesh.position.set(wPos.x, returnScale / 2 + 0.1, wPos.z);
                 }
 
                 activeCamera = camTop;
@@ -704,14 +711,18 @@ currentEnemyObj.mesh.position.set(wPos.x, returnScale / 2 + 0.1, wPos.z);
         }
 
         // FIX: расчёт позиции HP-бара через мировые координаты + половину высоты спрайта
-        function updateMobHpBar() {
+                function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = new THREE.Vector3();
             currentEnemySprite.getWorldPosition(worldPos);
-            worldPos.y += currentEnemySprite.scale.y / 2 + 0.5; 
+            
+            // Прибавляем половину роста врага + небольшой отступ, чтобы бар был над головой
+            worldPos.y += (currentEnemySprite.scale.y / 2) + 0.2; 
+            
             worldPos.project(activeCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            
             var el = document.getElementById('mob-hp');
             el.style.left = x + 'px';
             el.style.top = y + 'px';
