@@ -28,95 +28,21 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
-
-        /* Боевые контролы */
-        #battle-controls {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            z-index: 45;
-        }
+        #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; }
         
-        /* Кнопка удара */
-        #attack-icon { 
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(calc(-50% - 20px));
-            margin-bottom: 70px;
-            width: 85px; 
-            height: 85px; 
-            cursor: pointer; 
-            pointer-events: auto;
-            padding: 0;
-            border: none;
-            background: none;
-            flex-shrink: 0;
-            display: none;
-        }
-        #attack-icon:active { transform: translateX(calc(-50% - 20px)) scale(0.9); }
-        #attack-icon img { 
-            width: 85px; 
-            height: 85px; 
-            object-fit: contain; 
-            border-radius: 8px; 
-            border: 3px solid rgba(200, 160, 80, 0.8); 
-            background: rgba(0, 0, 0, 0.6); 
-            padding: 3px;
-            transition: all 0.2s;
-            display: block;
-            box-sizing: border-box;
-        }
-        #attack-icon img:hover {
-            transform: scale(1.1); 
-            filter: drop-shadow(0 0 10px #ffd700);
-        }
-        #attack-cooldown-overlay { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); border-radius: 8px;
-            display: none; align-items: center; justify-content: center; 
-            color: #ff5555; font-weight: bold; font-size: 20px; 
-        }
-
-        .skill-btn { 
-            cursor: pointer; 
-            border-radius: 8px; 
-            border: 3px solid rgba(200, 160, 80, 0.8); 
-            background: rgba(0, 0, 0, 0.6); 
-            padding: 3px; 
-            width: 85px; 
-            height: 85px; 
-            object-fit: contain; 
-            transition: all 0.2s;
-            display: block;
-            flex-shrink: 0;
-            box-sizing: border-box;
-        }
-        .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
-        .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-
-        #skills-row {
-            display: none;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: nowrap;
-        }
+        /* Новый контейнер для скиллов под кнопкой удара */
+        #skills-row { pointer-events: auto; position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: row; align-items: center; gap: 15px; z-index: 45; display: none; }
+        #skills-row img { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 50px; height: 50px; object-fit: contain; transition: all 0.2s; }
+        #skills-row img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
+        #skills-row img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
-        
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
         #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
         #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
         @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
         
-        @media (max-width: 900px) {
+        @media (max-width: 600px) {
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
             #mob-hp { width: 220px !important; height: 150px !important; }
@@ -124,11 +50,9 @@
             #mob-hp-name { font-size: 13px !important; top: -12px !important; }
             #hit-effect-img { width: 130px !important; height: 130px !important; }
             
-            #battle-controls { bottom: 100px; gap: 10px; }
-            #attack-icon { width: 70px; height: 70px; margin-bottom: 50px; }
-            #attack-icon img { width: 70px; height: 70px; }
-            .skill-btn { width: 70px; height: 70px; }
-            #skills-row { gap: 10px; }
+            #skills-row { bottom: 100px !important; gap: 10px !important; }
+            #skills-row img { width: 38px !important; height: 38px !important; }
+            #attack-icon { width: 44px !important; height: 44px !important; bottom: 30px !important; }
             #arrow-counter { font-size: 13px !important; padding: 3px 10px !important; }
             #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
@@ -139,24 +63,16 @@
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
     <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
-    
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000</span>
     </div>
-    
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
     
-    <div id="battle-controls">
-        <div id="attack-icon">
-            <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
-            <div id="attack-cooldown-overlay">0.0s</div>
-        </div>
-        <div id="skills-row"></div>
-    </div>
-
+    <div id="skills-row"></div>
+    
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
@@ -167,6 +83,7 @@
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">Скверна: 0%</span>
     </div>
+    <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
 
     <div id="vignette"></div>
     <div id="scanlines"></div>
@@ -315,7 +232,7 @@
         const group = new THREE.Group(); scene.add(group);
 
         // ============================================================
-        //  БОЕВАЯ КОМНАТА (ФОН КАК В ПЛАТФОРМЕРЕ)
+        //  БОЕВАЯ КОМНАТА (С ФОНОМ КАК В ПЛАТФОРМЕРЕ)
         // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
@@ -351,9 +268,9 @@
             }
         }
 
-        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false, depthWrite: false }));
+        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
         heroSprite.scale.set(0.85, 0.85, 1); scene.add(heroSprite);
-        let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.4, playerGY - center);
+        let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.6, playerGY - center);
 
         var playerPos = new THREE.Vector3(playerGX - center, 0, playerGY - center);
         var playerYaw = 0;
@@ -605,7 +522,7 @@
         function checkObjects() { checkExitDoor(); }
 
         // ============================================================
-        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + БОЕВАЯ КОМНАТА
+        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + ПЕРЕНОС ВРАГА В БОЕВУЮ КОМНАТУ
         // ============================================================
         function setBattleCamera(on) {
             if (on) {
@@ -628,7 +545,7 @@
                 }
 
                 document.getElementById('crosshair').style.display = 'block';
-                document.getElementById('battle-controls').style.display = 'flex';
+                document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-row').style.display = 'flex';
 
             } else {
@@ -643,7 +560,7 @@
 
                 activeCamera = camTop;
                 document.getElementById('crosshair').style.display = 'none';
-                document.getElementById('battle-controls').style.display = 'none';
+                document.getElementById('attack-icon').style.display = 'none';
                 document.getElementById('skills-row').style.display = 'none';
 
                 heroSprite.visible = true;
