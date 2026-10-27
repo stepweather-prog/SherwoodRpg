@@ -480,13 +480,14 @@
             var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
                 map: loader.load(obj.img), 
                 transparent: true,
-                depthTest: true,
+                depthTest: false,
                 depthWrite: false
             }));
-            // Враги и боссы одинакового размера
-            var scale = obj.type === 'enemy' ? 1.05 : 0.28; // Объекты (зелья, котлы, алтари) уменьшены вдвое
+            // Враги и боссы одинакового размера; объекты чуть меньше мешка лута (0.65)
+            var scale = (obj.type === 'enemy') ? 1.05 : 0.42;
             sprite.scale.set(scale, scale, 1);
             sprite.position.set(x, scale / 2, z);
+            sprite.renderOrder = (obj.type === 'enemy') ? 1 : 0;
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
         }
@@ -521,7 +522,13 @@
 
         function applyLootEffect(obj) {
             if (!obj) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
-            if (obj.type === 'potion_hp') { var addHp = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += addHp; showCenterText('+' + addHp + ' HP', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
+            if (obj.type === 'potion_hp') {
+                var addHp = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp);
+                if (addHp <= 0) { showCenterText('HP полное', '#4caf50'); return; }
+                p.stats.hp += addHp;
+                showCenterText('+' + addHp + ' HP', '#4caf50');
+                obj.collected = true; group.remove(obj.mesh);
+            }
             else if (obj.type === 'potion_filth') { var f1 = getFilth(); setFilth(Math.max(0, f1.cur - f1.max * 0.5)); showCenterText('-50% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
             else if (obj.type === 'potion_high') { var heal2 = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += heal2; setFilth(Math.max(0, getFilth().cur - getFilth().max * 0.8)); showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
             else if (obj.type === 'cauldron') { if (obj.used) return; obj.used = true; setFilth(0); showCenterText('Скверна снята', '#4caf50'); playSound(soundCauldron); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
@@ -622,9 +629,13 @@
                 camFPS.lookAt(0, 0.45, 0);
 
                 if (currentEnemySprite) {
+                    if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
                     battleRoom.add(currentEnemySprite);
                     var sy = currentEnemySprite.scale.y;
                     currentEnemySprite.position.set(0, sy / 2, 0);
+                    currentEnemySprite.material.depthTest = false;
+                    currentEnemySprite.material.depthWrite = false;
+                    currentEnemySprite.renderOrder = 10;
                     currentEnemySprite.visible = true;
                 }
 
@@ -638,6 +649,10 @@
                 group.visible = true;
 
                 if (currentEnemyObj && currentEnemyObj.mesh) {
+                    if (currentEnemyObj.mesh.parent) currentEnemyObj.mesh.parent.remove(currentEnemyObj.mesh);
+                    currentEnemyObj.mesh.material.depthTest = true;
+                    currentEnemyObj.mesh.material.depthWrite = false;
+                    currentEnemyObj.mesh.renderOrder = 0;
                     group.add(currentEnemyObj.mesh);
                     var sy2 = currentEnemyObj.mesh.scale.y;
                     currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, sy2 / 2, currentEnemyObj.y - center);
@@ -775,7 +790,7 @@
                         var ud2 = best.obj.userData;
                         if (ud2 && ud2.objRef) {
                             var cur = worldToGrid(playerPos.x, playerPos.z);
-                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { return; } // Убрал подсказку
+                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { return; }
                             var pathB = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
                             if (pathB.length > 0) { waypoints = pathB; moving = true; pendingBattle = null; pendingLoot = { type: 'bag', bag: ud2.objRef }; startSteps(); }
                             return;
@@ -793,7 +808,7 @@
                                 return;
                             }
                             if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
-                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; } // Убрал подсказку
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; }
                                 var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
                                 if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
                                 return;
@@ -861,11 +876,27 @@
             var iconImg = document.getElementById('attack-icon-img'); if (!iconImg) return;
             if (isBattleActive) { iconImg.src = 'assets/assets2/talents/simple_attack.png'; return; }
             var cur = worldToGrid(playerPos.x, playerPos.z); var nearLoot = false;
-            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; } }
-            if (!nearLoot) { for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; } } }
-            
-            if (!nearLoot && exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) {
-                nearLoot = true; 
+
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
+                if (o.used) continue;
+                var tile = tileMeshes[o.y * size + o.x];
+                if (!tile || !tile.opened) continue;
+                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; }
+            }
+            if (!nearLoot) {
+                for (var b = 0; b < lootBags.length; b++) {
+                    var bag = lootBags[b];
+                    if (bag.opened) continue;
+                    var tile2 = tileMeshes[bag.gy * size + bag.gx];
+                    if (!tile2 || !tile2.opened) continue;
+                    if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; }
+                }
+            }
+            if (!nearLoot && exitIsOpen) {
+                var tileE = tileMeshes[exitCell.gy * size + exitCell.gx];
+                if (tileE && tileE.opened && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) nearLoot = true;
             }
 
             if (!isBattleActive) {
