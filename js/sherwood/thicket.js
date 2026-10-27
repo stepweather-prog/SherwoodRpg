@@ -283,7 +283,7 @@ Sherwood.Thicket = {
     // ============================================================
     //  ПОБЕДА / ПОРАЖЕНИЕ
     // ============================================================
-    _onWin: function(nodeId, diff) {
+        _onWin: function(nodeId, diff) {
         var node = this.getNode(nodeId);
         if (!node) return;
 
@@ -293,8 +293,8 @@ Sherwood.Thicket = {
         var mult = this.DIFF_MULT[diff - 1] || 1.0;
         var reward = {
             exp: Math.floor(node.exp * mult),
-            gold: Math.floor(node.gold * mult),
-            silver: Math.floor(node.gold * mult * 3)
+            gold: Math.floor(node.gold * mult * 2),    // <-- добавили * 2 (золото х2)
+            silver: Math.floor(node.gold * mult * 5)   // <-- поменяли 3 на 5 (серебро х5)
         };
 
         Sherwood.addExp(reward.exp);
@@ -318,7 +318,7 @@ Sherwood.Thicket = {
         this._inBattle = false;
 
         var reward = {
-            exp: 50,
+            exp: 200,
             silver: 20
         };
 
