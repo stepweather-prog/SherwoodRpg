@@ -55,7 +55,7 @@
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: url('assets/assets2/dungeon_details/swamp_tiles_6.png') center center / cover no-repeat;
-            z-index: 0;
+            z-index: 1;
             pointer-events: none;
             display: none;
         }
@@ -316,7 +316,7 @@
         battleRenderer.domElement.style.position = 'fixed';
         battleRenderer.domElement.style.top = '0';
         battleRenderer.domElement.style.left = '0';
-        battleRenderer.domElement.style.zIndex = '1';
+        battleRenderer.domElement.style.zIndex = '2'; // canvas боя над фоном
         battleRenderer.domElement.style.display = 'none';
         document.body.appendChild(battleRenderer.domElement);
 
@@ -621,7 +621,7 @@
                         document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
                         document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
                         showCenterText('РИКОШЕТ!', '#a020f0');
-                        showBloodOverlay(); // эффект удара по герою
+                        showBloodOverlay();
                         if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
                         return;
                     }
@@ -630,7 +630,7 @@
                 addFilth(FILTH_HIT_AMOUNT);
                 if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
-                showBloodOverlay(); // кровь + вспышка + тряска
+                showBloodOverlay();
                 if (pp.stats.hp <= 0) { stopBattle(); onDefeat(); }
             }, 1000);
         }
@@ -746,7 +746,7 @@
                     document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
                     document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
                     showCenterText('РИКОШЕТ!', '#a020f0');
-                    showBloodOverlay(); // эффект удара по герою
+                    showBloodOverlay();
                     if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
                     return;
                 }
@@ -755,7 +755,7 @@
             addFilth(FILTH_HIT_AMOUNT);
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
             updateHeroSpheres();
-            showBloodOverlay(); // кровь + вспышка + тряска
+            showBloodOverlay();
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
 
