@@ -380,7 +380,7 @@
 
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
         // Уменьшаем иконку героя
-        heroSprite.scale.set(0.55, 0.55, 1); scene.add(heroSprite);
+        heroSprite.scale.set(0.85, 0.85, 1); scene.add(heroSprite);
         let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.4, playerGY - center);
 
         var playerPos = new THREE.Vector3(playerGX - center, 0, playerGY - center);
@@ -887,18 +887,33 @@
             }
         });
 
-        function updateLootButton() {
+                function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img'); if (!iconImg) return;
             if (isBattleActive) { iconImg.src = 'assets/assets2/talents/simple_attack.png'; return; }
             var cur = worldToGrid(playerPos.x, playerPos.z); var nearLoot = false;
-            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; } }
-            if (!nearLoot) { for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; } } }
             
-            var exitCur = worldToGrid(playerPos.x, playerPos.z);
-            if (!nearLoot && exitIsOpen && Math.abs(exitCur.gx - exitCell.gx) + Math.abs(exitCur.gy - exitCell.gy) <= 1) {
-                nearLoot = true; // Кнопка выхода тоже появляется
+            // Проверка на лут (зелья, стрелы, котлы, алтари)
+            for (var i = 0; i < objects.length; i++) { 
+                var o = objects[i]; 
+                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; 
+                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; } 
+            }
+            
+            // Проверка на мешки с лутом
+            if (!nearLoot) { 
+                for (var b = 0; b < lootBags.length; b++) { 
+                    var bag = lootBags[b]; 
+                    if (bag.opened) continue; 
+                    if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; } 
+                } 
+            }
+            
+            // Проверка на открытый выход
+            if (!nearLoot && exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) {
+                nearLoot = true;
             }
 
+            // Показываем/скрываем кнопку сбора вне боя
             if (!isBattleActive) {
                 document.getElementById('battle-controls').style.display = nearLoot ? 'flex' : 'none';
             }
@@ -906,20 +921,49 @@
         }
 
         document.getElementById('attack-icon').addEventListener('click', (e) => {
-            e.stopPropagation(); if (isBattleActive) { attackEnemy(); return; }
+            e.stopPropagation(); 
+            if (isBattleActive) { attackEnemy(); return; }
+            
             var cur = worldToGrid(playerPos.x, playerPos.z);
-            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } }
-            for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } }
+            
+            // Сбор лута
+            for (var i = 0; i < objects.length; i++) { 
+                var o = objects[i]; 
+                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; 
+                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } 
+            }
+            
+            // Открытие мешка
+            for (var b = 0; b < lootBags.length; b++) { 
+                var bag = lootBags[b]; 
+                if (bag.opened) continue; 
+                if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } 
+            }
+            
+            // Выход из подземки
             if (exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) { winDungeon(); return; }
         });
 
-        var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } };
+        var talentData = { 
+            'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 
+            'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 
+            'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } 
+        };
         var skillCooldowns = {};
+        
         function renderLearnedTalents() {
-            var row = document.getElementById('skills-row'); if (!row) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.talents) p.talents = {}; row.innerHTML = '';
+            var row = document.getElementById('skills-row'); 
+            if (!row) return;
+            var p = parent.Sherwood.getPlayer(); 
+            if (!p) return; 
+            if (!p.talents) p.talents = {}; 
+            row.innerHTML = '';
+            
             for (var id in talentData) {
-                var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
+                var img = document.createElement('img'); 
+                img.src = talentData[id].icon; 
+                img.className = 'skill-btn';
+                img.dataset.skillId = id;
                 img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
                 row.appendChild(img);
             }
