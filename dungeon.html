@@ -6,12 +6,15 @@
     <title>Проклятая чаща</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
-        canvas { display: block; background: #000; touch-action: none; cursor: pointer; }
+        canvas { display: block; background: #000; touch-action: none; cursor: crosshair; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
+        #minimap { position: fixed; top: 12px; right: 12px; width: 180px; height: 180px; z-index: 30; pointer-events: none; }
+        #minimap-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 1; }
+        #minimap-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; }
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; display: none; }
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
@@ -28,149 +31,90 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
-        
-        /* Боевые контролы */
-        #battle-controls {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            z-index: 45;
-        }
-        
-        #attack-icon { 
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(calc(-50% - 20px));
-            margin-bottom: 70px;
-            width: 85px; 
-            height: 85px; 
-            cursor: pointer; 
-            pointer-events: auto;
-            padding: 0;
-            border: none;
-            background: none;
-            flex-shrink: 0;
-            display: none;
-        }
-        #attack-icon:active { transform: translateX(calc(-50% - 20px)) scale(0.9); }
-        #attack-icon img { 
-            width: 85px; 
-            height: 85px; 
-            object-fit: contain; 
-            border-radius: 8px; 
-            border: 3px solid rgba(200, 160, 80, 0.8); 
-            background: rgba(0, 0, 0, 0.6); 
-            padding: 3px;
-            transition: all 0.2s;
-            display: block;
-            box-sizing: border-box;
-        }
-        #attack-icon img:hover {
-            transform: scale(1.1); 
-            filter: drop-shadow(0 0 10px #ffd700);
-        }
-        #attack-cooldown-overlay { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); border-radius: 8px;
-            display: none; align-items: center; justify-content: center; 
-            color: #ff5555; font-weight: bold; font-size: 20px; 
-        }
-
-        .skill-btn { 
-            cursor: pointer; 
-            border-radius: 8px; 
-            border: 3px solid rgba(200, 160, 80, 0.8); 
-            background: rgba(0, 0, 0, 0.6); 
-            padding: 3px; 
-            width: 85px; 
-            height: 85px; 
-            object-fit: contain; 
-            transition: all 0.2s;
-            display: block;
-            flex-shrink: 0;
-            box-sizing: border-box;
-        }
-        .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
-        .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-
-        #skills-row {
-            display: none;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: nowrap;
-        }
-
+        #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
+        .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
+        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
+        #btn-forward { top: 0; left: 41px; }
+        #btn-left { top: 41px; left: 0; }
+        #btn-right { top: 41px; left: 82px; }
+        #btn-back { top: 82px; left: 41px; }
+        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; z-index: 40; cursor: pointer; pointer-events: auto; }
+        #skills-left, #skills-right { pointer-events: auto; }
+        #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; transition: all 0.2s; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; }
+        #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
+        #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
-        
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
         #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
         #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
         @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
-        
-        @media (max-width: 900px) {
+        @media (max-width: 600px) {
+            button[onclick="exitDungeon();"] { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
+            #joystick { bottom: 20px !important; width: 110px !important; height: 110px !important; }
+            .arrow-btn { width: 34px !important; height: 34px !important; font-size: 14px !important; }
+            #btn-forward { top: 0 !important; left: 38px !important; }
+            #btn-left    { top: 38px !important; left: 0 !important; }
+            #btn-right   { top: 38px !important; left: 76px !important; }
+            #btn-back    { top: 76px !important; left: 38px !important; }
+            #attack-icon { width: 34px !important; height: 34px !important; }
+            #minimap { width: 130px !important; height: 130px !important; top: 8px !important; right: 8px !important; }
+            #minimap-frame, #minimap-canvas { width: 100% !important; height: 100% !important; }
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
+            #hero-life img, #hero-mana img { width: 135% !important; height: 135% !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
             #mob-hp { width: 220px !important; height: 150px !important; }
             #mob-hp-text { font-size: 15px !important; }
             #mob-hp-name { font-size: 13px !important; top: -12px !important; }
+            #skills-left, #skills-right { bottom: 110px !important; width: 80px !important; }
+            #skills-left img, #skills-right img { width: 38px !important; height: 38px !important; }
             #hit-effect-img { width: 130px !important; height: 130px !important; }
-            
-            #battle-controls { bottom: 100px; gap: 10px; }
-            #attack-icon { width: 70px; height: 70px; margin-bottom: 50px; }
-            #attack-icon img { width: 70px; height: 70px; }
-            .skill-btn { width: 70px; height: 70px; }
-            #skills-row { gap: 10px; }
             #arrow-counter { font-size: 13px !important; padding: 3px 10px !important; }
             #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
     </style>
 </head>
 <body>
+    <div id="info">Проклятая чаща</div>
     <div id="crosshair">✚</div>
     <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
-    <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
-    
+    <div id="arrow-counter">
+        <img src="assets/interface/sherwood_hollow_arrow.png" alt="">
+        <span id="arrow-count-text">25</span>
+    </div>
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 1000</span>
     </div>
-    
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
-    
-    <div id="battle-controls">
-        <div id="attack-icon">
-            <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
-            <div id="attack-cooldown-overlay">0.0s</div>
-        </div>
-        <div id="skills-row"></div>
-    </div>
-
+    <div id="skills-left" style="position:absolute; bottom:130px; left:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45;"></div>
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
+    <div id="skills-right" style="position:absolute; bottom:130px; right:10px; width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:45;"></div>
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">Скверна: 0%</span>
     </div>
-
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-forward">▲</div>
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+        <div class="arrow-btn" id="btn-back">▼</div>
+        <div id="attack-icon"><img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" style="width:100%;height:100%;object-fit:contain;"></div>
+    </div>
+    <div id="minimap">
+        <img id="minimap-frame" src="assets/assets2/game_details/maps_maps.png" alt="">
+        <canvas id="minimap-canvas"></canvas>
+    </div>
     <div id="vignette"></div>
     <div id="scanlines"></div>
     <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
-
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
     </script>
@@ -185,236 +129,590 @@
         if (currentDiff < 1 || currentDiff > 3) currentDiff = 1;
 
         var totalCups = 0;
-        try { if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) totalCups = parent.Sherwood.Dungeon.getTotalCups(); } catch(e) {}
+        try {
+            if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.getTotalCups) {
+                totalCups = parent.Sherwood.Dungeon.getTotalCups();
+            }
+            if (!totalCups && parent.UI && parent.UI._ensureDungeonProgress) {
+                var byD = parent.UI._ensureDungeonProgress();
+                if (byD && byD.byDungeon) {
+                    for (var dk in byD.byDungeon) {
+                        var arr = byD.byDungeon[dk];
+                        for (var i = 0; i < arr.length; i++) totalCups += (arr[i].cups || 0);
+                    }
+                }
+            }
+        } catch(e) {}
         var difficultyLevel = totalCups + 1;
 
         var ENEMY_POOLS = {
-            1: { 1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' }, 2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' }, 3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' }, 4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' }, 5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' }, 6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' } },
-            2: { 1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' }, 2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' }, 3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' }, 4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' }, 5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' }, 6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' } },
-            3: { 1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' }, 2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' }, 3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' }, 4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' }, 5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' }, 6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' } },
-            4: { 1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' }, 2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' }, 3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' }, 4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' }, 5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' }, 6: { normal: ['chaos_knight.png','ash_overlord.png','underground_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' } }
+            1: {
+                1: { normal: ['plague_crow.png','bone_vulture.png','executioner_crow.png','plague_pixie.png','putrid_sprite.png'], boss: 'forest_strangler.png' },
+                2: { normal: ['warped_imp.png','bristle_boar.png','quill_beast.png','grave_borer.png','acid_devourer.png'], boss: 'shard_back.png' },
+                3: { normal: ['bone_borer.png','bark_beetle.png','blight_beetle_warden.png','armored_beetle.png','blighted_werewolf.png'], boss: 'blight_lord_beetle.png' },
+                4: { normal: ['blight_alpha.png','yew_blight_wolf.png','swamp_slugmouth.png','swamp_gorgymouth.png','swamp_drowner.png'], boss: 'bog_brute.png' },
+                5: { normal: ['blighted_oak_golem.png','oak_golem.png','twigtangle.png','woodland_terror.png','leshy.png'], boss: 'root_executioner.png' },
+                6: { normal: ['leshy_servant.png','spectral_stag.png','forest_blight_cyclops.png','blight_troglodyte.png','blight_oozemouth.png'], boss: 'blight_lord_leshy.png' }
+            },
+            2: {
+                1: { normal: ['bog_trapper.png','blight_spitter.png','swamp_spider.png','ocular_arachnid.png','blight_horn_worm.png'], boss: 'searing_arachnid.png' },
+                2: { normal: ['swamp_centipede.png','water_hag.png','marsh_witch.png','blight_snail.png','ancient_blight_snail.png'], boss: 'sherwood_lizard.png' },
+                3: { normal: ['peat_lord.png','lost_maiden.png','bog_witch.png','swamp_kikimora.png','blight_boletus.png'], boss: 'swamp_vodyanoy.png' },
+                4: { normal: ['swamp_drake.png','blight_cerberus.png','putrid_wolf.png','ripper_wolf.png','blight_fox.png'], boss: 'fox_pack_lord.png' },
+                5: { normal: ['swamp_viper.png','putrid_rat.png','oppressor_firefly.png','executioner_cricket.png','thorn_moth.png'], boss: 'plague_bat.png' },
+                6: { normal: ['ash_stalker.png','ash_assassin.png','bone_keeper.png','blight_blade.png','ash_wraith.png'], boss: 'ash_overlord.png' }
+            },
+            3: {
+                1: { normal: ['basalt_devourer.png','grotto_brute.png','cave_watcher.png','runic_sentinel.png','ancient_watcher.png'], boss: 'lost_treasure_hunter.png' },
+                2: { normal: ['blight_moss_ogre.png','warped_worm.png','grotto_slug.png','underground_terror.png','shadow_maiden.png'], boss: 'cursed_priestess.png' },
+                3: { normal: ['mistress_of_the_roots.png','bone_arachnid.png','necromantic_arachnid.png','root_daughter.png','animated_yew.png'], boss: 'rusty_servant.png' },
+                4: { normal: ['tormentor.png','grave_archer.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png'], boss: 'chaos_lord.png' },
+                5: { normal: ['chaos_harpy.png','blight_kite.png','harpy_witch.png','harpy_hatchling.png','harpy_chieftain.png'], boss: 'lord_of_the_feathered.png' },
+                6: { normal: ['cave_tormentor.png','blight_keeper.png','blight_king.png','underground_guardian.png','corruption_raccoon.png'], boss: 'blind_render.png' }
+            },
+            4: {
+                1: { normal: ['swamp_viper.png','necromantic_arachnid.png','animated_yew.png','blight_cerberus.png','putrid_wolf.png'], boss: 'the_cursed_outlaw_king.png' },
+                2: { normal: ['oppressor_firefly.png','rusty_dread.png','chaos_swordsman.png','chaos_knight.png','ash_wraith.png'], boss: 'ancient_crypt_warden.png' },
+                3: { normal: ['chaos_harpy.png','thorn_moth.png','cave_tormentor.png','blight_kite.png','blind_render.png'], boss: 'echo_of_the_triumvirate.png' },
+                4: { normal: ['blight_kite.png','blind_render.png','blight_keeper.png','blight_king.png','corruption_raccoon.png'], boss: 'sacred_tree_executioner.png' },
+                5: { normal: ['blight_king.png','corruption_raccoon.png','lord_of_the_feathered.png','chaos_knight.png','ash_overlord.png'], boss: 'sherwood_abomination.png' },
+                6: { normal: ['chaos_knight.png','ash_overlord.png','underworld_guardian.png','bone_keeper.png','blight_blade.png'], boss: 'the_primordial_core.png' }
+            }
         };
 
-        var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor]) || ENEMY_POOLS[1][1];
+        var currentPool = (ENEMY_POOLS[currentDungeon] && ENEMY_POOLS[currentDungeon][currentFloor])
+            || ENEMY_POOLS[1][1];
+
         var mult = 1.0 + (difficultyLevel - 1) * 0.2;
+
         var MOB_PATH = 'assets/all_beasts/';
         var BOSS_PATH = (currentDungeon === 4) ? 'assets/beast_quest/' : 'assets/all_beasts/';
 
         var MOB_NAMES = {
-            'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник', 'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси', 'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб', 'warped_imp.png': 'Искажённый Бес', 'bristle_boar.png': 'Шипастый Секач', 'quill_beast.png': 'Кристальный Иглобрюх', 'grave_borer.png': 'Личинка Короеда', 'acid_devourer.png': 'Кислотный Короед-Пожиратель', 'shard_back.png': 'Шервудский Дикобраз', 'bone_borer.png': 'Костяной Короед-Трупоед', 'bark_beetle.png': 'Жук-Короед', 'blight_beetle_warden.png': 'Чумной Короед-Страж', 'armored_beetle.png': 'Бронированный Короед', 'blighted_werewolf.png': 'Осквернённый Оборотень', 'blight_lord_beetle.png': 'Повелитель Гнили', 'blight_alpha.png': 'Альфа-Скверноискатель', 'yew_blight_wolf.png': 'Волк Тисовой Скверны', 'swamp_slugmouth.png': 'Болотный Слизнерот', 'swamp_gorgymouth.png': 'Скверножаб', 'swamp_drowner.png': 'Болотный Утопленник', 'bog_brute.png': 'Торфяной Труп', 'blighted_oak_golem.png': 'Голем Скверного Дуба', 'oak_golem.png': 'Голем Дуба', 'twigtangle.png': 'Хворост', 'woodland_terror.png': 'Древесный Ужас', 'leshy.png': 'Леший', 'root_executioner.png': 'Корневой Палач', 'leshy_servant.png': 'Слуга Лешего', 'spectral_stag.png': 'Призрачный Олень', 'forest_blight_cyclops.png': 'Лесное Лихо', 'blight_troglodyte.png': 'Лихо-Троглодит', 'blight_oozemouth.png': 'Слизнерот-Громила', 'blight_lord_leshy.png': 'Древний Владыка', 'bog_trapper.png': 'Болотный Капкан', 'blight_spitter.png': 'Скверноплюй', 'swamp_spider.png': 'Болотный Паук', 'ocular_arachnid.png': 'Окулярный Арахнид', 'blight_horn_worm.png': 'Болотный Рогохвост', 'searing_arachnid.png': 'Выжигающий Арахнид', 'swamp_centipede.png': 'Болотная Сколопендра', 'water_hag.png': 'Водная Баба', 'marsh_witch.png': 'Болотная Ведунья', 'blight_snail.png': 'Улитка Скверны', 'ancient_blight_snail.png': 'Древняя Улитка Скверны', 'sherwood_lizard.png': 'Шервудский Ящер', 'peat_lord.png': 'Торфяной Владыка', 'lost_maiden.png': 'Заблудшая Дева', 'bog_witch.png': 'Болотная Ведьма', 'swamp_kikimora.png': 'Болотная Кикимора', 'blight_boletus.png': 'Боровик Скверны', 'swamp_vodyanoy.png': 'Водяной Скверны', 'swamp_drake.png': 'Болотный Дракончик', 'blight_cerberus.png': 'Цербер Скверны', 'putrid_wolf.png': 'Гниющий Волк', 'ripper_wolf.png': 'Волк-Потрошитель', 'blight_fox.png': 'Гнилостная Лиса', 'fox_pack_lord.png': 'Повелитель Стаи', 'swamp_viper.png': 'Болотная Гадюка', 'putrid_rat.png': 'Гнилостная Крыса', 'oppressor_firefly.png': 'Светляк-Угнетатель', 'executioner_cricket.png': 'Сверчок-Палач', 'thorn_moth.png': 'Терновый Мотыль', 'plague_bat.png': 'Чумная Летучая Мышь', 'ash_stalker.png': 'Пепельный Охотник', 'ash_assassin.png': 'Пепельный Ассасин', 'bone_keeper.png': 'Хранитель Костей', 'blight_blade.png': 'Клинок Скверны', 'ash_wraith.png': 'Призрак Пепла', 'ash_overlord.png': 'Владыка Пепла', 'basalt_devourer.png': 'Базальтовый Пожиратель', 'grotto_brute.png': 'Громила Грота', 'cave_watcher.png': 'Пещерный Наблюдатель', 'runic_sentinel.png': 'Рунический Страж', 'ancient_watcher.png': 'Древний Наблюдатель', 'lost_treasure_hunter.png': 'Пропавший Кладоискатель', 'blight_moss_ogre.png': 'Огр Скверного Мха', 'warped_worm.png': 'Искажённый Червь', 'grotto_slug.png': 'Гротный Слизень', 'underground_terror.png': 'Подземный Ужас', 'shadow_maiden.png': 'Теневая Дева', 'cursed_priestess.png': 'Проклятая Жрица', 'mistress_of_the_roots.png': 'Повелительница Корней', 'bone_arachnid.png': 'Костяной Арахнид', 'necromantic_arachnid.png': 'Арахнид-Некромант', 'root_daughter.png': 'Дочь Корней', 'animated_yew.png': 'Оживший Тис', 'rusty_servant.png': 'Ржавый Слуга', 'tormentor.png': 'Истязатель', 'grave_archer.png': 'Могильный Лучник', 'rusty_dread.png': 'Ржавый Страх', 'chaos_swordsman.png': 'Мечник Хаоса', 'chaos_knight.png': 'Рыцарь Хаоса', 'chaos_lord.png': 'Лорд Хаоса', 'chaos_harpy.png': 'Гарпия Хаоса', 'blight_kite.png': 'Коршун Скверны', 'harpy_witch.png': 'Гарпия-Ведьма', 'harpy_hatchling.png': 'Птенец Гарпии', 'harpy_chieftain.png': 'Вождь Гарпий', 'lord_of_the_feathered.png': 'Хозяин Пернатых', 'cave_tormentor.png': 'Пещерный Терзатель', 'blight_keeper.png': 'Хранитель Скверны', 'blight_king.png': 'Скверный Король', 'underground_guardian.png': 'Страж Преисподней', 'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель', 'the_cursed_outlaw_king.png': 'Проклятый Король Разбойников', 'ancient_crypt_warden.png': 'Древний Хранитель Склепа', 'echo_of_the_triumvirate.png': 'Эхо Трех Порталов', 'sacred_tree_executioner.png': 'Палач Священного Древа', 'sherwood_abomination.png': 'Шервудское Отродье', 'the_primordial_core.png': 'Изначальный Стержень'
+            'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник',
+            'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси',
+            'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб',
+            'warped_imp.png': 'Искажённый Бес', 'bristle_boar.png': 'Шипастый Секач',
+            'quill_beast.png': 'Кристальный Иглобрюх', 'grave_borer.png': 'Личинка Короеда',
+            'acid_devourer.png': 'Кислотный Короед-Пожиратель', 'shard_back.png': 'Шервудский Дикобраз',
+            'bone_borer.png': 'Костяной Короед-Трупоед', 'bark_beetle.png': 'Жук-Короед',
+            'blight_beetle_warden.png': 'Чумной Короед-Страж', 'armored_beetle.png': 'Бронированный Короед',
+            'blighted_werewolf.png': 'Осквернённый Оборотень', 'blight_lord_beetle.png': 'Повелитель Гнили',
+            'blight_alpha.png': 'Альфа-Скверноискатель', 'yew_blight_wolf.png': 'Волк Тисовой Скверны',
+            'swamp_slugmouth.png': 'Болотный Слизнерот', 'swamp_gorgymouth.png': 'Скверножаб',
+            'swamp_drowner.png': 'Болотный Утопленник', 'bog_brute.png': 'Торфяной Труп',
+            'blighted_oak_golem.png': 'Голем Скверного Дуба', 'oak_golem.png': 'Голем Дуба',
+            'twigtangle.png': 'Хворост', 'woodland_terror.png': 'Древесный Ужас',
+            'leshy.png': 'Леший', 'root_executioner.png': 'Корневой Палач',
+            'leshy_servant.png': 'Слуга Лешего', 'spectral_stag.png': 'Призрачный Олень',
+            'forest_blight_cyclops.png': 'Лесное Лихо', 'blight_troglodyte.png': 'Лихо-Троглодит',
+            'blight_oozemouth.png': 'Слизнерот-Громила', 'blight_lord_leshy.png': 'Древний Владыка',
+            'bog_trapper.png': 'Болотный Капкан', 'blight_spitter.png': 'Скверноплюй',
+            'swamp_spider.png': 'Болотный Паук', 'ocular_arachnid.png': 'Окулярный Арахнид',
+            'blight_horn_worm.png': 'Болотный Рогохвост', 'searing_arachnid.png': 'Выжигающий Арахнид',
+            'swamp_centipede.png': 'Болотная Сколопендра', 'water_hag.png': 'Водная Баба',
+            'marsh_witch.png': 'Болотная Ведунья', 'blight_snail.png': 'Улитка Скверны',
+            'ancient_blight_snail.png': 'Древняя Улитка Скверны', 'sherwood_lizard.png': 'Шервудский Ящер',
+            'peat_lord.png': 'Торфяной Владыка', 'lost_maiden.png': 'Заблудшая Дева',
+            'bog_witch.png': 'Болотная Ведьма', 'swamp_kikimora.png': 'Болотная Кикимора',
+            'blight_boletus.png': 'Боровик Скверны', 'swamp_vodyanoy.png': 'Водяной Скверны',
+            'swamp_drake.png': 'Болотный Дракончик', 'blight_cerberus.png': 'Цербер Скверны',
+            'putrid_wolf.png': 'Гниющий Волк', 'ripper_wolf.png': 'Волк-Потрошитель',
+            'blight_fox.png': 'Гнилостная Лиса', 'fox_pack_lord.png': 'Повелитель Стаи',
+            'swamp_viper.png': 'Болотная Гадюка', 'putrid_rat.png': 'Гнилостная Крыса',
+            'oppressor_firefly.png': 'Светляк-Угнетатель', 'executioner_cricket.png': 'Сверчок-Палач',
+            'thorn_moth.png': 'Терновый Мотыль', 'plague_bat.png': 'Чумная Летучая Мышь',
+            'ash_stalker.png': 'Пепельный Охотник', 'ash_assassin.png': 'Пепельный Ассасин',
+            'bone_keeper.png': 'Хранитель Костей', 'blight_blade.png': 'Клинок Скверны',
+            'ash_wraith.png': 'Призрак Пепла', 'ash_overlord.png': 'Владыка Пепла',
+            'basalt_devourer.png': 'Базальтовый Пожиратель', 'grotto_brute.png': 'Громила Грота',
+            'cave_watcher.png': 'Пещерный Наблюдатель', 'runic_sentinel.png': 'Рунический Страж',
+            'ancient_watcher.png': 'Древний Наблюдатель', 'lost_treasure_hunter.png': 'Пропавший Кладоискатель',
+            'blight_moss_ogre.png': 'Огр Скверного Мха', 'warped_worm.png': 'Искажённый Червь',
+            'grotto_slug.png': 'Гротный Слизень', 'underground_terror.png': 'Подземный Ужас',
+            'shadow_maiden.png': 'Теневая Дева', 'cursed_priestess.png': 'Проклятая Жрица',
+            'mistress_of_the_roots.png': 'Повелительница Корней', 'bone_arachnid.png': 'Костяной Арахнид',
+            'necromantic_arachnid.png': 'Арахнид-Некромант', 'root_daughter.png': 'Дочь Корней',
+            'animated_yew.png': 'Оживший Тис', 'rusty_servant.png': 'Ржавый Слуга',
+            'tormentor.png': 'Истязатель', 'grave_archer.png': 'Могильный Лучник',
+            'rusty_dread.png': 'Ржавый Страх', 'chaos_swordsman.png': 'Мечник Хаоса',
+            'chaos_knight.png': 'Рыцарь Хаоса', 'chaos_lord.png': 'Лорд Хаоса',
+            'chaos_harpy.png': 'Гарпия Хаоса', 'blight_kite.png': 'Коршун Скверны',
+            'harpy_witch.png': 'Гарпия-Ведьма', 'harpy_hatchling.png': 'Птенец Гарпии',
+            'harpy_chieftain.png': 'Вождь Гарпий', 'lord_of_the_feathered.png': 'Хозяин Пернатых',
+            'cave_tormentor.png': 'Пещерный Терзатель', 'blight_keeper.png': 'Хранитель Скверны',
+            'blight_king.png': 'Скверный Король', 'underground_guardian.png': 'Страж Преисподней',
+            'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель',
+            'the_cursed_outlaw_king.png': 'Проклятый Король Разбойников',
+            'ancient_crypt_warden.png': 'Древний Хранитель Склепа',
+            'echo_of_the_triumvirate.png': 'Эхо Трех Порталов',
+            'sacred_tree_executioner.png': 'Палач Священного Древа',
+            'sherwood_abomination.png': 'Шервудское Отродье',
+            'the_primordial_core.png': 'Изначальный Стержень'
         };
 
-        function getMobName(imgPath) { if (!imgPath) return 'Враг'; var fname = imgPath.split('/').pop(); return MOB_NAMES[fname] || 'Враг'; }
+        function getMobName(imgPath) {
+            if (!imgPath) return 'Враг';
+            var fname = imgPath.split('/').pop();
+            return MOB_NAMES[fname] || 'Враг';
+        }
 
-        var playerArrows = 25; var ARROWS_MAX_START = 25;
-        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; updateArrowCounter(); return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; updateArrowCounter(); return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } updateArrowCounter(); }
-        function updateArrowCounter() { var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows; var counter = document.getElementById('arrow-counter'); if (counter) { if (playerArrows <= 3) counter.classList.add('low'); else counter.classList.remove('low'); } }
-        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; } return false; }
-        function addArrows(n) { playerArrows += n; updateArrowCounter(); }
+        // ============================================================
+        //  СТРЕЛЫ ИГРОКА (из сумки, макс 25 в начале)
+        // ============================================================
+        var playerArrows = 25;
+        var ARROWS_MAX_START = 25;
+        function loadArrowsFromBag() {
+            try {
+                if (!parent.Sherwood || !parent.Sherwood.Bag) { playerArrows = 0; updateArrowCounter(); return; }
+                var p = parent.Sherwood.getPlayer();
+                if (!p) { playerArrows = 0; updateArrowCounter(); return; }
+                var cnt = 0;
+                if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows;
+                if (!cnt && parent.Sherwood.Bag.getItems) {
+                    var items = parent.Sherwood.Bag.getItems();
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].id === 'arrow' || items[i].id === 'arrows' || items[i].id === 'sherwood_arrow') {
+                            cnt += (items[i].quantity || 1);
+                        }
+                    }
+                }
+                playerArrows = Math.min(ARROWS_MAX_START, cnt);
+            } catch(e) { playerArrows = 0; }
+            updateArrowCounter();
+        }
+        function updateArrowCounter() {
+            var el = document.getElementById('arrow-count-text');
+            if (el) el.textContent = playerArrows;
+            var counter = document.getElementById('arrow-counter');
+            if (counter) {
+                if (playerArrows <= 3) counter.classList.add('low');
+                else counter.classList.remove('low');
+            }
+        }
+        function useArrow(n) {
+            n = n || 1;
+            if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; }
+            return false;
+        }
+        function addArrows(n) {
+            playerArrows += n;
+            updateArrowCounter();
+        }
         setTimeout(loadArrowsFromBag, 700);
 
-        var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 5, FILTH_HIT_AMOUNT = 5;
-        function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
-        function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; } else { filthFullSince = 0; } updateHeroSpheres(); }
-        function addFilth(amount) { var f = getFilth(); setFilth(f.cur + amount); }
-        function spendFilth(amount) { var f = getFilth(); if (f.cur < amount) return false; setFilth(f.cur - amount); return true; }
+        // ============================================================
+        //  СКВЕРНА
+        // ============================================================
+        var filthTimer = 0;
+        var filthFullSince = 0;
+        var FILTH_DEATH_TIME = 60;
+        var FILTH_SELF_RATE = 15;
+        var FILTH_SELF_AMOUNT = 2;
+        var FILTH_HIT_AMOUNT = 5;
 
-        var soundHit = new Audio('assets/assets2/tune/hit.wav'); var soundVictory = new Audio('assets/assets2/tune/victory.wav'); var soundDefeat = new Audio('assets/assets2/tune/defeat.wav'); var soundSteps = new Audio('assets/assets2/tune/steps.wav'); var soundChest = new Audio('assets/assets2/tune/chest_open.wav'); var soundAltar = new Audio('assets/assets2/tune/altar.wav'); var soundCauldron = new Audio('assets/assets2/tune/cauldron.wav'); var soundLoot = new Audio('assets/assets2/tune/loot_fly.wav'); var soundArrowPick = new Audio('assets/assets2/tune/loot_fly.wav'); var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg'); dungeonMusic.loop = true; dungeonMusic.volume = 0.4;
+        function getFilth() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return { cur: 0, max: 100 };
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return { cur: 0, max: 100 };
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            return { cur: p.stats.filth, max: p.stats.maxFilth };
+        }
+        function setFilth(v) {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (!p.stats.maxFilth) p.stats.maxFilth = 100;
+            p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v));
+            if (p.stats.filth >= p.stats.maxFilth) {
+                if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
+            } else {
+                filthFullSince = 0;
+            }
+            updateHeroSpheres();
+        }
+        function addFilth(amount) {
+            var f = getFilth();
+            setFilth(f.cur + amount);
+        }
+        function spendFilth(amount) {
+            var f = getFilth();
+            if (f.cur < amount) return false;
+            setFilth(f.cur - amount);
+            return true;
+        }
 
-        function stopAllParentMusic() { try { if (parent) { if (parent.audioPlayer) { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } if (typeof parent.stopMainMusic === 'function') parent.stopMainMusic(); if (parent.UI && parent.UI._currentMusic) { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; } } } catch(e){} }
+        // ============================================================
+        //  ЗВУКИ
+        // ============================================================
+        var soundHit = new Audio('assets/assets2/tune/hit.wav');
+        var soundVictory = new Audio('assets/assets2/tune/victory.wav');
+        var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
+        var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+        var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
+        var soundAltar = new Audio('assets/assets2/tune/altar.wav');
+        var soundCauldron = new Audio('assets/assets2/tune/cauldron.wav');
+        var soundLoot = new Audio('assets/assets2/tune/loot_fly.wav');
+        var soundArrowPick = new Audio('assets/assets2/tune/loot_fly.wav');
+        var dungeonMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
+        dungeonMusic.loop = true;
+        dungeonMusic.volume = 0.4;
+
+        function stopAllParentMusic() {
+            try {
+                if (parent) {
+                    if (parent.audioPlayer) { try { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } catch(e){} }
+                    if (typeof parent.stopMainMusic === 'function') { try { parent.stopMainMusic(); } catch(e){} }
+                    if (parent.UI) {
+                        try { if (parent.UI._currentMusic) { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; parent.UI._currentMusic = null; } } catch(e){}
+                        try { if (parent.UI._sounds) { for (var k in parent.UI._sounds) { try { parent.UI._sounds[k].pause(); parent.UI._sounds[k].currentTime = 0; } catch(e){} } } } catch(e){}
+                    }
+                    if (parent.AudioManager) {
+                        try { if (typeof parent.AudioManager.stopCityTheme === 'function') parent.AudioManager.stopCityTheme(); } catch(e){}
+                        try { if (parent.AudioManager.currentMusic) { parent.AudioManager.currentMusic.pause(); parent.AudioManager.currentMusic.currentTime = 0; } } catch(e){}
+                    }
+                    if (parent.document) { try { parent.document.querySelectorAll('audio').forEach(function(a){ try { a.pause(); a.currentTime = 0; } catch(e){} }); } catch(e){} }
+                }
+            } catch(e){}
+        }
         setTimeout(function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); }, 300);
         window.addEventListener('click', function(){ stopAllParentMusic(); dungeonMusic.play().catch(function(){}); });
         setInterval(stopAllParentMusic, 500);
 
         function playSound(audio) { try { audio.currentTime = 0; audio.play().catch(function() {}); } catch(e) {} }
-        var stepsPlaying = false; function startSteps() { if (stepsPlaying) return; stepsPlaying = true; try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} } function stopSteps() { stepsPlaying = false; try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
+        var stepsPlaying = false;
+        function startSteps() { if (stepsPlaying) return; stepsPlaying = true; try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} }
+        function stopSteps() { stepsPlaying = false; try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
 
-        function exitDungeon() { stopSteps(); try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){} try { if (parent.UI) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; } } catch(e){} try { if (parent && parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon(); } catch(e) {} }
+        function exitDungeon() {
+            stopSteps();
+            try { if (dungeonMusic) { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } } catch(e){}
+            try { if (parent.UI) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; } } catch(e){}
+            try {
+                if (parent && parent.UI && parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                else if (parent && parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+            } catch(e) {}
+        }
         window.exitDungeon = exitDungeon;
 
-        function showCenterText(text, color) { var el = document.createElement('div'); var fontSize = window.innerWidth <= 600 ? '22px' : '36px'; el.textContent = text; el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:' + fontSize + ';font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;'; document.body.appendChild(el); requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; }); setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900); setTimeout(function() { el.remove(); }, 1900); }
+        function showCenterText(text, color) {
+            var el = document.createElement('div');
+            var fontSize = window.innerWidth <= 600 ? '22px' : '36px';
+            el.textContent = text;
+            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:' + fontSize + ';font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;';
+            document.body.appendChild(el);
+            requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; });
+            setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900);
+            setTimeout(function() { el.remove(); }, 1900);
+        }
 
-        var bloodOverlayTextures = ['assets/assets2/animation/Fine_blood_spray_texture.png', 'assets/assets2/animation/Fine_blood_spray_texture (1).png', 'assets/assets2/animation/Fine_blood_spray_texture (2).png'];
+        var bloodOverlayTextures = [
+            'assets/assets2/animation/Fine_blood_spray_texture.png',
+            'assets/assets2/animation/Fine_blood_spray_texture (1).png',
+            'assets/assets2/animation/Fine_blood_spray_texture (2).png'
+        ];
         var bloodOverlayTimeout1 = null, bloodOverlayTimeout2 = null;
-        function showBloodOverlay() { var el = document.getElementById('blood-overlay'); if (!el) return; var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)]; el.style.backgroundImage = 'url("' + tex + '")'; el.style.transition = 'opacity 0.1s ease-out'; el.style.opacity = '1'; clearTimeout(bloodOverlayTimeout1); clearTimeout(bloodOverlayTimeout2); bloodOverlayTimeout1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200); bloodOverlayTimeout2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200); }
+        function showBloodOverlay() {
+            var el = document.getElementById('blood-overlay');
+            if (!el) return;
+            var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)];
+            el.style.backgroundImage = 'url("' + tex + '")';
+            el.style.transition = 'opacity 0.1s ease-out';
+            el.style.opacity = '1';
+            clearTimeout(bloodOverlayTimeout1); clearTimeout(bloodOverlayTimeout2);
+            bloodOverlayTimeout1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
+            bloodOverlayTimeout2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
+        }
+        window.showBloodOverlay = showBloodOverlay;
 
-        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0805);
-        const size = 16; const cellSize = 1; const center = Math.floor(size / 2);
-        const viewSize = 5; const aspect = window.innerWidth / window.innerHeight;
-
-        const camTop = new THREE.OrthographicCamera(-viewSize * aspect / 2, viewSize * aspect / 2, viewSize / 2, -viewSize / 2, 0.1, 100);
-        camTop.position.set(0, 20, 0); camTop.lookAt(0, 0, 0);
-        const camFPS = new THREE.PerspectiveCamera(70, aspect, 0.1, 40); camFPS.rotation.order = 'YXZ';
-        let activeCamera = camTop;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); renderer.setClearColor(0x0a0805, 1);
+        // ============================================================
+        //  СЦЕНА ЛАБИРИНТА
+        // ============================================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0805);
+        scene.fog = new THREE.Fog(0x0a0805, 4, 12);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
+        camera.rotation.order = 'YXZ';
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
-        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        scene.add(new THREE.AmbientLight(0x554433, 0.9));
+        scene.add(new THREE.HemisphereLight(0x3a2a18, 0x000000, 0.4));
 
-        const map = []; for (let i = 0; i < size; i++) { map[i] = []; for (let j = 0; j < size; j++) { map[i][j] = 1; } }
+        // ============================================================
+        //  ОТДЕЛЬНАЯ СЦЕНА БОЯ (как в платформере)
+        // ============================================================
+        const battleScene = new THREE.Scene();
+        battleScene.background = new THREE.Color(0x0a0805);
+        const battleCamera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30);
+        battleCamera.position.set(0, 0.55, 3.6);
+        battleCamera.lookAt(0, 0.45, 0);
+        battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        const bKeyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
+        bKeyLight.position.set(2, 4, 3);
+        battleScene.add(bKeyLight);
+        const bFillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
+        battleScene.add(bFillLight);
+
+        // Фон боя — плоскость с картинкой, отодвинутая назад
+        var battleBgPath;
+        if (currentDungeon === 2) battleBgPath = 'assets/assets2/dungeon_details/swamp_tiles_1.png';
+        else if (currentDungeon === 3) battleBgPath = 'assets/assets2/Sherwood_Square/floors_raid.png';
+        else if (currentDungeon === 4) battleBgPath = 'assets/assets2/Sherwood_Square/wall_area_1.png';
+        else battleBgPath = 'assets/assets2/dungeon_details/wall_5.png';
+
+        const battleBgTex = new THREE.TextureLoader().load(battleBgPath);
+        const battleBgMat = new THREE.MeshBasicMaterial({ map: battleBgTex });
+        const battleBgMesh = new THREE.Mesh(new THREE.PlaneGeometry(30, 20), battleBgMat);
+        battleBgMesh.position.set(0, 0, -8);
+        battleScene.add(battleBgMesh);
+
+        // ============================================================
+        //  ЛАБИРИНТ
+        // ============================================================
+        const size = 16;
+        const wallHeight = 1.4;
+        const cellSize = 1;
+
+        const map = [];
+        for (let i = 0; i < size; i++) {
+            map[i] = [];
+            for (let j = 0; j < size; j++) { map[i][j] = 1; }
+        }
+
         function generateMaze() {
-            const stack = []; const startX = 1, startY = 1; map[startY][startX] = 0; stack.push({ x: startX, y: startY });
+            const stack = [];
+            const startX = 1, startY = 1;
+            map[startY][startX] = 0;
+            stack.push({ x: startX, y: startY });
             const dirs = [{ x: 0, y: -2 }, { x: 0, y: 2 }, { x: -2, y: 0 }, { x: 2, y: 0 }];
             while (stack.length > 0) {
-                const current = stack[stack.length - 1]; const neighbors = [];
+                const current = stack[stack.length - 1];
+                const neighbors = [];
                 for (const dir of dirs) {
-                    const nx = current.x + dir.x, ny = current.y + dir.y;
-                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) { neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 }); }
+                    const nx = current.x + dir.x;
+                    const ny = current.y + dir.y;
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) {
+                        neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 });
+                    }
                 }
                 if (neighbors.length > 0) {
                     const next = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    map[next.y][next.x] = 0; map[current.y + next.dy][current.x + next.dx] = 0; stack.push({ x: next.x, y: next.y });
+                    map[next.y][next.x] = 0;
+                    map[current.y + next.dy][current.x + next.dx] = 0;
+                    stack.push({ x: next.x, y: next.y });
                 } else { stack.pop(); }
             }
         }
         generateMaze();
 
         var exitCell = (function findFarthestCell() {
-            var startGX = 1, startGY = 1, visited = {}; var queue = [{ x: startGX, y: startGY, dist: 0 }]; visited[startGY * size + startGX] = true;
-            var farthest = { x: startGX, y: startGY, dist: 0 }; var dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+            var startGX = 1, startGY = 1;
+            var visited = {};
+            var queue = [{ x: startGX, y: startGY, dist: 0 }];
+            visited[startGY * size + startGX] = true;
+            var farthest = { x: startGX, y: startGY, dist: 0 };
+            var dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
             while (queue.length) {
-                var cur = queue.shift(); if (cur.dist > farthest.dist) farthest = cur;
+                var cur = queue.shift();
+                if (cur.dist > farthest.dist) farthest = cur;
                 for (var d = 0; d < dirs.length; d++) {
-                    var nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y;
+                    var nx = cur.x + dirs[d].x;
+                    var ny = cur.y + dirs[d].y;
                     if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
-                    var v = map[ny][nx]; if (v !== 0 && v !== 3) continue; var key = ny * size + nx; if (visited[key]) continue;
-                    visited[key] = true; queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
+                    var v = map[ny][nx];
+                    if (v !== 0 && v !== 3) continue;
+                    var key = ny * size + nx;
+                    if (visited[key]) continue;
+                    visited[key] = true;
+                    queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
                 }
-            } return { gx: farthest.x, gy: farthest.y };
+            }
+            return { gx: farthest.x, gy: farthest.y };
         })();
 
-        function isWallCell(x, y) { if (x < 0 || y < 0 || x >= size || y >= size) return true; return map[y][x] === 1; }
-
+        function isWallCell(x, y) {
+            if (x < 0 || y < 0 || x >= size || y >= size) return true;
+            return map[y][x] === 1;
+        }
+        function placeDoors() {
+            const candidates = [];
+            for (let y = 1; y < size - 1; y++) {
+                for (let x = 1; x < size - 1; x++) {
+                    if (map[y][x] !== 0) continue;
+                    if (x === 1 && y === 1) continue;
+                    if (x === exitCell.gx && y === exitCell.gy) continue;
+                    const wL = isWallCell(x - 1, y), wR = isWallCell(x + 1, y);
+                    const wU = isWallCell(x, y - 1), wD = isWallCell(x, y + 1);
+                    if (wL && wR && !wU && !wD) candidates.push({ x, y });
+                    else if (wU && wD && !wL && !wR) candidates.push({ x, y });
+                }
+            }
+            const placed = [];
+            for (const c of candidates) {
+                let ok = true;
+                for (const p of placed) {
+                    if (Math.abs(p.x - c.x) + Math.abs(p.y - c.y) < 4) { ok = false; break; }
+                }
+                if (ok && Math.random() < 0.4) { map[c.y][c.x] = 2; placed.push(c); }
+            }
+        }
+        placeDoors();
         const loader = new THREE.TextureLoader();
-        const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
-        const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
-        const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-        const wallBattleTex = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
-        const ceilBattleTex = loader.load('assets/assets2/Sherwood_Square/ceiling_quest.png');
-        const wallCustomTex = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
-        const lockedChestTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
-        const openChestTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
-        const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
-        const potionHpTex = loader.load('assets/assets2/game_details/resource_life_potion.png');
-        const potionFilthTex = loader.load('assets/assets2/game_details/potion_of_filth.png');
-        const cauldronImg = loader.load('assets/assets2/game_details/cauldron_first_dungeon.png');
-        const altarImg = loader.load('assets/assets2/game_details/altar_of_the_first_dungeon.png');
+
+        var wallTexturePath, floorTexturePath, ceilTexturePath;
+        if (currentDungeon === 2) {
+            floorTexturePath = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
+            wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/swamp_wall_6.png';
+            ceilTexturePath  = 'assets/dungeon_tiles/visual_dungeon/grotto_ceiling_dungeon_1.png';
+        } else if (currentDungeon === 3) {
+            floorTexturePath = 'assets/assets2/Sherwood_Square/ceiling_raid.png';
+            wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/grotto_wall_6.png';
+            ceilTexturePath  = 'assets/dungeon_tiles/visual_dungeon/ceiling_dungeon_5.png';
+        } else if (currentDungeon === 4) {
+            floorTexturePath = 'assets/assets2/Sherwood_Square/floors_quest.png';
+            wallTexturePath  = 'assets/assets2/Sherwood_Square/walls_quest.png';
+            ceilTexturePath  = 'assets/assets2/Sherwood_Square/ceiling_quest.png';
+        } else {
+            floorTexturePath = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
+            wallTexturePath  = 'assets/dungeon_tiles/visual_dungeon/wall_5.png';
+            ceilTexturePath  = 'assets/assets2/dungeon_details/swamp_ceiling_dungeon_1.png';
+        }
+
+        const wallTexture  = loader.load(wallTexturePath);
+        const floorTexture = loader.load(floorTexturePath);
+        const ceilTexture  = loader.load(ceilTexturePath);
+
+        var openDoorPath;
+        if (currentDungeon === 2) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level2.png';
+        else if (currentDungeon === 3) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level3.png';
+        else if (currentDungeon === 4) openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level3.png';
+        else openDoorPath = 'assets/assets2/game_details/completion_of_the_second_underground_level1.png';
+
+        var lockedChestPath, openChestPath;
+        if (currentDungeon === 2) {
+            lockedChestPath = 'assets/assets2/game_details/locked_chest_second_dungeon.png';
+            openChestPath   = 'assets/assets2/game_details/open_chest_of_the_second_dungeon.png';
+        } else if (currentDungeon === 3 || currentDungeon === 4) {
+            lockedChestPath = 'assets/assets2/game_details/locked_chest_third_dungeon.png';
+            openChestPath   = 'assets/assets2/game_details/open_chest_third_dungeon.png';
+        } else {
+            lockedChestPath = 'assets/assets2/game_details/locked_chest_first_dungeon.png';
+            openChestPath   = 'assets/assets2/game_details/open_chest_first_dungeon.png';
+        }
+
+        var cauldronImg, altarImg;
+        if (currentDungeon === 2) {
+            cauldronImg = 'assets/assets2/game_details/cauldron_of_the_second_dungeon.png';
+            altarImg    = 'assets/assets2/game_details/altar_of_the_second_dungeon.png';
+        } else if (currentDungeon === 3 || currentDungeon === 4) {
+            cauldronImg = 'assets/assets2/game_details/the_third_cauldron_of_the_dungeon.png';
+            altarImg    = 'assets/assets2/game_details/the_third_altar_of_the_dungeon.png';
+        } else {
+            cauldronImg = 'assets/assets2/game_details/cauldron_first_dungeon.png';
+            altarImg    = 'assets/assets2/game_details/altar_of_the_first_dungeon.png';
+        }
+
+        const doorTexture  = loader.load('assets/assets2/game_details/labyrinth_asset.png');
+        const lootBagTex   = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
+        const emptyBagTex  = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
+        const lockedChestTex = loader.load(lockedChestPath);
+        const openChestTex   = loader.load(openChestPath);
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
-        const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level1.png');
+        const openDoorTex  = loader.load(openDoorPath);
+        const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
+        const potionHpTex    = loader.load('assets/assets2/game_details/resource_life_potion.png');
+        const potionFilthTex = loader.load('assets/assets2/game_details/potion_of_filth.png');
+        const potionHighTex  = loader.load('assets/assets2/game_details/resource_high_level_health_potion.png');
 
-        const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
-        var doorMats = [new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.95 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.5 }), new THREE.MeshBasicMaterial({ map: doorTex, transparent: true, opacity: 0.2, color: 0x555555 })];
-        var wallMats = [
-            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.95 }),
-            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.5 }),
-            new THREE.MeshBasicMaterial({ map: wallCustomTex, transparent: true, opacity: 0.2 })
-        ];
+        [lootBagTex, emptyBagTex, lockedChestTex, openChestTex, closedLockTex, openDoorTex, arrowPickupTex, potionHpTex, potionFilthTex, potionHighTex].forEach(function(t) {
+            t.minFilter = THREE.LinearFilter;
+            t.magFilter = THREE.LinearFilter;
+        });
 
-        const group = new THREE.Group(); scene.add(group);
+        const wallMat  = new THREE.MeshStandardMaterial({ map: wallTexture,  roughness: 0.85, metalness: 0.05 });
+        const floorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95, metalness: 0.0 });
+        const ceilMat  = new THREE.MeshStandardMaterial({ map: ceilTexture,  roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide });
+        const doorMat  = new THREE.MeshStandardMaterial({ map: doorTexture, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.85 });
+        const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
 
-        // ============================================================
-        //  БОЕВАЯ КОМНАТА (ФОН КАК В ПЛАТФОРМЕРЕ)
-        // ============================================================
-        const battleRoom = new THREE.Group();
-        battleRoom.visible = false;
-        scene.add(battleRoom);
+        const group = new THREE.Group();
+        scene.add(group);
+        const floorMeshes = [];
+        const wallMeshes  = [];
+        const doorLeaves  = [];
 
-        let battleBgPath = 'assets/assets2/dungeon_details/wall_5.png';
-        if (currentDungeon === 2) battleBgPath = 'assets/assets2/dungeon_details/swamp_tiles_1.png';
-        else if (currentDungeon === 3) battleBgPath = 'assets/assets2/Sherwood_Square/floors_raid.png';
-        else if (currentDungeon === 4) battleBgPath = 'assets/assets2/Sherwood_Square/wall_area_1.png';
-
-        const battleBgTex = loader.load(battleBgPath);
-        const bgGeometry = new THREE.PlaneGeometry(30, 20);
-        const bgMaterial = new THREE.MeshBasicMaterial({ map: battleBgTex });
-        const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, 0, -8);
-        battleRoom.add(bgMesh);
-
-        var tileMeshes = [];
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
-                const x = col - center, z = row - center, isWall = (map[row][col] === 1);
-                const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-                floor.rotation.x = -Math.PI / 2; floor.position.set(x, 0, z); floor.visible = false;
-                floor.userData = { isFloor: true, gridX: col, gridY: row }; group.add(floor);
-
-                const door = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.98, cellSize * 0.98), doorMats[2]);
-                door.rotation.x = -Math.PI / 2; door.position.set(x, 0.05, z);
-                door.userData = { isDoor: true, gridX: col, gridY: row }; group.add(door);
-
-                var isStartCell = (col === 1 && row === 1);
-                if (isStartCell) { door.visible = false; floor.visible = true; }
-                tileMeshes.push({ mesh: door, floorMesh: floor, x: col, y: row, isWall: isWall, opened: isStartCell });
+                const x = col - Math.floor(size / 2);
+                const z = row - Math.floor(size / 2);
+                if (map[row][col] !== 1) {
+                    const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
+                    floor.rotation.x = -Math.PI / 2;
+                    floor.position.set(x, 0, z);
+                    floor.userData = { gridX: col, gridY: row, walkable: true, isFloor: true };
+                    group.add(floor);
+                    floorMeshes.push(floor);
+                    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
+                    ceil.rotation.x = Math.PI / 2;
+                    ceil.position.set(x, wallHeight, z);
+                    group.add(ceil);
+                }
+                if (map[row][col] === 1) {
+                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMatsArray);
+                    wall.position.set(x, wallHeight / 2, z);
+                    wall.userData = { gridX: col, gridY: row, isWall: true };
+                    group.add(wall);
+                    wallMeshes.push(wall);
+                } else if (map[row][col] === 2) {
+                    const horiz = map[row][col - 1] === 1 && map[row][col + 1] === 1;
+                    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), doorMat);
+                    if (!horiz) leaf.rotation.y = Math.PI / 2;
+                    leaf.position.set(x, wallHeight / 2, z);
+                    leaf.userData = { doorGX: col, doorGY: row, isDoor: true };
+                    group.add(leaf);
+                    doorLeaves.push({
+                        mesh: leaf, gx: col, gy: row,
+                        open: false, t: 0,
+                        closedY: wallHeight / 2,
+                        openY: -wallHeight / 2 - 0.1
+                    });
+                }
             }
         }
 
-        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
-        // Уменьшаем иконку героя
-        heroSprite.scale.set(0.55, 0.55, 1); scene.add(heroSprite);
-        let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.4, playerGY - center);
+        const playerStart = { cx: 1, cy: 1 };
+        let playerGX = playerStart.cx;
+        let playerGY = playerStart.cy;
+        const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
+        let playerYaw = 0;
 
-        var playerPos = new THREE.Vector3(playerGX - center, 0, playerGY - center);
-        var playerYaw = 0;
+        const heroGlow = new THREE.PointLight(0xffb060, 0.7, 6, 2);
+        heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
+        scene.add(heroGlow);
 
-        var highlights = []; for (var i = 0; i < 4; i++) { var hl = new THREE.Mesh(new THREE.PlaneGeometry(cellSize * 0.95, cellSize * 0.95), new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.15 })); hl.rotation.x = -Math.PI / 2; hl.position.set(0, 0.08, 0); hl.visible = false; scene.add(hl); highlights.push(hl); }
-        function updateHighlights() { var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}]; for (var i = 0; i < 4; i++) { var nx = playerGX + dirs[i].x, ny = playerGY + dirs[i].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) { highlights[i].visible = false; continue; } highlights[i].position.set(nx - center, 0.08, ny - center); highlights[i].visible = true; } }
-
-        function updateFog() {
-            for (var i = 0; i < tileMeshes.length; i++) {
-                var t = tileMeshes[i]; var dist = Math.max(Math.abs(t.x - playerGX), Math.abs(t.y - playerGY));
-                if (t.opened) { t.mesh.visible = false; if (t.floorMesh) t.floorMesh.visible = true; }
-                else { t.mesh.visible = true; if (t.floorMesh) t.floorMesh.visible = false; if (dist > 2) t.mesh.material = t.isWall ? wallMats[2] : doorMats[2]; else if (dist === 2) t.mesh.material = t.isWall ? wallMats[1] : doorMats[1]; else t.mesh.material = t.isWall ? wallMats[0] : doorMats[0]; }
-            }
-
-            for (var i = 0; i < objects.length; i++) {
-                var o = objects[i];
-                if (o.collected || !o.mesh) continue;
-                var tile = tileMeshes[o.y * size + o.x];
-                if (tile) o.mesh.visible = tile.opened;
-            }
-
-            for (var b = 0; b < lootBags.length; b++) {
-                var bag = lootBags[b];
-                var tile2 = tileMeshes[bag.gy * size + bag.gx];
-                if (tile2) bag.mesh.visible = tile2.opened;
-            }
-        }
-
-        var objects = []; var lootBags = [];
+        // ============================================================
+        //  ОБЪЕКТЫ НА ЭТАЖЕ
+        // ============================================================
+        var objectTypes = [
+            { type: 'enemy',      count: 15 },
+            { type: 'potion_hp',  count: 3,  img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_filth', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'potion_high',  count: 3, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
+            { type: 'cauldron',   count: 3,  img: cauldronImg },
+            { type: 'altar',      count: 3,  img: altarImg },
+            { type: 'arrow_pickup', count: 6, img: 'assets/interface/sherwood_hollow_arrow.png' }
+        ];
+        var objects = [];
+        var lootBags = [];
         var LOOT_TYPES = ['potion_hp', 'potion_filth', 'potion_high', 'cauldron', 'altar', 'arrow_pickup'];
         var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0 };
 
         function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
         function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
-
-        function buildPath(startGX, startGY, goalGX, goalGY) {
-            if (goalGX < 0 || goalGY < 0 || goalGX >= size || goalGY >= size) return [];
-            if (map[goalGY][goalGX] !== 0 && map[goalGY][goalGX] !== 3) return [];
-            var keyFn = function(x, y) { return y * size + x; };
-            var prev = {}; var q = [{ x: startGX, y: startGY }]; prev[keyFn(startGX, startGY)] = null;
-            var dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-            var found = false;
-            while (q.length) {
-                var cur = q.shift();
-                if (cur.x === goalGX && cur.y === goalGY) { found = true; break; }
-                for (var d = 0; d < dirs.length; d++) {
-                    var nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y;
-                    if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
-                    if (map[ny][nx] !== 0 && map[ny][nx] !== 3) continue;
-                    var k = keyFn(nx, ny);
-                    if (prev[k] !== undefined) continue;
-                    prev[k] = keyFn(cur.x, cur.y);
-                    q.push({ x: nx, y: ny });
-                }
-            }
-            if (!found) return [];
-            var out = []; var kk = keyFn(goalGX, goalGY);
-            while (kk !== null && kk !== undefined) { out.push({ gx: kk % size, gy: Math.floor(kk / size) }); kk = prev[kk]; }
-            out.reverse();
-            return out.slice(1).map(function(n) { return gridToWorld(n.gx, n.gy); });
-        }
 
         function getRandomFreeCell() {
             var attempts = 0;
@@ -437,18 +735,12 @@
             return { x: 1, y: 1 };
         }
 
-        var objectTypes = [
-            { type: 'enemy',      count: 15 },
-            { type: 'potion_hp',  count: 3,  img: 'assets/assets2/game_details/resource_life_potion.png' },
-            { type: 'potion_filth', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
-            { type: 'potion_high',  count: 3, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
-            { type: 'cauldron',   count: 3,  img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
-            { type: 'altar',      count: 3,  img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
-            { type: 'arrow_pickup', count: 6, img: 'assets/interface/sherwood_hollow_arrow.png' }
-        ];
-
-        var enemyImgList = []; enemyImgList.push(BOSS_PATH + currentPool.boss);
-        for (var ei = 0; ei < 14; ei++) { var enName = currentPool.normal[Math.floor(Math.random() * currentPool.normal.length)]; enemyImgList.push(MOB_PATH + enName); }
+        var enemyImgList = [];
+        enemyImgList.push(BOSS_PATH + currentPool.boss);
+        for (var ei = 0; ei < 14; ei++) {
+            var enName = currentPool.normal[Math.floor(Math.random() * currentPool.normal.length)];
+            enemyImgList.push(MOB_PATH + enName);
+        }
         enemyImgList.sort(function() { return Math.random() - 0.5; });
         var enemyIndex = 0;
 
@@ -468,331 +760,1004 @@
                 var baseDef = 10 + Math.floor(Math.random() * 10);
                 if (isBoss) { baseHp *= 3; baseAtk *= 2; baseDef *= 2; }
                 objects.push({
-                    type: typeDef.type, x: pos.x, y: pos.y, img: imgPath, collected: false, attacking: false, stepTimer: 0,
-                    hp: Math.floor(baseHp * mult), maxHp: Math.floor(baseHp * mult), atk: Math.floor(baseAtk * mult), def: Math.floor(baseDef * mult),
+                    type: typeDef.type, x: pos.x, y: pos.y,
+                    img: imgPath, collected: false, attacking: false, stepTimer: 0,
+                    hp: Math.floor(baseHp * mult), maxHp: Math.floor(baseHp * mult),
+                    atk: Math.floor(baseAtk * mult), def: Math.floor(baseDef * mult),
                     isBoss: isBoss, fleeTimer: 0, fleeCooldown: 0, _chasing: false, used: false
                 });
             }
         }
 
         for (var i = 0; i < objects.length; i++) {
-            var obj = objects[i]; var x = obj.x - Math.floor(size / 2); var z = obj.y - Math.floor(size / 2);
-            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
-                map: loader.load(obj.img), 
-                transparent: true,
-                depthTest: false,
-                depthWrite: false
-            }));
-            // Враги и боссы одинакового размера; объекты чуть меньше мешка лута (0.65)
-            var scale = (obj.type === 'enemy') ? 1.05 : 0.42;
-            sprite.scale.set(scale, scale, 1);
-            sprite.position.set(x, scale / 2, z);
-            sprite.renderOrder = (obj.type === 'enemy') ? 1 : 0;
+            var obj = objects[i];
+            var x = obj.x - Math.floor(size / 2);
+            var z = obj.y - Math.floor(size / 2);
+            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
+            sprite.position.set(x, 0.1, z);
+            if (obj.type === 'enemy') {
+                var scale = obj.isBoss ? 1.5 : 1.05;
+                sprite.scale.set(scale, scale, 1);
+                sprite.position.y = scale / 2;
+            } else {
+                sprite.scale.set(0.55, 0.55, 1);
+                sprite.position.y = 0.35;
+            }
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
-            group.add(sprite); obj.mesh = sprite;
+            group.add(sprite);
+            obj.mesh = sprite;
         }
 
+        // ============================================================
+        //  ВЫХОД
+        // ============================================================
         var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
-        var exitDoorMat = new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true });
-        var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), exitDoorMat);
-        exitDoor.rotation.x = -Math.PI / 2; exitDoor.position.set(exitPos.x, 0.06, exitPos.z); group.add(exitDoor);
+        var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy);
+        var exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
+        var exitHoriz = exitWL && exitWR;
+
+        var exitDoorMat = new THREE.MeshStandardMaterial({
+            map: closedLockTex,
+            transparent: true,
+            alphaTest: 0.4,
+            side: THREE.DoubleSide,
+            roughness: 0.85
+        });
+        var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, wallHeight), exitDoorMat);
+        if (!exitHoriz) exitDoor.rotation.y = Math.PI / 2;
+        exitDoor.position.set(exitPos.x, wallHeight / 2, exitPos.z);
+        exitDoor.userData = { exit: true };
+        group.add(exitDoor);
 
         var exitIsOpen = false;
         function checkExitDoor() {
             var alive = 0;
-            for (var i = 0; i < objects.length; i++) { if (objects[i].type === 'enemy' && !objects[i].collected) alive++; }
-            if (alive === 0 && !exitIsOpen) { exitIsOpen = true; exitDoor.material.map = openDoorTex; exitDoor.material.needsUpdate = true; showCenterText('Выход открыт!', '#4caf50'); }
+            for (var i = 0; i < objects.length; i++) {
+                if (objects[i].type === 'enemy' && !objects[i].collected) alive++;
+            }
+            if (alive === 0 && !exitIsOpen) {
+                exitIsOpen = true;
+                exitDoor.material.map = openDoorTex;
+                exitDoor.material.needsUpdate = true;
+                showCenterText('Выход открыт!', '#4caf50');
+            }
         }
-
-        var lootBagTex = loader.load('assets/assets2/game_details/loot_bag_of_beasts.png');
-        var emptyBagTex = loader.load('assets/assets2/game_details/empty_bag_of_loot_beasts.png');
 
         function spawnLootBag(gx, gy, isBoss) {
-            var w = gridToWorld(gx, gy); var texture = isBoss ? lockedChestTex : lootBagTex;
+            var w = gridToWorld(gx, gy);
+            var texture = isBoss ? lockedChestTex : lootBagTex;
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1, depthWrite: false }));
-            var sc = isBoss ? 0.85 : 0.65; spr.scale.set(sc, sc, 1); spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
-            spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss }; group.add(spr);
-            var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss }; spr.userData.objRef = bag; lootBags.push(bag);
+            var sc = isBoss ? 0.85 : 0.65;
+            spr.scale.set(sc, sc, 1);
+            spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
+            spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss };
+            group.add(spr);
+            var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss };
+            spr.userData.objRef = bag;
+            lootBags.push(bag);
         }
 
+        // ============================================================
+        //  ПОДБОР СТРЕЛ НА ЭТАЖЕ
+        // ============================================================
         function pickArrowFromFloor(obj) {
-            if (!obj || obj.collected) return; obj.collected = true; addArrows(5); showCenterText('+5 стрел', '#c9a040'); playSound(soundArrowPick);
-            if (obj.mesh) group.remove(obj.mesh); updateLootButton(); checkObjects();
+            if (!obj || obj.collected) return;
+            obj.collected = true;
+            addArrows(5);
+            showCenterText('+5 стрел', '#c9a040');
+            playSound(soundArrowPick);
+            if (obj.mesh) group.remove(obj.mesh);
+            updateLootButton();
+            checkObjects();
         }
 
+        // ============================================================
+        //  ЗЕЛЬЯ / КОТЛЫ / АЛТАРИ
+        // ============================================================
         function applyLootEffect(obj) {
-            if (!obj) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
+            if (!obj) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
             if (obj.type === 'potion_hp') {
-                var addHp = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp);
-                if (addHp <= 0) { showCenterText('HP полное', '#4caf50'); return; }
-                p.stats.hp += addHp;
+                var curHp = Math.floor(p.stats.hp);
+                var maxHp = Math.floor(p.stats.maxHp);
+                if (curHp >= maxHp) { showCenterText('Запас полный', '#4caf50'); return; }
+                var addHp = Math.min(Math.floor(maxHp * 0.5), maxHp - curHp);
+                p.stats.hp = curHp + addHp;
                 showCenterText('+' + addHp + ' HP', '#4caf50');
-                obj.collected = true; group.remove(obj.mesh);
+                obj.collected = true;
+                group.remove(obj.mesh);
+            } else if (obj.type === 'potion_filth') {
+                var f1 = getFilth();
+                if (f1.cur <= 0) { showCenterText('Скверны нет', '#4caf50'); return; }
+                setFilth(Math.max(0, f1.cur - f1.max * 0.5));
+                showCenterText('-50% скверны', '#4caf50');
+                obj.collected = true;
+                group.remove(obj.mesh);
+            } else if (obj.type === 'potion_high') {
+                var curHp2 = Math.floor(p.stats.hp);
+                var maxHp2 = Math.floor(p.stats.maxHp);
+                var heal2 = Math.min(Math.floor(maxHp2 * 0.5), maxHp2 - curHp2);
+                p.stats.hp = curHp2 + heal2;
+                var f2 = getFilth();
+                setFilth(Math.max(0, f2.cur - f2.max * 0.8));
+                showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50');
+                obj.collected = true;
+                group.remove(obj.mesh);
+            } else if (obj.type === 'cauldron') {
+                if (obj.used) { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Котёл уже использован'); return; }
+                obj.used = true;
+                var f3 = getFilth();
+                setFilth(Math.max(0, f3.cur - f3.max));
+                showCenterText('Скверна снята', '#4caf50');
+                playSound(soundCauldron);
+                if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
+            } else if (obj.type === 'altar') {
+                if (obj.used) { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Алтарь уже использован'); return; }
+                obj.used = true;
+                p.stats.hp = p.stats.maxHp;
+                if (parent.Sherwood.addExp) parent.Sherwood.addExp(200 + currentFloor * 50);
+                showCenterText('Полное HP + опыт', '#4caf50');
+                playSound(soundAltar);
+                if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555);
+            } else if (obj.type === 'arrow_pickup') {
+                pickArrowFromFloor(obj);
+                return;
             }
-            else if (obj.type === 'potion_filth') { var f1 = getFilth(); setFilth(Math.max(0, f1.cur - f1.max * 0.5)); showCenterText('-50% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
-            else if (obj.type === 'potion_high') { var heal2 = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += heal2; setFilth(Math.max(0, getFilth().cur - getFilth().max * 0.8)); showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
-            else if (obj.type === 'cauldron') { if (obj.used) return; obj.used = true; setFilth(0); showCenterText('Скверна снята', '#4caf50'); playSound(soundCauldron); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
-            else if (obj.type === 'altar') { if (obj.used) return; obj.used = true; p.stats.hp = p.stats.maxHp; if (parent.Sherwood.addExp) parent.Sherwood.addExp(200 + currentFloor * 50); showCenterText('Полное HP + опыт', '#4caf50'); playSound(soundAltar); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
-            else if (obj.type === 'arrow_pickup') { pickArrowFromFloor(obj); return; }
-            updateHeroSpheres(); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); updateLootButton(); checkObjects();
+            updateHeroSpheres();
+            if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+            if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateLootButton();
+            checkObjects();
+        }
+
+        // ============================================================
+        //  ЛУТ ИЗ МЕШКОВ
+        // ============================================================
+        function showLootIcons(items) {
+            var layer = document.getElementById('loot-fly-layer');
+            if (!layer) return;
+            playSound(soundLoot);
+            var i = 0;
+            function next() {
+                if (i >= items.length) return;
+                var it = items[i++];
+                var img = document.createElement('img');
+                img.src = it.icon;
+                img.style.cssText = 'position:absolute;top:50%;left:50%;width:64px;height:64px;object-fit:contain;transform:translate(-50%,-50%) scale(0.5);opacity:0;transition:all 0.6s cubic-bezier(.2,.7,.3,1);filter:drop-shadow(0 0 12px #ffd700);pointer-events:none;';
+                layer.appendChild(img);
+                requestAnimationFrame(function() { img.style.opacity = '1'; img.style.transform = 'translate(-50%,-120%) scale(1.2)'; });
+                setTimeout(function() { img.style.opacity = '0'; img.style.transform = 'translate(-50%,-160%) scale(0.7)'; }, 700);
+                setTimeout(function() { img.remove(); }, 1400);
+                setTimeout(next, 400);
+            }
+            next();
         }
 
         function openLootBag(bag) {
-            if (!bag || bag.opened) return; bag.opened = true; var openTex = bag.isBoss ? openChestTex : emptyBagTex;
-            bag.mesh.material.map = openTex; bag.mesh.material.needsUpdate = true; playSound(soundChest);
-            var p = parent.Sherwood.getPlayer(); if (!p) return;
-            var exp = 50 + Math.floor(Math.random() * 100), gold = 15 + Math.floor(Math.random() * 25), silver = 5 + Math.floor(Math.random() * 15);
-            var arrowDrop = 2 + Math.floor(Math.random() * 2); addArrows(arrowDrop);
-            var resources = { skins: 1, entranceTickets: Math.random() < 0.25 ? 1 : 0, amuletTablets: Math.random() < 0.3 ? 1 : 0, ringTablets: Math.random() < 0.3 ? 1 : 0, skinTablets: Math.random() < 0.25 ? 1 : 0, skinDrawings: Math.random() < 0.2 ? 1 : 0, portalToken1: Math.random() < 0.3 ? 1 : 0, branchDamnedYew: Math.random() < 0.3 ? 1 : 0 };
-            if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) { parent.Sherwood.Bag.addLoot({ gold: gold, silver: silver, exp: exp, skins: resources.skins, entranceTickets: resources.entranceTickets, amuletTablets: resources.amuletTablets, ringTablets: resources.ringTablets, skinTablets: resources.skinTablets, skinDrawings: resources.skinDrawings, portalToken1: resources.portalToken1, branchDamnedYew: resources.branchDamnedYew }); }
-            else { if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp); if (parent.Sherwood.addResource) { parent.Sherwood.addResource('gold', gold); parent.Sherwood.addResource('silver', silver); for (var key in resources) { if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]); } } }
-            runLoot.exp += exp; runLoot.gold += gold; runLoot.silver += silver;
-            for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
-            showCenterText('+' + arrowDrop + ' стрел', '#c9a040'); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); updateLootButton();
+            if (!bag || bag.opened) return;
+            bag.opened = true;
+            var openTex = bag.isBoss ? openChestTex : emptyBagTex;
+            bag.mesh.material.map = openTex;
+            bag.mesh.material.needsUpdate = true;
+            if (bag.isBoss) bag.mesh.scale.set(0.85, 0.85, 1);
+            else bag.mesh.scale.set(0.65, 0.65, 1);
+            playSound(soundChest);
+
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            var exp = 50 + Math.floor(Math.random() * 100);
+            var gold = 15 + Math.floor(Math.random() * 25);
+            var silver = 5 + Math.floor(Math.random() * 15);
+
+            var arrowDrop = 2 + Math.floor(Math.random() * 2);
+            addArrows(arrowDrop);
+
+            var branchDrop = 0;
+            if (bag.isBoss) {
+                branchDrop = 3;
+            } else {
+                branchDrop = Math.random() < 0.6 ? 1 : 0;
+            }
+            branchDrop += Math.floor(Math.random() * 3);
+
+            var resources = {
+                skins: 1,
+                entranceTickets: Math.random() < 0.25 ? 1 : 0,
+                amuletTablets: Math.random() < 0.3 ? 1 : 0,
+                ringTablets: Math.random() < 0.3 ? 1 : 0,
+                skinTablets: Math.random() < 0.25 ? 1 : 0,
+                skinDrawings: Math.random() < 0.2 ? 1 : 0,
+                portalToken1: Math.random() < 0.3 ? 1 : 0,
+                branchDamnedYew: branchDrop
+            };
+
+            if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) {
+                parent.Sherwood.Bag.addLoot({
+                    gold: gold, silver: silver, exp: exp,
+                    skins: resources.skins,
+                    entranceTickets: resources.entranceTickets,
+                    amuletTablets: resources.amuletTablets,
+                    ringTablets: resources.ringTablets,
+                    skinTablets: resources.skinTablets,
+                    skinDrawings: resources.skinDrawings,
+                    portalToken1: resources.portalToken1,
+                    branchDamnedYew: resources.branchDamnedYew
+                });
+            } else {
+                if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp);
+                if (parent.Sherwood.addResource) {
+                    parent.Sherwood.addResource('gold', gold);
+                    parent.Sherwood.addResource('silver', silver);
+                    for (var key in resources) {
+                        if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]);
+                    }
+                }
+            }
+
+            runLoot.exp += exp;
+            runLoot.gold += gold;
+            runLoot.silver += silver;
+            for (var key in resources) {
+                if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key];
+            }
+
+            var icons = [];
+            icons.push({ icon: 'assets/interface/resource_gold.png' });
+            icons.push({ icon: 'assets/interface/resource_silver.png' });
+            icons.push({ icon: 'assets/interface/sherwood_hollow_arrow.png' });
+            if (resources.skins) icons.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png' });
+            if (resources.entranceTickets) icons.push({ icon: 'assets/interface/resource_key_to_locked_levels.png' });
+            if (resources.amuletTablets) icons.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png' });
+            if (resources.ringTablets) icons.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png' });
+            if (resources.skinTablets) icons.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png' });
+            if (resources.skinDrawings) icons.push({ icon: 'assets/interface/skin_drawing.png' });
+            if (resources.portalToken1) icons.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png' });
+            if (resources.branchDamnedYew) icons.push({ icon: 'assets/interface/branch_of_the_damned_yew.png' });
+            showLootIcons(icons);
+
+            var msgs = [];
+            msgs.push({ text: '+' + arrowDrop + ' стрел', color: '#c9a040' });
+            if (resources.skins > 0) msgs.push({ text: '+' + resources.skins + ' шкур(ы)', color: '#c9a040' });
+            if (resources.entranceTickets > 0) msgs.push({ text: '+' + resources.entranceTickets + ' ключ(а) от уровня', color: '#c9a040' });
+            if (resources.amuletTablets > 0) msgs.push({ text: '+' + resources.amuletTablets + ' амулет. таблич.', color: '#c9a040' });
+            if (resources.ringTablets > 0) msgs.push({ text: '+' + resources.ringTablets + ' кольц. таблич.', color: '#c9a040' });
+            if (resources.skinTablets > 0) msgs.push({ text: '+' + resources.skinTablets + ' табл. внешности', color: '#c9a040' });
+            if (resources.skinDrawings > 0) msgs.push({ text: '+' + resources.skinDrawings + ' чертёж(ей)', color: '#c9a040' });
+            if (resources.portalToken1 > 0) msgs.push({ text: '+' + resources.portalToken1 + ' токен портала', color: '#a020f0' });
+            if (resources.branchDamnedYew > 0) msgs.push({ text: '+' + resources.branchDamnedYew + ' ветк(и) тиса', color: '#c9a040' });
+            if (gold > 0) msgs.push({ text: '+' + gold + ' золота', color: '#ffd700' });
+            if (silver > 0) msgs.push({ text: '+' + silver + ' серебра', color: '#c0c0c0' });
+
+            msgs.forEach(function(m, idx) {
+                setTimeout(function() { showCenterText(m.text, m.color); }, idx * 250);
+            });
+
+            if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+            if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
         }
 
-        var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png', 'assets/assets2/animation/blood_5.png'];
+        // ============================================================
+        //  КРОВЬ И ХИТ-СПРАЙТЫ
+        // ============================================================
+        var bloodSprites = [
+            'assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png',
+            'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png',
+            'assets/assets2/animation/blood_5.png'
+        ];
         var bloodTextures = bloodSprites.map(function(path) { return loader.load(path); });
         var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
-        hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false; scene.add(hitFlashSprite);
+        hitFlashSprite.scale.set(0.4, 0.4, 1);
+        hitFlashSprite.visible = false;
+        scene.add(hitFlashSprite);
 
-        var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
-        var battleTimer = null, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0, playerHitFirst = false, enemyStunned = 0, playerStunned = 0, rageCharges = 0;
-        var vampirismBuff = 0, vampirismReady = false;
+        // ============================================================
+        //  УПРАВЛЕНИЕ ДВИЖЕНИЕМ
+        // ============================================================
+        const MOVE_SPEED = 2.0;
+        const rotationSpeed = Math.PI / 2;
+        let waypoints = [];
+        let moving = false;
+        let isTurning = false;
+        let pendingLoot = null;
+
+        function isWalkable(gx, gy) {
+            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
+            const v = map[gy][gx];
+            return v === 0 || v === 3;
+        }
+        function isEnemyAt(gx, gy) {
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.type === 'enemy' && !o.collected && o.x === gx && o.y === gy) return o;
+            }
+            return null;
+        }
+        function isClosedDoor(gx, gy) {
+            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
+            return map[gy][gx] === 2;
+        }
+        function canStep(fromGX, fromGY, toGX, toGY) {
+            if (!isWalkable(toGX, toGY)) return false;
+            if (isEnemyAt(toGX, toGY)) return false;
+            const dx = toGX - fromGX, dy = toGY - fromGY;
+            if (dx !== 0 && dy !== 0) {
+                if (!isWalkable(fromGX + dx, fromGY)) return false;
+                if (!isWalkable(fromGX, fromGY + dy)) return false;
+            }
+            return true;
+        }
+        function getFrontCell() {
+            const dx = -Math.sin(playerYaw);
+            const dz = -Math.cos(playerYaw);
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            return { gx: cur.gx + Math.round(dx), gy: cur.gy + Math.round(dz) };
+        }
+        function isLootInFront(obj) {
+            if (!obj) return false;
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            if (obj.x === cur.gx && obj.y === cur.gy) return true;
+            const front = getFrontCell();
+            if (obj.x === front.gx && obj.y === front.gy) return true;
+            return false;
+        }
+        function isBagInFront(bag) { return bag ? isLootInFront({ x: bag.gx, y: bag.gy }) : false; }
+
+        function buildPath(startGX, startGY, goalGX, goalGY) {
+            if (!isWalkable(goalGX, goalGY)) return [];
+            const key = (x, y) => y * size + x;
+            const prev = new Map();
+            const q = [{ x: startGX, y: startGY }];
+            prev.set(key(startGX, startGY), null);
+            const dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+            let found = false;
+            while (q.length) {
+                const cur = q.shift();
+                if (cur.x === goalGX && cur.y === goalGY) { found = true; break; }
+                for (const d of dirs) {
+                    const nx = cur.x + d.x, ny = cur.y + d.y;
+                    if (!canStep(cur.x, cur.y, nx, ny)) continue;
+                    const k = key(nx, ny);
+                    if (!prev.has(k)) { prev.set(k, key(cur.x, cur.y)); q.push({ x: nx, y: ny }); }
+                }
+            }
+            if (!found) return [];
+            const out = [];
+            let k = key(goalGX, goalGY);
+            while (k !== null) { out.push({ gx: k % size, gy: Math.floor(k / size) }); k = prev.get(k); }
+            out.reverse();
+            return out.slice(1).map(n => gridToWorld(n.gx, n.gy));
+        }
+
+        function openDoor(gx, gy) {
+            if (!isClosedDoor(gx, gy)) return false;
+            map[gy][gx] = 3;
+            const d = doorLeaves.find(o => o.gx === gx && o.gy === gy);
+            if (d && !d.open) { d.open = true; d.t = 0; }
+            playSound(soundAltar);
+            return true;
+        }
+
+        function animateTurn(targetYaw, duration) {
+            if (isTurning) return;
+            duration = duration || 400;
+            const startYaw = playerYaw;
+            const startTime = performance.now();
+            isTurning = true;
+            function turnLoop() {
+                const elapsed = performance.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const smoothT = t * t * (3 - 2 * t);
+                let delta = targetYaw - startYaw;
+                while (delta > Math.PI) delta -= Math.PI * 2;
+                while (delta < -Math.PI) delta += Math.PI * 2;
+                playerYaw = startYaw + delta * smoothT;
+                if (t < 1) requestAnimationFrame(turnLoop);
+                else { playerYaw = startYaw + delta; isTurning = false; }
+            }
+            turnLoop();
+        }
+        function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
+        function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
+
+        function moveForward() {
+            if (isBattleActive) return;
+            if (moving || isTurning) return;
+            const dirX = -Math.sin(playerYaw);
+            const dirZ = -Math.cos(playerYaw);
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            const nx = cur.gx + Math.round(dirX);
+            const ny = cur.gy + Math.round(dirZ);
+            if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
+            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
+            const to = gridToWorld(nx, ny);
+            waypoints = [{ x: to.x, z: to.z }];
+            moving = true;
+            startSteps();
+        }
+        function moveBackward() {
+            if (isBattleActive) return;
+            if (moving || isTurning) return;
+            const dirX = Math.sin(playerYaw);
+            const dirZ = Math.cos(playerYaw);
+            const cur = worldToGrid(playerPos.x, playerPos.z);
+            const nx = cur.gx + Math.round(dirX);
+            const ny = cur.gy + Math.round(dirZ);
+            if (isClosedDoor(nx, ny)) { openDoor(nx, ny); return; }
+            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
+            const to = gridToWorld(nx, ny);
+            waypoints = [{ x: to.x, z: to.z }];
+            moving = true;
+            startSteps();
+        }
+
+        document.getElementById('btn-forward').addEventListener('click', (e) => { e.preventDefault(); moveForward(); });
+        document.getElementById('btn-back').addEventListener('click', (e) => { e.preventDefault(); moveBackward(); });
+        document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); turnLeft(); });
+        document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); turnRight(); });
+        document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
+        document.getElementById('btn-back').addEventListener('touchstart', (e) => { e.preventDefault(); moveBackward(); });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); turnLeft(); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); turnRight(); });
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': case 'arrowup': moveForward(); e.preventDefault(); break;
+                case 's': case 'arrowdown': moveBackward(); e.preventDefault(); break;
+                case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
+                case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
+            }
+        });
+
+        // ============================================================
+        //  МИНИКАРТА
+        // ============================================================
+        const minimapSize = size;
+        const minimapCell = 11;
+        const minimapCanvas = document.getElementById('minimap-canvas');
+        minimapCanvas.width  = minimapSize * minimapCell;
+        minimapCanvas.height = minimapSize * minimapCell;
+        const mmCtx = minimapCanvas.getContext('2d');
+        const explored = new Uint8Array(size * size);
+        const walked = new Uint8Array(size * size);
+
+        const raycaster = new THREE.Raycaster();
+        const ndc = new THREE.Vector2();
+                // ============================================================
+        //  БОЙ — состояние
+        // ============================================================
+        var currentEnemySprite = null;
+        var currentEnemyStats = null;
+        var currentEnemyObj = null;
+        var isBattleActive = false;
+        var battleTimer = null;
+        var playerAttackCooldown = 0;
+        var PLAYER_ATTACK_CD = 1.0;
         var pushTimer = null;
+        var playerHitFirst = false;
         var hitSprites = ['strike_claws.png', 'strike_claws_1.png', 'strike_claws_2.png', 'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'];
         var enemyKnockback = { active: false, sprite: null, originalX: 0, originalZ: 0, t: 0, duration: 0.25, dx: 0, dz: 0 };
         var cameraShake = 0;
 
+        var playerStunned = 0;
+        var enemyStunned = 0;
+        var rageCharges = 0;
+        var vampirismBuff = 0;
+        var vampirismReady = false;
+
+        // ============================================================
+        //  АНИМАЦИЯ ОТБРАСЫВАНИЯ
+        // ============================================================
         function knockbackEnemy(sprite, fromX, fromZ) {
-            if (!sprite) return; enemyKnockback.active = true; enemyKnockback.sprite = sprite; enemyKnockback.originalX = sprite.position.x; enemyKnockback.originalZ = sprite.position.z;
-            var dx = sprite.position.x - fromX, dz = sprite.position.z - fromZ, len = Math.hypot(dx, dz) || 1, power = 0.10;
-            enemyKnockback.dx = (dx / len) * power; enemyKnockback.dz = (dz / len) * power; enemyKnockback.t = 0;
+            if (!sprite) return;
+            enemyKnockback.active = true;
+            enemyKnockback.sprite = sprite;
+            enemyKnockback.originalX = sprite.position.x;
+            enemyKnockback.originalZ = sprite.position.z;
+            var dx = sprite.position.x - fromX;
+            var dz = sprite.position.z - fromZ;
+            var len = Math.hypot(dx, dz) || 1;
+            var power = 0.10;
+            enemyKnockback.dx = (dx / len) * power;
+            enemyKnockback.dz = (dz / len) * power;
+            enemyKnockback.t = 0;
         }
 
+        // ============================================================
+        //  СФЕРЫ HUD
+        // ============================================================
         function updateHeroSpheres() {
-            var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
-            var hpPercent = p.stats.hp / p.stats.maxHp; var lifeFill = document.getElementById('life-fill'); if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
-            var hpText = document.getElementById('hp-text'); if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
-            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
-            var filth = p.stats.filth, maxFilth = p.stats.maxFilth, filthPercent = filth / maxFilth;
-            var manaFill = document.getElementById('mana-fill'); if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filthPercent) * 100) + '% 0 0 0)';
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+
+            var hpPercent = p.stats.hp / p.stats.maxHp;
+            var lifeFill = document.getElementById('life-fill');
+            if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            var hpText = document.getElementById('hp-text');
+            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            var filth = p.stats.filth;
+            var maxFilth = p.stats.maxFilth;
+            var filthPercent = filth / maxFilth;
+
+            var manaFill = document.getElementById('mana-fill');
+            if (manaFill) {
+                manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filthPercent) * 100) + '% 0 0 0)';
+                if (filth >= maxFilth) manaFill.style.filter = 'hue-rotate(-30deg) brightness(1.3)';
+                else manaFill.style.filter = '';
+            }
             var manaText = document.getElementById('mana-text');
-            if (manaText) { if (filth >= maxFilth) { var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince)); if (left < 0) left = 0; manaText.textContent = '⚠ ' + left + 'с'; manaText.style.color = '#ff4444'; } else { manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%'; manaText.style.color = '#fff'; } }
+            if (manaText) {
+                if (filth >= maxFilth) {
+                    var left = Math.ceil(FILTH_DEATH_TIME - (performance.now() / 1000 - filthFullSince));
+                    if (left < 0) left = 0;
+                    manaText.textContent = '⚠ ' + left + 'с';
+                    manaText.style.color = '#ff4444';
+                } else {
+                    manaText.textContent = 'Скверна: ' + Math.floor(filth) + '%';
+                    manaText.style.color = '#fff';
+                }
+            }
         }
         setTimeout(updateHeroSpheres, 500);
 
+        // ============================================================
+        //  СКВЕРНА — обновление
+        // ============================================================
         var filthDamageTimer = 0;
+
         function updateFilth(dt) {
-            var p = parent.Sherwood.getPlayer(); if (!p) return;
-            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+
             filthTimer += dt;
-            if (filthTimer >= FILTH_SELF_RATE) { filthTimer -= FILTH_SELF_RATE; if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); } }
+            if (filthTimer >= FILTH_SELF_RATE) {
+                filthTimer -= FILTH_SELF_RATE;
+                if (p.stats.filth < p.stats.maxFilth) {
+                    p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT);
+                    updateHeroSpheres();
+                }
+            }
+
             if (p.stats.filth >= p.stats.maxFilth) {
                 if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
-                if (performance.now() / 1000 - filthFullSince >= FILTH_DEATH_TIME) {
+                var elapsed = performance.now() / 1000 - filthFullSince;
+                if (elapsed >= FILTH_DEATH_TIME) {
                     filthDamageTimer += dt;
-                    if (filthDamageTimer >= 3) { filthDamageTimer -= 3; p.stats.hp = Math.max(0, p.stats.hp - 150); showBloodOverlay(); showCenterText('-150 HP (скверна)', '#ff2020'); updateHeroSpheres(); if (p.stats.hp <= 0) { filthFullSince = 0; filthDamageTimer = 0; dieFromFilth(); return; } }
+                    if (filthDamageTimer >= 5) {
+                        filthDamageTimer -= 5;
+                        p.stats.hp = Math.max(0, p.stats.hp - 50);
+                        showBloodOverlay();
+                        showCenterText('-50 HP (скверна)', '#ff2020');
+                        updateHeroSpheres();
+                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                        if (p.stats.hp <= 0) {
+                            filthFullSince = 0;
+                            filthDamageTimer = 0;
+                            dieFromFilth();
+                            return;
+                        }
+                    }
                 }
-            } else { filthFullSince = 0; filthDamageTimer = 0; }
+            } else {
+                filthFullSince = 0;
+                filthDamageTimer = 0;
+            }
+
             if (playerStunned > 0) playerStunned = Math.max(0, playerStunned - dt);
             if (playerAttackCooldown > 0) playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
             if (enemyStunned > 0) enemyStunned = Math.max(0, enemyStunned - dt);
             if (vampirismBuff > 0) vampirismBuff = Math.max(0, vampirismBuff - dt);
         }
 
-        function dieFromFilth() { if (isBattleActive) stopBattle(); playSound(soundDefeat); showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020'); try { dungeonMusic.pause(); } catch(e){} showDeathVideoAndLose(); }
-        function showDeathVideoAndLose() {
-            stopSteps(); try { if (dungeonMusic) dungeonMusic.pause(); } catch(e){}
-            var video = document.createElement('video'); video.src = 'assets/assets2/animation/background2.webm'; video.autoplay = true; video.muted = false; video.playsInline = true;
-            video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;'; document.body.appendChild(video);
-            var finished = false; function finish() { if (finished) return; finished = true; try { video.remove(); } catch(e){} loseDungeon(); }
-            video.onended = finish; video.onerror = finish; setTimeout(finish, 15000);
+        // ============================================================
+        //  СМЕРТЬ ОТ СКВЕРНЫ
+        // ============================================================
+        function dieFromFilth() {
+            if (typeof isBattleActive !== 'undefined' && isBattleActive) stopBattle();
+            playSound(soundDefeat);
+            showCenterText('СКВЕРНА ПОГЛОТИЛА ТЕБЯ', '#ff2020');
+            try { dungeonMusic.pause(); } catch(e){}
+            showDeathVideoAndLose();
         }
+
+        // ============================================================
+        //  ВИДЕО ПРИ СМЕРТИ
+        // ============================================================
+        function showDeathVideoAndLose() {
+            stopSteps();
+            try { if (dungeonMusic) dungeonMusic.pause(); } catch(e){}
+
+            var video = document.createElement('video');
+            video.src = 'assets/assets2/animation/background2.webm';
+            video.autoplay = true;
+            video.muted = false;
+            video.playsInline = true;
+            video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;';
+            document.body.appendChild(video);
+
+            var finished = false;
+            function finish() {
+                if (finished) return;
+                finished = true;
+                try { video.remove(); } catch(e){}
+                loseDungeon();
+            }
+            video.onended = finish;
+            video.onerror = finish;
+            setTimeout(finish, 15000);
+        }
+        window.showDeathVideoAndLose = showDeathVideoAndLose;
 
         function checkObjects() { checkExitDoor(); }
 
         // ============================================================
-        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + БОЕВАЯ КОМНАТА
+        //  ПЕРЕНОС ВРАГА В СЦЕНУ БОЯ
         // ============================================================
-        function setBattleCamera(on) {
+        function setBattleMode(on) {
             if (on) {
-                battleRoom.visible = true;
-                battleRoom.position.set(0, 0, 0);
-                group.visible = false;
-
-                heroSprite.visible = false;
-                highlights.forEach(h => h.visible = false);
-
-                activeCamera = camFPS;
-                camFPS.position.set(0, 0.55, 3.6);
-                camFPS.lookAt(0, 0.45, 0);
-
-                if (currentEnemySprite) {
-                    if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
-                    battleRoom.add(currentEnemySprite);
-                    var sy = currentEnemySprite.scale.y;
-                    currentEnemySprite.position.set(0, sy / 2, 0);
-                    currentEnemySprite.material.depthTest = false;
-                    currentEnemySprite.material.depthWrite = false;
-                    currentEnemySprite.renderOrder = 10;
-                    currentEnemySprite.visible = true;
-                }
-
+                // Враг уже в battleScene (переносится в startBattle)
                 document.getElementById('crosshair').style.display = 'block';
-                document.getElementById('battle-controls').style.display = 'flex';
-                document.getElementById('attack-icon').style.display = 'block';
-                document.getElementById('skills-row').style.display = 'flex';
-
+                document.getElementById('skills-left').style.display = 'flex';
+                document.getElementById('skills-right').style.display = 'flex';
             } else {
-                battleRoom.visible = false;
-                group.visible = true;
-
+                // Возвращаем врага в сцену лабиринта
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     if (currentEnemyObj.mesh.parent) currentEnemyObj.mesh.parent.remove(currentEnemyObj.mesh);
-                    currentEnemyObj.mesh.material.depthTest = true;
-                    currentEnemyObj.mesh.material.depthWrite = false;
-                    currentEnemyObj.mesh.renderOrder = 0;
                     group.add(currentEnemyObj.mesh);
                     var sy2 = currentEnemyObj.mesh.scale.y;
-                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, sy2 / 2, currentEnemyObj.y - center);
+                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - Math.floor(size / 2), sy2 / 2, currentEnemyObj.y - Math.floor(size / 2));
                 }
-
-                activeCamera = camTop;
                 document.getElementById('crosshair').style.display = 'none';
-                document.getElementById('battle-controls').style.display = 'none';
-                document.getElementById('attack-icon').style.display = 'none';
-                document.getElementById('skills-row').style.display = 'none';
-
-                heroSprite.visible = true;
-                updateHighlights();
-                updateFog();
+                document.getElementById('skills-left').style.display = 'none';
+                document.getElementById('skills-right').style.display = 'none';
             }
         }
 
+        // ============================================================
+        //  СТАРТ БОЯ
+        // ============================================================
         function startBattle(obj) {
-            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
-            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
+            if (isBattleActive) return;
+            isBattleActive = true;
+            playerHitFirst = false;
+            currentEnemySprite = obj.mesh;
+            currentEnemyObj = obj;
+            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def };
+            enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
-            pendingBattle = null; pendingLoot = null;
 
-            syncPlayerGrid();
-            updateFog();
-            setBattleCamera(true);
+            vampirismReady = false;
+            var p = parent.Sherwood.getPlayer();
+            if (p && p.talents && p.talents['vampirism'] > 0) {
+                if (Math.random() < 0.30) {
+                    vampirismReady = true;
+                    vampirismBuff = 20;
+                    showCenterText('ВАМПИРИЗМ!', '#a020f0');
+                }
+            }
 
-            vampirismReady = false; var p = parent.Sherwood.getPlayer();
-            if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
+            // === Перенос спрайта врага в сцену боя ===
+            if (currentEnemySprite) {
+                if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
+                battleScene.add(currentEnemySprite);
+                // Убираем прозрачную рамку, чтобы враг точно был в центре
+                currentEnemySprite.center.set(0.5, 0.5);
+                var enemyScale = currentEnemySprite.scale.y;
+                currentEnemySprite.position.set(0, enemyScale / 2, 0);
+                // Убеждаемся что виден и поверх фона
+                currentEnemySprite.material.depthTest = false;
+                currentEnemySprite.material.depthWrite = false;
+                currentEnemySprite.renderOrder = 1;
+                currentEnemySprite.visible = true;
+            }
+
+            // Камера боя смотрит на врага
+            battleCamera.position.set(0, 0.6, 3.2);
+            battleCamera.lookAt(0, 0.5, 0);
+
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
-            var nameEl = document.getElementById('mob-hp-name'); if (nameEl) nameEl.textContent = getMobName(obj.img);
-            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)'; playSound(soundHit);
+            var nameEl = document.getElementById('mob-hp-name');
+            if (nameEl) nameEl.textContent = getMobName(obj.img);
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
+            playSound(soundHit);
+
+            setBattleMode(true);
 
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
-                if (!isBattleActive || !playerHitFirst) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
-                if (enemyStunned > 0 || playerStunned > 0) return;
+                if (!isBattleActive) return;
+                if (!playerHitFirst) return;
+                if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+                var p = parent.Sherwood.getPlayer();
+                if (!p) return;
+                if (enemyStunned > 0) return;
+                if (playerStunned > 0) return;
+
                 var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
-                if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
-                if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp; document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
-                p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay();
+                if (p.talents) {
+                    if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                    if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+                }
+                if (p.talents && p.talents['ricochet'] > 0) {
+                    if (Math.random() < 0.45) {
+                        currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg);
+                        if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+                        document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+                        document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+                        showCenterText('РИКОШЕТ!', '#a020f0');
+                        if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+                        return;
+                    }
+                }
+                p.stats.hp = Math.max(0, p.stats.hp - edmg);
+                addFilth(FILTH_HIT_AMOUNT);
+                if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+                updateHeroSpheres();
+                showBloodOverlay();
                 if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
             }, 1000);
         }
 
         function stopBattle() {
-            isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0;
-            pendingBattle = null; pendingLoot = null;
+            isBattleActive = false;
+            playerHitFirst = false;
+            enemyStunned = 0;
+            playerAttackCooldown = 0;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
 
-            setBattleCamera(false);
+            // Враг умирает / бой кончился — возвращаем на сцену лабиринта (если живой — вернём в onEnemyKilled/stopBattle)
+            if (currentEnemySprite) {
+                if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
+            }
 
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
+            setBattleMode(false);
+
+            currentEnemySprite = null;
+            currentEnemyStats = null;
+            currentEnemyObj = null;
         }
 
+        // ============================================================
+        //  НОВЫЙ УРОВЕНЬ — лечит и снимает 70% скверны
+        // ============================================================
+        var lastKnownLevel = 0;
+        function checkLevelUp() {
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (!lastKnownLevel) lastKnownLevel = p.level || 1;
+            if (p.level > lastKnownLevel) {
+                lastKnownLevel = p.level;
+                p.stats.hp = p.stats.maxHp;
+                var f = getFilth();
+                setFilth(Math.max(0, f.cur - f.max * 0.7));
+                showCenterText('НОВЫЙ УРОВЕНЬ! HP полное, -70% скверны', '#ffd700');
+                updateHeroSpheres();
+            }
+        }
+        setInterval(checkLevelUp, 1000);
+
+        // ============================================================
+        //  УБИЙСТВО ВРАГА
+        // ============================================================
         function onEnemyKilled() {
-            if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
-            pendingBattle = null; pendingLoot = null;
-            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
+            if (!isBattleActive) return;
+            isBattleActive = false;
+            playerHitFirst = false;
+            enemyStunned = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+
             if (currentEnemyObj) {
                 spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
-                try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
+                try {
+                    if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
+                        var imgFile = currentEnemyObj.img.split('/').pop();
+                        parent.Sherwood.Bestiary.registerKill(imgFile);
+                    }
+                } catch(e) {}
                 currentEnemyObj.collected = true;
                 if (currentEnemyObj.mesh) {
                     if (currentEnemyObj.mesh.parent) currentEnemyObj.mesh.parent.remove(currentEnemyObj.mesh);
                 }
             }
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
+            currentEnemySprite = null;
+            currentEnemyStats = null;
+            currentEnemyObj = null;
+
+            setBattleMode(false);
             checkObjects();
-            setBattleCamera(false);
         }
 
+        // ============================================================
+        //  АТАКА ИГРОКА
+        // ============================================================
         function attackEnemy() {
-            if (!isBattleActive || !currentEnemyStats || !parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            if (!isBattleActive || !currentEnemyStats) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
             if (playerStunned > 0) { showCenterText('ОГЛУШЁН!', '#888'); return; }
-            if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
-            var p = parent.Sherwood.getPlayer(); playSound(soundHit);
-            var arrowsNeeded = (rageCharges > 0) ? 2 : 1; var hasArrows = (playerArrows >= arrowsNeeded);
-            if (hasArrows) { useArrow(arrowsNeeded); } else { if (playerArrows > 0) useArrow(1); else showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
+            if (playerAttackCooldown > 0) return;
+            playerAttackCooldown = PLAYER_ATTACK_CD;
+            playerHitFirst = true;
+            var p = parent.Sherwood.getPlayer();
+            playSound(soundHit);
+
+            var arrowsNeeded = (rageCharges > 0) ? 2 : 1;
+            var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) {
+                useArrow(arrowsNeeded);
+            } else {
+                if (playerArrows > 0) useArrow(1);
+                else showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555');
+            }
+
             var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
             if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
-            if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
-            var dmg = baseDmg; currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
-            if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) { var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100; var heal = Math.floor(dmg * vampPercent); if (heal > 0) { p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); updateHeroSpheres(); } }
+
+            if (rageCharges > 0) {
+                baseDmg = Math.floor(baseDmg * 1.2);
+                rageCharges--;
+                if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888');
+            }
+
+            var dmg = baseDmg;
+            currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg);
+            if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+
+            if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) {
+                var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100;
+                var heal = Math.floor(dmg * vampPercent);
+                if (heal > 0) {
+                    p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                    updateHeroSpheres();
+                }
+            }
+
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+
             if (currentEnemySprite) {
-                var spriteW = currentEnemySprite.scale.x, spriteH = currentEnemySprite.scale.y; var ox = (Math.random() - 0.5) * spriteW * 0.7, oy = (Math.random() - 0.5) * spriteH * 0.7;
-                hitFlashSprite.position.copy(currentEnemySprite.position); hitFlashSprite.position.x += ox; hitFlashSprite.position.y += oy;
-                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)]; hitFlashSprite.material.needsUpdate = true;
-                hitFlashSprite.visible = true; clearTimeout(pushTimer); pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+                var spriteW = currentEnemySprite.scale.x;
+                var spriteH = currentEnemySprite.scale.y;
+                var ox = (Math.random() - 0.5) * spriteW * 0.7;
+                var oy = (Math.random() - 0.5) * spriteH * 0.7;
+                hitFlashSprite.position.copy(currentEnemySprite.position);
+                hitFlashSprite.position.x += ox;
+                hitFlashSprite.position.y += oy;
+                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
+                hitFlashSprite.material.needsUpdate = true;
+                hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
+                hitFlashSprite.visible = true;
+                clearTimeout(pushTimer);
+                pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
                 knockbackEnemy(currentEnemySprite, 0, 0);
                 cameraShake = 0.06;
             }
+            var hitEffect = document.getElementById('hit-effect');
+            var hitEffectImg = document.getElementById('hit-effect-img');
+            if (hitEffect && hitEffectImg && currentEnemySprite) {
+                hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                var screenPos = currentEnemySprite.position.clone();
+                screenPos.y += 0.1;
+                screenPos.project(battleCamera);
+                var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                var side = Math.random() < 0.5 ? -1 : 1;
+                hitEffect.style.left = (x + side * 120) + 'px';
+                hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
+                hitEffect.style.display = 'block';
+                setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
+            }
             if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+
             if (enemyStunned > 0) { updateHeroSpheres(); return; }
+
             var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
-            if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
-            if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp; document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
-            p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay();
+            if (p.talents) {
+                if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking']));
+                if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness']));
+            }
+            if (p.talents && p.talents['ricochet'] > 0) {
+                if (Math.random() < 0.45) {
+                    currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg);
+                    if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+                    document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+                    document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+                    showCenterText('РИКОШЕТ!', '#a020f0');
+                    if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+                    return;
+                }
+            }
+
+            p.stats.hp = Math.max(0, p.stats.hp - edmg);
+            addFilth(FILTH_HIT_AMOUNT);
+            if (parent.UI.updateDisplay) parent.UI.updateDisplay();
+            updateHeroSpheres();
+            showBloodOverlay();
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showDeathVideoAndLose(); }
         }
 
+        // ============================================================
+        //  HP-БАР ВРАГА (в сцене боя)
+        // ============================================================
         function updateMobHpBar() {
-            if (!isBattleActive || !currentEnemySprite) return; var worldPos = currentEnemySprite.position.clone(); worldPos.y += 0.55; worldPos.project(activeCamera);
-            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth; var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-            document.getElementById('mob-hp').style.left = x + 'px'; document.getElementById('mob-hp').style.top = y + 'px';
+            if (!isBattleActive || !currentEnemySprite) return;
+            var worldPos = currentEnemySprite.position.clone();
+            worldPos.y += 0.55;
+            worldPos.project(battleCamera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            document.getElementById('mob-hp').style.left = x + 'px';
+            document.getElementById('mob-hp').style.top = y + 'px';
         }
 
-        const raycaster = new THREE.Raycaster(); const ndc = new THREE.Vector2();
-        var waypoints = []; var moving = false; const MOVE_SPEED = 2.0;
-        var pendingBattle = null, pendingLoot = null;
-
+        // ============================================================
+        //  КЛИК ПО СЦЕНЕ ЛАБИРИНТА
+        // ============================================================
         renderer.domElement.addEventListener('click', (e) => {
-            if (isBattleActive) { if (currentEnemySprite) attackEnemy(); return; }
-            ndc.x = (e.clientX / window.innerWidth) * 2 - 1; ndc.y = -(e.clientY / window.innerHeight) * 2 + 1; raycaster.setFromCamera(ndc, activeCamera);
+            if (isBattleActive) {
+                if (currentEnemySprite) attackEnemy();
+                return;
+            }
+            ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+            ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(ndc, camera);
 
             var candidates = [];
-            var bagMeshes = lootBags.filter(b => b.mesh.visible).map(b => b.mesh);
-            if (bagMeshes.length) { var bagHits = raycaster.intersectObjects(bagMeshes, false); if (bagHits.length) candidates.push({ dist: bagHits[0].distance, kind: 'bag', obj: bagHits[0].object }); }
-            var spriteMeshes = objects.filter(o => !o.collected && o.mesh && o.mesh.visible).map(o => o.mesh);
-            if (spriteMeshes.length) { var spriteHits = raycaster.intersectObjects(spriteMeshes, false); if (spriteHits.length) candidates.push({ dist: spriteHits[0].distance, kind: 'sprite', obj: spriteHits[0].object }); }
-            var exitHits = raycaster.intersectObject(exitDoor, false); if (exitHits.length) candidates.push({ dist: exitHits[0].distance, kind: 'exit' });
+            var exitHits = raycaster.intersectObject(exitDoor, false);
+            if (exitHits.length) candidates.push({ dist: exitHits[0].distance, kind: 'exit' });
+            var doorHits = raycaster.intersectObjects(doorLeaves.map(d => d.mesh), false);
+            if (doorHits.length) candidates.push({ dist: doorHits[0].distance, kind: 'door', obj: doorHits[0].object });
+            var bagMeshes = lootBags.map(b => b.mesh);
+            if (bagMeshes.length) {
+                var bagHits = raycaster.intersectObjects(bagMeshes, false);
+                if (bagHits.length) candidates.push({ dist: bagHits[0].distance, kind: 'bag', obj: bagHits[0].object });
+            }
+            var spriteMeshes = objects.filter(o => !o.collected && o.mesh).map(o => o.mesh);
+            if (spriteMeshes.length) {
+                var spriteHits = raycaster.intersectObjects(spriteMeshes, false);
+                if (spriteHits.length) candidates.push({ dist: spriteHits[0].distance, kind: 'sprite', obj: spriteHits[0].object });
+            }
 
             if (candidates.length > 0) {
                 candidates.sort(function(a, b) { return a.dist - b.dist; });
                 var best = candidates[0];
                 if (best.kind === 'exit') {
-                    if (best.dist < 4) { if (exitIsOpen) { winDungeon(); } else { showCenterText('Выход закрыт!', '#f44336'); } return; }
+                    if (best.dist < 8) {
+                        if (exitIsOpen) { winDungeon(); }
+                        else { if (parent.UI && parent.UI._showToast) parent.UI._showToast('Дверь закрыта! Убей всех врагов.'); }
+                        return;
+                    }
+                } else if (best.kind === 'door') {
+                    if (best.dist < 3) {
+                        var ud = best.obj.userData;
+                        if (ud.isDoor && openDoor(ud.doorGX, ud.doorGY)) return;
+                    }
                 } else if (best.kind === 'bag') {
                     if (best.dist < 8) {
                         var ud2 = best.obj.userData;
                         if (ud2 && ud2.objRef) {
                             var cur = worldToGrid(playerPos.x, playerPos.z);
-                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { return; }
-                            var pathB = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
-                            if (pathB.length > 0) { waypoints = pathB; moving = true; pendingBattle = null; pendingLoot = { type: 'bag', bag: ud2.objRef }; startSteps(); }
+                            var dist = Math.abs(cur.gx - ud2.gx) + Math.abs(cur.gy - ud2.gy);
+                            if (dist <= 1) { openLootBag(ud2.objRef); }
+                            else {
+                                var path = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
+                                if (path.length > 0) { waypoints = path; moving = true; startSteps(); }
+                            }
                             return;
                         }
                     }
@@ -800,177 +1765,270 @@
                     if (best.dist < 8) {
                         var ud3 = best.obj.userData;
                         if (ud3) {
-                            var curS = worldToGrid(playerPos.x, playerPos.z);
-                            if (ud3.type === 'enemy') {
-                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { startBattle(ud3.objRef); return; }
-                                var pathE = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
-                                if (pathE.length > 0) { waypoints = pathE; moving = true; pendingBattle = ud3.objRef; pendingLoot = null; startSteps(); }
-                                return;
-                            }
+                            if (ud3.type === 'enemy') { ud3.objRef.attacking = true; startBattle(ud3.objRef); return; }
                             if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
-                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; }
-                                var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
-                                if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
+                                const ccur = worldToGrid(playerPos.x, playerPos.z);
+                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY);
+                                if (d <= 1) { applyLootEffect(ud3.objRef); }
+                                else {
+                                    const path = buildPath(ccur.gx, ccur.gy, ud3.gridX, ud3.gridY);
+                                    if (path.length > 0) { waypoints = path; moving = true; pendingLoot = ud3.objRef; startSteps(); }
+                                }
                                 return;
                             }
                         }
                     }
                 }
             }
-
-            var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
-            var hits = raycaster.intersectObjects(allMeshes, false);
-            if (hits.length > 0) {
-                var hitObj = hits[0].object; var tile = tileMeshes.find(t => t.x === hitObj.userData.gridX && t.y === hitObj.userData.gridY);
-                if (!tile) return;
-                var dist = Math.abs(playerGX - tile.x) + Math.abs(playerGY - tile.y);
-
-                if (tile.isWall) return;
-
-                if (!tile.opened) {
-                    if (dist === 1) {
-                        tile.opened = true;
-                        tile.mesh.visible = false;
-                        if (tile.floorMesh) tile.floorMesh.visible = true;
-                        playSound(soundAltar);
-                        updateFog();
-                    }
-                    return;
-                }
-
-                var cur2 = worldToGrid(playerPos.x, playerPos.z);
-                if (tile.x === cur2.gx && tile.y === cur2.gy) return;
-
-                var enemyOnTile = null;
-                for (var i = 0; i < objects.length; i++) {
-                    if (objects[i].type === 'enemy' && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
-                        enemyOnTile = objects[i]; break;
-                    }
-                }
-                var lootOnTile = null;
-                for (var i = 0; i < objects.length; i++) {
-                    if (LOOT_TYPES.indexOf(objects[i].type) !== -1 && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
-                        lootOnTile = objects[i]; break;
-                    }
-                }
-                if (!lootOnTile) {
-                    for (var b = 0; b < lootBags.length; b++) {
-                        if (!lootBags[b].opened && lootBags[b].gx === tile.x && lootBags[b].gy === tile.y) {
-                            lootOnTile = { type: 'bag', bag: lootBags[b] }; break;
-                        }
-                    }
-                }
-
-                var path = buildPath(cur2.gx, cur2.gy, tile.x, tile.y);
-                if (path.length > 0) {
-                    waypoints = path;
-                    moving = true;
-                    pendingBattle = enemyOnTile || null;
-                    pendingLoot = lootOnTile || null;
-                    startSteps();
-                }
-            }
+            moveForward();
         });
 
+        // ============================================================
+        //  КНОПКА АТАКИ / ПОДБОРА
+        // ============================================================
         function updateLootButton() {
-            var iconImg = document.getElementById('attack-icon-img'); if (!iconImg) return;
+            var iconImg = document.getElementById('attack-icon-img');
+            if (!iconImg) return;
             if (isBattleActive) { iconImg.src = 'assets/assets2/talents/simple_attack.png'; return; }
-            var cur = worldToGrid(playerPos.x, playerPos.z); var nearLoot = false;
-
+            var nearLoot = null;
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
                 if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
-                if (o.used) continue;
-                var tile = tileMeshes[o.y * size + o.x];
-                if (!tile || !tile.opened) continue;
-                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; }
+                if (isLootInFront(o)) { nearLoot = o; break; }
             }
             if (!nearLoot) {
                 for (var b = 0; b < lootBags.length; b++) {
                     var bag = lootBags[b];
                     if (bag.opened) continue;
-                    var tile2 = tileMeshes[bag.gy * size + bag.gx];
-                    if (!tile2 || !tile2.opened) continue;
-                    if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; }
+                    if (isBagInFront(bag)) { nearLoot = { type: 'bag', bag: bag }; break; }
                 }
             }
-            if (!nearLoot && exitIsOpen) {
-                var tileE = tileMeshes[exitCell.gy * size + exitCell.gx];
-                if (tileE && tileE.opened && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) nearLoot = true;
-            }
-
-            if (!isBattleActive) {
-                document.getElementById('battle-controls').style.display = nearLoot ? 'flex' : 'none';
-                document.getElementById('attack-icon').style.display = nearLoot ? 'block' : 'none';
-            }
-            iconImg.src = nearLoot ? 'assets/assets2/icons/take.png' : 'assets/assets2/talents/simple_attack.png';
+            if (nearLoot) iconImg.src = 'assets/assets2/icons/take.png';
+            else iconImg.src = 'assets/assets2/talents/simple_attack.png';
         }
 
         document.getElementById('attack-icon').addEventListener('click', (e) => {
-            e.stopPropagation(); if (isBattleActive) { attackEnemy(); return; }
-            var cur = worldToGrid(playerPos.x, playerPos.z);
-            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } }
-            for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } }
-            if (exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) { winDungeon(); return; }
+            e.stopPropagation();
+            if (isBattleActive) { attackEnemy(); return; }
+            for (var i = 0; i < objects.length; i++) {
+                var o = objects[i];
+                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
+                if (isLootInFront(o)) { applyLootEffect(o); return; }
+            }
+            for (var b = 0; b < lootBags.length; b++) {
+                var bag = lootBags[b];
+                if (bag.opened) continue;
+                if (isBagInFront(bag)) { openLootBag(bag); return; }
+            }
         });
 
-        var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } };
+        // ============================================================
+        //  СКИЛЛЫ
+        // ============================================================
+        var talentData = {
+            'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 20000, name: 'Оглушение' },
+            'rage':     { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 25000, name: 'Ярость' },
+            'healing':  { icon: 'assets/assets2/talents/healing.png', side: 'right', cooldown: 8000, name: 'Лечение' }
+        };
         var skillCooldowns = {};
+
         function renderLearnedTalents() {
-            var row = document.getElementById('skills-row'); if (!row) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.talents) p.talents = {}; row.innerHTML = '';
+            var leftCol = document.getElementById('skills-left');
+            var rightCol = document.getElementById('skills-right');
+            if (!leftCol || !rightCol) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            if (!p.talents) p.talents = {};
+            leftCol.innerHTML = ''; rightCol.innerHTML = '';
+
             for (var id in talentData) {
-                var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
+                var img = document.createElement('img');
+                img.src = talentData[id].icon;
+                img.style.cssText = 'width:44px; height:44px; object-fit:contain;';
+                var lvl = (p.talents && p.talents[id]) ? p.talents[id] : 1;
+                img.title = talentData[id].name + ' (Ур. ' + lvl + ')';
+                img.dataset.skillId = id;
                 img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
-                row.appendChild(img);
+                (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
             }
         }
         setTimeout(renderLearnedTalents, 500);
 
         function useSkill(skillId) {
-            if (!isBattleActive || !currentEnemyStats) return; if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return; var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
-            if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 20000; }
-            else if (skillId === 'rage') { var f = getFilth(); if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; } if (!spendFilth(65)) return; rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
-            else if (skillId === 'healing') { if (!spendFilth(5)) return; var heal = 10; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
-            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown || 10000); }
+            if (!isBattleActive || !currentEnemyStats) return;
+            if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
+            if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            var p = parent.Sherwood.getPlayer();
+            if (!p) return;
+            var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
+            if (lvl <= 0) lvl = 1;
+
+            if (skillId === 'stunning') {
+                if (!spendFilth(20)) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Мало скверны! Нужно 20%');
+                    return;
+                }
+                enemyStunned = 10;
+                showCenterText('ОГЛУШЕНИЕ! 10 сек', '#ffd700');
+                playSound(soundAltar);
+                skillCooldowns[skillId] = Date.now() + 20000;
+                var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, 20000); }
+                return;
+            }
+
+            if (skillId === 'rage') {
+                var f = getFilth();
+                if (f.cur < f.max) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Ярость только на полной сфере!');
+                    return;
+                }
+                if (!spendFilth(65)) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Мало скверны!');
+                    return;
+                }
+                rageCharges = 3;
+                showCenterText('ЯРОСТЬ! 3 удара +20%', '#ff4400');
+                playSound(soundHit);
+                skillCooldowns[skillId] = Date.now() + 25000;
+                var icon2 = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon2) { icon2.classList.add('on-cooldown'); setTimeout(function() { icon2.classList.remove('on-cooldown'); }, 25000); }
+                return;
+            }
+
+            if (skillId === 'healing') {
+                var filthCost = 5 * lvl;
+                if (!spendFilth(filthCost)) {
+                    if (parent.UI && parent.UI._showToast) parent.UI._showToast('Мало скверны! Нужно ' + filthCost + '%');
+                    return;
+                }
+                var heal = 10 * lvl;
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                showCenterText('+' + heal + ' HP', '#4caf50');
+                updateHeroSpheres();
+                playSound(soundAltar);
+                skillCooldowns[skillId] = Date.now() + 8000;
+                var icon3 = document.querySelector('img[data-skill-id="' + skillId + '"]');
+                if (icon3) { icon3.classList.add('on-cooldown'); setTimeout(function() { icon3.classList.remove('on-cooldown'); }, 8000); }
+                return;
+            }
         }
 
+        // ============================================================
+        //  ВРАГИ — ДВИЖЕНИЕ
+        // ============================================================
+        const ENEMY_SPEED = 0.55;
+        const ENEMY_AGGRO_RANGE = 5.0;
+        const ENEMY_STOP_DIST = 1.2;
+        const ENEMY_STEP_INTERVAL = 0.5;
+        const ENEMY_MAX_AGGRO = 2;
+
+        function updateEnemies(dt) {
+            if (isBattleActive) return;
+            var alreadyChasing = 0;
+            for (var ci = 0; ci < objects.length; ci++) {
+                var ce = objects[ci];
+                if (ce.type === 'enemy' && !ce.collected && !ce.attacking && ce._chasing) alreadyChasing++;
+            }
+            objects.forEach(function(obj) {
+                if (obj.collected || obj.type !== 'enemy' || !obj.mesh) return;
+                if (obj.attacking) return;
+                var ex = obj.mesh.position.x, ez = obj.mesh.position.z;
+                var dx = playerPos.x - ex, dz = playerPos.z - ez;
+                var dist = Math.hypot(dx, dz);
+                if (dist > ENEMY_AGGRO_RANGE) { obj.stepTimer = 0; obj._chasing = false; return; }
+                if (!obj._chasing && alreadyChasing >= ENEMY_MAX_AGGRO) { obj.stepTimer = 0; return; }
+                if (!obj._chasing) { obj._chasing = true; alreadyChasing++; }
+                if (dist < ENEMY_STOP_DIST) { obj.stepTimer = 0; return; }
+                obj.stepTimer = (obj.stepTimer || 0) + dt;
+                if (obj.stepTimer < ENEMY_STEP_INTERVAL) return;
+                obj.stepTimer = 0;
+                var step = ENEMY_SPEED * ENEMY_STEP_INTERVAL;
+                var nx = ex + (dx / dist) * step;
+                var nz = ez + (dz / dist) * step;
+                var g = worldToGrid(nx, nz);
+                if (isWalkable(g.gx, g.gy) && !isEnemyAt(g.gx, g.gy)) {
+                    obj.mesh.position.x = nx; obj.mesh.position.z = nz;
+                    obj.x = g.gx; obj.y = g.gy;
+                } else {
+                    var gxOnly = worldToGrid(nx, ez);
+                    var gzOnly = worldToGrid(ex, nz);
+                    if (isWalkable(gxOnly.gx, gxOnly.gy) && !isEnemyAt(gxOnly.gx, gxOnly.gy)) {
+                        obj.mesh.position.x = nx; obj.x = gxOnly.gx; obj.y = gxOnly.gy;
+                    } else if (isWalkable(gzOnly.gx, gzOnly.gy) && !isEnemyAt(gzOnly.gx, gzOnly.gy)) {
+                        obj.mesh.position.z = nz; obj.x = gzOnly.gx; obj.y = gzOnly.gy;
+                    }
+                }
+            });
+        }
+
+        // ============================================================
+        //  КАМЕРА ЛАБИРИНТА
+        // ============================================================
         const clock = new THREE.Clock();
+
+        function updateCamera() {
+            camera.position.x = playerPos.x + (Math.random() - 0.5) * cameraShake;
+            camera.position.z = playerPos.z + (Math.random() - 0.5) * cameraShake;
+            camera.position.y = 0.75 + Math.sin(clock.elapsedTime * 10) * 0.012 * (moving ? 1 : 0) + (Math.random() - 0.5) * cameraShake;
+            camera.rotation.set(0, playerYaw, 0);
+            cameraShake *= 0.85;
+            if (cameraShake < 0.001) cameraShake = 0;
+        }
+        function syncPlayerGrid() {
+            const g = worldToGrid(playerPos.x, playerPos.z);
+            playerGX = g.gx; playerGY = g.gy;
+        }
+
+        // ============================================================
+        //  АНИМАЦИОННЫЙ ЦИКЛ
+        // ============================================================
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
+            const t = clock.elapsedTime;
 
             if (moving && waypoints.length && !isBattleActive) {
                 let budget = MOVE_SPEED * dt;
                 while (budget > 0 && waypoints.length) {
                     const tgt = waypoints[0];
-                    const dx = tgt.x - playerPos.x; const dz = tgt.z - playerPos.z; const dist = Math.hypot(dx, dz);
-                    if (dist <= budget) { playerPos.x = tgt.x; playerPos.z = tgt.z; budget -= dist; waypoints.shift(); }
-                    else { const nx = dx / dist, nz = dz / dist; playerPos.x += nx * budget; playerPos.z += nz * budget; budget = 0; }
+                    const dx = tgt.x - playerPos.x;
+                    const dz = tgt.z - playerPos.z;
+                    const dist = Math.hypot(dx, dz);
+                    if (dist <= budget) {
+                        playerPos.x = tgt.x; playerPos.z = tgt.z;
+                        budget -= dist; waypoints.shift();
+                    } else {
+                        const nx = dx / dist, nz = dz / dist;
+                        playerPos.x += nx * budget; playerPos.z += nz * budget;
+                        budget = 0;
+                    }
                 }
-                if (!waypoints.length) {
-                    moving = false; stopSteps(); syncPlayerGrid(); updateFog();
-                    if (pendingBattle) {
-                        var eObj = pendingBattle; pendingBattle = null;
-                        if (eObj && !eObj.collected) startBattle(eObj);
-                    }
+                if (!waypoints.length && !isBattleActive) {
+                    moving = false;
+                    stopSteps();
                     if (pendingLoot) {
-                        var L = pendingLoot; pendingLoot = null;
+                        var pp = pendingLoot;
+                        pendingLoot = null;
+                        var cg = worldToGrid(playerPos.x, playerPos.z);
+                        var dd = Math.abs(cg.gx - pp.x) + Math.abs(cg.gy - pp.y);
+                        if (dd <= 1) applyLootEffect(pp);
                     }
+                    checkObjects();
                 }
             }
 
             updateFilth(dt);
-            if (isBattleActive) updateMobHpBar();
+            updateEnemies(dt);
+            syncPlayerGrid();
             updateLootButton();
 
-            if (!isBattleActive) {
-                heroSprite.position.set(playerPos.x, 0.4, playerPos.z);
-            }
-
             if (enemyKnockback.active && enemyKnockback.sprite) {
-                enemyKnockback.t += dt; var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1); var ease = Math.sin(kk * Math.PI); var spr = enemyKnockback.sprite;
+                enemyKnockback.t += dt;
+                var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
+                var ease = Math.sin(kk * Math.PI);
+                var spr = enemyKnockback.sprite;
                 spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease;
                 spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
                 if (kk >= 1) {
@@ -981,73 +2039,234 @@
                 }
             }
 
+            heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
+            heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
+            for (const d of doorLeaves) {
+                if (d.open && d.t < 1) {
+                    d.t += dt / 0.45;
+                    const k = Math.min(d.t, 1);
+                    const e = k * k * (3 - 2 * k);
+                    d.mesh.position.y = d.closedY + (d.openY - d.closedY) * e;
+                    if (k >= 1) d.mesh.visible = false;
+                }
+            }
+            updateCamera();
+
+            // === Рендер сцены боя или лабиринта ===
             if (isBattleActive) {
-                camFPS.position.x = (Math.random() - 0.5) * cameraShake;
-                camFPS.position.z = (Math.random() - 0.5) * cameraShake;
-                camFPS.position.y = 0.55 + (Math.random() - 0.5) * cameraShake;
-                cameraShake *= 0.85; if (cameraShake < 0.001) cameraShake = 0;
+                if (cameraShake > 0) {
+                    battleCamera.position.x = (Math.random() - 0.5) * cameraShake;
+                    battleCamera.position.y = 0.6 + (Math.random() - 0.5) * cameraShake;
+                    battleCamera.lookAt(0, 0.5, 0);
+                } else {
+                    battleCamera.position.set(0, 0.6, 3.2);
+                    battleCamera.lookAt(0, 0.5, 0);
+                }
+                renderer.render(battleScene, battleCamera);
             } else {
-                camTop.position.x = playerPos.x; camTop.position.z = playerPos.z; camTop.position.y = 20; camTop.lookAt(playerPos.x, 0, playerPos.z);
+                renderer.render(scene, camera);
             }
 
-            renderer.render(scene, activeCamera);
+            if (isBattleActive) updateMobHpBar();
+            updateExplored();
+            drawMinimap();
         }
 
-        function syncPlayerGrid() { const g = worldToGrid(playerPos.x, playerPos.z); playerGX = g.gx; playerGY = g.gy; updateHighlights(); }
+        // ============================================================
+        //  МИНИКАРТА
+        // ============================================================
+        function drawMinimap() {
+            mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const idx = row * size + col;
+                    if (!explored[idx]) continue;
+                    let color = null;
+                    const v = map[row][col];
+                    if (v === 1) color = 'rgba(42,26,10,0.85)';
+                    else if (v === 2) color = 'rgba(139,90,43,0.9)';
+                    else if (v === 3) color = 'rgba(201,160,64,0.9)';
+                    else color = 'rgba(139,115,85,0.75)';
+                    mmCtx.fillStyle = color;
+                    mmCtx.fillRect(col * minimapCell, row * minimapCell, minimapCell, minimapCell);
+                }
+            }
+            mmCtx.fillStyle = 'rgba(255, 215, 0, 0.55)';
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    if (walked[row * size + col]) {
+                        mmCtx.beginPath();
+                        mmCtx.arc(col * minimapCell + minimapCell / 2, row * minimapCell + minimapCell / 2, minimapCell * 0.45, 0, Math.PI * 2);
+                        mmCtx.fill();
+                    }
+                }
+            }
+            var exitKnown = false;
+            for (var ddy = -1; ddy <= 1 && !exitKnown; ddy++) {
+                for (var ddx = -1; ddx <= 1 && !exitKnown; ddx++) {
+                    var gx = exitCell.gx + ddx, gy = exitCell.gy + ddy;
+                    if (gx < 0 || gy < 0 || gx >= size || gy >= size) continue;
+                    if (explored[gy * size + gx]) exitKnown = true;
+                }
+            }
+            if (exitKnown) {
+                mmCtx.fillStyle = exitIsOpen ? '#4caf50' : '#c0392b';
+                mmCtx.fillRect(exitCell.gx * minimapCell + 2, exitCell.gy * minimapCell + 2, minimapCell - 4, minimapCell - 4);
+                mmCtx.strokeStyle = '#000';
+                mmCtx.lineWidth = 1;
+                mmCtx.strokeRect(exitCell.gx * minimapCell + 2, exitCell.gy * minimapCell + 2, minimapCell - 4, minimapCell - 4);
+            }
+            const pg = worldToGrid(playerPos.x, playerPos.z);
+            mmCtx.fillStyle = '#ffd700';
+            mmCtx.beginPath();
+            mmCtx.arc(pg.gx * minimapCell + minimapCell/2, pg.gy * minimapCell + minimapCell/2, minimapCell * 1.2, 0, Math.PI * 2);
+            mmCtx.fill();
+            const cx = pg.gx * minimapCell + minimapCell/2;
+            const cy = pg.gy * minimapCell + minimapCell/2;
+            const len = minimapCell * 3;
+            const dx = -Math.sin(playerYaw) * len;
+            const dy = -Math.cos(playerYaw) * len;
+            mmCtx.strokeStyle = '#ffd700';
+            mmCtx.lineWidth = 2;
+            mmCtx.beginPath();
+            mmCtx.moveTo(cx, cy);
+            mmCtx.lineTo(cx + dx, cy + dy);
+            mmCtx.stroke();
+        }
 
-        updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
+        // ============================================================
+        //  ТУМАН ВОЙНЫ
+        // ============================================================
+        function updateExplored() {
+            const pg = worldToGrid(playerPos.x, playerPos.z);
+            const R = 3;
+            for (let dy = -R; dy <= R; dy++) {
+                for (let dx = -R; dx <= R; dx++) {
+                    const gx = pg.gx + dx;
+                    const gy = pg.gy + dy;
+                    if (gx < 0 || gy < 0 || gx >= size || gy >= size) continue;
+                    if (dx*dx + dy*dy > R*R) continue;
+                    explored[gy * size + gx] = 1;
+                }
+            }
+            if (pg.gx >= 0 && pg.gy >= 0 && pg.gx < size && pg.gy < size) {
+                walked[pg.gy * size + pg.gx] = 1;
+            }
+        }
 
-        addEventListener('resize', () => {
-            const aspect = window.innerWidth / window.innerHeight;
-            camTop.left = -viewSize * aspect / 2; camTop.right = viewSize * aspect / 2; camTop.top = viewSize / 2; camTop.bottom = -viewSize / 2;
-            camTop.updateProjectionMatrix();
-            camFPS.aspect = aspect; camFPS.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        // ============================================================
+        //  ПОБЕДА
+        // ============================================================
+        function grantCupBoth(floor, diff) {
+            try {
+                if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, floor, diff);
+                if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(floor, diff);
+            } catch(e) {}
+        }
 
         function winDungeon() {
+            stopSteps();
+            playSound(soundVictory);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
+            grantCupBoth(currentFloor, currentDiff);
+
             try {
                 if (parent.Sherwood && parent.Sherwood.getPlayer) {
-                    var pW = parent.Sherwood.getPlayer();
-                    if (pW && pW.stats) {
-                        pW.stats.hp = pW.stats.maxHp;
-                        pW.stats.filth = 0;
-                        filthFullSince = 0;
-                        filthDamageTimer = 0;
-                        if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
-                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+                    var p = parent.Sherwood.getPlayer();
+                    if (p) {
+                        if (!p.resources) p.resources = {};
+                        p.resources.arrows = playerArrows;
                     }
                 }
             } catch(e) {}
 
-            stopSteps(); playSound(soundVictory); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            try { if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, currentFloor, currentDiff); if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(currentFloor, currentDiff); } catch(e) {}
-            if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows; } }
-            try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { parent.Sherwood.Bestiary.registerKill(currentPool.boss); } } catch(e) {}
-            var rewards = { cupEarned: true, exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp, gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold, silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver, items: [] };
-            try { if (parent.UI && parent.UI._showVictoryScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showVictoryScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
+            try {
+                if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
+                    var bossFile = currentPool.boss;
+                    if (bossFile) parent.Sherwood.Bestiary.registerKill(bossFile);
+                }
+            } catch(e) {}
+
+            var rewardItems = [];
+            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
+            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
+
+            var rewards = {
+                cupEarned: true,
+                exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp,
+                gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold,
+                silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver,
+                items: rewardItems
+            };
+            try {
+                if (parent.UI && parent.UI._showVictoryScreen) {
+                    parent.UI._lastPortal = null;
+                    parent.UI._lastDungeon = currentDungeon;
+                    parent.UI._afterRewardAction = function() {
+                        try {
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                            else if (parent.UI.dungeon) parent.UI.dungeon();
+                        } catch(e) { exitDungeon(); }
+                    };
+                    parent.UI._showVictoryScreen(rewards);
+                } else { exitDungeon(); }
+            } catch(e) { exitDungeon(); }
         }
         window.winDungeon = winDungeon;
 
+        // ============================================================
+        //  ПОРАЖЕНИЕ (после видео)
+        // ============================================================
         function loseDungeon() {
-            try {
-                if (parent.Sherwood && parent.Sherwood.getPlayer) {
-                    var pL = parent.Sherwood.getPlayer();
-                    if (pL && pL.stats) {
-                        pL.stats.hp = pL.stats.maxHp;
-                        pL.stats.filth = 0;
-                        filthFullSince = 0;
-                        filthDamageTimer = 0;
-                        if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
-                        if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
-                    }
-                }
-            } catch(e) {}
+            stopSteps();
+            playSound(soundDefeat);
+            try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
 
-            stopSteps(); playSound(soundDefeat); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
-            var rewards = { exp: 50 + runLoot.exp, gold: runLoot.gold, silver: 20 + runLoot.silver, items: [] };
-            try { if (parent.UI && parent.UI._showDefeatScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showDefeatScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
+            var rewardItems = [];
+            if (runLoot.skins > 0)           rewardItems.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкуры', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0)  rewardItems.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Амулетные таблички', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0)    rewardItems.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Кольцевые таблички', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0)    rewardItems.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Таблички внешности', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0)   rewardItems.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертежи шкур', quantity: runLoot.skinDrawings });
+            if (runLoot.portalToken1 > 0)   rewardItems.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токены портала', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) rewardItems.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветви тиса', quantity: runLoot.branchDamnedYew });
+
+            var rewards = { exp: 50 + runLoot.exp, gold: 0 + runLoot.gold, silver: 20 + runLoot.silver, items: rewardItems };
+            try {
+                if (parent.UI && parent.UI._showDefeatScreen) {
+                    parent.UI._lastPortal = null;
+                    parent.UI._lastDungeon = currentDungeon;
+                    parent.UI._afterRewardAction = function() {
+                        try {
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon);
+                            else if (parent.UI.dungeon) parent.UI.dungeon();
+                        } catch(e) { exitDungeon(); }
+                    };
+                    parent.UI._showDefeatScreen(rewards);
+                } else { exitDungeon(); }
+            } catch(e) { exitDungeon(); }
         }
+
+        // ============================================================
+        //  ЗАПУСК
+        // ============================================================
+        animate();
+        setTimeout(checkObjects, 800);
+        setTimeout(updateArrowCounter, 900);
+
+        addEventListener('resize', () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = aspect;
+            camera.updateProjectionMatrix();
+            battleCamera.aspect = aspect;
+            battleCamera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
