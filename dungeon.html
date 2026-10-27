@@ -413,10 +413,11 @@
                 depthTest: false,
                 depthWrite: false
             }));
-            var scale = (obj.type === 'enemy') ? 1.05 : 0.42;
-            sprite.center.set(0.5, 0);                          // FIX: низ спрайта в точке позиции (как в платформере)
-            sprite.scale.set(scale, scale, 1);
-            sprite.position.set(x, scale / 2, z);
+            // Увеличиваем врагов в лабиринте (1.4 вместо 1.05) и центрируем по клетке
+var scale = (obj.type === 'enemy') ? 1.4 : 0.42;
+sprite.center.set(0.5, 0.5); // Центр спрайта
+sprite.scale.set(scale, scale, 1);
+sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, чтобы не тонул в полу
             sprite.renderOrder = (obj.type === 'enemy') ? 1 : 0;
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
@@ -564,9 +565,11 @@
                     if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
                     battleRoom.add(currentEnemySprite);
                     // FIX: центр спрайта в середине (как в платформере при входе в бой)
-                    currentEnemySprite.center.set(0.5, 0.5);
-                    var sy = currentEnemySprite.scale.y;
-                    currentEnemySprite.position.set(0, sy / 2, 0);
+                    // В бою враг должен быть огромным (1.4 * 2.5 = 3.5)
+var battleScale = 3.5; 
+currentEnemySprite.scale.set(battleScale, battleScale, 1);
+currentEnemySprite.center.set(0.5, 0.5);
+currentEnemySprite.position.set(0, battleScale / 2, 0); // Ставим ровно по центру
                     currentEnemySprite.material.depthTest = false;
                     currentEnemySprite.material.depthWrite = false;
                     currentEnemySprite.renderOrder = 10;
@@ -589,9 +592,11 @@
                     currentEnemyObj.mesh.renderOrder = 0;
                     group.add(currentEnemyObj.mesh);
                     // FIX: вернуть "низ в точке позиции" (как в платформере)
-                    currentEnemyObj.mesh.center.set(0.5, 0);
-                    var sy2 = currentEnemyObj.mesh.scale.y;
-                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, sy2 / 2, currentEnemyObj.y - center);
+                    var returnScale = 1.4;
+currentEnemyObj.mesh.scale.set(returnScale, returnScale, 1);
+currentEnemyObj.mesh.center.set(0.5, 0.5);
+var wPos = gridToWorld(currentEnemyObj.x, currentEnemyObj.y);
+currentEnemyObj.mesh.position.set(wPos.x, returnScale / 2 + 0.1, wPos.z);
                 }
 
                 activeCamera = camTop;
@@ -703,7 +708,7 @@
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = new THREE.Vector3();
             currentEnemySprite.getWorldPosition(worldPos);
-            worldPos.y += currentEnemySprite.scale.y / 2 + 0.15;
+            worldPos.y += currentEnemySprite.scale.y / 2 + 0.5; 
             worldPos.project(activeCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
