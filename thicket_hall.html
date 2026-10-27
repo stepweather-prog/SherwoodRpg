@@ -34,7 +34,7 @@
         /* Боевые контролы (Кнопка удара + Скиллы) */
         #battle-controls {
             position: absolute;
-            bottom: 30px;
+            bottom: 30px; /* Чуть выше низа */
             left: 50%;
             transform: translateX(-50%);
             display: none;
@@ -46,18 +46,18 @@
         
         #attack-icon { 
             position: relative;
-            width: 90px; 
-            height: 90px; 
+            width: 120px; /* ЕЩЕ КРУПНЕЕ */
+            height: 120px; 
             cursor: pointer; 
             pointer-events: auto;
-            bottom: 100px; /* Подняли кнопку */
+            bottom: 150px; /* ЕЩЕ ВЫШЕ */
         }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
         #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 24px; }
         
-        .skills-row { display: flex; gap: 15px; justify-content: center; margin-top: -90px; /* Поднимаем скиллы под кнопку */ }
-        #skills-left, #skills-right { display: flex; gap: 15px; justify-content: center; }
+        .skills-row { display: flex; gap: 20px; justify-content: center; margin-top: -120px; /* Поднимаем скиллы под кнопку */ }
+        #skills-left, #skills-right { display: flex; gap: 20px; justify-content: center; }
         
         .skill-btn { 
             cursor: pointer; 
@@ -65,8 +65,8 @@
             border: 3px solid rgba(200, 160, 80, 0.8); 
             background: rgba(0, 0, 0, 0.6); 
             padding: 3px; 
-            width: 65px; 
-            height: 65px; 
+            width: 80px; /* ЕЩЕ КРУПНЕЕ */
+            height: 80px; 
             object-fit: contain; 
             transition: all 0.2s;
         }
@@ -92,9 +92,9 @@
             #mob-hp-name { font-size: 13px; top: -12px; }
             #hit-effect-img { width: 130px; height: 130px; }
             #battle-controls { bottom: 10px; gap: 10px; }
-            #attack-icon { width: 75px; height: 75px; bottom: 80px; }
-            .skill-btn { width: 55px; height: 55px; }
-            .skills-row, #skills-left, #skills-right { gap: 10px; margin-top: -70px; }
+            #attack-icon { width: 100px; height: 100px; bottom: 120px; }
+            .skill-btn { width: 70px; height: 70px; }
+            .skills-row, #skills-left, #skills-right { gap: 15px; margin-top: -100px; }
         }
     </style>
 </head>
