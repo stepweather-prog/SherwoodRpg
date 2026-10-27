@@ -306,7 +306,7 @@
         const bgGeometry = new THREE.PlaneGeometry(30, 20); // Пропорции 3 к 2 (как у тайлов)
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, 4, -10); // Высоко и далеко
+                bgMesh.position.set(0, 0, -10);
         battleScene.add(bgMesh);
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
