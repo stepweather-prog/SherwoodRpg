@@ -50,12 +50,12 @@
         #btn-left  { top: 35px; left: 0; }
         #btn-right { top: 35px; left: 70px; }
 
-        /* Фон боевой комнаты */
+        /* Фон боевой комнаты — swamp_tiles_6.png */
         #battle-bg {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: url('assets/assets2/Sherwood_Square/walls_quest.png') center center / cover no-repeat;
+            background: url('assets/assets2/dungeon_details/swamp_tiles_6.png') center center / cover no-repeat;
             z-index: 0;
             pointer-events: none;
             display: none;
@@ -162,7 +162,6 @@
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
         var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
-        var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var thicketMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
         thicketMusic.loop = true; thicketMusic.volume = 0.4;
 
@@ -290,7 +289,7 @@
         platformerGroup.add(startDoor);
 
         // ============================================================
-        //  БОЕВАЯ КОМНАТА (как в портале — фон + прозрачный canvas)
+        //  БОЕВАЯ КОМНАТА (фон + прозрачный canvas)
         // ============================================================
         var battleBg = document.getElementById('battle-bg');
 
@@ -629,7 +628,9 @@
                 addFilth(FILTH_HIT_AMOUNT);
                 if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
-                showBloodOverlay();
+                showBloodOverlay();        // <-- Кровь на экране
+                showHeroHitFlash();        // <-- Вспышка/эффект удара по герою
+                cameraShake = 0.12;        // <-- Тряска камеры
                 if (pp.stats.hp <= 0) { stopBattle(); onDefeat(); }
             }, 1000);
         }
@@ -754,6 +755,8 @@
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
             updateHeroSpheres();
             showBloodOverlay();
+            showHeroHitFlash();        // <-- Эффект удара по герою (и при ответном ударе)
+            cameraShake = 0.12;
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
 
@@ -766,6 +769,21 @@
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
             document.getElementById('mob-hp').style.left = x + 'px';
             document.getElementById('mob-hp').style.top = y + 'px';
+        }
+
+        // Эффект удара по герою: вспышка на весь экран (красная)
+        var heroHitFlashEl = document.createElement('div');
+        heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
+        document.body.appendChild(heroHitFlashEl);
+        var heroHitFlashTimer = null;
+        function showHeroHitFlash() {
+            heroHitFlashEl.style.transition = 'opacity 0.05s ease-out';
+            heroHitFlashEl.style.opacity = '1';
+            clearTimeout(heroHitFlashTimer);
+            heroHitFlashTimer = setTimeout(function() {
+                heroHitFlashEl.style.transition = 'opacity 0.25s ease-out';
+                heroHitFlashEl.style.opacity = '0';
+            }, 100);
         }
 
         // Скиллы
@@ -803,7 +821,7 @@
                 if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; }
                 enemyStunned = 10;
                 showCenterText('ОГЛУШЕНИЕ! 10 сек', '#ffd700');
-                playSound(soundAltar);
+                // БЕЗ звука алтаря
                 skillCooldowns[skillId] = Date.now() + 20000;
             } else if (skillId === 'rage') {
                 if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; }
@@ -817,7 +835,7 @@
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
                 showCenterText('+' + heal + ' HP', '#4caf50');
                 updateHeroSpheres();
-                playSound(soundAltar);
+                // БЕЗ звука алтаря
                 skillCooldowns[skillId] = Date.now() + 8000;
             }
             var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
@@ -904,7 +922,6 @@
                 renderer.render(scene, camPlatformer);
             } else {
                 updateTimers(dt);
-                // Камера-тряска
                 if (cameraShake > 0.001) {
                     battleCamera.position.x = (Math.random() - 0.5) * cameraShake;
                     battleCamera.position.y = 0.55 + (Math.random() - 0.5) * cameraShake;
