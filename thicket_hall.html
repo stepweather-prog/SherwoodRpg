@@ -44,16 +44,17 @@
             z-index: 45;
         }
         
-                  /* Кнопка удара — ровно 85x85, рамка на картинке */
+        /* Кнопка удара — 85x85 */
         #attack-icon { 
             position: relative;
             width: 85px; 
             height: 85px; 
             cursor: pointer; 
             pointer-events: auto;
-            padding: 0;   /* Убрали */
-            border: none; /* Убрали */
+            padding: 0;
+            border: none;
             background: none;
+            flex-shrink: 0;
         }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { 
@@ -65,7 +66,7 @@
             background: rgba(0, 0, 0, 0.6); 
             padding: 3px;
             transition: all 0.2s;
-            display: block; /* Убирает лишние отступы снизу */
+            display: block;
         }
         #attack-icon img:hover {
             transform: scale(1.1); 
@@ -78,7 +79,7 @@
             color: #ff5555; font-weight: bold; font-size: 20px; 
         }
 
-        /* Скиллы — ровно 85x85, рамка на картинке */
+        /* Скиллы — ровно 85x85 */
         .skill-btn { 
             cursor: pointer; 
             border-radius: 8px; 
@@ -90,9 +91,20 @@
             object-fit: contain; 
             transition: all 0.2s;
             display: block;
+            flex-shrink: 0;
         }
         .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+
+        /* Горизонтальный ряд скиллов под кнопкой удара */
+        #skills-row {
+            display: none;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: nowrap;
+        }
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         
@@ -116,7 +128,7 @@
             #battle-controls { bottom: 100px; gap: 10px; }
             #attack-icon { width: 70px; height: 70px; }
             .skill-btn { width: 70px; height: 70px; }
-            .skills-row, #skills-left, #skills-right { gap: 10px; }
+            #skills-row { gap: 10px; }
         }
     </style>
 </head>
@@ -139,11 +151,8 @@
             <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
             <div id="attack-cooldown-overlay">0.0s</div>
         </div>
-        <!-- Скиллы СНИЗУ -->
-        <div class="skills-row">
-            <div id="skills-left"></div>
-            <div id="skills-right"></div>
-        </div>
+        <!-- Скиллы СНИЗУ — горизонтально -->
+        <div id="skills-row"></div>
     </div>
 
     <div id="hero-life">
@@ -610,8 +619,8 @@
                 document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('joystick').style.display = 'none';
                 
-                document.getElementById('skills-left').style.display = 'flex';
-                document.getElementById('skills-right').style.display = 'flex';
+                // Показываем горизонтальный ряд скиллов
+                document.getElementById('skills-row').style.display = 'flex';
             } else {
                 renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
@@ -623,8 +632,8 @@
                 document.getElementById('battle-controls').style.display = 'none';
                 document.getElementById('joystick').style.display = 'block';
                 
-                document.getElementById('skills-left').style.display = 'none';
-                document.getElementById('skills-right').style.display = 'none';
+                // Скрываем горизонтальный ряд скиллов
+                document.getElementById('skills-row').style.display = 'none';
             }
         }
 
@@ -821,25 +830,26 @@
         }
 
         var talentData = {
-            'stunning': { icon: 'assets/assets2/talents/stunning.png', side: 'left', cooldown: 20000, name: 'Оглушение' },
-            'rage':     { icon: 'assets/assets2/talents/Riot.png', side: 'left', cooldown: 25000, name: 'Ярость' },
-            'healing':  { icon: 'assets/assets2/talents/healing.png', side: 'right', cooldown: 8000, name: 'Лечение' }
+            'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' },
+            'rage':     { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' },
+            'healing':  { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' }
         };
         var skillCooldowns = {};
 
+        // Отрисовка скиллов в горизонтальный ряд
         function renderLearnedTalents() {
-            var leftCol = document.getElementById('skills-left'), rightCol = document.getElementById('skills-right');
-            if (!leftCol || !rightCol) return;
+            var row = document.getElementById('skills-row');
+            if (!row) return;
             var p = parent.Sherwood.getPlayer(); if (!p) return;
             if (!p.talents) p.talents = {};
-            leftCol.innerHTML = ''; rightCol.innerHTML = '';
+            row.innerHTML = '';
             for (var id in talentData) {
                 var img = document.createElement('img');
                 img.src = talentData[id].icon;
                 img.className = 'skill-btn';
                 img.dataset.skillId = id;
                 img.onclick = (function(sid){ return function(){ useSkill(sid); }; })(id);
-                (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
+                row.appendChild(img);
             }
         }
         setTimeout(renderLearnedTalents, 500);
@@ -870,7 +880,7 @@
                 skillCooldowns[skillId] = Date.now() + 8000;
             }
             var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
-            if (icon) { icon.classList.add('on-cooldown'); setTimeout(function(){ icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown); }
+            if (icon) { icon.classList.add('on-cooldown'); setTimeout(function(){ icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown || 10000); }
         }
 
         function checkInteraction() {
