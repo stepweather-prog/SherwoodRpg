@@ -30,17 +30,53 @@
 
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
+
+        /* Боевые контролы (Кнопка удара + Скиллы) */
+        #battle-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 45;
+        }
         
-        #attack-icon { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; z-index: 40; cursor: pointer; display: none; background: rgba(0,0,0,0.6); border-radius: 50%; border: 2px solid #c8a050; padding: 5px; box-shadow: 0 0 15px rgba(200, 160, 80, 0.5); transition: transform 0.1s; }
-        #attack-icon:active { transform: translateX(-50%) scale(0.9); }
+        #attack-icon { 
+            position: relative;
+            width: 90px; 
+            height: 90px; 
+            cursor: pointer; 
+            background: rgba(0,0,0,0.6); 
+            border-radius: 50%; 
+            border: 3px solid #c8a050; 
+            padding: 8px; 
+            box-shadow: 0 0 20px rgba(200, 160, 80, 0.6); 
+            transition: transform 0.1s; 
+            pointer-events: auto;
+        }
+        #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
-        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 24px; }
         
-        #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: none; flex-direction: column; align-items: center; gap: 6px; z-index: 45; }
-        #skills-left { left: 10px; }
-        #skills-right { right: 10px; }
-        #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; width: 44px; height: 44px; object-fit: contain; }
-        #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        .skills-row { display: flex; gap: 15px; justify-content: center; }
+        #skills-left, #skills-right { display: flex; gap: 15px; justify-content: center; }
+        
+        .skill-btn { 
+            cursor: pointer; 
+            border-radius: 8px; 
+            border: 3px solid rgba(200, 160, 80, 0.8); 
+            background: rgba(0, 0, 0, 0.6); 
+            padding: 3px; 
+            width: 65px; 
+            height: 65px; 
+            object-fit: contain; 
+            transition: all 0.2s;
+        }
+        .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
+        .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         
@@ -52,7 +88,6 @@
         
         @media (max-width: 900px) {
             #joystick { display: block; }
-            #attack-icon { bottom: 80px; width: 55px; height: 55px; }
             #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
             #hero-life { left: 6px; }
             #hero-mana { right: 6px; }
@@ -60,9 +95,11 @@
             #mob-hp { width: 220px; height: 150px; }
             #mob-hp-text { font-size: 15px; }
             #mob-hp-name { font-size: 13px; top: -12px; }
-            #skills-left, #skills-right { bottom: 100px; width: 60px; }
-            #skills-left img, #skills-right img { width: 34px; height: 34px; }
             #hit-effect-img { width: 130px; height: 130px; }
+            #battle-controls { bottom: 20px; gap: 10px; }
+            #attack-icon { width: 75px; height: 75px; }
+            .skill-btn { width: 55px; height: 55px; }
+            .skills-row, #skills-left, #skills-right { gap: 10px; }
         }
     </style>
 </head>
@@ -78,22 +115,27 @@
     </div>
     
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
-    <div id="skills-left"></div>
+    
+    <div id="battle-controls">
+        <div id="attack-icon">
+            <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
+            <div id="attack-cooldown-overlay">0.0s</div>
+        </div>
+        <div class="skills-row">
+            <div id="skills-left"></div>
+            <div id="skills-right"></div>
+        </div>
+    </div>
+
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
-    <div id="skills-right"></div>
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">Скверна: 0%</span>
-    </div>
-    
-    <div id="attack-icon">
-        <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
-        <div id="attack-cooldown-overlay">0.0s</div>
     </div>
     
     <div id="joystick">
@@ -192,7 +234,6 @@
         ];
         var boT1 = null, boT2 = null;
 
-        // Эффект удара по герою
         var heroHitFlashEl = document.createElement('div');
         heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
         document.body.appendChild(heroHitFlashEl);
@@ -297,17 +338,24 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-         // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ)
+        // ФОН БОЯ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ)
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
         bgTexture.wrapS = THREE.RepeatWrapping;
         bgTexture.wrapT = THREE.RepeatWrapping;
-        bgTexture.repeat.set(3, 2); // 3 плитки по ширине, 2 по высоте
+        bgTexture.repeat.set(3, 2); 
 
-        const bgGeometry = new THREE.PlaneGeometry(30, 20); // Пропорции 3 к 2 (как у тайлов)
+        const bgGeometry = new THREE.PlaneGeometry(30, 20); 
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-                bgMesh.position.set(0, 0, -10);
+        bgMesh.position.set(0, -2, -10); // Опустили ниже, чтобы закрыть пол
         battleScene.add(bgMesh);
+
+        battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        var bKeyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
+        bKeyLight.position.set(2, 4, 3);
+        battleScene.add(bKeyLight);
+        var bFillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
+        battleScene.add(bFillLight);
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
         var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
@@ -540,9 +588,7 @@
                     currentEnemySprite.position.set(0, currentEnemySprite.scale.y / 2, 0);
                 }
                 document.getElementById('crosshair').style.display = 'block';
-                document.getElementById('attack-icon').style.display = 'block';
-                document.getElementById('skills-left').style.display = 'flex';
-                document.getElementById('skills-right').style.display = 'flex';
+                document.getElementById('battle-controls').style.display = 'flex';
             } else {
                 renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
@@ -551,8 +597,7 @@
                     currentEnemyObj.mesh.position.set(currentEnemyObj.x, 0, 0.8);
                 }
                 document.getElementById('crosshair').style.display = 'none';
-                document.getElementById('skills-left').style.display = 'none';
-                document.getElementById('skills-right').style.display = 'none';
+                document.getElementById('battle-controls').style.display = 'none';
             }
         }
 
@@ -764,7 +809,7 @@
             for (var id in talentData) {
                 var img = document.createElement('img');
                 img.src = talentData[id].icon;
-                img.style.cssText = 'width:44px; height:44px; object-fit:contain;';
+                img.className = 'skill-btn';
                 img.dataset.skillId = id;
                 img.onclick = (function(sid){ return function(){ useSkill(sid); }; })(id);
                 (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
@@ -822,25 +867,33 @@
             overlay.style.display = 'none'; img.style.opacity = '1';
 
             if (enemyAlive && enemySprite && Math.abs(player.pos.x - enemyX) < 3.5) {
-                icon.style.display = 'block';
+                document.getElementById('battle-controls').style.display = 'flex'; // Показываем кнопки
                 icon.dataset.action = 'startBattle';
                 img.src = 'assets/assets2/talents/simple_attack.png';
+                // Скрываем скиллы в платформере
+                document.getElementById('skills-left').style.display = 'none';
+                document.getElementById('skills-right').style.display = 'none';
                 return;
             }
             if (!enemyAlive && chestSprite && Math.abs(player.pos.x - chestSprite.position.x) < 3.5) {
-                icon.style.display = 'block';
+                document.getElementById('battle-controls').style.display = 'flex';
                 icon.dataset.action = 'chest';
                 img.src = 'assets/assets2/icons/take.png';
+                document.getElementById('skills-left').style.display = 'none';
+                document.getElementById('skills-right').style.display = 'none';
                 return;
             }
             if (!enemyAlive && Math.abs(player.pos.x - exitDoor.position.x) < 3.5) {
-                icon.style.display = 'block';
+                document.getElementById('battle-controls').style.display = 'flex';
                 icon.dataset.action = 'exit';
                 img.src = 'assets/assets2/icons/take.png';
+                document.getElementById('skills-left').style.display = 'none';
+                document.getElementById('skills-right').style.display = 'none';
                 return;
             }
-            icon.style.display = 'none';
-            icon.dataset.action = '';
+            
+            // Если ничего нет рядом в платформере
+            document.getElementById('battle-controls').style.display = 'none';
         }
 
         document.getElementById('attack-icon').addEventListener('click', function(e) {
