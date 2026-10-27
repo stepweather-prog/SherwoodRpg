@@ -49,17 +49,6 @@
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
         #btn-left  { top: 35px; left: 0; }
         #btn-right { top: 35px; left: 70px; }
-
-        #battle-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: url('assets/assets2/dungeon_details/swamp_tiles_6.png') center center / cover no-repeat;
-            z-index: 0;
-            pointer-events: none;
-            display: none;
-        }
-        #battle-bg.active { display: block; }
         
         @media (max-width: 900px) {
             #joystick { display: block; }
@@ -78,7 +67,6 @@
     </style>
 </head>
 <body>
-    <div id="battle-bg"></div>
     <div id="crosshair">✚</div>
     <div id="blood-overlay"></div>
     
@@ -204,7 +192,7 @@
         ];
         var boT1 = null, boT2 = null;
 
-        // Эффект удара по герою: красная вспышка
+        // Эффект удара по герою
         var heroHitFlashEl = document.createElement('div');
         heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
         document.body.appendChild(heroHitFlashEl);
@@ -240,15 +228,10 @@
         camPlatformer.position.set(0, 2.5, 6);
         camPlatformer.lookAt(0, 0.5, 0);
 
-                // Основной рендерер (для платформера и боя)
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 1);
-        renderer.domElement.style.position = 'fixed';
-        renderer.domElement.style.top = '0';
-        renderer.domElement.style.left = '0';
-        renderer.domElement.style.zIndex = '1'; // Canvas ВЫШЕ фона
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
@@ -305,8 +288,7 @@
         startDoor.rotation.y = Math.PI / 2;
         platformerGroup.add(startDoor);
 
-        // Боевая комната (рендер в основной renderer, фон — div)
-        var battleBg = document.getElementById('battle-bg');
+        // Боевая комната
         const battleScene = new THREE.Scene();
         battleScene.background = null;
 
@@ -314,6 +296,14 @@
         battleCamera.position.set(0, 0.55, 3.6);
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
+
+        // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ
+        const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
+        const bgGeometry = new THREE.PlaneGeometry(20, 12);
+        const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
+        const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
+        bgMesh.position.set(0, 3, -6);
+        battleScene.add(bgMesh);
 
         battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
         var bKeyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
@@ -546,7 +536,6 @@
 
         function setBattleCamera(on) {
             if (on) {
-                battleBg.classList.add('active');
                 renderer.setClearColor(0x000000, 0);
                 if (currentEnemySprite) {
                     battleScene.add(currentEnemySprite);
@@ -558,7 +547,6 @@
                 document.getElementById('skills-left').style.display = 'flex';
                 document.getElementById('skills-right').style.display = 'flex';
             } else {
-                battleBg.classList.remove('active');
                 renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     platformerGroup.add(currentEnemyObj.mesh);
