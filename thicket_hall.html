@@ -44,7 +44,7 @@
             z-index: 45;
         }
         
-        /* Кнопка удара — 85x85 */
+        /* Кнопка удара — картинка сама является кнопкой, как .skill-btn */
         #attack-icon { 
             position: relative;
             width: 85px; 
@@ -58,8 +58,8 @@
         }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { 
-            width: 100%; 
-            height: 100%; 
+            width: 85px; 
+            height: 85px; 
             object-fit: contain; 
             border-radius: 8px; 
             border: 3px solid rgba(200, 160, 80, 0.8); 
@@ -67,6 +67,7 @@
             padding: 3px;
             transition: all 0.2s;
             display: block;
+            box-sizing: border-box;
         }
         #attack-icon img:hover {
             transform: scale(1.1); 
@@ -92,6 +93,7 @@
             transition: all 0.2s;
             display: block;
             flex-shrink: 0;
+            box-sizing: border-box;
         }
         .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
@@ -127,6 +129,7 @@
             
             #battle-controls { bottom: 100px; gap: 10px; }
             #attack-icon { width: 70px; height: 70px; }
+            #attack-icon img { width: 70px; height: 70px; }
             .skill-btn { width: 70px; height: 70px; }
             #skills-row { gap: 10px; }
         }
