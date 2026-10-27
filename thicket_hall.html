@@ -49,6 +49,18 @@
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
         #btn-left  { top: 35px; left: 0; }
         #btn-right { top: 35px; left: 70px; }
+
+        /* Фон боевой комнаты */
+        #battle-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('assets/assets2/Sherwood_Square/walls_quest.png') center center / cover no-repeat;
+            z-index: 0;
+            pointer-events: none;
+            display: none;
+        }
+        #battle-bg.active { display: block; }
         
         @media (max-width: 900px) {
             #joystick { display: block; }
@@ -67,6 +79,7 @@
     </style>
 </head>
 <body>
+    <div id="battle-bg"></div>
     <div id="crosshair">✚</div>
     <div id="blood-overlay"></div>
     
@@ -204,7 +217,7 @@
             boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
         }
 
-        // Сцена
+        // Сцена платформера
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000); 
         scene.fog = new THREE.Fog(0x1a1208, 15, 35);
@@ -212,11 +225,6 @@
         const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
         camPlatformer.position.set(0, 2.5, 6);
         camPlatformer.lookAt(0, 0.5, 0);
-
-        const camFPS = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
-        camFPS.rotation.order = 'YXZ';
-
-        let activeCamera = camPlatformer;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -273,54 +281,55 @@
         // Выход (в конце) и Вход (в начале) в виде дверей
         const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, 0);
-        exitDoor.rotation.y = -Math.PI / 2; // Смотрит внутрь коридора
+        exitDoor.rotation.y = -Math.PI / 2;
         platformerGroup.add(exitDoor);
 
-        // Вход (в начале) - всегда закрыт
         const startDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         startDoor.position.set(1, WALL_H / 2, 0);
-        startDoor.rotation.y = Math.PI / 2; // Смотрит внутрь коридора
+        startDoor.rotation.y = Math.PI / 2;
         platformerGroup.add(startDoor);
 
-        // БОЕВАЯ КОМНАТА (КАК В ПОДЗЕМКЕ)
-        const battleRoom = new THREE.Group();
-        battleRoom.visible = false; scene.add(battleRoom);
-        
-        const bWallMat = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.85 });
-        const bFloorMat = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.95 });
-        const bCeilMat = new THREE.MeshStandardMaterial({ map: ceilTexture, roughness: 0.95, side: THREE.DoubleSide });
-        
-        const bRoomLength = 15; 
-        const bWallHeight = 3;
-        const bCorridorWidth = 4;
+        // ============================================================
+        //  БОЕВАЯ КОМНАТА (как в портале — фон + прозрачный canvas)
+        // ============================================================
+        var battleBg = document.getElementById('battle-bg');
 
-        const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bRoomLength), bFloorMat);
-        bFloor.rotation.x = -Math.PI / 2;
-        bFloor.position.set(0, 0, -bRoomLength / 2);
-        battleRoom.add(bFloor);
+        const battleScene = new THREE.Scene();
+        const battleCamera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30);
+        battleCamera.position.set(0, 0.55, 3.6);
+        battleCamera.rotation.order = 'YXZ';
+        battleCamera.lookAt(0, 0.45, 0);
 
-        const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bRoomLength), bCeilMat);
-        bCeil.rotation.x = Math.PI / 2;
-        bCeil.position.set(0, bWallHeight, -bRoomLength / 2);
-        battleRoom.add(bCeil);
+        const battleRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+        battleRenderer.setSize(window.innerWidth, window.innerHeight);
+        battleRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        battleRenderer.setClearColor(0x000000, 0);
+        battleRenderer.domElement.style.position = 'fixed';
+        battleRenderer.domElement.style.top = '0';
+        battleRenderer.domElement.style.left = '0';
+        battleRenderer.domElement.style.zIndex = '1';
+        battleRenderer.domElement.style.display = 'none';
+        document.body.appendChild(battleRenderer.domElement);
 
-        const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bRoomLength, bWallHeight), bWallMat);
-        bWallL.rotation.y = Math.PI / 2;
-        bWallL.position.set(-bCorridorWidth / 2, bWallHeight / 2, -bRoomLength / 2);
-        battleRoom.add(bWallL);
+        battleScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+        var bKeyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
+        bKeyLight.position.set(2, 4, 3);
+        battleScene.add(bKeyLight);
+        var bFillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
+        battleScene.add(bFillLight);
 
-        const bWallR = new THREE.Mesh(new THREE.PlaneGeometry(bRoomLength, bWallHeight), bWallMat);
-        bWallR.rotation.y = -Math.PI / 2;
-        bWallR.position.set(bCorridorWidth / 2, bWallHeight / 2, -bRoomLength / 2);
-        battleRoom.add(bWallR);
+        // Кровь в бою
+        var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
+        var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
+        var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+        hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false;
+        battleScene.add(hitFlashSprite);
 
-        const bBack = new THREE.Mesh(new THREE.PlaneGeometry(bCorridorWidth, bWallHeight), bWallMat);
-        bBack.position.set(0, bWallHeight / 2, 0);
-        battleRoom.add(bBack);
+        var hitSprites = ['strike_claws.png','strike_claws_1.png','strike_claws_2.png','strike_claws_4.png','strike_claws_5.png','strike_claws_6.png'];
 
         // Игрок
         const player = {
-            pos: new THREE.Vector3(3, 0, 0), // Начинаем чуть дальше от стены
+            pos: new THREE.Vector3(3, 0, 0),
             vel: new THREE.Vector3(0, 0, 0),
             onGround: false,
             facing: 1,
@@ -417,26 +426,18 @@
         }
         createEnemy();
 
-        // Кровь
-        var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
-        var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
-        var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
-        hitFlashSprite.scale.set(1.0, 1.0, 1); hitFlashSprite.visible = false;
-        battleRoom.add(hitFlashSprite);
-        var hitSprites = ['strike_claws.png','strike_claws_1.png','strike_claws_2.png','strike_claws_4.png','strike_claws_5.png','strike_claws_6.png'];
-
-        // Сундук
+        // Сундук (закрытый и открытый)
         var chestSprite = null;
+        var chestOpenTex = loader.load('assets/assets2/game_details/open_chest_first_dungeon.png');
+        var chestClosedTex = loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png');
 
         function spawnChest() {
             if (!chestSprite) {
-                loader.load('assets/assets2/game_details/locked_chest_first_dungeon.png', function(t) {
-                    chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
-                    chestSprite.center.set(0.5, 0);
-                    chestSprite.scale.set(2.0, 2.0, 1);
-                    chestSprite.position.set(enemyX, 0, 0.8);
-                    platformerGroup.add(chestSprite);
-                });
+                chestSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: chestClosedTex, transparent: true }));
+                chestSprite.center.set(0.5, 0);
+                chestSprite.scale.set(2.0, 2.0, 1);
+                chestSprite.position.set(enemyX, 0, 0.8);
+                platformerGroup.add(chestSprite);
             }
         }
 
@@ -488,7 +489,6 @@
             if (p.vel.y < -25) p.vel.y = -25;
 
             const newX = p.pos.x + p.vel.x * dt;
-            // Ограничиваем ход, чтобы не заходить в двери
             p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
 
             const newY = p.pos.y + p.vel.y * dt;
@@ -547,33 +547,30 @@
             try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){}
         }
 
-        // КАМЕРА БОЯ (КАК В ПОДЗЕМКЕ)
+        // Камера боя
         function setBattleCamera(on) {
             if (on) {
-                battleRoom.visible = true;
-                platformerGroup.visible = false;
-                activeCamera = camFPS;
-                camFPS.position.set(0, 1.2, 0); 
-                camFPS.rotation.set(0, 0, 0);
-                
+                battleBg.classList.add('active');
+                battleRenderer.domElement.style.display = 'block';
+                renderer.domElement.style.display = 'none';
                 if (currentEnemySprite) {
-                    battleRoom.add(currentEnemySprite);
-                    currentEnemySprite.center.set(0.5, 0); 
-                    currentEnemySprite.position.set(0, 0, -8); 
+                    battleScene.add(currentEnemySprite);
+                    currentEnemySprite.center.set(0.5, 0.5);
+                    currentEnemySprite.position.set(0, currentEnemySprite.scale.y / 2, 0);
                 }
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-left').style.display = 'flex';
                 document.getElementById('skills-right').style.display = 'flex';
             } else {
-                battleRoom.visible = false;
-                platformerGroup.visible = true;
+                battleBg.classList.remove('active');
+                battleRenderer.domElement.style.display = 'none';
+                renderer.domElement.style.display = 'block';
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     platformerGroup.add(currentEnemyObj.mesh);
                     currentEnemyObj.mesh.center.set(0.5, 0);
                     currentEnemyObj.mesh.position.set(currentEnemyObj.x, 0, 0.8);
                 }
-                activeCamera = camPlatformer;
                 document.getElementById('crosshair').style.display = 'none';
                 document.getElementById('skills-left').style.display = 'none';
                 document.getElementById('skills-right').style.display = 'none';
@@ -590,6 +587,9 @@
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def };
             enemyStunned = 0;
             stopSteps();
+
+            var scale = 2.4;
+            currentEnemySprite.scale.set(scale, scale, 1);
 
             vampirismReady = false;
             var p = parent.Sherwood.getPlayer();
@@ -666,7 +666,6 @@
             setBattleCamera(false);
             playSound(soundVictory);
             
-            // Меняем дверь на открытую
             exitDoor.material.map = openDoorTex;
             exitDoor.material.needsUpdate = true;
 
@@ -711,7 +710,7 @@
                 hitFlashSprite.visible = true;
                 clearTimeout(pushTimer);
                 pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
-                knockbackEnemy(currentEnemySprite, camFPS.position.x, camFPS.position.z);
+                knockbackEnemy(currentEnemySprite, battleCamera.position.x, battleCamera.position.z);
                 cameraShake = 0.06;
 
                 var hitEffect = document.getElementById('hit-effect');
@@ -720,7 +719,7 @@
                     hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
                     var screenPos = currentEnemySprite.position.clone();
                     screenPos.y += 1.0; 
-                    screenPos.project(activeCamera);
+                    screenPos.project(battleCamera);
                     var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
                     var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
                     var side = Math.random() < 0.5 ? -1 : 1;
@@ -761,8 +760,8 @@
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += 3.0; 
-            worldPos.project(activeCamera);
+            worldPos.y += currentEnemySprite.scale.y / 2 + 0.1;
+            worldPos.project(battleCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
             document.getElementById('mob-hp').style.left = x + 'px';
@@ -858,7 +857,6 @@
                 img.src = 'assets/assets2/icons/take.png';
                 return;
             }
-            // Если дверь открыта (враг мертв)
             if (!enemyAlive && Math.abs(player.pos.x - exitDoor.position.x) < 3.5) {
                 icon.style.display = 'block';
                 icon.dataset.action = 'exit';
@@ -876,7 +874,7 @@
             if (action === 'startBattle') { if (enemyObj) startBattle(enemyObj); return; }
             if (action === 'chest') {
                 playSound(soundChest);
-                if (chestSprite) { platformerGroup.remove(chestSprite); chestSprite = null; }
+                if (chestSprite) { chestSprite.material.map = chestOpenTex; chestSprite.material.needsUpdate = true; }
                 return;
             }
             if (action === 'exit') {
@@ -903,44 +901,35 @@
                 heroGroup.position.copy(player.pos);
                 heroGroup.position.y = player.pos.y; 
                 playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
+                renderer.render(scene, camPlatformer);
             } else {
                 updateTimers(dt);
+                // Камера-тряска
+                if (cameraShake > 0.001) {
+                    battleCamera.position.x = (Math.random() - 0.5) * cameraShake;
+                    battleCamera.position.y = 0.55 + (Math.random() - 0.5) * cameraShake;
+                    battleCamera.position.z = 3.6 + (Math.random() - 0.5) * cameraShake;
+                    battleCamera.lookAt(0, 0.45, 0);
+                    cameraShake *= 0.85;
+                } else if (cameraShake !== 0) {
+                    battleCamera.position.set(0, 0.55, 3.6);
+                    battleCamera.lookAt(0, 0.45, 0);
+                    cameraShake = 0;
+                }
+                battleRenderer.render(battleScene, battleCamera);
+                updateMobHpBar();
             }
 
             checkInteraction();
-            if (isBattleActive) updateMobHpBar();
-
-            if (enemyKnockback.active && enemyKnockback.sprite) {
-                enemyKnockback.t += dt;
-                var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1);
-                var ease = Math.sin(kk * Math.PI);
-                var spr = enemyKnockback.sprite;
-                spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease;
-                spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
-                if (kk >= 1) {
-                    spr.position.x = enemyKnockback.originalX;
-                    spr.position.z = enemyKnockback.originalZ;
-                    enemyKnockback.active = false;
-                    enemyKnockback.sprite = null;
-                }
-            }
-
-            if (isBattleActive) {
-                camFPS.position.x = (Math.random() - 0.5) * cameraShake;
-                camFPS.position.z = (Math.random() - 0.5) * cameraShake;
-                camFPS.position.y = 1.2 + (Math.random() - 0.5) * cameraShake;
-                cameraShake *= 0.85; if (cameraShake < 0.001) cameraShake = 0;
-            }
-
-            renderer.render(scene, activeCamera);
         }
         animate();
 
         addEventListener('resize', function() {
             var aspect = window.innerWidth / window.innerHeight;
             camPlatformer.aspect = aspect; camPlatformer.updateProjectionMatrix();
-            camFPS.aspect = aspect; camFPS.updateProjectionMatrix();
+            battleCamera.aspect = aspect; battleCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            battleRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
