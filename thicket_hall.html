@@ -34,30 +34,31 @@
         /* Боевые контролы */
         #battle-controls {
             position: absolute;
-            bottom: 20px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             z-index: 45;
         }
         
+        /* Кнопка удара (СВЕРХУ) */
         #attack-icon { 
             position: relative;
-            width: 140px; 
-            height: 140px; 
+            width: 85px; 
+            height: 85px; 
             cursor: pointer; 
             pointer-events: auto;
-            bottom: 180px; /* Высоко */
         }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
-        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 28px; }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
         
-        .skills-row { display: flex; gap: 20px; justify-content: center; margin-top: -160px; /* Скиллы под кнопку */ }
-        #skills-left, #skills-right { display: flex; gap: 20px; justify-content: center; }
+        /* Скиллы (СНИЗУ) */
+        .skills-row { display: flex; gap: 15px; justify-content: center; }
+        #skills-left, #skills-right { display: none; gap: 15px; justify-content: center; }
         
         .skill-btn { 
             cursor: pointer; 
@@ -92,10 +93,10 @@
             #mob-hp-name { font-size: 13px; top: -12px; }
             #hit-effect-img { width: 130px; height: 130px; }
             
-            #battle-controls { bottom: 10px; gap: 10px; }
-            #attack-icon { width: 110px; height: 110px; bottom: 140px; }
+            #battle-controls { bottom: 100px; gap: 10px; }
+            #attack-icon { width: 70px; height: 70px; }
             .skill-btn { width: 70px; height: 70px; }
-            .skills-row, #skills-left, #skills-right { gap: 15px; margin-top: -120px; }
+            .skills-row, #skills-left, #skills-right { gap: 10px; }
         }
     </style>
 </head>
@@ -113,10 +114,12 @@
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
     
     <div id="battle-controls">
+        <!-- Кнопка удара СВЕРХУ -->
         <div id="attack-icon">
             <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
             <div id="attack-cooldown-overlay">0.0s</div>
         </div>
+        <!-- Скиллы СНИЗУ -->
         <div class="skills-row">
             <div id="skills-left"></div>
             <div id="skills-right"></div>
@@ -587,7 +590,6 @@
                 document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('joystick').style.display = 'none';
                 
-                // Показываем скиллы
                 document.getElementById('skills-left').style.display = 'flex';
                 document.getElementById('skills-right').style.display = 'flex';
             } else {
@@ -601,7 +603,6 @@
                 document.getElementById('battle-controls').style.display = 'none';
                 document.getElementById('joystick').style.display = 'block';
                 
-                // Скрываем скиллы
                 document.getElementById('skills-left').style.display = 'none';
                 document.getElementById('skills-right').style.display = 'none';
             }
