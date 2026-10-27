@@ -8,7 +8,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
-        canvas { display: block; background: #000; touch-action: none; cursor: crosshair; }
+        canvas { display: block; background: transparent; touch-action: none; cursor: crosshair; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
@@ -50,7 +50,6 @@
         #btn-left  { top: 35px; left: 0; }
         #btn-right { top: 35px; left: 70px; }
 
-        /* Фон боевой комнаты из портала */
         #battle-bg {
             position: fixed;
             top: 0; left: 0;
@@ -205,6 +204,21 @@
         ];
         var boT1 = null, boT2 = null;
 
+        // Эффект удара по герою: красная вспышка
+        var heroHitFlashEl = document.createElement('div');
+        heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
+        document.body.appendChild(heroHitFlashEl);
+        var heroHitFlashTimer = null;
+        function showHeroHitFlash() {
+            heroHitFlashEl.style.transition = 'opacity 0.05s ease-out';
+            heroHitFlashEl.style.opacity = '1';
+            clearTimeout(heroHitFlashTimer);
+            heroHitFlashTimer = setTimeout(function() {
+                heroHitFlashEl.style.transition = 'opacity 0.25s ease-out';
+                heroHitFlashEl.style.opacity = '0';
+            }, 100);
+        }
+
         function showBloodOverlay() {
             var el = document.getElementById('blood-overlay'); if (!el) return;
             var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)];
@@ -214,6 +228,8 @@
             clearTimeout(boT1); clearTimeout(boT2);
             boT1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
             boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
+            showHeroHitFlash();
+            cameraShake = 0.12;
         }
 
         const scene = new THREE.Scene();
@@ -224,9 +240,11 @@
         camPlatformer.position.set(0, 2.5, 6);
         camPlatformer.lookAt(0, 0.5, 0);
 
+        // Основной рендерер (для платформера и боя)
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
@@ -283,40 +301,17 @@
         startDoor.rotation.y = Math.PI / 2;
         platformerGroup.add(startDoor);
 
-        // Боевая комната (как в портале, но с эффектами из подземки)
+        // Боевая комната (рендер в основной renderer, фон — div)
         var battleBg = document.getElementById('battle-bg');
-        var heroHitFlashEl = document.createElement('div');
-        heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
-        document.body.appendChild(heroHitFlashEl);
-        var heroHitFlashTimer = null;
-        function showHeroHitFlash() {
-            heroHitFlashEl.style.transition = 'opacity 0.05s ease-out';
-            heroHitFlashEl.style.opacity = '1';
-            clearTimeout(heroHitFlashTimer);
-            heroHitFlashTimer = setTimeout(function() {
-                heroHitFlashEl.style.transition = 'opacity 0.25s ease-out';
-                heroHitFlashEl.style.opacity = '0';
-            }, 100);
-        }
-
         const battleScene = new THREE.Scene();
+        battleScene.background = null;
+
         const battleCamera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30);
         battleCamera.position.set(0, 0.55, 3.6);
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-        const battleRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
-        battleRenderer.setSize(window.innerWidth, window.innerHeight);
-        battleRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        battleRenderer.setClearColor(0x000000, 0);
-        battleRenderer.domElement.style.position = 'fixed';
-        battleRenderer.domElement.style.top = '0';
-        battleRenderer.domElement.style.left = '0';
-        battleRenderer.domElement.style.zIndex = '2';
-        battleRenderer.domElement.style.display = 'none';
-        document.body.appendChild(battleRenderer.domElement);
-
-        battleScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+        battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
         var bKeyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
         bKeyLight.position.set(2, 4, 3);
         battleScene.add(bKeyLight);
@@ -548,8 +543,7 @@
         function setBattleCamera(on) {
             if (on) {
                 battleBg.classList.add('active');
-                battleRenderer.domElement.style.display = 'block';
-                renderer.domElement.style.display = 'none';
+                renderer.setClearColor(0x000000, 0);
                 if (currentEnemySprite) {
                     battleScene.add(currentEnemySprite);
                     currentEnemySprite.center.set(0.5, 0.5);
@@ -561,8 +555,7 @@
                 document.getElementById('skills-right').style.display = 'flex';
             } else {
                 battleBg.classList.remove('active');
-                battleRenderer.domElement.style.display = 'none';
-                renderer.domElement.style.display = 'block';
+                renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     platformerGroup.add(currentEnemyObj.mesh);
                     currentEnemyObj.mesh.center.set(0.5, 0);
@@ -618,8 +611,6 @@
                         document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
                         showCenterText('РИКОШЕТ!', '#a020f0');
                         showBloodOverlay();
-                        showHeroHitFlash();
-                        cameraShake = 0.12;
                         if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
                         return;
                     }
@@ -629,8 +620,6 @@
                 if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
                 updateHeroSpheres();
                 showBloodOverlay();
-                showHeroHitFlash();
-                cameraShake = 0.12;
                 if (pp.stats.hp <= 0) { stopBattle(); onDefeat(); }
             }, 1000);
         }
@@ -747,8 +736,6 @@
                     document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
                     showCenterText('РИКОШЕТ!', '#a020f0');
                     showBloodOverlay();
-                    showHeroHitFlash();
-                    cameraShake = 0.12;
                     if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
                     return;
                 }
@@ -758,8 +745,6 @@
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
             updateHeroSpheres();
             showBloodOverlay();
-            showHeroHitFlash();
-            cameraShake = 0.12;
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
 
@@ -916,7 +901,7 @@
                     battleCamera.lookAt(0, 0.45, 0);
                     cameraShake = 0;
                 }
-                battleRenderer.render(battleScene, battleCamera);
+                renderer.render(battleScene, battleCamera);
                 updateMobHpBar();
             }
 
@@ -929,7 +914,6 @@
             camPlatformer.aspect = aspect; camPlatformer.updateProjectionMatrix();
             battleCamera.aspect = aspect; battleCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            battleRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
