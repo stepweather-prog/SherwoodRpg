@@ -12,23 +12,19 @@
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
-        
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
         #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
-        
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
-        
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
-        
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
@@ -46,6 +42,7 @@
             z-index: 45;
         }
         
+        /* Кнопка удара */
         #attack-icon { 
             position: absolute;
             bottom: 100%;
@@ -318,7 +315,7 @@
         const group = new THREE.Group(); scene.add(group);
 
         // ============================================================
-        //  БОЕВАЯ КОМНАТА (С ФОНОМ КАК В ПЛАТФОРМЕРЕ)
+        //  БОЕВАЯ КОМНАТА (ФОН КАК В ПЛАТФОРМЕРЕ)
         // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
@@ -330,10 +327,6 @@
         else if (currentDungeon === 4) battleBgPath = 'assets/assets2/Sherwood_Square/wall_area_1.png';
 
         const battleBgTex = loader.load(battleBgPath);
-        battleBgTex.wrapS = THREE.RepeatWrapping;
-        battleBgTex.wrapT = THREE.RepeatWrapping;
-        battleBgTex.repeat.set(3, 2);
-
         const bgGeometry = new THREE.PlaneGeometry(30, 20);
         const bgMaterial = new THREE.MeshBasicMaterial({ map: battleBgTex });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
@@ -359,7 +352,6 @@
         }
 
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false, depthWrite: false }));
-        // Возвращаем нормальный размер иконки героя
         heroSprite.scale.set(0.85, 0.85, 1); scene.add(heroSprite);
         let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.4, playerGY - center);
 
@@ -493,7 +485,7 @@
             }));
             var scale = obj.isBoss ? 1.1 : 1.05; 
             sprite.scale.set(scale, scale, 1);
-            sprite.position.set(x, 0, z); // Опустил объекты на пол (Y = 0), чтобы не висели
+            sprite.position.set(x, scale / 2, z);
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
         }
@@ -516,7 +508,7 @@
         function spawnLootBag(gx, gy, isBoss) {
             var w = gridToWorld(gx, gy); var texture = isBoss ? lockedChestTex : lootBagTex;
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1, depthWrite: false }));
-            var sc = isBoss ? 0.85 : 0.65; spr.scale.set(sc, sc, 1); spr.position.set(w.x, 0, w.z); // Опустил на пол
+            var sc = isBoss ? 0.85 : 0.65; spr.scale.set(sc, sc, 1); spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
             spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss }; group.add(spr);
             var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss }; spr.userData.objRef = bag; lootBags.push(bag);
         }
@@ -613,11 +605,12 @@
         function checkObjects() { checkExitDoor(); }
 
         // ============================================================
-        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР И БОЕВАЯ КОМНАТА
+        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + БОЕВАЯ КОМНАТА
         // ============================================================
         function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
+                battleRoom.position.set(0, 0, 0);
                 group.visible = false;
 
                 heroSprite.visible = false;
@@ -645,7 +638,7 @@
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     group.add(currentEnemyObj.mesh);
                     var sy2 = currentEnemyObj.mesh.scale.y;
-                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, 0, currentEnemyObj.y - center);
+                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, sy2 / 2, currentEnemyObj.y - center);
                 }
 
                 activeCamera = camTop;
@@ -779,10 +772,9 @@
                         var ud2 = best.obj.userData;
                         if (ud2 && ud2.objRef) {
                             var cur = worldToGrid(playerPos.x, playerPos.z);
-                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { return; } // Убрал подсказку
+                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { return; }
                             var pathB = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
                             if (pathB.length > 0) { waypoints = pathB; moving = true; pendingBattle = null; pendingLoot = { type: 'bag', bag: ud2.objRef }; startSteps(); }
-                            else { showCenterText('Нет пути', '#888'); }
                             return;
                         }
                     }
@@ -795,14 +787,12 @@
                                 if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { startBattle(ud3.objRef); return; }
                                 var pathE = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
                                 if (pathE.length > 0) { waypoints = pathE; moving = true; pendingBattle = ud3.objRef; pendingLoot = null; startSteps(); }
-                                else { showCenterText('Нет пути', '#888'); }
                                 return;
                             }
                             if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
-                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; } // Убрал подсказку
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; }
                                 var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
                                 if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
-                                else { showCenterText('Нет пути', '#888'); }
                                 return;
                             }
                         }
@@ -860,8 +850,6 @@
                     pendingBattle = enemyOnTile || null;
                     pendingLoot = lootOnTile || null;
                     startSteps();
-                } else {
-                    showCenterText('Нет пути', '#888');
                 }
             }
         });
