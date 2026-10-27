@@ -40,7 +40,7 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             z-index: 45;
         }
         
@@ -49,19 +49,14 @@
             width: 90px; 
             height: 90px; 
             cursor: pointer; 
-            background: rgba(0,0,0,0.6); 
-            border-radius: 50%; 
-            border: 3px solid #c8a050; 
-            padding: 8px; 
-            box-shadow: 0 0 20px rgba(200, 160, 80, 0.6); 
-            transition: transform 0.1s; 
             pointer-events: auto;
+            bottom: 100px; /* Подняли кнопку */
         }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
         #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 24px; }
         
-        .skills-row { display: flex; gap: 15px; justify-content: center; }
+        .skills-row { display: flex; gap: 15px; justify-content: center; margin-top: -90px; /* Поднимаем скиллы под кнопку */ }
         #skills-left, #skills-right { display: flex; gap: 15px; justify-content: center; }
         
         .skill-btn { 
@@ -97,9 +92,9 @@
             #mob-hp-name { font-size: 13px; top: -12px; }
             #hit-effect-img { width: 130px; height: 130px; }
             #battle-controls { bottom: 10px; gap: 10px; }
-            #attack-icon { width: 75px; height: 75px; }
+            #attack-icon { width: 75px; height: 75px; bottom: 80px; }
             .skill-btn { width: 55px; height: 55px; }
-            .skills-row, #skills-left, #skills-right { gap: 10px; }
+            .skills-row, #skills-left, #skills-right { gap: 10px; margin-top: -70px; }
         }
     </style>
 </head>
