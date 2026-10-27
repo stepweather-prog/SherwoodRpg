@@ -8,13 +8,10 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
-        canvas { display: block; background: #000; touch-action: none; cursor: crosshair; }
+        canvas { display: block; background: #000; touch-action: none; cursor: pointer; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
-        #minimap { position: fixed; top: 12px; right: 12px; width: 180px; height: 180px; z-index: 30; pointer-events: none; }
-        #minimap-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 1; }
-        #minimap-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; }
-        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.6; }
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
@@ -31,10 +28,11 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
-        #attack-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; z-index: 40; cursor: pointer; pointer-events: auto; }
-        #skills-left, #skills-right { pointer-events: auto; }
-        #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; transition: all 0.2s; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; }
-        #skills-left img:hover, #skills-right img:hover { filter: drop-shadow(0 0 10px #ffd700); transform: scale(1.1); }
+        #attack-icon { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; z-index: 40; cursor: pointer; }
+        #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 45; display: none; }
+        #skills-left { left: 10px; }
+        #skills-right { right: 10px; }
+        #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; width: 44px; height: 44px; object-fit: contain; }
         #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
@@ -42,17 +40,15 @@
         #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
         @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
         @media (max-width: 600px) {
-            button[onclick="exitDungeon();"] { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
-            #attack-icon { width: 34px !important; height: 34px !important; }
-            #minimap { width: 130px !important; height: 130px !important; top: 8px !important; right: 8px !important; }
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
             #mob-hp { width: 220px !important; height: 150px !important; }
             #mob-hp-text { font-size: 15px !important; }
             #mob-hp-name { font-size: 13px !important; top: -12px !important; }
-            #skills-left, #skills-right { bottom: 110px !important; width: 80px !important; }
-            #skills-left img, #skills-right img { width: 38px !important; height: 38px !important; }
             #hit-effect-img { width: 130px !important; height: 130px !important; }
+            #skills-left, #skills-right { bottom: 100px !important; width: 60px !important; }
+            #skills-left img, #skills-right img { width: 34px !important; height: 34px !important; }
+            #attack-icon { width: 44px !important; height: 44px !important; bottom: 30px !important; }
             #arrow-counter { font-size: 13px !important; padding: 3px 10px !important; }
             #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
@@ -329,6 +325,9 @@
         function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
         function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
 
+        // ============================================================
+        //  BFS-ПУТЬ ПО ОТКРЫТЫМ КЛЕТКАМ
+        // ============================================================
         function buildPath(startGX, startGY, goalGX, goalGY) {
             if (goalGX < 0 || goalGY < 0 || goalGX >= size || goalGY >= size) return [];
             if (map[goalGY][goalGX] !== 0 && map[goalGY][goalGX] !== 3) return [];
@@ -417,17 +416,20 @@
 
         for (var i = 0; i < objects.length; i++) {
             var obj = objects[i]; var x = obj.x - Math.floor(size / 2); var z = obj.y - Math.floor(size / 2);
-            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: loader.load(obj.img), transparent: true }));
-            sprite.position.set(x, 0.1, z);
-            if (obj.type === 'enemy') { var scale = obj.isBoss ? 1.5 : 1.05; sprite.scale.set(scale, scale, 1); sprite.position.y = scale / 2; }
-            else { sprite.scale.set(0.55, 0.55, 1); sprite.position.y = 0.35; }
+            var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ 
+                map: loader.load(obj.img), 
+                transparent: true,
+                depthTest: true,
+                depthWrite: false
+            }));
+            var scale = obj.isBoss ? 1.1 : 1.05; 
+            sprite.scale.set(scale, scale, 1);
+            sprite.position.set(x, scale / 2, z);
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
         }
 
         var exitPos = gridToWorld(exitCell.gx, exitCell.gy);
-        var exitWL = isWallCell(exitCell.gx - 1, exitCell.gy), exitWR = isWallCell(exitCell.gx + 1, exitCell.gy);
-        var exitHoriz = exitWL && exitWR;
         var exitDoorMat = new THREE.MeshBasicMaterial({ map: closedLockTex, transparent: true });
         var exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), exitDoorMat);
         exitDoor.rotation.x = -Math.PI / 2; exitDoor.position.set(exitPos.x, 0.06, exitPos.z); group.add(exitDoor);
@@ -516,7 +518,7 @@
             var p = parent.Sherwood.getPlayer(); if (!p) return;
             if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
             filthTimer += dt;
-            if (filthTimer >= FILTH_SELF_RATE) { filthTimer -= FILTH_SELF_RATE; if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); }
+            if (filthTimer >= FILTH_SELF_RATE) { filthTimer -= FILTH_SELF_RATE; if (p.stats.filth < p.stats.maxFilth) { p.stats.filth = Math.min(p.stats.maxFilth, p.stats.filth + FILTH_SELF_AMOUNT); updateHeroSpheres(); } }
             if (p.stats.filth >= p.stats.maxFilth) {
                 if (filthFullSince === 0) filthFullSince = performance.now() / 1000;
                 if (performance.now() / 1000 - filthFullSince >= FILTH_DEATH_TIME) {
@@ -710,35 +712,36 @@
                         var ud2 = best.obj.userData;
                         if (ud2 && ud2.objRef) {
                             var cur = worldToGrid(playerPos.x, playerPos.z);
-                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { openLootBag(ud2.objRef); return; }
+                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { showCenterText('Нажми кнопку сбора', '#ffd700'); return; }
                             var pathB = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
                             if (pathB.length > 0) { waypoints = pathB; moving = true; pendingBattle = null; pendingLoot = { type: 'bag', bag: ud2.objRef }; startSteps(); }
                             else { showCenterText('Нет пути', '#888'); }
                             return;
                         }
                     }
-                                } else if (best.kind === 'sprite') {
+                } else if (best.kind === 'sprite') {
                     if (best.dist < 8) {
                         var ud3 = best.obj.userData;
                         if (ud3) {
+                            var curS = worldToGrid(playerPos.x, playerPos.z);
                             if (ud3.type === 'enemy') {
-                                var cur = worldToGrid(playerPos.x, playerPos.z);
-                                var dist = Math.abs(cur.gx - ud3.gridX) + Math.abs(cur.gy - ud3.gridY);
-                                if (dist <= 1) { startBattle(ud3.objRef); }
-                                else { showCenterText('Далеко', '#888'); }
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { startBattle(ud3.objRef); return; }
+                                var pathE = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
+                                if (pathE.length > 0) { waypoints = pathE; moving = true; pendingBattle = ud3.objRef; pendingLoot = null; startSteps(); }
+                                else { showCenterText('Нет пути', '#888'); }
                                 return;
                             }
                             if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
-                                const ccur = worldToGrid(playerPos.x, playerPos.z);
-                                const d = Math.abs(ccur.gx - ud3.gridX) + Math.abs(ccur.gy - ud3.gridY);
-                                if (d <= 1) { showCenterText('Нажми кнопку сбора', '#ffd700'); } // <--- ВОТ ТУТ
-                                else { showCenterText('Далеко', '#888'); }
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { showCenterText('Нажми кнопку сбора', '#ffd700'); return; }
+                                var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
+                                if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
+                                else { showCenterText('Нет пути', '#888'); }
                                 return;
                             }
                         }
                     }
                 }
-            
+            }
 
             var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
             var hits = raycaster.intersectObjects(allMeshes, false);
@@ -828,14 +831,9 @@
         function useSkill(skillId) {
             if (!isBattleActive || !currentEnemyStats) return; if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
             var p = parent.Sherwood.getPlayer(); if (!p) return; var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
-            if (skillId === 'stunning') {
-                if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); skillCooldowns[skillId] = Date.now() + 20000;
-            }
+            if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); skillCooldowns[skillId] = Date.now() + 20000; }
             else if (skillId === 'rage') { var f = getFilth(); if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; } if (!spendFilth(65)) return; rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
-            else if (skillId === 'healing') {
-                if (!spendFilth(5)) return; var heal = 10; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); skillCooldowns[skillId] = Date.now() + 8000;
-            }
+            else if (skillId === 'healing') { if (!spendFilth(5)) return; var heal = 10; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); skillCooldowns[skillId] = Date.now() + 8000; }
             var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown); }
         }
 
@@ -865,8 +863,8 @@
                         if (L.type === 'bag') dd = Math.abs(cg.gx - L.bag.gx) + Math.abs(cg.gy - L.bag.gy);
                         else dd = Math.abs(cg.gx - L.x) + Math.abs(cg.gy - L.y);
                         if (dd <= 1) {
-                            if (L.type === 'bag') openLootBag(L.bag);
-                            else applyLootEffect(L);
+                            if (L.type === 'bag') showCenterText('Нажми кнопку сбора', '#ffd700');
+                            else showCenterText('Нажми кнопку сбора', '#ffd700');
                         }
                     }
                 }
@@ -917,7 +915,6 @@
         });
 
         function winDungeon() {
-            // Восстанавливаем HP и сбрасываем скверну при победе
             try {
                 if (parent.Sherwood && parent.Sherwood.getPlayer) {
                     var pW = parent.Sherwood.getPlayer();
@@ -942,7 +939,6 @@
         window.winDungeon = winDungeon;
 
         function loseDungeon() {
-            // Восстанавливаем HP и сбрасываем скверну при поражении
             try {
                 if (parent.Sherwood && parent.Sherwood.getPlayer) {
                     var pL = parent.Sherwood.getPlayer();
