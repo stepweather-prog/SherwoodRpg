@@ -283,7 +283,7 @@ Sherwood.Thicket = {
     // ============================================================
     //  ПОБЕДА / ПОРАЖЕНИЕ
     // ============================================================
-        _onWin: function(nodeId, diff) {
+           _onWin: function(nodeId, diff) {
         var node = this.getNode(nodeId);
         if (!node) return;
 
@@ -293,13 +293,30 @@ Sherwood.Thicket = {
         var mult = this.DIFF_MULT[diff - 1] || 1.0;
         var reward = {
             exp: Math.floor(node.exp * mult),
-            gold: Math.floor(node.gold * mult * 2),    // <-- добавили * 2 (золото х2)
-            silver: Math.floor(node.gold * mult * 5)   // <-- поменяли 3 на 5 (серебро х5)
+            gold: Math.floor(node.gold * mult * 2),
+            silver: Math.floor(node.gold * mult * 5)
         };
 
         Sherwood.addExp(reward.exp);
         Sherwood.addResource('gold', reward.gold);
         Sherwood.addResource('silver', reward.silver);
+
+        // === ВЫПАДЕНИЕ ТОКЕНА ПОРТАЛА ===
+        // Шанс: 10% на легкой, 30% на средней, 50% на сложной
+        var ticketChance = diff === 1 ? 0.1 : (diff === 2 ? 0.3 : 0.5);
+        
+        if (Math.random() < ticketChance) {
+            // Так как чащоба открывается в iframe, обращаемся к сумке через parent
+            if (parent.Sherwood && parent.Sherwood.Bag && parent.Sherwood.Bag.addResource) {
+                parent.Sherwood.Bag.addResource('portalToken1', 1);
+                if (typeof UI !== 'undefined' && UI._showToast) {
+                    UI._showToast('🎫 Выпал Токен портала I!');
+                }
+                console.log('🎫 Выпал токен портала!');
+            } else {
+                console.log('Ошибка: Сумка (parent.Sherwood.Bag) не найдена');
+            }
+        }
 
         if (typeof UI !== 'undefined' && UI.updateDisplay) UI.updateDisplay();
 
@@ -319,7 +336,7 @@ Sherwood.Thicket = {
 
         var reward = {
             exp: 200,
-            silver: 20
+            silver: 150
         };
 
         Sherwood.addExp(reward.exp);
