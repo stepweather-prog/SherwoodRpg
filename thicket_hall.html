@@ -297,20 +297,17 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-                // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ (ЗАКРЫВАЕТ ВЕСЬ ЭКРАН)
+         // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ)
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
-        const bgGeometry = new THREE.PlaneGeometry(50, 30); // Огромная плоскость
+        bgTexture.wrapS = THREE.RepeatWrapping;
+        bgTexture.wrapT = THREE.RepeatWrapping;
+        bgTexture.repeat.set(3, 2); // 3 плитки по ширине, 2 по высоте
+
+        const bgGeometry = new THREE.PlaneGeometry(30, 20); // Пропорции 3 к 2 (как у тайлов)
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, 5, -10); // Высоко и далеко, чтобы закрыть весь экран
+        bgMesh.position.set(0, 4, -10); // Высоко и далеко
         battleScene.add(bgMesh);
-
-        battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
-        var bKeyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
-        bKeyLight.position.set(2, 4, 3);
-        battleScene.add(bKeyLight);
-        var bFillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
-        battleScene.add(bFillLight);
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
         var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
