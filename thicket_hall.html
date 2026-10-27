@@ -40,7 +40,7 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
             z-index: 45;
         }
         
@@ -96,7 +96,7 @@
             #mob-hp-text { font-size: 15px; }
             #mob-hp-name { font-size: 13px; top: -12px; }
             #hit-effect-img { width: 130px; height: 130px; }
-            #battle-controls { bottom: 20px; gap: 10px; }
+            #battle-controls { bottom: 10px; gap: 10px; }
             #attack-icon { width: 75px; height: 75px; }
             .skill-btn { width: 55px; height: 55px; }
             .skills-row, #skills-left, #skills-right { gap: 10px; }
@@ -338,7 +338,7 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-        // ФОН БОЯ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ)
+        // ФОН БОЯ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ, ОПУЩЕН)
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
         bgTexture.wrapS = THREE.RepeatWrapping;
         bgTexture.wrapT = THREE.RepeatWrapping;
@@ -347,7 +347,7 @@
         const bgGeometry = new THREE.PlaneGeometry(30, 20); 
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, -2, -10); // Опустили ниже, чтобы закрыть пол
+        bgMesh.position.set(0, -2, -10); // Опустили
         battleScene.add(bgMesh);
 
         battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
@@ -589,6 +589,7 @@
                 }
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('battle-controls').style.display = 'flex';
+                document.getElementById('joystick').style.display = 'none'; // Скрываем джойстик
             } else {
                 renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
@@ -598,6 +599,7 @@
                 }
                 document.getElementById('crosshair').style.display = 'none';
                 document.getElementById('battle-controls').style.display = 'none';
+                document.getElementById('joystick').style.display = 'block'; // Показываем джойстик
             }
         }
 
@@ -867,10 +869,9 @@
             overlay.style.display = 'none'; img.style.opacity = '1';
 
             if (enemyAlive && enemySprite && Math.abs(player.pos.x - enemyX) < 3.5) {
-                document.getElementById('battle-controls').style.display = 'flex'; // Показываем кнопки
+                document.getElementById('battle-controls').style.display = 'flex';
                 icon.dataset.action = 'startBattle';
                 img.src = 'assets/assets2/talents/simple_attack.png';
-                // Скрываем скиллы в платформере
                 document.getElementById('skills-left').style.display = 'none';
                 document.getElementById('skills-right').style.display = 'none';
                 return;
@@ -892,7 +893,6 @@
                 return;
             }
             
-            // Если ничего нет рядом в платформере
             document.getElementById('battle-controls').style.display = 'none';
         }
 
