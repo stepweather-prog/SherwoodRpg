@@ -738,7 +738,7 @@
                         }
                     }
                 }
-            }
+            
 
             var allMeshes = []; tileMeshes.forEach(t => { if (t.mesh.visible) allMeshes.push(t.mesh); if (t.floorMesh.visible) allMeshes.push(t.floorMesh); });
             var hits = raycaster.intersectObjects(allMeshes, false);
