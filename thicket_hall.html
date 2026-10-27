@@ -31,7 +31,7 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
 
-       /* Боевые контролы */
+              /* Боевые контролы */
         #battle-controls {
             position: absolute;
             bottom: 120px;
@@ -44,13 +44,9 @@
             z-index: 45;
         }
         
-        /* Кнопка удара — поднята НАД рядом скиллов */
+        /* Кнопка удара */
         #attack-icon { 
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-bottom: 70px;
+            position: relative; /* Возвращаем в поток */
             width: 85px; 
             height: 85px; 
             cursor: pointer; 
@@ -59,8 +55,11 @@
             border: none;
             background: none;
             flex-shrink: 0;
+            transform: translateY(-50px); /* Поднимаем вверх на 50 пикселей */
+            margin-bottom: -20px; /* Компенсируем пустое место, чтобы скиллы не уезжали вниз */
         }
-        #attack-icon:active { transform: translateX(-50%) scale(0.9); }
+        #attack-icon:active { transform: translateY(-50px) scale(0.9); }
+        
         #attack-icon img { 
             width: 85px; 
             height: 85px; 
