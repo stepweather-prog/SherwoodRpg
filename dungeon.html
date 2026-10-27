@@ -33,7 +33,7 @@
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
-        /* Боевые контролы (как в платформере) */
+        /* Боевые контролы */
         #battle-controls {
             position: absolute;
             bottom: 120px;
@@ -50,7 +50,7 @@
             position: absolute;
             bottom: 100%;
             left: 50%;
-            transform: translateX(calc(-50% - 20px)); /* Сдвиг как в платформере */
+            transform: translateX(calc(-50% - 20px));
             margin-bottom: 70px;
             width: 85px; 
             height: 85px; 
@@ -318,47 +318,27 @@
         const group = new THREE.Group(); scene.add(group);
 
         // ============================================================
-        //  ЛОКАЛЬНАЯ КОМНАТА ДЛЯ БОЯ (FPS-коридор как в платформере)
+        //  БОЕВАЯ КОМНАТА (С ФОНОМ КАК В ПЛАТФОРМЕРЕ)
         // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
         scene.add(battleRoom);
 
-        const bWallMat = new THREE.MeshBasicMaterial({ map: wallBattleTex, transparent: false });
-        const bFloorMat = new THREE.MeshBasicMaterial({ map: floorTex, transparent: false });
-        const bCeilMat = new THREE.MeshBasicMaterial({ map: ceilBattleTex, transparent: false });
-        const bRoomLength = 6;
-        const bCellSize = 1;
-        const bWallHeight = 1.4;
+        let battleBgPath = 'assets/assets2/dungeon_details/wall_5.png';
+        if (currentDungeon === 2) battleBgPath = 'assets/assets2/dungeon_details/swamp_tiles_1.png';
+        else if (currentDungeon === 3) battleBgPath = 'assets/assets2/Sherwood_Square/floors_raid.png';
+        else if (currentDungeon === 4) battleBgPath = 'assets/assets2/Sherwood_Square/wall_area_1.png';
 
-        for (let z = 0; z < bRoomLength; z++) {
-            const bFloor = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bFloorMat);
-            bFloor.rotation.x = -Math.PI / 2;
-            bFloor.position.set(0, 0, -z);
-            battleRoom.add(bFloor);
+        const battleBgTex = loader.load(battleBgPath);
+        battleBgTex.wrapS = THREE.RepeatWrapping;
+        battleBgTex.wrapT = THREE.RepeatWrapping;
+        battleBgTex.repeat.set(3, 2);
 
-            const bCeil = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bCellSize), bCeilMat);
-            bCeil.rotation.x = Math.PI / 2;
-            bCeil.position.set(0, bWallHeight, -z);
-            battleRoom.add(bCeil);
-
-            const bWallL = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-            bWallL.rotation.y = Math.PI / 2;
-            bWallL.position.set(-0.5, bWallHeight / 2, -z);
-            battleRoom.add(bWallL);
-
-            const bWallR = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-            bWallR.rotation.y = -Math.PI / 2;
-            bWallR.position.set(0.5, bWallHeight / 2, -z);
-            battleRoom.add(bWallR);
-        }
-        const bBackWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-        bBackWall.position.set(0, bWallHeight / 2, 0.5);
-        battleRoom.add(bBackWall);
-
-        const bFrontWall = new THREE.Mesh(new THREE.PlaneGeometry(bCellSize, bWallHeight), bWallMat);
-        bFrontWall.position.set(0, bWallHeight / 2, -bRoomLength + 0.5);
-        battleRoom.add(bFrontWall);
+        const bgGeometry = new THREE.PlaneGeometry(30, 20);
+        const bgMaterial = new THREE.MeshBasicMaterial({ map: battleBgTex });
+        const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
+        bgMesh.position.set(0, 0, -8);
+        battleRoom.add(bgMesh);
 
         var tileMeshes = [];
         for (let row = 0; row < size; row++) {
@@ -378,8 +358,8 @@
             }
         }
 
-        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true }));
-        // Уменьшаем иконку героя
+        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false, depthWrite: false }));
+        // Возвращаем нормальный размер иконки героя
         heroSprite.scale.set(0.85, 0.85, 1); scene.add(heroSprite);
         let playerGX = 1, playerGY = 1; heroSprite.position.set(playerGX - center, 0.4, playerGY - center);
 
@@ -513,7 +493,7 @@
             }));
             var scale = obj.isBoss ? 1.1 : 1.05; 
             sprite.scale.set(scale, scale, 1);
-            sprite.position.set(x, scale / 2, z);
+            sprite.position.set(x, 0, z); // Опустил объекты на пол (Y = 0), чтобы не висели
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
         }
@@ -536,7 +516,7 @@
         function spawnLootBag(gx, gy, isBoss) {
             var w = gridToWorld(gx, gy); var texture = isBoss ? lockedChestTex : lootBagTex;
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1, depthWrite: false }));
-            var sc = isBoss ? 0.85 : 0.65; spr.scale.set(sc, sc, 1); spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
+            var sc = isBoss ? 0.85 : 0.65; spr.scale.set(sc, sc, 1); spr.position.set(w.x, 0, w.z); // Опустил на пол
             spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss }; group.add(spr);
             var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss }; spr.userData.objRef = bag; lootBags.push(bag);
         }
@@ -568,7 +548,7 @@
             else { if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp); if (parent.Sherwood.addResource) { parent.Sherwood.addResource('gold', gold); parent.Sherwood.addResource('silver', silver); for (var key in resources) { if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]); } } }
             runLoot.exp += exp; runLoot.gold += gold; runLoot.silver += silver;
             for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
-            showCenterText('+' + arrowDrop + ' стрел', '#c9a040'); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay();
+            showCenterText('+' + arrowDrop + ' стрел', '#c9a040'); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); updateLootButton();
         }
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png', 'assets/assets2/animation/blood_5.png'];
@@ -633,25 +613,24 @@
         function checkObjects() { checkExitDoor(); }
 
         // ============================================================
-        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + ПЕРЕНОС ВРАГА В БОЕВУЮ КОМНАТУ
+        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР И БОЕВАЯ КОМНАТА
         // ============================================================
         function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
-                battleRoom.position.set(0, 0, 0);
                 group.visible = false;
 
                 heroSprite.visible = false;
                 highlights.forEach(h => h.visible = false);
 
                 activeCamera = camFPS;
-                camFPS.position.set(0, 1.2, 0);
-                camFPS.rotation.set(0, 0, 0);
+                camFPS.position.set(0, 0.55, 3.6);
+                camFPS.lookAt(0, 0.45, 0);
 
                 if (currentEnemySprite) {
                     battleRoom.add(currentEnemySprite);
                     var sy = currentEnemySprite.scale.y;
-                    currentEnemySprite.position.set(0, sy / 2, -2);
+                    currentEnemySprite.position.set(0, sy / 2, 0);
                     currentEnemySprite.visible = true;
                 }
 
@@ -666,7 +645,7 @@
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     group.add(currentEnemyObj.mesh);
                     var sy2 = currentEnemyObj.mesh.scale.y;
-                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, sy2 / 2, currentEnemyObj.y - center);
+                    currentEnemyObj.mesh.position.set(currentEnemyObj.x - center, 0, currentEnemyObj.y - center);
                 }
 
                 activeCamera = camTop;
@@ -800,7 +779,7 @@
                         var ud2 = best.obj.userData;
                         if (ud2 && ud2.objRef) {
                             var cur = worldToGrid(playerPos.x, playerPos.z);
-                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { showCenterText('Нажми кнопку сбора', '#ffd700'); return; }
+                            if (cur.gx === ud2.gx && cur.gy === ud2.gy) { return; } // Убрал подсказку
                             var pathB = buildPath(cur.gx, cur.gy, ud2.gx, ud2.gy);
                             if (pathB.length > 0) { waypoints = pathB; moving = true; pendingBattle = null; pendingLoot = { type: 'bag', bag: ud2.objRef }; startSteps(); }
                             else { showCenterText('Нет пути', '#888'); }
@@ -820,7 +799,7 @@
                                 return;
                             }
                             if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
-                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { showCenterText('Нажми кнопку сбора', '#ffd700'); return; }
+                                if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; } // Убрал подсказку
                                 var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
                                 if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
                                 else { showCenterText('Нет пути', '#888'); }
@@ -887,33 +866,17 @@
             }
         });
 
-                function updateLootButton() {
+        function updateLootButton() {
             var iconImg = document.getElementById('attack-icon-img'); if (!iconImg) return;
             if (isBattleActive) { iconImg.src = 'assets/assets2/talents/simple_attack.png'; return; }
             var cur = worldToGrid(playerPos.x, playerPos.z); var nearLoot = false;
+            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; } }
+            if (!nearLoot) { for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; } } }
             
-            // Проверка на лут (зелья, стрелы, котлы, алтари)
-            for (var i = 0; i < objects.length; i++) { 
-                var o = objects[i]; 
-                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; 
-                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { nearLoot = true; break; } 
-            }
-            
-            // Проверка на мешки с лутом
-            if (!nearLoot) { 
-                for (var b = 0; b < lootBags.length; b++) { 
-                    var bag = lootBags[b]; 
-                    if (bag.opened) continue; 
-                    if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { nearLoot = true; break; } 
-                } 
-            }
-            
-            // Проверка на открытый выход
             if (!nearLoot && exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) {
-                nearLoot = true;
+                nearLoot = true; 
             }
 
-            // Показываем/скрываем кнопку сбора вне боя
             if (!isBattleActive) {
                 document.getElementById('battle-controls').style.display = nearLoot ? 'flex' : 'none';
             }
@@ -921,49 +884,20 @@
         }
 
         document.getElementById('attack-icon').addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            if (isBattleActive) { attackEnemy(); return; }
-            
+            e.stopPropagation(); if (isBattleActive) { attackEnemy(); return; }
             var cur = worldToGrid(playerPos.x, playerPos.z);
-            
-            // Сбор лута
-            for (var i = 0; i < objects.length; i++) { 
-                var o = objects[i]; 
-                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; 
-                if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } 
-            }
-            
-            // Открытие мешка
-            for (var b = 0; b < lootBags.length; b++) { 
-                var bag = lootBags[b]; 
-                if (bag.opened) continue; 
-                if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } 
-            }
-            
-            // Выход из подземки
+            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } }
+            for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } }
             if (exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) { winDungeon(); return; }
         });
 
-        var talentData = { 
-            'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 
-            'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 
-            'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } 
-        };
+        var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } };
         var skillCooldowns = {};
-        
         function renderLearnedTalents() {
-            var row = document.getElementById('skills-row'); 
-            if (!row) return;
-            var p = parent.Sherwood.getPlayer(); 
-            if (!p) return; 
-            if (!p.talents) p.talents = {}; 
-            row.innerHTML = '';
-            
+            var row = document.getElementById('skills-row'); if (!row) return;
+            var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.talents) p.talents = {}; row.innerHTML = '';
             for (var id in talentData) {
-                var img = document.createElement('img'); 
-                img.src = talentData[id].icon; 
-                img.className = 'skill-btn';
-                img.dataset.skillId = id;
+                var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
                 img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
                 row.appendChild(img);
             }
@@ -1000,14 +934,6 @@
                     }
                     if (pendingLoot) {
                         var L = pendingLoot; pendingLoot = null;
-                        var cg = worldToGrid(playerPos.x, playerPos.z);
-                        var dd;
-                        if (L.type === 'bag') dd = Math.abs(cg.gx - L.bag.gx) + Math.abs(cg.gy - L.bag.gy);
-                        else dd = Math.abs(cg.gx - L.x) + Math.abs(cg.gy - L.y);
-                        if (dd <= 1) {
-                            if (L.type === 'bag') showCenterText('Нажми кнопку сбора', '#ffd700');
-                            else showCenterText('Нажми кнопку сбора', '#ffd700');
-                        }
                     }
                 }
             }
@@ -1035,7 +961,7 @@
             if (isBattleActive) {
                 camFPS.position.x = (Math.random() - 0.5) * cameraShake;
                 camFPS.position.z = (Math.random() - 0.5) * cameraShake;
-                camFPS.position.y = 1.2 + (Math.random() - 0.5) * cameraShake;
+                camFPS.position.y = 0.55 + (Math.random() - 0.5) * cameraShake;
                 cameraShake *= 0.85; if (cameraShake < 0.001) cameraShake = 0;
             } else {
                 camTop.position.x = playerPos.x; camTop.position.z = playerPos.z; camTop.position.y = 20; camTop.lookAt(playerPos.x, 0, playerPos.z);
