@@ -2,118 +2,83 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Лагерь Шервуда</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
-        canvas { display: block; }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
+        canvas { display: block; background: transparent; touch-action: none; cursor: crosshair; }
+        
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
 
         #camp-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0,0,0,0.75); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; letter-spacing: 2px; }
-
         #camp-exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
-
-        #camp-hint { position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 13px; text-shadow: 0 0 6px #000; z-index: 20; pointer-events: none; opacity: 0.85; letter-spacing: 1px; text-align: center; }
-
-        #door-labels-layer {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 15;
+        
+        /* Кнопка взаимодействия с дверью (как в платформере) */
+        #action-btn {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            width: 85px; height: 85px; cursor: pointer; pointer-events: auto;
+            padding: 0; border: none; background: none; z-index: 45; display: none;
         }
-        .door-label {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.78);
-            border: 2px solid #c8a050;
-            border-radius: 8px;
-            padding: 4px 12px;
-            color: #ffd27a;
-            font: bold 14px "Times New Roman", serif;
-            text-shadow: 0 0 6px #000, 0 2px 4px #000;
-            letter-spacing: 1px;
-            white-space: nowrap;
-            display: none;
+        #action-btn:active { transform: translateX(-50%) scale(0.9); }
+        #action-btn img {
+            width: 85px; height: 85px; object-fit: contain; border-radius: 8px;
+            border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6);
+            padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box;
         }
+        #action-btn img:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
 
-        #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; pointer-events: none; }
-        #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
-        #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 110px; height: 110px; z-index: 50; pointer-events: none; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
-
+        
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; pointer-events: none; }
-        #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
-        #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
-        #joystick { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; z-index: 30; pointer-events: auto; }
-        .arrow-btn { position: absolute; width: 38px; height: 38px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 16px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
+        #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
+        .arrow-btn { position: absolute; width: 60px; height: 60px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
-        #btn-forward { top: 0; left: 41px; }
-        #btn-left { top: 41px; left: 0; }
-        #btn-right { top: 41px; left: 82px; }
-        #btn-back { top: 82px; left: 41px; }
-
-        #step-anim {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 76px; height: 76px;
-            pointer-events: none;
-            z-index: 35;
-            border-radius: 50%;
-            object-fit: cover;
-            opacity: 0.85;
-            filter: drop-shadow(0 0 8px rgba(200,160,80,0.6));
-        }
-
-        @media (max-width: 600px) {
-            #camp-exit-btn { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
-            #camp-title { top: 8px !important; font-size: 14px !important; padding: 4px 12px !important; }
-            #camp-hint { font-size: 11px !important; bottom: 150px !important; }
-            #joystick { bottom: 20px !important; width: 110px !important; height: 110px !important; }
-            .arrow-btn { width: 34px !important; height: 34px !important; font-size: 14px !important; }
-            #btn-forward { top: 0 !important; left: 38px !important; }
-            #btn-left    { top: 38px !important; left: 0 !important; }
-            #btn-right   { top: 38px !important; left: 76px !important; }
-            #btn-back    { top: 76px !important; left: 38px !important; }
-            #step-anim { width: 60px !important; height: 60px !important; }
-            #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
-            #hero-life span, #hero-mana span { font-size: 13px !important; }
-            .door-label { font-size: 12px !important; padding: 3px 8px !important; }
+        #btn-left  { top: 40px; left: 0; }
+        #btn-right { top: 40px; left: 80px; }
+        
+        @media (max-width: 900px) {
+            #joystick { display: block; }
+            #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
+            #hero-life { left: 6px; }
+            #hero-mana { right: 6px; }
+            #hero-life span, #hero-mana span { font-size: 13px; }
+            #action-btn { width: 70px; height: 70px; bottom: 100px; }
+            #action-btn img { width: 70px; height: 70px; }
         }
     </style>
 </head>
 <body>
     <div id="camp-title">🏕️ ЛАГЕРЬ ШЕРВУДА</div>
     <div id="camp-exit-btn" onclick="exitCamp();">←</div>
-    <div id="camp-hint">Иди по коридору, поворачивай в ниши и кликай по дверям</div>
 
-    <div id="door-labels-layer"></div>
+    <button id="action-btn">
+        <img id="action-btn-img" src="assets/assets2/icons/take.png" alt="Взаимодействовать">
+    </button>
 
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
-
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
-        <span id="mana-text">MP: 0</span>
+        <span id="mana-text">Скверна: 0%</span>
     </div>
 
     <div id="joystick">
-        <div class="arrow-btn" id="btn-forward">▲</div>
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
-        <div class="arrow-btn" id="btn-back">▼</div>
-        <video id="step-anim" src="assets/assets2/animation/step_up.webm" muted playsinline autoplay loop preload="auto"></video>
     </div>
 
     <div id="vignette"></div>
@@ -129,8 +94,6 @@
         var urlParams = new URLSearchParams(window.location.search);
         var returnGX = urlParams.get('returnGX');
         var returnGY = urlParams.get('returnGY');
-        if (returnGX !== null) returnGX = parseInt(returnGX);
-        if (returnGY !== null) returnGY = parseInt(returnGY);
 
         function exitCamp() {
             try { if (parent.UI && parent.UI.loadHome) parent.UI.loadHome(); } catch(e) {}
@@ -138,205 +101,138 @@
         window.exitCamp = exitCamp;
 
         // ============================================================
-        //  8 РАЗДЕЛОВ — 4 ниши сверху (x=3,5,7,9), 4 ниши снизу
+        //  ДАННЫЕ ДЛЯ ДВЕРЕЙ (Разделы)
         // ============================================================
-       var SECTIONS = [
-    { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  doorX: 3,  doorY: 5,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
-    { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          doorX: 5,  doorY: 5,  open: function() { try { parent.UI.tavern(); } catch(e) {} } },
-    { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          doorX: 7,  doorY: 5,  open: function() { try { parent.UI.portals(); } catch(e) {} } },
-    { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          doorX: 9,  doorY: 5,  open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-    { key: 'thicket',  name: 'Шервудская чащоба', icon: 'assets/assets2/icons/quest.png',   doorX: 11, doorY: 5,  open: function() { try { parent.UI.thicket(); } catch(e) {} } },
-    { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', doorX: 3,  doorY: 11, open: function() { try { parent.UI.market(); } catch(e) {} } },
-    { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           doorX: 5,  doorY: 11, open: function() { try { parent.UI.forge(); } catch(e) {} } },
-    { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        doorX: 7,  doorY: 11, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
-    { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        doorX: 9,  doorY: 11, open: function() { try { parent.UI.settings(); } catch(e) {} } }
-];
+        var SECTIONS = [
+            { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  x: 8,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
+            { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          x: 16, open: function() { try { parent.UI.tavern(); } catch(e) {} } },
+            { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          x: 24, open: function() { try { parent.UI.portals(); } catch(e) {} } },
+            { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          x: 32, open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+            { key: 'thicket',  name: 'Шервудская чащоба', icon: 'assets/assets2/icons/quest.png',   x: 40, open: function() { try { parent.UI.thicket(); } catch(e) {} } },
+            { key: 'market',   name: 'Рынок',     icon: 'assets/assets2/icons/sherwood_market.png', x: 48, open: function() { try { parent.UI.market(); } catch(e) {} } },
+            { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           x: 56, open: function() { try { parent.UI.forge(); } catch(e) {} } },
+            { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        x: 64, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
+            { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        x: 72, open: function() { try { parent.UI.settings(); } catch(e) {} } }
+        ];
 
         // ============================================================
         //  СЦЕНА
         // ============================================================
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0805);
-        scene.fog = new THREE.Fog(0x0a0805, 5, 14);
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.Fog(0x1a1208, 20, 50);
 
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 40);
-        camera.rotation.order = 'YXZ';
+        const camPlatformer = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        camPlatformer.position.set(0, 2.5, 6);
+        camPlatformer.lookAt(0, 0.5, 0);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setClearColor(0x0a0805, 1);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0x665544, 1.0));
-        scene.add(new THREE.HemisphereLight(0x5a4a28, 0x000000, 0.5));
+        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
+        dirLight.position.set(5, 10, 5); scene.add(dirLight);
+        const playerLight = new THREE.PointLight(0xffaa55, 2.0, 15);
+        playerLight.position.set(0, 2, 2); scene.add(playerLight);
 
-        const size = 16;
-        const wallHeight = 1.4;
-        const cellSize = 1;
-
-        const map = [];
-        for (let i = 0; i < size; i++) {
-            map[i] = [];
-            for (let j = 0; j < size; j++) { map[i][j] = 1; }
-        }
-
-        // ============================================================
-        //  КАРТА: КОРИДОР 3 КЛЕТКИ + 4+4 НИШИ С ПРОСТЕНКАМИ 1 КЛЕТКА
-        //  Ниши: x = 3, 5, 7, 9
-        //  Простенки: x = 4, 6, 8 (1 клетка между нишами)
-        // ============================================================
-        function generateCamp() {
-            for (var yy = 0; yy < size; yy++) {
-                for (var xx = 0; xx < size; xx++) {
-                    map[yy][xx] = 1;
-                }
-            }
-
-            // Коридор — 3 клетки ширины: y=7, y=8, y=9, x от 2 до 10
-            for (var x = 2; x <= 10; x++) {
-                map[7][x] = 0;
-                map[8][x] = 0;
-                map[9][x] = 0;
-            }
-
-           // Верхние ниши — x = 3, 5, 7, 9, 11 (y=6 проход, y=5 ниша)
-var topNiches = [3, 5, 7, 9, 11];
-for (var i = 0; i < topNiches.length; i++) {
-    map[6][topNiches[i]] = 0;
-    map[5][topNiches[i]] = 0;
-}
-// Проход к новой нише справа (x=11) — соединяем с коридором
-map[6][10] = 0;  
-
-            // Нижние ниши — x = 3, 5, 7, 9 (y=10 проход, y=11 ниша)
-            var botNiches = [3, 5, 7, 9];
-            for (var i = 0; i < botNiches.length; i++) {
-                map[10][botNiches[i]] = 0;
-                map[11][botNiches[i]] = 0;
-            }
-        }
-        generateCamp();
-
-        function isWallCell(x, y) {
-            if (x < 0 || y < 0 || x >= size || y >= size) return true;
-            return map[y][x] === 1;
-        }
-
-        // ============================================================
-        //  ТЕКСТУРЫ
-        // ============================================================
         const loader = new THREE.TextureLoader();
-        const wallTex  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
-        const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
-        const ceilTex  = loader.load('assets/assets2/Sherwood_Square/ceiling_area_9.png');
+        const wallTexture  = loader.load('assets/assets2/Sherwood_Square/wall_area_1.png');
+        const floorTexture = loader.load('assets/assets2/Sherwood_Square/floor2.png');
+        const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
 
-        const wallMat  = new THREE.MeshStandardMaterial({ map: wallTex,  roughness: 0.85, metalness: 0.05 });
-        const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.95, metalness: 0.0 });
-        const ceilMat  = new THREE.MeshStandardMaterial({ map: ceilTex,  roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide });
-        const wallMatsArray = [wallMat, wallMat, ceilMat, wallMat, wallMat, wallMat];
+        wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(8, 2);
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(8, 2);
+        ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
+        ceilTexture.repeat.set(8, 2);
 
-        const group = new THREE.Group();
-        scene.add(group);
+        const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
+        const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
+        const ceilMat  = new THREE.MeshLambertMaterial({ map: ceilTexture });
 
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                const x = col - Math.floor(size / 2);
-                const z = row - Math.floor(size / 2);
+        const platformerGroup = new THREE.Group();
+        scene.add(platformerGroup);
 
-                if (map[row][col] !== 1) {
-                    const floor = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), floorMat);
-                    floor.rotation.x = -Math.PI / 2;
-                    floor.position.set(x, 0, z);
-                    group.add(floor);
+        const LEVEL_W = 80; 
+        const WALL_H = 6;   
+        const CORRIDOR_DEPTH = 6; 
 
-                    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(cellSize, cellSize), ceilMat);
-                    ceil.rotation.x = Math.PI / 2;
-                    ceil.position.set(x, wallHeight, z);
-                    group.add(ceil);
-                }
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
+        ground.position.set(LEVEL_W / 2, -0.5, 0); 
+        platformerGroup.add(ground);
 
-                if (map[row][col] === 1) {
-                    const wall = new THREE.Mesh(new THREE.BoxGeometry(cellSize, wallHeight, cellSize), wallMatsArray);
-                    wall.position.set(x, wallHeight / 2, z);
-                    group.add(wall);
-                }
-            }
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
+        platformerGroup.add(backWall);
+
+        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
+        ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
+        platformerGroup.add(ceil);
+
+        // ============================================================
+        //  ДВЕРИ-РАЗДЕЛЫ (Опускаются вниз)
+        // ============================================================
+        var doorLeaves = [];
+        for (var i = 0; i < SECTIONS.length; i++) {
+            var sec = SECTIONS[i];
+            var tex = loader.load(sec.icon);
+            tex.minFilter = THREE.LinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            
+            var mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: true, depthWrite: false, color: 0xffffff });
+            var leaf = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
+            
+            leaf.position.set(sec.x, 2.5, 0); // Поднята над полом
+            leaf.userData = { isDoor: true, section: sec, originalY: 2.5, openY: -3.5, t: 0, open: false, _reverse: false };
+            platformerGroup.add(leaf);
+            
+            doorLeaves.push(leaf);
         }
 
         // ============================================================
-        //  БРАЗИЕРЫ — 4 штуки (в начале и в конце коридора)
+        //  БРАЗИЕРЫ (Вазоны с огнем)
         // ============================================================
-        const brazierPositions = [
-            { gx: 2,  gy: 7 },
-            { gx: 2,  gy: 9 },
-            { gx: 10, gy: 7 },
-            { gx: 10, gy: 9 }
-        ];
         const braziers = [];
-
         function chromaKeyImageData(imgData) {
             var d = imgData.data;
             for (var i = 0; i < d.length; i += 4) {
                 var r = d[i], g = d[i+1], b = d[i+2];
                 if (g > 80 && g > r * 1.35 && g > b * 1.35) {
                     var greenness = (g - Math.max(r, b)) / g;
-                    if (greenness > 0.25) {
-                        d[i+3] = 0;
-                    } else {
-                        d[i+3] = Math.floor(255 * (1 - greenness / 0.25));
-                    }
+                    if (greenness > 0.25) { d[i+3] = 0; } else { d[i+3] = Math.floor(255 * (1 - greenness / 0.25)); }
                 }
             }
         }
 
-        for (var b = 0; b < brazierPositions.length; b++) {
-            var bp = brazierPositions[b];
-            var bx = bp.gx - Math.floor(size / 2);
-            var bz = bp.gy - Math.floor(size / 2);
-
+        for (var b = 0; b < 4; b++) {
+            var bx = 4 + b * 18; 
+            
             var fireLight = new THREE.PointLight(0xff7a2a, 0.85, 4.5, 2);
-            fireLight.position.set(bx, 0.55, bz);
+            fireLight.position.set(bx, 0.55, 1.5);
             scene.add(fireLight);
 
-            // Разрешение canvas уменьшено до 128×128 для производительности
             var bCanvas = document.createElement('canvas');
-            bCanvas.width = 128;
-            bCanvas.height = 128;
+            bCanvas.width = 128; bCanvas.height = 128;
             var bCtx = bCanvas.getContext('2d', { willReadFrequently: true });
 
             var bVideo = document.createElement('video');
             bVideo.src = 'assets/assets2/animation/stone_brazier_fire.webm';
-            bVideo.autoplay = true;
-            bVideo.loop = true;
-            bVideo.muted = true;
-            bVideo.playsInline = true;
-            bVideo.preload = 'auto';
+            bVideo.autoplay = true; bVideo.loop = true; bVideo.muted = true; bVideo.playsInline = true; bVideo.preload = 'auto';
             bVideo.play().catch(function(){});
 
             var bTex = new THREE.CanvasTexture(bCanvas);
-            bTex.minFilter = THREE.LinearFilter;
-            bTex.magFilter = THREE.LinearFilter;
+            bTex.minFilter = THREE.LinearFilter; bTex.magFilter = THREE.LinearFilter;
 
-            var bSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: bTex,
-                transparent: true,
-                depthTest: true,
-                depthWrite: false
-            }));
+            var bSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bTex, transparent: true, depthTest: true, depthWrite: false }));
             bSprite.scale.set(0.55, 0.55, 1);
-            bSprite.position.set(bx, 0.3, bz);
+            bSprite.position.set(bx, 0.3, 1.5); // Стоят на переднем плане
             scene.add(bSprite);
 
-            braziers.push({
-                video: bVideo,
-                canvas: bCanvas,
-                ctx: bCtx,
-                texture: bTex,
-                sprite: bSprite,
-                light: fireLight,
-                phase: Math.random() * Math.PI * 2
-            });
+            braziers.push({ video: bVideo, canvas: bCanvas, ctx: bCtx, texture: bTex, sprite: bSprite, light: fireLight, phase: Math.random() * Math.PI * 2 });
         }
 
         function updateBrazierFrames() {
@@ -355,160 +251,145 @@ map[6][10] = 0;
         }
 
         // ============================================================
-        //  ДВЕРИ — в нишах
+        //  ПЕРСОНАЖ (Анимация как в платформере)
         // ============================================================
-        function makeDoorMaterial(iconPath) {
-            var tex = loader.load(iconPath);
-            tex.minFilter = THREE.LinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-            return new THREE.MeshBasicMaterial({
-                map: tex,
-                transparent: true,
-                side: THREE.DoubleSide,
-                depthTest: true,
-                depthWrite: false,
-                color: 0xffffff
-            });
-        }
+        const player = {
+            pos: new THREE.Vector3(3, 0, 0),
+            vel: new THREE.Vector3(0, 0, 0),
+            onGround: false,
+            facing: 1,
+            speed: 6.0,
+            jumpPower: 10.0,
+            gravity: 25.0,
+            jumpPressed: false
+        };
 
-        var doorLeaves = [];
+        const heroGroup = new THREE.Group();
+        platformerGroup.add(heroGroup);
 
-        for (var d = 0; d < SECTIONS.length; d++) {
-            var sec = SECTIONS[d];
-            var gx = sec.doorX;
-            var gy = sec.doorY;
+        const video = document.createElement('video');
+        video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
+        video.loop = true; video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
 
-            var wx = gx - Math.floor(size / 2);
-            var wz = gy - Math.floor(size / 2);
+        const hCanvas = document.createElement('canvas');
+        hCanvas.width = 512; hCanvas.height = 512;
+        const hCtx = hCanvas.getContext('2d', { willReadFrequently: true });
 
-            var leaf = new THREE.Mesh(
-                new THREE.PlaneGeometry(cellSize, wallHeight),
-                makeDoorMaterial(sec.icon)
-            );
-
-            leaf.position.set(wx, wallHeight / 2, wz);
-            leaf.userData = { isDoor: true, doorGX: gx, doorGY: gy, section: sec };
-            group.add(leaf);
-
-            doorLeaves.push({
-                mesh: leaf,
-                gx: gx, gy: gy,
-                open: false, t: 0,
-                closedY: wallHeight / 2,
-                openY: -wallHeight / 2 - 0.15,
-                section: sec,
-                labelEl: null
-            });
-        }
-
-        console.log('🚪 Дверей размещено:', doorLeaves.length);
-
-        // ============================================================
-        //  СВЕТЛЯЧКИ
-        // ============================================================
-        var fireflies = [];
-        var fireflyTex = (function() {
-            var canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            var ctx = canvas.getContext('2d');
-            var gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            gradient.addColorStop(0, 'rgba(255, 240, 160, 1)');
-            gradient.addColorStop(0.25, 'rgba(255, 220, 100, 0.85)');
-            gradient.addColorStop(0.55, 'rgba(255, 180, 60, 0.35)');
-            gradient.addColorStop(1, 'rgba(255, 180, 60, 0)');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(32, 32, 32, 0, Math.PI * 2);
-            ctx.fill();
-            var t = new THREE.CanvasTexture(canvas);
-            t.minFilter = THREE.LinearFilter;
-            t.magFilter = THREE.LinearFilter;
-            return t;
-        })();
-
-        for (var fd = 0; fd < doorLeaves.length; fd++) {
-            var door = doorLeaves[fd];
-            var baseX = door.mesh.position.x;
-            var baseZ = door.mesh.position.z;
-
-            var count = 3 + Math.floor(Math.random() * 3);
-            for (var k = 0; k < count; k++) {
-                var spr = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: fireflyTex,
-                    transparent: true,
-                    depthTest: true,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending
-                }));
-                var fsize = 0.08 + Math.random() * 0.06;
-                spr.scale.set(fsize, fsize, 1);
-
-                var angle = Math.random() * Math.PI * 2;
-                var radius = 0.25 + Math.random() * 0.3;
-                var height = 0.3 + Math.random() * 0.9;
-                spr.position.set(
-                    baseX + Math.cos(angle) * radius,
-                    height,
-                    baseZ + Math.sin(angle) * radius
-                );
-                scene.add(spr);
-
-                fireflies.push({
-                    sprite: spr,
-                    baseX: baseX,
-                    baseZ: baseZ,
-                    angle: angle,
-                    radius: radius,
-                    height: height,
-                    speed: 0.3 + Math.random() * 0.4,
-                    verticalSpeed: 0.5 + Math.random() * 0.7,
-                    phase: Math.random() * Math.PI * 2,
-                    wobbleAmp: 0.08 + Math.random() * 0.1
-                });
+        function chromaKeyHero(imgData) {
+            var d = imgData.data;
+            for (var i = 0; i < d.length; i += 4) {
+                var r = d[i], g = d[i+1], b = d[i+2];
+                if (g > 80 && g > r * 1.35 && g > b * 1.35) {
+                    var greenness = (g - Math.max(r, b)) / g;
+                    if (greenness > 0.25) { d[i+3] = 0; } else { d[i+3] = Math.floor(255 * (1 - greenness / 0.25)); }
+                }
             }
         }
+        function processHeroFrame(flip) {
+            if (video.readyState < 2) return;
+            try {
+                hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+                hCtx.save();
+                if (flip) { hCtx.scale(-1, 1); hCtx.translate(-hCanvas.width, 0); }
+                hCtx.drawImage(video, 0, 0, hCanvas.width, hCanvas.height);
+                hCtx.restore();
+                var imgData = hCtx.getImageData(0, 0, hCanvas.width, hCanvas.height);
+                chromaKeyHero(imgData);
+                hCtx.putImageData(imgData, 0, 0);
+                heroTex.needsUpdate = true;
+            } catch(e) {}
+        }
+        const heroTex = new THREE.CanvasTexture(hCanvas);
+        heroTex.minFilter = heroTex.magFilter = THREE.LinearFilter;
+
+        const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
+        heroSprite.center.set(0.5, 0); 
+        heroSprite.scale.set(2.2, 2.2, 1); 
+        heroSprite.position.set(0, 0, 0); 
+        heroGroup.add(heroSprite);
+
+        const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
+        const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
+        staticSprite.center.set(0.5, 0); 
+        staticSprite.scale.set(2.2, 2.2, 1); 
+        staticSprite.position.set(0, 0, 0);
+        heroGroup.add(staticSprite);
+        video.addEventListener('play', () => { staticSprite.visible = false; });
 
         // ============================================================
-        //  ПОДПИСИ
+        //  УПРАВЛЕНИЕ
         // ============================================================
-        var labelsLayer = document.getElementById('door-labels-layer');
-        for (var i = 0; i < doorLeaves.length; i++) {
-            var el = document.createElement('div');
-            el.className = 'door-label';
-            el.textContent = doorLeaves[i].section.name;
-            labelsLayer.appendChild(el);
-            doorLeaves[i].labelEl = el;
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','KeyJ'].includes(e.code)) e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+        const touch = { left: false, right: false };
+        function bindTouch(id, prop) {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); touch[prop] = true; });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); touch[prop] = false; });
+            el.addEventListener('mousedown', (e) => { e.preventDefault(); touch[prop] = true; });
+            el.addEventListener('mouseup', (e) => { e.preventDefault(); touch[prop] = false; });
+            el.addEventListener('mouseleave', () => { touch[prop] = false; });
+        }
+        bindTouch('btn-left', 'left');
+        bindTouch('btn-right', 'right');
+
+        function updatePlayer(dt) {
+            const p = player;
+            let moveX = 0;
+            if (keys['KeyA'] || keys['ArrowLeft'] || touch.left) moveX -= 1;
+            if (keys['KeyD'] || keys['ArrowRight'] || touch.right) moveX += 1;
+
+            p.vel.x = moveX * p.speed;
+            if (moveX !== 0) {
+                p.facing = moveX;
+                if (video.paused) video.play().catch(()=>{});
+                if (!stepsPlaying) startSteps();
+            } else {
+                if (!video.paused) video.pause();
+                if (stepsPlaying) stopSteps();
+            }
+
+            const jumpDown = keys['KeyW'] || keys['Space'] || keys['ArrowUp'];
+            if (jumpDown && !p.jumpPressed && p.onGround) {
+                p.vel.y = p.jumpPower;
+                p.onGround = false;
+            }
+            p.jumpPressed = jumpDown;
+
+            p.vel.y -= p.gravity * dt;
+            if (p.vel.y < -25) p.vel.y = -25;
+
+            const newX = p.pos.x + p.vel.x * dt;
+            p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
+
+            const newY = p.pos.y + p.vel.y * dt;
+            if (newY <= 0) { p.pos.y = 0; p.vel.y = 0; p.onGround = true; }
+            else { p.pos.y = newY; p.onGround = false; }
         }
 
         // ============================================================
         //  ЗВУКИ
         // ============================================================
-        var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+        var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var campMusic = new Audio('assets/assets2/music/main_theme_2.ogg');
-        campMusic.loop = true;
-        campMusic.volume = 0.35;
-
-        var stepAnimEl = document.getElementById('step-anim');
-        stepAnimEl.pause();
+        campMusic.loop = true; campMusic.volume = 0.35;
 
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function(){}); } catch(e) {} }
-
-        function startSteps() {
-            try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){}
-            try { stepAnimEl.play().catch(function(){}); } catch(e){}
-        }
-        function stopSteps() {
-            try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){}
-            try { stepAnimEl.pause(); } catch(e){}
-        }
+        var stepsPlaying = false;
+        function startSteps() { if (stepsPlaying) return; stepsPlaying = true; try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} }
+        function stopSteps() { stepsPlaying = false; try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
 
         setTimeout(function() { try { campMusic.play().catch(function(){}); } catch(e){} }, 300);
         window.addEventListener('click', function() { try { campMusic.play().catch(function(){}); } catch(e){} });
 
         // ============================================================
-        //  СФЕРЫ
+        //  СФЕРЫ HP/Мана
         // ============================================================
         function updateHeroSpheres() {
             if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
@@ -520,356 +401,113 @@ map[6][10] = 0;
             var hpText = document.getElementById('hp-text');
             if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
 
-            var mana = p.stats.mana || 0;
-            var maxMana = p.stats.maxMana || 100;
+            var mana = p.stats.filth || 0;
+            var maxMana = p.stats.maxFilth || 100;
             var manaPercent = mana / maxMana;
             var manaFill = document.getElementById('mana-fill');
             if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - manaPercent) * 100) + '% 0 0 0)';
             var manaText = document.getElementById('mana-text');
-            if (manaText) manaText.textContent = 'MP: ' + Math.floor(mana);
+            if (manaText) manaText.textContent = 'Скверна: ' + Math.floor(mana) + '%';
         }
         setTimeout(updateHeroSpheres, 400);
         setInterval(updateHeroSpheres, 1000);
 
         // ============================================================
-        //  ИГРОК — центр коридора
+        //  ВЗАИМОДЕЙСТВИЕ С ДВЕРЬМИ
         // ============================================================
-        let playerGX = 6, playerGY = 8;
-        const playerPos = new THREE.Vector3(playerGX - Math.floor(size / 2), 0, playerGY - Math.floor(size / 2));
-        let playerYaw = -Math.PI / 2;
+        var actionBtn = document.getElementById('action-btn');
+        var actionBtnImg = document.getElementById('action-btn-img');
+        var activeDoor = null;
 
-        if (returnGX !== null && returnGY !== null && !isNaN(returnGX) && !isNaN(returnGY)) {
-            var neighbours = [
-                { x: returnGX, y: returnGY + 1 },
-                { x: returnGX, y: returnGY - 1 },
-                { x: returnGX + 1, y: returnGY },
-                { x: returnGX - 1, y: returnGY }
-            ];
-            var spawn = null;
-            for (var n = 0; n < neighbours.length; n++) {
-                var nx = neighbours[n].x, ny = neighbours[n].y;
-                if (nx >= 0 && ny >= 0 && nx < size && ny < size && map[ny][nx] === 0) {
-                    spawn = { x: nx, y: ny };
-                    break;
+        function checkDoorInteraction() {
+            var closestDoor = null;
+            var minDist = 4.5; // Дистанция взаимодействия
+
+            for (var i = 0; i < doorLeaves.length; i++) {
+                var door = doorLeaves[i];
+                if (door.open) continue;
+                var dist = Math.abs(player.pos.x - door.position.x);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestDoor = door;
                 }
             }
-            if (spawn) {
-                playerGX = spawn.x;
-                playerGY = spawn.y;
-                playerPos.x = playerGX - Math.floor(size / 2);
-                playerPos.z = playerGY - Math.floor(size / 2);
-                var faceX = returnGX - playerGX;
-                var faceY = returnGY - playerGY;
-                if (faceX === 1) playerYaw = -Math.PI / 2;
-                else if (faceX === -1) playerYaw = Math.PI / 2;
-                else if (faceY === 1) playerYaw = Math.PI;
-                else if (faceY === -1) playerYaw = 0;
+
+            if (closestDoor) {
+                activeDoor = closestDoor;
+                actionBtn.style.display = 'block';
+                actionBtnImg.src = 'assets/assets2/icons/take.png'; // Иконка руки/лута
+            } else {
+                activeDoor = null;
+                actionBtn.style.display = 'none';
             }
-            for (var dl = 0; dl < doorLeaves.length; dl++) {
-                if (doorLeaves[dl].gx === returnGX && doorLeaves[dl].gy === returnGY) {
-                    var dd = doorLeaves[dl];
-                    dd.mesh.position.y = dd.openY;
-                    dd.mesh.visible = true;
-                    dd.t = 0;
-                    dd._reverse = true;
-                    break;
-                }
-            }
-            setTimeout(function() { playSound(soundAltar); }, 400);
         }
 
-        const heroGlow = new THREE.PointLight(0xffb060, 0.7, 6, 2);
-        heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
-        scene.add(heroGlow);
-
-        const MOVE_SPEED = 2.0;
-        const rotationSpeed = Math.PI / 2;
-        let waypoints = [];
-        let moving = false;
-        let isTurning = false;
-
-        function isWalkable(gx, gy) {
-            if (gx < 0 || gy < 0 || gx >= size || gy >= size) return false;
-            return map[gy][gx] === 0;
-        }
-        function canStep(fromGX, fromGY, toGX, toGY) {
-            if (!isWalkable(toGX, toGY)) return false;
-            const dx = toGX - fromGX, dy = toGY - fromGY;
-            if (dx !== 0 && dy !== 0) {
-                if (!isWalkable(fromGX + dx, fromGY)) return false;
-                if (!isWalkable(fromGX, fromGY + dy)) return false;
-            }
-            return true;
-        }
-        function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
-        function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
-
-        function openDoor(doorObj) {
-            if (!doorObj || doorObj.open) return;
-            doorObj.open = true;
-            doorObj.t = 0;
-            doorObj._reverse = false;
-            playSound(soundAltar);
-
-            try {
-                if (parent.UI) parent.UI._campReturnInfo = { gx: doorObj.gx, gy: doorObj.gy };
-            } catch(e) {}
-
-            setTimeout(function() {
-                if (doorObj.section && doorObj.section.open) {
-                    doorObj.section.open();
-                }
-            }, 350);
-        }
-
-        function animateTurn(targetYaw, duration) {
-            if (isTurning) return;
-            duration = duration || 400;
-            const startYaw = playerYaw;
-            const startTime = performance.now();
-            isTurning = true;
-            function turnLoop() {
-                const elapsed = performance.now() - startTime;
-                const t = Math.min(elapsed / duration, 1);
-                const smoothT = t * t * (3 - 2 * t);
-                let delta = targetYaw - startYaw;
-                while (delta > Math.PI) delta -= Math.PI * 2;
-                while (delta < -Math.PI) delta += Math.PI * 2;
-                playerYaw = startYaw + delta * smoothT;
-                if (t < 1) requestAnimationFrame(turnLoop);
-                else { playerYaw = startYaw + delta; isTurning = false; }
-            }
-            turnLoop();
-        }
-
-        function moveForward() {
-            if (moving || isTurning) return;
-            const dirX = -Math.sin(playerYaw);
-            const dirZ = -Math.cos(playerYaw);
-            const cur = worldToGrid(playerPos.x, playerPos.z);
-            const nx = cur.gx + Math.round(dirX);
-            const ny = cur.gy + Math.round(dirZ);
-            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
-            const to = gridToWorld(nx, ny);
-            waypoints = [{ x: to.x, z: to.z }];
-            moving = true;
-            startSteps();
-        }
-        function moveBackward() {
-            if (moving || isTurning) return;
-            const dirX = Math.sin(playerYaw);
-            const dirZ = Math.cos(playerYaw);
-            const cur = worldToGrid(playerPos.x, playerPos.z);
-            const nx = cur.gx + Math.round(dirX);
-            const ny = cur.gy + Math.round(dirZ);
-            if (!canStep(cur.gx, cur.gy, nx, ny)) return;
-            const to = gridToWorld(nx, ny);
-            waypoints = [{ x: to.x, z: to.z }];
-            moving = true;
-            startSteps();
-        }
-        function turnLeft() { if (!moving && !isTurning) animateTurn(playerYaw + rotationSpeed); }
-        function turnRight() { if (!moving && !isTurning) animateTurn(playerYaw - rotationSpeed); }
-
-        document.getElementById('btn-forward').addEventListener('click', (e) => { e.preventDefault(); moveForward(); });
-        document.getElementById('btn-back').addEventListener('click', (e) => { e.preventDefault(); moveBackward(); });
-        document.getElementById('btn-left').addEventListener('click', (e) => { e.preventDefault(); turnLeft(); });
-        document.getElementById('btn-right').addEventListener('click', (e) => { e.preventDefault(); turnRight(); });
-        document.getElementById('btn-forward').addEventListener('touchstart', (e) => { e.preventDefault(); moveForward(); });
-        document.getElementById('btn-back').addEventListener('touchstart', (e) => { e.preventDefault(); moveBackward(); });
-        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); turnLeft(); });
-        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); turnRight(); });
-
-        document.addEventListener('keydown', (e) => {
-            switch (e.key.toLowerCase()) {
-                case 'w': case 'arrowup': moveForward(); e.preventDefault(); break;
-                case 's': case 'arrowdown': moveBackward(); e.preventDefault(); break;
-                case 'a': case 'arrowleft': turnLeft(); e.preventDefault(); break;
-                case 'd': case 'arrowright': turnRight(); e.preventDefault(); break;
-            }
-        });
-
-        const raycaster = new THREE.Raycaster();
-        const ndc = new THREE.Vector2();
-
-        renderer.domElement.addEventListener('click', (e) => {
-            ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
-            ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(ndc, camera);
-
-            var doorMeshes = doorLeaves.map(function(d) { return d.mesh; });
-            var hits = raycaster.intersectObjects(doorMeshes, false);
-            if (hits.length > 0) {
-                var ud = hits[0].object.userData;
-                if (ud && ud.isDoor) {
-                    var cur = worldToGrid(playerPos.x, playerPos.z);
-                    var dist = Math.abs(cur.gx - ud.doorGX) + Math.abs(cur.gy - ud.doorGY);
-                    if (dist <= 1) {
-                        for (var i = 0; i < doorLeaves.length; i++) {
-                            if (doorLeaves[i].gx === ud.doorGX && doorLeaves[i].gy === ud.doorGY) {
-                                openDoor(doorLeaves[i]);
-                                break;
-                            }
-                        }
+        actionBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (activeDoor && !activeDoor.open) {
+                activeDoor.open = true;
+                activeDoor.t = 0;
+                playSound(soundAltar);
+                
+                // Запуск открытия раздела через 350 мс (как в старом лагере)
+                setTimeout(function() {
+                    if (activeDoor.userData.section && activeDoor.userData.section.open) {
+                        activeDoor.userData.section.open();
                     }
-                    return;
-                }
+                }, 350);
             }
         });
 
-        const clock = new THREE.Clock();
-
-        function updateCamera() {
-            camera.position.x = playerPos.x;
-            camera.position.z = playerPos.z;
-            camera.position.y = 0.75;
-            camera.rotation.set(0, playerYaw, 0);
-        }
-
-        function updateDoorLabels() {
-            var forwardX = -Math.sin(playerYaw);
-            var forwardZ = -Math.cos(playerYaw);
-
-            for (var i = 0; i < doorLeaves.length; i++) {
-                if (doorLeaves[i].labelEl) doorLeaves[i].labelEl.style.display = 'none';
-            }
-
-            var best = null;
-            var bestScore = -1;
-            for (var i = 0; i < doorLeaves.length; i++) {
-                var d = doorLeaves[i];
-                if (!d.labelEl) continue;
-                if (!d.mesh.visible && d.open) continue;
-
-                var dx = d.mesh.position.x - playerPos.x;
-                var dz = d.mesh.position.z - playerPos.z;
-                var dist = Math.hypot(dx, dz);
-
-                if (dist > 5) continue;
-                if (dist < 0.001) continue;
-
-                var nx = dx / dist;
-                var nz = dz / dist;
-                var dot = nx * forwardX + nz * forwardZ;
-
-                if (dot < 0.9) continue;
-
-                var score = dot * 2 + (5 - dist) / 5;
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = d;
-                }
-            }
-
-            if (!best) return;
-
-            var worldPos = new THREE.Vector3(best.mesh.position.x, best.mesh.position.y + 0.7, best.mesh.position.z);
-            worldPos.project(camera);
-
-            if (worldPos.z > 1) return;
-
-            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
-            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-
-            if (x < -100 || x > window.innerWidth + 100 || y < -100 || y > window.innerHeight + 100) return;
-
-            var dist2 = Math.hypot(best.mesh.position.x - playerPos.x, best.mesh.position.z - playerPos.z);
-            var opacity = 1;
-            if (dist2 > 3) opacity = Math.max(0, 1 - (dist2 - 3) / 2);
-
-            best.labelEl.style.display = 'block';
-            best.labelEl.style.left = x + 'px';
-            best.labelEl.style.top = y + 'px';
-            best.labelEl.style.opacity = opacity;
-        }
+        // ============================================================
+        //  АНИМАЦИЯ
+        // ============================================================
+        let lastTime = performance.now();
 
         function animate() {
             requestAnimationFrame(animate);
-            const dt = Math.min(clock.getDelta(), 0.05);
-            const t = clock.elapsedTime;
+            const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
+            lastTime = performance.now();
+            const t = performance.now() / 1000;
 
-            if (moving && waypoints.length) {
-                let budget = MOVE_SPEED * dt;
-                while (budget > 0 && waypoints.length) {
-                    const tgt = waypoints[0];
-                    const dx = tgt.x - playerPos.x;
-                    const dz = tgt.z - playerPos.z;
-                    const dist = Math.hypot(dx, dz);
-                    if (dist <= budget) {
-                        playerPos.x = tgt.x;
-                        playerPos.z = tgt.z;
-                        budget -= dist;
-                        waypoints.shift();
-                    } else {
-                        const nx = dx / dist, nz = dz / dist;
-                        playerPos.x += nx * budget;
-                        playerPos.z += nz * budget;
-                        budget = 0;
-                    }
-                }
-                if (!waypoints.length) {
-                    moving = false;
-                    stopSteps();
-                }
-            }
+            if (video.readyState >= 2) processHeroFrame(player.facing < 0);
 
+            updatePlayer(dt);
+            camPlatformer.position.x = player.pos.x;
+            camPlatformer.lookAt(camPlatformer.position.x, 1.0, 0);
+            heroGroup.position.copy(player.pos);
+            heroGroup.position.y = player.pos.y; 
+            playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
+
+            // Логика анимации дверей
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
-                if (d._reverse) {
-                    if (d.t < 1) {
-                        d.t += dt / 0.45;
-                        var k = Math.min(d.t, 1);
-                        var e = k * k * (3 - 2 * k);
-                        d.mesh.position.y = d.openY + (d.closedY - d.openY) * e;
-                        if (k >= 1) {
-                            d.mesh.position.y = d.closedY;
-                            d._reverse = false;
-                            d.open = false;
-                        }
-                    }
-                } else if (d.open && d.t < 1) {
+                if (d.open && d.t < 1) {
                     d.t += dt / 0.45;
                     var k2 = Math.min(d.t, 1);
                     var e2 = k2 * k2 * (3 - 2 * k2);
-                    d.mesh.position.y = d.closedY + (d.openY - d.closedY) * e2;
-                    if (k2 >= 1) d.mesh.visible = false;
+                    // Дверь уезжает вниз
+                    d.position.y = d.userData.originalY + (d.userData.openY - d.userData.originalY) * e2;
+                    if (k2 >= 1) d.visible = false;
                 }
             }
 
-            heroGlow.position.set(playerPos.x, 0.9, playerPos.z);
-            heroGlow.intensity = 0.65 + Math.sin(t * 3) * 0.08;
-
+            // Обновление бразиеров
             updateBrazierFrames();
             for (var bi = 0; bi < braziers.length; bi++) {
                 var bb = braziers[bi];
                 bb.light.intensity = 0.75 + Math.sin(t * 5.5 + bb.phase) * 0.18 + Math.sin(t * 13.7 + bb.phase) * 0.08;
             }
 
-            for (var fi = 0; fi < fireflies.length; fi++) {
-                var f = fireflies[fi];
-                f.angle += dt * f.speed * 0.6;
-                var r = f.radius + Math.sin(t * 1.3 + f.phase) * f.wobbleAmp;
-                var yy = f.height + Math.sin(t * f.verticalSpeed + f.phase) * 0.15;
-
-                f.sprite.position.x = f.baseX + Math.cos(f.angle) * r;
-                f.sprite.position.z = f.baseZ + Math.sin(f.angle) * r;
-                f.sprite.position.y = yy;
-
-                var pulse = 0.55 + Math.sin(t * 3 + f.phase) * 0.4;
-                f.sprite.material.opacity = Math.max(0.15, pulse);
-            }
-
-            updateCamera();
-            renderer.render(scene, camera);
-            updateDoorLabels();
+            checkDoorInteraction();
+            renderer.render(scene, camPlatformer);
         }
-
         animate();
 
-        addEventListener('resize', () => {
-            camera.aspect = innerWidth / innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(innerWidth, innerHeight);
+        addEventListener('resize', function() {
+            var aspect = window.innerWidth / window.innerHeight;
+            camPlatformer.aspect = aspect; camPlatformer.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
