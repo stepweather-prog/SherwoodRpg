@@ -143,8 +143,13 @@
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floor2.png');
         const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
 
-        wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(8, 2);
+        // --- ФИКС СТЕН: убираем повторение текстуры по вертикали ---
+        wallTexture.wrapS = THREE.RepeatWrapping; 
+        wallTexture.repeat.x = 8; 
+        wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
+        wallTexture.repeat.y = 1; 
+        wallTexture.offset.y = 0.2; // Сдвиг, чтобы скрыть корни
+
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(8, 2);
         ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
@@ -317,6 +322,18 @@
         heroGroup.add(staticSprite);
         video.addEventListener('play', () => { staticSprite.visible = false; });
 
+        // ПРОВЕРКА ВОЗВРАТА ИЗ РАЗДЕЛА (Восстановление позиции)
+        try {
+            if (parent && parent.Sherwood && parent.Sherwood._campReturnPos) {
+                var rx = parent.Sherwood._campReturnPos.x;
+                if (typeof rx === 'number' && !isNaN(rx)) {
+                    player.pos.x = rx;
+                    heroGroup.position.x = rx;
+                }
+                parent.Sherwood._campReturnPos = null;
+            }
+        } catch(e) {}
+
         // ============================================================
         //  УПРАВЛЕНИЕ
         // ============================================================
@@ -444,7 +461,13 @@
                 activeDoor.userData.t = 0;
                 playSound(soundAltar);
                 
-                // Сразу вызываем переход в раздел через 300мс, как только дверь начнёт опускаться
+                // СОХРАНЯЕМ ПОЗИЦИЮ ИГРОКА ПЕРЕД ПЕРЕХОДОМ
+                try {
+                    if (parent && parent.Sherwood) {
+                        parent.Sherwood._campReturnPos = { x: player.pos.x };
+                    }
+                } catch(e) {}
+
                 var sectionToOpen = activeDoor.userData.section;
                 setTimeout(function() {
                     if (sectionToOpen && sectionToOpen.open) {
