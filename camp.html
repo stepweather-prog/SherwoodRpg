@@ -438,15 +438,33 @@
         // ============================================================
         //  ЗВУКИ
         // ============================================================
-        var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+                var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+        soundSteps.loop = true; // <--- ВАЖНО: включаем бесконечный цикл, пока персонаж идет
+
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var campMusic = new Audio('assets/assets2/music/main_theme_2.ogg');
         campMusic.loop = true; campMusic.volume = 0.35;
 
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function(){}); } catch(e) {} }
+
         var stepsPlaying = false;
-        function startSteps() { if (stepsPlaying) return; stepsPlaying = true; try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} }
-        function stopSteps() { stepsPlaying = false; try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
+
+        function startSteps() { 
+            if (stepsPlaying) return; 
+            stepsPlaying = true; 
+            try { 
+                soundSteps.currentTime = 0; // Начинаем с начала
+                soundSteps.play().catch(function(){}); 
+            } catch(e){} 
+        }
+
+        function stopSteps() { 
+            stepsPlaying = false; 
+            try { 
+                soundSteps.pause(); 
+                soundSteps.currentTime = 0; // Сбрасываем на начало при остановке
+            } catch(e){} 
+        }
 
         setTimeout(function() { try { campMusic.play().catch(function(){}); } catch(e){} }, 300);
         window.addEventListener('click', function() { try { campMusic.play().catch(function(){}); } catch(e){} });
