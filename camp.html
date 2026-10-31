@@ -99,8 +99,7 @@
             try { if (parent.UI && parent.UI.loadHome) parent.UI.loadHome(); } catch(e) {}
         }
         window.exitCamp = exitCamp;
-
-        // ============================================================
+        / ============================================================
         //  ДАННЫЕ ДЛЯ ДВЕРЕЙ (Разделы)
         // ============================================================
         var SECTIONS = [
@@ -140,15 +139,15 @@
 
         const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/wall_area_1.png');
-        const floorTexture = loader.load('assets/assets2/Sherwood_Square/floor2.png');
+        const floorTexture = loader.load('assets/dungeon_tiles/dungeon1/tiles_5.png'); // НОВЫЙ ПОЛ
         const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
 
-        // --- ФИКС СТЕН: убираем повторение текстуры по вертикали ---
+        // Настройка стены (без повторений сверху)
         wallTexture.wrapS = THREE.RepeatWrapping; 
         wallTexture.repeat.x = 8; 
         wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
         wallTexture.repeat.y = 1; 
-        wallTexture.offset.y = 0.2; // Сдвиг, чтобы скрыть корни
+        wallTexture.offset.y = 0.2; 
 
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(8, 2);
@@ -179,7 +178,7 @@
         platformerGroup.add(ceil);
 
         // ============================================================
-        //  ДВЕРИ-РАЗДЕЛЫ (Стоят на заднем фоне z = 0)
+        //  ДВЕРИ-РАЗДЕЛЫ (Опущены ниже - на высоту 1.8)
         // ============================================================
         var doorLeaves = [];
         for (var i = 0; i < SECTIONS.length; i++) {
@@ -191,11 +190,64 @@
             var mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: true, depthWrite: false, color: 0xffffff });
             var leaf = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
             
-            leaf.position.set(sec.x, 2.5, 0); // Z=0 чтобы стояли сзади
-            leaf.userData = { isDoor: true, section: sec, originalY: 2.5, openY: -4.0, t: 0, open: false };
+            // Опускаем двери: было 2.5, стало 1.8
+            leaf.position.set(sec.x, 1.8, 0); 
+            leaf.userData = { isDoor: true, section: sec, originalY: 1.8, openY: -4.5, t: 0, open: false };
             platformerGroup.add(leaf);
             
             doorLeaves.push(leaf);
+        }
+
+        // ============================================================
+        //  СВЕТЛЯЧКИ ВОКРУГ ДВЕРЕЙ (Возвращены)
+        // ============================================================
+        var fireflies = [];
+        var fireflyTex = (function() {
+            var canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            var ctx = canvas.getContext('2d');
+            var gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255, 240, 160, 1)');
+            gradient.addColorStop(0.25, 'rgba(255, 220, 100, 0.85)');
+            gradient.addColorStop(0.55, 'rgba(255, 180, 60, 0.35)');
+            gradient.addColorStop(1, 'rgba(255, 180, 60, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI * 2); ctx.fill();
+            var t = new THREE.CanvasTexture(canvas);
+            t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter;
+            return t;
+        })();
+
+        for (var fd = 0; fd < doorLeaves.length; fd++) {
+            var door = doorLeaves[fd];
+            var baseX = door.position.x;
+            var baseY = door.position.y; // Центр двери
+            
+            var count = 4 + Math.floor(Math.random() * 4); // 4-7 светлячков на дверь
+            for (var k = 0; k < count; k++) {
+                var spr = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: fireflyTex, transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending
+                }));
+                var fsize = 0.12 + Math.random() * 0.08;
+                spr.scale.set(fsize, fsize, 1);
+
+                // Спавним вокруг двери
+                var angle = Math.random() * Math.PI * 2;
+                var radius = 1.5 + Math.random() * 1.5;
+                var offsetY = (Math.random() - 0.5) * 3.0;
+                
+                spr.position.set(baseX + Math.cos(angle) * radius, baseY + offsetY, 0.5);
+                scene.add(spr);
+
+                fireflies.push({
+                    sprite: spr, baseX: baseX, baseY: baseY,
+                    angle: angle, radius: radius, offsetY: offsetY,
+                    speed: 0.3 + Math.random() * 0.4,
+                    verticalSpeed: 0.5 + Math.random() * 0.7,
+                    phase: Math.random() * Math.PI * 2,
+                    wobbleAmp: 0.2 + Math.random() * 0.3
+                });
+            }
         }
 
         // ============================================================
