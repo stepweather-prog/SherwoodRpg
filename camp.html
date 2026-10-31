@@ -16,7 +16,7 @@
         #camp-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0,0,0,0.75); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; letter-spacing: 2px; }
         #camp-exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
         
-        /* Кнопка взаимодействия с дверью (как в платформере) */
+        /* Кнопка взаимодействия */
         #action-btn {
             position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
             width: 85px; height: 85px; cursor: pointer; pointer-events: auto;
@@ -174,7 +174,7 @@
         platformerGroup.add(ceil);
 
         // ============================================================
-        //  ДВЕРИ-РАЗДЕЛЫ (Опускаются вниз)
+        //  ДВЕРИ-РАЗДЕЛЫ (Стоят на заднем фоне z = 0)
         // ============================================================
         var doorLeaves = [];
         for (var i = 0; i < SECTIONS.length; i++) {
@@ -186,15 +186,15 @@
             var mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: true, depthWrite: false, color: 0xffffff });
             var leaf = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
             
-            leaf.position.set(sec.x, 2.5, 0); // Поднята над полом
-            leaf.userData = { isDoor: true, section: sec, originalY: 2.5, openY: -3.5, t: 0, open: false, _reverse: false };
+            leaf.position.set(sec.x, 2.5, 0); // Z=0 чтобы стояли сзади
+            leaf.userData = { isDoor: true, section: sec, originalY: 2.5, openY: -4.0, t: 0, open: false };
             platformerGroup.add(leaf);
             
             doorLeaves.push(leaf);
         }
 
         // ============================================================
-        //  БРАЗИЕРЫ (Вазоны с огнем)
+        //  БРАЗИЕРЫ (Вазоны с огнем - стоят на переднем плане z = 2.0)
         // ============================================================
         const braziers = [];
         function chromaKeyImageData(imgData) {
@@ -208,7 +208,7 @@
             }
         }
 
-        for (var b = 0; b < 4; b++) {
+        for (var b = 0; b < 5; b++) {
             var bx = 4 + b * 18; 
             
             var fireLight = new THREE.PointLight(0xff7a2a, 0.85, 4.5, 2);
@@ -229,7 +229,7 @@
 
             var bSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bTex, transparent: true, depthTest: true, depthWrite: false }));
             bSprite.scale.set(0.55, 0.55, 1);
-            bSprite.position.set(bx, 0.3, 1.5); // Стоят на переднем плане
+            bSprite.position.set(bx, 0.3, 2.0); // Z=2.0 перед игроком
             scene.add(bSprite);
 
             braziers.push({ video: bVideo, canvas: bCanvas, ctx: bCtx, texture: bTex, sprite: bSprite, light: fireLight, phase: Math.random() * Math.PI * 2 });
@@ -251,10 +251,10 @@
         }
 
         // ============================================================
-        //  ПЕРСОНАЖ (Анимация как в платформере)
+        //  ПЕРСОНАЖ (Анимация как в платформере - z = 1.0)
         // ============================================================
         const player = {
-            pos: new THREE.Vector3(3, 0, 0),
+            pos: new THREE.Vector3(3, 0, 1.0), // Игрок на Z=1.0
             vel: new THREE.Vector3(0, 0, 0),
             onGround: false,
             facing: 1,
@@ -265,6 +265,7 @@
         };
 
         const heroGroup = new THREE.Group();
+        heroGroup.position.set(3, 0, 1.0);
         platformerGroup.add(heroGroup);
 
         const video = document.createElement('video');
@@ -354,13 +355,6 @@
                 if (stepsPlaying) stopSteps();
             }
 
-            const jumpDown = keys['KeyW'] || keys['Space'] || keys['ArrowUp'];
-            if (jumpDown && !p.jumpPressed && p.onGround) {
-                p.vel.y = p.jumpPower;
-                p.onGround = false;
-            }
-            p.jumpPressed = jumpDown;
-
             p.vel.y -= p.gravity * dt;
             if (p.vel.y < -25) p.vel.y = -25;
 
@@ -421,11 +415,11 @@
 
         function checkDoorInteraction() {
             var closestDoor = null;
-            var minDist = 4.5; // Дистанция взаимодействия
+            var minDist = 4.5;
 
             for (var i = 0; i < doorLeaves.length; i++) {
                 var door = doorLeaves[i];
-                if (door.open) continue;
+                if (door.userData.open) continue;
                 var dist = Math.abs(player.pos.x - door.position.x);
                 if (dist < minDist) {
                     minDist = dist;
@@ -436,7 +430,7 @@
             if (closestDoor) {
                 activeDoor = closestDoor;
                 actionBtn.style.display = 'block';
-                actionBtnImg.src = 'assets/assets2/icons/take.png'; // Иконка руки/лута
+                actionBtnImg.src = 'assets/assets2/icons/take.png';
             } else {
                 activeDoor = null;
                 actionBtn.style.display = 'none';
@@ -445,17 +439,18 @@
 
         actionBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (activeDoor && !activeDoor.open) {
-                activeDoor.open = true;
-                activeDoor.t = 0;
+            if (activeDoor && !activeDoor.userData.open) {
+                activeDoor.userData.open = true;
+                activeDoor.userData.t = 0;
                 playSound(soundAltar);
                 
-                // Запуск открытия раздела через 350 мс (как в старом лагере)
+                // Сразу вызываем переход в раздел через 300мс, как только дверь начнёт опускаться
+                var sectionToOpen = activeDoor.userData.section;
                 setTimeout(function() {
-                    if (activeDoor.userData.section && activeDoor.userData.section.open) {
-                        activeDoor.userData.section.open();
+                    if (sectionToOpen && sectionToOpen.open) {
+                        sectionToOpen.open();
                     }
-                }, 350);
+                }, 300);
             }
         });
 
@@ -482,11 +477,10 @@
             // Логика анимации дверей
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
-                if (d.open && d.t < 1) {
-                    d.t += dt / 0.45;
-                    var k2 = Math.min(d.t, 1);
+                if (d.userData.open && d.userData.t < 1) {
+                    d.userData.t += dt / 0.45;
+                    var k2 = Math.min(d.userData.t, 1);
                     var e2 = k2 * k2 * (3 - 2 * k2);
-                    // Дверь уезжает вниз
                     d.position.y = d.userData.originalY + (d.userData.openY - d.userData.originalY) * e2;
                     if (k2 >= 1) d.visible = false;
                 }
