@@ -174,7 +174,7 @@ Sherwood.Tavern = {
         // Прогресс
         h += '<div style="margin-bottom:20px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
 
-        // === КНОПКИ РАЗДЕЛОВ (ТОЛЬКО 2) ===
+                // === КНОПКИ РАЗДЕЛОВ (ТЕПЕРЬ 3) ===
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:30px;">';
 
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
@@ -183,6 +183,11 @@ Sherwood.Tavern = {
 
         h += '<div onclick="Sherwood.Training.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
+        h += '</div>';
+
+        // НОВАЯ КНОПКА РЫНКА
+        h += '<div onclick="Sherwood.BlackMarket.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Рынок</span>';
         h += '</div>';
 
         h += '</div>';
