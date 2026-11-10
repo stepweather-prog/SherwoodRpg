@@ -93,42 +93,47 @@ Sherwood.Training = {
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/training.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;">';
         h += '<style>.training-scroll::-webkit-scrollbar { display: none; } .training-scroll { scrollbar-width: none; }</style>';
 
-        h += '<div class="training-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:40px;width:100%;">';
+        h += '<div class="training-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:40px;padding-bottom:40px;width:100%;">';
 
+        // Очки опыта
         h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;">';
         h += '<img src="assets/assets2/game_details/tablet_of_experience.png" style="width:36px;height:36px;object-fit:contain;">';
         h += '<span style="color:#ffd700;font-size:18px;font-weight:bold;">' + (p.experiencePoints || 0) + '</span>';
         h += '</div>';
 
-        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;width:100%;max-width:280px;">';
+        // Вкладки выбора статов
+        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;width:90%;max-width:340px;">';
         for (var i = 0; i < stats.length; i++) {
             var s = stats[i];
             var isActive = (this._selectedStat === s);
-            h += '<div onclick="Sherwood.Training._selectStat(\'' + s + '\')" style="flex:1;height:40px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
+            h += '<div onclick="Sherwood.Training._selectStat(\'' + s + '\')" style="flex:1;height:40px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;' + (isActive ? 'filter:brightness(1.3);' : 'filter:brightness(0.7);') + '">';
             h += '<span style="color:' + (isActive ? colors[s] : '#fff') + ';font-size:12px;font-weight:bold;text-shadow:0 2px 4px #000;">' + names[s] + '</span>';
             h += '</div>';
         }
         h += '</div>';
 
-        h += '<div style="display:flex;justify-content:center;align-items:flex-start;width:90%;max-width:320px;gap:15px;">';
+        // Карточки статов (сетка)
+        h += '<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;width:95%;max-width:360px;margin-bottom:20px;">';
+        
         for (var j = 0; j < stats.length; j++) {
             var stat = stats[j];
             var info = this.getStatInfo(stat);
 
-            h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;border-radius:8px;padding:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);">';
+            h += '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:8px;padding:10px 5px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1);">';
             
-            h += '<img src="' + icons[stat] + '" style="display:block;margin:0 auto;width:45px;height:45px;object-fit:contain;">';
+            h += '<img src="' + icons[stat] + '" style="display:block;margin:0 auto;width:36px;height:36px;object-fit:contain;">';
             
-            h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:12px;margin-top:4px;">' + names[stat] + '</div>';
+            h += '<div style="color:' + colors[stat] + ';font-weight:bold;font-size:12px;margin-top:6px;">' + names[stat] + '</div>';
             
-            h += '<div style="color:#aaa;font-size:11px;margin-top:2px;">Уровень: ' + info.level + '</div>';
+            h += '<div style="color:#aaa;font-size:10px;margin-top:2px;">Ур: ' + info.level + '</div>';
             
-            h += '<div style="color:#aaa;font-size:10px;margin-top:2px;">+' + info.bonus + ' за ур.</div>';
+            h += '<div style="color:#aaa;font-size:9px;margin-top:2px;">+' + info.bonus + ' / ур</div>';
 
-            h += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;">';
-            h += '<button onclick="Sherwood.Training._removePoint(\'' + stat + '\')" style="background:#f44336;border:none;border-radius:50%;padding:3px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:12px;">-</button>';
-            h += '<span style="color:#fff;font-size:14px;font-weight:bold;">' + info.level + '</span>';
-            h += '<button onclick="Sherwood.Training._addPoint(\'' + stat + '\')" style="background:#4caf50;border:none;border-radius:50%;padding:3px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:12px;">+</button>';
+            // Блок с кнопками + и -
+            h += '<div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px;width:100%;">';
+            h += '<button onclick="Sherwood.Training._removePoint(\'' + stat + '\')" style="background:#f44336;border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;padding:0;">-</button>';
+            h += '<span style="color:#fff;font-size:13px;font-weight:bold;min-width:20px;">' + info.level + '</span>';
+            h += '<button onclick="Sherwood.Training._addPoint(\'' + stat + '\')" style="background:#4caf50;border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;font-size:14px;padding:0;">+</button>';
             h += '</div>';
 
             h += '<div style="color:#ffd700;font-size:10px;margin-top:6px;">⭐ ' + info.cost + '</div>';
@@ -137,7 +142,8 @@ Sherwood.Training = {
         }
         h += '</div>';
 
-        h += '<div style="width:100%;max-width:320px;padding:20px 0 30px 0;text-align:center;">';
+        // Кнопка подтверждения
+        h += '<div style="width:90%;max-width:340px;text-align:center;">';
         h += '<button onclick="Sherwood.Training._confirmTraining()" style="width:100%;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">Подтвердить</button>';
         h += '</div>';
 
