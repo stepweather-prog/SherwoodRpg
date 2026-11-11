@@ -100,14 +100,13 @@
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         
         wallTexture.wrapS = THREE.RepeatWrapping; 
-        wallTexture.repeat.x = 4; 
+        wallTexture.repeat.x = 16; 
         wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
         wallTexture.repeat.y = 1; 
-        wallTexture.offset.y = 0.2; 
         wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(8, 1);
+        floorTexture.repeat.set(16, 1);
         floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
