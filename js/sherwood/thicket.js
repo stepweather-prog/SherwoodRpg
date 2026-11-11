@@ -1,16 +1,13 @@
 /**
  * Sherwood Thicket — Шервудская чащоба
  * Квестовая тропа: 65 узлов, 3 сложности, кубки как в подземке
+ * Визуал: сетка карточек по главам (как в талантах)
  */
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
 
 Sherwood.Thicket = {
 
-    // ============================================================
-    //  ДАННЫЕ УЗЛОВ — 65 штук
-    //  imagePath — ПОЛНЫЙ путь к картинке (как в quests.js / raid.js)
-    // ============================================================
     NODES: [
         // ========== ГЛАВА 1: Кровь Великого Дуба ==========
         { id: 1,  chapter: 1, chapterName: 'Кровь Великого Дуба', name: 'Чумной Ворон',            image: 'plague_crow.png',        imagePath: 'assets/all_beasts/plague_crow.png',        hp: 1000,  atk: 400,   def: 200,  exp: 30,  gold: 25,  isBoss: false },
@@ -108,39 +105,27 @@ Sherwood.Thicket = {
         { id: 63, chapter: 16, chapterName: 'Шрам, который не заживёт', name: 'Страж Преисподней',    image: 'underworld_guardian.png',  imagePath: 'assets/all_beasts/underworld_guardian.png',  hp: 250000,atk: 22400, def: 20400, exp: 220, gold: 60,  isBoss: false },
         { id: 64, chapter: 16, chapterName: 'Шрам, который не заживёт', name: 'Изначальный Стержень', image: 'the_primordial_core.png',  imagePath: 'assets/beast_quest/the_primordial_core.png', hp: 560000,atk: 36000, def: 29000, exp: 1600, gold: 1300, isBoss: true },
 
-        // ========== РЕЙД-БОСС (финальный узел) ==========
+        // ========== РЕЙД-БОСС ==========
         { id: 65, chapter: 0, chapterName: 'Рейд', name: 'Изначальный Ужас', image: 'original_horror.png', imagePath: 'assets/assets2/mobs/raid_mobs/original_horror.png', hp: 580000, atk: 38000, def: 30000, exp: 20000, gold: 15000, isBoss: true, isRaidBoss: true }
     ],
 
-    // Множители сложности: [лёгкая, средняя, сложная]
     DIFF_MULT: [1.0, 1.5, 2.2],
     DIFF_NAMES: ['Лёгкая', 'Средняя', 'Сложная'],
 
-    // ============================================================
-    //  СОСТОЯНИЕ
-    // ============================================================
     _currentNode: null,
     _currentDiff: 1,
     _inBattle: false,
+    _selectedChapter: 1,
 
-    // ============================================================
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ============================================================
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
         if (!p.thicket) {
-            p.thicket = {
-                cupsByNode: {},
-                lastViewedNode: 1
-            };
+            p.thicket = { cupsByNode: {}, lastViewedNode: 1 };
         }
         console.log('🌲 Шервудская чащоба инициализирована. Узлов:', this.NODES.length);
     },
 
-    // ============================================================
-    //  ДОСТУП К ДАННЫМ
-    // ============================================================
     getNode: function(nodeId) {
         for (var i = 0; i < this.NODES.length; i++) {
             if (this.NODES[i].id === nodeId) return this.NODES[i];
@@ -151,9 +136,7 @@ Sherwood.Thicket = {
     getProgress: function() {
         var p = Sherwood.getPlayer();
         if (!p) return { cupsByNode: {}, lastViewedNode: 1 };
-        if (!p.thicket) {
-            p.thicket = { cupsByNode: {}, lastViewedNode: 1 };
-        }
+        if (!p.thicket) p.thicket = { cupsByNode: {}, lastViewedNode: 1 };
         return p.thicket;
     },
 
@@ -179,17 +162,11 @@ Sherwood.Thicket = {
         Sherwood.saveGame();
     },
 
-    // ============================================================
-    //  РАЗБЛОКИРОВКА
-    // ============================================================
     isNodeAvailable: function(nodeId, diff) {
         if (nodeId === 1) return diff === 1 || this.getCups(1) >= (diff - 1);
-
         var prevCups = this.getCups(nodeId - 1);
         if (prevCups < 1) return false;
-
         if (diff === 1) return true;
-
         var thisCups = this.getCups(nodeId);
         if (diff === 2) return thisCups >= 1;
         if (diff === 3) return thisCups >= 2;
@@ -204,9 +181,6 @@ Sherwood.Thicket = {
         return this.NODES[this.NODES.length - 1].id;
     },
 
-    // ============================================================
-    //  СТАРТ БОЯ
-    // ============================================================
     startNode: function(nodeId, diff) {
         if (!this.isNodeAvailable(nodeId, diff)) {
             return { success: false, reason: 'Узел заблокирован' };
@@ -220,7 +194,6 @@ Sherwood.Thicket = {
 
         this.setLastViewed(nodeId);
         this._openBattle(nodeId, diff);
-
         return { success: true };
     },
 
@@ -231,38 +204,23 @@ Sherwood.Thicket = {
         var self = this;
         var node = this.getNode(nodeId);
 
-        // Рейд-босс (узел 65) — сначала видео
         if (node && node.isRaidBoss) {
             var video = document.createElement('video');
             video.src = 'assets/assets2/animation/raid_entrance.webm';
-            video.autoplay = true;
-            video.muted = true;
-            video.playsInline = true;
-
+            video.autoplay = true; video.muted = true; video.playsInline = true;
             var videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
-            if (window.innerWidth < 480) {
-                video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
-            } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
-                video.style.cssText = videoStyles + 'width:480px;height:100vh;';
-            } else {
-                video.style.cssText = videoStyles + 'width:480px;height:800px;';
-            }
-
+            if (window.innerWidth < 480) { video.style.cssText = videoStyles + 'width:100vw;height:100vh;'; }
+            else if (window.innerWidth >= 480 && window.innerHeight <= 800) { video.style.cssText = videoStyles + 'width:480px;height:100vh;'; }
+            else { video.style.cssText = videoStyles + 'width:480px;height:800px;'; }
             document.body.appendChild(video);
-
             var opened = false;
             function openIframe() {
-                if (opened) return;
-                opened = true;
-                video.remove();
+                if (opened) return; opened = true; video.remove();
                 self._openThicketIframe(nodeId, diff);
             }
-
             video.onended = openIframe;
             video.onerror = openIframe;
-            setTimeout(function() {
-                if (document.body.contains(video)) openIframe();
-            }, 5000);
+            setTimeout(function() { if (document.body.contains(video)) openIframe(); }, 5000);
             return;
         }
 
@@ -280,13 +238,9 @@ Sherwood.Thicket = {
         }
     },
 
-    // ============================================================
-    //  ПОБЕДА / ПОРАЖЕНИЕ
-    // ============================================================
-           _onWin: function(nodeId, diff) {
+    _onWin: function(nodeId, diff) {
         var node = this.getNode(nodeId);
         if (!node) return;
-
         this.setCups(nodeId, diff);
         this._inBattle = false;
 
@@ -296,33 +250,20 @@ Sherwood.Thicket = {
             gold: Math.floor(node.gold * mult * 2),
             silver: Math.floor(node.gold * mult * 5)
         };
-
         Sherwood.addExp(reward.exp);
         Sherwood.addResource('gold', reward.gold);
         Sherwood.addResource('silver', reward.silver);
 
-        // === ВЫПАДЕНИЕ ТОКЕНА ПОРТАЛА ===
-        // Шанс: 10% на легкой, 30% на средней, 50% на сложной
         var ticketChance = diff === 1 ? 0.1 : (diff === 2 ? 0.3 : 0.5);
-        
         if (Math.random() < ticketChance) {
-            // Так как чащоба открывается в iframe, обращаемся к сумке через parent
             if (parent.Sherwood && parent.Sherwood.Bag && parent.Sherwood.Bag.addResource) {
                 parent.Sherwood.Bag.addResource('portalToken1', 1);
-                if (typeof UI !== 'undefined' && UI._showToast) {
-                    UI._showToast('🎫 Выпал Токен портала I!');
-                }
-                console.log('🎫 Выпал токен портала!');
-            } else {
-                console.log('Ошибка: Сумка (parent.Sherwood.Bag) не найдена');
+                if (typeof UI !== 'undefined' && UI._showToast) UI._showToast('🎫 Выпал Токен портала I!');
             }
         }
 
         if (typeof UI !== 'undefined' && UI.updateDisplay) UI.updateDisplay();
-
-        if (Sherwood.Bestiary && Sherwood.Bestiary.registerKill) {
-            Sherwood.Bestiary.registerKill(node.image);
-        }
+        if (Sherwood.Bestiary && Sherwood.Bestiary.registerKill) Sherwood.Bestiary.registerKill(node.image);
 
         UI._afterRewardAction = function() {
             UI._playMusic('main_theme');
@@ -333,17 +274,11 @@ Sherwood.Thicket = {
 
     _onDefeat: function(nodeId) {
         this._inBattle = false;
-
-        var reward = {
-            exp: 200,
-            silver: 150
-        };
-
+        var reward = { exp: 200, silver: 150 };
         Sherwood.addExp(reward.exp);
         Sherwood.addResource('silver', reward.silver);
 
         if (typeof UI !== 'undefined' && UI.updateDisplay) UI.updateDisplay();
-
         var p = Sherwood.getPlayer();
         if (p && p.stats) {
             p.stats.hp = p.stats.maxHp;
@@ -361,295 +296,188 @@ Sherwood.Thicket = {
     _flee: function() {
         this._inBattle = false;
         this._currentNode = null;
-        if (typeof UI !== 'undefined') {
-            UI._stopMusic();
-            this.showUI();
-        }
+        if (typeof UI !== 'undefined') { UI._stopMusic(); this.showUI(); }
     },
 
-    // ============================================================
-    //  УТИЛИТЫ
-    // ============================================================
-    getImagePath: function(node) {
-        return node.imagePath;
-    },
+    getImagePath: function(node) { return node.imagePath; },
 
     getCurrentEnemy: function() {
         if (!this._currentNode) return null;
         var n = this._currentNode;
         var mult = this.DIFF_MULT[this._currentDiff - 1] || 1.0;
         return {
-            name: n.name,
-            image: n.image,
-            imagePath: n.imagePath,
-            hp: Math.floor(n.hp * mult),
-            maxHp: Math.floor(n.hp * mult),
-            atk: Math.floor(n.atk * mult),
-            def: Math.floor(n.def * mult),
-            isBoss: n.isBoss,
-            isRaidBoss: n.isRaidBoss || false,
-            nodeId: n.id,
-            diff: this._currentDiff
+            name: n.name, image: n.image, imagePath: n.imagePath,
+            hp: Math.floor(n.hp * mult), maxHp: Math.floor(n.hp * mult),
+            atk: Math.floor(n.atk * mult), def: Math.floor(n.def * mult),
+            isBoss: n.isBoss, isRaidBoss: n.isRaidBoss || false,
+            nodeId: n.id, diff: this._currentDiff
         };
     },
 
     // ============================================================
-    //  UI — ЭКРАН ТРОПЫ (SVG)
+    //  UI — СЕТКА КАРТОЧЕК ПО ГЛАВАМ
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
         UI._playSound('click');
 
         var self = this;
-        var prog = this.getProgress();
-        var totalNodes = this.NODES.length;
-
-        var NODE_RADIUS = 32;
-        var NODE_SPACING_Y = 140;
-        var AMPLITUDE_X = 90;
-        var SVG_WIDTH = 400;
-        var SVG_HEIGHT = totalNodes * NODE_SPACING_Y + 200;
-        var CENTER_X = SVG_WIDTH / 2;
-
-        function nodePos(index) {
-            var angle = index * 0.8;
-            var x = CENTER_X + Math.sin(angle) * AMPLITUDE_X;
-            var y = 100 + index * NODE_SPACING_Y;
-            return { x: x, y: y };
+        var chapters = {};
+        for (var i = 0; i < this.NODES.length; i++) {
+            var n = this.NODES[i];
+            if (!chapters[n.chapter]) chapters[n.chapter] = { name: n.chapterName, nodes: [] };
+            chapters[n.chapter].nodes.push(n);
         }
 
-        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + SVG_WIDTH + '" height="' + SVG_HEIGHT + '" style="display:block;margin:0 auto;">';
-
-        var pathD = '';
-        for (var i = 0; i < totalNodes; i++) {
-            var pos = nodePos(i);
-            if (i === 0) {
-                pathD += 'M ' + pos.x + ' ' + pos.y;
-            } else {
-                var prev = nodePos(i - 1);
-                var cx1 = prev.x;
-                var cy1 = prev.y + NODE_SPACING_Y / 2;
-                var cx2 = pos.x;
-                var cy2 = pos.y - NODE_SPACING_Y / 2;
-                pathD += ' C ' + cx1 + ' ' + cy1 + ', ' + cx2 + ' ' + cy2 + ', ' + pos.x + ' ' + pos.y;
-            }
-        }
-        svg += '<path d="' + pathD + '" stroke="#3a2a1a" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>';
-        svg += '<path d="' + pathD + '" stroke="#6b5a3a" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 10"/>';
-
-        for (var i = 0; i < totalNodes; i++) {
-            var node = this.NODES[i];
-            var pos = nodePos(i);
-            var cups = this.getCups(node.id);
-            var available = this.isNodeAvailable(node.id, 1);
-            var completed = cups >= 3;
-            var inProgress = cups >= 1 && cups < 3;
-            var locked = !available && cups === 0;
-
-            var circleFill = 'rgba(20,15,8,0.9)';
-            var circleStroke = '#6b5a3a';
-            var strokeWidth = 3;
-
-            if (completed) {
-                circleFill = 'rgba(80,60,20,0.9)';
-                circleStroke = '#ffd700';
-                strokeWidth = 4;
-            } else if (inProgress) {
-                circleFill = 'rgba(60,40,15,0.9)';
-                circleStroke = '#c9a040';
-                strokeWidth = 4;
-            } else if (available) {
-                circleFill = 'rgba(20,15,8,0.9)';
-                circleStroke = '#c9a040';
-                strokeWidth = 3;
-            } else if (locked) {
-                circleFill = 'rgba(10,10,10,0.85)';
-                circleStroke = '#333';
-                strokeWidth = 2;
-            }
-
-            if (available && !completed) {
-                svg += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="' + (NODE_RADIUS + 8) + '" fill="none" stroke="#ffd700" stroke-width="1.5" opacity="0.4">';
-                svg += '<animate attributeName="r" values="' + (NODE_RADIUS + 4) + ';' + (NODE_RADIUS + 14) + ';' + (NODE_RADIUS + 4) + '" dur="2s" repeatCount="indefinite"/>';
-                svg += '<animate attributeName="opacity" values="0.5;0.1;0.5" dur="2s" repeatCount="indefinite"/>';
-                svg += '</circle>';
-            }
-
-            svg += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="' + NODE_RADIUS + '" fill="' + circleFill + '" stroke="' + circleStroke + '" stroke-width="' + strokeWidth + '" data-node-id="' + node.id + '" style="cursor:pointer;" class="thicket-node-circle"/>';
-
-            var imgPath = self.getImagePath(node);
-            var imgSize = NODE_RADIUS * 1.6;
-            var filter = (available || cups > 0) ? '' : 'filter="grayscale(1) brightness(0.4)" opacity="0.5"';
-            svg += '<image href="' + imgPath + '" x="' + (pos.x - imgSize / 2) + '" y="' + (pos.y - imgSize / 2) + '" width="' + imgSize + '" height="' + imgSize + '" preserveAspectRatio="xMidYMid meet" ' + filter + ' pointer-events="none" onerror="this.style.display=\'none\'"/>';
-
-            var cupY = pos.y + NODE_RADIUS + 14;
-            var cupStartX = pos.x - (3 * 8) + 4;
-            for (var k = 0; k < 3; k++) {
-                var cx = cupStartX + k * 16;
-                var hasCup = cups >= (k + 1);
-                if (hasCup) {
-                    svg += '<circle cx="' + cx + '" cy="' + cupY + '" r="5" fill="#ffd700" stroke="#8b6b3a" stroke-width="1"/>';
-                } else {
-                    svg += '<circle cx="' + cx + '" cy="' + cupY + '" r="5" fill="none" stroke="#555" stroke-width="1" opacity="0.5"/>';
-                }
-            }
-
-            svg += '<text x="' + pos.x + '" y="' + (pos.y - NODE_RADIUS - 8) + '" text-anchor="middle" font-family="Times New Roman, serif" font-size="12" fill="#c8a050" opacity="0.7" pointer-events="none">' + node.id + '</text>';
-        }
-
-        svg += '</svg>';
+        var chapterKeys = Object.keys(chapters).sort(function(a, b) { return parseInt(a) - parseInt(b); });
+        var selectedChapter = this._selectedChapter || 1;
 
         var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;">';
-        h += '<div id="thicket-scroll-container" style="width:100%;height:calc(100vh - 120px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative;">';
-        h += '<div id="thicket-svg-wrapper" style="width:' + SVG_WIDTH + 'px;margin:0 auto;">';
-        h += svg;
+
+        // Вкладки глав
+        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px;">';
+        for (var c = 0; c < chapterKeys.length; c++) {
+            var chId = parseInt(chapterKeys[c]);
+            var chData = chapters[chId];
+            var isActive = (chId === selectedChapter);
+            h += '<div onclick="Sherwood.Thicket._selectChapter(' + chId + ')" style="cursor:pointer;padding:6px 12px;border-radius:6px;border:2px solid ' + (isActive ? '#c9a040' : '#555') + ';background:' + (isActive ? 'rgba(60,40,15,0.9)' : 'rgba(20,20,20,0.7)') + ';color:' + (isActive ? '#ffd27a' : '#aaa') + ';font:bold 12px \'Times New Roman\',serif;white-space:nowrap;">' + (chId === 0 ? 'Рейд' : 'Глава ' + chId) + '</div>';
+        }
         h += '</div>';
-        h += '</div>';
+
+        // Сетка узлов текущей главы
+        var chData = chapters[selectedChapter];
+        if (chData) {
+            h += '<div style="color:#c8a050;font-size:14px;text-align:center;margin-bottom:12px;text-shadow:0 2px 4px #000;">' + chData.name + '</div>';
+            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">';
+
+            for (var ni = 0; ni < chData.nodes.length; ni++) {
+                var node = chData.nodes[ni];
+                var cups = this.getCups(node.id);
+                var available = this.isNodeAvailable(node.id, 1);
+
+                var borderColor = cups >= 3 ? '#ffd700' : (available ? '#c9a040' : '#333');
+                var opacity = available ? 1 : 0.4;
+                var cursor = available ? 'pointer' : 'not-allowed';
+
+                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:' + cursor + ';opacity:' + opacity + ';background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;text-align:center;">';
+
+                // Иконка
+                h += '<div style="width:70px;height:70px;border-radius:8px;overflow:hidden;margin-bottom:6px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">';
+                h += '<img src="' + node.imagePath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '</div>';
+
+                // Номер и имя
+                h += '<div style="color:#ffa500;font-size:10px;margin-bottom:2px;">#' + node.id + '</div>';
+                h += '<div style="color:#fff;font-size:11px;font-weight:bold;line-height:1.2;margin-bottom:4px;">' + node.name + '</div>';
+
+                // Кубки
+                h += '<div style="display:flex;gap:3px;justify-content:center;">';
+                for (var k = 1; k <= 3; k++) {
+                    h += '<div style="width:10px;height:10px;border-radius:50%;border:1px solid ' + (cups >= k ? '#ffd700' : '#555') + ';background:' + (cups >= k ? '#ffd700' : 'transparent') + ';"></div>';
+                }
+                h += '</div>';
+
+                if (node.isBoss) {
+                    h += '<div style="color:#ff6b35;font-size:9px;font-weight:bold;margin-top:2px;">БОСС</div>';
+                }
+
+                h += '</div>';
+            }
+            h += '</div>';
+        }
+
         h += '</div>';
 
         UI._screenLayer.innerHTML = '';
-        var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');' +
-                      'background-size:cover;background-position:center;background-repeat:no-repeat;';
+        var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
         var wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
-                                'display:flex;flex-direction:column;overflow:hidden;';
+        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle + 'display:flex;flex-direction:column;overflow:hidden;';
         wrapper.innerHTML =
             '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
                 '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
                 '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">🌲 Шервудская чащоба</span>' +
             '</div>' +
-            '<div style="flex:1;overflow:hidden;padding:70px 12px 20px;box-sizing:border-box;display:flex;justify-content:center;">' + h + '</div>';
+            '<div style="flex:1;overflow-y:auto;padding:70px 12px 20px;box-sizing:border-box;display:flex;justify-content:center;">' + h + '</div>';
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
         UI._screenLayer.style.overflow = 'hidden';
-
-        var scrollContainer = document.getElementById('thicket-scroll-container');
-        if (scrollContainer) {
-            var focusNodeId = prog.lastViewedNode || this.getCurrentProgressNode();
-            var focusIndex = 0;
-            for (var fi = 0; fi < totalNodes; fi++) {
-                if (this.NODES[fi].id === focusNodeId) { focusIndex = fi; break; }
-            }
-            var focusPos = nodePos(focusIndex);
-            setTimeout(function() {
-                var containerHeight = scrollContainer.clientHeight;
-                var targetScroll = focusPos.y - containerHeight / 2;
-                if (targetScroll < 0) targetScroll = 0;
-                scrollContainer.scrollTop = targetScroll;
-            }, 50);
-        }
-
-        var svgWrapper = document.getElementById('thicket-svg-wrapper');
-        if (svgWrapper) {
-            svgWrapper.addEventListener('click', function(e) {
-                var target = e.target;
-                if (target && target.classList && target.classList.contains('thicket-node-circle')) {
-                    var nodeId = parseInt(target.getAttribute('data-node-id'));
-                    if (!isNaN(nodeId)) {
-                        self._showNodePanel(nodeId);
-                    }
-                }
-            });
-        }
     },
 
-    // ============================================================
-    //  ПАНЕЛЬ УЗЛА — 3 сложности
-    // ============================================================
+    _selectChapter: function(chId) {
+        this._selectedChapter = chId;
+        this.showUI();
+    },
+
     _showNodePanel: function(nodeId) {
-    var self = this;
-    var node = this.getNode(nodeId);
-    if (!node) return;
+        var self = this;
+        var node = this.getNode(nodeId);
+        if (!node) return;
+        this.setLastViewed(nodeId);
 
-    this.setLastViewed(nodeId);
+        var cups = this.getCups(nodeId);
+        var imgPath = this.getImagePath(node);
 
-    var cups = this.getCups(nodeId);
-    var imgPath = this.getImagePath(node);
+        var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;text-align:center;position:relative;">';
 
-    var h = '<div style="width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;text-align:center;position:relative;">';
-
-    // === СЛОЙ 1: картинка врага (z-index 1, не кликабельна) ===
-    h += '<div style="position:relative;z-index:1;margin:0 auto 16px;width:200px;height:200px;' +
-         'border:3px solid #c9a040;border-radius:16px;' +
-         'box-shadow:0 0 30px rgba(201,160,64,0.4), inset 0 0 40px rgba(0,0,0,0.8);' +
-         'background:radial-gradient(circle, rgba(0,0,0,0.2), rgba(0,0,0,0.7));' +
-         'display:flex;align-items:center;justify-content:center;overflow:hidden;' +
-         'pointer-events:none;">';
-    h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;" onerror="this.style.display=\'none\'">';
-    h += '</div>';
-
-    // === СЛОЙ 2: текст + кнопки (z-index 10, всегда сверху) ===
-    h += '<div style="position:relative;z-index:10;">';
-
-    h += '<div style="color:#ffd27a;font:bold 22px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:6px;">' + node.name + '</div>';
-
-    if (node.chapter > 0) {
-        h += '<div style="color:#aaa;font-size:0.85em;margin-bottom:4px;">Глава ' + node.chapter + ' — ' + node.chapterName + '</div>';
-    } else {
-        h += '<div style="color:#ff6b35;font-size:0.9em;font-weight:bold;margin-bottom:4px;">' + node.chapterName + '</div>';
-    }
-    if (node.isBoss) {
-        h += '<div style="color:#ff6b35;font-size:0.8em;font-weight:bold;margin-bottom:8px;">' + (node.isRaidBoss ? '👑 РЕЙД-БОСС' : '☠ БОСС') + '</div>';
-    }
-
-    h += '<div style="color:#c8a050;font-size:0.9em;margin-bottom:16px;">Кубков: ' + cups + ' / 3</div>';
-
-    h += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">';
-    for (var d = 1; d <= 3; d++) {
-        var available = this.isNodeAvailable(nodeId, d);
-        var passed = cups >= d;
-        var mult = this.DIFF_MULT[d - 1];
-        var diffName = this.DIFF_NAMES[d - 1];
-
-        var bg = passed ? 'linear-gradient(180deg,#5a4020,#3a2a10)' :
-                 (available ? 'linear-gradient(180deg,#3a2a10,#1a1208)' : 'rgba(20,20,20,0.7)');
-        var border = passed ? '#ffd700' : (available ? '#c9a040' : '#333');
-        var color = passed ? '#ffd700' : (available ? '#ffd27a' : '#666');
-        var cursor = available ? 'pointer' : 'not-allowed';
-
-        // onclick ВСЕГДА вешаем — внутри _enterNode проверка
-        var clickAttr = ' onclick="Sherwood.Thicket._enterNode(' + nodeId + ',' + d + ')"';
-
-        h += '<div' + clickAttr + ' style="position:relative;z-index:20;' +
-             'background:' + bg + ';border:2px solid ' + border + ';border-radius:10px;' +
-             'padding:14px 20px;cursor:' + cursor + ';' +
-             'display:flex;justify-content:space-between;align-items:center;' +
-             'pointer-events:auto;user-select:none;">';
-        h += '<div style="text-align:left;color:' + color + ';font:bold 15px \'Times New Roman\',serif;letter-spacing:1px;pointer-events:none;">' + diffName + '</div>';
-        h += '<div style="color:' + color + ';font-size:0.85em;pointer-events:none;">';
-        if (passed) h += '✓ Пройдено';
-        else if (available) h += '×' + mult.toFixed(1) + ' HP/ATK';
-        else h += '🔒 Закрыто';
+        h += '<div style="position:relative;z-index:1;margin:0 auto 16px;width:200px;height:200px;border:3px solid #c9a040;border-radius:16px;box-shadow:0 0 30px rgba(201,160,64,0.4), inset 0 0 40px rgba(0,0,0,0.8);background:radial-gradient(circle, rgba(0,0,0,0.2), rgba(0,0,0,0.7));display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;">';
+        h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;" onerror="this.style.display=\'none\'">';
         h += '</div>';
+
+        h += '<div style="position:relative;z-index:10;">';
+        h += '<div style="color:#ffd27a;font:bold 22px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;margin-bottom:6px;">' + node.name + '</div>';
+
+        if (node.chapter > 0) {
+            h += '<div style="color:#aaa;font-size:0.85em;margin-bottom:4px;">Глава ' + node.chapter + ' — ' + node.chapterName + '</div>';
+        } else {
+            h += '<div style="color:#ff6b35;font-size:0.9em;font-weight:bold;margin-bottom:4px;">' + node.chapterName + '</div>';
+        }
+        if (node.isBoss) {
+            h += '<div style="color:#ff6b35;font-size:0.8em;font-weight:bold;margin-bottom:8px;">' + (node.isRaidBoss ? '👑 РЕЙД-БОСС' : '☠ БОСС') + '</div>';
+        }
+
+        h += '<div style="color:#c8a050;font-size:0.9em;margin-bottom:16px;">Кубков: ' + cups + ' / 3</div>';
+
+        h += '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">';
+        for (var d = 1; d <= 3; d++) {
+            var available = this.isNodeAvailable(nodeId, d);
+            var passed = cups >= d;
+            var mult = this.DIFF_MULT[d - 1];
+            var diffName = this.DIFF_NAMES[d - 1];
+
+            var bg = passed ? 'linear-gradient(180deg,#5a4020,#3a2a10)' : (available ? 'linear-gradient(180deg,#3a2a10,#1a1208)' : 'rgba(20,20,20,0.7)');
+            var border = passed ? '#ffd700' : (available ? '#c9a040' : '#333');
+            var color = passed ? '#ffd700' : (available ? '#ffd27a' : '#666');
+            var cursor = available ? 'pointer' : 'not-allowed';
+            var clickAttr = ' onclick="Sherwood.Thicket._enterNode(' + nodeId + ',' + d + ')"';
+
+            h += '<div' + clickAttr + ' style="position:relative;z-index:20;background:' + bg + ';border:2px solid ' + border + ';border-radius:10px;padding:14px 20px;cursor:' + cursor + ';display:flex;justify-content:space-between;align-items:center;pointer-events:auto;user-select:none;">';
+            h += '<div style="text-align:left;color:' + color + ';font:bold 15px \'Times New Roman\',serif;letter-spacing:1px;pointer-events:none;">' + diffName + '</div>';
+            h += '<div style="color:' + color + ';font-size:0.85em;pointer-events:none;">';
+            if (passed) h += '✓ Пройдено';
+            else if (available) h += '×' + mult.toFixed(1) + ' HP/ATK';
+            else h += '🔒 Закрыто';
+            h += '</div></div>';
+        }
         h += '</div>';
-    }
-    h += '</div>';
 
-    h += '<button onclick="Sherwood.Thicket.showUI()" style="position:relative;z-index:20;background:transparent;border:2px solid #6b5a3a;border-radius:8px;padding:10px 24px;color:#c8a050;font:bold 14px \'Times New Roman\',serif;cursor:pointer;letter-spacing:1px;pointer-events:auto;">← К ТРОПЕ</button>';
+        h += '<button onclick="Sherwood.Thicket.showUI()" style="position:relative;z-index:20;background:transparent;border:2px solid #6b5a3a;border-radius:8px;padding:10px 24px;color:#c8a050;font:bold 14px \'Times New Roman\',serif;cursor:pointer;letter-spacing:1px;pointer-events:auto;">← К ТРОПЕ</button>';
+        h += '</div></div>';
 
-    h += '</div>'; // конец слоя 2
+        UI._screenLayer.innerHTML = '';
+        var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
+        var wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle + 'display:flex;flex-direction:column;overflow:hidden;';
+        wrapper.innerHTML =
+            '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
+                '<button onclick="Sherwood.Thicket.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
+                '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + node.name + '</span>' +
+            '</div>' +
+            '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;">' + h + '</div>';
+        UI._screenLayer.appendChild(wrapper);
+        UI._screenLayer.style.display = 'block';
+        UI._screenLayer.style.overflow = 'hidden';
+    },
 
-    h += '</div>'; // конец обёртки
-
-    UI._screenLayer.innerHTML = '';
-    var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');' +
-                  'background-size:cover;background-position:center;background-repeat:no-repeat;';
-    var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
-                            'display:flex;flex-direction:column;overflow:hidden;';
-    wrapper.innerHTML =
-        '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
-            '<button onclick="Sherwood.Thicket.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
-            '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + node.name + '</span>' +
-        '</div>' +
-        '<div style="flex:1;overflow-y:auto;padding:70px 16px 20px;box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;">' + h + '</div>';
-    UI._screenLayer.appendChild(wrapper);
-    UI._screenLayer.style.display = 'block';
-    UI._screenLayer.style.overflow = 'hidden';
-},
-    // ============================================================
-    //  ВХОД В УЗЕЛ
-    // ============================================================
     _enterNode: function(nodeId, diff) {
         if (!this.isNodeAvailable(nodeId, diff)) {
             if (typeof UI !== 'undefined' && UI._showToast) UI._showToast('Узел заблокирован');
