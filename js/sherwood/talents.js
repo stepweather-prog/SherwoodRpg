@@ -1,7 +1,6 @@
 // ============================================================
-//  js/sherwood/talents.js — Таланты героя (v8)
-//  Древовидная структура, название под карточкой, описание во всплывающем окне
-//  Единый стиль для Таверны и Профиля
+//  js/sherwood/talents.js — Таланты героя (v9)
+//  Убрана автовыдача талантов. Древовидная структура.
 // ============================================================
 
 if (typeof Sherwood === 'undefined') {
@@ -36,12 +35,10 @@ Sherwood.Talents = {
         if (!p) return;
         if (!p.talents) p.talents = {};
 
-        if (typeof p.talents['stunning'] === 'undefined') p.talents['stunning'] = 1;
-        if (typeof p.talents['rage'] === 'undefined') p.talents['rage'] = 1;
-        if (typeof p.talents['healing'] === 'undefined') p.talents['healing'] = 1;
-        if (typeof p.talents['vampirism'] === 'undefined') p.talents['vampirism'] = 0;
-        if (typeof p.talents['ricochet'] === 'undefined') p.talents['ricochet'] = 0;
-
+        // Автоматическая выдача базовых скиллов УБРАНА. 
+        // Теперь игрок начинает с пустого списка талантов.
+        
+        // Чистим старые/неизвестные таланты, чтобы не было ошибок
         var allowed = ['stunning', 'rage', 'healing', 'vampirism', 'ricochet'];
         for (var key in p.talents) {
             if (allowed.indexOf(key) === -1) {
@@ -50,7 +47,7 @@ Sherwood.Talents = {
         }
 
         this._talentLevels = p.talents;
-        console.log('⚡ Таланты инициализированы (v8)');
+        console.log('⚡ Таланты инициализированы (автовыдача отключена)');
     },
 
     getAllTalents: function() { return this.TALENTS; },
@@ -324,11 +321,8 @@ Sherwood.Talents = {
             UI._showToast('Уровень 0, нечего убирать');
             return;
         }
-        var base = ['stunning', 'rage'];
-        if (base.indexOf(id) !== -1 && t <= 1) {
-            UI._showToast('Базовый скилл, минимум 1 уровень');
-            return;
-        }
+        // Убрано ограничение на минимум 1 уровень для базовых скиллов, 
+        // так как теперь мы не выдаем их автоматически.
         p.talentPoints++;
         this._talentLevels[id] = t - 1;
         p.talents = this._talentLevels;
@@ -367,4 +361,4 @@ if (typeof UI !== 'undefined' && UI.talents) {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Talents = Sherwood.Talents;
 
-console.log('⚡ Таланты загружены (v8: единый стиль для профиля и таверны)!');
+console.log('⚡ Таланты загружены (v9: автовыдача отключена, единый стиль)!');
