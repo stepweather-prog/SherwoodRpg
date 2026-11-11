@@ -104,9 +104,11 @@
         wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
         wallTexture.repeat.y = 1; 
         wallTexture.offset.y = 0.2; 
+        wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(8, 2);
+        floorTexture.repeat.set(8, 1);
+        floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
@@ -152,9 +154,6 @@
             leaf.add(label);
         }
 
-        // ============================================================
-        //  СВЕТЛЯЧКИ С АНИМАЦИЕЙ
-        // ============================================================
         var fireflies = [];
         var fireflyTex = (function() {
             var canvas = document.createElement('canvas');
@@ -176,7 +175,6 @@
             var door = doorLeaves[fd];
             var baseX = door.position.x;
             var baseY = door.position.y;
-            
             var count = 4 + Math.floor(Math.random() * 4);
             for (var k = 0; k < count; k++) {
                 var spr = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -184,14 +182,11 @@
                 }));
                 var fsize = 0.12 + Math.random() * 0.08;
                 spr.scale.set(fsize, fsize, 1);
-
                 var angle = Math.random() * Math.PI * 2;
                 var radius = 1.5 + Math.random() * 1.5;
                 var offsetY = (Math.random() - 0.5) * 3.0;
-                
                 spr.position.set(baseX + Math.cos(angle) * radius, baseY + offsetY, 0.5);
                 scene.add(spr);
-
                 fireflies.push({
                     sprite: spr, baseX: baseX, baseY: baseY,
                     angle: angle, radius: radius, offsetY: offsetY,
@@ -255,16 +250,6 @@
         heroSprite.position.set(0, 0, 0); 
         heroGroup.add(heroSprite);
 
-        const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
-        const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
-        staticSprite.center.set(0.5, 0); 
-        staticSprite.scale.set(1.8, 1.8, 1); // Уменьшили размер статики
-        staticSprite.position.set(0, 0, 0);
-        heroGroup.add(staticSprite);
-        
-        staticSprite.visible = true;
-        heroSprite.visible = false;
-
         try {
             if (parent && parent.Sherwood && parent.Sherwood._profileReturnPos) {
                 var rx = parent.Sherwood._profileReturnPos.x;
@@ -304,20 +289,12 @@
             p.vel.x = moveX * p.speed;
             if (moveX !== 0) {
                 p.facing = moveX;
-                heroSprite.visible = true;
-                staticSprite.visible = false;
                 if (video.paused) video.play().catch(()=>{});
             } else {
-                heroSprite.visible = false;
-                staticSprite.visible = true;
-                if (!video.paused) video.pause();
-            }
-
-            // Зеркалим статику в зависимости от направления
-            if (p.facing < 0) {
-                staticSprite.scale.x = -1.8;
-            } else {
-                staticSprite.scale.x = 1.8;
+                if (!video.paused) {
+                    video.pause();
+                    video.currentTime = 0; // Возврат к первому кадру
+                }
             }
 
             const newX = p.pos.x + p.vel.x * dt;
@@ -380,7 +357,6 @@
             heroGroup.position.copy(player.pos);
             playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
 
-            // АНИМАЦИЯ СВЕТЛЯЧКОВ
             for (var i = 0; i < fireflies.length; i++) {
                 var f = fireflies[i];
                 f.angle += f.speed * dt;
