@@ -9,72 +9,34 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
         canvas { display: block; background: transparent; touch-action: none; cursor: crosshair; }
-        
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
-
-        #camp-title { 
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
-            color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0,0,0,0.75); 
-            padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; 
-            text-align: center; pointer-events: none; z-index: 10; 
-            text-shadow: 0 2px 4px #000; letter-spacing: 2px; 
-            white-space: nowrap;
-        }
+        #camp-title { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0,0,0,0.75); padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; text-align: center; pointer-events: none; z-index: 10; text-shadow: 0 2px 4px #000; letter-spacing: 2px; white-space: nowrap; }
         #camp-exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
-        
-        #action-btn {
-            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
-            width: 85px; height: 85px; cursor: pointer; pointer-events: auto;
-            padding: 0; border: none; background: none; z-index: 45; display: none;
-        }
+        #action-btn { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); width: 85px; height: 85px; cursor: pointer; pointer-events: auto; padding: 0; border: none; background: none; z-index: 45; display: none; }
         #action-btn:active { transform: translateX(-50%) scale(0.9); }
-        #action-btn img {
-            width: 85px; height: 85px; object-fit: contain; border-radius: 8px;
-            border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6);
-            padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box;
-        }
-
+        #action-btn img { width: 85px; height: 85px; object-fit: contain; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box; }
         #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
         .arrow-btn { position: absolute; width: 60px; height: 60px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
         #btn-left  { top: 40px; left: 0; }
         #btn-right { top: 40px; left: 80px; }
-        
         @media (max-width: 900px) {
             #joystick { display: block; }
             #action-btn { width: 70px; height: 70px; bottom: 100px; }
             #action-btn img { width: 70px; height: 70px; }
         }
-
-        /* Стиль для HTML-подписей (как в таверне) */
-        .door-label {
-            background: url('assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
-            padding: 6px 20px;
-            color: #ffa500;
-            font-family: "Times New Roman", serif;
-            font-size: 14px;
-            font-weight: bold;
-            text-shadow: 0 2px 4px #000;
-            white-space: nowrap;
-            pointer-events: none;
-            user-select: none;
-        }
+        .door-label { background: url('assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat; padding: 6px 20px; color: #ffa500; font-family: "Times New Roman", serif; font-size: 14px; font-weight: bold; text-shadow: 0 2px 4px #000; white-space: nowrap; pointer-events: none; user-select: none; }
     </style>
 </head>
 <body>
     <div id="camp-title">ПРОФИЛЬ</div>
     <div id="camp-exit-btn" onclick="exitProfile();">←</div>
-
-    <button id="action-btn">
-        <img id="action-btn-img" src="assets/assets2/icons/take.png" alt="Взаимодействовать">
-    </button>
-
+    <button id="action-btn"><img id="action-btn-img" src="assets/assets2/icons/take.png" alt="Взаимодействовать"></button>
     <div id="joystick">
         <div class="arrow-btn" id="btn-left">◀</div>
         <div class="arrow-btn" id="btn-right">▶</div>
     </div>
-
     <div id="vignette"></div>
     <div id="scanlines"></div>
 
@@ -96,9 +58,6 @@
         }
         window.exitProfile = exitProfile;
         
-        // ============================================================
-        //  РАЗДЕЛЫ ПРОФИЛЯ (Двери)
-        // ============================================================
         var PROFILE_SECTIONS = [
             { key: 'trophies', name: 'Трофеи', icon: 'assets/all_trophies/asset_isolated_on_a_solid.png', x: 8, open: function() { try { parent.UI._cameFromCamp = false; parent.UI._showAllTrophies(); } catch(e) {} } },
             { key: 'rings',    name: 'Кольца', icon: 'assets/interface/ring_first_level.png', x: 24, open: function() { try { parent.UI._cameFromCamp = false; parent.UI._showAllRings(); } catch(e) {} } },
@@ -108,9 +67,6 @@
             { key: 'talents',  name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', x: 88, open: function() { try { parent.UI._cameFromCamp = false; parent.Sherwood.Talents.showLearnedTalents(); } catch(e) {} } }
         ];
 
-        // ============================================================
-        //  СЦЕНА
-        // ============================================================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
         scene.fog = new THREE.Fog(0x1a1208, 20, 50);
@@ -125,7 +81,6 @@
         renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
 
-        // Рендерер для HTML-подписей
         const labelRenderer = new CSS2DRenderer();
         labelRenderer.setSize(window.innerWidth, window.innerHeight);
         labelRenderer.domElement.style.position = 'absolute';
@@ -141,23 +96,17 @@
 
         const loader = new THREE.TextureLoader();
         
-        // ============================================================
-        //  ТЕКСТУРЫ (НАСТРОЙКА ДЛЯ ЧЕТКОСТИ)
-        // ============================================================
         const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
-
-        // Настройка стены
+        
         wallTexture.wrapS = THREE.RepeatWrapping; 
-        wallTexture.wrapT = THREE.RepeatWrapping; 
-        wallTexture.repeat.set(16, 1); // 16 раз по длине, 1 раз по высоте
-        wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        wallTexture.repeat.x = 4; 
+        wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
+        wallTexture.repeat.y = 1; 
+        wallTexture.offset.y = 0.2; 
 
-        // Настройка пола
-        floorTexture.wrapS = THREE.RepeatWrapping;
-        floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(16, 1); // 16 раз по длине, 1 раз по ширине
-        floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(8, 2);
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
@@ -169,29 +118,18 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
-        // ============================================================
-        //  ПОЛ (ПЛОСКОСТЬ БЕЗ ТОРЦОВ)
-        // ============================================================
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), floorMat);
-        ground.rotation.x = -Math.PI / 2; // Поворачиваем горизонтально
-        ground.position.set(LEVEL_W / 2, 0, 0); // Ставим на уровень y=0
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.set(LEVEL_W / 2, 0, 0);
         platformerGroup.add(ground);
 
-        // ============================================================
-        //  СТЕНА (ПЛОСКОСТЬ)
-        // ============================================================
         const backWall = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, WALL_H), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        // ============================================================
-        //  ДВЕРИ И ПОДПИСИ (ПРИВЯЗАНЫ К ДВЕРЯМ)
-        // ============================================================
         var doorLeaves = [];
         for (var i = 0; i < PROFILE_SECTIONS.length; i++) {
             var sec = PROFILE_SECTIONS[i];
-            
-            // 1. Иконка двери
             var tex = loader.load(sec.icon);
             tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
@@ -205,19 +143,19 @@
             
             doorLeaves.push(leaf);
 
-            // 2. Подпись (привязана прямо к мешу двери)
             var div = document.createElement('div');
             div.className = 'door-label';
             div.textContent = sec.name;
             
             var label = new CSS2DObject(div);
-            label.position.set(0, -2.5, 0.1); // Спускаем вниз под иконку
+            label.position.set(0, -2.5, 0.1);
             leaf.add(label);
         }
 
         // ============================================================
-        //  СВЕТЛЯЧКИ
+        //  СВЕТЛЯЧКИ С АНИМАЦИЕЙ
         // ============================================================
+        var fireflies = [];
         var fireflyTex = (function() {
             var canvas = document.createElement('canvas');
             canvas.width = 64; canvas.height = 64;
@@ -236,23 +174,37 @@
 
         for (var fd = 0; fd < doorLeaves.length; fd++) {
             var door = doorLeaves[fd];
-            var count = 2 + Math.floor(Math.random() * 2);
+            var baseX = door.position.x;
+            var baseY = door.position.y;
+            
+            var count = 4 + Math.floor(Math.random() * 4);
             for (var k = 0; k < count; k++) {
                 var spr = new THREE.Sprite(new THREE.SpriteMaterial({
                     map: fireflyTex, transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending
                 }));
                 var fsize = 0.12 + Math.random() * 0.08;
                 spr.scale.set(fsize, fsize, 1);
-                spr.position.set(door.position.x + (Math.random()-0.5)*2, 1.8 + (Math.random()-0.5)*2, 0.5);
+
+                var angle = Math.random() * Math.PI * 2;
+                var radius = 1.5 + Math.random() * 1.5;
+                var offsetY = (Math.random() - 0.5) * 3.0;
+                
+                spr.position.set(baseX + Math.cos(angle) * radius, baseY + offsetY, 0.5);
                 scene.add(spr);
+
+                fireflies.push({
+                    sprite: spr, baseX: baseX, baseY: baseY,
+                    angle: angle, radius: radius, offsetY: offsetY,
+                    speed: 0.3 + Math.random() * 0.4,
+                    verticalSpeed: 0.5 + Math.random() * 0.7,
+                    phase: Math.random() * Math.PI * 2,
+                    wobbleAmp: 0.2 + Math.random() * 0.3
+                });
             }
         }
 
-        // ============================================================
-        //  ПЕРСОНАЖ
-        // ============================================================
         const player = {
-            pos: new THREE.Vector3(3, 0, 1.0), // y=0, стоит на полу
+            pos: new THREE.Vector3(3, 0, 1.0),
             vel: new THREE.Vector3(0, 0, 0),
             facing: 1,
             speed: 6.0
@@ -306,14 +258,13 @@
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0); 
-        staticSprite.scale.set(2.0, 2.0, 1); 
+        staticSprite.scale.set(1.8, 1.8, 1); // Уменьшили размер статики
         staticSprite.position.set(0, 0, 0);
         heroGroup.add(staticSprite);
         
         staticSprite.visible = true;
         heroSprite.visible = false;
 
-        // ВОССТАНОВЛЕНИЕ ПОЗИЦИИ
         try {
             if (parent && parent.Sherwood && parent.Sherwood._profileReturnPos) {
                 var rx = parent.Sherwood._profileReturnPos.x;
@@ -325,9 +276,6 @@
             }
         } catch(e) {}
 
-        // ============================================================
-        //  УПРАВЛЕНИЕ
-        // ============================================================
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
@@ -365,27 +313,23 @@
                 if (!video.paused) video.pause();
             }
 
+            // Зеркалим статику в зависимости от направления
             if (p.facing < 0) {
-                staticSprite.scale.x = -2.0;
+                staticSprite.scale.x = -1.8;
             } else {
-                staticSprite.scale.x = 2.0;
+                staticSprite.scale.x = 1.8;
             }
 
             const newX = p.pos.x + p.vel.x * dt;
             p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
         }
 
-        // ============================================================
-        //  ВЗАИМОДЕЙСТВИЕ С ДВЕРЬМИ
-        // ============================================================
         var actionBtn = document.getElementById('action-btn');
-        var actionBtnImg = document.getElementById('action-btn-img');
         var activeDoor = null;
 
         function checkDoorInteraction() {
             var closestDoor = null;
             var minDist = 4.5;
-
             for (var i = 0; i < doorLeaves.length; i++) {
                 var door = doorLeaves[i];
                 if (door.userData.open) continue;
@@ -395,7 +339,6 @@
                     closestDoor = door;
                 }
             }
-
             if (closestDoor) {
                 activeDoor = closestDoor;
                 actionBtn.style.display = 'block';
@@ -410,39 +353,41 @@
             if (activeDoor && !activeDoor.userData.open) {
                 activeDoor.userData.open = true;
                 activeDoor.userData.t = 0;
-                
                 try {
                     if (parent && parent.Sherwood) {
                         parent.Sherwood._profileReturnPos = { x: player.pos.x };
                     }
                 } catch(e) {}
-
                 var sectionToOpen = activeDoor.userData.section;
                 setTimeout(function() {
-                    if (sectionToOpen && sectionToOpen.open) {
-                        sectionToOpen.open();
-                    }
+                    if (sectionToOpen && sectionToOpen.open) sectionToOpen.open();
                 }, 300);
             }
         });
 
-        // ============================================================
-        //  АНИМАЦИЯ
-        // ============================================================
         let lastTime = performance.now();
 
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
             lastTime = performance.now();
+            const t = performance.now() / 1000;
 
             if (video.readyState >= 2) processHeroFrame(player.facing < 0);
-
             updatePlayer(dt);
             cam.position.x = player.pos.x;
             cam.lookAt(cam.position.x, 1.0, 0);
             heroGroup.position.copy(player.pos);
             playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
+
+            // АНИМАЦИЯ СВЕТЛЯЧКОВ
+            for (var i = 0; i < fireflies.length; i++) {
+                var f = fireflies[i];
+                f.angle += f.speed * dt;
+                var x = f.baseX + Math.cos(f.angle) * f.radius;
+                var y = f.baseY + f.offsetY + Math.sin(t * f.verticalSpeed + f.phase) * f.wobbleAmp;
+                f.sprite.position.set(x, y, 0.5);
+            }
 
             for (var i = 0; i < doorLeaves.length; i++) {
                 var d = doorLeaves[i];
@@ -456,9 +401,8 @@
             }
 
             checkDoorInteraction();
-            
             renderer.render(scene, cam);
-            labelRenderer.render(scene, cam); // Рендерим HTML-подписи
+            labelRenderer.render(scene, cam);
         }
         animate();
 
