@@ -12,157 +12,74 @@
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
-        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
+        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; left: 50%; top: 30%; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
         #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
-        
-        #hero-life { position: absolute; bottom: 10px; left: 10px; width: 110px; height: 110px; z-index: 50; }
-        #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
-        #life-fill { clip-path: inset(0 0 0 0); }
+        #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
+        #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
+        #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
-        
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
-        #hero-mana img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
-        #mana-fill { clip-path: inset(0 0 0 0); }
+        #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
+        #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
-
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
+        #loot-fly-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
-        /* Боевые контролы */
-        #battle-controls {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            z-index: 45;
-        }
-        
-        #attack-icon { 
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(calc(-50% - 20px));
-            margin-bottom: 70px;
-            width: 85px; 
-            height: 85px; 
-            cursor: pointer; 
-            pointer-events: auto;
-            padding: 0;
-            border: none;
-            background: none;
-            flex-shrink: 0;
-        }
+        #battle-controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 45; }
+        #attack-icon { position: absolute; bottom: 100%; left: 50%; transform: translateX(calc(-50% - 20px)); margin-bottom: 70px; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; padding: 0; border: none; background: none; flex-shrink: 0; display: none; }
         #attack-icon:active { transform: translateX(calc(-50% - 20px)) scale(0.9); }
-        #attack-icon img { 
-            width: 85px; 
-            height: 85px; 
-            object-fit: contain; 
-            border-radius: 8px; 
-            border: 3px solid rgba(200, 160, 80, 0.8); 
-            background: rgba(0, 0, 0, 0.6); 
-            padding: 3px;
-            transition: all 0.2s;
-            display: block;
-            box-sizing: border-box;
-        }
-        #attack-icon img:hover {
-            transform: scale(1.1); 
-            filter: drop-shadow(0 0 10px #ffd700);
-        }
-        #attack-cooldown-overlay { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); border-radius: 8px;
-            display: none; align-items: center; justify-content: center; 
-            color: #ff5555; font-weight: bold; font-size: 20px; 
-        }
-
-        .skill-btn { 
-            cursor: pointer; 
-            border-radius: 8px; 
-            border: 3px solid rgba(200, 160, 80, 0.8); 
-            background: rgba(0, 0, 0, 0.6); 
-            padding: 3px; 
-            width: 85px; 
-            height: 85px; 
-            object-fit: contain; 
-            transition: all 0.2s;
-            display: block;
-            flex-shrink: 0;
-            box-sizing: border-box;
-        }
+        #attack-icon img { width: 85px; height: 85px; object-fit: contain; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box; }
+        #attack-icon img:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 8px; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
+        .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
         .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-
-        #skills-row {
-            display: none;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: nowrap;
-        }
-
+        #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
-        
-        #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
-        .arrow-btn { position: absolute; width: 60px; height: 60px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
-        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
-        #btn-left  { top: 40px; left: 0; }
-        #btn-right { top: 40px; left: 80px; }
-        
-        /* Стиль для HTML-подписей (как в таверне) */
-        .door-label {
-            background: url('assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
-            padding: 6px 20px;
-            color: #ffa500;
-            font-family: "Times New Roman", serif;
-            font-size: 14px;
-            font-weight: bold;
-            text-shadow: 0 2px 4px #000;
-            white-space: nowrap;
-            pointer-events: none;
-            user-select: none;
-        }
-        
+        #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% - 70px)); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+        #kill-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% + 70px)); color: #ff8080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b3a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        #kill-counter.clear { color: #55ff55; border-color: #55aa55; box-shadow: 0 0 10px #55aa55; }
+        #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
+        #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
+        @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
+
         @media (max-width: 900px) {
-            #joystick { display: block; }
-            #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
-            #hero-life { left: 6px; }
-            #hero-mana { right: 6px; }
-            #hero-life span, #hero-mana span { font-size: 13px; }
-            #mob-hp { width: 220px; height: 150px; }
-            #mob-hp-text { font-size: 15px; }
-            #mob-hp-name { font-size: 13px; top: -12px; }
-            #hit-effect-img { width: 130px; height: 130px; }
-            
+            #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
+            #hero-life span, #hero-mana span { font-size: 13px !important; }
+            #mob-hp { width: 220px !important; height: 150px !important; }
+            #mob-hp-text { font-size: 15px !important; }
+            #mob-hp-name { font-size: 13px !important; top: -12px !important; }
+            #hit-effect-img { width: 130px !important; height: 130px !important; }
             #battle-controls { bottom: 100px; gap: 10px; }
             #attack-icon { width: 70px; height: 70px; margin-bottom: 50px; }
             #attack-icon img { width: 70px; height: 70px; }
             .skill-btn { width: 70px; height: 70px; }
             #skills-row { gap: 10px; }
+            #arrow-counter { transform: translateX(calc(-50% - 55px)); font-size: 13px !important; padding: 3px 10px !important; }
+            #kill-counter { transform: translateX(calc(-50% + 55px)); font-size: 13px !important; padding: 3px 10px !important; }
+            #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
     </style>
 </head>
 <body>
     <div id="crosshair">✚</div>
+    <div id="loot-fly-layer"></div>
     <div id="blood-overlay"></div>
-    
+    <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
+    <div id="kill-counter"><span id="kill-count-text">Врагов: 0 / 0</span></div>
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
-        <span id="mob-hp-text">HP: 0/0</span>
+        <span id="mob-hp-text">HP: 1000</span>
     </div>
-    
+
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
-    
+
     <div id="battle-controls">
         <div id="attack-icon">
             <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
@@ -181,28 +98,16 @@
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">Скверна: 0%</span>
     </div>
-    
-    <div id="joystick">
-        <div class="arrow-btn" id="btn-left">◀</div>
-        <div class="arrow-btn" id="btn-right">▶</div>
-    </div>
 
     <div id="vignette"></div>
     <div id="scanlines"></div>
-    <button onclick="exitThicket();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
+    <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
 
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-            }
-        }
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
     </script>
-
     <script type="module">
         import * as THREE from 'three';
-        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         var urlParams = new URLSearchParams(window.location.search);
         var nodeId = parseInt(urlParams.get('node') || '1');
@@ -325,14 +230,6 @@
         renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
 
-        // Рендерер для HTML-подписей
-        const labelRenderer = new CSS2DRenderer();
-        labelRenderer.setSize(window.innerWidth, window.innerHeight);
-        labelRenderer.domElement.style.position = 'absolute';
-        labelRenderer.domElement.style.top = '0px';
-        labelRenderer.domElement.style.pointerEvents = 'none';
-        document.body.appendChild(labelRenderer.domElement);
-
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5); scene.add(dirLight);
@@ -347,15 +244,14 @@
         const closedDoorTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level2.png');
         
-        // Настройка четкости текстур
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
         wallTexture.repeat.set(16, 1);
         wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
+        
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(16, 1);
         floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
+        
         ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
         ceilTexture.repeat.set(16, 1);
         ceilTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -371,59 +267,30 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
-        // ============================================================
-        //  ПОЛ (ПЛОСКОСТЬ БЕЗ ТОРЦОВ)
-        // ============================================================
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), floorMat);
         ground.rotation.x = -Math.PI / 2;
         ground.position.set(LEVEL_W / 2, 0, 0);
         platformerGroup.add(ground);
 
-        // ============================================================
-        //  СТЕНА (ПЛОСКОСТЬ)
-        // ============================================================
         const backWall = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, WALL_H), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        // ============================================================
-        //  ПОТОЛОК (ПЛОСКОСТЬ)
-        // ============================================================
         const ceil = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), ceilMat);
         ceil.rotation.x = Math.PI / 2;
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
-        // ============================================================
-        //  ДВЕРИ С ПОДПИСЯМИ
-        // ============================================================
         const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, 0);
         exitDoor.rotation.y = -Math.PI / 2;
         platformerGroup.add(exitDoor);
-
-        // Подпись "Выход" под дверью
-        var exitDiv = document.createElement('div');
-        exitDiv.className = 'door-label';
-        exitDiv.textContent = 'Выход';
-        var exitLabel = new CSS2DObject(exitDiv);
-        exitLabel.position.set(0, -2.5, 0.1);
-        exitDoor.add(exitLabel);
 
         const startDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         startDoor.position.set(1, WALL_H / 2, 0);
         startDoor.rotation.y = Math.PI / 2;
         platformerGroup.add(startDoor);
 
-        // Подпись "Начало" под дверью
-        var startDiv = document.createElement('div');
-        startDiv.className = 'door-label';
-        startDiv.textContent = 'Начало';
-        var startLabel = new CSS2DObject(startDiv);
-        startLabel.position.set(0, -2.5, 0.1);
-        startDoor.add(startLabel);
-
-        // Боевая комната
         const battleScene = new THREE.Scene();
         battleScene.background = null;
 
@@ -432,7 +299,6 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-        // ФОН БОЯ
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
         bgTexture.wrapS = THREE.RepeatWrapping;
         bgTexture.wrapT = THREE.RepeatWrapping;
@@ -475,7 +341,14 @@
 
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
-        video.loop = true; video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
+        video.loop = true; // Оставляем цикл
+        video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
+        
+        // Как только видео загрузится, перематываем в конец (стойка)
+        video.addEventListener('loadeddata', function() {
+            video.currentTime = 2.99;
+            processHeroFrame(player.facing < 0);
+        });
 
         const hCanvas = document.createElement('canvas');
         hCanvas.width = 512; hCanvas.height = 512;
@@ -514,14 +387,6 @@
         heroSprite.scale.set(2.2, 2.2, 1); 
         heroSprite.position.set(0, 0, 1.0); 
         heroGroup.add(heroSprite);
-
-        const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
-        const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
-        staticSprite.center.set(0.5, 0); 
-        staticSprite.scale.set(2.2, 2.2, 1); 
-        staticSprite.position.set(0, 0, 1.0);
-        heroGroup.add(staticSprite);
-        video.addEventListener('play', () => { staticSprite.visible = false; });
 
         var enemyObj = null;
         var enemySprite = null;
@@ -589,6 +454,8 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
+        var isStopping = false;
+
         function updatePlayer(dt) {
             const p = player;
             let moveX = 0;
@@ -599,9 +466,16 @@
             if (moveX !== 0) {
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
+                isStopping = false;
                 if (!stepsPlaying) startSteps();
             } else {
-                if (!video.paused) video.pause();
+                // Мгновенная остановка
+                if (!video.paused || !isStopping) {
+                    video.pause();
+                    video.currentTime = 2.99;
+                    isStopping = true;
+                    setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
+                }
                 if (stepsPlaying) stopSteps();
             }
 
@@ -1020,7 +894,6 @@
                 heroGroup.position.y = player.pos.y; 
                 playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
                 renderer.render(scene, camPlatformer);
-                labelRenderer.render(scene, camPlatformer);
             } else {
                 updateTimers(dt);
                 if (cameraShake > 0.001) {
@@ -1047,7 +920,6 @@
             camPlatformer.aspect = aspect; camPlatformer.updateProjectionMatrix();
             battleCamera.aspect = aspect; battleCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
