@@ -8,22 +8,22 @@ if (typeof Sherwood === 'undefined') {
 
 Sherwood.Tavern = {
     CHAPTERS: [
-        { id: 1, title: 'Кровь Великого Дуба', quest: 'Останови осквернение леса, найди источник проклятия', enemy: { name: 'Лесничий-Отступник', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 }, reward: { exp: 200, gold: 50, silver: 500 }, lore: 'Шервудский лес веками был щитом для королевства, а его сердце — Древний Шервудский Дуб...' },
-        { id: 2, title: 'Кара Скверны', quest: 'Очисти лес от искажённых тварей, уничтожь Вожака стаи', enemy: { name: 'Вожак Искаженной Стаи', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 }, reward: { exp: 400, gold: 100, silver: 1000 }, lore: 'Смерть Дуба вызвала цепную реакцию...' },
-        { id: 3, title: 'Старый Егерь', quest: 'Найди слепого ветерана Гаррета, упокой Альфа-Гончую', enemy: { name: 'Альфа-Гончая Егеря', hp: 90000, atk: 4500, def: 3500, exp: 250, gold: 160 }, reward: { exp: 600, gold: 150, silver: 1500 }, lore: 'На окраине гибнущего леса, в заброшенном домике егеря...' },
-        { id: 4, title: 'Спуск в Шервудскую Чащобу', quest: 'Спустись в подземелье, победи Падшего Друида', enemy: { name: 'Падший Друид', hp: 180000, atk: 7000, def: 5500, exp: 300, gold: 200 }, reward: { exp: 800, gold: 200, silver: 2000 }, lore: 'Чтобы остановить расползающееся зло, нужно ударить в его источник...' },
-        { id: 5, title: 'Искажённая Экосистема', quest: 'Пробейся через туннели чащобы, уничтожь Голод Чащи', enemy: { name: 'Голод Чащи', hp: 300000, atk: 9500, def: 7500, exp: 350, gold: 250 }, reward: { exp: 1000, gold: 250, silver: 2500 }, lore: 'Спуск в сырые туннели чащобы открывает первую волну кошмаров...' },
-        { id: 6, title: 'Слепая Ярость Духов', quest: 'Пробейся к Древнему Владыке, одолей Лешего', enemy: { name: 'Древний Владыка', hp: 450000, atk: 12000, def: 9500, exp: 400, gold: 300 }, reward: { exp: 1500, gold: 350, silver: 3500 }, lore: 'Спуск глубже приводит Лучника в каменные залы...' },
-        { id: 7, title: 'Эхо Прошлых Поражений', quest: 'Уничтожь Пожирателя Эха в глубинах подземки', enemy: { name: 'Пожиратель Эха', hp: 650000, atk: 14500, def: 11500, exp: 450, gold: 350 }, reward: { exp: 2000, gold: 500, silver: 5000 }, lore: 'Подземка поглощает не только плоть, но и души...' },
-        { id: 8, title: 'Ужас Болотных Недр', quest: 'Спустись в болотные гроты, убей Повелительницу Топей', enemy: { name: 'Повелительница Топей', hp: 900000, atk: 17000, def: 13500, exp: 500, gold: 400 }, reward: { exp: 2500, gold: 650, silver: 6500 }, lore: 'В самых потайных, покрытых слизью гротах...' },
-        { id: 9, title: 'Разломы Безумия', quest: 'Закрой три магических разлома, победи Стража Разломов', enemy: { name: 'Страж Разломов', hp: 1200000, atk: 19500, def: 15500, exp: 550, gold: 450 }, reward: { exp: 3000, gold: 800, silver: 8000 }, lore: 'Скверна, переполнив чащобу, прожгла ткань реальности...' },
-        { id: 10, title: 'Портал Нашествия — Улей Плоти', quest: 'Войди в Портал Нашествия, уничтожь Матку Лесных Короедов', enemy: { name: 'Матка Лесных Короедов', hp: 1600000, atk: 22000, def: 17500, exp: 600, gold: 500 }, reward: { exp: 4000, gold: 1000, silver: 10000 }, lore: 'Первый разлом превратил пещеры в гнездо чумы...' },
-        { id: 11, title: 'Портал Искажения — Костяной Трон', quest: 'Войди в Портал Искажения, убей Проклятого Короля Разбойников', enemy: { name: 'Проклятый Король Разбойников', hp: 2100000, atk: 24500, def: 19500, exp: 700, gold: 600 }, reward: { exp: 5000, gold: 1500, silver: 15000 }, lore: 'Второй портал перенес Лучника в проклятый склеп...' },
-        { id: 12, title: 'Портал Безумия — Кровоточащий Кап', quest: 'Войди в Портал Безумия, победи Древнего Хранителя Склепа', enemy: { name: 'Древний Хранитель Склепа', hp: 2700000, atk: 27000, def: 21500, exp: 800, gold: 700 }, reward: { exp: 6000, gold: 2000, silver: 20000 }, lore: 'Третий портал вел в хтоническое капище...' },
-        { id: 13, title: 'Триумвират Зла', quest: 'Сразись с Эхом Трёх Порталов в Осквернённом Сердце', enemy: { name: 'Эхо Трех Порталов', hp: 3400000, atk: 29500, def: 23500, exp: 900, gold: 800 }, reward: { exp: 7500, gold: 2500, silver: 25000 }, lore: 'Закрыв три разлома, Лучник думал, что победил...' },
-        { id: 14, title: 'Сломанная Печать', quest: 'Уничтожь Палача Священного Древа — последнюю преграду', enemy: { name: 'Палач Священного Древа', hp: 4200000, atk: 32000, def: 25500, exp: 1000, gold: 900 }, reward: { exp: 9000, gold: 3000, silver: 30000 }, lore: 'Слияние энергий Порталов пробудило кое-что древнее...' },
-        { id: 15, title: 'Последний Выстрел', quest: 'Порази ядро Шервудского Отродья, запечатай Сердце', enemy: { name: 'Шервудское Отродье', hp: 5200000, atk: 34500, def: 27500, exp: 1500, gold: 1200 }, reward: { exp: 12000, gold: 5000, silver: 50000 }, lore: 'Поглотив энергию мертвого Палача, Оскверненное Сердце пробудилось...' },
-        { id: 16, title: 'Шрам, который не заживёт (Секретная глава)', quest: 'Спустись в воронку и запечатай Изначальный Стержень', enemy: { name: 'Изначальный Стержень', hp: 1500000, atk: 30000, def: 25000, exp: 1000, gold: 300 }, reward: { exp: 2000, gold: 500, silver: 1500 }, isSecret: true, lore: 'После победы над Отродьем на поверхности леса зияет огромная воронка...' }
+        { id: 1, title: 'Кровь Великого Дуба', quest: 'Останови осквернение леса, найди источник проклятия', enemy: { name: 'Лесничий-Отступник', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 }, reward: { exp: 200, gold: 50, silver: 500 }, lore: 'Шервудский лес веками был щитом для королевства, а его сердце — Древний Шервудский Дуб...', bossNodeId: 4 },
+        { id: 2, title: 'Кара Скверны', quest: 'Очисти лес от искажённых тварей, уничтожь Вожака стаи', enemy: { name: 'Вожак Искаженной Стаи', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 }, reward: { exp: 400, gold: 100, silver: 1000 }, lore: 'Смерть Дуба вызвала цепную реакцию...', bossNodeId: 8 },
+        { id: 3, title: 'Старый Егерь', quest: 'Найди слепого ветерана Гаррета, упокой Альфа-Гончую', enemy: { name: 'Альфа-Гончая Егеря', hp: 90000, atk: 4500, def: 3500, exp: 250, gold: 160 }, reward: { exp: 600, gold: 150, silver: 1500 }, lore: 'На окраине гибнущего леса, в заброшенном домике егеря...', bossNodeId: 12 },
+        { id: 4, title: 'Спуск в Шервудскую Чащобу', quest: 'Спустись в подземелье, победи Падшего Друида', enemy: { name: 'Падший Друид', hp: 180000, atk: 7000, def: 5500, exp: 300, gold: 200 }, reward: { exp: 800, gold: 200, silver: 2000 }, lore: 'Чтобы остановить расползающееся зло, нужно ударить в его источник...', bossNodeId: 16 },
+        { id: 5, title: 'Искажённая Экосистема', quest: 'Пробейся через туннели чащобы, уничтожь Голод Чащи', enemy: { name: 'Голод Чащи', hp: 300000, atk: 9500, def: 7500, exp: 350, gold: 250 }, reward: { exp: 1000, gold: 250, silver: 2500 }, lore: 'Спуск в сырые туннели чащобы открывает первую волну кошмаров...', bossNodeId: 20 },
+        { id: 6, title: 'Слепая Ярость Духов', quest: 'Пробейся к Древнему Владыке, одолей Лешего', enemy: { name: 'Древний Владыка', hp: 450000, atk: 12000, def: 9500, exp: 400, gold: 300 }, reward: { exp: 1500, gold: 350, silver: 3500 }, lore: 'Спуск глубже приводит Лучника в каменные залы...', bossNodeId: 24 },
+        { id: 7, title: 'Эхо Прошлых Поражений', quest: 'Уничтожь Пожирателя Эха в глубинах подземки', enemy: { name: 'Пожиратель Эха', hp: 650000, atk: 14500, def: 11500, exp: 450, gold: 350 }, reward: { exp: 2000, gold: 500, silver: 5000 }, lore: 'Подземка поглощает не только плоть, но и души...', bossNodeId: 28 },
+        { id: 8, title: 'Ужас Болотных Недр', quest: 'Спустись в болотные гроты, убей Повелительницу Топей', enemy: { name: 'Повелительница Топей', hp: 900000, atk: 17000, def: 13500, exp: 500, gold: 400 }, reward: { exp: 2500, gold: 650, silver: 6500 }, lore: 'В самых потайных, покрытых слизью гротах...', bossNodeId: 32 },
+        { id: 9, title: 'Разломы Безумия', quest: 'Закрой три магических разлома, победи Стража Разломов', enemy: { name: 'Страж Разломов', hp: 1200000, atk: 19500, def: 15500, exp: 550, gold: 450 }, reward: { exp: 3000, gold: 800, silver: 8000 }, lore: 'Скверна, переполнив чащобу, прожгла ткань реальности...', bossNodeId: 36 },
+        { id: 10, title: 'Портал Нашествия — Улей Плоти', quest: 'Войди в Портал Нашествия, уничтожь Матку Лесных Короедов', enemy: { name: 'Матка Лесных Короедов', hp: 1600000, atk: 22000, def: 17500, exp: 600, gold: 500 }, reward: { exp: 4000, gold: 1000, silver: 10000 }, lore: 'Первый разлом превратил пещеры в гнездо чумы...', bossNodeId: 40 },
+        { id: 11, title: 'Портал Искажения — Костяной Трон', quest: 'Войди в Портал Искажения, убей Проклятого Короля Разбойников', enemy: { name: 'Проклятый Король Разбойников', hp: 2100000, atk: 24500, def: 19500, exp: 700, gold: 600 }, reward: { exp: 5000, gold: 1500, silver: 15000 }, lore: 'Второй портал перенес Лучника в проклятый склеп...', bossNodeId: 44 },
+        { id: 12, title: 'Портал Безумия — Кровоточащий Кап', quest: 'Войди в Портал Безумия, победи Древнего Хранителя Склепа', enemy: { name: 'Древний Хранитель Склепа', hp: 2700000, atk: 27000, def: 21500, exp: 800, gold: 700 }, reward: { exp: 6000, gold: 2000, silver: 20000 }, lore: 'Третий портал вел в хтоническое капище...', bossNodeId: 48 },
+        { id: 13, title: 'Триумвират Зла', quest: 'Сразись с Эхом Трёх Порталов в Осквернённом Сердце', enemy: { name: 'Эхо Трех Порталов', hp: 3400000, atk: 29500, def: 23500, exp: 900, gold: 800 }, reward: { exp: 7500, gold: 2500, silver: 25000 }, lore: 'Закрыв три разлома, Лучник думал, что победил...', bossNodeId: 52 },
+        { id: 14, title: 'Сломанная Печать', quest: 'Уничтожь Палача Священного Древа — последнюю преграду', enemy: { name: 'Палач Священного Древа', hp: 4200000, atk: 32000, def: 25500, exp: 1000, gold: 900 }, reward: { exp: 9000, gold: 3000, silver: 30000 }, lore: 'Слияние энергий Порталов пробудило кое-что древнее...', bossNodeId: 56 },
+        { id: 15, title: 'Последний Выстрел', quest: 'Порази ядро Шервудского Отродья, запечатай Сердце', enemy: { name: 'Шервудское Отродье', hp: 5200000, atk: 34500, def: 27500, exp: 1500, gold: 1200 }, reward: { exp: 12000, gold: 5000, silver: 50000 }, lore: 'Поглотив энергию мертвого Палача, Оскверненное Сердце пробудилось...', bossNodeId: 60 },
+        { id: 16, title: 'Шрам, который не заживёт (Секретная глава)', quest: 'Спустись в воронку и запечатай Изначальный Стержень', enemy: { name: 'Изначальный Стержень', hp: 1500000, atk: 30000, def: 25000, exp: 1000, gold: 300 }, reward: { exp: 2000, gold: 500, silver: 1500 }, isSecret: true, lore: 'После победы над Отродьем на поверхности леса зияет огромная воронка...', bossNodeId: 64 }
     ],
 
     _currentQuest: null,
@@ -48,7 +48,7 @@ Sherwood.Tavern = {
         p.tavern.currentChapter = this._currentChapterIndex;
         p.tavern.secretUnlocked = this._isSecretUnlocked;
 
-        console.log('Таверна инициализирована (синхронизирована с квестами)');
+        console.log('Таверна инициализирована (синхронизирована с чащобой)');
     },
 
     getAllChapters: function() { return this.CHAPTERS; },
@@ -62,6 +62,14 @@ Sherwood.Tavern = {
     getCompletedCount: function() { return this._completedChapters.length; },
     getTotalChapters: function() { return this.CHAPTERS.length; },
     isChapterCompleted: function(id) { return this._completedChapters.indexOf(id) !== -1; },
+
+    // ПРОВЕРКА: УБИТ ЛИ БОСС ГЛАВЫ В ЧАЩОБЕ
+    isChapterBossKilled: function(chapter) {
+        if (!chapter || !chapter.bossNodeId) return false;
+        if (typeof Sherwood.Thicket === 'undefined' || !Sherwood.Thicket.getCups) return false;
+        // Если у узла есть хотя бы 1 кубок — значит, босс убит
+        return Sherwood.Thicket.getCups(chapter.bossNodeId) >= 1;
+    },
 
     acceptQuest: function() {
         var chapter = this.getCurrentChapter();
@@ -174,7 +182,7 @@ Sherwood.Tavern = {
         // Прогресс
         h += '<div style="margin-bottom:20px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
 
-                // === КНОПКИ РАЗДЕЛОВ (ТЕПЕРЬ 3) ===
+        // === КНОПКИ РАЗДЕЛОВ ===
         h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:30px;">';
 
         h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
@@ -185,7 +193,6 @@ Sherwood.Tavern = {
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
         h += '</div>';
 
-        // НОВАЯ КНОПКА РЫНКА
         h += '<div onclick="Sherwood.BlackMarket.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
         h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Рынок</span>';
         h += '</div>';
@@ -199,6 +206,7 @@ Sherwood.Tavern = {
         if (current) {
             var isCompleted = this.isChapterCompleted(current.id);
             var isAccepted = this._currentQuest !== null && this._currentQuest.id === current.id;
+            var bossKilled = this.isChapterBossKilled(current);
 
             h += '<div style="text-align:center;color:#ffa500;font-size:14px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.6;">' + current.title + '</div>';
             h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
@@ -208,7 +216,14 @@ Sherwood.Tavern = {
             if (isCompleted) {
                 h += '<div style="text-align:center;color:#52b788;margin-top:15px;font-size:16px;font-weight:bold;">Глава пройдена!</div>';
             } else if (isAccepted) {
-                h += '<div style="text-align:center;color:#ffa500;margin-top:15px;font-size:16px;font-weight:bold;">Квест принят!<br><span style="font-size:12px;color:#ccc;">Зайди в раздел «Квесты» на главном экране</span></div>';
+                if (bossKilled) {
+                    h += '<div style="text-align:center;color:#52b788;margin-top:10px;font-size:14px;font-weight:bold;">Босс в чащобе побеждён!</div>';
+                    h += '<button onclick="Sherwood.Tavern.completeFromUI()" style="margin-top:10px;background:#52b788;border:none;border-radius:6px;padding:8px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Сдать квест</button>';
+                } else {
+                    h += '<div style="text-align:center;color:#ffa500;margin-top:15px;font-size:16px;font-weight:bold;">Квест принят!</div>';
+                    h += '<div style="text-align:center;color:#ccc;font-size:12px;margin-top:5px;">Победи босса в чащобе (Узел ' + current.bossNodeId + ')</div>';
+                    h += '<button onclick="UI.thicket()" style="margin-top:10px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Перейти в чащобу</button>';
+                }
             } else {
                 h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:15px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
             }
@@ -231,6 +246,16 @@ Sherwood.Tavern = {
             return;
         }
         UI._showToast('Квест принят: ' + r.chapter.title);
+        this.showUI();
+    },
+
+    completeFromUI: function() {
+        var r = this.completeQuest();
+        if (!r.success) {
+            UI._showToast(r.reason || 'Ошибка');
+            return;
+        }
+        UI._showToast('Квест сдан: ' + r.chapter.title);
         this.showUI();
     },
 
