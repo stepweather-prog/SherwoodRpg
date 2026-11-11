@@ -23,7 +23,6 @@
         }
         #camp-exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
         
-        /* Кнопка взаимодействия (как в лагере) */
         #action-btn {
             position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
             width: 85px; height: 85px; cursor: pointer; pointer-events: auto;
@@ -35,9 +34,7 @@
             border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6);
             padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box;
         }
-        #action-btn img:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
 
-        /* Джойстик (как в лагере) */
         #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
         .arrow-btn { position: absolute; width: 60px; height: 60px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
@@ -80,14 +77,15 @@
         window.exitProfile = exitProfile;
         
         // ============================================================
-        //  РАЗДЕЛЫ ПРОФИЛЯ (Двери)
+        //  РАЗДЕЛЫ ПРОФИЛЯ (Двери) - ПУТИ ВЗЯТЫ ИЗ СТАРОГО UI.profile
         // ============================================================
         var PROFILE_SECTIONS = [
-            { key: 'stats',    name: 'Характеристики', icon: 'assets/interface/player_profile.png', x: 10, open: function() { try { parent.UI.profile(); } catch(e) {} } },
-            { key: 'bag',      name: 'Сумка',          icon: 'assets/assets2/icons/hero_bag.png',   x: 25, open: function() { try { parent.UI.bag(); } catch(e) {} } },
-            { key: 'talents',  name: 'Таланты',        icon: 'assets/all_buttons/ranger_skills_button.png', x: 40, open: function() { try { parent.Sherwood.Talents.showLearnedTalents(); } catch(e) {} } },
-            { key: 'wallet',   name: 'Кесет',          icon: 'assets/interface/wallet.png',         x: 55, open: function() { try { parent.UI.wallet(); } catch(e) {} } },
-            { key: 'rings',    name: 'Кольца',         icon: 'assets/interface/ring_first_level.png', x: 70, open: function() { try { parent.UI._showAllRings(); } catch(e) {} } }
+            { key: 'trophies', name: 'Трофеи', icon: 'assets/all_trophies/asset_isolated_on_a_solid.png', x: 8, open: function() { try { parent.UI._showAllTrophies(); } catch(e) {} } },
+            { key: 'rings',    name: 'Кольца', icon: 'assets/interface/ring_first_level.png', x: 24, open: function() { try { parent.UI._showAllRings(); } catch(e) {} } },
+            { key: 'amulets',  name: 'Амулеты', icon: 'assets/interface/sherwood_amulet_level_one.png', x: 40, open: function() { try { parent.UI._showAllAmulets(); } catch(e) {} } },
+            { key: 'wallet',   name: 'Кесет', icon: 'assets/interface/wallet.png', x: 56, open: function() { try { parent.UI.wallet(); } catch(e) {} } },
+            { key: 'bag',      name: 'Сумка', icon: 'assets/assets2/icons/hero_bag.png', x: 72, open: function() { try { parent.UI.bag(); } catch(e) {} } },
+            { key: 'talents',  name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', x: 88, open: function() { try { parent.Sherwood.Talents.showLearnedTalents(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -116,10 +114,10 @@
         const loader = new THREE.TextureLoader();
         
         // ============================================================
-        //  ТУТ ВАЖНО: ЗАМЕНИ ПУТЬ НА КАРТИНКУ ФОНА ПРОФИЛЯ
+        //  ТЕКСТУРЫ (СТЕНА ИЗ ПРОФИЛЯ, ПОЛ ИЗ SHERWOOD_SQUARE)
         // ============================================================
-        const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png'); // <--- ПРОВЕРЬ ПУТЬ
-        const floorTexture = loader.load('assets/dungeon_tiles/dungeon1/tiles_5.png');
+        const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png');
+        const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png'); // Твой пол
         
         wallTexture.wrapS = THREE.RepeatWrapping; 
         wallTexture.repeat.x = 4; 
@@ -136,7 +134,7 @@
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
-        const LEVEL_W = 80; 
+        const LEVEL_W = 100; // Увеличил длину коридора, чтобы влезли все 6 дверей
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
@@ -169,7 +167,7 @@
         }
 
         // ============================================================
-        //  СВЕТЛЯЧКИ (для атмосферы, но меньше, чтобы не тормозило)
+        //  СВЕТЛЯЧКИ
         // ============================================================
         var fireflyTex = (function() {
             var canvas = document.createElement('canvas');
@@ -189,7 +187,7 @@
 
         for (var fd = 0; fd < doorLeaves.length; fd++) {
             var door = doorLeaves[fd];
-            var count = 2 + Math.floor(Math.random() * 2); // 2-3 светлячка на дверь
+            var count = 2 + Math.floor(Math.random() * 2);
             for (var k = 0; k < count; k++) {
                 var spr = new THREE.Sprite(new THREE.SpriteMaterial({
                     map: fireflyTex, transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending
@@ -202,7 +200,7 @@
         }
 
         // ============================================================
-        //  ПЕРСОНАЖ (ВИДЕО + СТАТИКА, КАК В ЛАГЕРЕ)
+        //  ПЕРСОНАЖ (ВИДЕО + СТАТИКА)
         // ============================================================
         const player = {
             pos: new THREE.Vector3(3, 0, 1.0),
