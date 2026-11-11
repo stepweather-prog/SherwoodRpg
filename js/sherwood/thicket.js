@@ -1,6 +1,7 @@
 /**
  * Sherwood Thicket — Шервудская чащоба
  * Квестовая тропа: 65 узлов, 3 сложности, кубки как в подземке
+ * Визуал: вертикальная тропа-змейка
  */
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
@@ -314,7 +315,7 @@ Sherwood.Thicket = {
     },
 
     // ============================================================
-    //  UI — ВЕРТИКАЛЬНЫЙ СПИСОК (ИСПРАВЛЕННЫЙ)
+    //  UI — ВЕРТИКАЛЬНАЯ ТРОПА-ЗМЕЙКА (КРАСИВАЯ)
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
@@ -331,15 +332,14 @@ Sherwood.Thicket = {
         var chapterKeys = Object.keys(chapters).sort(function(a, b) { return parseInt(a) - parseInt(b); });
         var selectedChapter = this._selectedChapter || 1;
 
-        // ЖЕСТКО ЦЕНТРИРУЕМ И ОГРАНИЧИВАЕМ ШИРИНУ
-        var h = '<div style="width:100%;max-width:340px;margin:0 auto;box-sizing:border-box;padding:10px;">';
+        var h = '<div style="width:100%;max-width:380px;margin:0 auto;box-sizing:border-box;padding:10px;">';
         
         // Вкладки глав
         h += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:20px;">';
         for (var c = 0; c < chapterKeys.length; c++) {
             var chId = parseInt(chapterKeys[c]);
             var isActive = (chId === selectedChapter);
-            h += '<div onclick="Sherwood.Thicket._selectChapter(' + chId + ')" style="cursor:pointer;padding:5px 10px;border-radius:6px;border:2px solid ' + (isActive ? '#c9a040' : '#444') + ';background:' + (isActive ? 'rgba(60,40,15,0.9)' : 'rgba(20,20,20,0.7)') + ';color:' + (isActive ? '#ffd27a' : '#888') + ';font:bold 12px \'Times New Roman\',serif;white-space:nowrap;">' + (chId === 0 ? 'Рейд' : 'Гл. ' + chId) + '</div>';
+            h += '<div onclick="Sherwood.Thicket._selectChapter(' + chId + ')" style="cursor:pointer;padding:5px 10px;border-radius:6px;border:2px solid ' + (isActive ? '#c9a040' : '#444') + ';background:' + (isActive ? 'rgba(60,40,15,0.9)' : 'rgba(20,20,20,0.7)') + ';color:' + (isActive ? '#ffd27a' : '#888') + ';font:bold 12px \'Times New Roman\',serif;white-space:nowrap;box-shadow:' + (isActive ? '0 0 8px rgba(201,160,64,0.5)' : 'none') + ';">' + (chId === 0 ? 'Рейд' : 'Гл. ' + chId) + '</div>';
         }
         h += '</div>';
 
@@ -348,8 +348,11 @@ Sherwood.Thicket = {
         if (chData) {
             h += '<div style="color:#c8a050;font-size:14px;text-align:center;margin-bottom:15px;text-shadow:0 2px 4px #000;font-weight:bold;">' + chData.name + '</div>';
             
-            // Список (колонка)
-            h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+            // ТРОПА (вертикальная змейка)
+            h += '<div style="position:relative;display:flex;flex-direction:column;align-items:center;padding:10px 0;">';
+
+            // Рисуем вертикальную линию (тропу) на фоне
+            h += '<div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:4px;height:100%;background:linear-gradient(180deg, #6b5a3a, #3a2a1a, #6b5a3a);border-radius:2px;z-index:0;"></div>';
 
             for (var ni = 0; ni < chData.nodes.length; ni++) {
                 var node = chData.nodes[ni];
@@ -357,31 +360,31 @@ Sherwood.Thicket = {
                 var available = this.isNodeAvailable(node.id, 1);
 
                 var borderColor = cups >= 3 ? '#ffd700' : (available ? '#c9a040' : '#333');
-                var opacity = available ? 1 : 0.4;
+                var opacity = available ? 1 : 0.5;
+                
+                // Смещение для змейки (четные влево, нечетные вправо)
+                var offset = (ni % 2 === 0) ? -50 : 50;
+                var marginBottom = (ni === chData.nodes.length - 1) ? 0 : 30;
 
-                // КАРТОЧКА (полоска)
-                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:pointer;opacity:' + opacity + ';background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:10px;">';
+                // Узел
+                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="position:relative;z-index:1;display:flex;align-items:center;gap:10px;margin-bottom:' + marginBottom + 'px;margin-left:' + (offset > 0 ? 'auto' : '0') + ';margin-right:' + (offset < 0 ? 'auto' : '0') + ';cursor:pointer;opacity:' + opacity + ';background:rgba(10,8,5,0.95);border:2px solid ' + borderColor + ';border-radius:10px;padding:8px;width:140px;box-shadow:0 4px 10px rgba(0,0,0,0.8);">';
 
-                // Иконка (40x40)
-                h += '<div style="width:40px;height:40px;flex-shrink:0;background:rgba(0,0,0,0.5);border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;">';
+                // Иконка
+                h += '<div style="width:36px;height:36px;flex-shrink:0;background:rgba(0,0,0,0.5);border-radius:6px;overflow:hidden;">';
                 h += '<img src="' + node.imagePath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
 
                 // Текст
                 h += '<div style="flex:1;min-width:0;">';
-                h += '<div style="color:#ffa500;font-size:9px;margin-bottom:2px;">#' + node.id + (node.isBoss ? ' <span style="color:#ff6b35;">БОСС</span>' : '') + '</div>';
-                h += '<div style="color:#fff;font-size:12px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">' + node.name + '</div>';
+                h += '<div style="color:#fff;font-size:10px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + node.name + '</div>';
                 
                 // Кубки
-                h += '<div style="display:flex;gap:3px;">';
+                h += '<div style="display:flex;gap:2px;margin-top:4px;">';
                 for (var k = 1; k <= 3; k++) {
-                    h += '<div style="width:8px;height:8px;border-radius:50%;border:1px solid ' + (cups >= k ? '#ffd700' : '#555') + ';background:' + (cups >= k ? '#ffd700' : 'transparent') + ';"></div>';
+                    h += '<div style="width:6px;height:6px;border-radius:50%;border:1px solid ' + (cups >= k ? '#ffd700' : '#555') + ';background:' + (cups >= k ? '#ffd700' : 'transparent') + ';"></div>';
                 }
                 h += '</div>';
                 h += '</div>';
-
-                // Стрелочка
-                h += '<div style="color:#666;font-size:18px;flex-shrink:0;">›</div>';
 
                 h += '</div>';
             }
