@@ -99,14 +99,12 @@
         const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         
-        // Стена: 16 раз по длине, 1 раз по высоте
         wallTexture.wrapS = THREE.RepeatWrapping; 
         wallTexture.repeat.x = 16; 
         wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
         wallTexture.repeat.y = 1; 
         wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-        // Пол: 16 раз по длине, 1 раз по ширине
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(16, 1);
         floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -212,8 +210,14 @@
 
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
-        video.loop = false; // ВАЖНО: отключаем цикл
+        video.loop = true; // Оставляем цикл, чтобы браузер всегда отдавал кадр
         video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
+        
+        // ВАЖНО: Как только видео загрузится, перематываем в конец, чтобы персонаж стоял
+        video.addEventListener('loadeddata', function() {
+            video.currentTime = 2.99;
+            processHeroFrame(player.facing < 0); // Принудительно отрисовываем кадр
+        });
 
         const hCanvas = document.createElement('canvas');
         hCanvas.width = 512; hCanvas.height = 512;
@@ -282,7 +286,7 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
-                var isStopping = false;
+        var isStopping = false;
 
         function updatePlayer(dt) {
             const p = player;
@@ -296,26 +300,19 @@
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
                 isStopping = false;
-                // Если это camp.html, добавь: if (!stepsPlaying) startSteps();
             } else {
                 // Мгновенная остановка
                 if (!video.paused || !isStopping) {
                     video.pause();
-                    video.currentTime = 2.99; // Мгновенный переход в конец (стойка)
+                    video.currentTime = 2.99; // Мгновенный переход в конец
                     isStopping = true;
+                    // Принудительная отрисовка кадра
+                    setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
                 }
-                // Если это camp.html, добавь: if (stepsPlaying) stopSteps();
             }
 
             const newX = p.pos.x + p.vel.x * dt;
             p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
-
-            // В camp.html также оставь физику (гравитацию и прыжок):
-            p.vel.y -= p.gravity * dt;
-            if (p.vel.y < -25) p.vel.y = -25;
-            const newY = p.pos.y + p.vel.y * dt;
-            if (newY <= 0) { p.pos.y = 0; p.vel.y = 0; p.onGround = true; }
-            else { p.pos.y = newY; p.onGround = false; }
         }
 
         var actionBtn = document.getElementById('action-btn');
