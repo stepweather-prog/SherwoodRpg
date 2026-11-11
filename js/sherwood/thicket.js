@@ -1,6 +1,7 @@
 /**
  * Sherwood Thicket — Шервудская чащоба
  * Квестовая тропа: 65 узлов, 3 сложности, кубки как в подземке
+ * Визуал: карусель как в бестиарии
  */
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
@@ -112,6 +113,7 @@ Sherwood.Thicket = {
     _currentDiff: 1,
     _inBattle: false,
     _selectedChapter: 1,
+    _currentIndex: 0,
 
     init: function() {
         var p = Sherwood.getPlayer();
@@ -311,7 +313,7 @@ Sherwood.Thicket = {
     },
 
     // ============================================================
-    //  UI — ОДНА КАРТОЧКА В РЯД, ПО ЦЕНТРУ, С ПРОКРУТКОЙ
+    //  UI — КАРУСЕЛЬ КАК В БЕСТИАРИИ
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
@@ -327,80 +329,192 @@ Sherwood.Thicket = {
 
         var chapterKeys = Object.keys(chapters).sort(function(a, b) { return parseInt(a) - parseInt(b); });
         var selectedChapter = this._selectedChapter || 1;
+        var chData = chapters[selectedChapter];
+        var beasts = chData ? chData.nodes : [];
 
-        // Контейнер как в тренировке (по центру)
-        var h = '<div style="width:100%;max-width:340px;margin:0 auto;box-sizing:border-box;">';
-        
-        // Вкладки глав
-        h += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:20px;">';
+        if (this._currentIndex >= beasts.length) this._currentIndex = 0;
+        if (this._currentIndex < 0) this._currentIndex = 0;
+
+        var h = '';
+
+        // Вкладки глав (как табы в бестиарии)
+        h += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:14px;padding:0 8px;">';
         for (var c = 0; c < chapterKeys.length; c++) {
             var chId = parseInt(chapterKeys[c]);
-            var isActive = (chId === selectedChapter);
-            h += '<div onclick="Sherwood.Thicket._selectChapter(' + chId + ')" style="cursor:pointer;padding:5px 10px;border-radius:6px;border:2px solid ' + (isActive ? '#c9a040' : '#444') + ';background:' + (isActive ? 'rgba(60,40,15,0.9)' : 'rgba(20,20,20,0.7)') + ';color:' + (isActive ? '#ffd27a' : '#888') + ';font:bold 11px "Times New Roman", serif;white-space:nowrap;">' + (chId === 0 ? 'Рейд' : 'Гл. ' + chId) + '</div>';
+            var active = (chId === selectedChapter);
+            var bg = active ? '#c9a040' : 'rgba(0,0,0,0.6)';
+            var color = active ? '#000' : '#c9a040';
+            var border = active ? '#ffd27a' : '#6b5a3a';
+            h += '<button onclick="Sherwood.Thicket._selectChapter(' + chId + ')" ' +
+                 'style="background:' + bg + ';border:2px solid ' + border + ';border-radius:6px;padding:6px 10px;color:' + color + ';cursor:pointer;font:bold 11px \'Times New Roman\',serif;text-shadow:0 2px 4px #000;letter-spacing:1px;">' + (chId === 0 ? 'Рейд' : 'Гл. ' + chId) + '</button>';
         }
         h += '</div>';
 
-        var chData = chapters[selectedChapter];
-        if (chData) {
-            h += '<div style="color:#c8a050;font-size:13px;text-align:center;margin-bottom:12px;text-shadow:0 2px 4px #000;font-weight:bold;">' + chData.name + '</div>';
-            
-            // СПИСОК: ОДНА КАРТОЧКА В РЯД
-            h += '<div style="display:flex;flex-direction:column;gap:8px;">';
+        if (beasts.length === 0) {
+            h += '<div style="text-align:center;padding:80px 24px;color:#c8a050;">';
+            h += '<div style="font-size:3em;margin-bottom:16px;opacity:0.6;">🌲</div>';
+            h += '<div style="font-size:1.1em;font-weight:bold;margin-bottom:8px;">Пока никого не открыто</div>';
+            h += '<div style="color:#888;font-size:0.9em;line-height:1.5;">Победи бестию в бою —<br>и она появится здесь.</div>';
+            h += '</div>';
+        } else {
+            h += '<div id="thicket-carousel" style="position:relative;width:100%;height:calc(100vh - 220px);min-height:420px;overflow:hidden;touch-action:pan-y;user-select:none;cursor:grab;">';
 
-            for (var ni = 0; ni < chData.nodes.length; ni++) {
-                var node = chData.nodes[ni];
+            for (var i = 0; i < beasts.length; i++) {
+                var node = beasts[i];
                 var cups = this.getCups(node.id);
                 var available = this.isNodeAvailable(node.id, 1);
-
                 var borderColor = cups >= 3 ? '#ffd700' : (available ? '#c9a040' : '#333');
-                var opacity = available ? 1 : 0.4;
 
-                // Карточка (строго на всю ширину контейнера)
-                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:pointer;opacity:' + opacity + ';background:rgba(10,8,5,0.95);border:2px solid ' + borderColor + ';border-radius:10px;padding:10px;display:flex;align-items:center;gap:12px;box-sizing:border-box;width:100%;box-shadow:0 3px 8px rgba(0,0,0,0.7);">';
+                h += '<div class="thicket-slide" data-index="' + i + '" ' +
+                     'style="position:absolute;top:0;left:0;width:100%;height:100%;' +
+                     'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+                     'transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);' +
+                     'transform:translateY(' + ((i - this._currentIndex) * 100) + '%);' +
+                     'cursor:pointer;opacity:' + (available ? 1 : 0.4) + ';" ' +
+                     'onclick="if(!Sherwood.Thicket._wasDragging)Sherwood.Thicket._showNodePanel(' + node.id + ');">';
 
-                // Иконка
-                h += '<div style="width:44px;height:44px;flex-shrink:0;background:#000;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;">';
-                h += '<img src="' + node.imagePath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                // Рамка с картинкой
+                h += '<div style="position:relative;width:260px;height:260px;max-width:80vw;max-height:80vw;' +
+                     'background:radial-gradient(circle at 50% 50%, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.4) 100%);' +
+                     'border:3px solid ' + borderColor + ';border-radius:16px;' +
+                     'box-shadow:0 0 30px ' + borderColor + '44, inset 0 0 40px rgba(0,0,0,0.8);' +
+                     'display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;">';
+                h += '<img src="' + node.imagePath + '" style="width:100%;height:100%;object-fit:contain;pointer-events:none;" ' +
+                     'onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
 
-                // Текст
-                h += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">';
-                h += '<div style="color:#fff;font-size:12px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">' + node.name + '</div>';
-                h += '<div style="color:#ffa500;font-size:10px;">#' + node.id + (node.isBoss ? ' БОСС' : '') + '</div>';
-                h += '</div>';
+                // Имя
+                h += '<div style="margin-top:20px;color:#ffd27a;font:bold 22px \'Times New Roman\',serif;' +
+                     'text-shadow:0 0 12px #000,0 3px 6px #000;text-align:center;padding:0 20px;letter-spacing:1px;pointer-events:none;">' +
+                     node.name + '</div>';
+
+                // Номер и босс
+                h += '<div style="margin-top:8px;color:#888;font-size:0.85em;text-shadow:0 0 8px #000;pointer-events:none;">#' + node.id + (node.isBoss ? ' БОСС' : '') + '</div>';
 
                 // Кубки
-                h += '<div style="display:flex;gap:3px;flex-shrink:0;">';
+                h += '<div style="margin-top:10px;display:flex;gap:6px;pointer-events:none;">';
                 for (var k = 1; k <= 3; k++) {
-                    h += '<div style="width:8px;height:8px;border-radius:50%;border:1px solid ' + (cups >= k ? '#ffd700' : '#555') + ';background:' + (cups >= k ? '#ffd700' : 'transparent') + ';"></div>';
+                    h += '<div style="width:14px;height:14px;border-radius:50%;border:2px solid ' + (cups >= k ? '#ffd700' : '#555') + ';background:' + (cups >= k ? '#ffd700' : 'transparent') + ';box-shadow:' + (cups >= k ? '0 0 8px #ffd700' : 'none') + ';"></div>';
                 }
                 h += '</div>';
 
                 h += '</div>';
             }
             h += '</div>';
+
+            if (beasts.length > 1) {
+                h += '<div style="text-align:center;color:#6b5a3a;font-size:0.75em;margin-top:6px;">▲ свайп / колесо вверх-вниз ▼</div>';
+            }
         }
 
-        h += '</div>';
-
-        // Отрисовка с прокруткой
         UI._screenLayer.innerHTML = '';
-        var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');background-size:cover;background-position:center;background-repeat:no-repeat;';
-        
-        UI._screenLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle + 'display:flex;flex-direction:column;overflow:hidden;z-index:100;';
-        UI._screenLayer.innerHTML = 
-            '<div style="position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);z-index:10;">' +
-                '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:10px;background:transparent;border:none;color:#e0c080;font-size:18px;cursor:pointer;">←</button>' +
-                '<span style="color:#e0c080;font-size:16px;font-weight:bold;">🌲 Шервудская чащоба</span>' +
-            '</div>' +
-            '<div style="flex:1;overflow-y:auto;padding:60px 10px 20px;display:flex;justify-content:center;-webkit-overflow-scrolling:touch;">' + h + '</div>';
-        
+        var bgStyle = 'background-image:url(\'' + (UI._bg.quests || '') + '\');' +
+                      'background-size:cover;background-position:center;background-repeat:no-repeat;';
+        var wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle +
+                                'display:flex;flex-direction:column;overflow:hidden;';
+        wrapper.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
+                            '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
+                            '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">🌲 Шервудская чащоба</span>' +
+                            '</div>' +
+                            '<div style="flex:1;overflow-y:auto;padding:70px 12px 20px;box-sizing:border-box;">' + h + '</div>';
+        UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
+        UI._screenLayer.style.width = '100%';
+        UI._screenLayer.style.height = '100%';
         UI._screenLayer.style.overflow = 'hidden';
+
+        // --- Свайп + мышь + колесо ---
+        this._wasDragging = false;
+        var carousel = document.getElementById('thicket-carousel');
+        if (carousel && beasts.length > 1) {
+            var startY = 0, currentY = 0, dragging = false;
+            var slides = carousel.querySelectorAll('.thicket-slide');
+
+            function updateSlides(deltaY) {
+                for (var s = 0; s < slides.length; s++) {
+                    var offset = (s - self._currentIndex) * 100;
+                    slides[s].style.transition = 'none';
+                    slides[s].style.transform = 'translateY(calc(' + offset + '% + ' + deltaY + 'px))';
+                }
+            }
+            function snapToIndex() {
+                for (var s = 0; s < slides.length; s++) {
+                    var offset = (s - self._currentIndex) * 100;
+                    slides[s].style.transition = 'transform 0.3s cubic-bezier(0.22,1,0.36,1)';
+                    slides[s].style.transform = 'translateY(' + offset + '%)';
+                }
+            }
+            function goNext() { if (self._currentIndex < beasts.length - 1) { self._currentIndex++; snapToIndex(); } }
+            function goPrev() { if (self._currentIndex > 0) { self._currentIndex--; snapToIndex(); } }
+
+            // Тач
+            carousel.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY; currentY = startY;
+                dragging = true; self._wasDragging = false;
+            }, { passive: true });
+            carousel.addEventListener('touchmove', function(e) {
+                if (!dragging) return;
+                currentY = e.touches[0].clientY;
+                var delta = currentY - startY;
+                if (Math.abs(delta) > 8) self._wasDragging = true;
+                updateSlides(delta);
+            }, { passive: true });
+            carousel.addEventListener('touchend', function() {
+                if (!dragging) return;
+                dragging = false;
+                var delta = currentY - startY;
+                if (Math.abs(delta) > 50) { if (delta < 0) goNext(); else goPrev(); }
+                snapToIndex();
+                setTimeout(function() { self._wasDragging = false; }, 100);
+            }, { passive: true });
+
+            // Мышь — drag
+            var mouseStartY = 0, mouseDown = false;
+            carousel.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                mouseStartY = e.clientY; mouseDown = true;
+                self._wasDragging = false;
+                carousel.style.cursor = 'grabbing';
+            });
+            carousel.addEventListener('mousemove', function(e) {
+                if (!mouseDown) return;
+                var delta = e.clientY - mouseStartY;
+                if (Math.abs(delta) > 8) self._wasDragging = true;
+                updateSlides(delta);
+            });
+            carousel.addEventListener('mouseup', function(e) {
+                if (!mouseDown) return;
+                mouseDown = false;
+                carousel.style.cursor = 'grab';
+                var delta = e.clientY - mouseStartY;
+                if (Math.abs(delta) > 50) { if (delta < 0) goNext(); else goPrev(); }
+                snapToIndex();
+                setTimeout(function() { self._wasDragging = false; }, 100);
+            });
+            carousel.addEventListener('mouseleave', function() {
+                if (!mouseDown) return;
+                mouseDown = false;
+                carousel.style.cursor = 'grab';
+                snapToIndex();
+            });
+
+            // Колесо мыши
+            var wheelLock = false;
+            carousel.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                if (wheelLock) return;
+                if (Math.abs(e.deltaY) < 10) return;
+                wheelLock = true;
+                if (e.deltaY > 0) goNext(); else goPrev();
+                setTimeout(function() { wheelLock = false; }, 350);
+            }, { passive: false });
+        }
     },
 
     _selectChapter: function(chId) {
         this._selectedChapter = chId;
+        this._currentIndex = 0;
         this.showUI();
     },
 
