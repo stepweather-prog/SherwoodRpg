@@ -134,7 +134,7 @@
         const platformerGroup = new THREE.Group();
         scene.add(platformerGroup);
 
-        const LEVEL_W = 100; // Увеличил длину коридора, чтобы влезли все 6 дверей
+        const LEVEL_W = 100; 
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
@@ -248,16 +248,19 @@
         const heroTex = new THREE.CanvasTexture(hCanvas);
         heroTex.minFilter = heroTex.magFilter = THREE.LinearFilter;
 
+        // Анимация (видео)
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
         heroSprite.center.set(0.5, 0); 
         heroSprite.scale.set(2.2, 2.2, 1); 
         heroSprite.position.set(0, 0, 0); 
         heroGroup.add(heroSprite);
 
+        // Статика (картинка)
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0); 
-        staticSprite.scale.set(2.2, 2.2, 1); 
+        // Чуть уменьшил масштаб, чтобы не было прыжка при остановке
+        staticSprite.scale.set(2.0, 2.0, 1); 
         staticSprite.position.set(0, 0, 0);
         heroGroup.add(staticSprite);
         
@@ -314,6 +317,13 @@
                 heroSprite.visible = false;
                 staticSprite.visible = true;
                 if (!video.paused) video.pause();
+            }
+
+            // Разворот статичной картинки в зависимости от направления
+            if (p.facing < 0) {
+                staticSprite.scale.x = -2.0; // Отрицательный масштаб = отзеркалить
+            } else {
+                staticSprite.scale.x = 2.0;
             }
 
             const newX = p.pos.x + p.vel.x * dt;
