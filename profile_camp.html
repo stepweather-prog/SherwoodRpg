@@ -282,7 +282,7 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
-        var isStopping = false;
+                var isStopping = false;
 
         function updatePlayer(dt) {
             const p = player;
@@ -296,23 +296,26 @@
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
                 isStopping = false;
+                // Если это camp.html, добавь: if (!stepsPlaying) startSteps();
             } else {
-                if (!video.paused && !isStopping) {
+                // Мгновенная остановка
+                if (!video.paused || !isStopping) {
+                    video.pause();
+                    video.currentTime = 2.99; // Мгновенный переход в конец (стойка)
                     isStopping = true;
                 }
-            }
-
-            if (isStopping) {
-                if (video.currentTime < 2.99) {
-                    video.currentTime = Math.min(2.99, video.currentTime + 0.08);
-                } else {
-                    if (!video.paused) video.pause();
-                    isStopping = false;
-                }
+                // Если это camp.html, добавь: if (stepsPlaying) stopSteps();
             }
 
             const newX = p.pos.x + p.vel.x * dt;
             p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
+
+            // В camp.html также оставь физику (гравитацию и прыжок):
+            p.vel.y -= p.gravity * dt;
+            if (p.vel.y < -25) p.vel.y = -25;
+            const newY = p.pos.y + p.vel.y * dt;
+            if (newY <= 0) { p.pos.y = 0; p.vel.y = 0; p.onGround = true; }
+            else { p.pos.y = newY; p.onGround = false; }
         }
 
         var actionBtn = document.getElementById('action-btn');
