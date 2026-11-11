@@ -1,6 +1,7 @@
 // ============================================================
-//  js/sherwood/talents.js — Таланты героя v7
-//  Древовидная структура: карточка -> название -> кнопки
+//  js/sherwood/talents.js — Таланты героя (v8)
+//  Древовидная структура, название под карточкой, описание во всплывающем окне
+//  Единый стиль для Таверны и Профиля
 // ============================================================
 
 if (typeof Sherwood === 'undefined') {
@@ -49,7 +50,7 @@ Sherwood.Talents = {
         }
 
         this._talentLevels = p.talents;
-        console.log('⚡ Таланты инициализированы (v7)');
+        console.log('⚡ Таланты инициализированы (v8)');
     },
 
     getAllTalents: function() { return this.TALENTS; },
@@ -134,36 +135,51 @@ Sherwood.Talents = {
         var p = Sherwood.getPlayer();
         var talentPoints = p ? (p.talentPoints || 0) : 0;
 
-        var h = '<div style="text-align:center;padding:20px;">';
-        h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;">Изученные таланты</div>';
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/visual_talents.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;">';
+        h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
+        h += '<div class="talents-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:40px;padding-bottom:60px;width:100%;">';
 
-        h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">';
-        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:40px;height:40px;object-fit:contain;">';
-        h += '<span style="color:#aaa;font-size:18px;font-weight:bold;">Очки талантов: ' + talentPoints + '</span>';
+        // Заголовок
+        h += '<div style="color:#e0c080;font-size:22px;font-weight:bold;margin-bottom:20px;text-shadow:0 2px 4px #000;">Изученные таланты</div>';
+
+        // Очки талантов
+        h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:30px;">';
+        h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;">';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:36px;height:36px;object-fit:contain;">';
+        h += '<span style="color:#ffd700;font-size:18px;font-weight:bold;">' + talentPoints + '</span>';
+        h += '</div>';
+        h += '<div style="color:#888;font-size:10px;margin-top:4px;text-align:center;">Доступно очков для распределения</div>';
         h += '</div>';
 
         if (learnedTalents.length === 0) {
-            h += '<div style="color:#aaa;font-size:16px;">Вы ещё не изучили ни одного таланта.</div>';
+            h += '<div style="color:#aaa;font-size:16px;text-shadow:0 2px 4px #000;">Вы ещё не изучили ни одного таланта.</div>';
         } else {
-            h += '<div style="overflow-y:auto;height:60vh;scrollbar-width:none;-ms-overflow-style:none;max-width:420px;margin:0 auto;padding:10px;">';
-            h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
-            h += '<div class="talents-scroll" style="display:flex;flex-direction:column;gap:15px;">';
+            // Сетка карточек (как в таверне, но без кнопок)
+            h += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:20px;width:95%;max-width:360px;margin-bottom:30px;">';
 
             for (var i = 0; i < learnedTalents.length; i++) {
                 var t = learnedTalents[i];
                 var lvl = this.getTalentLevel(t.id);
-                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="background:rgba(0,0,0,0.6);border:2px solid #ffa500;border-radius:10px;padding:15px;text-align:center;cursor:pointer;">';
-                h += '<div style="text-align:center;margin-bottom:10px;">';
-                h += '<img src="' + t.icon + '" style="width:50px;height:50px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-                h += '</div>';
-                h += '<div style="color:#fff;font-size:14px;font-weight:bold;">' + t.name + '</div>';
-                h += '<div style="color:#ffa500;font-size:12px;margin-top:4px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
-                h += '</div>';
+
+                h += '<div style="display:flex;flex-direction:column;align-items:center;width:100%;">';
+                
+                // Карточка с иконкой
+                h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
+                h += '<img onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" src="' + t.icon + '" style="display:block;margin:0 auto;width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));cursor:pointer;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '</div>'; // конец карточки
+
+                // Название и уровень
+                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="color:#fff;font-size:12px;font-weight:bold;margin-top:10px;text-align:center;cursor:pointer;text-shadow:0 2px 4px #000;line-height:1.2;">' + t.name + '</div>';
+                h += '<div style="color:#ffa500;font-size:11px;font-weight:bold;margin-top:4px;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+
+                h += '</div>'; // конец колонки
             }
-            h += '</div>';
-            h += '</div>';
+            h += '</div>'; // конец сетки
         }
+
         h += '</div>';
+        h += '</div>';
+
         UI._openScreenScrollable('⚡ Таланты', 'talents', h, 'UI.profile()');
     },
 
@@ -351,4 +367,4 @@ if (typeof UI !== 'undefined' && UI.talents) {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Talents = Sherwood.Talents;
 
-console.log('⚡ Таланты загружены (v7: кнопки под названием)!');
+console.log('⚡ Таланты загружены (v8: единый стиль для профиля и таверны)!');
