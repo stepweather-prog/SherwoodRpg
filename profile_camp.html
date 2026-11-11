@@ -99,12 +99,14 @@
         const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         
+        // Стена: 16 раз по длине, 1 раз по высоте
         wallTexture.wrapS = THREE.RepeatWrapping; 
         wallTexture.repeat.x = 16; 
         wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
         wallTexture.repeat.y = 1; 
         wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
+        // Пол: 16 раз по длине, 1 раз по ширине
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(16, 1);
         floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -210,7 +212,8 @@
 
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
-        video.loop = true; video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
+        video.loop = false; // ВАЖНО: отключаем цикл
+        video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
 
         const hCanvas = document.createElement('canvas');
         hCanvas.width = 512; hCanvas.height = 512;
@@ -279,6 +282,8 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
+        var isStopping = false;
+
         function updatePlayer(dt) {
             const p = player;
             let moveX = 0;
@@ -286,13 +291,23 @@
             if (keys['KeyD'] || keys['ArrowRight'] || touch.right) moveX += 1;
 
             p.vel.x = moveX * p.speed;
+            
             if (moveX !== 0) {
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
+                isStopping = false;
             } else {
-                if (!video.paused) {
-                    video.pause();
-                    video.currentTime = 0; // Возврат к первому кадру
+                if (!video.paused && !isStopping) {
+                    isStopping = true;
+                }
+            }
+
+            if (isStopping) {
+                if (video.currentTime < 2.99) {
+                    video.currentTime = Math.min(2.99, video.currentTime + 0.08);
+                } else {
+                    if (!video.paused) video.pause();
+                    isStopping = false;
                 }
             }
 
