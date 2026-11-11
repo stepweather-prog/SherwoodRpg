@@ -46,6 +46,20 @@
             #action-btn { width: 70px; height: 70px; bottom: 100px; }
             #action-btn img { width: 70px; height: 70px; }
         }
+
+        /* Стиль для HTML-подписей (как в таверне) */
+        .door-label {
+            background: url('assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
+            padding: 6px 20px;
+            color: #ffa500;
+            font-family: "Times New Roman", serif;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px #000;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -65,11 +79,17 @@
     <div id="scanlines"></div>
 
     <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
     </script>
 
     <script type="module">
         import * as THREE from 'three';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         function exitProfile() {
             try { if (parent.UI && parent.UI.loadHome) parent.UI.loadHome(); } catch(e) {}
@@ -104,6 +124,14 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
+
+        // Рендерер для HTML-подписей
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
@@ -144,42 +172,9 @@
         platformerGroup.add(backWall);
 
         // ============================================================
-        //  ДВЕРИ И ПОДПИСИ
+        //  ДВЕРИ И ПОДПИСИ (ПРИВЯЗАНЫ К ДВЕРЯМ)
         // ============================================================
         var doorLeaves = [];
-        
-        // Функция для создания текстовой текстуры (спрайта)
-        function createLabelSprite(text) {
-            var canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 64;
-            var ctx = canvas.getContext('2d');
-            
-            // Фон плашки (как в таверне)
-            ctx.fillStyle = 'rgba(30, 20, 10, 0.85)';
-            ctx.strokeStyle = '#c8a050';
-            ctx.lineWidth = 4;
-            // Рисуем прямоугольник с закругленными углами (упрощенно)
-            ctx.beginPath();
-            ctx.roundRect(0, 0, 256, 64, 10);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Текст
-            ctx.font = 'bold 28px "Times New Roman", serif';
-            ctx.fillStyle = '#c8a050';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#000';
-            ctx.shadowBlur = 4;
-            ctx.fillText(text, 128, 32);
-            
-            var texture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            return texture;
-        }
-
         for (var i = 0; i < PROFILE_SECTIONS.length; i++) {
             var sec = PROFILE_SECTIONS[i];
             
@@ -197,13 +192,15 @@
             
             doorLeaves.push(leaf);
 
-            // 2. Подпись под иконкой
-            var labelTex = createLabelSprite(sec.name);
-            var labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true, depthTest: true, depthWrite: false }));
-            labelSprite.center.set(0.5, 0.5);
-            labelSprite.scale.set(3.0, 0.75, 1); // Ширина 3, высота 0.75
-            labelSprite.position.set(sec.x, 0.1, 0.5); // Под иконкой (иконка на y=1.8, размер 4, значит низ на -0.2, подпись на 0.1)
-            platformerGroup.add(labelSprite);
+            // 2. Подпись (привязана прямо к мешу двери)
+            var div = document.createElement('div');
+            div.className = 'door-label';
+            div.textContent = sec.name;
+            
+            var label = new CSS2DObject(div);
+            // Позиция относительно центра двери: спускаем вниз
+            label.position.set(0, -2.5, 0.1); 
+            leaf.add(label);
         }
 
         // ============================================================
@@ -240,7 +237,7 @@
         }
 
         // ============================================================
-        //  ПЕРСОНАЖ (ВИДЕО + СТАТИКА)
+        //  ПЕРСОНАЖ
         // ============================================================
         const player = {
             pos: new THREE.Vector3(3, 0, 1.0),
@@ -356,7 +353,6 @@
                 if (!video.paused) video.pause();
             }
 
-            // Разворот статичной картинки
             if (p.facing < 0) {
                 staticSprite.scale.x = -2.0;
             } else {
@@ -448,7 +444,9 @@
             }
 
             checkDoorInteraction();
+            
             renderer.render(scene, cam);
+            labelRenderer.render(scene, cam); // Рендерим HTML-подписи
         }
         animate();
 
@@ -456,6 +454,7 @@
             var aspect = window.innerWidth / window.innerHeight;
             cam.aspect = aspect; cam.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
