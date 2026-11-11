@@ -220,7 +220,8 @@
 
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
-        video.loop = true; video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
+        video.loop = false; // Отключаем цикл для остановки на последнем кадре
+        video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
 
         const hCanvas = document.createElement('canvas');
         hCanvas.width = 512; hCanvas.height = 512;
@@ -289,6 +290,8 @@
         bindTouch('btn-left', 'left');
         bindTouch('btn-right', 'right');
 
+        var isStopping = false;
+
         function updatePlayer(dt) {
             const p = player;
             let moveX = 0;
@@ -299,13 +302,23 @@
             if (moveX !== 0) {
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
+                isStopping = false;
                 if (!stepsPlaying) startSteps();
             } else {
-                if (!video.paused) {
-                    video.pause();
-                    video.currentTime = 0; // Возврат к первому кадру
+                if (!video.paused && !isStopping) {
+                    isStopping = true;
                 }
                 if (stepsPlaying) stopSteps();
+            }
+
+            // Плавная остановка видео на последнем кадре
+            if (isStopping) {
+                if (video.currentTime < 2.99) {
+                    video.currentTime = Math.min(2.99, video.currentTime + 0.08);
+                } else {
+                    if (!video.paused) video.pause();
+                    isStopping = false;
+                }
             }
 
             p.vel.y -= p.gravity * dt;
