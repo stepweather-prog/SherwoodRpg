@@ -77,15 +77,15 @@
         window.exitProfile = exitProfile;
         
         // ============================================================
-        //  РАЗДЕЛЫ ПРОФИЛЯ (Двери) - ПУТИ ВЗЯТЫ ИЗ СТАРОГО UI.profile
+        //  РАЗДЕЛЫ ПРОФИЛЯ (Двери)
         // ============================================================
         var PROFILE_SECTIONS = [
-            { key: 'trophies', name: 'Трофеи', icon: 'assets/all_trophies/asset_isolated_on_a_solid.png', x: 8, open: function() { try { parent.UI._showAllTrophies(); } catch(e) {} } },
-            { key: 'rings',    name: 'Кольца', icon: 'assets/interface/ring_first_level.png', x: 24, open: function() { try { parent.UI._showAllRings(); } catch(e) {} } },
-            { key: 'amulets',  name: 'Амулеты', icon: 'assets/interface/sherwood_amulet_level_one.png', x: 40, open: function() { try { parent.UI._showAllAmulets(); } catch(e) {} } },
-            { key: 'wallet',   name: 'Кесет', icon: 'assets/interface/wallet.png', x: 56, open: function() { try { parent.UI.wallet(); } catch(e) {} } },
-            { key: 'bag',      name: 'Сумка', icon: 'assets/assets2/icons/hero_bag.png', x: 72, open: function() { try { parent.UI.bag(); } catch(e) {} } },
-            { key: 'talents',  name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', x: 88, open: function() { try { parent.Sherwood.Talents.showLearnedTalents(); } catch(e) {} } }
+            { key: 'trophies', name: 'Трофеи', icon: 'assets/all_trophies/asset_isolated_on_a_solid.png', x: 8, open: function() { try { parent.UI._cameFromCamp = false; parent.UI._showAllTrophies(); } catch(e) {} } },
+            { key: 'rings',    name: 'Кольца', icon: 'assets/interface/ring_first_level.png', x: 24, open: function() { try { parent.UI._cameFromCamp = false; parent.UI._showAllRings(); } catch(e) {} } },
+            { key: 'amulets',  name: 'Амулеты', icon: 'assets/interface/sherwood_amulet_level_one.png', x: 40, open: function() { try { parent.UI._cameFromCamp = false; parent.UI._showAllAmulets(); } catch(e) {} } },
+            { key: 'wallet',   name: 'Кесет', icon: 'assets/interface/wallet.png', x: 56, open: function() { try { parent.UI._cameFromCamp = false; parent.UI.wallet(); } catch(e) {} } },
+            { key: 'bag',      name: 'Сумка', icon: 'assets/assets2/icons/hero_bag.png', x: 72, open: function() { try { parent.UI._cameFromCamp = false; parent.UI.bag(); } catch(e) {} } },
+            { key: 'talents',  name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', x: 88, open: function() { try { parent.UI._cameFromCamp = false; parent.Sherwood.Talents.showLearnedTalents(); } catch(e) {} } }
         ];
 
         // ============================================================
@@ -113,11 +113,8 @@
 
         const loader = new THREE.TextureLoader();
         
-        // ============================================================
-        //  ТЕКСТУРЫ (СТЕНА ИЗ ПРОФИЛЯ, ПОЛ ИЗ SHERWOOD_SQUARE)
-        // ============================================================
         const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png');
-        const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png'); // Твой пол
+        const floorTexture = loader.load('assets/assets2/Sherwood_Square/ceiling_raid.png');
         
         wallTexture.wrapS = THREE.RepeatWrapping; 
         wallTexture.repeat.x = 4; 
@@ -147,11 +144,46 @@
         platformerGroup.add(backWall);
 
         // ============================================================
-        //  ДВЕРИ
+        //  ДВЕРИ И ПОДПИСИ
         // ============================================================
         var doorLeaves = [];
+        
+        // Функция для создания текстовой текстуры (спрайта)
+        function createLabelSprite(text) {
+            var canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            var ctx = canvas.getContext('2d');
+            
+            // Фон плашки (как в таверне)
+            ctx.fillStyle = 'rgba(30, 20, 10, 0.85)';
+            ctx.strokeStyle = '#c8a050';
+            ctx.lineWidth = 4;
+            // Рисуем прямоугольник с закругленными углами (упрощенно)
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 256, 64, 10);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Текст
+            ctx.font = 'bold 28px "Times New Roman", serif';
+            ctx.fillStyle = '#c8a050';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 4;
+            ctx.fillText(text, 128, 32);
+            
+            var texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            return texture;
+        }
+
         for (var i = 0; i < PROFILE_SECTIONS.length; i++) {
             var sec = PROFILE_SECTIONS[i];
+            
+            // 1. Иконка двери
             var tex = loader.load(sec.icon);
             tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
@@ -164,6 +196,14 @@
             platformerGroup.add(leaf);
             
             doorLeaves.push(leaf);
+
+            // 2. Подпись под иконкой
+            var labelTex = createLabelSprite(sec.name);
+            var labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true, depthTest: true, depthWrite: false }));
+            labelSprite.center.set(0.5, 0.5);
+            labelSprite.scale.set(3.0, 0.75, 1); // Ширина 3, высота 0.75
+            labelSprite.position.set(sec.x, 0.1, 0.5); // Под иконкой (иконка на y=1.8, размер 4, значит низ на -0.2, подпись на 0.1)
+            platformerGroup.add(labelSprite);
         }
 
         // ============================================================
@@ -248,18 +288,15 @@
         const heroTex = new THREE.CanvasTexture(hCanvas);
         heroTex.minFilter = heroTex.magFilter = THREE.LinearFilter;
 
-        // Анимация (видео)
         const heroSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTex, transparent: true, depthTest: false }));
         heroSprite.center.set(0.5, 0); 
         heroSprite.scale.set(2.2, 2.2, 1); 
         heroSprite.position.set(0, 0, 0); 
         heroGroup.add(heroSprite);
 
-        // Статика (картинка)
         const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
         const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
         staticSprite.center.set(0.5, 0); 
-        // Чуть уменьшил масштаб, чтобы не было прыжка при остановке
         staticSprite.scale.set(2.0, 2.0, 1); 
         staticSprite.position.set(0, 0, 0);
         heroGroup.add(staticSprite);
@@ -319,9 +356,9 @@
                 if (!video.paused) video.pause();
             }
 
-            // Разворот статичной картинки в зависимости от направления
+            // Разворот статичной картинки
             if (p.facing < 0) {
-                staticSprite.scale.x = -2.0; // Отрицательный масштаб = отзеркалить
+                staticSprite.scale.x = -2.0;
             } else {
                 staticSprite.scale.x = 2.0;
             }
