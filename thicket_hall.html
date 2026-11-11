@@ -44,7 +44,6 @@
             z-index: 45;
         }
         
-        /* Кнопка удара — опущена на прежнее место и сдвинута влево на 10px */
         #attack-icon { 
             position: absolute;
             bottom: 100%;
@@ -84,7 +83,6 @@
             color: #ff5555; font-weight: bold; font-size: 20px; 
         }
 
-        /* Скиллы — ровно 85x85 */
         .skill-btn { 
             cursor: pointer; 
             border-radius: 8px; 
@@ -102,7 +100,6 @@
         .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
-        /* Горизонтальный ряд скиллов под кнопкой удара */
         #skills-row {
             display: none;
             flex-direction: row;
@@ -119,6 +116,20 @@
         .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
         #btn-left  { top: 40px; left: 0; }
         #btn-right { top: 40px; left: 80px; }
+        
+        /* Стиль для HTML-подписей (как в таверне) */
+        .door-label {
+            background: url('assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
+            padding: 6px 20px;
+            color: #ffa500;
+            font-family: "Times New Roman", serif;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px #000;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+        }
         
         @media (max-width: 900px) {
             #joystick { display: block; }
@@ -153,12 +164,10 @@
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
     
     <div id="battle-controls">
-        <!-- Кнопка удара СВЕРХУ -->
         <div id="attack-icon">
             <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
             <div id="attack-cooldown-overlay">0.0s</div>
         </div>
-        <!-- Скиллы СНИЗУ — горизонтально -->
         <div id="skills-row"></div>
     </div>
 
@@ -183,11 +192,17 @@
     <button onclick="exitThicket();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
 
     <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
     </script>
 
     <script type="module">
         import * as THREE from 'three';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         var urlParams = new URLSearchParams(window.location.search);
         var nodeId = parseInt(urlParams.get('node') || '1');
@@ -310,6 +325,14 @@
         renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
 
+        // Рендерер для HTML-подписей
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5); scene.add(dirLight);
@@ -324,12 +347,18 @@
         const closedDoorTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level2.png');
         
+        // Настройка четкости текстур
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-        wallTexture.repeat.set(8, 2);
+        wallTexture.repeat.set(16, 1);
+        wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(8, 2);
+        floorTexture.repeat.set(16, 1);
+        floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
         ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
-        ceilTexture.repeat.set(8, 2);
+        ceilTexture.repeat.set(16, 1);
+        ceilTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
@@ -342,27 +371,57 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
-        ground.position.set(LEVEL_W / 2, -0.5, 0); 
+        // ============================================================
+        //  ПОЛ (ПЛОСКОСТЬ БЕЗ ТОРЦОВ)
+        // ============================================================
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), floorMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.set(LEVEL_W / 2, 0, 0);
         platformerGroup.add(ground);
 
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        // ============================================================
+        //  СТЕНА (ПЛОСКОСТЬ)
+        // ============================================================
+        const backWall = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, WALL_H), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
+        // ============================================================
+        //  ПОТОЛОК (ПЛОСКОСТЬ)
+        // ============================================================
+        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), ceilMat);
+        ceil.rotation.x = Math.PI / 2;
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
+        // ============================================================
+        //  ДВЕРИ С ПОДПИСЯМИ
+        // ============================================================
         const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         exitDoor.position.set(LEVEL_W - 1, WALL_H / 2, 0);
         exitDoor.rotation.y = -Math.PI / 2;
         platformerGroup.add(exitDoor);
 
+        // Подпись "Выход" под дверью
+        var exitDiv = document.createElement('div');
+        exitDiv.className = 'door-label';
+        exitDiv.textContent = 'Выход';
+        var exitLabel = new CSS2DObject(exitDiv);
+        exitLabel.position.set(0, -2.5, 0.1);
+        exitDoor.add(exitLabel);
+
         const startDoor = new THREE.Mesh(new THREE.PlaneGeometry(4, WALL_H), new THREE.MeshBasicMaterial({ map: closedDoorTex, transparent: true }));
         startDoor.position.set(1, WALL_H / 2, 0);
         startDoor.rotation.y = Math.PI / 2;
         platformerGroup.add(startDoor);
+
+        // Подпись "Начало" под дверью
+        var startDiv = document.createElement('div');
+        startDiv.className = 'door-label';
+        startDiv.textContent = 'Начало';
+        var startLabel = new CSS2DObject(startDiv);
+        startLabel.position.set(0, -2.5, 0.1);
+        startDoor.add(startLabel);
 
         // Боевая комната
         const battleScene = new THREE.Scene();
@@ -382,7 +441,7 @@
         const bgGeometry = new THREE.PlaneGeometry(30, 20); 
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, -2, -10); // Опустили
+        bgMesh.position.set(0, -2, -10);
         battleScene.add(bgMesh);
 
         battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
@@ -625,8 +684,6 @@
                 document.getElementById('crosshair').style.display = 'block';
                 document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('joystick').style.display = 'none';
-                
-                // Показываем горизонтальный ряд скиллов
                 document.getElementById('skills-row').style.display = 'flex';
             } else {
                 renderer.setClearColor(0x000000, 1);
@@ -638,8 +695,6 @@
                 document.getElementById('crosshair').style.display = 'none';
                 document.getElementById('battle-controls').style.display = 'none';
                 document.getElementById('joystick').style.display = 'block';
-                
-                // Скрываем горизонтальный ряд скиллов
                 document.getElementById('skills-row').style.display = 'none';
             }
         }
@@ -843,7 +898,6 @@
         };
         var skillCooldowns = {};
 
-        // Отрисовка скиллов в горизонтальный ряд
         function renderLearnedTalents() {
             var row = document.getElementById('skills-row');
             if (!row) return;
@@ -966,6 +1020,7 @@
                 heroGroup.position.y = player.pos.y; 
                 playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
                 renderer.render(scene, camPlatformer);
+                labelRenderer.render(scene, camPlatformer);
             } else {
                 updateTimers(dt);
                 if (cameraShake > 0.001) {
@@ -992,6 +1047,7 @@
             camPlatformer.aspect = aspect; camPlatformer.updateProjectionMatrix();
             battleCamera.aspect = aspect; battleCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
