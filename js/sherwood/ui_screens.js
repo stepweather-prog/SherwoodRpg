@@ -524,86 +524,32 @@ UI._claimReward = function() {
 
 UI.profile = function() {
     UI._playSound('click');
-    var p = Sherwood.getPlayer();
-    var eq = Sherwood.Bag ? Sherwood.Bag.getEquipment() : {};
-    var ring = eq.ring, amulet = eq.amulet;
-    var trophies = p.trophies || [];
-    
-    var sections = [
-        { name: trophies.length > 0 ? trophies.length + ' трофеев' : 'Трофеи', icon: trophies.length > 0 && trophies[0].icon ? trophies[0].icon : 'assets/all_trophies/asset_isolated_on_a_solid.png', action: 'UI._showAllTrophies()' },
-        { name: ring ? ring.name : 'Кольца', icon: ring ? ring.icon || 'assets/interface/ring_first_level.png' : 'assets/interface/ring_first_level.png', action: 'UI._showAllRings()' },
-        { name: amulet ? amulet.name : 'Амулеты', icon: amulet ? amulet.icon || 'assets/interface/sherwood_amulet_level_one.png' : 'assets/interface/sherwood_amulet_level_one.png', action: 'UI._showAllAmulets()' },
-        { name: 'Кесет', icon: 'assets/interface/wallet.png', action: 'UI.wallet()' },
-        { name: 'Сумка', icon: 'assets/assets2/icons/hero_bag.png', action: 'UI.bag()' },
-        { name: 'Таланты', icon: 'assets/all_buttons/ranger_skills_button.png', action: 'Sherwood.Talents.showLearnedTalents()' }
-    ];
-    
-    var h = '';
-    
-    // Статы
-    h += '<div style="position:relative;width:94%;max-width:460px;height:100px;margin:0 auto 10px;">';
-    h += '<div style="position:absolute;top:15px;left:0;width:100%;height:100px;background-image:url(\'assets/assets2/game_details/main_panel_stat1.png\');background-size:100% 100%;background-repeat:no-repeat;"></div>';
-    h += '<img src="assets/assets2/icons/progress.png" style="position:absolute;top:0;left:8.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-    h += '<img src="assets/assets2/icons/power.png" style="position:absolute;top:0;left:25%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-    h += '<img src="assets/assets2/icons/armor.png" style="position:absolute;top:0;left:41.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-    h += '<img src="assets/assets2/icons/life.png" style="position:absolute;top:0;left:58.33%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-    h += '<img src="assets/assets2/icons/resource_gold.png" style="position:absolute;top:0;left:75%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-    h += '<img src="assets/assets2/icons/resource_silver.png" style="position:absolute;top:0;left:91.66%;transform:translateX(-50%);width:58px;height:58px;object-fit:contain;">';
-    h += '<span style="position:absolute;top:60px;left:8.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.expToLevel > 0 ? Math.round((p.exp / p.expToLevel) * 100) + '%' : p.exp) + '</span>';
-    h += '<span style="position:absolute;top:60px;left:25%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.attack + '</span>';
-    h += '<span style="position:absolute;top:60px;left:41.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.defense + '</span>';
-    h += '<span style="position:absolute;top:60px;left:58.33%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + p.stats.hp + '</span>';
-    h += '<span style="position:absolute;top:60px;left:75%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.gold || 0) + '</span>';
-    h += '<span style="position:absolute;top:60px;left:91.66%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:bold;text-shadow:1px 1px 2px #000;">' + (p.resources.silver || 0) + '</span>';
-    h += '</div>';
-    
-    // Карусель — один подраздел, всё по центру (ИСПРАВЛЕНИЕ)
-    h += '<div id="profile-carousel" style="position:relative;height:400px;overflow:hidden;touch-action:pan-y;margin:0 -12px;">';
-    for (var i = 0; i < sections.length; i++) {
-        var section = sections[i];
-        var display = (i === 0) ? 'flex' : 'none';
-        
-        // ИСПРАВЛЕНИЕ: Убираем position:absolute, используем Flexbox
-        h += '<div class="profile-slide" data-index="' + i + '" onclick="' + section.action + '" style="display:' + display + ';flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:20px;cursor:pointer;">';
-        
-        // 1. ИКОНКА (сверху, с жестким отступом)
-        h += '<img src="' + section.icon + '" style="width:140px;height:140px;object-fit:contain;margin:0 auto 30px;display:block;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-        
-        // 2. ПЛАШКА С НАЗВАНИЕМ (снизу, с ЖЕСТКИМ ВЕРХНИМ ОТСТУПОМ)
-        h += '<div style="background:url(\'assets/assets2/game_details/sections_menu.png\') center/100% 100% no-repeat;padding:10px 45px;color:#ffa500;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;display:inline-block;line-height:1.2;margin-top:180px;margin-bottom:15px;">' + section.name + '</div>';
-        h += '</div>';
+    UI._stopMusic();
+
+    try {
+        if (window.stopMainMusic) window.stopMainMusic();
+        if (window.audioPlayer) {
+            window.audioPlayer.pause();
+            window.audioPlayer.currentTime = 0;
+            window.audioPlayer.src = '';
+        }
+        if (window.isMusicPlaying !== undefined) window.isMusicPlaying = false;
+    } catch(e){}
+
+    UI._cameFromCamp = true;
+
+    var url = 'profile_camp.html';
+    if (UI._campReturnInfo && UI._campReturnInfo.gx !== undefined) {
+        url += '?returnGX=' + UI._campReturnInfo.gx + '&returnGY=' + UI._campReturnInfo.gy;
     }
-    h += '</div>';
-    
-    UI._openScreen('Профиль', 'profile', h);
-    
-    // Свайпы
-    var self = UI;
-    var carousel = document.getElementById('profile-carousel');
-    if (carousel) {
-        var startY = 0;
-        var currentIndex = 0;
-        
-        carousel.addEventListener('wheel', function(e) {
-            e.preventDefault();
-            if (Math.abs(e.deltaY) < 20) return;
-            var slides = carousel.querySelectorAll('.profile-slide');
-            slides[currentIndex].style.display = 'none';
-            if (e.deltaY > 0) { currentIndex = (currentIndex + 1) % slides.length; }
-            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-            slides[currentIndex].style.display = 'flex'; // ВАЖНО: flex, а не block!
-        }, { passive: false });
-        
-        carousel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; }, { passive: true });
-        carousel.addEventListener('touchend', function(e) {
-            var delta = e.changedTouches[0].clientY - startY;
-            if (Math.abs(delta) < 50) return;
-            var slides = carousel.querySelectorAll('.profile-slide');
-            slides[currentIndex].style.display = 'none';
-            if (delta < 0) { currentIndex = (currentIndex + 1) % slides.length; }
-            else { currentIndex = (currentIndex - 1 + slides.length) % slides.length; }
-            slides[currentIndex].style.display = 'flex'; // ВАЖНО: flex, а не block!
-        }, { passive: true });
+
+    var iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+    if (UI._screenLayer) {
+        UI._screenLayer.innerHTML = '';
+        UI._screenLayer.appendChild(iframe);
+        UI._screenLayer.style.display = 'block';
     }
 };
 // ============================================================
