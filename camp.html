@@ -220,8 +220,14 @@
 
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
-        video.loop = false; // Отключаем цикл для остановки на последнем кадре
+        video.loop = true; // Оставляем цикл, чтобы браузер всегда отдавал кадр
         video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
+        
+        // ВАЖНО: Как только видео загрузится, перематываем в конец, чтобы персонаж стоял
+        video.addEventListener('loadeddata', function() {
+            video.currentTime = 2.99;
+            processHeroFrame(player.facing < 0); // Принудительно отрисовываем кадр
+        });
 
         const hCanvas = document.createElement('canvas');
         hCanvas.width = 512; hCanvas.height = 512;
@@ -299,26 +305,22 @@
             if (keys['KeyD'] || keys['ArrowRight'] || touch.right) moveX += 1;
 
             p.vel.x = moveX * p.speed;
+            
             if (moveX !== 0) {
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
                 isStopping = false;
                 if (!stepsPlaying) startSteps();
             } else {
-                if (!video.paused && !isStopping) {
+                // Мгновенная остановка
+                if (!video.paused || !isStopping) {
+                    video.pause();
+                    video.currentTime = 2.99;
                     isStopping = true;
+                    // Принудительная отрисовка кадра
+                    setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
                 }
                 if (stepsPlaying) stopSteps();
-            }
-
-            // Плавная остановка видео на последнем кадре
-            if (isStopping) {
-                if (video.currentTime < 2.99) {
-                    video.currentTime = Math.min(2.99, video.currentTime + 0.08);
-                } else {
-                    if (!video.paused) video.pause();
-                    isStopping = false;
-                }
             }
 
             p.vel.y -= p.gravity * dt;
