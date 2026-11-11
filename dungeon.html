@@ -146,7 +146,7 @@
         function addArrows(n) { playerArrows += n; updateArrowCounter(); }
         setTimeout(loadArrowsFromBag, 700);
 
-        // УВЕЛИЧЕНО накопление скверны (было 5, стало 7)
+        // Накопление скверны чуть активнее (было 5, стало 7)
         var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 7, FILTH_HIT_AMOUNT = 5;
         function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
         function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; } else { filthFullSince = 0; } updateHeroSpheres(); }
@@ -214,6 +214,7 @@
         const arrowPickupTex = loader.load('assets/interface/sherwood_hollow_arrow.png');
         const potionHpTex = loader.load('assets/assets2/game_details/resource_life_potion.png');
         const potionFilthTex = loader.load('assets/assets2/game_details/potion_of_filth.png');
+        const potionHighTex = loader.load('assets/assets2/game_details/resource_high_level_health_potion.png');
         const cauldronImg = loader.load('assets/assets2/game_details/cauldron_first_dungeon.png');
         const altarImg = loader.load('assets/assets2/game_details/altar_of_the_first_dungeon.png');
         const closedLockTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
@@ -349,15 +350,16 @@
             return { x: 1, y: 1 };
         }
 
-        // УМЕНЬШЕНО количество зелий (было по 3, стало по 1)
+        // УМЕНЬШЕНО количество зелий (было по 3, стало по 1) + ДОБАВЛЕНО ДОП. ЗЕЛЬЕ
         var objectTypes = [
-            { type: 'enemy',      count: 15 },
-            { type: 'potion_hp',  count: 1,  img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'enemy',        count: 15 },
+            { type: 'potion_hp',    count: 1,  img: 'assets/assets2/game_details/resource_life_potion.png' },
             { type: 'potion_filth', count: 1, img: 'assets/assets2/game_details/potion_of_filth.png' },
             { type: 'potion_high',  count: 1, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
-            { type: 'cauldron',   count: 3,  img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
-            { type: 'altar',      count: 3,  img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
-            { type: 'arrow_pickup', count: 6, img: 'assets/interface/sherwood_hollow_arrow.png' }
+            { type: 'potion_extra', count: 1, img: 'assets/assets2/game_details/potion_of_filth.png' }, // Рандомное доп. зелье
+            { type: 'cauldron',     count: 3,  img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
+            { type: 'altar',        count: 3,  img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
+            { type: 'arrow_pickup', count: 6,  img: 'assets/interface/sherwood_hollow_arrow.png' }
         ];
 
         var enemyImgList = []; enemyImgList.push(BOSS_PATH + currentPool.boss);
@@ -371,6 +373,16 @@
                 var pos = getRandomFreeCell();
                 var imgPath = typeDef.img;
                 var isBoss = false;
+                
+                if (typeDef.type === 'potion_extra') {
+                    // Если выпало доп. зелье, рандомно выбираем между зельем от скверны и комбинированным
+                    if (Math.random() < 0.5) {
+                        imgPath = 'assets/assets2/game_details/potion_of_filth.png';
+                    } else {
+                        imgPath = 'assets/assets2/game_details/resource_high_level_health_potion.png'; // Комбинированное (лечит + снимает скверну)
+                    }
+                }
+
                 if (typeDef.type === 'enemy') {
                     imgPath = enemyImgList[enemyIndex];
                     if (imgPath.indexOf(currentPool.boss) !== -1) isBoss = true;
@@ -446,6 +458,15 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             }
             else if (obj.type === 'potion_filth') { var f1 = getFilth(); setFilth(Math.max(0, f1.cur - f1.max * 0.5)); showCenterText('-50% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
             else if (obj.type === 'potion_high') { var heal2 = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += heal2; setFilth(Math.max(0, getFilth().cur - getFilth().max * 0.8)); showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
+            else if (obj.type === 'potion_extra') {
+                // Логика для рандомного доп. зелья
+                if (obj.img.indexOf('potion_of_filth') !== -1) {
+                    var f2 = getFilth(); setFilth(Math.max(0, f2.cur - f2.max * 0.5)); showCenterText('-50% скверны', '#4caf50');
+                } else {
+                    var heal3 = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += heal3; setFilth(Math.max(0, getFilth().cur - getFilth().max * 0.8)); showCenterText('+' + heal3 + ' HP, -80% скверны', '#4caf50');
+                }
+                obj.collected = true; group.remove(obj.mesh);
+            }
             else if (obj.type === 'cauldron') { if (obj.used) return; obj.used = true; setFilth(0); showCenterText('Скверна снята', '#4caf50'); playSound(soundCauldron); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
             else if (obj.type === 'altar') { if (obj.used) return; obj.used = true; p.stats.hp = p.stats.maxHp; if (parent.Sherwood.addExp) parent.Sherwood.addExp(200 + currentFloor * 50); showCenterText('Полное HP + опыт', '#4caf50'); playSound(soundAltar); if (obj.mesh) obj.mesh.material.color = new THREE.Color(0x555555); }
             else if (obj.type === 'arrow_pickup') { pickArrowFromFloor(obj); return; }
@@ -457,10 +478,9 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             bag.mesh.material.map = openTex; bag.mesh.material.needsUpdate = true; playSound(soundChest);
             var p = parent.Sherwood.getPlayer(); if (!p) return;
             var exp = 50 + Math.floor(Math.random() * 100), gold = 15 + Math.floor(Math.random() * 25), silver = 5 + Math.floor(Math.random() * 15);
-            // МЕНЬШЕ СТРЕЛ (было 2-3, стало 1)
+            
             var arrowDrop = 1; addArrows(arrowDrop);
             
-            // РАСШИРЕННЫЙ ЛУТ: добавляем тикеты, скрижали, чертежи
             var resources = { 
                 skins: 1, 
                 entranceTickets: Math.random() < 0.25 ? 1 : 0, 
@@ -497,7 +517,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             runLoot.exp += exp; runLoot.gold += gold; runLoot.silver += silver;
             for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
             
-            // СООБЩЕНИЯ О ВЫПАДЕНИИ
             var lootMsgs = [];
             if (resources.entranceTickets > 0) lootMsgs.push('+1 Тикет');
             if (resources.amuletTablets > 0) lootMsgs.push('+1 Скрижаль амулета');
@@ -597,8 +616,9 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                     var scale = currentEnemyObj && currentEnemyObj.isBoss ? 2.8 : 2.4;
                     currentEnemySprite.scale.set(scale, scale, 1);
                     
-                    currentEnemySprite.center.set(0.5, 0.5);
-                    currentEnemySprite.position.set(0, scale / 2, 0); 
+                    // ИСПРАВЛЕНИЕ БАГА С HP-БАРОМ (ставим центр внизу)
+                    currentEnemySprite.center.set(0.5, 0); 
+                    currentEnemySprite.position.set(0, 0, 0); 
                     
                     currentEnemySprite.material.depthTest = false;
                     currentEnemySprite.material.depthWrite = false;
@@ -710,7 +730,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
             var p = parent.Sherwood.getPlayer(); playSound(soundHit);
             
-            // ТРАТА СТРЕЛ: теперь за удар забирает 3 стрелы
             var arrowsNeeded = 3; 
             var hasArrows = (playerArrows >= arrowsNeeded);
             if (hasArrows) { 
@@ -750,7 +769,8 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             var worldPos = new THREE.Vector3();
             currentEnemySprite.getWorldPosition(worldPos);
             
-            worldPos.y += (currentEnemySprite.scale.y / 2) + 0.2; 
+            // ОПУСКАЕМ БАР (уменьшили отступ, чтобы влезал в экран)
+            worldPos.y += (currentEnemySprite.scale.y) - 0.8; 
             
             worldPos.project(activeCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
@@ -803,7 +823,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                                 if (pathE.length > 0) { waypoints = pathE; moving = true; pendingBattle = ud3.objRef; pendingLoot = null; startSteps(); }
                                 return;
                             }
-                            if (LOOT_TYPES.indexOf(ud3.type) !== -1) {
+                            if (LOOT_TYPES.indexOf(ud3.type) !== -1 || ud3.type === 'potion_extra') {
                                 if (curS.gx === ud3.gridX && curS.gy === ud3.gridY) { return; }
                                 var pathL = buildPath(curS.gx, curS.gy, ud3.gridX, ud3.gridY);
                                 if (pathL.length > 0) { waypoints = pathL; moving = true; pendingBattle = null; pendingLoot = ud3.objRef; startSteps(); }
@@ -845,7 +865,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                 }
                 var lootOnTile = null;
                 for (var i = 0; i < objects.length; i++) {
-                    if (LOOT_TYPES.indexOf(objects[i].type) !== -1 && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
+                    if ((LOOT_TYPES.indexOf(objects[i].type) !== -1 || objects[i].type === 'potion_extra') && !objects[i].collected && objects[i].x === tile.x && objects[i].y === tile.y) {
                         lootOnTile = objects[i]; break;
                     }
                 }
@@ -875,7 +895,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
 
             for (var i = 0; i < objects.length; i++) {
                 var o = objects[i];
-                if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue;
+                if (o.collected || (LOOT_TYPES.indexOf(o.type) === -1 && o.type !== 'potion_extra')) continue;
                 if (o.used) continue;
                 var tile = tileMeshes[o.y * size + o.x];
                 if (!tile || !tile.opened) continue;
@@ -905,7 +925,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
         document.getElementById('attack-icon').addEventListener('click', (e) => {
             e.stopPropagation(); if (isBattleActive) { attackEnemy(); return; }
             var cur = worldToGrid(playerPos.x, playerPos.z);
-            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || LOOT_TYPES.indexOf(o.type) === -1) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } }
+            for (var i = 0; i < objects.length; i++) { var o = objects[i]; if (o.collected || (LOOT_TYPES.indexOf(o.type) === -1 && o.type !== 'potion_extra')) continue; if (Math.abs(cur.gx - o.x) + Math.abs(cur.gy - o.y) <= 1) { applyLootEffect(o); return; } }
             for (var b = 0; b < lootBags.length; b++) { var bag = lootBags[b]; if (bag.opened) continue; if (Math.abs(cur.gx - bag.gx) + Math.abs(cur.gy - bag.gy) <= 1) { openLootBag(bag); return; } }
             if (exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) { winDungeon(); return; }
         });
@@ -913,7 +933,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
         var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } };
         var skillCooldowns = {};
         
-        // ПРОВЕРКА СКИЛЛОВ: показываем только изученные
         function renderLearnedTalents() {
             var row = document.getElementById('skills-row'); if (!row) return;
             var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.talents) p.talents = {}; row.innerHTML = '';
