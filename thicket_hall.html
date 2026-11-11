@@ -101,7 +101,7 @@
 
     <div id="vignette"></div>
     <div id="scanlines"></div>
-    <button onclick="exitDungeon();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
+    <button onclick="exitThicket();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">←</button>
 
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
@@ -244,6 +244,7 @@
         const closedDoorTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level2.png');
         
+        // ИСПРАВЛЕНИЕ ТЕКСТУР: 16 раз по длине, 1 по высоте
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
         wallTexture.repeat.set(16, 1);
         wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -341,12 +342,11 @@
 
         const video = document.createElement('video');
         video.src = 'assets/assets2/animation/Untitled_Archer_Side_Scroller.webm';
-        video.loop = true; // Оставляем цикл
+        video.loop = true;
         video.muted = true; video.pause(); video.crossOrigin = 'anonymous';
         
-        // Как только видео загрузится, перематываем в конец (стойка)
         video.addEventListener('loadeddata', function() {
-            video.currentTime = 2.99;
+            video.currentTime = 0;
             processHeroFrame(player.facing < 0);
         });
 
@@ -469,10 +469,9 @@
                 isStopping = false;
                 if (!stepsPlaying) startSteps();
             } else {
-                // Мгновенная остановка
                 if (!video.paused || !isStopping) {
                     video.pause();
-                    video.currentTime = 2.99;
+                    video.currentTime = 0;
                     isStopping = true;
                     setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
                 }
@@ -779,12 +778,14 @@
             if (!p.talents) p.talents = {};
             row.innerHTML = '';
             for (var id in talentData) {
-                var img = document.createElement('img');
-                img.src = talentData[id].icon;
-                img.className = 'skill-btn';
-                img.dataset.skillId = id;
-                img.onclick = (function(sid){ return function(){ useSkill(sid); }; })(id);
-                row.appendChild(img);
+                var lvl = 0;
+                try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(id); } catch(e) {}
+                if (lvl > 0) {
+                    var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
+                    img.dataset.skillId = id;
+                    img.onclick = (function(sid){ return function(){ useSkill(sid); }; })(id);
+                    row.appendChild(img);
+                }
             }
         }
         setTimeout(renderLearnedTalents, 500);
@@ -792,30 +793,16 @@
         function useSkill(skillId) {
             if (!isBattleActive || !currentEnemyStats) return;
             if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return;
-            var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
+            var p = parent.Sherwood.getPlayer(); if (!p) return; 
             
-            if (skillId === 'stunning') {
-                if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                enemyStunned = 10;
-                showCenterText('ОГЛУШЕНИЕ! 10 сек', '#ffd700');
-                skillCooldowns[skillId] = Date.now() + 20000;
-            } else if (skillId === 'rage') {
-                if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                rageCharges = 3;
-                showCenterText('ЯРОСТЬ! 3 удара +20%', '#ff4400');
-                playSound(soundHit);
-                skillCooldowns[skillId] = Date.now() + 25000;
-            } else if (skillId === 'healing') {
-                if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                var heal = 10 * lvl;
-                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-                showCenterText('+' + heal + ' HP', '#4caf50');
-                updateHeroSpheres();
-                skillCooldowns[skillId] = Date.now() + 8000;
-            }
-            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
-            if (icon) { icon.classList.add('on-cooldown'); setTimeout(function(){ icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown || 10000); }
+            var lvl = 0;
+            try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(skillId); } catch(e) {}
+            if (lvl <= 0) { showCenterText('Скилл не изучен!', '#ff5555'); return; }
+            
+            if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 20000; }
+            else if (skillId === 'rage') { var f = getFilth(); if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; } if (!spendFilth(65)) return; rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
+            else if (skillId === 'healing') { if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; } var heal = 10 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
+            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown || 10000); }
         }
 
         function checkInteraction() {
