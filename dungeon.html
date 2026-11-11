@@ -13,7 +13,6 @@
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
 
-        /* FIX: дефолтные left/top, чтобы бар не мелькал в (0,0) до первого updateMobHpBar */
         #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; left: 50%; top: 30%; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
@@ -43,8 +42,8 @@
         #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% - 70px)); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
-#kill-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% + 70px)); color: #ff8080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b3a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-#kill-counter.clear { color: #55ff55; border-color: #55aa55; box-shadow: 0 0 10px #55aa55; }
+        #kill-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% + 70px)); color: #ff8080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b3a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        #kill-counter.clear { color: #55ff55; border-color: #55aa55; box-shadow: 0 0 10px #55aa55; }
         #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
         #arrow-counter.low { color: #ff5555; border-color: #ff5555; animation: pulseRed 1s infinite; }
         @keyframes pulseRed { 0%,100% { box-shadow: 0 0 4px #ff5555; } 50% { box-shadow: 0 0 16px #ff5555; } }
@@ -147,7 +146,8 @@
         function addArrows(n) { playerArrows += n; updateArrowCounter(); }
         setTimeout(loadArrowsFromBag, 700);
 
-        var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 5, FILTH_HIT_AMOUNT = 5;
+        // УВЕЛИЧЕНО накопление скверны (было 5, стало 7)
+        var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 7, FILTH_HIT_AMOUNT = 5;
         function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
         function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; } else { filthFullSince = 0; } updateHeroSpheres(); }
         function addFilth(amount) { var f = getFilth(); setFilth(f.cur + amount); }
@@ -190,32 +190,14 @@
         function generateMaze() {
             const stack = []; const startX = 1, startY = 1; map[startY][startX] = 0; stack.push({ x: startX, y: startY });
             const dirs = [{ x: 0, y: -2 }, { x: 0, y: 2 }, { x: -2, y: 0 }, { x: 2, y: 0 }];
-            while (stack.length > 0) {
-                const current = stack[stack.length - 1]; const neighbors = [];
-                for (const dir of dirs) {
-                    const nx = current.x + dir.x, ny = current.y + dir.y;
-                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) { neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 }); }
-                }
-                if (neighbors.length > 0) {
-                    const next = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    map[next.y][next.x] = 0; map[current.y + next.dy][current.x + next.dx] = 0; stack.push({ x: next.x, y: next.y });
-                } else { stack.pop(); }
-            }
+            while (stack.length > 0) { const current = stack[stack.length - 1]; const neighbors = []; for (const dir of dirs) { const nx = current.x + dir.x, ny = current.y + dir.y; if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && map[ny][nx] === 1) { neighbors.push({ x: nx, y: ny, dx: dir.x / 2, dy: dir.y / 2 }); } } if (neighbors.length > 0) { const next = neighbors[Math.floor(Math.random() * neighbors.length)]; map[next.y][next.x] = 0; map[current.y + next.dy][current.x + next.dx] = 0; stack.push({ x: next.x, y: next.y }); } else { stack.pop(); } }
         }
         generateMaze();
 
         var exitCell = (function findFarthestCell() {
             var startGX = 1, startGY = 1, visited = {}; var queue = [{ x: startGX, y: startGY, dist: 0 }]; visited[startGY * size + startGX] = true;
             var farthest = { x: startGX, y: startGY, dist: 0 }; var dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
-            while (queue.length) {
-                var cur = queue.shift(); if (cur.dist > farthest.dist) farthest = cur;
-                for (var d = 0; d < dirs.length; d++) {
-                    var nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y;
-                    if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
-                    var v = map[ny][nx]; if (v !== 0 && v !== 3) continue; var key = ny * size + nx; if (visited[key]) continue;
-                    visited[key] = true; queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
-                }
-            } return { gx: farthest.x, gy: farthest.y };
+            while (queue.length) { var cur = queue.shift(); if (cur.dist > farthest.dist) farthest = cur; for (var d = 0; d < dirs.length; d++) { var nx = cur.x + dirs[d].x, ny = cur.y + dirs[d].y; if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue; var v = map[ny][nx]; if (v !== 0 && v !== 3) continue; var key = ny * size + nx; if (visited[key]) continue; visited[key] = true; queue.push({ x: nx, y: ny, dist: cur.dist + 1 }); } } return { gx: farthest.x, gy: farthest.y };
         })();
 
         function isWallCell(x, y) { if (x < 0 || y < 0 || x >= size || y >= size) return true; return map[y][x] === 1; }
@@ -247,9 +229,6 @@
 
         const group = new THREE.Group(); scene.add(group);
 
-        // ============================================================
-        //  БОЕВАЯ КОМНАТА
-        // ============================================================
         const battleRoom = new THREE.Group();
         battleRoom.visible = false;
         scene.add(battleRoom);
@@ -370,11 +349,12 @@
             return { x: 1, y: 1 };
         }
 
+        // УМЕНЬШЕНО количество зелий (было по 3, стало по 1)
         var objectTypes = [
             { type: 'enemy',      count: 15 },
-            { type: 'potion_hp',  count: 3,  img: 'assets/assets2/game_details/resource_life_potion.png' },
-            { type: 'potion_filth', count: 3, img: 'assets/assets2/game_details/potion_of_filth.png' },
-            { type: 'potion_high',  count: 3, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
+            { type: 'potion_hp',  count: 1,  img: 'assets/assets2/game_details/resource_life_potion.png' },
+            { type: 'potion_filth', count: 1, img: 'assets/assets2/game_details/potion_of_filth.png' },
+            { type: 'potion_high',  count: 1, img: 'assets/assets2/game_details/resource_high_level_health_potion.png' },
             { type: 'cauldron',   count: 3,  img: 'assets/assets2/game_details/cauldron_first_dungeon.png' },
             { type: 'altar',      count: 3,  img: 'assets/assets2/game_details/altar_of_the_first_dungeon.png' },
             { type: 'arrow_pickup', count: 6, img: 'assets/interface/sherwood_hollow_arrow.png' }
@@ -416,11 +396,10 @@
                 depthTest: false,
                 depthWrite: false
             }));
-            // Увеличиваем врагов в лабиринте (1.4 вместо 1.05) и центрируем по клетке
 var scale = (obj.type === 'enemy') ? 1.4 : 0.42;
-sprite.center.set(0.5, 0.5); // Центр спрайта
+sprite.center.set(0.5, 0.5);
 sprite.scale.set(scale, scale, 1);
-sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, чтобы не тонул в полу
+sprite.position.set(x, scale / 2 + 0.1, z);
             sprite.renderOrder = (obj.type === 'enemy') ? 1 : 0;
             sprite.userData = { gridX: obj.x, gridY: obj.y, type: obj.type, img: obj.img, objRef: obj };
             group.add(sprite); obj.mesh = sprite;
@@ -445,7 +424,7 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
             var w = gridToWorld(gx, gy); var texture = isBoss ? lockedChestTex : lootBagTex;
             var spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1, depthWrite: false }));
             var sc = isBoss ? 0.85 : 0.65;
-            spr.center.set(0.5, 0);                              // FIX: низ спрайта в точке позиции
+            spr.center.set(0.5, 0);
             spr.scale.set(sc, sc, 1); spr.position.set(w.x, isBoss ? 0.2 : 0.15, w.z);
             spr.userData = { type: 'loot_bag', gx: gx, gy: gy, isBoss: !!isBoss }; group.add(spr);
             var bag = { mesh: spr, gx: gx, gy: gy, opened: false, isBoss: !!isBoss }; spr.userData.objRef = bag; lootBags.push(bag);
@@ -478,13 +457,63 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
             bag.mesh.material.map = openTex; bag.mesh.material.needsUpdate = true; playSound(soundChest);
             var p = parent.Sherwood.getPlayer(); if (!p) return;
             var exp = 50 + Math.floor(Math.random() * 100), gold = 15 + Math.floor(Math.random() * 25), silver = 5 + Math.floor(Math.random() * 15);
-            var arrowDrop = 2 + Math.floor(Math.random() * 2); addArrows(arrowDrop);
-            var resources = { skins: 1, entranceTickets: Math.random() < 0.25 ? 1 : 0, amuletTablets: Math.random() < 0.3 ? 1 : 0, ringTablets: Math.random() < 0.3 ? 1 : 0, skinTablets: Math.random() < 0.25 ? 1 : 0, skinDrawings: Math.random() < 0.2 ? 1 : 0, portalToken1: Math.random() < 0.3 ? 1 : 0, branchDamnedYew: Math.random() < 0.3 ? 1 : 0 };
-            if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) { parent.Sherwood.Bag.addLoot({ gold: gold, silver: silver, exp: exp, skins: resources.skins, entranceTickets: resources.entranceTickets, amuletTablets: resources.amuletTablets, ringTablets: resources.ringTablets, skinTablets: resources.skinTablets, skinDrawings: resources.skinDrawings, portalToken1: resources.portalToken1, branchDamnedYew: resources.branchDamnedYew }); }
-            else { if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp); if (parent.Sherwood.addResource) { parent.Sherwood.addResource('gold', gold); parent.Sherwood.addResource('silver', silver); for (var key in resources) { if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]); } } }
+            // МЕНЬШЕ СТРЕЛ (было 2-3, стало 1)
+            var arrowDrop = 1; addArrows(arrowDrop);
+            
+            // РАСШИРЕННЫЙ ЛУТ: добавляем тикеты, скрижали, чертежи
+            var resources = { 
+                skins: 1, 
+                entranceTickets: Math.random() < 0.25 ? 1 : 0, 
+                amuletTablets: Math.random() < 0.3 ? 1 : 0, 
+                ringTablets: Math.random() < 0.3 ? 1 : 0, 
+                skinTablets: Math.random() < 0.25 ? 1 : 0, 
+                skinDrawings: Math.random() < 0.2 ? 1 : 0, 
+                portalToken1: Math.random() < 0.3 ? 1 : 0, 
+                branchDamnedYew: Math.random() < 0.3 ? 1 : 0 
+            };
+            
+            if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) { 
+                parent.Sherwood.Bag.addLoot({ 
+                    gold: gold, silver: silver, exp: exp, 
+                    skins: resources.skins, 
+                    entranceTickets: resources.entranceTickets, 
+                    amuletTablets: resources.amuletTablets, 
+                    ringTablets: resources.ringTablets, 
+                    skinTablets: resources.skinTablets, 
+                    skinDrawings: resources.skinDrawings, 
+                    portalToken1: resources.portalToken1, 
+                    branchDamnedYew: resources.branchDamnedYew 
+                }); 
+            }
+            else { 
+                if (parent.Sherwood.addExp) parent.Sherwood.addExp(exp); 
+                if (parent.Sherwood.addResource) { 
+                    parent.Sherwood.addResource('gold', gold); 
+                    parent.Sherwood.addResource('silver', silver); 
+                    for (var key in resources) { if (resources[key] > 0) parent.Sherwood.addResource(key, resources[key]); } 
+                } 
+            }
+            
             runLoot.exp += exp; runLoot.gold += gold; runLoot.silver += silver;
             for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
-            showCenterText('+' + arrowDrop + ' стрел', '#c9a040'); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); updateLootButton();
+            
+            // СООБЩЕНИЯ О ВЫПАДЕНИИ
+            var lootMsgs = [];
+            if (resources.entranceTickets > 0) lootMsgs.push('+1 Тикет');
+            if (resources.amuletTablets > 0) lootMsgs.push('+1 Скрижаль амулета');
+            if (resources.ringTablets > 0) lootMsgs.push('+1 Скрижаль кольца');
+            if (resources.skinTablets > 0) lootMsgs.push('+1 Скрижаль скина');
+            if (resources.skinDrawings > 0) lootMsgs.push('+1 Чертёж скина');
+            if (resources.portalToken1 > 0) lootMsgs.push('+1 Токен портала');
+            if (resources.branchDamnedYew > 0) lootMsgs.push('+1 Ветка тиса');
+            
+            var msg = '+' + arrowDrop + ' стрел';
+            if (lootMsgs.length > 0) msg += ', ' + lootMsgs.join(', ');
+            showCenterText(msg, '#c9a040');
+            
+            if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); 
+            if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); 
+            updateLootButton();
         }
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png', 'assets/assets2/animation/blood_5.png'];
@@ -548,10 +577,7 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
 
         function checkObjects() { checkExitDoor(); }
 
-        // ============================================================
-        //  ПЕРЕКЛЮЧЕНИЕ КАМЕР + БОЕВАЯ КОМНАТА
-        // ============================================================
-                function setBattleCamera(on) {
+        function setBattleCamera(on) {
             if (on) {
                 battleRoom.visible = true;
                 battleRoom.position.set(0, 0, 0);
@@ -568,11 +594,9 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
                     if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
                     battleRoom.add(currentEnemySprite);
                     
-                    // Берем размер как в платформере (боссы чуть больше)
                     var scale = currentEnemyObj && currentEnemyObj.isBoss ? 2.8 : 2.4;
                     currentEnemySprite.scale.set(scale, scale, 1);
                     
-                    // Ставим ровно по центру
                     currentEnemySprite.center.set(0.5, 0.5);
                     currentEnemySprite.position.set(0, scale / 2, 0); 
                     
@@ -583,13 +607,11 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
                 }
 
                 document.getElementById('crosshair').style.display = 'block';
-                // Показываем контролы
                 document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-row').style.display = 'flex';
 
             } else {
-                // Возврат в лабиринт
                 battleRoom.visible = false;
                 group.visible = true;
 
@@ -600,7 +622,6 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
                     currentEnemyObj.mesh.renderOrder = 0;
                     group.add(currentEnemyObj.mesh);
                     
-                    // Возвращаем маленький размер и ставим на клетку
                     var returnScale = currentEnemyObj.isBoss ? 0.95 : 0.85;
                     currentEnemyObj.mesh.scale.set(returnScale, returnScale, 1);
                     currentEnemyObj.mesh.center.set(0.5, 0.5);
@@ -638,7 +659,6 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
             var nameEl = document.getElementById('mob-hp-name'); if (nameEl) nameEl.textContent = getMobName(obj.img);
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)'; playSound(soundHit);
 
-            // FIX: сразу пересчитать позицию бара, чтобы не висел в (0,0) первый кадр
             updateMobHpBar();
 
             if (battleTimer) clearInterval(battleTimer);
@@ -689,8 +709,17 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
             if (playerStunned > 0) { showCenterText('ОГЛУШЁН!', '#888'); return; }
             if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
             var p = parent.Sherwood.getPlayer(); playSound(soundHit);
-            var arrowsNeeded = (rageCharges > 0) ? 2 : 1; var hasArrows = (playerArrows >= arrowsNeeded);
-            if (hasArrows) { useArrow(arrowsNeeded); } else { if (playerArrows > 0) useArrow(1); else showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
+            
+            // ТРАТА СТРЕЛ: теперь за удар забирает 3 стрелы
+            var arrowsNeeded = 3; 
+            var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) { 
+                useArrow(arrowsNeeded); 
+            } else { 
+                if (playerArrows > 0) useArrow(playerArrows); 
+                showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); 
+            }
+            
             var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
             if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
@@ -716,13 +745,11 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showDeathVideoAndLose(); }
         }
 
-        // FIX: расчёт позиции HP-бара через мировые координаты + половину высоты спрайта
-                function updateMobHpBar() {
+        function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = new THREE.Vector3();
             currentEnemySprite.getWorldPosition(worldPos);
             
-            // Прибавляем половину роста врага + небольшой отступ, чтобы бар был над головой
             worldPos.y += (currentEnemySprite.scale.y / 2) + 0.2; 
             
             worldPos.project(activeCamera);
@@ -885,23 +912,35 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
 
         var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } };
         var skillCooldowns = {};
+        
+        // ПРОВЕРКА СКИЛЛОВ: показываем только изученные
         function renderLearnedTalents() {
             var row = document.getElementById('skills-row'); if (!row) return;
             var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.talents) p.talents = {}; row.innerHTML = '';
             for (var id in talentData) {
-                var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
-                img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
-                row.appendChild(img);
+                var lvl = 0;
+                try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(id); } catch(e) {}
+                if (lvl > 0) {
+                    var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
+                    img.dataset.skillId = id;
+                    img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
+                    row.appendChild(img);
+                }
             }
         }
         setTimeout(renderLearnedTalents, 500);
 
         function useSkill(skillId) {
             if (!isBattleActive || !currentEnemyStats) return; if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return; var lvl = (p.talents && p.talents[skillId]) ? p.talents[skillId] : 1;
+            var p = parent.Sherwood.getPlayer(); if (!p) return; 
+            
+            var lvl = 0;
+            try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(skillId); } catch(e) {}
+            if (lvl <= 0) { showCenterText('Скилл не изучен!', '#ff5555'); return; }
+            
             if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 20000; }
             else if (skillId === 'rage') { var f = getFilth(); if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; } if (!spendFilth(65)) return; rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
-            else if (skillId === 'healing') { if (!spendFilth(5)) return; var heal = 10; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
+            else if (skillId === 'healing') { if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; } var heal = 10 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
             var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown || 10000); }
         }
 
@@ -965,7 +1004,6 @@ sprite.position.set(x, scale / 2 + 0.1, z); // Чуть приподняли, ч
 
         function syncPlayerGrid() { const g = worldToGrid(playerPos.x, playerPos.z); playerGX = g.gx; playerGY = g.gy; updateHighlights(); }
 
-        // Инициализация счетчика врагов перед запуском
 var totalEnemies = 0;
 for (var i = 0; i < objects.length; i++) {
     if (objects[i].type === 'enemy') totalEnemies++;
