@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Профиль Шервуда</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
+        canvas { display: block; background: transparent; touch-action: none; cursor: crosshair; }
+        
+        #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
+        #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
+
+        #camp-title { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+            color: #c8a050; font: 18px "Times New Roman", serif; background: rgba(0,0,0,0.75); 
+            padding: 6px 20px; border: 2px solid #6b5a3a; border-radius: 4px; 
+            text-align: center; pointer-events: none; z-index: 10; 
+            text-shadow: 0 2px 4px #000; letter-spacing: 2px; 
+            white-space: nowrap;
+        }
+        #camp-exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
+        
+        #action-btn {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            width: 85px; height: 85px; cursor: pointer; pointer-events: auto;
+            padding: 0; border: none; background: none; z-index: 45; display: none;
+        }
+        #action-btn:active { transform: translateX(-50%) scale(0.9); }
+        #action-btn img {
+            width: 85px; height: 85px; object-fit: contain; border-radius: 8px;
+            border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6);
+            padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box;
+        }
+
+        #joystick { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; z-index: 55; pointer-events: none; display: none; }
+        .arrow-btn { position: absolute; width: 60px; height: 60px; background: rgba(10, 8, 5, 0.85); border: 2px solid #6b5a3a; border-radius: 50%; color: #c8a050; font-size: 24px; display: flex; align-items: center; justify-content: center; pointer-events: auto; -webkit-tap-highlight-color: transparent; text-shadow: 0 0 6px #8b6b3a; box-shadow: 0 0 6px rgba(139, 107, 58, 0.3); }
+        .arrow-btn:active { background: rgba(139, 107, 58, 0.6); transform: scale(0.9); }
+        #btn-left  { top: 40px; left: 0; }
+        #btn-right { top: 40px; left: 80px; }
+        
+        @media (max-width: 900px) {
+            #joystick { display: block; }
+            #action-btn { width: 70px; height: 70px; bottom: 100px; }
+            #action-btn img { width: 70px; height: 70px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="camp-title">ПРОФИЛЬ</div>
+    <div id="camp-exit-btn" onclick="exitProfile();">←</div>
+
+    <button id="action-btn">
+        <img id="action-btn-img" src="assets/assets2/icons/take.png" alt="Взаимодействовать">
+    </button>
+
+    <div id="joystick">
+        <div class="arrow-btn" id="btn-left">◀</div>
+        <div class="arrow-btn" id="btn-right">▶</div>
+    </div>
+
+    <div id="vignette"></div>
+    <div id="scanlines"></div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        function exitProfile() {
+            try { if (parent.UI && parent.UI.loadHome) parent.UI.loadHome(); } catch(e) {}
+        }
+        window.exitProfile = exitProfile;
+        
+        // ============================================================
+        //  РАЗДЕЛЫ ПРОФИЛЯ (Двери)
+        // ============================================================
+        var PROFILE_SECTIONS = [
+            { key: 'stats',    name: 'Характеристики', icon: 'assets/interface/player_profile.png', x: 10, open: function() { try { parent.UI.profile(); } catch(e) {} } },
+            { key: 'bag',      name: 'Сумка',          icon: 'assets/assets2/icons/hero_bag.png',   x: 25, open: function() { try { parent.UI.bag(); } catch(e) {} } },
+            { key: 'talents',  name: 'Таланты',        icon: 'assets/all_buttons/ranger_skills_button.png', x: 40, open: function() { try { parent.Sherwood.Talents.showLearnedTalents(); } catch(e) {} } },
+            { key: 'wallet',   name: 'Кесет',          icon: 'assets/interface/wallet.png',         x: 55, open: function() { try { parent.UI.wallet(); } catch(e) {} } },
+            { key: 'rings',    name: 'Кольца',         icon: 'assets/interface/ring_first_level.png', x: 70, open: function() { try { parent.UI._showAllRings(); } catch(e) {} } }
+        ];
+
+        // ============================================================
+        //  СЦЕНА
+        // ============================================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.Fog(0x1a1208, 20, 50);
+
+        const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        cam.position.set(0, 2.5, 6);
+        cam.lookAt(0, 0.5, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 1);
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
+        dirLight.position.set(5, 10, 5); scene.add(dirLight);
+        const playerLight = new THREE.PointLight(0xffaa55, 2.0, 15);
+        playerLight.position.set(0, 2, 2); scene.add(playerLight);
+
+        const loader = new THREE.TextureLoader();
+        
+        // ВСТАВЛЯЕМ КАРТИНКУ ПРОФИЛЯ КАК ФОН
+        const wallTexture = loader.load('assets/assets2/backgrounds/profile_visual.png');
+        const floorTexture = loader.load('assets/dungeon_tiles/dungeon1/tiles_5.png');
+        
+        wallTexture.wrapS = THREE.RepeatWrapping; 
+        wallTexture.repeat.x = 4; 
+        wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
+        wallTexture.repeat.y = 1; 
+        wallTexture.offset.y = 0.2; 
+
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(8, 2);
+
+        const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
+        const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
+
+        const platformerGroup = new THREE.Group();
+        scene.add(platformerGroup);
+
+        const LEVEL_W = 80; 
+        const WALL_H = 6;   
+        const CORRIDOR_DEPTH = 6; 
+
+        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
+        ground.position.set(LEVEL_W / 2, -0.5, 0); 
+        platformerGroup.add(ground);
+
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
+        platformerGroup.add(backWall);
+
+        // ============================================================
+        //  ДВЕРИ
+        // ============================================================
+        var doorLeaves = [];
+        for (var i = 0; i < PROFILE_SECTIONS.length; i++) {
+            var sec = PROFILE_SECTIONS[i];
+            var tex = loader.load(sec.icon);
+            tex.minFilter = THREE.LinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            
+            var mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: true, depthWrite: false, color: 0xffffff });
+            var leaf = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
+            
+            leaf.position.set(sec.x, 1.8, 0); 
+            leaf.userData = { isDoor: true, section: sec, originalY: 1.8, openY: -4.5, t: 0, open: false };
+            platformerGroup.add(leaf);
+            
+            doorLeaves.push(leaf);
+        }
+
+        // ============================================================
+        //  ПЕРСОНАЖ
+        // ============================================================
+        const player = {
+            pos: new THREE.Vector3(3, 0, 1.0),
+            vel: new THREE.Vector3(0, 0, 0),
+            facing: 1,
+            speed: 6.0
+        };
+
+        const heroGroup = new THREE.Group();
+        heroGroup.position.set(3, 0, 1.0);
+        platformerGroup.add(heroGroup);
+
+        const heroTexStatic = loader.load('assets/assets2/game_details/ezgif-frame-006.png');
+        const staticSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: heroTexStatic, transparent: true, depthTest: false }));
+        staticSprite.center.set(0.5, 0); 
+        staticSprite.scale.set(2.2, 2.2, 1); 
+        staticSprite.position.set(0, 0, 0);
+        heroGroup.add(staticSprite);
+
+        // ВОССТАНОВЛЕНИЕ ПОЗИЦИИ (ЕСЛИ ВЕРНУЛИСЬ ИЗ РАЗДЕЛА)
+        try {
+            if (parent && parent.Sherwood && parent.Sherwood._profileReturnPos) {
+                var rx = parent.Sherwood._profileReturnPos.x;
+                if (typeof rx === 'number' && !isNaN(rx)) {
+                    player.pos.x = rx;
+                    heroGroup.position.x = rx;
+                }
+                parent.Sherwood._profileReturnPos = null;
+            }
+        } catch(e) {}
+
+        // ============================================================
+        //  УПРАВЛЕНИЕ
+        // ============================================================
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (['ArrowLeft','ArrowRight','KeyA','KeyD'].includes(e.code)) e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+        const touch = { left: false, right: false };
+        function bindTouch(id, prop) {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); touch[prop] = true; });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); touch[prop] = false; });
+            el.addEventListener('mousedown', (e) => { e.preventDefault(); touch[prop] = true; });
+            el.addEventListener('mouseup', (e) => { e.preventDefault(); touch[prop] = false; });
+            el.addEventListener('mouseleave', () => { touch[prop] = false; });
+        }
+        bindTouch('btn-left', 'left');
+        bindTouch('btn-right', 'right');
+
+        function updatePlayer(dt) {
+            const p = player;
+            let moveX = 0;
+            if (keys['KeyA'] || keys['ArrowLeft'] || touch.left) moveX -= 1;
+            if (keys['KeyD'] || keys['ArrowRight'] || touch.right) moveX += 1;
+
+            p.vel.x = moveX * p.speed;
+            if (moveX !== 0) {
+                p.facing = moveX;
+            }
+
+            const newX = p.pos.x + p.vel.x * dt;
+            p.pos.x = Math.max(2.5, Math.min(LEVEL_W - 2.5, newX));
+        }
+
+        // ============================================================
+        //  ВЗАИМОДЕЙСТВИЕ С ДВЕРЬМИ
+        // ============================================================
+        var actionBtn = document.getElementById('action-btn');
+        var actionBtnImg = document.getElementById('action-btn-img');
+        var activeDoor = null;
+
+        function checkDoorInteraction() {
+            var closestDoor = null;
+            var minDist = 4.5;
+
+            for (var i = 0; i < doorLeaves.length; i++) {
+                var door = doorLeaves[i];
+                if (door.userData.open) continue;
+                var dist = Math.abs(player.pos.x - door.position.x);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestDoor = door;
+                }
+            }
+
+            if (closestDoor) {
+                activeDoor = closestDoor;
+                actionBtn.style.display = 'block';
+            } else {
+                activeDoor = null;
+                actionBtn.style.display = 'none';
+            }
+        }
+
+        actionBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (activeDoor && !activeDoor.userData.open) {
+                activeDoor.userData.open = true;
+                activeDoor.userData.t = 0;
+                
+                // СОХРАНЯЕМ ПОЗИЦИЮ
+                try {
+                    if (parent && parent.Sherwood) {
+                        parent.Sherwood._profileReturnPos = { x: player.pos.x };
+                    }
+                } catch(e) {}
+
+                var sectionToOpen = activeDoor.userData.section;
+                setTimeout(function() {
+                    if (sectionToOpen && sectionToOpen.open) {
+                        sectionToOpen.open();
+                    }
+                }, 300);
+            }
+        });
+
+        // ============================================================
+        //  АНИМАЦИЯ
+        // ============================================================
+        let lastTime = performance.now();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min((performance.now() - lastTime) / 1000, 0.05);
+            lastTime = performance.now();
+
+            updatePlayer(dt);
+            cam.position.x = player.pos.x;
+            cam.lookAt(cam.position.x, 1.0, 0);
+            heroGroup.position.copy(player.pos);
+            playerLight.position.set(player.pos.x, player.pos.y + 1, 2);
+
+            // Логика анимации дверей
+            for (var i = 0; i < doorLeaves.length; i++) {
+                var d = doorLeaves[i];
+                if (d.userData.open && d.userData.t < 1) {
+                    d.userData.t += dt / 0.45;
+                    var k2 = Math.min(d.userData.t, 1);
+                    var e2 = k2 * k2 * (3 - 2 * k2);
+                    d.position.y = d.userData.originalY + (d.userData.openY - d.userData.originalY) * e2;
+                    if (k2 >= 1) d.visible = false;
+                }
+            }
+
+            checkDoorInteraction();
+            renderer.render(scene, cam);
+        }
+        animate();
+
+        addEventListener('resize', function() {
+            var aspect = window.innerWidth / window.innerHeight;
+            cam.aspect = aspect; cam.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
