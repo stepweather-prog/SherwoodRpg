@@ -221,7 +221,9 @@ Sherwood.Combat = {
                 }
             } catch(e) { console.warn('Bestiary.registerKill error:', e); }
 
-            this.addBattleLog('🏆 Победа! +' + result.exp + ' опыта, +' + result.gold + ' золота');
+            // 🆕 ВОССТАНОВЛЕНИЕ HP ПОСЛЕ ПОБЕДЫ (100% от макс. HP)
+            p.stats.hp = p.stats.maxHp;
+            this.addBattleLog('🏆 Победа! +' + result.exp + ' опыта, +' + result.gold + ' золота. HP восстановлено!');
             this._battle = null;
             this._closeBattleUI();
             Sherwood.saveGame();
@@ -233,7 +235,10 @@ Sherwood.Combat = {
             result.playerDead = true;
             result.exp = Math.floor(b.enemy.maxHp * 0.1);
             result.gold = 0;
-            this.addBattleLog('💀 Ты погиб!');
+            
+            // 🆕 ВОССТАНОВЛЕНИЕ HP ПОСЛЕ СМЕРТИ (чтобы не застрять с 0 HP)
+            p.stats.hp = Math.floor(p.stats.maxHp * 0.5); 
+            this.addBattleLog('💀 Ты погиб! HP восстановлено на 50%.');
             this._battle = null;
             this._closeBattleUI();
             Sherwood.saveGame();
@@ -381,7 +386,9 @@ Sherwood.Combat = {
                 }
             } catch(e) { console.warn('Bestiary.registerKill error:', e); }
 
-            this.addBattleLog('🏆 Победа! +' + result.exp + ' опыта, +' + result.gold + ' золота');
+            // 🆕 ВОССТАНОВЛЕНИЕ HP ПОСЛЕ ПОБЕДЫ (100% от макс. HP)
+            p.stats.hp = p.stats.maxHp;
+            this.addBattleLog('🏆 Победа! +' + result.exp + ' опыта, +' + result.gold + ' золота. HP восстановлено!');
             this._battle = null;
             this._closeBattleUI();
             Sherwood.saveGame();
@@ -398,7 +405,10 @@ Sherwood.Combat = {
                 result.playerDead = true;
                 result.exp = Math.floor(b.enemy.maxHp * 0.1);
                 result.gold = 0;
-                this.addBattleLog('💀 Ты погиб!');
+                
+                // 🆕 ВОССТАНОВЛЕНИЕ HP ПОСЛЕ СМЕРТИ (чтобы не застрять с 0 HP)
+                p.stats.hp = Math.floor(p.stats.maxHp * 0.5); 
+                this.addBattleLog('💀 Ты погиб! HP восстановлено на 50%.');
                 this._battle = null;
                 this._closeBattleUI();
                 Sherwood.saveGame();
@@ -580,4 +590,4 @@ Sherwood.Combat = {
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Combat = Sherwood.Combat;
 
-console.log('⚔️ Combat загружен!');
+console.log('⚔️ Combat загружен (с восстановлением HP)!');
