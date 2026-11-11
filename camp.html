@@ -23,7 +23,6 @@
         }
         #camp-exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
         
-        /* Кнопка взаимодействия */
         #action-btn {
             position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
             width: 85px; height: 85px; cursor: pointer; pointer-events: auto;
@@ -62,6 +61,20 @@
             #action-btn { width: 70px; height: 70px; bottom: 100px; }
             #action-btn img { width: 70px; height: 70px; }
         }
+
+        /* Стиль для HTML-подписей (как в таверне) */
+        .door-label {
+            background: url('assets/assets2/game_details/sections_menu.png') center/100% 100% no-repeat;
+            padding: 6px 20px;
+            color: #ffa500;
+            font-family: "Times New Roman", serif;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px #000;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -92,11 +105,17 @@
     <div id="scanlines"></div>
 
     <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
     </script>
 
     <script type="module">
         import * as THREE from 'three';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         var urlParams = new URLSearchParams(window.location.search);
         var returnGX = urlParams.get('returnGX');
@@ -110,7 +129,7 @@
         // ============================================================
         //  ДАННЫЕ ДЛЯ ДВЕРЕЙ (Разделы)
         // ============================================================
-                var SECTIONS = [
+        var SECTIONS = [
             { key: 'profile',  name: 'Профиль',   icon: 'assets/assets2/icons/player_profile.png',  x: 8,  open: function() { try { parent.UI.profile(); } catch(e) {} } },
             { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          x: 16, open: function() { try { parent.UI.tavern(); } catch(e) {} } },
             { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          x: 24, open: function() { try { parent.UI.portals(); } catch(e) {} } },
@@ -120,6 +139,7 @@
             { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        x: 64, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
             { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        x: 72, open: function() { try { parent.UI.settings(); } catch(e) {} } }
         ];
+
         // ============================================================
         //  СЦЕНА
         // ============================================================
@@ -137,6 +157,14 @@
         renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
 
+        // Рендерер для HTML-подписей
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
         dirLight.position.set(5, 10, 5); scene.add(dirLight);
@@ -144,20 +172,31 @@
         playerLight.position.set(0, 2, 2); scene.add(playerLight);
 
         const loader = new THREE.TextureLoader();
+        
+        // ============================================================
+        //  ТЕКСТУРЫ (НАСТРОЙКА ДЛЯ ЧЕТКОСТИ)
+        // ============================================================
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/wall_area_1.png');
         const floorTexture = loader.load('assets/dungeon_tiles/dungeon1/tiles_5.png');
         const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
 
+        // Настройка стены
         wallTexture.wrapS = THREE.RepeatWrapping; 
-        wallTexture.repeat.x = 8; 
+        wallTexture.repeat.x = 16; // Увеличили для четкости на длинном коридоре
         wallTexture.wrapT = THREE.ClampToEdgeWrapping; 
         wallTexture.repeat.y = 1; 
         wallTexture.offset.y = 0.2; 
+        wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
+        // Настройка пола
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-        floorTexture.repeat.set(8, 2);
+        floorTexture.repeat.set(16, 1); // 16 раз по длине, 1 по ширине
+        floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+        // Настройка потолка
         ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
-        ceilTexture.repeat.set(8, 2);
+        ceilTexture.repeat.set(16, 1);
+        ceilTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
         const wallMat  = new THREE.MeshLambertMaterial({ map: wallTexture });
         const floorMat = new THREE.MeshLambertMaterial({ map: floorTexture });
@@ -170,20 +209,31 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
-        const ground = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 1, CORRIDOR_DEPTH), floorMat);
-        ground.position.set(LEVEL_W / 2, -0.5, 0); 
+        // ============================================================
+        //  ПОЛ (ПЛОСКОСТЬ БЕЗ ТОРЦОВ)
+        // ============================================================
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), floorMat);
+        ground.rotation.x = -Math.PI / 2; // Поворачиваем горизонтально
+        ground.position.set(LEVEL_W / 2, 0, 0); // Ставим на уровень y=0
         platformerGroup.add(ground);
 
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, WALL_H, 0.5), wallMat);
+        // ============================================================
+        //  СТЕНА (ПЛОСКОСТЬ)
+        // ============================================================
+        const backWall = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, WALL_H), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        const ceil = new THREE.Mesh(new THREE.BoxGeometry(LEVEL_W, 0.5, CORRIDOR_DEPTH), ceilMat);
+        // ============================================================
+        //  ПОТОЛОК (ПЛОСКОСТЬ)
+        // ============================================================
+        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), ceilMat);
+        ceil.rotation.x = Math.PI / 2; // Поворачиваем горизонтально вниз
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
         platformerGroup.add(ceil);
 
         // ============================================================
-        //  ДВЕРИ-РАЗДЕЛЫ
+        //  ДВЕРИ-РАЗДЕЛЫ И ПОДПИСИ (ПРИВЯЗАНЫ К ДВЕРЯМ)
         // ============================================================
         var doorLeaves = [];
         for (var i = 0; i < SECTIONS.length; i++) {
@@ -200,6 +250,15 @@
             platformerGroup.add(leaf);
             
             doorLeaves.push(leaf);
+
+            // Подпись под дверью (как в таверне)
+            var div = document.createElement('div');
+            div.className = 'door-label';
+            div.textContent = sec.name;
+            
+            var label = new CSS2DObject(div);
+            label.position.set(0, -2.5, 0.1); // Спускаем вниз под иконку
+            leaf.add(label);
         }
 
         // ============================================================
@@ -538,7 +597,9 @@
             }
 
             checkDoorInteraction();
+            
             renderer.render(scene, camPlatformer);
+            labelRenderer.render(scene, camPlatformer); // Рендерим HTML-подписи
         }
         animate();
 
@@ -546,6 +607,7 @@
             var aspect = window.innerWidth / window.innerHeight;
             camPlatformer.aspect = aspect; camPlatformer.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
