@@ -1,7 +1,6 @@
 /**
  * Sherwood Thicket — Шервудская чащоба
  * Квестовая тропа: 65 узлов, 3 сложности, кубки как в подземке
- * Визуал: аккуратный вертикальный список
  */
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
@@ -315,7 +314,7 @@ Sherwood.Thicket = {
     },
 
     // ============================================================
-    //  UI — АККУРАТНЫЙ ВЕРТИКАЛЬНЫЙ СПИСОК
+    //  UI — ВЕРТИКАЛЬНЫЙ СПИСОК (В СТИЛЕ ТАВЕРНЫ)
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
@@ -332,24 +331,24 @@ Sherwood.Thicket = {
         var chapterKeys = Object.keys(chapters).sort(function(a, b) { return parseInt(a) - parseInt(b); });
         var selectedChapter = this._selectedChapter || 1;
 
-        var h = '<div style="width:100%;max-width:480px;margin:0 auto;box-sizing:border-box;">';
-
+        var h = '<div style="width:100%;max-width:400px;margin:0 auto;box-sizing:border-box;padding:10px;">';
+        
         // Вкладки глав
-        h += '<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:16px;padding:0 8px;">';
+        h += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:20px;">';
         for (var c = 0; c < chapterKeys.length; c++) {
             var chId = parseInt(chapterKeys[c]);
             var isActive = (chId === selectedChapter);
-            h += '<div onclick="Sherwood.Thicket._selectChapter(' + chId + ')" style="cursor:pointer;padding:5px 10px;border-radius:6px;border:2px solid ' + (isActive ? '#c9a040' : '#444') + ';background:' + (isActive ? 'rgba(60,40,15,0.9)' : 'rgba(20,20,20,0.7)') + ';color:' + (isActive ? '#ffd27a' : '#888') + ';font:bold 11px \'Times New Roman\',serif;white-space:nowrap;">' + (chId === 0 ? 'Рейд' : 'Гл. ' + chId) + '</div>';
+            h += '<div onclick="Sherwood.Thicket._selectChapter(' + chId + ')" style="cursor:pointer;padding:5px 10px;border-radius:6px;border:2px solid ' + (isActive ? '#c9a040' : '#444') + ';background:' + (isActive ? 'rgba(60,40,15,0.9)' : 'rgba(20,20,20,0.7)') + ';color:' + (isActive ? '#ffd27a' : '#888') + ';font:bold 12px \'Times New Roman\',serif;white-space:nowrap;">' + (chId === 0 ? 'Рейд' : 'Гл. ' + chId) + '</div>';
         }
         h += '</div>';
 
-        // Заголовок главы
+        // Заголовок
         var chData = chapters[selectedChapter];
         if (chData) {
-            h += '<div style="color:#c8a050;font-size:13px;text-align:center;margin-bottom:12px;text-shadow:0 2px 4px #000;padding:0 8px;">' + chData.name + '</div>';
+            h += '<div style="color:#c8a050;font-size:14px;text-align:center;margin-bottom:15px;text-shadow:0 2px 4px #000;font-weight:bold;">' + chData.name + '</div>';
             
-            // СПИСОК
-            h += '<div style="display:flex;flex-direction:column;gap:8px;padding:0 8px;">';
+            // Сам список (строго вертикальный)
+            h += '<div style="display:flex;flex-direction:column;gap:8px;">';
 
             for (var ni = 0; ni < chData.nodes.length; ni++) {
                 var node = chData.nodes[ni];
@@ -358,30 +357,30 @@ Sherwood.Thicket = {
 
                 var borderColor = cups >= 3 ? '#ffd700' : (available ? '#c9a040' : '#333');
                 var opacity = available ? 1 : 0.4;
-                var cursor = available ? 'pointer' : 'not-allowed';
 
-                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:' + cursor + ';opacity:' + opacity + ';background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:10px;text-align:left;">';
+                // Карточка-строка
+                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:pointer;opacity:' + opacity + ';background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:12px;">';
 
                 // Иконка
-                h += '<div style="width:48px;height:48px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">';
+                h += '<div style="width:40px;height:40px;flex-shrink:0;background:rgba(0,0,0,0.5);border-radius:6px;display:flex;align-items:center;justify-content:center;">';
                 h += '<img src="' + node.imagePath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
 
-                // Информация
-                h += '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">';
-                h += '<div style="color:#fff;font-size:12px;font-weight:bold;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">' + (node.isBoss ? '👑 ' : '') + node.name + '</div>';
+                // Текст
+                h += '<div style="flex:1;min-width:0;">';
+                h += '<div style="color:#ffa500;font-size:9px;margin-bottom:2px;">#' + node.id + (node.isBoss ? ' <span style="color:#ff6b35;">БОСС</span>' : '') + '</div>';
+                h += '<div style="color:#fff;font-size:12px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">' + node.name + '</div>';
                 
                 // Кубки
-                h += '<div style="display:flex;gap:3px;align-items:center;">';
+                h += '<div style="display:flex;gap:3px;">';
                 for (var k = 1; k <= 3; k++) {
                     h += '<div style="width:8px;height:8px;border-radius:50%;border:1px solid ' + (cups >= k ? '#ffd700' : '#555') + ';background:' + (cups >= k ? '#ffd700' : 'transparent') + ';"></div>';
                 }
-                h += '<span style="color:#666;font-size:9px;margin-left:6px;">#' + node.id + '</span>';
                 h += '</div>';
                 h += '</div>';
 
                 // Стрелочка
-                h += '<div style="color:#666;font-size:16px;flex-shrink:0;padding-right:4px;">›</div>';
+                h += '<div style="color:#666;font-size:18px;">›</div>';
 
                 h += '</div>';
             }
@@ -396,12 +395,12 @@ Sherwood.Thicket = {
         wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle + 'display:flex;flex-direction:column;overflow:hidden;';
         
         wrapper.innerHTML =
-            '<style>.thicket-scroll::-webkit-scrollbar { display: none; } .thicket-scroll { scrollbar-width: none; -ms-overflow-style: none; }</style>' +
-            '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
-                '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
+            '<style>.thicket-scroll::-webkit-scrollbar { display: none; } .thicket-scroll { scrollbar-width: none; }</style>' +
+            '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.95),transparent);z-index:10;">' +
+                '<button onclick="UI.loadHome()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;color:#e0c080;font-size:20px;cursor:pointer;">←</button>' +
                 '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">🌲 Шервудская чащоба</span>' +
             '</div>' +
-            '<div class="thicket-scroll" style="flex:1;overflow-y:auto;padding:70px 0 20px;box-sizing:border-box;display:flex;justify-content:center;">' + h + '</div>';
+            '<div class="thicket-scroll" style="flex:1;overflow-y:auto;padding:70px 12px 20px;box-sizing:border-box;display:flex;justify-content:center;">' + h + '</div>';
         UI._screenLayer.appendChild(wrapper);
         UI._screenLayer.style.display = 'block';
         UI._screenLayer.style.overflow = 'hidden';
@@ -472,7 +471,7 @@ Sherwood.Thicket = {
         var wrapper = document.createElement('div');
         wrapper.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' + bgStyle + 'display:flex;flex-direction:column;overflow:hidden;';
         wrapper.innerHTML =
-            '<style>.thicket-scroll::-webkit-scrollbar { display: none; } .thicket-scroll { scrollbar-width: none; -ms-overflow-style: none; }</style>' +
+            '<style>.thicket-scroll::-webkit-scrollbar { display: none; } .thicket-scroll { scrollbar-width: none; }</style>' +
             '<div style="position:absolute;top:0;left:0;right:0;height:60px;display:flex;flex-direction:row;align-items:center;justify-content:center;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,0.9),transparent);">' +
                 '<button onclick="Sherwood.Thicket.showUI()" style="position:absolute;left:10px;top:14px;background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>' +
                 '<span style="color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">' + node.name + '</span>' +
