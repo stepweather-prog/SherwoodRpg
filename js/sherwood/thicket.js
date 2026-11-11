@@ -314,7 +314,7 @@ Sherwood.Thicket = {
     },
 
     // ============================================================
-    //  UI — ВЕРТИКАЛЬНЫЙ СПИСОК (В СТИЛЕ ТАВЕРНЫ)
+    //  UI — ВЕРТИКАЛЬНЫЙ СПИСОК (ИСПРАВЛЕННЫЙ)
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
@@ -331,7 +331,8 @@ Sherwood.Thicket = {
         var chapterKeys = Object.keys(chapters).sort(function(a, b) { return parseInt(a) - parseInt(b); });
         var selectedChapter = this._selectedChapter || 1;
 
-        var h = '<div style="width:100%;max-width:400px;margin:0 auto;box-sizing:border-box;padding:10px;">';
+        // ЖЕСТКО ЦЕНТРИРУЕМ И ОГРАНИЧИВАЕМ ШИРИНУ
+        var h = '<div style="width:100%;max-width:340px;margin:0 auto;box-sizing:border-box;padding:10px;">';
         
         // Вкладки глав
         h += '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:20px;">';
@@ -347,7 +348,7 @@ Sherwood.Thicket = {
         if (chData) {
             h += '<div style="color:#c8a050;font-size:14px;text-align:center;margin-bottom:15px;text-shadow:0 2px 4px #000;font-weight:bold;">' + chData.name + '</div>';
             
-            // Сам список (строго вертикальный)
+            // Список (колонка)
             h += '<div style="display:flex;flex-direction:column;gap:8px;">';
 
             for (var ni = 0; ni < chData.nodes.length; ni++) {
@@ -358,11 +359,11 @@ Sherwood.Thicket = {
                 var borderColor = cups >= 3 ? '#ffd700' : (available ? '#c9a040' : '#333');
                 var opacity = available ? 1 : 0.4;
 
-                // Карточка-строка
-                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:pointer;opacity:' + opacity + ';background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:12px;">';
+                // КАРТОЧКА (полоска)
+                h += '<div onclick="Sherwood.Thicket._showNodePanel(' + node.id + ')" style="cursor:pointer;opacity:' + opacity + ';background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:10px;">';
 
-                // Иконка
-                h += '<div style="width:40px;height:40px;flex-shrink:0;background:rgba(0,0,0,0.5);border-radius:6px;display:flex;align-items:center;justify-content:center;">';
+                // Иконка (40x40)
+                h += '<div style="width:40px;height:40px;flex-shrink:0;background:rgba(0,0,0,0.5);border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;">';
                 h += '<img src="' + node.imagePath + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 h += '</div>';
 
@@ -380,7 +381,7 @@ Sherwood.Thicket = {
                 h += '</div>';
 
                 // Стрелочка
-                h += '<div style="color:#666;font-size:18px;">›</div>';
+                h += '<div style="color:#666;font-size:18px;flex-shrink:0;">›</div>';
 
                 h += '</div>';
             }
@@ -420,7 +421,7 @@ Sherwood.Thicket = {
         var cups = this.getCups(nodeId);
         var imgPath = this.getImagePath(node);
 
-        var h = '<div style="width:100%;max-width:400px;margin:0 auto;box-sizing:border-box;text-align:center;position:relative;padding:0 12px;">';
+        var h = '<div style="width:100%;max-width:340px;margin:0 auto;box-sizing:border-box;text-align:center;position:relative;">';
 
         h += '<div style="position:relative;z-index:1;margin:0 auto 16px;width:160px;height:160px;border:3px solid #c9a040;border-radius:16px;box-shadow:0 0 30px rgba(201,160,64,0.4), inset 0 0 40px rgba(0,0,0,0.8);background:radial-gradient(circle, rgba(0,0,0,0.2), rgba(0,0,0,0.7));display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;">';
         h += '<img src="' + imgPath + '" style="width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;" onerror="this.style.display=\'none\'">';
