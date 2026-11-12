@@ -1070,8 +1070,27 @@ updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
             try { if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, currentFloor, currentDiff); if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(currentFloor, currentDiff); } catch(e) {}
             if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows; } }
             try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { parent.Sherwood.Bestiary.registerKill(currentPool.boss); } } catch(e) {}
-            var rewards = { cupEarned: true, exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp, gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold, silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver, items: [] };
-            try { if (parent.UI && parent.UI._showVictoryScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showVictoryScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
+            
+            // Формируем награды, добавляя выпавшие тикеты
+            var items = [];
+            if (runLoot.entranceTickets > 0) {
+                items.push({ icon: 'assets/assets2/icons/ticket.png', name: 'Тикет в портал', quantity: runLoot.entranceTickets });
+            }
+            var rewards = { cupEarned: true, exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp, gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold, silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver, items: items };
+            
+            try { 
+                if (parent.UI && parent.UI._showVictoryScreen) { 
+                    parent.UI._lastPortal = null; 
+                    parent.UI._lastDungeon = currentDungeon; 
+                    parent.UI._afterRewardAction = function() { 
+                        try { 
+                            if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); 
+                            else if (parent.UI.dungeon) parent.UI.dungeon(); 
+                        } catch(e) { exitDungeon(); } 
+                    }; 
+                    parent.UI._showVictoryScreen(rewards); 
+                } else { exitDungeon(); } 
+            } catch(e) { exitDungeon(); }
         }
         window.winDungeon = winDungeon;
 
