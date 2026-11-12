@@ -12,7 +12,8 @@
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: none; }
-        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -50%); display: none; pointer-events: none; }
+        
+        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -100%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
@@ -31,16 +32,19 @@
         #hit-effect { position: absolute; display: none; pointer-events: none; z-index: 60; transform: translate(-50%, -50%); }
         #hit-effect-img { width: 180px; height: 180px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.6)); }
         
-        #attack-icon { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; z-index: 40; cursor: pointer; display: none; background: rgba(0,0,0,0.6); border-radius: 50%; border: 2px solid #c8a050; padding: 5px; box-shadow: 0 0 15px rgba(200, 160, 80, 0.5); transition: transform 0.1s; }
-        #attack-icon:active { transform: translateX(-50%) scale(0.9); }
-        #attack-icon img { width: 100%; height: 100%; object-fit: contain; }
-        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
+        /* Контейнер для нижней панели боя (атака + скиллы) */
+        #battle-controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 45; width: 100%; }
         
-        #skills-left, #skills-right { pointer-events: auto; position: absolute; bottom: 110px; width: 80px; display: none; flex-direction: column; align-items: center; gap: 6px; z-index: 45; }
-        #skills-left { left: 10px; }
-        #skills-right { right: 10px; }
-        #skills-left img, #skills-right img { cursor: pointer; border-radius: 6px; border: 2px solid rgba(200, 160, 80, 0.7); background: rgba(0, 0, 0, 0.5); padding: 2px; width: 44px; height: 44px; object-fit: contain; }
-        #skills-left img.on-cooldown, #skills-right img.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; padding: 0; border: none; background: none; flex-shrink: 0; display: none; margin-bottom: 70px; }
+        #attack-icon:active { transform: scale(0.9); }
+        #attack-icon img { width: 85px; height: 85px; object-fit: contain; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box; }
+        #attack-icon img:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 8px; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
+        
+        #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
+        .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
+        .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
+        .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         
@@ -52,7 +56,11 @@
         
         @media (max-width: 900px) {
             #joystick { display: block; }
-            #attack-icon { bottom: 80px; width: 55px; height: 55px; }
+            #battle-controls { bottom: 100px; gap: 10px; }
+            #attack-icon { width: 70px; height: 70px; margin-bottom: 50px; }
+            #attack-icon img { width: 70px; height: 70px; }
+            .skill-btn { width: 70px; height: 70px; }
+            #skills-row { gap: 10px; }
             #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
             #hero-life { left: 6px; }
             #hero-mana { right: 6px; }
@@ -60,8 +68,6 @@
             #mob-hp { width: 220px; height: 150px; }
             #mob-hp-text { font-size: 15px; }
             #mob-hp-name { font-size: 13px; top: -12px; }
-            #skills-left, #skills-right { bottom: 100px; width: 60px; }
-            #skills-left img, #skills-right img { width: 34px; height: 34px; }
             #hit-effect-img { width: 130px; height: 130px; }
         }
     </style>
@@ -78,22 +84,24 @@
     </div>
     
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
-    <div id="skills-left"></div>
+    
+    <div id="battle-controls">
+        <div id="attack-icon">
+            <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
+            <div id="attack-cooldown-overlay">0.0s</div>
+        </div>
+        <div id="skills-row"></div>
+    </div>
+    
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
-    <div id="skills-right"></div>
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
         <span id="mana-text">Скверна: 0%</span>
-    </div>
-    
-    <div id="attack-icon">
-        <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
-        <div id="attack-cooldown-overlay">0.0s</div>
     </div>
     
     <div id="joystick">
@@ -240,7 +248,7 @@
         const playerLight = new THREE.PointLight(0xffaa55, 2.0, 15);
         playerLight.position.set(0, 2, 2); scene.add(playerLight);
 
-                const loader = new THREE.TextureLoader();
+        const loader = new THREE.TextureLoader();
         const wallTexture  = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
         const floorTexture = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const ceilTexture  = loader.load('assets/assets2/dungeon_details/swamp_ceiling_dungeon_2.png'); 
@@ -248,17 +256,14 @@
         const closedDoorTex = loader.load('assets/assets2/game_details/closed_level_lock_icon.png');
         const openDoorTex = loader.load('assets/assets2/game_details/completion_of_the_second_underground_level2.png');
         
-        // Стена: 16 раз по длине, 1 по высоте (без растяжения)
         wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
         wallTexture.repeat.set(16, 1);
         wallTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
         
-        // Пол: 16 раз по длине, 1 по ширине
         floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(16, 1);
         floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
         
-        // Потолок: 16 раз по длине, 1 по ширине
         ceilTexture.wrapS = ceilTexture.wrapT = THREE.RepeatWrapping;
         ceilTexture.repeat.set(16, 1);
         ceilTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -274,18 +279,15 @@
         const WALL_H = 6;   
         const CORRIDOR_DEPTH = 6; 
 
-        // Пол (плоскость, без торцов)
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), floorMat);
         ground.rotation.x = -Math.PI / 2;
         ground.position.set(LEVEL_W / 2, 0, 0);
         platformerGroup.add(ground);
 
-        // Стена (плоскость)
         const backWall = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, WALL_H), wallMat);
         backWall.position.set(LEVEL_W / 2, WALL_H / 2, -CORRIDOR_DEPTH / 2); 
         platformerGroup.add(backWall);
 
-        // Потолок (плоскость)
         const ceil = new THREE.Mesh(new THREE.PlaneGeometry(LEVEL_W, CORRIDOR_DEPTH), ceilMat);
         ceil.rotation.x = Math.PI / 2;
         ceil.position.set(LEVEL_W / 2, WALL_H, 0); 
@@ -310,16 +312,15 @@
         battleCamera.rotation.order = 'YXZ';
         battleCamera.lookAt(0, 0.45, 0);
 
-         // ФОН БОЯ КАК 3D-ПЛОСКОСТЬ (ТАЙЛИНГ БЕЗ ИСКАЖЕНИЙ)
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
         bgTexture.wrapS = THREE.RepeatWrapping;
         bgTexture.wrapT = THREE.RepeatWrapping;
-        bgTexture.repeat.set(3, 2); // 3 плитки по ширине, 2 по высоте
+        bgTexture.repeat.set(3, 2);
 
-        const bgGeometry = new THREE.PlaneGeometry(30, 20); // Пропорции 3 к 2 (как у тайлов)
+        const bgGeometry = new THREE.PlaneGeometry(30, 20);
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-                bgMesh.position.set(0, 0, -10);
+        bgMesh.position.set(0, 0, -10);
         battleScene.add(bgMesh);
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
@@ -549,23 +550,38 @@
                 renderer.setClearColor(0x000000, 0);
                 if (currentEnemySprite) {
                     battleScene.add(currentEnemySprite);
-                    currentEnemySprite.center.set(0.5, 0.5);
-                    currentEnemySprite.position.set(0, currentEnemySprite.scale.y / 2, 0);
+                    
+                    // УМЕНЬШИЛИ врага и ОПУСТИЛИ вниз (как в подземке)
+                    var scale = currentEnemyObj && currentEnemyObj.isBoss ? 2.3 : 2.0;
+                    currentEnemySprite.scale.set(scale, scale, 1);
+                    
+                    currentEnemySprite.center.set(0.5, 0); 
+                    currentEnemySprite.position.set(0, -0.4, 0); 
+                    
+                    currentEnemySprite.material.depthTest = false;
+                    currentEnemySprite.material.depthWrite = false;
+                    currentEnemySprite.renderOrder = 10;
+                    currentEnemySprite.visible = true;
                 }
                 document.getElementById('crosshair').style.display = 'block';
+                document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('attack-icon').style.display = 'block';
-                document.getElementById('skills-left').style.display = 'flex';
-                document.getElementById('skills-right').style.display = 'flex';
+                document.getElementById('skills-row').style.display = 'flex';
             } else {
                 renderer.setClearColor(0x000000, 1);
                 if (currentEnemyObj && currentEnemyObj.mesh) {
                     platformerGroup.add(currentEnemyObj.mesh);
+                    currentEnemyObj.mesh.material.depthTest = true;
+                    currentEnemyObj.mesh.material.depthWrite = false;
+                    currentEnemyObj.mesh.renderOrder = 0;
                     currentEnemyObj.mesh.center.set(0.5, 0);
+                    currentEnemyObj.mesh.scale.set(currentEnemyObj.isBoss ? 2.8 : 2.4, currentEnemyObj.isBoss ? 2.8 : 2.4, 1);
                     currentEnemyObj.mesh.position.set(currentEnemyObj.x, 0, 0.8);
                 }
                 document.getElementById('crosshair').style.display = 'none';
-                document.getElementById('skills-left').style.display = 'none';
-                document.getElementById('skills-right').style.display = 'none';
+                document.getElementById('battle-controls').style.display = 'none';
+                document.getElementById('attack-icon').style.display = 'none';
+                document.getElementById('skills-row').style.display = 'none';
             }
         }
 
@@ -579,9 +595,6 @@
             enemyStunned = 0;
             stopSteps();
 
-            var scale = 2.4;
-            currentEnemySprite.scale.set(scale, scale, 1);
-
             vampirismReady = false;
             var p = parent.Sherwood.getPlayer();
             if (p && p.talents && p.talents['vampirism'] > 0) {
@@ -594,6 +607,8 @@
             var nameEl = document.getElementById('mob-hp-name'); if (nameEl) nameEl.textContent = getMobName(obj.img);
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)';
             playSound(soundHit);
+            
+            updateMobHpBar();
 
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
@@ -753,12 +768,14 @@
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
             var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += currentEnemySprite.scale.y / 2 + 0.1;
+            worldPos.y += (currentEnemySprite.scale.y * 0.5) + 0.1;
             worldPos.project(battleCamera);
             var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-            document.getElementById('mob-hp').style.left = x + 'px';
-            document.getElementById('mob-hp').style.top = y + 'px';
+            var el = document.getElementById('mob-hp');
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.transform = 'translate(-50%, -100%)';
         }
 
         var talentData = {
@@ -769,18 +786,18 @@
         var skillCooldowns = {};
 
         function renderLearnedTalents() {
-            var leftCol = document.getElementById('skills-left'), rightCol = document.getElementById('skills-right');
-            if (!leftCol || !rightCol) return;
+            var row = document.getElementById('skills-row');
+            if (!row) return;
             var p = parent.Sherwood.getPlayer(); if (!p) return;
             if (!p.talents) p.talents = {};
-            leftCol.innerHTML = ''; rightCol.innerHTML = '';
+            row.innerHTML = '';
             for (var id in talentData) {
                 var img = document.createElement('img');
                 img.src = talentData[id].icon;
-                img.style.cssText = 'width:44px; height:44px; object-fit:contain;';
+                img.className = 'skill-btn';
                 img.dataset.skillId = id;
                 img.onclick = (function(sid){ return function(){ useSkill(sid); }; })(id);
-                (talentData[id].side === 'left' ? leftCol : rightCol).appendChild(img);
+                row.appendChild(img);
             }
         }
         setTimeout(renderLearnedTalents, 500);
