@@ -835,8 +835,10 @@
             var icon = document.getElementById('attack-icon');
             var img = document.getElementById('attack-icon-img');
             var overlay = document.getElementById('attack-cooldown-overlay');
+            var controls = document.getElementById('battle-controls');
 
             if (isBattleActive) {
+                controls.style.display = 'flex';
                 icon.style.display = 'block';
                 icon.dataset.action = 'attack';
                 if (playerAttackCooldown > 0) {
@@ -852,18 +854,21 @@
             overlay.style.display = 'none'; img.style.opacity = '1';
 
             if (enemyAlive && enemySprite && Math.abs(player.pos.x - enemyX) < 3.5) {
+                controls.style.display = 'flex';
                 icon.style.display = 'block';
                 icon.dataset.action = 'startBattle';
                 img.src = 'assets/assets2/talents/simple_attack.png';
                 return;
             }
             if (!enemyAlive && chestSprite && Math.abs(player.pos.x - chestSprite.position.x) < 3.5) {
+                controls.style.display = 'flex';
                 icon.style.display = 'block';
                 icon.dataset.action = 'chest';
                 img.src = 'assets/assets2/icons/take.png';
                 return;
             }
             if (!enemyAlive && Math.abs(player.pos.x - exitDoor.position.x) < 3.5) {
+                controls.style.display = 'flex';
                 icon.style.display = 'block';
                 icon.dataset.action = 'exit';
                 img.src = 'assets/assets2/icons/take.png';
@@ -871,6 +876,7 @@
             }
             icon.style.display = 'none';
             icon.dataset.action = '';
+            controls.style.display = 'none';
         }
 
         document.getElementById('attack-icon').addEventListener('click', function(e) {
