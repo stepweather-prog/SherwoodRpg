@@ -1054,6 +1054,20 @@ updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
         });
 
         function winDungeon() {
+            // === ВЫДАЧА БОНУСНОГО СКИНА ЗА 4-Ю ПОДЗЕМКУ, 6-Й ЭТАЖ ===
+            if (currentDungeon === 4 && currentFloor === 6) {
+                try {
+                    var pBonus = parent.Sherwood.getPlayer();
+                    if (pBonus && (!pBonus.unlockedSkins || pBonus.unlockedSkins.indexOf('bonus_skin_sec') === -1)) {
+                        if (!pBonus.unlockedSkins) pBonus.unlockedSkins = [];
+                        pBonus.unlockedSkins.push('bonus_skin_sec');
+                        if (parent.Sherwood.saveGame) parent.Sherwood.saveGame();
+                        if (parent.UI && parent.UI._showToast) parent.UI._showToast('🎁 Получен бонусный скин: Бог Бездны!');
+                    }
+                } catch(e) {}
+            }
+            // ============================================================
+
             try {
                 if (parent.Sherwood && parent.Sherwood.getPlayer) {
                     var pW = parent.Sherwood.getPlayer();
