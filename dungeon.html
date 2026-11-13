@@ -146,7 +146,6 @@
         function addArrows(n) { playerArrows += n; updateArrowCounter(); }
         setTimeout(loadArrowsFromBag, 700);
 
-        // Накопление скверны чуть активнее (было 5, стало 7)
         var filthTimer = 0, filthFullSince = 0, FILTH_DEATH_TIME = 20, FILTH_SELF_RATE = 10, FILTH_SELF_AMOUNT = 7, FILTH_HIT_AMOUNT = 5;
         function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
         function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); if (p.stats.filth >= p.stats.maxFilth) { if (filthFullSince === 0) filthFullSince = performance.now() / 1000; } else { filthFullSince = 0; } updateHeroSpheres(); }
@@ -297,7 +296,7 @@
 
         var objects = []; var lootBags = [];
         var LOOT_TYPES = ['potion_hp', 'potion_filth', 'potion_high', 'cauldron', 'altar', 'arrow_pickup'];
-        var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0 };
+        var runLoot = { gold: 0, silver: 0, exp: 0, skins: 0, entranceTickets: 0, autoFightTickets: 0, amuletTablets: 0, ringTablets: 0, skinTablets: 0, skinDrawings: 0, portalToken1: 0, branchDamnedYew: 0, bones: 0, feathers: 0 };
 
         function worldToGrid(wx, wz) { return { gx: Math.round(wx + Math.floor(size / 2)), gy: Math.round(wz + Math.floor(size / 2)) }; }
         function gridToWorld(gx, gy) { return { x: gx - Math.floor(size / 2), z: gy - Math.floor(size / 2) }; }
@@ -350,7 +349,6 @@
             return { x: 1, y: 1 };
         }
 
-        // УМЕНЬШЕНО количество зелий (было по 3, стало по 1) + ДОБАВЛЕНО ДОП. ЗЕЛЬЕ
         var objectTypes = [
             { type: 'enemy',        count: 15 },
             { type: 'potion_hp',    count: 1,  img: 'assets/assets2/game_details/resource_life_potion.png' },
@@ -375,11 +373,10 @@
                 var isBoss = false;
                 
                 if (typeDef.type === 'potion_extra') {
-                    // Если выпало доп. зелье, рандомно выбираем между зельем от скверны и комбинированным
                     if (Math.random() < 0.5) {
                         imgPath = 'assets/assets2/game_details/potion_of_filth.png';
                     } else {
-                        imgPath = 'assets/assets2/game_details/resource_high_level_health_potion.png'; // Комбинированное (лечит + снимает скверну)
+                        imgPath = 'assets/assets2/game_details/resource_high_level_health_potion.png'; 
                     }
                 }
 
@@ -459,7 +456,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             else if (obj.type === 'potion_filth') { var f1 = getFilth(); setFilth(Math.max(0, f1.cur - f1.max * 0.5)); showCenterText('-50% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
             else if (obj.type === 'potion_high') { var heal2 = Math.min(Math.floor(p.stats.maxHp * 0.5), p.stats.maxHp - p.stats.hp); p.stats.hp += heal2; setFilth(Math.max(0, getFilth().cur - getFilth().max * 0.8)); showCenterText('+' + heal2 + ' HP, -80% скверны', '#4caf50'); obj.collected = true; group.remove(obj.mesh); }
             else if (obj.type === 'potion_extra') {
-                // Логика для рандомного доп. зелья
                 if (obj.img.indexOf('potion_of_filth') !== -1) {
                     var f2 = getFilth(); setFilth(Math.max(0, f2.cur - f2.max * 0.5)); showCenterText('-50% скверны', '#4caf50');
                 } else {
@@ -484,12 +480,15 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             var resources = { 
                 skins: 1, 
                 entranceTickets: Math.random() < 0.25 ? 1 : 0, 
+                autoFightTickets: Math.random() < 0.15 ? 1 : 0, 
                 amuletTablets: Math.random() < 0.3 ? 1 : 0, 
                 ringTablets: Math.random() < 0.3 ? 1 : 0, 
                 skinTablets: Math.random() < 0.25 ? 1 : 0, 
                 skinDrawings: Math.random() < 0.2 ? 1 : 0, 
                 portalToken1: Math.random() < 0.3 ? 1 : 0, 
-                branchDamnedYew: Math.random() < 0.3 ? 1 : 0 
+                branchDamnedYew: Math.random() < 0.4 ? 1 : 0,
+                bones: Math.random() < 0.5 ? 1 : 0,
+                feathers: Math.random() < 0.5 ? 1 : 0
             };
             
             if (parent.Sherwood.Bag && parent.Sherwood.Bag.addLoot) { 
@@ -497,12 +496,15 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                     gold: gold, silver: silver, exp: exp, 
                     skins: resources.skins, 
                     entranceTickets: resources.entranceTickets, 
+                    autoFightTickets: resources.autoFightTickets,
                     amuletTablets: resources.amuletTablets, 
                     ringTablets: resources.ringTablets, 
                     skinTablets: resources.skinTablets, 
                     skinDrawings: resources.skinDrawings, 
                     portalToken1: resources.portalToken1, 
-                    branchDamnedYew: resources.branchDamnedYew 
+                    branchDamnedYew: resources.branchDamnedYew,
+                    bones: resources.bones,
+                    feathers: resources.feathers
                 }); 
             }
             else { 
@@ -518,13 +520,16 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
             
             var lootMsgs = [];
-            if (resources.entranceTickets > 0) lootMsgs.push('+1 Тикет');
+            if (resources.entranceTickets > 0) lootMsgs.push('+1 Ключ подземки');
+            if (resources.autoFightTickets > 0) lootMsgs.push('+1 Билет автобоя');
             if (resources.amuletTablets > 0) lootMsgs.push('+1 Скрижаль амулета');
             if (resources.ringTablets > 0) lootMsgs.push('+1 Скрижаль кольца');
             if (resources.skinTablets > 0) lootMsgs.push('+1 Скрижаль скина');
             if (resources.skinDrawings > 0) lootMsgs.push('+1 Чертёж скина');
             if (resources.portalToken1 > 0) lootMsgs.push('+1 Токен портала');
             if (resources.branchDamnedYew > 0) lootMsgs.push('+1 Ветка тиса');
+            if (resources.bones > 0) lootMsgs.push('+1 Кость');
+            if (resources.feathers > 0) lootMsgs.push('+1 Перо');
             
             var msg = '+' + arrowDrop + ' стрел';
             if (lootMsgs.length > 0) msg += ', ' + lootMsgs.join(', ');
@@ -613,7 +618,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                     if (currentEnemySprite.parent) currentEnemySprite.parent.remove(currentEnemySprite);
                     battleRoom.add(currentEnemySprite);
                     
-                    // УМЕНЬШИЛИ врага и ОПУСТИЛИ вниз
                     var scale = currentEnemyObj && currentEnemyObj.isBoss ? 2.3 : 2.0;
                     currentEnemySprite.scale.set(scale, scale, 1);
                     
@@ -769,7 +773,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             var worldPos = new THREE.Vector3();
             currentEnemySprite.getWorldPosition(worldPos);
             
-            // Поднимаем бар ровно на макушку (половина высоты спрайта + небольшой отступ)
             worldPos.y += (currentEnemySprite.scale.y * 0.5) + 0.1; 
             
             worldPos.project(activeCamera);
@@ -780,7 +783,6 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             el.style.left = x + 'px';
             el.style.top = y + 'px';
             
-            // Центрируем по X и прижимаем низ бара к макушке врага
             el.style.transform = 'translate(-50%, -100%)';
         }
 
@@ -1071,11 +1073,20 @@ updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
             if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows; } }
             try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { parent.Sherwood.Bestiary.registerKill(currentPool.boss); } } catch(e) {}
             
-            // Формируем награды, добавляя выпавшие тикеты
+            // Формируем награды, добавляя выпавшие ресурсы
             var items = [];
-            if (runLoot.entranceTickets > 0) {
-                items.push({ icon: 'assets/assets2/icons/ticket.png', name: 'Тикет в портал', quantity: runLoot.entranceTickets });
-            }
+            if (runLoot.entranceTickets > 0) items.push({ icon: 'assets/interface/resource_key_to_locked_levels.png', name: 'Ключ подземки', quantity: runLoot.entranceTickets });
+            if (runLoot.autoFightTickets > 0) items.push({ icon: 'assets/interface/ticket_autofight.png', name: 'Билет автобоя', quantity: runLoot.autoFightTickets });
+            if (runLoot.portalToken1 > 0) items.push({ icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токен портала I', quantity: runLoot.portalToken1 });
+            if (runLoot.branchDamnedYew > 0) items.push({ icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветка тиса', quantity: runLoot.branchDamnedYew });
+            if (runLoot.bones > 0) items.push({ icon: 'assets/interface/bone_growth_of_the_beast.png', name: 'Кость бестии', quantity: runLoot.bones });
+            if (runLoot.feathers > 0) items.push({ icon: 'assets/interface/feather_beast_1.png', name: 'Перо твари', quantity: runLoot.feathers });
+            if (runLoot.skins > 0) items.push({ icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкура', quantity: runLoot.skins });
+            if (runLoot.amuletTablets > 0) items.push({ icon: 'assets/interface/amulet_crafting_tablet_resource.png', name: 'Скрижаль амулета', quantity: runLoot.amuletTablets });
+            if (runLoot.ringTablets > 0) items.push({ icon: 'assets/interface/ring_crafting_tablet_resource.png', name: 'Скрижаль кольца', quantity: runLoot.ringTablets });
+            if (runLoot.skinTablets > 0) items.push({ icon: 'assets/interface/resource_appearance_crafting_tablet.png', name: 'Скрижаль скина', quantity: runLoot.skinTablets });
+            if (runLoot.skinDrawings > 0) items.push({ icon: 'assets/interface/skin_drawing.png', name: 'Чертёж скина', quantity: runLoot.skinDrawings });
+
             var rewards = { cupEarned: true, exp: 500 + currentFloor * 100 + (currentDiff - 1) * 300 + runLoot.exp, gold: 250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold, silver: 100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver, items: items };
             
             try { 
