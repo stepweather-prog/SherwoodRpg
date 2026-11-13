@@ -945,89 +945,12 @@ UI.settings = function() {
 // ============================================================
 UI.bag = function() {
     UI._playSound('click');
-
-    // Пересчёт слотов
-    if (Sherwood.Bag && Sherwood.Bag._recalcMaxSlots) {
-        try { Sherwood.Bag._recalcMaxSlots(); } catch(e) {}
-    }
-
-    var items = Sherwood.Bag ? Sherwood.Bag.getItems() : [];
-    var max = Sherwood.Bag ? Sherwood.Bag.getMaxSlots() : 25;
-
-    // Свой фон + своя сетка со скроллом
-    var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/bag.png\') center/cover no-repeat fixed;overflow:hidden;">';
-
-    // Шапка со счётчиком
-    h += '<div style="position:absolute;top:56px;left:0;right:0;text-align:center;color:#e0c080;font-size:0.9em;font-weight:bold;text-shadow:0 2px 4px #000;z-index:5;padding:6px 0;">📦 ' + items.length + ' / ' + max + ' ячеек</div>';
-
-    // Скролл-контейнер только для сетки
-    h += '<div class="bag-scroll" style="position:absolute;top:96px;left:0;right:0;bottom:0;overflow-y:auto;padding:10px 12px 20px 12px;">';
-    h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;justify-items:center;">';
-
-    for (var i = 0; i < max; i++) {
-        var item = items[i];
-        if (item) {
-            var gc = Sherwood.GradeColors ? (Sherwood.GradeColors[item.grade] || '#9d9d9d') : '#9d9d9d';
-            h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="UI._bagDragStart(event,' + i + ')" ondragover="UI._bagDragOver(event)" ondrop="UI._bagDrop(event,' + i + ')" onclick="UI._bagAction(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;padding:4px;">';
-            h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-            if ((item.quantity || 1) > 1) {
-                h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;">' + item.quantity + '</span>';
-            }
-            h += '</div>';
-        } else {
-            h += '<div data-bag-index="' + i + '" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid #555;border-radius:8px;"></div>';
-        }
-    }
-    h += '</div>';
-    h += '<div id="bag-info" style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;margin-top:12px;min-height:24px;">Нажми на предмет</div>';
-    h += '</div>';
-    h += '</div>';
-
-    // Отключаем скролл родительского слоя
-    try { if (UI._screenLayer) UI._screenLayer.style.overflow = 'hidden'; } catch(e) {}
-
-    UI._openScreenScrollable('🎒 Сумка', null, h);
-};
-
-UI._bagDragStart = function(e, index) { e.dataTransfer.setData('text/plain', index); e.dataTransfer.effectAllowed = 'move'; };
-UI._bagDragOver = function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
-UI._bagDrop = function(e, targetIndex) {
-    e.preventDefault();
-    var sourceIndex = parseInt(e.dataTransfer.getData('text/plain'));
-    if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
-    var items = Sherwood.Bag.getItems();
-    if (sourceIndex >= items.length) return;
-    var sourceItem = items[sourceIndex];
-    var targetItem = items[targetIndex];
-    if (targetItem && sourceItem.id === targetItem.id && sourceItem.name === targetItem.name) {
-        var maxStack = Math.min(sourceItem.maxStack || 100, 100);
-        var totalQty = (sourceItem.quantity || 1) + (targetItem.quantity || 1);
-        if (totalQty <= maxStack) { targetItem.quantity = totalQty; items.splice(sourceIndex, 1); }
-        else { targetItem.quantity = maxStack; sourceItem.quantity = totalQty - maxStack; }
+    if (Sherwood.Bag && Sherwood.Bag.showUI) {
+        Sherwood.Bag.showUI();
     } else {
-        items[sourceIndex] = targetItem;
-        items[targetIndex] = sourceItem;
+        UI._showPlaceholder('Сумка', 'bag');
     }
-    Sherwood.Bag._save();
-    UI.bag();
 };
-
-UI._bagAction = function(i) {
-    var bag = Sherwood.Bag;
-    if (!bag) return;
-    var items = bag.getItems();
-    if (i >= items.length) return;
-    var item = items[i];
-    if (!item) return;
-    var info = document.getElementById('bag-info');
-    if (!info) return;
-    var a = '';
-    if (item.part) { a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');UI.bag();" style="background:#4caf50;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Надеть</button>'; }
-    a += '<button onclick="Sherwood.Bag.sellItem(' + i + ');UI.bag();" style="background:#ff9800;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Продать</button>';
-    a += '<button onclick="Sherwood.Bag.discardItem(' + i + ');UI.bag();" style="background:#f44336;border:none;border-radius:6px;padding:6px 14px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;">Выкинуть</button>';
-    info.innerHTML = '<div style="color:#e0c080;font-size:0.95em;font-weight:bold;">' + (item.name || 'Предмет') + '</div><div style="color:#aaa;font-size:0.75em;">' + (item.grade || 'обычный') + ' x' + (item.quantity || 1) + '</div><div style="margin-top:8px;">' + a + '</div>';
-};
-
 // ============================================================
 //  ДОПОЛНИТЕЛЬНЫЕ ЭКРАНЫ
 // ============================================================
