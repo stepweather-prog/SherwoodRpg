@@ -240,19 +240,23 @@ Sherwood.BlackMarket = (function() {
 
             var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
-            // Шапка: иконка НАД числом
-            h += '<div style="display:flex;justify-content:center;align-items:flex-end;gap:24px;margin-bottom:16px;">';
+            // === ШАПКА (Иконка над цифрой) ===
+            h += '<div style="display:flex;justify-content:center;align-items:flex-start;gap:30px;margin-bottom:20px;">';
             
             // Золото
-            h += '<div style="display:flex;flex-direction:column;align-items:center;">';
-            h += '<img src="assets/interface/resource_gold.png" style="width:32px;height:32px;object-fit:contain;margin-bottom:4px;">';
-            h += '<span style="color:#ffd700;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + gold + '</span>';
+            h += '<div style="text-align:center;line-height:1;">';
+            h += '<div style="height:38px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">';
+            h += '<img src="assets/interface/resource_gold.png" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,215,0,0.6));display:block;">';
+            h += '</div>';
+            h += '<span style="color:#ffd700;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + gold + '</span>';
             h += '</div>';
             
             // Серебро
-            h += '<div style="display:flex;flex-direction:column;align-items:center;">';
-            h += '<img src="assets/interface/resource_silver.png" style="width:32px;height:32px;object-fit:contain;margin-bottom:4px;">';
-            h += '<span style="color:#c0c0c0;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + silver + '</span>';
+            h += '<div style="text-align:center;line-height:1;">';
+            h += '<div style="height:38px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">';
+            h += '<img src="assets/interface/resource_silver.png" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(192,192,192,0.6));display:block;">';
+            h += '</div>';
+            h += '<span style="color:#e0e0e0;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + silver + '</span>';
             h += '</div>';
             
             h += '</div>';
@@ -263,7 +267,7 @@ Sherwood.BlackMarket = (function() {
                 h += '<div style="color:#888;font-size:0.75em;text-align:center;margin-bottom:16px;">Обновлений сегодня больше нет</div>';
             }
 
-            // Сетка карточек
+            // === СЕТКА КАРТОЧЕК ===
             h += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));gap:12px;justify-items:center;">';
             
             for (var i = 0; i < shopItems.length; i++) {
@@ -275,15 +279,17 @@ Sherwood.BlackMarket = (function() {
                 // Карточка
                 h += '<div onclick="Sherwood.BlackMarket._buyFromUI(' + i + ')" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;cursor:pointer;overflow:hidden;transition:transform 0.1s;">';
                 
-                // Иконка предмета
-                h += '<img src="' + item.icon + '" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.5));margin-bottom:20px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                // Иконка предмета (сдвинута чуть ниже, чтобы освободить место ценнику)
+                h += '<img src="' + item.icon + '" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.5));margin-top:15px;margin-bottom:15px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 
                 // Название (снизу)
                 h += '<div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;padding:0 2px;line-height:1.1;">' + item.name + '</div>';
                 
-                // Ценник: иконка НАД числом
-                h += '<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.85);border:1px solid rgba(200,160,80,0.5);border-radius:8px;padding:2px 8px;box-shadow:0 2px 4px rgba(0,0,0,0.5);">';
-                h += '<img src="' + currencyIcon + '" style="width:16px;height:16px;object-fit:contain;margin-bottom:1px;">';
+                // Ценник (Иконка НАД цифрой)
+                h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.8);border:1px solid rgba(200,160,80,0.6);border-radius:6px;padding:4px 6px;box-shadow:0 2px 4px rgba(0,0,0,0.5);line-height:1;">';
+                h += '<div style="height:18px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;">';
+                h += '<img src="' + currencyIcon + '" style="width:16px;height:16px;object-fit:contain;display:block;">';
+                h += '</div>';
                 h += '<span style="color:#fff;font-size:0.65em;font-weight:bold;text-shadow:0 1px 2px #000;">' + item.price + '</span>';
                 h += '</div>';
 
