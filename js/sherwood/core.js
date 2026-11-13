@@ -239,10 +239,12 @@ Sherwood.addExp = function(amount) {
         p.level++;
         
         // НАЧИСЛЕНИЕ ОЧКОВ ОПЫТА И ТАЛАНТОВ
-        p.experiencePoints = (p.experiencePoints || 0) + 20;
-        p.talentPoints = (p.talentPoints || 0) + 20;
+        p.experiencePoints = (p.experiencePoints || 0) + 1;
+        p.talentPoints = (p.talentPoints || 0) + 1;
         
-        p.expToLevel = Math.min(Math.floor(p.expToLevel * 1.3), 999999);
+        // Формула: 500 * (уровень ^ 1.8)
+// 1 ур: ~500, 2 ур: ~1750, 3 ур: ~3500, 5 ур: ~8500, 10 ур: ~28000
+p.expToLevel = Math.floor(500 * Math.pow(p.level, 1.8));
         this.dispatch({ type: 'PLAYER_LEVEL_UP', payload: { level: p.level } });
         this._recalcStats();
     }
