@@ -27,13 +27,15 @@
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
         #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+        #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
 
         #exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
 
         /* Контейнер для нижней панели боя (атака + скиллы) */
         #battle-controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 45; width: 100%; }
 
-        #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; border-radius: 50%; border: 3px solid #6b5a3a; background: radial-gradient(circle at center, rgba(200,160,80,0.25), rgba(0,0,0,0.7)); box-shadow: 0 0 20px rgba(139,107,58,0.5); display: flex; align-items: center; justify-content: center; transition: transform 0.1s; margin-bottom: 70px; }
+        /* Кнопка атаки теперь строго по центру */
+        #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; border-radius: 50%; border: 3px solid #6b5a3a; background: radial-gradient(circle at center, rgba(200,160,80,0.25), rgba(0,0,0,0.7)); box-shadow: 0 0 20px rgba(139,107,58,0.5); display: flex; align-items: center; justify-content: center; transition: transform 0.1s; margin-bottom: 20px; }
         #attack-icon:active { transform: scale(0.92); }
         #attack-icon img { width: 60px; height: 60px; object-fit: contain; }
 
@@ -66,8 +68,9 @@
             #wave-label { font-size: 12px !important; top: 6px !important; max-width: 90% !important; }
             #mob-hp { width: 220px !important; height: 150px !important; }
             #mob-hp-text { font-size: 15px !important; }
+            #mob-hp-name { font-size: 13px !important; top: -12px !important; }
             #battle-controls { bottom: 100px; gap: 10px; }
-            #attack-icon { width: 70px !important; height: 70px !important; margin-bottom: 50px !important; }
+            #attack-icon { width: 70px !important; height: 70px !important; margin-bottom: 10px !important; }
             #attack-icon img { width: 50px !important; height: 50px !important; }
             .skill-btn { width: 70px; height: 70px; }
             #skills-row { gap: 10px; }
@@ -78,12 +81,11 @@
     </style>
 </head>
 <body>
-    <!-- ФОН ПОРТАЛА -->
     <div id="portal-bg"></div>
-
     <div id="wave-label"></div>
 
     <div id="mob-hp">
+        <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
         <span id="mob-hp-text">HP: 0/0</span>
@@ -107,7 +109,6 @@
 
     <button id="exit-btn" onclick="exitPortal();">← Выйти</button>
 
-    <!-- Нижняя панель боя -->
     <div id="battle-controls">
         <div id="attack-icon"><img src="assets/assets2/talents/simple_attack.png" alt=""></div>
         <div id="skills-row"></div>
@@ -150,11 +151,6 @@
         var enemyTexture = null;
         var enemyBaseY = 0.55;
 
-        // ============================================================
-        //  Пути к спрайтам:
-        //   - боссы порталов  → assets/assets2/mobs/portal_mobs/
-        //   - guard'ы порталов → assets/all_beasts/
-        // ============================================================
         var BOSS_DIR  = 'assets/assets2/mobs/portal_mobs/';
         var GUARD_DIR = 'assets/all_beasts/';
 
@@ -179,7 +175,6 @@
                 enemySprite = null;
             }
             
-            // УМЕНЬШИЛИ врага (было 3.0 / 2.1, стало 2.3 / 2.0)
             var scale = isBoss ? 2.3 : 2.0;
             var dir = isBoss ? BOSS_DIR : GUARD_DIR;
             loadEnemyTexture(dir + imageName, function(tex) {
@@ -190,9 +185,8 @@
                     depthTest: false, depthWrite: false
                 }));
                 enemySprite.scale.set(scale, scale, 1);
-                // Центр спрайта ставим внизу, чтобы позиционировать от ног
                 enemySprite.center.set(0.5, 0);
-                // ОПУСТИЛИ врага вниз
+                // Опускаем врага вниз
                 enemySprite.position.set(0, -0.4, 0);
                 enemySprite.renderOrder = 10;
                 scene.add(enemySprite);
