@@ -257,10 +257,10 @@ Sherwood.BlackMarket = (function() {
 
             var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
-            // Шапка с иконками ресурсов
-            h += '<div style="display:flex;justify-content:center;gap:20px;margin-bottom:12px;font-size:0.9em;color:#e0c080;">';
-            h += '<span style="display:flex;align-items:center;gap:4px;"><img src="assets/interface/resource_gold.png" style="width:20px;height:20px;object-fit:contain;"> ' + gold + '</span>';
-            h += '<span style="display:flex;align-items:center;gap:4px;"><img src="assets/interface/resource_silver.png" style="width:20px;height:20px;object-fit:contain;"> ' + silver + '</span>';
+                        // Шапка с иконками ресурсов (иконка и число в одну строку)
+            h += '<div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:12px;font-size:0.95em;color:#e0c080;">';
+            h += '<span style="display:flex;align-items:center;gap:4px;line-height:1;"><img src="assets/interface/resource_gold.png" style="width:20px;height:20px;object-fit:contain;display:block;"> ' + gold + '</span>';
+            h += '<span style="display:flex;align-items:center;gap:4px;line-height:1;"><img src="assets/interface/resource_silver.png" style="width:20px;height:20px;object-fit:contain;display:block;"> ' + silver + '</span>';
             h += '</div>';
 
             if (canRefresh) {
