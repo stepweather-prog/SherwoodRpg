@@ -539,13 +539,18 @@
             }
         }
 
-        function exitPortal() {
+                function exitPortal() {
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             try { if (parent.Sherwood.Portal) { if (parent.Sherwood.Portal.isInPortal()) parent.Sherwood.Portal.fleePortal(); } } catch(e){}
             try { if (parent.UI) { parent.UI._lastPortal = portalId; parent.UI._lastDungeon = null; } } catch(e){}
             try {
-                if (parent.Sherwood && parent.Sherwood.Portal && parent.Sherwood.Portal.showUI) parent.Sherwood.Portal.showUI();
-                else if (parent.UI && parent.UI.dungeon) parent.UI.dungeon();
+                if (parent.Sherwood && parent.Sherwood.Portal && parent.Sherwood.Portal.showUI) {
+                    parent.Sherwood.Portal.showUI();
+                } else if (parent.UI && parent.UI.camp) {
+                    parent.UI.camp();
+                } else if (parent.UI && parent.UI.dungeon) {
+                    parent.UI.dungeon();
+                }
             } catch(e){}
         }
         window.exitPortal = exitPortal;
