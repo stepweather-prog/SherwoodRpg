@@ -1,15 +1,7 @@
 /**
- * Sherwood Bag — Сумка
- *  — старт: 10 ячеек, 20 ключей подземки, 10 билетов автобоя, 10 токенов портала
- *  — регенерация ключей подземки: 1 шт. каждые 40 минут, максимум 10
- *  — расширение: кнопка "Расширить" снизу (5 ячеек за 1000 шкур)
- *  — если шкур не хватает — можно докупить по 15 золота за штуку
- *  — весь лут (кроме золота/серебра) падает в ячейки, стак 50
- *  — UI: сетка ячеек, шапка с ресурсами, продажа с выбором количества
- *  — Drag-and-Drop для перемещения предметов между ячейками
- */
+ * Sherwood Bag — Сумка */
 
-if (typeof Sherwood === 'undefined') {
+ if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
 }
 
@@ -629,7 +621,7 @@ Sherwood.Bag = {
             if (UI._screenLayer) UI._screenLayer.style.overflow = 'hidden';
         } catch(e) {}
 
-        UI._openScreenScrollable('🎒 Сумка', null, h);
+        UI._openScreenScrollable('🎒 Сумка', null, h, 'UI.loadHome()');
     },
 
     _showExpandUI: function() {
