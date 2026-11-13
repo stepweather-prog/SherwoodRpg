@@ -1043,8 +1043,7 @@ UI.dungeon = function() {
     }
     h += '</div>';
 
-    UI._openScreen('🏚️ Подземка', null, h, 'UI.loadHome()');
-
+    UI._openScreen('🏚️ Подземка', null, h, 'UI.camp()');
     var carousel = document.getElementById('dungeon-carousel');
     if (carousel) {
         var startY = 0;
