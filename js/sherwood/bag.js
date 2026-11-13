@@ -1,10 +1,11 @@
 /**
  * Sherwood Bag — Сумка
- *  — старт: 10 ячеек
+ *  — старт: 10 ячеек, 20 ключей подземки, 10 билетов автобоя, 10 токенов портала
+ *  — регенерация ключей подземки: 1 шт. каждые 40 минут, максимум 10
  *  — расширение: кнопка "Расширить" снизу (5 ячеек за 1000 шкур)
  *  — если шкур не хватает — можно докупить по 15 золота за штуку
  *  — весь лут (кроме золота/серебра) падает в ячейки, стак 50
- *  — UI: сетка ячеек, шапка с золотом/серебром/шкурами, продажа с выбором количества
+ *  — UI: сетка ячеек, шапка с ресурсами, продажа с выбором количества
  *  — Drag-and-Drop для перемещения предметов между ячейками
  */
 
@@ -114,6 +115,34 @@ Sherwood.Bag = {
             delete player.bagResources;
         }
 
+        // ===== СТАРТОВЫЕ ПРЕДМЕТЫ =====
+        var hasAnyEntrance = false;
+        var hasAnyAutoFight = false;
+        var hasAnyPortalToken = false;
+        for (var i = 0; i < this._inventory.length; i++) {
+            if (this._inventory[i].id === 'entrance_ticket') hasAnyEntrance = true;
+            if (this._inventory[i].id === 'autofight_ticket') hasAnyAutoFight = true;
+            if (this._inventory[i].id === 'portal_token_1') hasAnyPortalToken = true;
+        }
+        if (!hasAnyEntrance && !player._starterTicketsGiven) {
+            this._addAsItem('entranceTickets', 20);
+        }
+        if (!hasAnyAutoFight && !player._starterAutoFightGiven) {
+            this._addAsItem('autoFightTickets', 10);
+        }
+        if (!hasAnyPortalToken && !player._starterPortalTokenGiven) {
+            this._addAsItem('portalToken1', 10);
+        }
+        // Помечаем, чтобы не выдавать повторно
+        player._starterTicketsGiven = true;
+        player._starterAutoFightGiven = true;
+        player._starterPortalTokenGiven = true;
+        // ==============================
+
+        // ===== РЕГЕНЕРАЦИЯ КЛЮЧЕЙ ПОДЗЕМКИ =====
+        this._initTicketRegen(player);
+        // =========================================
+
         // Стак не больше 50
         for (var i = 0; i < this._inventory.length; i++) {
             if (!this._inventory[i].maxStack || this._inventory[i].maxStack > 50) {
@@ -128,6 +157,53 @@ Sherwood.Bag = {
 
         this._save();
         console.log('🎒 Сумка инициализирована: ' + this._maxSlots + ' слотов');
+    },
+
+    _initTicketRegen: function(player) {
+        if (!player.ticketRegen) {
+            player.ticketRegen = {
+                lastRegenTime: Date.now(),
+                maxTickets: 10,
+                regenIntervalMs: 40 * 60 * 1000 // 40 минут
+            };
+        }
+        // Проверяем прямо сейчас
+        this._checkTicketRegen();
+    },
+
+    _checkTicketRegen: function() {
+        var player = Sherwood.getPlayer();
+        if (!player || !player.ticketRegen) return;
+
+        var regen = player.ticketRegen;
+        var now = Date.now();
+        var elapsed = now - regen.lastRegenTime;
+        var interval = regen.regenIntervalMs;
+        var max = regen.maxTickets;
+
+        var currentCount = this.getTicketCount('entrance');
+
+        if (currentCount >= max) {
+            // Если уже максимум — просто сбрасываем таймер на "сейчас", чтобы не копилось
+            regen.lastRegenTime = now;
+            return;
+        }
+
+        if (elapsed >= interval) {
+            var ticketsToAdd = Math.floor(elapsed / interval);
+            var canAdd = Math.min(ticketsToAdd, max - currentCount);
+            if (canAdd > 0) {
+                this._addAsItem('entranceTickets', canAdd);
+                // Сдвигаем время на количество добавленных интервалов
+                regen.lastRegenTime = now - (elapsed % interval);
+                this._save();
+                console.log('🔑 Начислено ' + canAdd + ' ключей подземки (регенерация)');
+            }
+            // Если после добавления всё равно меньше максимума — таймер сдвинут правильно
+            if (this.getTicketCount('entrance') >= max) {
+                regen.lastRegenTime = now;
+            }
+        }
     },
 
     getItems: function() { return this._inventory; },
@@ -459,6 +535,17 @@ Sherwood.Bag = {
         return total;
     },
 
+    getTicketCount: function(type) {
+        var total = 0;
+        var targetId = type === 'entrance' ? 'entrance_ticket' : (type === 'autofight' ? 'autofight_ticket' : 'portal_token_1');
+        for (var i = 0; i < this._inventory.length; i++) {
+            if (this._inventory[i].id === targetId) {
+                total += this._inventory[i].quantity || 0;
+            }
+        }
+        return total;
+    },
+
     _save: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
@@ -480,18 +567,27 @@ Sherwood.Bag = {
         }
         UI._playSound('click');
 
+        // Перед открытием проверяем регенерацию
+        this._checkTicketRegen();
+
         var items = this._inventory;
         var max = this._maxSlots;
         var skinsCount = this.getSkinCount();
+        var entranceCount = this.getTicketCount('entrance');
+        var autofightCount = this.getTicketCount('autofight');
+        var portalTokenCount = this.getTicketCount('portal');
 
         // Фон fixed — не растягивается при скролле
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/bag.png\') center/cover no-repeat fixed;overflow:hidden;">';
 
-        // Шапка с золотом, серебром и шкурами
-        h += '<div style="position:absolute;top:56px;left:0;right:0;text-align:center;color:#e0c080;font-size:0.9em;font-weight:bold;text-shadow:0 2px 4px #000;z-index:5;padding:6px 0;display:flex;justify-content:center;gap:20px;">';
+        // Шапка с ресурсами
+        h += '<div style="position:absolute;top:56px;left:0;right:0;text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;text-shadow:0 2px 4px #000;z-index:5;padding:6px 0;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">';
         h += '<span>🪙 ' + this._resources.gold + '</span>';
         h += '<span>🥈 ' + this._resources.silver + '</span>';
         h += '<span>🐺 ' + skinsCount + '</span>';
+        h += '<span>🔑 ' + entranceCount + '</span>';
+        h += '<span>⚔️ ' + autofightCount + '</span>';
+        h += '<span>🔮 ' + portalTokenCount + '</span>';
         h += '</div>';
 
         // Счётчик ячеек чуть ниже
