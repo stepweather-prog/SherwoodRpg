@@ -1132,86 +1132,9 @@ UI._grantCup = function(dungeonId, floor, diff) {
 };
 
 UI._dungeonShowFloors = function(dungeonId) {
-    UI._playSound('click');
-    UI._stopMusic();
-
-    // Проверяем завершённые бесплатные автобои
-    if (Sherwood.Dungeon && Sherwood.Dungeon.checkFreeAutoFights) {
-        Sherwood.Dungeon.checkFreeAutoFights();
+    if (Sherwood.Dungeon && Sherwood.Dungeon.showFloors) {
+        Sherwood.Dungeon.showFloors(dungeonId);
     }
-
-    var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
-
-    // Шапка с билетами и кнопкой докупки
-    var entranceCount = Sherwood.Dungeon.getEntranceTickets ? Sherwood.Dungeon.getEntranceTickets() : 0;
-    var autoCount = Sherwood.Dungeon.getAutoFightTickets ? Sherwood.Dungeon.getAutoFightTickets() : 0;
-    h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:0.9em;color:#e0c080;">';
-    h += '<span>🔑 ' + entranceCount + ' <button onclick="UI._buyDungeonTicket(\'entrance\')" style="background:#c9a040;border:none;border-radius:4px;padding:2px 8px;color:#000;cursor:pointer;font-size:0.7em;margin-left:4px;">+</button></span>';
-    h += '<span>⚔️ ' + autoCount + ' <button onclick="UI._buyDungeonTicket(\'autofight\')" style="background:#c9a040;border:none;border-radius:4px;padding:2px 8px;color:#000;cursor:pointer;font-size:0.7em;margin-left:4px;">+</button></span>';
-    h += '</div>';
-
-    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:420px;margin:0 auto;">';
-
-    for (var n = 1; n <= 6; n++) {
-        var cups = UI._getFloorCups(dungeonId, n);
-        var f1 = UI._isFloorAvailable(dungeonId, n, 1);
-        var f2 = UI._isFloorAvailable(dungeonId, n, 2);
-        var f3 = UI._isFloorAvailable(dungeonId, n, 3);
-
-        var floorTile;
-        if (dungeonId === 2) floorTile = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
-        else if (dungeonId === 3) floorTile = 'assets/assets2/Sherwood_Floor/ceiling_raid.png';
-        else if (dungeonId === 4) floorTile = 'assets/assets2/Sherwood_Square/floors_quest.png';
-        else floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
-
-        h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
-        h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
-
-        if (!f1) {
-            h += '<img src="assets/assets2/game_details/closed_level_lock_icon.png" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;object-fit:contain;opacity:0.9;pointer-events:none;">';
-        }
-
-        h += '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
-        for (var k = 1; k <= 3; k++) {
-            var hasCup = cups >= k;
-            var isOpen = (k === 1 && f1) || (k === 2 && f2) || (k === 3 && f3);
-            var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
-            var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
-            var clickAttr = isOpen ? 'onclick="event.stopPropagation();UI._dungeonEnter(' + dungeonId + ',' + n + ',' + k + ')"' : '';
-            var cursor = isOpen ? 'pointer' : 'not-allowed';
-
-            h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
-            if (hasCup) {
-                h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">';
-            } else if (!isOpen) {
-                h += '<span style="color:#666;font-size:12px;font-weight:bold;">🔒</span>';
-            } else {
-                h += '<span style="color:#8b6b3a;font-size:11px;font-weight:bold;">' + k + '</span>';
-            }
-            h += '</div>';
-        }
-        h += '</div>';
-
-        // Кнопки автобоя (только если есть кубок на этой сложности)
-        if (cups >= 1) {
-            h += '<div style="position:absolute;top:30px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
-            for (var k = 1; k <= cups; k++) {
-                h += '<button onclick="event.stopPropagation();UI._startAutoFight(' + dungeonId + ',' + n + ',' + k + ')" style="background:rgba(0,0,0,0.7);border:1px solid #ffd700;border-radius:4px;padding:2px 6px;color:#ffd700;font-size:0.6em;cursor:pointer;">⚔️ Автобой ' + k + '</button>';
-            }
-            // Бесплатный автобой, если нет билетов автобоя
-            if (Sherwood.Dungeon.getAutoFightTickets() <= 0) {
-                h += '<button onclick="event.stopPropagation();UI._startFreeAutoFight(' + dungeonId + ',' + n + ',' + cups + ')" style="background:rgba(0,0,0,0.7);border:1px solid #4caf50;border-radius:4px;padding:2px 6px;color:#4caf50;font-size:0.6em;cursor:pointer;">⏳ Бесплатно (15м)</button>';
-            }
-            h += '</div>';
-        }
-
-        h += '</div>';
-    }
-
-    h += '</div>';
-    h += '</div>';
-
-    UI._openScreenScrollable('🏚️ Выбор этажа', null, h, 'UI.dungeon()');
 };
 
 UI._dungeonEnter = function(dungeonId, floor, diff) {
