@@ -1233,7 +1233,21 @@ UI._dungeonShowFloors = function(dungeonId) {
     UI._playSound('click');
     UI._stopMusic();
 
+    // Проверяем завершённые бесплатные автобои
+    if (Sherwood.Dungeon && Sherwood.Dungeon.checkFreeAutoFights) {
+        Sherwood.Dungeon.checkFreeAutoFights();
+    }
+
     var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
+
+    // Шапка с билетами и кнопкой докупки
+    var entranceCount = Sherwood.Dungeon.getEntranceTickets ? Sherwood.Dungeon.getEntranceTickets() : 0;
+    var autoCount = Sherwood.Dungeon.getAutoFightTickets ? Sherwood.Dungeon.getAutoFightTickets() : 0;
+    h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:0.9em;color:#e0c080;">';
+    h += '<span>🔑 ' + entranceCount + ' <button onclick="UI._buyDungeonTicket(\'entrance\')" style="background:#c9a040;border:none;border-radius:4px;padding:2px 8px;color:#000;cursor:pointer;font-size:0.7em;margin-left:4px;">+</button></span>';
+    h += '<span>⚔️ ' + autoCount + ' <button onclick="UI._buyDungeonTicket(\'autofight\')" style="background:#c9a040;border:none;border-radius:4px;padding:2px 8px;color:#000;cursor:pointer;font-size:0.7em;margin-left:4px;">+</button></span>';
+    h += '</div>';
+
     h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:420px;margin:0 auto;">';
 
     for (var n = 1; n <= 6; n++) {
@@ -1242,13 +1256,13 @@ UI._dungeonShowFloors = function(dungeonId) {
         var f2 = UI._isFloorAvailable(dungeonId, n, 2);
         var f3 = UI._isFloorAvailable(dungeonId, n, 3);
 
-       var floorTile;
-if (dungeonId === 2) floorTile = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
-else if (dungeonId === 3) floorTile = 'assets/assets2/Sherwood_Square/ceiling_raid.png';
-else if (dungeonId === 4) floorTile = 'assets/assets2/Sherwood_Square/floors_quest.png';
-else floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
+        var floorTile;
+        if (dungeonId === 2) floorTile = 'assets/assets2/dungeon_details/swamp_tiles_6.png';
+        else if (dungeonId === 3) floorTile = 'assets/assets2/Sherwood_Floor/ceiling_raid.png';
+        else if (dungeonId === 4) floorTile = 'assets/assets2/Sherwood_Square/floors_quest.png';
+        else floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
 
-h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
+        h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
         h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
 
         if (!f1) {
@@ -1275,6 +1289,20 @@ h += '<div style="position:relative;width:100%;padding-bottom:100%;background:ur
             h += '</div>';
         }
         h += '</div>';
+
+        // Кнопки автобоя (только если есть кубок на этой сложности)
+        if (cups >= 1) {
+            h += '<div style="position:absolute;top:30px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
+            for (var k = 1; k <= cups; k++) {
+                h += '<button onclick="event.stopPropagation();UI._startAutoFight(' + dungeonId + ',' + n + ',' + k + ')" style="background:rgba(0,0,0,0.7);border:1px solid #ffd700;border-radius:4px;padding:2px 6px;color:#ffd700;font-size:0.6em;cursor:pointer;">⚔️ Автобой ' + k + '</button>';
+            }
+            // Бесплатный автобой, если нет билетов автобоя
+            if (Sherwood.Dungeon.getAutoFightTickets() <= 0) {
+                h += '<button onclick="event.stopPropagation();UI._startFreeAutoFight(' + dungeonId + ',' + n + ',' + cups + ')" style="background:rgba(0,0,0,0.7);border:1px solid #4caf50;border-radius:4px;padding:2px 6px;color:#4caf50;font-size:0.6em;cursor:pointer;">⏳ Бесплатно (15м)</button>';
+            }
+            h += '</div>';
+        }
+
         h += '</div>';
     }
 
@@ -1287,6 +1315,13 @@ h += '<div style="position:relative;width:100%;padding-bottom:100%;background:ur
 UI._dungeonEnter = function(dungeonId, floor, diff) {
     UI._playSound('click');
     UI._stopMusic();
+
+    // Проверяем билет
+    if (!Sherwood.Dungeon.spendEntranceTicket()) {
+        var cost = Sherwood.Dungeon.getBuyTicketCost('entrance');
+        if (UI._showToast) UI._showToast('❌ Нет ключей! Докупить за ' + cost + ' золота?');
+        return;
+    }
 
     try {
         if (window.stopMainMusic) window.stopMainMusic();
@@ -1309,6 +1344,37 @@ UI._dungeonEnter = function(dungeonId, floor, diff) {
         UI._screenLayer.innerHTML = '';
         UI._screenLayer.appendChild(iframe);
         UI._screenLayer.style.display = 'block';
+    }
+};
+
+// Дополнительные функции для кнопок
+UI._buyDungeonTicket = function(type) {
+    var r = Sherwood.Dungeon.buyTicket(type);
+    if (r.success) {
+        UI._showToast('✅ Куплено за ' + r.cost + ' золота');
+        UI._dungeonShowFloors(UI._lastDungeon || 1);
+    } else {
+        UI._showToast('❌ ' + r.reason);
+    }
+};
+
+UI._startAutoFight = function(dungeonId, floor, diff) {
+    var r = Sherwood.Dungeon.startAutoFight(floor, diff);
+    if (r.success) {
+        UI._showToast('✅ Автобой запущен...');
+        setTimeout(function() { UI._dungeonShowFloors(dungeonId); }, 3100);
+    } else {
+        UI._showToast('❌ ' + r.reason);
+    }
+};
+
+UI._startFreeAutoFight = function(dungeonId, floor, diff) {
+    var r = Sherwood.Dungeon.startFreeAutoFight(floor, diff);
+    if (r.success) {
+        UI._showToast('⏳ Бесплатный автобой начат. Награды через 15 минут.');
+        setTimeout(function() { UI._dungeonShowFloors(dungeonId); }, 1000);
+    } else {
+        UI._showToast('❌ ' + r.reason);
     }
 };
 UI.market = function() {
