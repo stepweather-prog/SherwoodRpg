@@ -285,27 +285,21 @@ UI._hideDungeonVideo = function() {
 };
 
 // ============================================================
-//  ЭКРАНЫ — ЕДИНАЯ ФУНКЦИЯ (ИСПРАВЛЕННАЯ ШАПКА)
+//  ЭКРАНЫ — ТОЛЬКО ВСТАВКА HTML (БЕЗ ШАПОК И СТРЕЛОК)
 // ============================================================
 UI._openScreen = function(title, bgKey, html, backFn) {
-    var goBack = backFn || (UI._cameFromCamp ? 'UI.camp()' : 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
             if (UI._bg && UI._bg[bgKey]) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
-            
             if (bgKey === null) {
                 bgStyle = 'background:transparent;';
             }
             
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:10px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>
-                        <span style="color:#e0c080;font-size:18px;font-weight:bold;">${title}</span>
-                    </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
                     </div>
@@ -324,24 +318,18 @@ UI._openScreen = function(title, bgKey, html, backFn) {
 };
 
 UI._openScreenScrollable = function(title, bgKey, html, backFn) {
-   var goBack = UI._cameFromCamp ? 'UI.camp()' : (backFn || 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
             if (UI._bg && UI._bg[bgKey]) {
                 bgStyle = 'background-image:url(\'' + UI._bg[bgKey] + '\');background-size:cover;background-position:center;background-repeat:no-repeat;background-color:transparent;';
             }
-            
             if (bgKey === null) {
                 bgStyle = 'background:transparent;';
             }
             
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="display:flex;flex-direction:row;justify-content:center;align-items:center;gap:10px;padding:10px;flex-shrink:0;position:sticky;top:0;z-index:10;background:transparent;">
-                        <button onclick="${goBack}" style="background:transparent;border:none;cursor:pointer;color:#e0c080;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;"> ← </button>
-                        <span style="color:#e0c080;font-size:18px;font-weight:bold;">${title}</span>
-                    </div>
                     <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
                         ${html}
                     </div>
@@ -357,34 +345,6 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             UI._screenLayer.style.background = 'transparent';
         }
     } catch(e) {}
-};
-
-UI._showPlaceholder = function(title, bgKey, backAction) {
-    UI._playSound('click');
-    UI._openScreen(title, bgKey, `
-        <div style="text-align:center;padding:40px 0;">
-            <div style="font-size:3em;margin-bottom:16px;">🚧</div>
-            <div style="font-size:1.2em;color:#e0c080;margin-bottom:8px;">${title}</div>
-            <div style="font-size:0.7em;color:#888;">В разработке</div>
-        </div>
-    `, backAction);
-};
-
-UI.loadHome = function() {
-    UI._hideDungeonVideo();
-    UI._cameFromCamp = false;
-    UI._campReturnInfo = null;   // ← вот сюда переносим сброс
-
-    try {
-        if (UI._screenLayer) {
-            UI._screenLayer.style.display = 'none';
-            UI._screenLayer.innerHTML = '';
-        }
-    } catch(e) {}
-    try { UI.updateDisplay(); } catch(e) {}
-    if (typeof showHomeScreen === 'function') {
-        showHomeScreen();
-    }
 };
 
 // ============================================================
