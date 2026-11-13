@@ -21,7 +21,8 @@ UI._bg = {
     settings: 'assets/assets2/backgrounds/settings_visual.png',
     portal: 'assets/assets2/backgrounds/portal.png',
     talents: 'assets/assets2/backgrounds/visual_talents.png',
-    dungeon: 'assets/assets2/backgrounds/visual_dungeon.png'
+    dungeon: 'assets/assets2/backgrounds/visual_dungeon.png',
+    thicket: 'assets/assets2/backgrounds/sherwood_thicket.png'
 };
 
 UI._statIcons = { 
@@ -1043,7 +1044,7 @@ UI.dungeon = function() {
     }
     h += '</div>';
 
-    UI._openScreen('🏚️ Подземка', null, h, 'UI.camp()');
+    UI._openScreen('🏚️ Подземка', 'thicket', h, 'UI.camp()');
     var carousel = document.getElementById('dungeon-carousel');
     if (carousel) {
         var startY = 0;
