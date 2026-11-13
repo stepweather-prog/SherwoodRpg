@@ -17,48 +17,13 @@ Sherwood.BlackMarket = (function() {
         { id: 'bone', name: 'Кость бестии', icon: 'assets/interface/bone_growth_of_the_beast.png', price: 80, currency: 'silver', gives: { bones: 15 }, desc: '+15 костей' },
         { id: 'branch', name: 'Ветка проклятого тиса', icon: 'assets/interface/branch_of_the_damned_yew.png', price: 80, currency: 'silver', gives: { branches: 15 }, desc: '+15 веток' },
         { id: 'feather', name: 'Перо шервудской твари', icon: 'assets/interface/feather_beast_1.png', price: 80, currency: 'silver', gives: { feathers: 15 }, desc: '+15 перьев' },
-        { id: 'skin', name: 'Шкура бестии', icon: 'assets/interface/skin_of_the_sherwood_creature.png', price: 150, currency: 'silver', gives: { skins: 5 }, desc: '+5 шкур' },
         { id: 'dungeon_ticket', name: 'Тикет подземки', icon: 'assets/interface/resource_key_to_locked_levels.png', price: 200, currency: 'silver', gives: { entranceTickets: 1 }, desc: '+1 тикет входа' },
         { id: 'autofight_ticket', name: 'Тикет автобоя', icon: 'assets/interface/ticket_autofight.png', price: 300, currency: 'silver', gives: { autoFightTickets: 1 }, desc: '+1 тикет автобоя' },
         { id: 'portal_token_1', name: 'Токен портала I', icon: 'assets/interface/resource_token_on_entrance_portal_1.png', price: 500, currency: 'silver', gives: { portalToken1: 1 }, desc: '+1 токен' },
-        { id: 'portal_token_2', name: 'Токен портала II', icon: 'assets/interface/resource_token_on_entrance_portal_2.png', price: 750, currency: 'silver', gives: { portalToken2: 1 }, desc: '+1 токен' },
-        { id: 'portal_token_3', name: 'Токен портала III', icon: 'assets/interface/resource_token_on_entrance_portal_3.png', price: 1000, currency: 'silver', gives: { portalToken3: 1 }, desc: '+1 токен' },
-        { id: 'wood', name: 'Древесина', icon: 'assets/interface/resource_wood.png', price: 100, currency: 'silver', gives: { wood: 20 }, desc: '+20 древесины' },
         { id: 'skin_drawing', name: 'Чертёж скина', icon: 'assets/interface/skin_drawing.png', price: 500, currency: 'gold', gives: { skinDrawings: 1 }, desc: '+1 чертёж скина' }
     ];
 
-    var RINGS = [
-        { chapter: 1, price: 500, stats: { attack: 5, defense: 3 } },
-        { chapter: 2, price: 1000, stats: { attack: 10, defense: 6 } },
-        { chapter: 3, price: 2000, stats: { attack: 18, defense: 10 } },
-        { chapter: 4, price: 3500, stats: { attack: 28, defense: 16 } },
-        { chapter: 5, price: 5500, stats: { attack: 40, defense: 24 } },
-        { chapter: 6, price: 8000, stats: { attack: 55, defense: 34 } },
-        { chapter: 7, price: 10000, stats: { attack: 68, defense: 42 } },
-        { chapter: 8, price: 12000, stats: { attack: 75, defense: 48 } },
-        { chapter: 9, price: 16000, stats: { attack: 88, defense: 56 } },
-        { chapter: 10, price: 20000, stats: { attack: 100, defense: 65 } },
-        { chapter: 11, price: 26000, stats: { attack: 118, defense: 78 } },
-        { chapter: 12, price: 35000, stats: { attack: 140, defense: 90 } },
-        { chapter: 13, price: 47000, stats: { attack: 168, defense: 110 } },
-        { chapter: 14, price: 60000, stats: { attack: 200, defense: 130 } }
-    ];
-
-    var AMULETS = [
-        { chapter: 1, price: 500, stats: { hp: 50, defense: 3 } },
-        { chapter: 2, price: 1000, stats: { hp: 100, defense: 6 } },
-        { chapter: 3, price: 2000, stats: { hp: 180, defense: 10 } },
-        { chapter: 4, price: 3500, stats: { hp: 280, defense: 16 } },
-        { chapter: 5, price: 5500, stats: { hp: 400, defense: 24 } },
-        { chapter: 6, price: 8000, stats: { hp: 550, defense: 34 } },
-        { chapter: 7, price: 10000, stats: { hp: 700, defense: 42 } },
-        { chapter: 8, price: 13000, stats: { hp: 900, defense: 52 } },
-        { chapter: 9, price: 17000, stats: { hp: 1150, defense: 64 } },
-        { chapter: 10, price: 22000, stats: { hp: 1500, defense: 78 } }
-    ];
-
     var RESOURCE_HANDLERS = {
-        wood: { method: 'addItem', itemDef: { id: 'wood', name: 'Дерево', icon: 'assets/interface/resource_wood.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 2 } },
         branches: { method: 'addItem', itemDef: { id: 'branch', name: 'Ветка', icon: 'assets/interface/branch_of_the_damned_yew.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 } },
         bones: { method: 'addItem', itemDef: { id: 'bone', name: 'Кость', icon: 'assets/interface/bone_growth_of_the_beast.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 } },
         feathers: { method: 'addItem', itemDef: { id: 'feather', name: 'Перо', icon: 'assets/interface/feather_beast_1.png', grade: 'common', type: 'resource', maxStack: 99, sellPrice: 3 } },
@@ -66,8 +31,6 @@ Sherwood.BlackMarket = (function() {
         entranceTickets: { method: 'addResource', bagKey: 'entranceTickets' },
         autoFightTickets: { method: 'addResource', bagKey: 'autoFightTickets' },
         portalToken1: { method: 'addResource', bagKey: 'portalToken1' },
-        portalToken2: { method: 'addResource', bagKey: 'portalToken2' },
-        portalToken3: { method: 'addResource', bagKey: 'portalToken3' },
         skinDrawings: { method: 'addResource', bagKey: 'skinTablets' }
     };
 
@@ -84,12 +47,6 @@ Sherwood.BlackMarket = (function() {
         var cbs = _listeners[event];
         if (!cbs) return;
         for (var i = 0; i < cbs.length; i++) cbs[i](data);
-    }
-
-    function _getCurrentChapter() {
-        var p = _getPlayer();
-        if (!p || !p.questProgress || !p.questProgress.currentChapter) return 1;
-        return p.questProgress.currentChapter;
     }
 
     function _ensureMarketData(p) {
@@ -171,28 +128,7 @@ Sherwood.BlackMarket = (function() {
         Sherwood.saveGame();
     }
 
-    function _getRingIconSuffix(chapter) {
-        var map = {
-            1: 'first_level', 2: 'second_level', 3: 'third_level',
-            4: 'fourth_level', 5: 'fifth_level', 6: 'chapter_six',
-            7: 'chapter_seven', 8: 'chapter_eight', 9: 'chapter_nine',
-            10: 'chapter_ten', 11: 'chapter_eleven', 12: 'chapter_twelve',
-            13: 'chapter_thirteen', 14: 'the_ring_chapter_fourteen'
-        };
-        return map[chapter] || 'chapter_' + chapter;
-    }
-
-    function _getAmuletIconSuffix(chapter) {
-        var map = {
-            1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five',
-            6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten'
-        };
-        return map[chapter] || String(chapter);
-    }
-
     return {
-        RINGS: RINGS,
-        AMULETS: AMULETS,
         CONSUMABLES: CONSUMABLES,
 
         init: function() {
@@ -290,108 +226,6 @@ Sherwood.BlackMarket = (function() {
             var result = { success: true, item: item };
             _emit('itemPurchased', result);
             return result;
-        },
-
-        getAvailableRings: function() {
-            var chapter = _getCurrentChapter();
-            var result = [];
-            for (var i = 0; i < RINGS.length; i++) {
-                if (RINGS[i].chapter <= chapter) {
-                    result.push({
-                        id: 'ring_' + RINGS[i].chapter,
-                        name: 'Кольцо главы ' + RINGS[i].chapter,
-                        icon: 'assets/interface/ring_' + _getRingIconSuffix(RINGS[i].chapter) + '.png',
-                        chapter: RINGS[i].chapter,
-                        price: RINGS[i].price,
-                        stats: RINGS[i].stats
-                    });
-                }
-            }
-            return result;
-        },
-
-        getAvailableAmulets: function() {
-            var chapter = _getCurrentChapter();
-            var result = [];
-            for (var i = 0; i < AMULETS.length; i++) {
-                if (AMULETS[i].chapter <= chapter) {
-                    result.push({
-                        id: 'amulet_' + AMULETS[i].chapter,
-                        name: 'Амулет главы ' + AMULETS[i].chapter,
-                        icon: 'assets/interface/sherwood_amulet_level_' + _getAmuletIconSuffix(AMULETS[i].chapter) + '.png',
-                        chapter: AMULETS[i].chapter,
-                        price: AMULETS[i].price,
-                        stats: AMULETS[i].stats
-                    });
-                }
-            }
-            return result;
-        },
-
-        buyJewelry: function(type, jewelryId) {
-            if (type !== 'ring' && type !== 'amulet') {
-                return { success: false, reason: 'Неверный тип: ' + type };
-            }
-
-            var source = type === 'ring' ? RINGS : AMULETS;
-            var item = null;
-            var chapter = null;
-            var parts = jewelryId.split('_');
-            chapter = parseInt(parts[parts.length - 1], 10);
-
-            for (var i = 0; i < source.length; i++) {
-                if (source[i].chapter === chapter) { item = source[i]; break; }
-            }
-            if (!item) return { success: false, reason: 'Изделие не найдено' };
-
-            var p = _getPlayer();
-            if (!p) return { success: false, reason: 'Ошибка загрузки игрока' };
-            _ensureMarketData(p);
-
-            if (p.marketData.ownedJewelry[type + 's'].indexOf(jewelryId) !== -1) {
-                return { success: false, reason: 'Уже куплено' };
-            }
-            if (chapter > _getCurrentChapter()) {
-                return { success: false, reason: 'Глава ' + chapter + ' ещё не открыта' };
-            }
-            if ((p.resources.silver || 0) < item.price) {
-                return { success: false, reason: 'Недостаточно серебра' };
-            }
-
-            Sherwood.spendResource('silver', item.price);
-
-            var equipItem = {
-                id: jewelryId,
-                name: type === 'ring' ? 'Кольцо главы ' + chapter : 'Амулет главы ' + chapter,
-                icon: type === 'ring' ?
-                    'assets/interface/ring_' + _getRingIconSuffix(chapter) + '.png' :
-                    'assets/interface/sherwood_amulet_level_' + _getAmuletIconSuffix(chapter) + '.png',
-                part: type,
-                stats: item.stats,
-                grade: 'rare',
-                type: 'equipment',
-                quantity: 1,
-                sellPrice: 0
-            };
-
-            if (Sherwood.Bag && Sherwood.Bag._equipment) {
-                Sherwood.Bag._equipment[type] = equipItem;
-            }
-
-            p.marketData.ownedJewelry[type + 's'].push(jewelryId);
-            if (typeof Sherwood._recalcStats === 'function') Sherwood._recalcStats();
-            Sherwood.saveGame();
-
-            var result = { success: true, type: type, item: equipItem };
-            _emit('jewelryPurchased', result);
-            return result;
-        },
-
-        isJewelryOwned: function(type, jewelryId) {
-            var p = _getPlayer();
-            if (!p || !p.marketData || !p.marketData.ownedJewelry) return false;
-            var list = p.marketData.ownedJewelry[type + 's'] || [];
-            return list.indexOf(jewelryId) !== -1;
         },
 
         on: function(event, callback) {
