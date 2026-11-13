@@ -1,278 +1,336 @@
-// ============================================================
-//  js/sherwood/tavern.js — Таверна Гаррета
-// ============================================================
+/**
+ * Sherwood Talents — Таланты героя (v10)
+ *  — Шрифт талантов как у табличек (золотистый, 0.9em)
+ *  — Кнопка "Назад" возвращает в лагерь
+ */
 
 if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
 }
 
-Sherwood.Tavern = {
-    CHAPTERS: [
-        { id: 1, title: 'Кровь Великого Дуба', quest: 'Останови осквернение леса, найди источник проклятия', enemy: { name: 'Лесничий-Отступник', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 }, reward: { exp: 200, gold: 50, silver: 500 }, lore: 'Шервудский лес веками был щитом для королевства, а его сердце — Древний Шервудский Дуб...', bossNodeId: 4 },
-        { id: 2, title: 'Кара Скверны', quest: 'Очисти лес от искажённых тварей, уничтожь Вожака стаи', enemy: { name: 'Вожак Искаженной Стаи', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 }, reward: { exp: 400, gold: 100, silver: 1000 }, lore: 'Смерть Дуба вызвала цепную реакцию...', bossNodeId: 8 },
-        { id: 3, title: 'Старый Егерь', quest: 'Найди слепого ветерана Гаррета, упокой Альфа-Гончую', enemy: { name: 'Альфа-Гончая Егеря', hp: 90000, atk: 4500, def: 3500, exp: 250, gold: 160 }, reward: { exp: 600, gold: 150, silver: 1500 }, lore: 'На окраине гибнущего леса, в заброшенном домике егеря...', bossNodeId: 12 },
-        { id: 4, title: 'Спуск в Шервудскую Чащобу', quest: 'Спустись в подземелье, победи Падшего Друида', enemy: { name: 'Падший Друид', hp: 180000, atk: 7000, def: 5500, exp: 300, gold: 200 }, reward: { exp: 800, gold: 200, silver: 2000 }, lore: 'Чтобы остановить расползающееся зло, нужно ударить в его источник...', bossNodeId: 16 },
-        { id: 5, title: 'Искажённая Экосистема', quest: 'Пробейся через туннели чащобы, уничтожь Голод Чащи', enemy: { name: 'Голод Чащи', hp: 300000, atk: 9500, def: 7500, exp: 350, gold: 250 }, reward: { exp: 1000, gold: 250, silver: 2500 }, lore: 'Спуск в сырые туннели чащобы открывает первую волну кошмаров...', bossNodeId: 20 },
-        { id: 6, title: 'Слепая Ярость Духов', quest: 'Пробейся к Древнему Владыке, одолей Лешего', enemy: { name: 'Древний Владыка', hp: 450000, atk: 12000, def: 9500, exp: 400, gold: 300 }, reward: { exp: 1500, gold: 350, silver: 3500 }, lore: 'Спуск глубже приводит Лучника в каменные залы...', bossNodeId: 24 },
-        { id: 7, title: 'Эхо Прошлых Поражений', quest: 'Уничтожь Пожирателя Эха в глубинах подземки', enemy: { name: 'Пожиратель Эха', hp: 650000, atk: 14500, def: 11500, exp: 450, gold: 350 }, reward: { exp: 2000, gold: 500, silver: 5000 }, lore: 'Подземка поглощает не только плоть, но и души...', bossNodeId: 28 },
-        { id: 8, title: 'Ужас Болотных Недр', quest: 'Спустись в болотные гроты, убей Повелительницу Топей', enemy: { name: 'Повелительница Топей', hp: 900000, atk: 17000, def: 13500, exp: 500, gold: 400 }, reward: { exp: 2500, gold: 650, silver: 6500 }, lore: 'В самых потайных, покрытых слизью гротах...', bossNodeId: 32 },
-        { id: 9, title: 'Разломы Безумия', quest: 'Закрой три магических разлома, победи Стража Разломов', enemy: { name: 'Страж Разломов', hp: 1200000, atk: 19500, def: 15500, exp: 550, gold: 450 }, reward: { exp: 3000, gold: 800, silver: 8000 }, lore: 'Скверна, переполнив чащобу, прожгла ткань реальности...', bossNodeId: 36 },
-        { id: 10, title: 'Портал Нашествия — Улей Плоти', quest: 'Войди в Портал Нашествия, уничтожь Матку Лесных Короедов', enemy: { name: 'Матка Лесных Короедов', hp: 1600000, atk: 22000, def: 17500, exp: 600, gold: 500 }, reward: { exp: 4000, gold: 1000, silver: 10000 }, lore: 'Первый разлом превратил пещеры в гнездо чумы...', bossNodeId: 40 },
-        { id: 11, title: 'Портал Искажения — Костяной Трон', quest: 'Войди в Портал Искажения, убей Проклятого Короля Разбойников', enemy: { name: 'Проклятый Король Разбойников', hp: 2100000, atk: 24500, def: 19500, exp: 700, gold: 600 }, reward: { exp: 5000, gold: 1500, silver: 15000 }, lore: 'Второй портал перенес Лучника в проклятый склеп...', bossNodeId: 44 },
-        { id: 12, title: 'Портал Безумия — Кровоточащий Кап', quest: 'Войди в Портал Безумия, победи Древнего Хранителя Склепа', enemy: { name: 'Древний Хранитель Склепа', hp: 2700000, atk: 27000, def: 21500, exp: 800, gold: 700 }, reward: { exp: 6000, gold: 2000, silver: 20000 }, lore: 'Третий портал вел в хтоническое капище...', bossNodeId: 48 },
-        { id: 13, title: 'Триумвират Зла', quest: 'Сразись с Эхом Трёх Порталов в Осквернённом Сердце', enemy: { name: 'Эхо Трех Порталов', hp: 3400000, atk: 29500, def: 23500, exp: 900, gold: 800 }, reward: { exp: 7500, gold: 2500, silver: 25000 }, lore: 'Закрыв три разлома, Лучник думал, что победил...', bossNodeId: 52 },
-        { id: 14, title: 'Сломанная Печать', quest: 'Уничтожь Палача Священного Древа — последнюю преграду', enemy: { name: 'Палач Священного Древа', hp: 4200000, atk: 32000, def: 25500, exp: 1000, gold: 900 }, reward: { exp: 9000, gold: 3000, silver: 30000 }, lore: 'Слияние энергий Порталов пробудило кое-что древнее...', bossNodeId: 56 },
-        { id: 15, title: 'Последний Выстрел', quest: 'Порази ядро Шервудского Отродья, запечатай Сердце', enemy: { name: 'Шервудское Отродье', hp: 5200000, atk: 34500, def: 27500, exp: 1500, gold: 1200 }, reward: { exp: 12000, gold: 5000, silver: 50000 }, lore: 'Поглотив энергию мертвого Палача, Оскверненное Сердце пробудилось...', bossNodeId: 60 },
-        { id: 16, title: 'Шрам, который не заживёт (Секретная глава)', quest: 'Спустись в воронку и запечатай Изначальный Стержень', enemy: { name: 'Изначальный Стержень', hp: 1500000, atk: 30000, def: 25000, exp: 1000, gold: 300 }, reward: { exp: 2000, gold: 500, silver: 1500 }, isSecret: true, lore: 'После победы над Отродьем на поверхности леса зияет огромная воронка...', bossNodeId: 64 }
+Sherwood.Talents = {
+    BRANCHES: {
+        damage: { id: 'damage', name: 'Атакующие', color: '#f44336', icon: 'assets/assets2/talents/simple_attack.png' },
+        passive: { id: 'passive', name: 'Пассивные', color: '#2196f3', icon: 'assets/assets2/talents/blocking.png' },
+        heal: { id: 'heal', name: 'Исцеляющие', color: '#4caf50', icon: 'assets/assets2/talents/healing.png' }
+    },
+
+    TALENTS: [
+        { id: 'stunning', name: 'Оглушение', branch: 'damage', icon: 'assets/assets2/talents/stunning.png',
+          desc: 'Оглушает врага на 10 секунд. Тратит 20% скверны. Кулдаун 20 сек.', maxLevel: 1 },
+        { id: 'rage', name: 'Ярость', branch: 'damage', icon: 'assets/assets2/talents/Riot.png',
+          desc: 'Работает только на полной сфере. Тратит 65% скверны. 3 удара с +20% урона. Кулдаун 25 сек.', maxLevel: 1 },
+        { id: 'healing', name: 'Лечение', branch: 'heal', icon: 'assets/assets2/talents/healing.png',
+          desc: 'Лечит 10 HP за уровень. Тратит 5% скверны за уровень. Кулдаун 8 сек.', maxLevel: 50 },
+        { id: 'vampirism', name: 'Вампиризм', branch: 'passive', icon: 'assets/assets2/talents/vampirism.png',
+          desc: '30% шанс в начале боя. 20 сек действует. Базово 5% от урона в HP, +5% за уровень. Максимум 50%.', maxLevel: 10 },
+        { id: 'ricochet', name: 'Рикошет', branch: 'passive', icon: 'assets/assets2/talents/Ricochet.png',
+          desc: '45% шанс вернуть удар врага ему же. В этот момент скверна не начисляется.', maxLevel: 1 }
     ],
 
-    _currentQuest: null,
-    _completedChapters: [],
-    _currentChapterIndex: 0,
-    _isSecretUnlocked: false,
+    _selectedBranch: 'damage',
+    _talentLevels: {},
 
     init: function() {
         var p = Sherwood.getPlayer();
         if (!p) return;
+        if (!p.talents) p.talents = {};
 
-        if (!p.questProgress) {
-            p.questProgress = { completed: [], currentChapter: 1 };
+        var allowed = ['stunning', 'rage', 'healing', 'vampirism', 'ricochet'];
+        for (var key in p.talents) {
+            if (allowed.indexOf(key) === -1) {
+                delete p.talents[key];
+            }
         }
 
-        this._completedChapters = p.questProgress.completed || [];
-        this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
-        this._isSecretUnlocked = this._completedChapters.length >= 15;
-
-        if (!p.tavern) p.tavern = {};
-        p.tavern.completedChapters = this._completedChapters;
-        p.tavern.currentChapter = this._currentChapterIndex;
-        p.tavern.secretUnlocked = this._isSecretUnlocked;
-
-        console.log('Таверна инициализирована (синхронизирована с чащобой)');
+        this._talentLevels = p.talents;
+        console.log('⚡ Таланты инициализированы');
     },
 
-    getAllChapters: function() { return this.CHAPTERS; },
+    getAllTalents: function() { return this.TALENTS; },
+    getTalentLevel: function(id) { return this._talentLevels[id] || 0; },
 
-    getCurrentChapter: function() {
-        if (this._currentChapterIndex < this.CHAPTERS.length) {
-            return this.CHAPTERS[this._currentChapterIndex];
+    canUpgrade: function(talent) {
+        var lvl = this.getTalentLevel(talent.id);
+        if (lvl >= talent.maxLevel) return { can: false, reason: 'Максимальный уровень' };
+        return { can: true };
+    },
+
+    upgradeTalent: function(id) {
+        var talent = null;
+        for (var i = 0; i < this.TALENTS.length; i++) {
+            if (this.TALENTS[i].id === id) { talent = this.TALENTS[i]; break; }
         }
-        return null;
-    },
-    getCompletedCount: function() { return this._completedChapters.length; },
-    getTotalChapters: function() { return this.CHAPTERS.length; },
-    isChapterCompleted: function(id) { return this._completedChapters.indexOf(id) !== -1; },
-
-    // ПРОВЕРКА: УБИТ ЛИ БОСС ГЛАВЫ В ЧАЩОБЕ
-    isChapterBossKilled: function(chapter) {
-        if (!chapter || !chapter.bossNodeId) return false;
-        if (typeof Sherwood.Thicket === 'undefined' || !Sherwood.Thicket.getCups) return false;
-        // Если у узла есть хотя бы 1 кубок — значит, босс убит
-        return Sherwood.Thicket.getCups(chapter.bossNodeId) >= 1;
-    },
-
-    acceptQuest: function() {
-        var chapter = this.getCurrentChapter();
-        if (!chapter) return { success: false, reason: 'Нет доступных глав' };
-        if (this.isChapterCompleted(chapter.id)) return { success: false, reason: 'Глава уже пройдена' };
-        if (this._currentQuest) return { success: false, reason: 'Уже есть активный квест' };
-        this._currentQuest = chapter;
-        this._saveState();
-        return { success: true, chapter: chapter };
-    },
-
-    completeQuest: function() {
-        if (!this._currentQuest) return { success: false, reason: 'Нет активного квеста' };
-        var chapter = this._currentQuest;
-        if (this._completedChapters.indexOf(chapter.id) === -1) {
-            this._completedChapters.push(chapter.id);
-        }
-        this._currentQuest = null;
-        this._currentChapterIndex++;
-        if (this._completedChapters.length >= 15 && !this._isSecretUnlocked) {
-            this._isSecretUnlocked = true;
-        }
-        this._saveState();
-        return { success: true, chapter: chapter };
-    },
-
-    _saveState: function() {
+        if (!talent) return { success: false, reason: 'Талант не найден' };
+        var lvl = this.getTalentLevel(id);
+        if (lvl >= talent.maxLevel) return { success: false, reason: 'Максимальный уровень' };
         var p = Sherwood.getPlayer();
-        if (!p) return;
-
-        if (!p.questProgress) p.questProgress = { completed: [], currentChapter: 1 };
-        p.questProgress.completed = this._completedChapters.slice();
-        p.questProgress.currentChapter = this._currentChapterIndex + 1;
-
-        if (!p.tavern) p.tavern = {};
-        p.tavern.completedChapters = this._completedChapters;
-        p.tavern.currentChapter = this._currentChapterIndex;
-        p.tavern.secretUnlocked = this._isSecretUnlocked || false;
-
+        if (!p) return { success: false, reason: 'Игрок не найден' };
+        if (!p.talentPoints) p.talentPoints = 0;
+        var cost = 1;
+        if (p.talentPoints < cost) {
+            return { success: false, reason: 'Нужно ' + cost + ' очков талантов!' };
+        }
+        p.talentPoints -= cost;
+        this._talentLevels[id] = lvl + 1;
+        p.talents = this._talentLevels;
         Sherwood.saveGame();
+        return { success: true, newLevel: lvl + 1 };
     },
 
-    markChapterComplete: function(chapterId) {
-        var p = Sherwood.getPlayer();
-        if (!p) return;
-
-        if (!p.questProgress) p.questProgress = { completed: [], currentChapter: 1 };
-        if (p.questProgress.completed.indexOf(chapterId) === -1) {
-            p.questProgress.completed.push(chapterId);
+    _showTalentInfo: function(id) {
+        var talent = null;
+        for (var i = 0; i < this.TALENTS.length; i++) {
+            if (this.TALENTS[i].id === id) { talent = this.TALENTS[i]; break; }
         }
-        p.questProgress.currentChapter = chapterId + 1;
+        if (!talent) return;
 
-        this._completedChapters = p.questProgress.completed.slice();
-        this._currentChapterIndex = p.questProgress.currentChapter - 1;
-        this._currentQuest = null;
+        var lvl = this.getTalentLevel(talent.id);
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        
+        var modal = document.createElement('div');
+        modal.style.cssText = 'background:linear-gradient(to bottom, #2a1e12, #110a04);border:2px solid #8b6b3a;border-radius:12px;padding:25px 20px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 30px rgba(139,107,58,0.4);position:relative;';
+        
+        modal.innerHTML = 
+            '<img src="' + talent.icon + '" style="width:70px;height:70px;object-fit:contain;margin:0 auto 15px auto;display:block;filter:drop-shadow(0 0 10px rgba(255,165,0,0.6));" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">' +
+            '<div style="color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:8px;text-shadow:0 2px 4px #000;">' + talent.name + '</div>' +
+            '<div style="color:#fff;font-size:0.85em;margin-bottom:15px;">Уровень: ' + lvl + ' / ' + talent.maxLevel + '</div>' +
+            '<div style="color:#ccc;font-size:0.8em;line-height:1.6;margin-bottom:20px;text-align:left;background:rgba(0,0,0,0.3);padding:12px;border-radius:6px;">' + talent.desc + '</div>' +
+            '<button onclick="this.parentElement.parentElement.remove()" style="background:#c9a040;border:none;border-radius:6px;padding:10px 25px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;">Понятно</button>';
 
-        if (!p.tavern) p.tavern = {};
-        p.tavern.completedChapters = this._completedChapters;
-        p.tavern.currentChapter = this._currentChapterIndex;
+        overlay.appendChild(modal);
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
 
-        Sherwood.saveGame();
+        document.body.appendChild(overlay);
     },
 
     // ============================================================
-    //  UI ТАВЕРНЫ
+    //  ЭКРАН «ИЗУЧЕННЫЕ ТАЛАНТЫ» (профиль)
     // ============================================================
-    showUI: function() {
-        if (typeof UI === 'undefined' || !UI._openScreenScrollable) {
-            console.error('UI не загружен!');
-            return;
-        }
+    showLearnedTalents: function() {
+        if (typeof UI === 'undefined' || !UI._openScreenScrollable) return;
 
         UI._playSound('click');
-
-        // ПЕРЕСИНХРОНИЗАЦИЯ ПЕРЕД ОТКРЫТИЕМ
+        var allTalents = this.getAllTalents();
+        var learnedTalents = [];
+        for (var i = 0; i < allTalents.length; i++) {
+            var lvl = this.getTalentLevel(allTalents[i].id);
+            if (lvl > 0) learnedTalents.push(allTalents[i]);
+        }
         var p = Sherwood.getPlayer();
-        if (p && p.questProgress) {
-            this._completedChapters = p.questProgress.completed || [];
-            this._currentChapterIndex = (p.questProgress.currentChapter || 1) - 1;
+        var talentPoints = p ? (p.talentPoints || 0) : 0;
 
-            if (this._currentQuest) {
-                var cqId = this._currentQuest.id;
-                if (this._completedChapters.indexOf(cqId) !== -1) {
-                    this._currentQuest = null;
-                } else if ((p.questProgress.currentChapter || 1) > cqId) {
-                    this._currentQuest = null;
-                }
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/visual_talents.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;">';
+        h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
+        h += '<div class="talents-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:40px;padding-bottom:60px;width:100%;">';
+
+        // Заголовок
+        h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:20px;text-shadow:0 2px 4px #000;">Изученные таланты</div>';
+
+        // Очки талантов
+        h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:30px;">';
+        h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;">';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:36px;height:36px;object-fit:contain;">';
+        h += '<span style="color:#ffd700;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + talentPoints + '</span>';
+        h += '</div>';
+        h += '<div style="color:#888;font-size:0.65em;margin-top:4px;text-align:center;">Доступно очков для распределения</div>';
+        h += '</div>';
+
+        if (learnedTalents.length === 0) {
+            h += '<div style="color:#aaa;font-size:1em;text-shadow:0 2px 4px #000;">Вы ещё не изучили ни одного таланта.</div>';
+        } else {
+            h += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:20px;width:95%;max-width:360px;margin-bottom:30px;">';
+
+            for (var i = 0; i < learnedTalents.length; i++) {
+                var t = learnedTalents[i];
+                var lvl = this.getTalentLevel(t.id);
+
+                h += '<div style="display:flex;flex-direction:column;align-items:center;width:100%;">';
+                
+                h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
+                h += '<img onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" src="' + t.icon + '" style="display:block;margin:0 auto;width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));cursor:pointer;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+                h += '</div>';
+
+                h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="color:#e0c080;font-size:0.85em;font-weight:bold;margin-top:10px;text-align:center;cursor:pointer;text-shadow:0 2px 4px #000;line-height:1.2;">' + t.name + '</div>';
+                h += '<div style="color:#ffa500;font-size:0.75em;font-weight:bold;margin-top:4px;text-shadow:0 2px 4px #000;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+
+                h += '</div>';
             }
+            h += '</div>';
         }
 
-        var current = this.getCurrentChapter();
-        var completed = this.getCompletedCount();
-        var total = this.getTotalChapters();
-
-        if (UI._screenLayer) {
-            UI._screenLayer.style.overflow = 'hidden';
-        }
-
-        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;scrollbar-width:none;-ms-overflow-style:none;">';
-        h += '<style>.tavern-scroll::-webkit-scrollbar{display:none;}.tavern-scroll{scrollbar-width:none;}</style>';
-
-        // Гаррет (видео) — фиксировано
-        h += '<div style="position:fixed;top:50%;left:55%;transform:translate(-50%,-50%);width:60%;height:60%;pointer-events:none;z-index:1;">';
-        h += '<video src="assets/assets2/animation/Garret.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>';
-        h += '</div>';
-
-        // Контент поверх
-        h += '<div class="tavern-scroll" style="position:relative;z-index:10;width:100%;min-height:100%;padding-top:60px;padding-bottom:40px;">';
-
-        // Прогресс
-        h += '<div style="margin-bottom:20px;text-align:center;color:#ffa500;font-size:16px;text-shadow:0 2px 4px #000;">Прогресс: ' + completed + '/' + total + ' глав</div>';
-
-        // === КНОПКИ РАЗДЕЛОВ ===
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:30px;">';
-
-        h += '<div onclick="Sherwood.Talents.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Таланты</span>';
-        h += '</div>';
-
-        h += '<div onclick="Sherwood.Training.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Тренировка</span>';
-        h += '</div>';
-
-        h += '<div onclick="Sherwood.BlackMarket.showUI()" style="width:300px;height:80px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;">';
-        h += '<span style="color:#ffa500;font-size:20px;font-weight:bold;text-shadow:0 2px 4px #000;">Рынок</span>';
-        h += '</div>';
-
-        h += '</div>';
-
-        // === СВИТОК С КВЕСТОМ ===
-        h += '<div style="width:90%;max-width:460px;margin:0 auto 30px auto;">';
-        h += '<div style="width:100%;min-height:300px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:30px 20px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
-
-        if (current) {
-            var isCompleted = this.isChapterCompleted(current.id);
-            var isAccepted = this._currentQuest !== null && this._currentQuest.id === current.id;
-            var bossKilled = this.isChapterBossKilled(current);
-
-            h += '<div style="text-align:center;color:#ffa500;font-size:14px;font-weight:bold;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;line-height:1.6;">' + current.title + '</div>';
-            h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.lore + '</div>';
-            h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;margin-bottom:10px;text-shadow:0 2px 4px #000;word-wrap:break-word;word-break:break-word;">' + current.quest + '</div>';
-            h += '<div style="text-align:center;color:#fff;font-size:12px;line-height:1.8;text-shadow:0 2px 4px #000;">+' + current.reward.exp + ' опыта, +' + current.reward.gold + ' золота, +' + current.reward.silver + ' серебра</div>';
-
-            if (isCompleted) {
-                h += '<div style="text-align:center;color:#52b788;margin-top:15px;font-size:16px;font-weight:bold;">Глава пройдена!</div>';
-            } else if (isAccepted) {
-                if (bossKilled) {
-                    h += '<div style="text-align:center;color:#52b788;margin-top:10px;font-size:14px;font-weight:bold;">Босс в чащобе побеждён!</div>';
-                    h += '<button onclick="Sherwood.Tavern.completeFromUI()" style="margin-top:10px;background:#52b788;border:none;border-radius:6px;padding:8px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Сдать квест</button>';
-                } else {
-                    h += '<div style="text-align:center;color:#ffa500;margin-top:15px;font-size:16px;font-weight:bold;">Квест принят!</div>';
-                    h += '<div style="text-align:center;color:#ccc;font-size:12px;margin-top:5px;">Победи босса в чащобе (Узел ' + current.bossNodeId + ')</div>';
-                    h += '<button onclick="UI.thicket()" style="margin-top:10px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Перейти в чащобу</button>';
-                }
-            } else {
-                h += '<button onclick="Sherwood.Tavern.acceptFromUI()" style="margin-top:15px;background:#5a3a00;border:none;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:14px;width:60%;max-width:200px;margin-left:auto;margin-right:auto;display:block;">Принять квест</button>';
-            }
-        } else if (completed >= total) {
-            h += '<div style="text-align:center;color:#ffa500;font-size:22px;font-weight:bold;text-shadow:0 2px 4px #000;">Шервуд спасён!</div>';
-        }
         h += '</div>';
         h += '</div>';
 
-        h += '</div>'; // .tavern-scroll
-        h += '</div>'; // фон
-
-        UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
+        // Возврат в профиль
+        UI._openScreenScrollable('Таланты', 'talents', h, 'UI.profile()');
     },
 
-    acceptFromUI: function() {
-        var r = this.acceptQuest();
+    // ============================================================
+    //  ЭКРАН РАСПРЕДЕЛЕНИЯ ТАЛАНТОВ (таверна)
+    // ============================================================
+    showUI: function() {
+        if (typeof UI === 'undefined' || !UI._openScreenScrollable) return;
+
+        UI._playSound('click');
+        var allTalents = this.getAllTalents();
+        var p = Sherwood.getPlayer();
+        var talentPoints = p ? (p.talentPoints || 0) : 0;
+        var selectedBranch = this._selectedBranch;
+
+        var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/visual_talents.png\') center/cover no-repeat;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;">';
+        h += '<style>.talents-scroll::-webkit-scrollbar { display: none; } .talents-scroll { scrollbar-width: none; }</style>';
+        h += '<div class="talents-scroll" style="display:flex;flex-direction:column;align-items:center;padding-top:40px;padding-bottom:60px;width:100%;">';
+
+        // Очки талантов
+        h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:20px;">';
+        h += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;">';
+        h += '<img src="assets/assets2/game_details/tablet_of_talents.png" style="width:36px;height:36px;object-fit:contain;">';
+        h += '<span style="color:#ffd700;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + talentPoints + '</span>';
+        h += '</div>';
+        h += '<div style="color:#888;font-size:0.65em;margin-top:4px;text-align:center;">Начисляются за получение нового уровня</div>';
+        h += '</div>';
+
+        // Вкладки веток
+        h += '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:30px;width:90%;max-width:340px;">';
+        var branchesOrder = ['damage', 'passive', 'heal'];
+        for (var b = 0; b < branchesOrder.length; b++) {
+            var branchId = branchesOrder[b];
+            var branch = this.BRANCHES[branchId];
+            var isActive = (branchId === selectedBranch);
+            h += '<div onclick="Sherwood.Talents._selectBranch(\'' + branchId + '\')" style="flex:1;height:40px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;border:2px solid ' + (isActive ? branch.color : 'rgba(255,255,255,0.3)') + ';border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:' + (isActive ? '0 0 10px ' + branch.color + '88' : '0 2px 4px rgba(0,0,0,0.5)') + ';">';
+            h += '<span style="color:' + (isActive ? branch.color : '#e0c080') + ';font-size:0.75em;font-weight:bold;text-shadow:0 2px 4px #000;">' + branch.name + '</span>';
+            h += '</div>';
+        }
+        h += '</div>';
+
+        var branchTalents = [];
+        for (var i = 0; i < allTalents.length; i++) {
+            if (allTalents[i].branch === selectedBranch) branchTalents.push(allTalents[i]);
+        }
+
+        // Дерево
+        h += '<div style="position:relative;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;">';
+
+        if (branchTalents.length === 2) {
+            h += '<div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);width:150px;height:4px;background:#8b6b3a;z-index:1;border-radius:2px;"></div>';
+            h += '<div style="position:absolute;top:0px;left:50%;transform:translateX(-50%);width:4px;height:42px;background:#8b6b3a;z-index:1;"></div>';
+            h += '<div style="position:absolute;top:40px;left:calc(50% - 75px);transform:translateX(-50%);width:4px;height:30px;background:#8b6b3a;z-index:1;"></div>';
+            h += '<div style="position:absolute;top:40px;left:calc(50% + 75px);transform:translateX(-50%);width:4px;height:30px;background:#8b6b3a;z-index:1;"></div>';
+        } 
+        else if (branchTalents.length === 1) {
+            h += '<div style="position:absolute;top:0px;left:50%;transform:translateX(-50%);width:4px;height:50px;background:#8b6b3a;z-index:1;"></div>';
+        }
+
+        h += '<div style="display:flex;justify-content:center;align-items:flex-start;gap:20px;margin-top:70px;z-index:2;width:100%;">';
+
+        for (var j = 0; j < branchTalents.length; j++) {
+            var t = branchTalents[j];
+            var lvl = this.getTalentLevel(t.id);
+
+            h += '<div style="display:flex;flex-direction:column;align-items:center;width:130px;">';
+            
+            h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
+            h += '<img onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" src="' + t.icon + '" style="display:block;margin:0 auto;width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));cursor:pointer;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            h += '</div>';
+
+            h += '<div onclick="Sherwood.Talents._showTalentInfo(\'' + t.id + '\')" style="color:#e0c080;font-size:0.85em;font-weight:bold;margin-top:10px;text-align:center;cursor:pointer;text-shadow:0 2px 4px #000;line-height:1.2;">' + t.name + '</div>';
+
+            h += '<div style="color:#ffa500;font-size:0.75em;font-weight:bold;margin-top:4px;margin-bottom:8px;text-shadow:0 2px 4px #000;">Ур. ' + lvl + '/' + t.maxLevel + '</div>';
+
+            h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,0.6);border-radius:20px;padding:4px 12px;border:1px solid rgba(139,107,58,0.5);">';
+            h += '<button onclick="Sherwood.Talents._removePoint(\'' + t.id + '\')" style="background:#f44336;border:none;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;font-size:16px;padding:0;">-</button>';
+            h += '<span style="color:#fff;font-size:14px;font-weight:bold;min-width:20px;text-shadow:0 2px 4px #000;">' + lvl + '</span>';
+            h += '<button onclick="Sherwood.Talents._addPoint(\'' + t.id + '\')" style="background:#4caf50;border:none;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;font-size:16px;padding:0;">+</button>';
+            h += '</div>';
+
+            h += '</div>';
+        }
+
+        h += '</div>';
+        h += '</div>';
+
+        // Кнопка "Подтвердить" — теперь выходит в лагерь
+        h += '<div style="width:90%;max-width:340px;text-align:center;margin-top:40px;">';
+        h += '<button onclick="UI.loadHome()" style="width:100%;background:#c9a040;border:none;border-radius:8px;padding:12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.9em;">Подтвердить и выйти в лагерь</button>';
+        h += '</div>';
+
+        h += '</div>';
+        h += '</div>';
+
+        // Возврат в лагерь
+        UI._openScreenScrollable('Таланты', null, h, 'UI.loadHome()');
+    },
+
+    _addPoint: function(id) {
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+        if (!p.talentPoints || p.talentPoints <= 0) {
+            UI._showToast('Нет очков талантов!');
+            return;
+        }
+        var t = this.getTalentLevel(id);
+        var max = 0;
+        for (var i = 0; i < this.TALENTS.length; i++) {
+            if (this.TALENTS[i].id === id) { max = this.TALENTS[i].maxLevel; break; }
+        }
+        if (t >= max) {
+            UI._showToast('Макс. уровень!');
+            return;
+        }
+        p.talentPoints--;
+        this._talentLevels[id] = t + 1;
+        p.talents = this._talentLevels;
+        Sherwood.saveGame();
+        this.showUI();
+    },
+
+    _removePoint: function(id) {
+        var p = Sherwood.getPlayer();
+        if (!p) return;
+        var t = this.getTalentLevel(id);
+        if (t <= 0) {
+            UI._showToast('Уровень 0, нечего убирать');
+            return;
+        }
+        p.talentPoints++;
+        this._talentLevels[id] = t - 1;
+        p.talents = this._talentLevels;
+        Sherwood.saveGame();
+        this.showUI();
+    },
+
+    _confirmTalents: function() {
+        UI._showToast('Таланты распределены!');
+        UI.loadHome();
+    },
+
+    _selectBranch: function(branchId) {
+        this._selectedBranch = branchId;
+        this.showUI();
+    },
+
+    _upgradeTalent: function(id) {
+        var r = this.upgradeTalent(id);
         if (!r.success) {
             UI._showToast(r.reason || 'Ошибка');
             return;
         }
-        UI._showToast('Квест принят: ' + r.chapter.title);
+        UI._showToast('Талант улучшен до уровня ' + r.newLevel + '!');
         this.showUI();
-    },
-
-    completeFromUI: function() {
-        var r = this.completeQuest();
-        if (!r.success) {
-            UI._showToast(r.reason || 'Ошибка');
-            return;
-        }
-        UI._showToast('Квест сдан: ' + r.chapter.title);
-        this.showUI();
-    },
-
-    nextFromUI: function() {
-        this._currentChapterIndex++;
-        this._saveState();
-        this.showUI();
-    },
-
-    closeUI: function() {
-        if (typeof UI !== 'undefined' && UI.loadHome) {
-            UI.loadHome();
-        }
     }
 };
 
-window.Sherwood = window.Sherwood || {};
-window.Sherwood.Tavern = Sherwood.Tavern;
+if (typeof UI !== 'undefined' && UI.talents) {
+    UI.talents = function() {
+        Sherwood.Talents.showUI();
+    };
+}
 
-console.log('Таверна загружена!');
+window.Sherwood = window.Sherwood || {};
+window.Sherwood.Talents = Sherwood.Talents;
+
+console.log('⚡ Таланты загружены (v10: шрифт как на табличках, возврат в лагерь)');
