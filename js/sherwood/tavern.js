@@ -241,7 +241,7 @@ Sherwood.Tavern = {
         h += '</div>'; // фон
 
         // ИЗМЕНЕНО: убрали встроенный заголовок и старую кнопку (передали '' и null), так как теперь есть своя кнопка
-        UI._openScreenScrollable('', null, h, 'UI.loadHome()');
+        UI._openScreenScrollable('Таверна', null, h, 'UI.camp()');
     },
 
     acceptFromUI: function() {
