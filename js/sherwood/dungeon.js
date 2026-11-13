@@ -173,22 +173,13 @@ Sherwood.Dungeon = {
     checkFreeAutoFights: function() {
         var p = Sherwood.getPlayer();
         if (!p || !p._freeAutoFightTimers) return;
+        if (!p._freeAutoFightReady) p._freeAutoFightReady = {};
         var now = Date.now();
         for (var key in p._freeAutoFightTimers) {
             if (now >= p._freeAutoFightTimers[key]) {
-                var parts = key.split('_');
-                var floor = parseInt(parts[0]);
-                var diff = parseInt(parts[1]);
-                this.grantCup(floor, diff);
-                var goldReward = 100, silverReward = 50;
-                p.resources.gold = (p.resources.gold || 0) + goldReward;
-                p.resources.silver = (p.resources.silver || 0) + silverReward;
-                if (Sherwood.addExp) Sherwood.addExp(200);
-                if (Sherwood.Wallet && Sherwood.Wallet.addFromRun) {
-                    Sherwood.Wallet.addFromRun(goldReward, silverReward);
-                }
+                p._freeAutoFightReady[key] = true;
                 delete p._freeAutoFightTimers[key];
-                UI._showToast('✅ Бесплатный автобой завершён! Этаж ' + floor);
+                UI._showToast('✅ Бесплатный автобой завершён! Забери награды в меню этажей.');
             }
         }
         Sherwood.saveGame();
@@ -316,7 +307,7 @@ Sherwood.Dungeon = {
             var f2 = this.isFloorAvailable(n, 2);
             var f3 = this.isFloorAvailable(n, 3);
 
-            var floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png'; // Упростил для примера
+            var floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png';
 
             h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
             h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
@@ -325,28 +316,43 @@ Sherwood.Dungeon = {
                 h += '<img src="assets/assets2/game_details/closed_level_lock_icon.png" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;object-fit:contain;opacity:0.9;pointer-events:none;">';
             }
 
-            h += '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
-            for (var k = 1; k <= 3; k++) {
-                var hasCup = cups >= k;
-                var isOpen = (k === 1 && f1) || (k === 2 && f2) || (k === 3 && f3);
-                var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
-                var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
-                
-                // ВАЖНО: Клик открывает модалку!
-                var clickAttr = isOpen ? 'onclick="event.stopPropagation();Sherwood.Dungeon._showFloorModal(' + dungeonId + ',' + n + ',' + k + ')"' : '';
-                var cursor = isOpen ? 'pointer' : 'not-allowed';
+            // Проверяем, есть ли готовый бесплатный автобой на этом этаже
+            var p = Sherwood.getPlayer();
+            var freeReady = p && p._freeAutoFightReady;
+            var readyKey = null;
+            if (freeReady) {
+                for (var rk in freeReady) {
+                    var parts = rk.split('_');
+                    if (parseInt(parts[0]) === n) { readyKey = rk; break; }
+                }
+            }
 
-                h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
-                if (hasCup) {
-                    h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">';
-                } else if (!isOpen) {
-                    h += '<span style="color:#666;font-size:12px;font-weight:bold;">🔒</span>';
-                } else {
-                    h += '<span style="color:#8b6b3a;font-size:11px;font-weight:bold;">' + k + '</span>';
+            if (readyKey) {
+                var readyDiff = parseInt(readyKey.split('_')[1]);
+                h += '<button onclick="event.stopPropagation();Sherwood.Dungeon._claimFreeAutoFight(' + n + ',' + readyDiff + ')" style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:#1a4a2a;border:2px solid #4caf50;border-radius:6px;padding:6px 12px;color:#7cff7c;font-size:0.7em;font-weight:bold;cursor:pointer;white-space:nowrap;box-shadow:0 0 10px rgba(76,175,80,0.5);">🎁 Забрать награды</button>';
+            } else {
+                h += '<div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;">';
+                for (var k = 1; k <= 3; k++) {
+                    var hasCup = cups >= k;
+                    var isOpen = (k === 1 && f1) || (k === 2 && f2) || (k === 3 && f3);
+                    var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
+                    var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
+                    
+                    var clickAttr = isOpen ? 'onclick="event.stopPropagation();Sherwood.Dungeon._showFloorModal(' + dungeonId + ',' + n + ',' + k + ')"' : '';
+                    var cursor = isOpen ? 'pointer' : 'not-allowed';
+
+                    h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
+                    if (hasCup) {
+                        h += '<img src="assets/interface/resource_cup_for_completed_tasks.png" style="width:20px;height:20px;object-fit:contain;">';
+                    } else if (!isOpen) {
+                        h += '<span style="color:#666;font-size:12px;font-weight:bold;">🔒</span>';
+                    } else {
+                        h += '<span style="color:#8b6b3a;font-size:11px;font-weight:bold;">' + k + '</span>';
+                    }
+                    h += '</div>';
                 }
                 h += '</div>';
             }
-            h += '</div>';
             h += '</div>';
         }
 
@@ -392,6 +398,71 @@ Sherwood.Dungeon = {
     _closeFloorModal: function() {
         var m = document.getElementById('floor-modal-overlay');
         if (m) m.remove();
+    },
+
+    _claimFreeAutoFight: function(floor, diff) {
+        var p = Sherwood.getPlayer();
+        if (!p || !p._freeAutoFightReady) return;
+        var key = floor + '_' + diff;
+        if (!p._freeAutoFightReady[key]) return;
+
+        // Удаляем запись
+        delete p._freeAutoFightReady[key];
+
+        // Начисляем награды
+        this.grantCup(floor, diff);
+        var goldReward = 100 + Math.floor(Math.random() * 100);
+        var silverReward = 50 + Math.floor(Math.random() * 50);
+        var expReward = 200 + Math.floor(Math.random() * 100);
+        p.resources.gold = (p.resources.gold || 0) + goldReward;
+        p.resources.silver = (p.resources.silver || 0) + silverReward;
+        if (Sherwood.addExp) Sherwood.addExp(expReward);
+        if (Sherwood.Wallet && Sherwood.Wallet.addFromRun) {
+            Sherwood.Wallet.addFromRun(goldReward, silverReward);
+        }
+
+        // Рандомный лут
+        var lootItems = [];
+        var lootPool = [
+            { icon: 'assets/interface/sherwood_hollow_arrow.png', name: 'Стрелы', min: 3, max: 10 },
+            { icon: 'assets/interface/skin_of_the_sherwood_creature.png', name: 'Шкура', min: 1, max: 3 },
+            { icon: 'assets/interface/resource_key_to_locked_levels.png', name: 'Ключ подземки', min: 1, max: 1 },
+            { icon: 'assets/interface/ticket_autofight.png', name: 'Билет автобоя', min: 1, max: 1 },
+            { icon: 'assets/interface/resource_token_on_entrance_portal_1.png', name: 'Токен портала', min: 1, max: 2 }
+        ];
+        for (var i = 0; i < 3; i++) {
+            if (Math.random() < 0.5) {
+                var loot = lootPool[Math.floor(Math.random() * lootPool.length)];
+                var qty = loot.min + Math.floor(Math.random() * (loot.max - loot.min + 1));
+                lootItems.push({ icon: loot.icon, name: loot.name, quantity: qty });
+                if (Sherwood.Bag) {
+                    if (loot.name === 'Стрелы') Sherwood.Bag._addAsItem('arrows', qty);
+                    else if (loot.name === 'Шкура') Sherwood.Bag._addAsItem('skins', qty);
+                    else if (loot.name === 'Ключ подземки') Sherwood.Bag._addAsItem('entranceTickets', qty);
+                    else if (loot.name === 'Билет автобоя') Sherwood.Bag._addAsItem('autoFightTickets', qty);
+                    else if (loot.name === 'Токен портала') Sherwood.Bag._addAsItem('portalToken1', qty);
+                }
+            }
+        }
+
+        Sherwood.saveGame();
+        UI.updateDisplay();
+
+        // Показываем экран победы
+        if (UI._showVictoryScreen) {
+            UI._lastDungeon = 1;
+            UI._lastPortal = null;
+            UI._afterRewardAction = function() {
+                UI._dungeonShowFloors(1);
+            };
+            UI._showVictoryScreen({
+                cupEarned: true,
+                exp: expReward,
+                gold: goldReward,
+                silver: silverReward,
+                items: lootItems
+            });
+        }
     },
 
     _buyTicketUI: function(type) {
