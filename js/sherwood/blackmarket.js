@@ -122,7 +122,6 @@ Sherwood.BlackMarket = (function() {
         var p = _getPlayer();
         if (!p) return;
         p.marketData.shopItems = _shopItems;
-        p.marketData.purchasedToday = _purchasedToday;
         p.marketData.refreshCountToday = _refreshCountToday;
         p.marketData.lastRefreshDate = _lastRefreshDate;
         Sherwood.saveGame();
@@ -140,13 +139,11 @@ Sherwood.BlackMarket = (function() {
 
             if (isNewDay) {
                 _shopItems = _generateShop();
-                _purchasedToday = {};
                 _refreshCountToday = 0;
                 _lastRefreshDate = today;
                 _saveMarketData();
             } else {
                 _shopItems = p.marketData.shopItems || [];
-                _purchasedToday = p.marketData.purchasedToday || {};
                 _refreshCountToday = p.marketData.refreshCountToday || 0;
                 _lastRefreshDate = p.marketData.lastRefreshDate;
                 if (_shopItems.length === 0) {
@@ -172,7 +169,6 @@ Sherwood.BlackMarket = (function() {
             }
             Sherwood.spendResource('gold', REFRESH_COST_GOLD);
             _refreshCountToday++;
-            _purchasedToday = {};
             _shopItems = _generateShop();
             _saveMarketData();
             _emit('shopRefreshed', { shopItems: _shopItems });
@@ -180,18 +176,7 @@ Sherwood.BlackMarket = (function() {
         },
 
         isPurchased: function(itemIdOrIndex) {
-            var item = null;
-            for (var i = 0; i < _shopItems.length; i++) {
-                if (_shopItems[i].id === itemIdOrIndex) { item = _shopItems[i]; break; }
-            }
-            if (!item) {
-                var idx = parseInt(itemIdOrIndex, 10);
-                if (!isNaN(idx) && idx >= 0 && idx < _shopItems.length) {
-                    item = _shopItems[idx];
-                }
-            }
-            if (!item) return true;
-            return !!_purchasedToday[item.id];
+            return false; // покупки не ограничены
         },
 
         buyItem: function(itemIdOrIndex) {
@@ -211,7 +196,6 @@ Sherwood.BlackMarket = (function() {
                 }
             }
             if (!item) return { success: false, reason: 'Товар не найден' };
-            if (_purchasedToday[item.id]) return { success: false, reason: 'Уже куплено сегодня' };
 
             var p = _getPlayer();
             if (!p) return { success: false, reason: 'Ошибка загрузки игрока' };
@@ -221,7 +205,6 @@ Sherwood.BlackMarket = (function() {
             }
             Sherwood.spendResource(item.currency, item.price);
             _grantResources(item.gives);
-            _purchasedToday[item.id] = true;
             _saveMarketData();
             var result = { success: true, item: item };
             _emit('itemPurchased', result);
@@ -257,19 +240,19 @@ Sherwood.BlackMarket = (function() {
 
             var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
-            // Шапка с иконками ресурсов (иконка и число в одну строку)
-            h += '<div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-bottom:16px;">';
+            // Шапка: иконка НАД числом
+            h += '<div style="display:flex;justify-content:center;align-items:flex-end;gap:24px;margin-bottom:16px;">';
             
             // Золото
-            h += '<div style="display:inline-flex;align-items:center;height:32px;">';
-            h += '<img src="assets/interface/resource_gold.png" style="width:32px;height:32px;object-fit:contain;margin-right:6px;display:block;">';
-            h += '<span style="color:#ffd700;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;line-height:1;">' + gold + '</span>';
+            h += '<div style="display:flex;flex-direction:column;align-items:center;">';
+            h += '<img src="assets/interface/resource_gold.png" style="width:32px;height:32px;object-fit:contain;margin-bottom:4px;">';
+            h += '<span style="color:#ffd700;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + gold + '</span>';
             h += '</div>';
             
             // Серебро
-            h += '<div style="display:inline-flex;align-items:center;height:32px;">';
-            h += '<img src="assets/interface/resource_silver.png" style="width:32px;height:32px;object-fit:contain;margin-right:6px;display:block;">';
-            h += '<span style="color:#c0c0c0;font-size:1.1em;font-weight:bold;text-shadow:0 2px 4px #000;line-height:1;">' + silver + '</span>';
+            h += '<div style="display:flex;flex-direction:column;align-items:center;">';
+            h += '<img src="assets/interface/resource_silver.png" style="width:32px;height:32px;object-fit:contain;margin-bottom:4px;">';
+            h += '<span style="color:#c0c0c0;font-size:1em;font-weight:bold;text-shadow:0 2px 4px #000;">' + silver + '</span>';
             h += '</div>';
             
             h += '</div>';
@@ -280,37 +263,29 @@ Sherwood.BlackMarket = (function() {
                 h += '<div style="color:#888;font-size:0.75em;text-align:center;margin-bottom:16px;">Обновлений сегодня больше нет</div>';
             }
 
-            // Сетка карточек (как таланты)
+            // Сетка карточек
             h += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));gap:12px;justify-items:center;">';
             
             for (var i = 0; i < shopItems.length; i++) {
                 var item = shopItems[i];
-                var purchased = this.isPurchased(i);
-                var borderColor = purchased ? '#4caf50' : '#6b5a3a';
-                var opacity = purchased ? '0.5' : '1';
                 var currencyIcon = item.currency === 'gold' ? 'assets/interface/resource_gold.png' : 'assets/interface/resource_silver.png';
 
-                h += '<div style="display:flex;flex-direction:column;align-items:center;width:100%;opacity:' + opacity + ';">';
+                h += '<div style="display:flex;flex-direction:column;align-items:center;width:100%;">';
 
                 // Карточка
-                h += '<div onclick="' + (purchased ? '' : 'Sherwood.BlackMarket._buyFromUI(' + i + ')') + '" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;cursor:' + (purchased ? 'default' : 'pointer') + ';overflow:hidden;">';
+                h += '<div onclick="Sherwood.BlackMarket._buyFromUI(' + i + ')" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;cursor:pointer;overflow:hidden;transition:transform 0.1s;">';
                 
-                // Иконка предмета (чуть увеличил)
+                // Иконка предмета
                 h += '<img src="' + item.icon + '" style="width:55px;height:55px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.5));margin-bottom:20px;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 
                 // Название (снизу)
                 h += '<div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;color:#fff;font-size:0.6em;font-weight:bold;text-shadow:0 1px 2px #000;padding:0 2px;line-height:1.1;">' + item.name + '</div>';
                 
-                // Ценник ПОВЕРХ предмета (сверху по центру)
-                if (!purchased) {
-                    h += '<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.85);border:1px solid rgba(200,160,80,0.5);border-radius:12px;padding:2px 8px;box-shadow:0 2px 4px rgba(0,0,0,0.5);">';
-                    h += '<span style="color:#fff;font-size:0.7em;font-weight:bold;text-shadow:0 1px 2px #000;">' + item.price + '</span>';
-                    h += '<img src="' + currencyIcon + '" style="width:16px;height:16px;object-fit:contain;display:block;">';
-                    h += '</div>';
-                } else {
-                    // Если куплено, ставим зелёную галочку наверх
-                    h += '<div style="position:absolute;top:6px;right:6px;color:#4caf50;font-size:0.8em;background:rgba(0,0,0,0.7);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">✅</div>';
-                }
+                // Ценник: иконка НАД числом
+                h += '<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.85);border:1px solid rgba(200,160,80,0.5);border-radius:8px;padding:2px 8px;box-shadow:0 2px 4px rgba(0,0,0,0.5);">';
+                h += '<img src="' + currencyIcon + '" style="width:16px;height:16px;object-fit:contain;margin-bottom:1px;">';
+                h += '<span style="color:#fff;font-size:0.65em;font-weight:bold;text-shadow:0 1px 2px #000;">' + item.price + '</span>';
+                h += '</div>';
 
                 h += '</div>'; // конец карточки
                 h += '</div>'; // конец колонки
@@ -320,7 +295,6 @@ Sherwood.BlackMarket = (function() {
             h += '<div id="market-log" style="text-align:center;color:#aaa;font-size:0.75em;margin-top:12px;min-height:20px;"></div>';
             h += '</div>';
 
-            // Убрал смайлик 🏪 из заголовка
             UI._openScreenScrollable('Рынок', 'market', h);
         },
 
