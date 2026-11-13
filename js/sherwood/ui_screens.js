@@ -1369,7 +1369,22 @@ UI.market = function() {
 UI.showUI = function() {
     UI.loadHome();
 };
-
+UI.loadHome = function() {
+    try { if (UI._hideDungeonVideo) UI._hideDungeonVideo(); } catch(e) {}
+    UI._cameFromCamp = false;
+    UI._campReturnInfo = null;
+    try {
+        if (UI._screenLayer) {
+            UI._screenLayer.style.display = 'none';
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.style.overflow = 'auto';
+        }
+    } catch(e) {}
+    try { UI.updateDisplay(); } catch(e) {}
+    if (typeof showHomeScreen === 'function') {
+        showHomeScreen();
+    }
+};
 // ============================================================
 //  ЭКСПОРТ
 // ============================================================
