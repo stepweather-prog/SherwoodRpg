@@ -1,6 +1,6 @@
 /**
  * Sherwood Forge — Кузница
- * Улучшение предметов, крафт стрел (3 ветки тиса = 1 стрела), скины, кольца, амулеты
+ * Улучшение предметов, крафт стрел (1 ветка + 1 перо + 1 кость = 1 стрела), скины, кольца, амулеты, заточка
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -26,8 +26,8 @@ Sherwood.Forge = {
         { level: 15, chance: 1, break: true }
     ],
 
-    // Сколько веток тиса на 1 стрелу
-    BRANCHES_PER_ARROW: 3,
+    // Для крафта 1 стрелы нужно: 1 ветка + 1 перо + 1 кость
+    ARROW_RECIPE: { branches: 1, feathers: 1, bones: 1 },
 
     _enhanceCosts: function(level) {
         return { gold: 10 + level * 15, silver: 50 + level * 30 };
@@ -96,127 +96,46 @@ Sherwood.Forge = {
         }
     },
 
-    enhanceEquipped: function(type) {
-        var p = Sherwood.getPlayer();
-        if (!p) return { success: false, reason: 'Игрок не найден' };
-        var bag = Sherwood.Bag;
-        if (!bag) return { success: false, reason: 'Сумка не найдена' };
-
-        if (type === 'ring') {
-            var ring = bag._equipment ? bag._equipment.ring : null;
-            if (!ring) return { success: false, reason: 'Нет кольца' };
-            var currentLevel = ring.enhancement || 0;
-            var cost = Math.round(50 * Math.pow(1.3, currentLevel));
-            if ((p.resources.silver || 0) < cost) {
-                return { success: false, reason: 'Нужно ' + cost + ' серебра' };
-            }
-            p.resources.silver -= cost;
-            ring.enhancement = currentLevel + 1;
-            if (!ring.stats) ring.stats = {};
-            ring.stats.attack = (ring.stats.attack || 0) + 2;
-            ring.stats.defense = (ring.stats.defense || 0) + 2;
-            bag._save();
-        } else if (type === 'amulet') {
-            var amulet = bag._equipment ? bag._equipment.amulet : null;
-            if (!amulet) return { success: false, reason: 'Нет амулета' };
-            var currentLevel = amulet.enhancement || 0;
-            var cost = Math.round(50 * Math.pow(1.3, currentLevel));
-            if ((p.resources.silver || 0) < cost) {
-                return { success: false, reason: 'Нужно ' + cost + ' серебра' };
-            }
-            p.resources.silver -= cost;
-            amulet.enhancement = currentLevel + 1;
-            if (!amulet.stats) amulet.stats = {};
-            amulet.stats.hp = (amulet.stats.hp || 0) + 5;
-            amulet.stats.defense = (amulet.stats.defense || 0) + 2;
-            bag._save();
-        } else if (type === 'skin') {
-            var activeSkin = this.getActiveSkin ? this.getActiveSkin() : null;
-            if (!activeSkin) return { success: false, reason: 'Нет скина' };
-            if (!p.activeSkinLevels) p.activeSkinLevels = {};
-            var currentLevel = p.activeSkinLevels[activeSkin] || 0;
-            var cost = Math.round(50 * Math.pow(1.3, currentLevel));
-            if ((p.resources.silver || 0) < cost) {
-                return { success: false, reason: 'Нужно ' + cost + ' серебра' };
-            }
-            p.resources.silver -= cost;
-            p.activeSkinLevels[activeSkin] = currentLevel + 1;
-        } else {
-            return { success: false, reason: 'Неизвестный тип' };
-        }
-
-        Sherwood._recalcStats();
-        Sherwood.saveGame();
-        return { success: true };
-    },
-
-    getEnhanceCost: function(type) {
-        var p = Sherwood.getPlayer();
-        if (!p) return 0;
-        var bag = Sherwood.Bag;
-        if (!bag) return 0;
-
-        if (type === 'ring') {
-            var ring = bag._equipment ? bag._equipment.ring : null;
-            if (!ring) return 0;
-            return Math.round(50 * Math.pow(1.3, ring.enhancement || 0));
-        } else if (type === 'amulet') {
-            var amulet = bag._equipment ? bag._equipment.amulet : null;
-            if (!amulet) return 0;
-            return Math.round(50 * Math.pow(1.3, amulet.enhancement || 0));
-        } else if (type === 'skin') {
-            var activeSkin = this.getActiveSkin ? this.getActiveSkin() : null;
-            if (!activeSkin) return 0;
-            if (!p.activeSkinLevels) p.activeSkinLevels = {};
-            return Math.round(50 * Math.pow(1.3, p.activeSkinLevels[activeSkin] || 0));
-        }
-        return 0;
-    },
-
-    getEnhanceLevel: function(type) {
-        var p = Sherwood.getPlayer();
-        if (!p) return 0;
-        var bag = Sherwood.Bag;
-        if (!bag) return 0;
-
-        if (type === 'ring') {
-            var ring = bag._equipment ? bag._equipment.ring : null;
-            return ring ? (ring.enhancement || 0) : 0;
-        } else if (type === 'amulet') {
-            var amulet = bag._equipment ? bag._equipment.amulet : null;
-            return amulet ? (amulet.enhancement || 0) : 0;
-        } else if (type === 'skin') {
-            var activeSkin = this.getActiveSkin ? this.getActiveSkin() : null;
-            if (!activeSkin) return 0;
-            if (!p.activeSkinLevels) p.activeSkinLevels = {};
-            return p.activeSkinLevels[activeSkin] || 0;
-        }
-        return 0;
+    // ============================================================
+    //  ОКРУГЛЕНИЕ ДО РОВНЫХ ЗНАЧЕНИЙ
+    // ============================================================
+    roundToNice: function(val) {
+        if (val <= 10) return Math.ceil(val);
+        if (val <= 50) return Math.ceil(val / 5) * 5;
+        if (val <= 200) return Math.ceil(val / 10) * 10;
+        if (val <= 500) return Math.ceil(val / 25) * 25;
+        if (val <= 1000) return Math.ceil(val / 50) * 50;
+        if (val <= 5000) return Math.ceil(val / 100) * 100;
+        if (val <= 20000) return Math.ceil(val / 500) * 500;
+        return Math.ceil(val / 1000) * 1000;
     },
 
     // ============================================================
-    //  КРАФТ СТРЕЛ ИЗ ВЕТВЕЙ ПРОКЛЯТОГО ТИСА
-    //  3 ветки = 1 стрела
+    //  КРАФТ СТРЕЛ
+    //  1 ветка + 1 перо + 1 кость = 1 стрела
     // ============================================================
     getArrowCraftInfo: function() {
         var bag = Sherwood.Bag;
-        if (!bag) return { branches: 0, canCraft: 0, branchesPerArrow: this.BRANCHES_PER_ARROW, arrowsCount: 0 };
+        if (!bag) return { branches: 0, feathers: 0, bones: 0, canCraft: 0, arrowsCount: 0 };
         var items = bag.getItems();
-        var branches = 0;
-        var arrows = 0;
+        var branches = 0, feathers = 0, bones = 0, arrows = 0;
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
-            if (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew') {
-                branches += item.quantity || 1;
-            }
-            if (item.id === 'sherwood_arrow') {
-                arrows += item.quantity || 1;
-            }
+            if (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew') branches += item.quantity || 1;
+            if (item.id === 'feather_beast_1' || item.resKey === 'feathers') feathers += item.quantity || 1;
+            if (item.id === 'bone_growth_of_the_beast' || item.resKey === 'bones') bones += item.quantity || 1;
+            if (item.id === 'sherwood_arrow') arrows += item.quantity || 1;
         }
+        var canCraft = Math.min(
+            Math.floor(branches / this.ARROW_RECIPE.branches),
+            Math.floor(feathers / this.ARROW_RECIPE.feathers),
+            Math.floor(bones / this.ARROW_RECIPE.bones)
+        );
         return {
             branches: branches,
-            canCraft: Math.floor(branches / this.BRANCHES_PER_ARROW),
-            branchesPerArrow: this.BRANCHES_PER_ARROW,
+            feathers: feathers,
+            bones: bones,
+            canCraft: canCraft,
             arrowsCount: arrows
         };
     },
@@ -224,28 +143,40 @@ Sherwood.Forge = {
     craftArrow: function() {
         var info = this.getArrowCraftInfo();
         if (info.canCraft <= 0) {
-            return { success: false, reason: 'Нужно ' + this.BRANCHES_PER_ARROW + ' ветки проклятого тиса' };
+            return { success: false, reason: 'Нужно: ' + this.ARROW_RECIPE.branches + ' ветка, ' + this.ARROW_RECIPE.feathers + ' перо, ' + this.ARROW_RECIPE.bones + ' кость' };
         }
         var bag = Sherwood.Bag;
         if (!bag) return { success: false, reason: 'Сумка не найдена' };
 
-        // Списываем 3 ветки
-        var need = this.BRANCHES_PER_ARROW;
+        // Списываем ресурсы
+        var needBranch = this.ARROW_RECIPE.branches;
+        var needFeather = this.ARROW_RECIPE.feathers;
+        var needBone = this.ARROW_RECIPE.bones;
+
         var items = bag.getItems();
-        for (var i = items.length - 1; i >= 0 && need > 0; i--) {
+        for (var i = items.length - 1; i >= 0 && (needBranch > 0 || needFeather > 0 || needBone > 0); i--) {
             var item = items[i];
-            if (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew') {
+            var isBranch = (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew');
+            var isFeather = (item.id === 'feather_beast_1' || item.resKey === 'feathers');
+            var isBone = (item.id === 'bone_growth_of_the_beast' || item.resKey === 'bones');
+            
+            if (isBranch && needBranch > 0) {
                 var qty = item.quantity || 1;
-                if (qty <= need) {
-                    need -= qty;
-                    bag.removeItem(i, qty);
-                } else {
-                    bag.removeItem(i, need);
-                    need = 0;
-                }
+                if (qty <= needBranch) { needBranch -= qty; bag.removeItem(i, qty); }
+                else { bag.removeItem(i, needBranch); needBranch = 0; }
+            } else if (isFeather && needFeather > 0) {
+                var qty = item.quantity || 1;
+                if (qty <= needFeather) { needFeather -= qty; bag.removeItem(i, qty); }
+                else { bag.removeItem(i, needFeather); needFeather = 0; }
+            } else if (isBone && needBone > 0) {
+                var qty = item.quantity || 1;
+                if (qty <= needBone) { needBone -= qty; bag.removeItem(i, qty); }
+                else { bag.removeItem(i, needBone); needBone = 0; }
             }
         }
-        if (need > 0) return { success: false, reason: 'Не удалось списать ветки' };
+        if (needBranch > 0 || needFeather > 0 || needBone > 0) {
+            return { success: false, reason: 'Не удалось списать ресурсы' };
+        }
 
         // Даём 1 стрелу
         bag.addItem({
@@ -255,7 +186,7 @@ Sherwood.Forge = {
             grade: 'rare',
             type: 'resource',
             quantity: 1,
-            maxStack: 100,
+            maxStack: 50,
             sellPrice: 2
         });
         Sherwood.saveGame();
@@ -266,14 +197,14 @@ Sherwood.Forge = {
         var info = this.getArrowCraftInfo();
         count = Math.min(count || 1, info.canCraft);
         if (count <= 0) {
-            return { success: false, reason: 'Нужно ' + this.BRANCHES_PER_ARROW + ' ветки на 1 стрелу' };
+            return { success: false, reason: 'Нужно: 1 ветка, 1 перо, 1 кость на 1 стрелу' };
         }
         var totalArrows = 0;
         for (var i = 0; i < count; i++) {
             var r = this.craftArrow();
             if (r.success) totalArrows += r.crafted;
         }
-        return { success: true, crafted: totalArrows, branchesUsed: count * this.BRANCHES_PER_ARROW };
+        return { success: true, crafted: totalArrows, used: { branches: count, feathers: count, bones: count } };
     },
 
     getArrowCount: function() {
@@ -282,9 +213,7 @@ Sherwood.Forge = {
         var items = bag.getItems();
         var count = 0;
         for (var i = 0; i < items.length; i++) {
-            if (items[i].id === 'sherwood_arrow') {
-                count += items[i].quantity || 1;
-            }
+            if (items[i].id === 'sherwood_arrow') count += items[i].quantity || 1;
         }
         return count;
     },
@@ -423,23 +352,22 @@ Sherwood.Forge = {
     // ============================================================
     getRingCraftInfo: function() {
         var bag = Sherwood.Bag;
-        if (!bag) return { currentLevel: 1, maxLevel: 50, cost: 5, tablets: 0, gold: 0, canCraft: false };
+        if (!bag) return { currentLevel: 0, maxLevel: 50, cost: 100, tablets: 0, canCraft: false, isNew: true };
 
         var ring = bag._equipment ? bag._equipment.ring : null;
-        var currentLevel = ring ? (ring.level || 1) : 1;
+        var currentLevel = ring ? (ring.level || 1) : 0;
         var maxLevel = 50;
-        var cost = Math.floor(5 * Math.pow(currentLevel + 1, 1.5));
+        
+        var cost = currentLevel === 0 ? 100 : 50 + (currentLevel - 1) * 50;
         var tablets = bag.getResource ? bag.getResource('ringTablets') : 0;
-        var player = Sherwood.getPlayer();
-        var gold = player ? (player.resources.gold || 0) : 0;
-
+        
         return {
             currentLevel: currentLevel,
             maxLevel: maxLevel,
             cost: cost,
             tablets: tablets,
-            gold: gold,
-            canCraft: currentLevel < maxLevel && (tablets >= cost || gold >= (cost - tablets) * 100)
+            canCraft: currentLevel < maxLevel && tablets >= cost,
+            isNew: currentLevel === 0
         };
     },
 
@@ -448,45 +376,29 @@ Sherwood.Forge = {
         if (info.currentLevel >= info.maxLevel) {
             return { success: false, reason: 'Максимальный уровень' };
         }
+        if (info.tablets < info.cost) {
+            return { success: false, reason: 'Нужно ' + info.cost + ' скрижалей, у вас ' + info.tablets };
+        }
 
         var bag = Sherwood.Bag;
         if (!bag) return { success: false, reason: 'Сумка не найдена' };
 
-        var haveTablets = info.tablets;
-        var needTablets = Math.max(0, info.cost - haveTablets);
-        var goldNeeded = needTablets * 100;
-
-        var player = Sherwood.getPlayer();
-        if (!player) return { success: false, reason: 'Игрок не найден' };
-
-        if (goldNeeded > (player.resources.gold || 0)) {
-            return { success: false, reason: 'Нужно ' + needTablets + ' скрижалей или ' + goldNeeded + ' золота' };
-        }
-
-        if (haveTablets >= info.cost) {
-            bag.spendResource('ringTablets', info.cost);
-        } else {
-            bag.spendResource('ringTablets', haveTablets);
-            Sherwood.spendResource('gold', goldNeeded);
-        }
+        bag.spendResource('ringTablets', info.cost);
 
         var newLevel = info.currentLevel + 1;
-        var bonus = Sherwood.getJewelryBonus ? Sherwood.getJewelryBonus(newLevel, 5) : newLevel * 10;
+        var bonus = newLevel * 25;
+
+        var ringIcon = 'assets/interface/ring_first_level.png';
+        if (newLevel >= 50) ringIcon = 'assets/interface/ring_chapter_fourteen.png';
+        else if (newLevel >= 40) ringIcon = 'assets/interface/ring_chapter_twelve.png';
+        else if (newLevel >= 30) ringIcon = 'assets/interface/ring_chapter_eight.png';
+        else if (newLevel >= 20) ringIcon = 'assets/interface/ring_chapter_six.png';
+        else if (newLevel >= 10) ringIcon = 'assets/interface/ring_fifth_level.png';
 
         var grade = newLevel >= 40 ? 'legendary' :
                     newLevel >= 30 ? 'epic' :
                     newLevel >= 20 ? 'rare' :
                     newLevel >= 10 ? 'uncommon' : 'common';
-
-        var ringIcon = 'assets/interface/ring_first_level.png';
-        if (newLevel >= 60) ringIcon = 'assets/interface/the_ring_chapter_fourteen.png';
-        else if (newLevel >= 50) ringIcon = 'assets/interface/ring_chapter_twelve.png';
-        else if (newLevel >= 40) ringIcon = 'assets/interface/ring_chapter_ten.png';
-        else if (newLevel >= 30) ringIcon = 'assets/interface/ring_chapter_eight.png';
-        else if (newLevel >= 20) ringIcon = 'assets/interface/ring_chapter_six.png';
-        else if (newLevel >= 15) ringIcon = 'assets/interface/ring_fifth_level.png';
-        else if (newLevel >= 12) ringIcon = 'assets/interface/ring_fourth_level.png';
-        else if (newLevel >= 8) ringIcon = 'assets/interface/ring_third_level.png';
 
         bag._equipment.ring = {
             name: 'Кольцо силы ' + newLevel,
@@ -494,7 +406,7 @@ Sherwood.Forge = {
             part: 'ring',
             grade: grade,
             level: newLevel,
-            stats: { attack: bonus, defense: Math.floor(bonus * 0.5) }
+            stats: { attack: bonus, defense: bonus, hp: bonus }
         };
 
         bag._save();
@@ -504,27 +416,26 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  АМУЛЕТ
+    //  АМУЛЕТ (+40% от текущего значения за уровень)
     // ============================================================
     getAmuletCraftInfo: function() {
         var bag = Sherwood.Bag;
-        if (!bag) return { currentLevel: 1, maxLevel: 50, cost: 5, tablets: 0, gold: 0, canCraft: false };
+        if (!bag) return { currentLevel: 0, maxLevel: 50, cost: 100, tablets: 0, canCraft: false, isNew: true };
 
         var amulet = bag._equipment ? bag._equipment.amulet : null;
-        var currentLevel = amulet ? (amulet.level || 1) : 1;
+        var currentLevel = amulet ? (amulet.level || 1) : 0;
         var maxLevel = 50;
-        var cost = Math.floor(5 * Math.pow(currentLevel + 1, 1.5));
+        
+        var cost = currentLevel === 0 ? 100 : 50 + (currentLevel - 1) * 50;
         var tablets = bag.getResource ? bag.getResource('amuletTablets') : 0;
-        var player = Sherwood.getPlayer();
-        var gold = player ? (player.resources.gold || 0) : 0;
-
+        
         return {
             currentLevel: currentLevel,
             maxLevel: maxLevel,
             cost: cost,
             tablets: tablets,
-            gold: gold,
-            canCraft: currentLevel < maxLevel && (tablets >= cost || gold >= (cost - tablets) * 100)
+            canCraft: currentLevel < maxLevel && tablets >= cost,
+            isNew: currentLevel === 0
         };
     },
 
@@ -533,41 +444,30 @@ Sherwood.Forge = {
         if (info.currentLevel >= info.maxLevel) {
             return { success: false, reason: 'Максимальный уровень' };
         }
+        if (info.tablets < info.cost) {
+            return { success: false, reason: 'Нужно ' + info.cost + ' скрижалей, у вас ' + info.tablets };
+        }
 
         var bag = Sherwood.Bag;
         if (!bag) return { success: false, reason: 'Сумка не найдена' };
 
-        var haveTablets = info.tablets;
-        var needTablets = Math.max(0, info.cost - haveTablets);
-        var goldNeeded = needTablets * 100;
-
-        var player = Sherwood.getPlayer();
-        if (!player) return { success: false, reason: 'Игрок не найден' };
-
-        if (goldNeeded > (player.resources.gold || 0)) {
-            return { success: false, reason: 'Нужно ' + needTablets + ' скрижалей или ' + goldNeeded + ' золота' };
-        }
-
-        if (haveTablets >= info.cost) {
-            bag.spendResource('amuletTablets', info.cost);
-        } else {
-            bag.spendResource('amuletTablets', haveTablets);
-            Sherwood.spendResource('gold', goldNeeded);
-        }
+        bag.spendResource('amuletTablets', info.cost);
 
         var newLevel = info.currentLevel + 1;
-        var bonus = Sherwood.getJewelryBonus ? Sherwood.getJewelryBonus(newLevel, 3) : newLevel * 6;
+        var raw = 5 * Math.pow(1.4, newLevel - 1);
+        var bonus = this.roundToNice(raw);
+
+        var amuletIcon = 'assets/interface/sherwood_amulet_level_one.png';
+        if (newLevel >= 50) amuletIcon = 'assets/interface/sherwood_amulet_level_five.png';
+        else if (newLevel >= 40) amuletIcon = 'assets/interface/sherwood_amulet_level_four.png';
+        else if (newLevel >= 30) amuletIcon = 'assets/interface/sherwood_amulet_level_three.png';
+        else if (newLevel >= 20) amuletIcon = 'assets/interface/sherwood_amulet_level_two.png';
+        else if (newLevel >= 10) amuletIcon = 'assets/interface/sherwood_amulet_level_two.png';
 
         var grade = newLevel >= 40 ? 'legendary' :
                     newLevel >= 30 ? 'epic' :
                     newLevel >= 20 ? 'rare' :
                     newLevel >= 10 ? 'uncommon' : 'common';
-
-        var amuletIcon = 'assets/interface/sherwood_amulet_level_one.png';
-        if (newLevel >= 40) amuletIcon = 'assets/interface/sherwood_amulet_level_five.png';
-        else if (newLevel >= 30) amuletIcon = 'assets/interface/sherwood_amulet_level_four.png';
-        else if (newLevel >= 20) amuletIcon = 'assets/interface/sherwood_amulet_level_three.png';
-        else if (newLevel >= 10) amuletIcon = 'assets/interface/sherwood_amulet_level_two.png';
 
         bag._equipment.amulet = {
             name: 'Амулет защиты ' + newLevel,
@@ -575,7 +475,7 @@ Sherwood.Forge = {
             part: 'amulet',
             grade: grade,
             level: newLevel,
-            stats: { hp: bonus * 2, defense: bonus }
+            stats: { attack: bonus, defense: bonus, hp: bonus * 2 }
         };
 
         bag._save();
@@ -585,33 +485,97 @@ Sherwood.Forge = {
     },
 
     // ============================================================
+    //  ЗАТОЧКА (ГЛОБАЛЬНАЯ)
+    // ============================================================
+    getSharpeningInfo: function() {
+        var p = Sherwood.getPlayer();
+        if (!p) return { level: 0, cost: 5, drawings: 0, canSharpen: false };
+        
+        if (!p.sharpeningLevel) p.sharpeningLevel = 0;
+        
+        var currentLevel = p.sharpeningLevel;
+        var cost = 5 + currentLevel * 5;
+        var drawings = 0;
+        
+        var bag = Sherwood.Bag;
+        if (bag) {
+            var items = bag.getItems();
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].id === 'skin_drawing') drawings += items[i].quantity || 1;
+            }
+        }
+        
+        return {
+            level: currentLevel,
+            cost: cost,
+            drawings: drawings,
+            canSharpen: drawings >= cost
+        };
+    },
+
+    sharpen: function() {
+        var info = this.getSharpeningInfo();
+        if (!info.canSharpen) {
+            return { success: false, reason: 'Нужно ' + info.cost + ' чертежей заточки, у вас ' + info.drawings };
+        }
+        
+        var bag = Sherwood.Bag;
+        if (!bag) return { success: false, reason: 'Сумка не найдена' };
+        
+        var need = info.cost;
+        var items = bag.getItems();
+        for (var i = items.length - 1; i >= 0 && need > 0; i--) {
+            var item = items[i];
+            if (item.id === 'skin_drawing') {
+                var qty = item.quantity || 1;
+                if (qty <= need) { need -= qty; bag.removeItem(i, qty); }
+                else { bag.removeItem(i, need); need = 0; }
+            }
+        }
+        
+        if (need > 0) return { success: false, reason: 'Не удалось списать чертежи' };
+        
+        var p = Sherwood.getPlayer();
+        p.sharpeningLevel = (p.sharpeningLevel || 0) + 1;
+        
+        Sherwood._recalcStats();
+        Sherwood.saveGame();
+        return { success: true, newLevel: p.sharpeningLevel };
+    },
+
+    // ============================================================
     //  UI КУЗНИЦЫ
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') {
-                showGenericScreen('Кузница', '🔧');
-            }
+            if (typeof showGenericScreen === 'function') showGenericScreen('Кузница', '🔧');
             return;
         }
         UI._playSound('click');
 
         var player = Sherwood.getPlayer();
-        var resources = Sherwood.Bag ? Sherwood.Bag.getResources() : {};
-        var skinDrawings = resources.skinTablets || 0;
-        var ringTablets = resources.ringTablets || 0;
-        var amuletTablets = resources.amuletTablets || 0;
-
+        var bag = Sherwood.Bag;
+        var resources = bag ? bag.getResources() : {};
+        var skinDrawings = 0;
+        if (bag) {
+            var items = bag.getItems();
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].id === 'skin_drawing') skinDrawings += items[i].quantity || 1;
+            }
+        }
+        
         var ringInfo = this.getRingCraftInfo();
         var amuletInfo = this.getAmuletCraftInfo();
         var arrowInfo = this.getArrowCraftInfo();
+        var sharpenInfo = this.getSharpeningInfo();
 
         var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
         // Стрелы
         h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
         h += '<div style="color:#ffa500;font-weight:bold;">🏹 Стрелы</div>';
-        h += '<div style="color:#888;font-size:11px;">Ветвей тиса: ' + arrowInfo.branches + ' | На 1 стрелу: ' + arrowInfo.branchesPerArrow + '</div>';
+        h += '<div style="color:#888;font-size:11px;">Веток: ' + arrowInfo.branches + ' | Перьев: ' + arrowInfo.feathers + ' | Костей: ' + arrowInfo.bones + '</div>';
+        h += '<div style="color:#888;font-size:11px;">Рецепт: 1 ветка + 1 перо + 1 кость = 1 стрела</div>';
         h += '<div style="color:#888;font-size:11px;">Можно сделать: ' + arrowInfo.canCraft + '</div>';
         h += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">';
         h += '<button onclick="Sherwood.Forge._craftArrowFromUI(1)" class="btn btn-success" style="padding:4px 12px;font-size:11px;">Сделать 1</button>';
@@ -623,34 +587,37 @@ Sherwood.Forge = {
 
         // Кольцо
         h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
-        h += '<div style="color:#4a8ab7;font-weight:bold;">💍 Кольцо (Ур. ' + ringInfo.currentLevel + '/' + ringInfo.maxLevel + ')</div>';
+        h += '<div style="color:#4a8ab7;font-weight:bold;">💍 Кольцо ' + (ringInfo.isNew ? '(нет)' : '(Ур. ' + ringInfo.currentLevel + '/' + ringInfo.maxLevel + ')') + '</div>';
         h += '<div style="color:#888;font-size:11px;">Скрижалей: ' + ringInfo.tablets + ' | Нужно: ' + ringInfo.cost + '</div>';
         if (ringInfo.canCraft) {
-            h += '<button onclick="Sherwood.Forge._craftRingFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">Улучшить</button>';
+            h += '<button onclick="Sherwood.Forge._craftRingFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
         } else {
-            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно ресурсов</div>';
+            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно скрижалей</div>';
         }
         h += '</div>';
 
         // Амулет
         h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
-        h += '<div style="color:#a8d8ea;font-weight:bold;">📿 Амулет (Ур. ' + amuletInfo.currentLevel + '/' + amuletInfo.maxLevel + ')</div>';
+        h += '<div style="color:#a8d8ea;font-weight:bold;">📿 Амулет ' + (amuletInfo.isNew ? '(нет)' : '(Ур. ' + amuletInfo.currentLevel + '/' + amuletInfo.maxLevel + ')') + '</div>';
         h += '<div style="color:#888;font-size:11px;">Скрижалей: ' + amuletInfo.tablets + ' | Нужно: ' + amuletInfo.cost + '</div>';
         if (amuletInfo.canCraft) {
-            h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">Улучшить</button>';
+            h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
         } else {
-            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно ресурсов</div>';
+            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно скрижалей</div>';
         }
         h += '</div>';
 
         // Заточка
         h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;">';
-        h += '<div style="color:#ffd700;font-weight:bold;">⚡ Заточка</div>';
-        h += '<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">';
-        h += '<button onclick="Sherwood.Forge._enhanceEquippedFromUI(\'ring\')" class="btn" style="padding:4px 12px;font-size:11px;">💍 Кольцо (+' + this.getEnhanceLevel('ring') + ') — ' + this.getEnhanceCost('ring') + ' сер.</button>';
-        h += '<button onclick="Sherwood.Forge._enhanceEquippedFromUI(\'amulet\')" class="btn" style="padding:4px 12px;font-size:11px;">📿 Амулет (+' + this.getEnhanceLevel('amulet') + ') — ' + this.getEnhanceCost('amulet') + ' сер.</button>';
-        h += '<button onclick="Sherwood.Forge._enhanceEquippedFromUI(\'skin\')" class="btn" style="padding:4px 12px;font-size:11px;">🎭 Скин (+' + this.getEnhanceLevel('skin') + ') — ' + this.getEnhanceCost('skin') + ' сер.</button>';
-        h += '</div></div>';
+        h += '<div style="color:#ffd700;font-weight:bold;">⚡ Заточка (Ур. ' + sharpenInfo.level + ')</div>';
+        h += '<div style="color:#888;font-size:11px;">Чертежей: ' + sharpenInfo.drawings + ' | Нужно: ' + sharpenInfo.cost + '</div>';
+        h += '<div style="color:#888;font-size:10px;">+5 ко всем статам за уровень</div>';
+        if (sharpenInfo.canSharpen) {
+            h += '<button onclick="Sherwood.Forge._sharpenFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">Заточить</button>';
+        } else {
+            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно чертежей</div>';
+        }
+        h += '</div>';
 
         h += '</div>';
         UI._openScreenScrollable('🔧 Кузница', 'forge', h);
@@ -659,7 +626,7 @@ Sherwood.Forge = {
     _craftArrowFromUI: function(count) {
         var r = this.craftArrowBatch(count);
         if (r.success) {
-            UI._showToast('✅ Сделано стрел: ' + r.crafted + ' (веток: ' + r.branchesUsed + ')');
+            UI._showToast('✅ Сделано стрел: ' + r.crafted);
             this.showUI();
         } else {
             UI._showToast('❌ ' + r.reason);
@@ -669,7 +636,7 @@ Sherwood.Forge = {
     _craftRingFromUI: function() {
         var r = this.craftRing();
         if (r.success) {
-            UI._showToast('✅ Кольцо улучшено до ' + r.newLevel + ' уровня!');
+            UI._showToast(r.newLevel === 1 ? '✅ Кольцо создано!' : '✅ Кольцо улучшено до ' + r.newLevel + ' уровня!');
             this.showUI();
         } else {
             UI._showToast('❌ ' + r.reason);
@@ -679,18 +646,18 @@ Sherwood.Forge = {
     _craftAmuletFromUI: function() {
         var r = this.craftAmulet();
         if (r.success) {
-            UI._showToast('✅ Амулет улучшен до ' + r.newLevel + ' уровня!');
+            UI._showToast(r.newLevel === 1 ? '✅ Амулет создан!' : '✅ Амулет улучшен до ' + r.newLevel + ' уровня!');
             this.showUI();
         } else {
             UI._showToast('❌ ' + r.reason);
         }
     },
 
-    _enhanceEquippedFromUI: function(type) {
-        var r = this.enhanceEquipped(type);
+    _sharpenFromUI: function() {
+        var r = this.sharpen();
         if (r.success) {
             UI._playSound('forge');
-            UI._showToast('✅ Улучшено!');
+            UI._showToast('✅ Заточка улучшена до ' + r.newLevel + ' уровня!');
             UI.updateDisplay();
             this.showUI();
         } else {
