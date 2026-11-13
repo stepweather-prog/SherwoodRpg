@@ -1099,6 +1099,12 @@ updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
                             else if (parent.UI.dungeon) parent.UI.dungeon(); 
                         } catch(e) { exitDungeon(); } 
                     }; 
+                    if (parent.Sherwood && parent.Sherwood.Wallet && parent.Sherwood.Wallet.addFromRun) {
+    parent.Sherwood.Wallet.addFromRun(
+        250 + currentFloor * 50 + (currentDiff - 1) * 150 + runLoot.gold,
+        100 + currentFloor * 20 + (currentDiff - 1) * 60 + runLoot.silver
+    );
+}
                     parent.UI._showVictoryScreen(rewards); 
                 } else { exitDungeon(); } 
             } catch(e) { exitDungeon(); }
