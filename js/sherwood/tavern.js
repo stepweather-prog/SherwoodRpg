@@ -8,7 +8,7 @@ if (typeof Sherwood === 'undefined') {
 
 Sherwood.Tavern = {
     CHAPTERS: [
-        { id: 1, title: 'Кровь Великого Дуба', quest: 'Останови осквернение леса, найди источник проклятия', enemy: { name: 'Лесничий-Отступник', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 }, reward: { exp: 200, gold: 50, silver: 500 }, lore: 'Шервудский лес веками был щитом для королевства, а его сердце — Древний Шервудский Дуб...', bossNodeId: 4 },
+        { id: 1, title: 'Кровь Великого Дуба', quest: 'Останови осквернение леса, найди источник проклятия', enemy: { name: 'Леечний-Отступник', hp: 8000, atk: 800, def: 800, exp: 150, gold: 100 }, reward: { exp: 200, gold: 50, silver: 500 }, lore: 'Шервудский лес веками был щитом для королевства, а его сердце — Древний Шервудский Дуб...', bossNodeId: 4 },
         { id: 2, title: 'Кара Скверны', quest: 'Очисти лес от искажённых тварей, уничтожь Вожака стаи', enemy: { name: 'Вожак Искаженной Стаи', hp: 35000, atk: 2500, def: 2000, exp: 200, gold: 130 }, reward: { exp: 400, gold: 100, silver: 1000 }, lore: 'Смерть Дуба вызвала цепную реакцию...', bossNodeId: 8 },
         { id: 3, title: 'Старый Егерь', quest: 'Найди слепого ветерана Гаррета, упокой Альфа-Гончую', enemy: { name: 'Альфа-Гончая Егеря', hp: 90000, atk: 4500, def: 3500, exp: 250, gold: 160 }, reward: { exp: 600, gold: 150, silver: 1500 }, lore: 'На окраине гибнущего леса, в заброшенном домике егеря...', bossNodeId: 12 },
         { id: 4, title: 'Спуск в Шервудскую Чащобу', quest: 'Спустись в подземелье, победи Падшего Друида', enemy: { name: 'Падший Друид', hp: 180000, atk: 7000, def: 5500, exp: 300, gold: 200 }, reward: { exp: 800, gold: 200, silver: 2000 }, lore: 'Чтобы остановить расползающееся зло, нужно ударить в его источник...', bossNodeId: 16 },
@@ -170,6 +170,10 @@ Sherwood.Tavern = {
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background:url(\'assets/assets2/backgrounds/tavern.png\') center/cover no-repeat;scrollbar-width:none;-ms-overflow-style:none;">';
         h += '<style>.tavern-scroll::-webkit-scrollbar{display:none;}.tavern-scroll{scrollbar-width:none;}</style>';
 
+        // --- СВОЯ КНОПКА НАЗАД (вместо встроенной) ---
+        h += '<button onclick="UI.loadHome()" style="position:fixed;top:15px;left:15px;z-index:9999;background:rgba(0,0,0,0.8);border:2px solid #c8a050;border-radius:8px;padding:8px 16px;color:#c8a050;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);">← Назад</button>';
+        // --- КОНЕЦ КНОПКИ ---
+
         // Гаррет (видео) — фиксировано
         h += '<div style="position:fixed;top:50%;left:55%;transform:translate(-50%,-50%);width:60%;height:60%;pointer-events:none;z-index:1;">';
         h += '<video src="assets/assets2/animation/Garret.webm" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:contain;pointer-events:none;"></video>';
@@ -236,8 +240,8 @@ Sherwood.Tavern = {
         h += '</div>'; // .tavern-scroll
         h += '</div>'; // фон
 
-        // ИЗМЕНЕНО: возврат в лагерь по кнопке "Назад"
-        UI._openScreenScrollable('Таверна', null, h, 'UI.loadHome()');
+        // ИЗМЕНЕНО: убрали встроенный заголовок и старую кнопку (передали '' и null), так как теперь есть своя кнопка
+        UI._openScreenScrollable('', null, h, 'UI.loadHome()');
     },
 
     acceptFromUI: function() {
