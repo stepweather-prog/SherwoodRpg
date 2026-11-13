@@ -297,10 +297,20 @@ UI._openScreen = function(title, bgKey, html, backFn) {
             if (bgKey === null) {
                 bgStyle = 'background:transparent;';
             }
+
+            // Проверяем, есть ли уже своя кнопка "Назад" в HTML
+            var hasCustomBack = html.indexOf('UI.loadHome()') !== -1 || html.indexOf('← Назад') !== -1 || html.indexOf('←') !== -1;
             
+            // Если нет — добавляем свою
+            var backBtn = '';
+            if (!hasCustomBack) {
+                backBtn = '<button onclick="' + (backFn || 'UI.loadHome()') + '" style="position:absolute;top:15px;left:15px;z-index:9999;background:rgba(0,0,0,0.8);border:2px solid #c8a050;border-radius:8px;padding:8px 16px;color:#c8a050;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);">← Назад</button>';
+            }
+
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
+                    <div style="flex:1;padding:8px 12px 20px 12px;width:100%;position:relative;">
+                        ${backBtn}
                         ${html}
                     </div>
                 </div>
@@ -327,10 +337,20 @@ UI._openScreenScrollable = function(title, bgKey, html, backFn) {
             if (bgKey === null) {
                 bgStyle = 'background:transparent;';
             }
+
+            // Проверяем, есть ли уже своя кнопка "Назад" в HTML
+            var hasCustomBack = html.indexOf('UI.loadHome()') !== -1 || html.indexOf('← Назад') !== -1 || html.indexOf('←') !== -1;
             
+            // Если нет — добавляем свою
+            var backBtn = '';
+            if (!hasCustomBack) {
+                backBtn = '<button onclick="' + (backFn || 'UI.loadHome()') + '" style="position:absolute;top:15px;left:15px;z-index:9999;background:rgba(0,0,0,0.8);border:2px solid #c8a050;border-radius:8px;padding:8px 16px;color:#c8a050;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);">← Назад</button>';
+            }
+
             UI._screenLayer.innerHTML = `
                 <div style="width:100%;min-height:100%;display:flex;flex-direction:column;${bgStyle}">
-                    <div style="flex:1;padding:8px 12px 20px 12px;width:100%;">
+                    <div style="flex:1;padding:8px 12px 20px 12px;width:100%;position:relative;">
+                        ${backBtn}
                         ${html}
                     </div>
                 </div>
