@@ -288,7 +288,7 @@ UI._hideDungeonVideo = function() {
 //  ЭКРАНЫ — ЕДИНАЯ ФУНКЦИЯ (ИСПРАВЛЕННАЯ ШАПКА)
 // ============================================================
 UI._openScreen = function(title, bgKey, html, backFn) {
-    var goBack = UI._cameFromCamp ? 'UI.camp()' : (backFn || 'UI.loadHome()');
+    var goBack = backFn || (UI._cameFromCamp ? 'UI.camp()' : 'UI.loadHome()');
     try {
         if (UI._screenLayer) {
             var bgStyle = 'background:transparent;';
