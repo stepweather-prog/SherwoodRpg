@@ -621,7 +621,7 @@ Sherwood.Bag = {
             if (UI._screenLayer) UI._screenLayer.style.overflow = 'hidden';
         } catch(e) {}
 
-        UI._openScreenScrollable('🎒 Сумка', null, h, 'UI.loadHome()');
+        UI._openScreenScrollable('🎒 Сумка', null, h, 'UI.profile()');
     },
 
     _showExpandUI: function() {
