@@ -1,5 +1,5 @@
 /**
- * Sherwood Dungeon — Рабочая версия (перенос твоего newlabir.html)
+ * Sherwood Dungeon — Рабочая версия
  *  — логика подземки (кубки, билеты, автобой, докупка)
  *  — 3D-рендер (Dungeon2D5)
  */
@@ -145,7 +145,6 @@ Sherwood.Dungeon = {
                 p.resources.gold = (p.resources.gold || 0) + goldReward;
                 p.resources.silver = (p.resources.silver || 0) + silverReward;
                 if (Sherwood.addExp) Sherwood.addExp(200);
-                // Кесет: 50% от наград падает в копилку
                 if (Sherwood.Wallet && Sherwood.Wallet.addFromRun) {
                     Sherwood.Wallet.addFromRun(goldReward, silverReward);
                 }
@@ -281,7 +280,7 @@ Sherwood.Dungeon = {
         h += '</div>';
         h += '</div>';
 
-        UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.loadHome()');
+        UI._openScreenScrollable('🏚️ Подземка', null, h, 'UI.camp()');
     },
 
     showFloors: function(dungeonId) {
@@ -300,6 +299,15 @@ Sherwood.Dungeon = {
         } catch(e){}
 
         var h = '<div style="position:absolute;top:0;left:0;width:100%;min-height:100%;background:url(\'assets/assets2/backgrounds/visual_dungeon.png\') center/cover no-repeat;padding:60px 12px 20px;box-sizing:border-box;">';
+
+        // Шапка с билетами
+        var entranceCount = this.getEntranceTickets();
+        var autoCount = this.getAutoFightTickets();
+        h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:0.9em;color:#e0c080;">';
+        h += '<span>🔑 ' + entranceCount + ' <button onclick="Sherwood.Dungeon._buyTicketUI(\'entrance\')" style="background:#c9a040;border:none;border-radius:4px;padding:2px 8px;color:#000;cursor:pointer;font-size:0.7em;margin-left:4px;">+</button></span>';
+        h += '<span>⚔️ ' + autoCount + ' <button onclick="Sherwood.Dungeon._buyTicketUI(\'autofight\')" style="background:#c9a040;border:none;border-radius:4px;padding:2px 8px;color:#000;cursor:pointer;font-size:0.7em;margin-left:4px;">+</button></span>';
+        h += '</div>';
+
         h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:420px;margin:0 auto;">';
 
         for (var n = 1; n <= 6; n++) {
@@ -308,7 +316,9 @@ Sherwood.Dungeon = {
             var f2 = this.isFloorAvailable(n, 2);
             var f3 = this.isFloorAvailable(n, 3);
 
-            h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
+            var floorTile = 'assets/dungeon_tiles/visual_dungeon/grotto_tiles_1.png'; // Упростил для примера
+
+            h += '<div style="position:relative;width:100%;padding-bottom:100%;background:url(\'' + floorTile + '\') center/cover no-repeat;border:2px solid #6b5a3a;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.7);">';
             h += '<div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#ffa500;font-size:16px;font-weight:bold;text-shadow:0 0 6px #000,0 2px 4px #000;white-space:nowrap;">ЭТАЖ ' + n + '</div>';
 
             if (!f1) {
@@ -321,7 +331,9 @@ Sherwood.Dungeon = {
                 var isOpen = (k === 1 && f1) || (k === 2 && f2) || (k === 3 && f3);
                 var borderColor = hasCup ? '#ffd700' : (isOpen ? '#8b6b3a' : '#333');
                 var bgColor = hasCup ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.5)';
-                var clickAttr = isOpen ? 'onclick="event.stopPropagation();Sherwood.Dungeon._enterFloor(' + n + ',' + k + ')"' : '';
+                
+                // ВАЖНО: Клик открывает модалку!
+                var clickAttr = isOpen ? 'onclick="event.stopPropagation();Sherwood.Dungeon._showFloorModal(' + dungeonId + ',' + n + ',' + k + ')"' : '';
                 var cursor = isOpen ? 'pointer' : 'not-allowed';
 
                 h += '<div ' + clickAttr + ' style="cursor:' + cursor + ';width:26px;height:26px;border-radius:50%;background:' + bgColor + ';border:2px solid ' + borderColor + ';display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;pointer-events:auto;">';
@@ -341,7 +353,55 @@ Sherwood.Dungeon = {
         h += '</div>';
         h += '</div>';
 
-        UI._openScreenScrollable('🏚️ Проклятая чаща', null, h, 'UI.dungeon()');
+        UI._openScreenScrollable('🏚️ Выбор этажа', null, h, 'UI.dungeon()');
+    },
+
+    _showFloorModal: function(dungeonId, floor, diff) {
+        UI._playSound('click');
+        var cups = this.getFloorCups(floor);
+        var canAuto = cups >= diff;
+        var tickets = this.getAutoFightTickets();
+
+        var h = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;" onclick="Sherwood.Dungeon._closeFloorModal()">';
+        h += '<div onclick="event.stopPropagation()" style="background:linear-gradient(180deg,#2a1e12,#110a04);border:2px solid #c8a050;border-radius:12px;padding:24px;max-width:320px;width:100%;text-align:center;box-shadow:0 0 30px rgba(200,160,80,0.3);">';
+
+        h += '<div style="color:#ffd27a;font-size:1.2em;font-weight:bold;margin-bottom:8px;">Этаж ' + floor + '</div>';
+        h += '<div style="color:#aaa;font-size:0.85em;margin-bottom:16px;">Сложность ' + diff + '</div>';
+
+        h += '<button onclick="Sherwood.Dungeon._closeFloorModal(); Sherwood.Dungeon._enterFloor(' + floor + ',' + diff + ')" style="width:100%;background:#5a3a00;border:2px solid #c8a050;border-radius:8px;padding:10px;color:#ffd27a;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">⚔️ Войти вручную</button>';
+
+        if (canAuto) {
+            if (tickets > 0) {
+                h += '<button onclick="Sherwood.Dungeon._closeFloorModal(); Sherwood.Dungeon._startAutoFight(' + floor + ',' + diff + ')" style="width:100%;background:#1a4a2a;border:2px solid #4caf50;border-radius:8px;padding:10px;color:#7cff7c;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">⚔️ Автобой (1 билет)</button>';
+            } else {
+                h += '<button onclick="Sherwood.Dungeon._closeFloorModal(); Sherwood.Dungeon._startFreeAutoFight(' + floor + ',' + diff + ')" style="width:100%;background:#1a3a4a;border:2px solid #4a9cff;border-radius:8px;padding:10px;color:#7cbcff;font-weight:bold;cursor:pointer;font-size:0.9em;margin-bottom:8px;">⏳ Бесплатно (15 мин)</button>';
+            }
+        } else {
+            h += '<div style="color:#888;font-size:0.75em;margin-bottom:8px;">Пройди вручную, чтобы открыть автобой</div>';
+        }
+
+        h += '<button onclick="Sherwood.Dungeon._closeFloorModal()" style="width:100%;background:#333;border:none;border-radius:8px;padding:8px;color:#ccc;cursor:pointer;font-size:0.8em;">Отмена</button>';
+        h += '</div></div>';
+
+        var modal = document.createElement('div');
+        modal.id = 'floor-modal-overlay';
+        modal.innerHTML = h;
+        document.body.appendChild(modal);
+    },
+
+    _closeFloorModal: function() {
+        var m = document.getElementById('floor-modal-overlay');
+        if (m) m.remove();
+    },
+
+    _buyTicketUI: function(type) {
+        var r = this.buyTicket(type);
+        if (r.success) {
+            UI._showToast('✅ Куплено за ' + r.cost + ' золота');
+            this.showFloors(UI._lastDungeon || 1);
+        } else {
+            UI._showToast('❌ ' + r.reason);
+        }
     },
 
     _enterFloor: function(floor, diff) {
