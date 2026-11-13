@@ -276,15 +276,16 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  СКИНЫ (оставлены как были)
+    //  СКИНЫ (только 5 + бонусный)
     // ============================================================
     getCraftSkins: function() {
         var allSkins = [
-            
-            'skin13_01','skin13_02','skin13_03',
-            'skin14_01','skin14_02','skin14_03','bonus_skin_14',
-            'skin15_01','skin15_02','skin15_03',
-            'skin16_01','skin16_02','skin16_03','bonus_skin_sec'
+            'skin1_01',
+            'skin9_01',
+            'skin8_01',
+            'skin4_01',
+            'skin16_03',
+            'bonus_skin_sec'
         ];
         var result = [];
         for (var i = 0; i < allSkins.length; i++) {
@@ -525,13 +526,11 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  UI КУЗНИЦЫ (только крафт стрел, кольца, амулета и глобальная заточка)
+    //  UI КУЗНИЦЫ (в стиле талантов)
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') {
-                showGenericScreen('Кузница', '');
-            }
+            if (typeof showGenericScreen === 'function') showGenericScreen('Кузница', '');
             return;
         }
         UI._playSound('click');
@@ -539,10 +538,14 @@ Sherwood.Forge = {
         var player = Sherwood.getPlayer();
         var bag = Sherwood.Bag;
         var skinDrawings = 0;
+        var ringTablets = 0;
+        var amuletTablets = 0;
         if (bag) {
             var items = bag.getItems();
             for (var i = 0; i < items.length; i++) {
                 if (items[i].id === 'skin_drawing') skinDrawings += items[i].quantity || 1;
+                if (items[i].id === 'ring_tablet') ringTablets += items[i].quantity || 1;
+                if (items[i].id === 'amulet_tablet') amuletTablets += items[i].quantity || 1;
             }
         }
         
@@ -553,51 +556,61 @@ Sherwood.Forge = {
 
         var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
 
-        // Стрелы
-        h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
-        h += '<div style="color:#ffa500;font-weight:bold;">🏹 Стрелы</div>';
-        h += '<div style="color:#888;font-size:11px;">Веток: ' + arrowInfo.branches + ' | Перьев: ' + arrowInfo.feathers + ' | Костей: ' + arrowInfo.bones + '</div>';
-        h += '<div style="color:#888;font-size:11px;">Рецепт: 1 ветка + 1 перо + 1 кость = 1 стрела</div>';
-        h += '<div style="color:#888;font-size:11px;">Можно сделать: ' + arrowInfo.canCraft + '</div>';
-        h += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">';
-        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(1)" class="btn btn-success" style="padding:4px 12px;font-size:11px;">Сделать 1</button>';
-        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(5)" class="btn btn-gold" style="padding:4px 12px;font-size:11px;">Сделать 5</button>';
-        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(10)" class="btn btn-danger" style="padding:4px 12px;font-size:11px;">Сделать 10</button>';
+        // --- СТРЕЛЫ ---
+        h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #6b5a3a;border-radius:12px;padding:12px;margin-bottom:12px;">';
+        h += '<div style="color:#ffa500;font-weight:bold;font-size:1em;margin-bottom:6px;">🏹 Стрелы</div>';
+        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:4px;">Веток: ' + arrowInfo.branches + ' | Перьев: ' + arrowInfo.feathers + ' | Костей: ' + arrowInfo.bones + '</div>';
+        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:8px;">Рецепт: 1 ветка + 1 перо + 1 кость = 1 стрела</div>';
+        h += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(1)" style="background:#c9a040;border:none;border-radius:6px;padding:6px 12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">Сделать 1</button>';
+        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(5)" style="background:#c9a040;border:none;border-radius:6px;padding:6px 12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">Сделать 5</button>';
+        h += '<button onclick="Sherwood.Forge._craftArrowFromUI(10)" style="background:#c9a040;border:none;border-radius:6px;padding:6px 12px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">Сделать 10</button>';
         h += '</div>';
-        h += '<div style="color:#888;font-size:10px;margin-top:4px;">Всего стрел в сумке: ' + arrowInfo.arrowsCount + '</div>';
+        h += '<div style="color:#888;font-size:0.7em;margin-top:6px;">Всего стрел в сумке: ' + arrowInfo.arrowsCount + '</div>';
         h += '</div>';
 
+        // --- КОЛЬЦО и АМУЛЕТ (в стиле талантов) ---
+        h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;">';
+        
         // Кольцо
-        h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
-        h += '<div style="color:#4a8ab7;font-weight:bold;">💍 Кольцо ' + (ringInfo.isNew ? '(нет)' : '(Ур. ' + ringInfo.currentLevel + '/' + ringInfo.maxLevel + ')') + '</div>';
-        h += '<div style="color:#888;font-size:11px;">Скрижалей: ' + ringInfo.tablets + ' | Нужно: ' + ringInfo.cost + '</div>';
+        h += '<div style="display:flex;flex-direction:column;align-items:center;">';
+        h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
+        h += '<img src="assets/interface/ring_crafting_tablet_resource.png" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));">';
+        h += '</div>';
+        h += '<div style="color:#ffd27a;font-size:0.8em;font-weight:bold;margin-top:8px;text-align:center;text-shadow:0 2px 4px #000;">Кольцо ' + (ringInfo.isNew ? '(нет)' : 'Ур. ' + ringInfo.currentLevel + '/' + ringInfo.maxLevel) + '</div>';
+        h += '<div style="color:#aaa;font-size:0.65em;margin-top:2px;">Скрижалей: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
         if (ringInfo.canCraft) {
-            h += '<button onclick="Sherwood.Forge._craftRingFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
+            h += '<button onclick="Sherwood.Forge._craftRingFromUI()" style="margin-top:6px;background:#c9a040;border:none;border-radius:6px;padding:6px 16px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
         } else {
-            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно скрижалей</div>';
+            h += '<div style="color:#555;font-size:0.7em;margin-top:4px;">🔒 Недостаточно</div>';
         }
         h += '</div>';
 
         // Амулет
-        h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin-bottom:10px;">';
-        h += '<div style="color:#a8d8ea;font-weight:bold;">📿 Амулет ' + (amuletInfo.isNew ? '(нет)' : '(Ур. ' + amuletInfo.currentLevel + '/' + amuletInfo.maxLevel + ')') + '</div>';
-        h += '<div style="color:#888;font-size:11px;">Скрижалей: ' + amuletInfo.tablets + ' | Нужно: ' + amuletInfo.cost + '</div>';
+        h += '<div style="display:flex;flex-direction:column;align-items:center;">';
+        h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
+        h += '<img src="assets/interface/amulet_crafting_tablet_resource.png" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));">';
+        h += '</div>';
+        h += '<div style="color:#ffd27a;font-size:0.8em;font-weight:bold;margin-top:8px;text-align:center;text-shadow:0 2px 4px #000;">Амулет ' + (amuletInfo.isNew ? '(нет)' : 'Ур. ' + amuletInfo.currentLevel + '/' + amuletInfo.maxLevel) + '</div>';
+        h += '<div style="color:#aaa;font-size:0.65em;margin-top:2px;">Скрижалей: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
         if (amuletInfo.canCraft) {
-            h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
+            h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" style="margin-top:6px;background:#c9a040;border:none;border-radius:6px;padding:6px 16px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
         } else {
-            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно скрижалей</div>';
+            h += '<div style="color:#555;font-size:0.7em;margin-top:4px;">🔒 Недостаточно</div>';
         }
         h += '</div>';
 
-        // Заточка
-        h += '<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;">';
-        h += '<div style="color:#ffd700;font-weight:bold;">⚡ Заточка (Ур. ' + sharpenInfo.level + ')</div>';
-        h += '<div style="color:#888;font-size:11px;">Чертежей: ' + sharpenInfo.drawings + ' | Нужно: ' + sharpenInfo.cost + '</div>';
-        h += '<div style="color:#888;font-size:10px;">+5 ко всем статам за уровень</div>';
+        h += '</div>';
+
+        // --- ЗАТОЧКА ---
+        h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #6b5a3a;border-radius:12px;padding:12px;">';
+        h += '<div style="color:#ffd700;font-weight:bold;font-size:1em;margin-bottom:6px;">⚡ Заточка (Ур. ' + sharpenInfo.level + ')</div>';
+        h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:4px;">Чертежей: ' + sharpenInfo.drawings + ' | Нужно: ' + sharpenInfo.cost + '</div>';
+        h += '<div style="color:#aaa;font-size:0.7em;margin-bottom:8px;">+5 ко всем статам за уровень</div>';
         if (sharpenInfo.canSharpen) {
-            h += '<button onclick="Sherwood.Forge._sharpenFromUI()" class="btn btn-gold" style="margin-top:6px;padding:4px 20px;font-size:12px;">Заточить</button>';
+            h += '<button onclick="Sherwood.Forge._sharpenFromUI()" style="background:#c9a040;border:none;border-radius:6px;padding:6px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;">Заточить</button>';
         } else {
-            h += '<div style="color:#555;font-size:11px;">🔒 Недостаточно чертежей</div>';
+            h += '<div style="color:#555;font-size:0.7em;">🔒 Недостаточно чертежей</div>';
         }
         h += '</div>';
 
