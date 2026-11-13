@@ -318,7 +318,7 @@ Sherwood.Portal = {
         }
         h += '</div>';
 
-        UI._openScreen('🌀 Порталы', 'portal', h);
+        UI._openScreen('🌀 Порталы', 'portal', h, 'UI.camp()');
 
         // Свайпы/колесо/тач — как в UI.dungeon
         var carousel = document.getElementById('portal-carousel');
