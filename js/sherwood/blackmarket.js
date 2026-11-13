@@ -301,7 +301,7 @@ Sherwood.BlackMarket = (function() {
             h += '<div id="market-log" style="text-align:center;color:#aaa;font-size:0.75em;margin-top:12px;min-height:20px;"></div>';
             h += '</div>';
 
-            UI._openScreenScrollable('Рынок', 'market', h);
+            UI._openScreenScrollable('Рынок', 'market', h, 'UI.loadHome()');
         },
 
         _refreshFromUI: function() {
