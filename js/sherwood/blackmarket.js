@@ -256,10 +256,15 @@ Sherwood.BlackMarket = (function() {
             var canRefresh = this.canRefresh();
 
             var h = '<div style="padding:10px;max-width:400px;margin:0 auto;">';
-            h += '<div style="text-align:center;margin-bottom:12px;font-size:0.9em;color:#e0c080;">💰 ' + gold + ' | 🥈 ' + silver + '</div>';
+
+            // Шапка с иконками ресурсов
+            h += '<div style="display:flex;justify-content:center;gap:20px;margin-bottom:12px;font-size:0.9em;color:#e0c080;">';
+            h += '<span style="display:flex;align-items:center;gap:4px;"><img src="assets/interface/resource_gold.png" style="width:20px;height:20px;object-fit:contain;"> ' + gold + '</span>';
+            h += '<span style="display:flex;align-items:center;gap:4px;"><img src="assets/interface/resource_silver.png" style="width:20px;height:20px;object-fit:contain;"> ' + silver + '</span>';
+            h += '</div>';
 
             if (canRefresh) {
-                h += '<button onclick="Sherwood.BlackMarket._refreshFromUI()" class="btn" style="width:100%;padding:8px;margin-bottom:12px;font-size:0.85em;background:linear-gradient(180deg,#6b5a3a,#3a2e1a);border:2px solid #c8a050;border-radius:8px;color:#ffd27a;font-weight:bold;cursor:pointer;">🔄 Обновить за 150 золота</button>';
+                h += '<button onclick="Sherwood.BlackMarket._refreshFromUI()" class="btn" style="width:100%;padding:8px;margin-bottom:12px;font-size:0.85em;background:linear-gradient(180deg,#6b5a3a,#3a2e1a);border:2px solid #c8a050;border-radius:8px;color:#ffd27a;font-weight:bold;cursor:pointer;">🔄 Обновить за 150 <img src="assets/interface/resource_gold.png" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;"></button>';
             } else {
                 h += '<div style="color:#888;font-size:0.7em;text-align:center;margin-bottom:12px;">Обновлений сегодня больше нет</div>';
             }
@@ -271,22 +276,25 @@ Sherwood.BlackMarket = (function() {
                 var purchased = this.isPurchased(i);
                 var borderColor = purchased ? '#4caf50' : '#6b5a3a';
                 var opacity = purchased ? '0.5' : '1';
+                var currencyIcon = item.currency === 'gold' ? 'assets/interface/resource_gold.png' : 'assets/interface/resource_silver.png';
 
                 h += '<div style="display:flex;flex-direction:column;align-items:center;width:100%;opacity:' + opacity + ';">';
 
                 // Карточка
                 h += '<div onclick="' + (purchased ? '' : 'Sherwood.BlackMarket._buyFromUI(' + i + ')') + '" style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid ' + borderColor + ';width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;cursor:' + (purchased ? 'default' : 'pointer') + ';transition:transform 0.1s;">';
                 
-                // Иконка
+                // Иконка предмета
                 h += '<img src="' + item.icon + '" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,165,0,0.5));" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
                 
                 // Название (снизу)
                 h += '<div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;color:#fff;font-size:0.55em;font-weight:bold;text-shadow:0 1px 2px #000;padding:0 2px;line-height:1.1;">' + item.name + '</div>';
                 
-                // Цена (если не куплено)
+                // Цена (если не куплено) — с иконкой валюты
                 if (!purchased) {
-                    var priceColor = item.currency === 'gold' ? '#ffd700' : '#c0c0c0';
-                    h += '<div style="position:absolute;top:2px;right:4px;color:' + priceColor + ';font-size:0.55em;font-weight:bold;text-shadow:0 1px 2px #000;">' + item.price + '</div>';
+                    h += '<div style="position:absolute;top:2px;right:4px;display:flex;align-items:center;gap:2px;text-shadow:0 1px 2px #000;">';
+                    h += '<span style="color:#fff;font-size:0.55em;font-weight:bold;">' + item.price + '</span>';
+                    h += '<img src="' + currencyIcon + '" style="width:14px;height:14px;object-fit:contain;">';
+                    h += '</div>';
                 } else {
                     h += '<div style="position:absolute;top:2px;right:4px;color:#4caf50;font-size:0.6em;">✅</div>';
                 }
