@@ -171,7 +171,7 @@ Sherwood.Tavern = {
         h += '<style>.tavern-scroll::-webkit-scrollbar{display:none;}.tavern-scroll{scrollbar-width:none;}</style>';
 
         // --- СВОЯ КНОПКА НАЗАД (вместо встроенной) ---
-        h += '<button onclick="UI.loadHome()" style="position:fixed;top:15px;left:15px;z-index:9999;background:rgba(0,0,0,0.8);border:2px solid #c8a050;border-radius:8px;padding:8px 16px;color:#c8a050;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);">← Назад</button>';
+        h += '<button onclick="UI.loadHome()" style="position:absolute;top:15px;left:15px;z-index:9999;background:rgba(0,0,0,0.8);border:2px solid #c8a050;border-radius:8px;padding:8px 16px;color:#c8a050;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);">← Назад</button>';
         // --- КОНЕЦ КНОПКИ ---
 
         // Гаррет (видео) — фиксировано
