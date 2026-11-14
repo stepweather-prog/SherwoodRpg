@@ -1,6 +1,6 @@
 /**
  * Sherwood Forge — Кузница
- * Улучшение предметов, крафт стрел, скины (крафт + прокачка), кольца, амулеты, заточка
+ * Улучшение предметов, крафт стрел, скины (100 уровней, 4 стадии), кольца, амулеты
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -122,10 +122,10 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  СКИНЫ (Крафт за скрижали, Улучшение за скрижали)
+    //  СКИНЫ (Крафт 1, прокачка до 100, смена облика каждые 25 ур.)
     // ============================================================
     getCraftSkins: function() {
-        var allSkins = ['skin1_01', 'skin9_01', 'skin8_01', 'skin4_01', 'skin16_03'];
+        var allSkins = ['skin1_01', 'skin9_01', 'skin8_01', 'skin4_01', 'skin16_03', 'bonus_skin_sec'];
         var result = [];
         for (var i = 0; i < allSkins.length; i++) {
             var sid = allSkins[i];
@@ -133,10 +133,10 @@ Sherwood.Forge = {
             if (data) {
                 result.push({
                     id: sid,
-                    name: data.name,
-                    chapter: data.chapter,
-                    costCreate: Math.ceil(data.chapter / 2),
-                    costUpgrade: 5 + Math.floor(data.chapter / 2)
+                    name: data.name || sid,
+                    chapter: data.chapter || 1,
+                    costCreate: Math.ceil((data.chapter || 1) * 5),
+                    costUpgrade: 2 + Math.floor((data.chapter || 1) / 2)
                 });
             }
         }
@@ -149,6 +149,19 @@ Sherwood.Forge = {
             if (skins[i].id === skinId) return skins[i];
         }
         return null;
+    },
+
+    // Получение правильной иконки для уровня
+    _getSkinIcon: function(skinId, level) {
+        if (level <= 0) return 'assets/hero_skins/' + skinId + '.png';
+        
+        var stage = 0;
+        if (level > 75) stage = 3;
+        else if (level > 50) stage = 2;
+        else if (level > 25) stage = 1;
+        
+        if (stage === 0) return 'assets/hero_skins/' + skinId + '.png';
+        return 'assets/hero_skins/' + skinId + '_stage' + (stage + 1) + '.png'; 
     },
 
     craftSkin: function(skinId) {
@@ -164,7 +177,6 @@ Sherwood.Forge = {
         if (!bag) return { success: false, reason: 'Сумка не найдена' };
         var haveTablets = bag.getResource ? bag.getResource('skinTablets') : 0;
 
-        // Если скина нет, крафтим 1 уровень
         if (currentLevel === 0) {
             if (haveTablets < info.costCreate) return { success: false, reason: 'Нужно ' + info.costCreate + ' скрижалей' };
             bag.spendResource('skinTablets', info.costCreate);
@@ -176,8 +188,7 @@ Sherwood.Forge = {
             return { success: true, action: 'created', level: 1 };
         }
 
-        // Если уже есть, улучшаем
-        if (currentLevel >= 10) return { success: false, reason: 'Максимальный уровень (10)' };
+        if (currentLevel >= 100) return { success: false, reason: 'Максимальный уровень (100)' };
         
         var nextLevel = currentLevel + 1;
         var upgradeCost = info.costCreate + (info.costUpgrade * nextLevel);
@@ -272,7 +283,7 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  ЗАТОЧКА (только за чертежи)
+    //  УЛУЧШЕНИЕ ЗАТОЧКИ (только за чертежи, без серебра)
     // ============================================================
     roundToNice: function(val) {
         if (val <= 10) return Math.ceil(val);
@@ -302,7 +313,7 @@ Sherwood.Forge = {
 
     sharpen: function() {
         var info = this.getSharpeningInfo();
-        if (!info.canSharpen) return { success: false, reason: 'Нужно ' + info.cost + ' чертежей заточки' };
+        if (!info.canSharpen) return { success: false, reason: 'Нужно ' + info.cost + ' чертежей' };
         var bag = Sherwood.Bag;
         if (!bag) return { success: false, reason: 'Сумка не найдена' };
         var need = info.cost;
@@ -324,7 +335,7 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  UI КУЗНИЦЫ (с шапкой ресурсов и сеткой скинов)
+    //  UI КУЗНИЦЫ
     // ============================================================
     showUI: function() {
         if (typeof UI === 'undefined') return;
@@ -376,7 +387,8 @@ Sherwood.Forge = {
         h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;">';
         h += '<div style="display:flex;flex-direction:column;align-items:center;">';
         h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
-        h += '<img src="assets/interface/ring_crafting_tablet_resource.png" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));"></div>';
+        var ringIconSrc = bag._equipment && bag._equipment.ring ? bag._equipment.ring.icon : 'assets/interface/ring_first_level.png';
+        h += '<img src="' + ringIconSrc + '" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));"></div>';
         h += '<div style="color:#ffd27a;font-size:0.8em;font-weight:bold;margin-top:8px;text-align:center;text-shadow:0 2px 4px #000;">Кольцо ' + (ringInfo.isNew ? '(нет)' : 'Ур. ' + ringInfo.currentLevel) + '</div>';
         h += '<div style="color:#aaa;font-size:0.65em;margin-top:2px;">Скрижалей: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
         if (ringInfo.canCraft) h += '<button onclick="Sherwood.Forge._craftRingFromUI()" style="margin-top:6px;background:#c9a040;border:none;border-radius:6px;padding:6px 16px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
@@ -385,7 +397,8 @@ Sherwood.Forge = {
 
         h += '<div style="display:flex;flex-direction:column;align-items:center;">';
         h += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;padding:10px;background:rgba(10,8,5,0.9);border:2px solid #6b5a3a;width:100%;box-shadow:0 4px 15px rgba(0,0,0,0.9);aspect-ratio:1/1;">';
-        h += '<img src="assets/interface/amulet_crafting_tablet_resource.png" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));"></div>';
+        var amuletIconSrc = bag._equipment && bag._equipment.amulet ? bag._equipment.amulet.icon : 'assets/interface/sherwood_amulet_level_one.png';
+        h += '<img src="' + amuletIconSrc + '" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,165,0,0.6));"></div>';
         h += '<div style="color:#ffd27a;font-size:0.8em;font-weight:bold;margin-top:8px;text-align:center;text-shadow:0 2px 4px #000;">Амулет ' + (amuletInfo.isNew ? '(нет)' : 'Ур. ' + amuletInfo.currentLevel) + '</div>';
         h += '<div style="color:#aaa;font-size:0.65em;margin-top:2px;">Скрижалей: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
         if (amuletInfo.canCraft) h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" style="margin-top:6px;background:#c9a040;border:none;border-radius:6px;padding:6px 16px;color:#000;font-weight:bold;cursor:pointer;font-size:0.75em;">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
@@ -403,15 +416,17 @@ Sherwood.Forge = {
                 var sk = skins[s];
                 var sLvl = (player && player.skinLevels && player.skinLevels[sk.id]) ? player.skinLevels[sk.id] : 0;
                 var isUnlocked = sLvl > 0;
-                var nextCost = sLvl === 0 ? sk.costCreate : (sk.costCreate + sk.costUpgrade * (sLvl + 1));
-                var btnText = sLvl === 0 ? 'Создать' : (sLvl >= 10 ? 'Макс' : 'Улучшить');
+                var nextCost = sLvl === 0 ? sk.costCreate : (sk.costCreate + sk.costUpgrade * sLvl);
+                var btnText = sLvl === 0 ? 'Создать' : (sLvl >= 100 ? 'Макс' : 'Улучшить');
                 
+                var iconPath = this._getSkinIcon(sk.id, sLvl);
+
                 h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(10,8,5,0.9);border:2px solid ' + (isUnlocked ? '#4caf50' : '#6b5a3a') + ';border-radius:12px;padding:8px;">';
-                h += '<img src="assets/hero_skins/' + sk.id + '.png" style="width:60px;height:60px;object-fit:contain;margin-bottom:4px;">';
+                h += '<img src="' + iconPath + '" style="width:60px;height:60px;object-fit:contain;margin-bottom:4px;">';
                 h += '<div style="color:#ffd27a;font-size:0.7em;font-weight:bold;text-align:center;height:20px;overflow:hidden;">' + sk.name + '</div>';
                 
-                if (sLvl >= 10) {
-                    h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">✅ Макс (10)</div>';
+                if (sLvl >= 100) {
+                    h += '<div style="color:#4caf50;font-size:0.7em;margin-top:4px;">✅ Макс (100)</div>';
                 } else {
                     h += '<div style="color:#aaa;font-size:0.65em;margin-top:4px;text-align:center;">' + (isUnlocked ? 'Ур. '+sLvl+' | ' : '') + 'Нужно: ' + nextCost + '</div>';
                     h += '<button onclick="Sherwood.Forge._craftSkinFromUI(\'' + sk.id + '\')" style="margin-top:6px;background:#c9a040;border:none;border-radius:6px;padding:4px 10px;color:#000;font-weight:bold;cursor:pointer;font-size:0.7em;">' + btnText + '</button>';
@@ -422,9 +437,9 @@ Sherwood.Forge = {
             h += '</div>';
         }
 
-        // --- 5. ЗАТОЧКА ---
+        // --- 5. УЛУЧШЕНИЕ (бывшая заточка) ---
         h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #6b5a3a;border-radius:12px;padding:12px;">';
-        h += '<div style="color:#ffd700;font-weight:bold;font-size:1em;margin-bottom:6px;">⚡ Заточка скина (Ур. ' + sharpenInfo.level + ')</div>';
+        h += '<div style="color:#ffd700;font-weight:bold;font-size:1em;margin-bottom:6px;">⚡ Улучшение (Ур. ' + sharpenInfo.level + ')</div>';
         h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:8px;">Чертежей: ' + sharpenInfo.drawings + ' / ' + sharpenInfo.cost + ' | +5 ко всем статам</div>';
         if (sharpenInfo.canSharpen) {
             h += '<button onclick="Sherwood.Forge._sharpenFromUI()" style="background:#c9a040;border:none;border-radius:6px;padding:6px 20px;color:#000;font-weight:bold;cursor:pointer;font-size:0.8em;">Улучшить</button>';
@@ -481,7 +496,7 @@ Sherwood.Forge = {
         var r = this.sharpen();
         if (r.success) {
             UI._playSound('forge');
-            UI._showToast('✅ Заточка улучшена до ' + r.newLevel + ' уровня!');
+            UI._showToast('✅ Улучшение повышено до ' + r.newLevel + ' уровня!');
             UI.updateDisplay();
             this.showUI();
         } else {
