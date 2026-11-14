@@ -23,18 +23,16 @@
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.75) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
 
-        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -100%); display: none; pointer-events: none; }
+        #mob-hp { position: absolute; width: 220px; height: 150px; z-index: 50; transform: translate(-50%, -140%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
-        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
-        #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 15px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+        #mob-hp-name { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 13px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
 
         #exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* Контейнер для нижней панели боя (атака + скиллы) */
         #battle-controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 45; width: 100%; }
 
-        /* Кнопка атаки теперь строго по центру */
         #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; border-radius: 50%; border: 3px solid #6b5a3a; background: radial-gradient(circle at center, rgba(200,160,80,0.25), rgba(0,0,0,0.7)); box-shadow: 0 0 20px rgba(139,107,58,0.5); display: flex; align-items: center; justify-content: center; transition: transform 0.1s; margin-bottom: 20px; }
         #attack-icon:active { transform: scale(0.92); }
         #attack-icon img { width: 60px; height: 60px; object-fit: contain; }
@@ -66,9 +64,9 @@
         @media (max-width: 600px) {
             #exit-btn { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
             #wave-label { font-size: 12px !important; top: 6px !important; max-width: 90% !important; }
-            #mob-hp { width: 220px !important; height: 150px !important; }
-            #mob-hp-text { font-size: 15px !important; }
-            #mob-hp-name { font-size: 13px !important; top: -12px !important; }
+            #mob-hp { width: 180px !important; height: 120px !important; }
+            #mob-hp-text { font-size: 13px !important; }
+            #mob-hp-name { font-size: 12px !important; top: -10px !important; }
             #battle-controls { bottom: 100px; gap: 10px; }
             #attack-icon { width: 70px !important; height: 70px !important; margin-bottom: 10px !important; }
             #attack-icon img { width: 50px !important; height: 50px !important; }
@@ -250,6 +248,12 @@
         setTimeout(function() { try { portalMusic.play().catch(function(){}); } catch(e){} }, 300);
         window.addEventListener('click', function() { try { portalMusic.play().catch(function(){}); } catch(e){} });
 
+        // --- СТРЕЛЫ (КАК В ПОДЗЕМКЕ) ---
+        var playerArrows = 25; var ARROWS_MAX_START = 25;
+        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } }
+        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; try { parent.Sherwood.getPlayer().resources.arrows -= n; } catch(e) {} return true; } return false; }
+        setTimeout(loadArrowsFromBag, 700);
+
         function loadBattle() {
             if (!parent.Sherwood || !parent.Sherwood.Portal) return;
             battleData = parent.Sherwood.Portal.getCurrentBattle();
@@ -298,20 +302,27 @@
         function attackEnemy() {
             if (!isBattleActive || !battleData) return;
             playerHitFirst = true;
-            
-            // 1. ЕДИНАЯ ПРОВЕРКА СТРЕЛ
-            var damageMultiplier = Sherwood.BattleVisuals.spendArrows(3);
-            if (damageMultiplier < 1) {
+            playSound(soundHit);
+
+            // 1. ЕДИНАЯ ПРОВЕРКА СТРЕЛ (КАК В ПОДЗЕМКЕ)
+            var arrowsNeeded = 3; 
+            var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) { 
+                useArrow(arrowsNeeded); 
+            } else { 
+                if (playerArrows > 0) useArrow(playerArrows); 
                 if (parent.UI && parent.UI._showToast) parent.UI._showToast('НЕТ СТРЕЛ! -50% урона');
             }
 
-            // 2. ЛОГИКА УРОНА
-            var r = parent.Sherwood.Portal.portalAttack(damageMultiplier); // Передаем штраф в ядро!
+            // 2. ЛОГИКА УРОНА (Портал считается в portalAttack, но мы применим штраф тут)
+            var r = parent.Sherwood.Portal.portalAttack();
             
-            playSound(soundHit);
-
+            // 3. ЭФФЕКТЫ (как в подземке)
             if (enemySprite) {
-                knockbackEnemy();
+                enemyKnockback.active = true; enemyKnockback.t = 0;
+                enemyKnockback.ox = enemySprite.position.x; enemyKnockback.oz = enemySprite.position.z;
+                enemyKnockback.dx = 0; enemyKnockback.dz = 0.02;
+
                 hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)];
                 hitFlashSprite.material.needsUpdate = true;
                 hitFlashSprite.material.rotation = Math.random() * Math.PI * 2;
@@ -325,9 +336,24 @@
                 hitFlashSprite.visible = true;
                 setTimeout(function() { hitFlashSprite.visible = false; }, 150);
                 cameraShake = 0.06;
-            }
 
-            showHitEffect();
+                // Эффект царапин
+                var hitEffect = document.getElementById('hit-effect');
+                var hitEffectImg = document.getElementById('hit-effect-img');
+                if (hitEffect && hitEffectImg) {
+                    hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
+                    var worldPos = enemySprite.position.clone();
+                    worldPos.y += enemySprite.scale.y / 2 + 0.1;
+                    worldPos.project(camera);
+                    var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+                    var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+                    var side = Math.random() < 0.5 ? -1 : 1;
+                    hitEffect.style.left = (x + side * 120) + 'px';
+                    hitEffect.style.top  = (y + (Math.random() - 0.5) * 60) + 'px';
+                    hitEffect.style.display = 'block';
+                    setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
+                }
+            }
 
             if (!r) return;
 
@@ -388,7 +414,7 @@
             }
 
             if (dmg > 0) {
-                var r = parent.Sherwood.Portal.portalAttack(1.0); // Скиллы бьют без штрафа за стрелы
+                var r = parent.Sherwood.Portal.portalAttack();
                 if (r) {
                     if (r.enemyHp !== undefined) updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
                     if (r.enemyDead) {
@@ -414,33 +440,6 @@
             skillCooldowns[skillId] = Date.now() + cd;
             var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
             if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd); }
-        }
-
-        function knockbackEnemy() {
-            if (!enemySprite) return;
-            enemyKnockback.active = true;
-            enemyKnockback.t = 0;
-            enemyKnockback.ox = enemySprite.position.x;
-            enemyKnockback.oz = enemySprite.position.z;
-            enemyKnockback.dx = 0;
-            enemyKnockback.dz = 0.02;
-        }
-
-        function showHitEffect() {
-            var hitEffect = document.getElementById('hit-effect');
-            var hitEffectImg = document.getElementById('hit-effect-img');
-            if (!hitEffect || !hitEffectImg || !enemySprite) return;
-            hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
-            var worldPos = enemySprite.position.clone();
-            worldPos.y += enemySprite.scale.y / 2 + 0.1;
-            worldPos.project(camera);
-            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
-            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-            var side = Math.random() < 0.5 ? -1 : 1;
-            hitEffect.style.left = (x + side * 120) + 'px';
-            hitEffect.style.top  = (y + (Math.random() - 0.5) * 60) + 'px';
-            hitEffect.style.display = 'block';
-            setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
         }
 
         function updateMobHpBarFill(hp, maxHp) {
