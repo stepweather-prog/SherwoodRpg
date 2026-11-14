@@ -408,7 +408,7 @@
             loader.load(path, function(t) {
                 t.minFilter = t.magFilter = THREE.LinearFilter;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: 0.05 }));
-                Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
+                parent.Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
                 battleScene.add(enemySprite);
                 enemyObj.mesh = enemySprite;
                 startBattle(enemyObj);
@@ -418,7 +418,14 @@
         // --- СТРЕЛЫ ---
         var playerArrows = 25; var ARROWS_MAX_START = 25;
         function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } }
-        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; return true; } return false; }
+        function useArrow(n) {
+    if (playerArrows >= n) {
+        playerArrows -= n;
+        try { parent.Sherwood.getPlayer().resources.arrows -= n; } catch(e) {}
+        return true;
+    }
+    return false;
+}
         setTimeout(loadArrowsFromBag, 700);
 
         const clock = new THREE.Clock();
