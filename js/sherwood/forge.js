@@ -122,10 +122,10 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  СКИНЫ (Крафт 1, прокачка до 100, смена облика каждые 25 ур.)
+    //  СКИНЫ (Крафт за скрижали, Улучшение за скрижали)
     // ============================================================
     getCraftSkins: function() {
-        var allSkins = ['skin1_01', 'skin9_01', 'skin8_01', 'skin4_01', 'skin16_03', 'bonus_skin_sec'];
+        var allSkins = ['skin1_01', 'skin9_01', 'skin8_01', 'skin4_01', 'skin16_03'];
         var result = [];
         for (var i = 0; i < allSkins.length; i++) {
             var sid = allSkins[i];
@@ -133,10 +133,10 @@ Sherwood.Forge = {
             if (data) {
                 result.push({
                     id: sid,
-                    name: data.name || sid,
-                    chapter: data.chapter || 1,
-                    costCreate: Math.ceil((data.chapter || 1) * 5),
-                    costUpgrade: 2 + Math.floor((data.chapter || 1) / 2)
+                    name: data.name,
+                    chapter: data.chapter,
+                    costCreate: Math.ceil(data.chapter / 2),
+                    costUpgrade: 5 + Math.floor(data.chapter / 2)
                 });
             }
         }
@@ -151,17 +151,12 @@ Sherwood.Forge = {
         return null;
     },
 
-    // Получение правильной иконки для уровня
+    // Хелпер для получения правильной иконки скина в зависимости от уровня
     _getSkinIcon: function(skinId, level) {
-        if (level <= 0) return 'assets/hero_skins/' + skinId + '.png';
-        
-        var stage = 0;
-        if (level > 75) stage = 3;
-        else if (level > 50) stage = 2;
-        else if (level > 25) stage = 1;
-        
-        if (stage === 0) return 'assets/hero_skins/' + skinId + '.png';
-        return 'assets/hero_skins/' + skinId + '_stage' + (stage + 1) + '.png'; 
+        if (level <= 0) level = 1;
+        var baseName = skinId.substring(0, skinId.lastIndexOf('_') + 1); 
+        var numStr = level < 10 ? '0' + level : '' + level;
+        return 'assets/hero_skins/' + baseName + numStr + '.png'; 
     },
 
     craftSkin: function(skinId) {
@@ -283,7 +278,7 @@ Sherwood.Forge = {
     },
 
     // ============================================================
-    //  УЛУЧШЕНИЕ ЗАТОЧКИ (только за чертежи, без серебра)
+    //  УЛУЧШЕНИЕ (бывшая заточка, только за чертежи)
     // ============================================================
     roundToNice: function(val) {
         if (val <= 10) return Math.ceil(val);
@@ -437,7 +432,7 @@ Sherwood.Forge = {
             h += '</div>';
         }
 
-        // --- 5. УЛУЧШЕНИЕ (бывшая заточка) ---
+        // --- 5. УЛУЧШЕНИЕ ---
         h += '<div style="background:rgba(0,0,0,0.5);border:2px solid #6b5a3a;border-radius:12px;padding:12px;">';
         h += '<div style="color:#ffd700;font-weight:bold;font-size:1em;margin-bottom:6px;">⚡ Улучшение (Ур. ' + sharpenInfo.level + ')</div>';
         h += '<div style="color:#aaa;font-size:0.75em;margin-bottom:8px;">Чертежей: ' + sharpenInfo.drawings + ' / ' + sharpenInfo.cost + ' | +5 ко всем статам</div>';
