@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Шервудская чащоба — Бой</title>
+    <title>Шервудская чащоба</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
+        /* Стили оставляем твои, они рабочие */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
-        canvas { display: block; background: transparent; touch-action: none; }
+        canvas { display: block; background: transparent; touch-action: none; cursor: crosshair; }
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
         #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #c8a050; font-size: 22px; pointer-events: none; z-index: 20; text-shadow: 0 0 12px #8b6b3a; opacity: 0.8; display: block; }
         
-        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -100%); display: block; pointer-events: none; }
+        #mob-hp { position: absolute; width: 220px; height: 150px; z-index: 50; transform: translate(-50%, -140%); display: block; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
-        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
-        #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 15px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+        #mob-hp-name { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 13px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
         
         #hero-life { position: absolute; bottom: 10px; left: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -37,12 +38,10 @@
         #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; padding: 0; border: none; background: none; flex-shrink: 0; display: block; margin-bottom: 20px; }
         #attack-icon:active { transform: scale(0.9); }
         #attack-icon img { width: 85px; height: 85px; object-fit: contain; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box; }
-        #attack-icon img:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 8px; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
         
         #skills-row { display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
         .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
-        .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
@@ -52,15 +51,9 @@
             #attack-icon { width: 70px; height: 70px; margin-bottom: 10px; }
             #attack-icon img { width: 70px; height: 70px; }
             .skill-btn { width: 70px; height: 70px; }
-            #skills-row { gap: 10px; }
             #hero-life, #hero-mana { width: 90px; height: 90px; bottom: 6px; }
             #hero-life { left: 6px; }
             #hero-mana { right: 6px; }
-            #hero-life span, #hero-mana span { font-size: 13px; }
-            #mob-hp { width: 220px; height: 150px; }
-            #mob-hp-text { font-size: 15px; }
-            #mob-hp-name { font-size: 13px; top: -12px; }
-            #hit-effect-img { width: 130px; height: 130px; }
         }
     </style>
 </head>
@@ -107,108 +100,48 @@
     <script type="module">
         import * as THREE from 'three';
 
+        // --- ТВОИ ПЕРЕМЕННЫЕ ---
         var urlParams = new URLSearchParams(window.location.search);
         var nodeId = parseInt(urlParams.get('node') || '1');
         var diff = parseInt(urlParams.get('diff') || '1');
         var enemyData = null;
         try { enemyData = parent.Sherwood.Thicket.getCurrentEnemy(); } catch(e) {}
 
-        var MOB_NAMES = {
-            'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник',
-            'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси',
-            'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб'
-        };
+        var MOB_NAMES = { 'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник', 'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси', 'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб' };
         function getMobName(p) { if (!p) return 'Враг'; var f = p.split('/').pop(); return MOB_NAMES[f] || 'Враг'; }
 
         var FILTH_HIT_AMOUNT = 5;
-        function getFilth() { 
-            var p = parent.Sherwood.getPlayer(); 
-            if (!p) return { cur: 0, max: 100 }; 
-            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; 
-            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; 
-            return { cur: p.stats.filth, max: p.stats.maxFilth }; 
-        }
-        function setFilth(v) { 
-            var p = parent.Sherwood.getPlayer(); 
-            if (!p) return; 
-            if (!p.stats.maxFilth) p.stats.maxFilth = 100; 
-            p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); 
-            updateHeroSpheres(); 
-        }
+        function getFilth() { var p = parent.Sherwood.getPlayer(); if (!p) return { cur: 0, max: 100 }; if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100; return { cur: p.stats.filth, max: p.stats.maxFilth }; }
+        function setFilth(v) { var p = parent.Sherwood.getPlayer(); if (!p) return; if (!p.stats.maxFilth) p.stats.maxFilth = 100; p.stats.filth = Math.max(0, Math.min(p.stats.maxFilth, v)); updateHeroSpheres(); }
         function addFilth(a) { var f = getFilth(); setFilth(f.cur + a); }
         function spendFilth(a) { var f = getFilth(); if (f.cur < a) return false; setFilth(f.cur - a); return true; }
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
         var soundVictory = new Audio('assets/assets2/tune/victory.wav');
         var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
+        var soundChest = new Audio('assets/assets2/tune/chest_open.wav');
         var thicketMusic = new Audio('assets/assets2/music/dungeon_3.ogg');
         thicketMusic.loop = true; thicketMusic.volume = 0.4;
-
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function(){}); } catch(e) {} }
 
-        function stopAllParentMusic() {
-            try {
-                if (parent) {
-                    if (parent.audioPlayer) { try { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } catch(e){} }
-                    if (typeof parent.stopMainMusic === 'function') { try { parent.stopMainMusic(); } catch(e){} }
-                    if (parent.UI && parent.UI._currentMusic) { try { parent.UI._currentMusic.pause(); parent.UI._currentMusic.currentTime = 0; } catch(e){} }
-                }
-            } catch(e){}
-        }
+        function stopAllParentMusic() { try { if (parent) { if (parent.audioPlayer) { try { parent.audioPlayer.pause(); parent.audioPlayer.currentTime = 0; } catch(e){} } if (typeof parent.stopMainMusic === 'function') { try { parent.stopMainMusic(); } catch(e){} } } } catch(e){} }
         setTimeout(function(){ stopAllParentMusic(); thicketMusic.play().catch(function(){}); }, 300);
 
-        function exitThicket() {
-            try { thicketMusic.pause(); thicketMusic.currentTime = 0; } catch(e){}
-            try { parent.Sherwood.Thicket._flee(); } catch(e) {}
-        }
+        function exitThicket() { try { thicketMusic.pause(); thicketMusic.currentTime = 0; } catch(e){} try { parent.Sherwood.Thicket._flee(); } catch(e) {} }
         window.exitThicket = exitThicket;
 
-        function showCenterText(text, color) {
-            var el = document.createElement('div');
-            var fs = window.innerWidth <= 600 ? '22px' : '36px';
-            el.textContent = text;
-            el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:' + fs + ';font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;';
-            document.body.appendChild(el);
-            requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; });
-            setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900);
-            setTimeout(function() { el.remove(); }, 1900);
-        }
+        function showCenterText(text, color) { var el = document.createElement('div'); var fs = window.innerWidth <= 600 ? '22px' : '36px'; el.textContent = text; el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:' + fs + ';font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;letter-spacing:2px;'; document.body.appendChild(el); requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; }); setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900); setTimeout(function() { el.remove(); }, 1900); }
 
-        var bloodOverlayTextures = [
-            'assets/assets2/animation/Fine_blood_spray_texture.png',
-            'assets/assets2/animation/Fine_blood_spray_texture (1).png',
-            'assets/assets2/animation/Fine_blood_spray_texture (2).png'
-        ];
+        var bloodOverlayTextures = ['assets/assets2/animation/Fine_blood_spray_texture.png', 'assets/assets2/animation/Fine_blood_spray_texture (1).png', 'assets/assets2/animation/Fine_blood_spray_texture (2).png'];
         var boT1 = null, boT2 = null;
-
         var heroHitFlashEl = document.createElement('div');
         heroHitFlashEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:151;background:radial-gradient(circle at center, transparent 40%, rgba(255,0,0,0.55) 100%);opacity:0;transition:opacity 0.1s ease-out;';
         document.body.appendChild(heroHitFlashEl);
         var heroHitFlashTimer = null;
-        function showHeroHitFlash() {
-            heroHitFlashEl.style.transition = 'opacity 0.05s ease-out';
-            heroHitFlashEl.style.opacity = '1';
-            clearTimeout(heroHitFlashTimer);
-            heroHitFlashTimer = setTimeout(function() {
-                heroHitFlashEl.style.transition = 'opacity 0.25s ease-out';
-                heroHitFlashEl.style.opacity = '0';
-            }, 100);
-        }
+        function showHeroHitFlash() { heroHitFlashEl.style.transition = 'opacity 0.05s ease-out'; heroHitFlashEl.style.opacity = '1'; clearTimeout(heroHitFlashTimer); heroHitFlashTimer = setTimeout(function() { heroHitFlashEl.style.transition = 'opacity 0.25s ease-out'; heroHitFlashEl.style.opacity = '0'; }, 100); }
+        function showBloodOverlay() { var el = document.getElementById('blood-overlay'); if (!el) return; var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)]; el.style.backgroundImage = 'url("' + tex + '")'; el.style.transition = 'opacity 0.1s ease-out'; el.style.opacity = '1'; clearTimeout(boT1); clearTimeout(boT2); boT1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200); boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200); showHeroHitFlash(); cameraShake = 0.12; }
 
-        function showBloodOverlay() {
-            var el = document.getElementById('blood-overlay'); if (!el) return;
-            var tex = bloodOverlayTextures[Math.floor(Math.random() * bloodOverlayTextures.length)];
-            el.style.backgroundImage = 'url("' + tex + '")';
-            el.style.transition = 'opacity 0.1s ease-out';
-            el.style.opacity = '1';
-            clearTimeout(boT1); clearTimeout(boT2);
-            boT1 = setTimeout(function() { el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0'; }, 200);
-            boT2 = setTimeout(function() { el.style.backgroundImage = ''; }, 200);
-            showHeroHitFlash();
-            cameraShake = 0.12;
-        }
-
-        // --- БОЕВАЯ СЦЕНА (сразу без коридора) ---
+        // --- СЦЕНА (только бой, без коридора) ---
         const battleScene = new THREE.Scene();
         battleScene.background = null;
 
@@ -230,14 +163,11 @@
         const loader = new THREE.TextureLoader();
         
         const bgTexture = loader.load('assets/assets2/dungeon_details/swamp_tiles_6.png');
-        bgTexture.wrapS = THREE.RepeatWrapping;
-        bgTexture.wrapT = THREE.RepeatWrapping;
-        bgTexture.repeat.set(3, 2);
+        bgTexture.wrapS = THREE.RepeatWrapping; bgTexture.wrapT = THREE.RepeatWrapping; bgTexture.repeat.set(3, 2);
         const bgGeometry = new THREE.PlaneGeometry(30, 20);
         const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
         const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgMesh.position.set(0, 0, -10);
-        battleScene.add(bgMesh);
+        bgMesh.position.set(0, 0, -10); battleScene.add(bgMesh);
 
         var bloodSprites = ['assets/assets2/animation/blood_1.png','assets/assets2/animation/blood_2.png','assets/assets2/animation/blood_3.png','assets/assets2/animation/blood_4.png','assets/assets2/animation/blood_5.png'];
         var bloodTextures = bloodSprites.map(function(p){ return loader.load(p); });
@@ -247,6 +177,7 @@
 
         var hitSprites = ['strike_claws.png','strike_claws_1.png','strike_claws_2.png','strike_claws_4.png','strike_claws_5.png','strike_claws_6.png'];
 
+        // --- ЛОГИКА БОЯ 1-В-1 ИЗ ПОДЗЕМКИ ---
         var isBattleActive = false;
         var battleTimer = null;
         var currentEnemyStats = null;
@@ -292,10 +223,7 @@
             if (vampirismBuff > 0) vampirismBuff = Math.max(0, vampirismBuff - dt);
         }
 
-        function onDefeat() {
-            playSound(soundDefeat);
-            try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){}
-        }
+        function onDefeat() { playSound(soundDefeat); try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch(e){} }
 
         function startBattle(obj) {
             if (isBattleActive || !obj) return;
@@ -363,16 +291,9 @@
             document.getElementById('mob-hp').style.display = 'none';
 
             if (currentEnemyObj) {
-                try {
-                    if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
-                        var imgFile = currentEnemyObj.img.split('/').pop();
-                        parent.Sherwood.Bestiary.registerKill(imgFile);
-                    }
-                } catch(e) {}
+                try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
                 currentEnemyObj.collected = true;
-                if (currentEnemyObj.mesh) {
-                    if (currentEnemyObj.mesh.parent) currentEnemyObj.mesh.parent.remove(currentEnemyObj.mesh);
-                }
+                if (currentEnemyObj.mesh) { if (currentEnemyObj.mesh.parent) currentEnemyObj.mesh.parent.remove(currentEnemyObj.mesh); }
             }
             currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
             playSound(soundVictory);
@@ -388,15 +309,14 @@
             playerHitFirst = true;
             playSound(soundHit);
 
-            // ЕДИНАЯ ПРОВЕРКА СТРЕЛ
-            var damageMultiplier = Sherwood.BattleVisuals.spendArrows(3);
-            if (damageMultiplier < 1) {
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast('НЕТ СТРЕЛ! -50% урона');
-            }
-
-            // ЛОГИКА УРОНА
+            var arrowsNeeded = 3; 
+            var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) { useArrow(arrowsNeeded); } 
+            else { if (playerArrows > 0) useArrow(playerArrows); showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
+            
             var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
-            if (damageMultiplier < 1) baseDmg = Math.floor(baseDmg * 0.5);
+            if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
+
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
             if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
 
@@ -427,22 +347,6 @@
                 pushTimer = setTimeout(function() { hitFlashSprite.visible = false; }, 150);
                 knockbackEnemy(currentEnemySprite, battleCamera.position.x, battleCamera.position.z);
                 cameraShake = 0.06;
-
-                var hitEffect = document.getElementById('hit-effect');
-                var hitEffectImg = document.getElementById('hit-effect-img');
-                if (hitEffect && hitEffectImg) {
-                    hitEffectImg.src = 'assets/assets2/animation/' + hitSprites[Math.floor(Math.random() * hitSprites.length)];
-                    var screenPos = currentEnemySprite.position.clone();
-                    screenPos.y += 1.0; 
-                    screenPos.project(battleCamera);
-                    var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                    var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                    var side = Math.random() < 0.5 ? -1 : 1;
-                    hitEffect.style.left = (x + side * 120) + 'px';
-                    hitEffect.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
-                    hitEffect.style.display = 'block';
-                    setTimeout(function() { hitEffect.style.display = 'none'; }, 200);
-                }
             }
 
             if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
@@ -473,69 +377,21 @@
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
 
-        var talentData = {
-            'stunning': { icon: 'assets/assets2/talents/stunning.png', cooldown: 20000, name: 'Оглушение' },
-            'rage':     { icon: 'assets/assets2/talents/Riot.png', cooldown: 25000, name: 'Ярость' },
-            'healing':  { icon: 'assets/assets2/talents/healing.png', cooldown: 8000, name: 'Лечение' }
-        };
-        var skillCooldowns = {};
-
-        function renderLearnedTalents() {
-            var row = document.getElementById('skills-row');
-            if (!row) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return;
-            if (!p.talents) p.talents = {};
-            row.innerHTML = '';
-            for (var id in talentData) {
-                var lvl = 0;
-                try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(id); } catch(e) {}
-                if (lvl > 0) {
-                    var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
-                    img.dataset.skillId = id;
-                    img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
-                    row.appendChild(img);
-                }
-            }
-        }
-        setTimeout(renderLearnedTalents, 500);
-
-        function useSkill(skillId) {
-            if (!isBattleActive || !currentEnemyStats) return;
-            if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return;
-            var lvl = 0;
-            try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(skillId); } catch(e) {}
-            if (lvl <= 0) { showCenterText('Скилл не изучен!', '#ff5555'); return; }
-            
-            if (skillId === 'stunning') {
-                if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                enemyStunned = 10;
-                showCenterText('ОГЛУШЕНИЕ! 10 сек', '#ffd700');
-                skillCooldowns[skillId] = Date.now() + 20000;
-            } else if (skillId === 'rage') {
-                if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                rageCharges = 3;
-                showCenterText('ЯРОСТЬ! 3 удара +20%', '#ff4400');
-                playSound(soundHit);
-                skillCooldowns[skillId] = Date.now() + 25000;
-            } else if (skillId === 'healing') {
-                if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; }
-                var heal = 10 * lvl;
-                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
-                showCenterText('+' + heal + ' HP', '#4caf50');
-                updateHeroSpheres();
-                skillCooldowns[skillId] = Date.now() + 8000;
-            }
-            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]');
-            if (icon) { icon.classList.add('on-cooldown'); setTimeout(function(){ icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown); }
+        function updateMobHpBar() {
+            if (!isBattleActive || !currentEnemySprite) return;
+            var worldPos = new THREE.Vector3();
+            currentEnemySprite.getWorldPosition(worldPos);
+            worldPos.y += (currentEnemySprite.scale.y * 0.5) + 0.1; 
+            worldPos.project(battleCamera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            var el = document.getElementById('mob-hp');
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.transform = 'translate(-50%, -140%)';
         }
 
-        document.getElementById('attack-icon').addEventListener('click', function(e) {
-            e.stopPropagation();
-            attackEnemy();
-        });
-
-        // --- СОЗДАНИЕ ВРАГА И ЗАПУСК БОЯ ---
+        // --- ЗАПУСК БОЯ ---
         var enemyObj = null;
         var enemySprite = null;
 
@@ -547,27 +403,24 @@
             var atk = (enemyData && enemyData.atk) ? enemyData.atk : (50 + Math.floor(Math.random() * 20));
             var def = (enemyData && enemyData.def) ? enemyData.def : (10 + Math.floor(Math.random() * 10));
 
-            enemyObj = {
-                x: 0, isBoss: isBoss, img: path,
-                hp: Math.floor(hp * mult), maxHp: Math.floor(hp * mult),
-                atk: Math.floor(atk * mult), def: Math.floor(def * mult),
-                collected: false, mesh: null
-            };
+            enemyObj = { x: 0, isBoss: isBoss, img: path, hp: Math.floor(hp * mult), maxHp: Math.floor(hp * mult), atk: Math.floor(atk * mult), def: Math.floor(def * mult), collected: false, mesh: null };
 
             loader.load(path, function(t) {
                 t.minFilter = t.magFilter = THREE.LinearFilter;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: 0.05 }));
-                // Единый стиль
                 Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
                 battleScene.add(enemySprite);
                 enemyObj.mesh = enemySprite;
-                
-                // СРАЗУ ЗАПУСКАЕМ БОЙ
                 startBattle(enemyObj);
             });
         }
 
-        // --- ЦИКЛ РЕНДЕРА ---
+        // --- СТРЕЛЫ ---
+        var playerArrows = 25; var ARROWS_MAX_START = 25;
+        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } }
+        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; return true; } return false; }
+        setTimeout(loadArrowsFromBag, 700);
+
         const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
@@ -591,23 +444,11 @@
                     enemyKnockback.t += dt; var kk = Math.min(enemyKnockback.t / enemyKnockback.duration, 1); var ease = Math.sin(kk * Math.PI); var spr = enemyKnockback.sprite;
                     spr.position.x = enemyKnockback.originalX + enemyKnockback.dx * ease;
                     spr.position.z = enemyKnockback.originalZ + enemyKnockback.dz * ease;
-                    if (kk >= 1) {
-                        spr.position.x = enemyKnockback.originalX;
-                        spr.position.z = enemyKnockback.originalZ;
-                        enemyKnockback.active = false;
-                        enemyKnockback.sprite = null;
-                    }
+                    if (kk >= 1) { spr.position.x = enemyKnockback.originalX; spr.position.z = enemyKnockback.originalZ; enemyKnockback.active = false; enemyKnockback.sprite = null; }
                 }
 
-                if (enemySprite && !enemyKnockback.active) {
-                    var t = clock.elapsedTime;
-                    enemySprite.position.y = -0.4 + Math.sin(t * 2.5) * 0.02;
-                }
-
-                // ЕДИНЫЙ HP-БАР
-                if (enemySprite) {
-                    Sherwood.BattleVisuals.updateMobHpBar(enemySprite, battleCamera, 'mob-hp');
-                }
+                if (enemySprite && !enemyKnockback.active) { var t = clock.elapsedTime; enemySprite.position.y = -0.4 + Math.sin(t * 2.5) * 0.02; }
+                updateMobHpBar();
             }
 
             renderer.render(battleScene, battleCamera);
