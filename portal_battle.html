@@ -181,7 +181,7 @@
                     map: enemyTexture, transparent: true, alphaTest: 0.05
                 }));
                 // Вызываем наш единый модуль!
-                Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
+                parent.Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
                 scene.add(enemySprite);
             });
         }
@@ -558,6 +558,7 @@
         }
         window.exitPortal = exitPortal;
 
+        // === ВОТ ТУТ ДОБАВЛЕН ОБРАБОТЧИК КНОПКИ АТАКИ ===
         document.getElementById('attack-icon').addEventListener('click', function(e) { e.stopPropagation(); attackEnemy(); });
         document.getElementById('attack-icon').addEventListener('touchstart', function(e) { e.preventDefault(); e.stopPropagation(); attackEnemy(); });
         document.addEventListener('keydown', function(e) { if (e.key === ' ' || e.key.toLowerCase() === 'enter') { e.preventDefault(); attackEnemy(); } });
@@ -637,7 +638,7 @@
             renderer.render(scene, camera);
 
             if (isBattleActive && enemySprite) {
-                Sherwood.BattleVisuals.updateMobHpBar(enemySprite, camera, 'mob-hp');
+                parent.Sherwood.BattleVisuals.updateMobHpBar(enemySprite, camera, 'mob-hp');
             }
         }
 
