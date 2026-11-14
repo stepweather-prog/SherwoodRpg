@@ -175,20 +175,15 @@
                 enemySprite = null;
             }
             
-            var scale = isBoss ? 2.3 : 2.0;
             var dir = isBoss ? BOSS_DIR : GUARD_DIR;
             loadEnemyTexture(dir + imageName, function(tex) {
                 if (!tex) return;
                 enemyTexture = tex;
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: enemyTexture, transparent: true, alphaTest: 0.05,
-                    depthTest: false, depthWrite: false
+                    map: enemyTexture, transparent: true, alphaTest: 0.05
                 }));
-                enemySprite.scale.set(scale, scale, 1);
-                enemySprite.center.set(0.5, 0);
-                // Опускаем врага вниз
-                enemySprite.position.set(0, -0.4, 0);
-                enemySprite.renderOrder = 10;
+                // Вызываем наш единый модуль!
+                Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
                 scene.add(enemySprite);
             });
         }
@@ -303,7 +298,16 @@
         function attackEnemy() {
             if (!isBattleActive || !battleData) return;
             playerHitFirst = true;
-            var r = parent.Sherwood.Portal.portalAttack();
+            
+            // 1. ЕДИНАЯ ПРОВЕРКА СТРЕЛ
+            var damageMultiplier = Sherwood.BattleVisuals.spendArrows(3);
+            if (damageMultiplier < 1) {
+                if (parent.UI && parent.UI._showToast) parent.UI._showToast('НЕТ СТРЕЛ! -50% урона');
+            }
+
+            // 2. ЛОГИКА УРОНА
+            var r = parent.Sherwood.Portal.portalAttack(damageMultiplier); // Передаем штраф в ядро!
+            
             playSound(soundHit);
 
             if (enemySprite) {
@@ -384,7 +388,7 @@
             }
 
             if (dmg > 0) {
-                var r = parent.Sherwood.Portal.portalAttack();
+                var r = parent.Sherwood.Portal.portalAttack(1.0); // Скиллы бьют без штрафа за стрелы
                 if (r) {
                     if (r.enemyHp !== undefined) updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
                     if (r.enemyDead) {
@@ -539,7 +543,7 @@
             }
         }
 
-                function exitPortal() {
+        function exitPortal() {
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             try { if (parent.Sherwood.Portal) { if (parent.Sherwood.Portal.isInPortal()) parent.Sherwood.Portal.fleePortal(); } } catch(e){}
             try { if (parent.UI) { parent.UI._lastPortal = portalId; parent.UI._lastDungeon = null; } } catch(e){}
@@ -634,14 +638,7 @@
             renderer.render(scene, camera);
 
             if (isBattleActive && enemySprite) {
-                var worldPos = enemySprite.position.clone();
-                worldPos.y += (enemySprite.scale.y * 0.5) + 0.1;
-                worldPos.project(camera);
-                var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
-                var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-                document.getElementById('mob-hp').style.left = x + 'px';
-                document.getElementById('mob-hp').style.top = y + 'px';
-                document.getElementById('mob-hp').style.transform = 'translate(-50%, -100%)';
+                Sherwood.BattleVisuals.updateMobHpBar(enemySprite, camera, 'mob-hp');
             }
         }
 
