@@ -135,7 +135,7 @@ function updateTopBar() {
             PlayerStats.damage = (sp.stats && sp.stats.attack) || 0;
             PlayerStats.armor = (sp.stats && sp.stats.defense) || 0;
             PlayerStats.hp = (sp.stats && sp.stats.hp) || 0;
-            PlayerStats.maxHp = (sp.stats && sp.stats.maxHp) || 0;
+            
         }
     }
 
@@ -595,5 +595,5 @@ window.initGameModules = initGameModules;
 window.playExitVideo = playExitVideo;
 
 console.log('🌳 Sherwood RPG загружена!');
-console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}/${PlayerStats.maxHp}`);
+console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}`);
 console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
