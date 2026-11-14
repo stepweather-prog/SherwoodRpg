@@ -56,7 +56,7 @@ Sherwood.BattleVisuals = {
         if (el) {
             el.style.left = x + 'px';
             el.style.top = y + 'px';
-            el.style.transform = 'translate(-50%, -100%)';
+            el.style.transform = 'translate(-50%, -140%)';
         }
     },
 
