@@ -29,7 +29,6 @@ Sherwood.Portal = {
         { id: 7, name: 'Портал Искажения', icon: '👁️', bg: 'assets/backgrounds/portal_1.jpeg', requiredChapter: 15, boss: { name: 'Воплощение Искажения', image: 'embodiment_of_distortion.png', hp: 7000, attack: 220, defense: 100, exp: 1200, gold: 1000 }, guard: { name: 'Изначальный Стержень', image: 'the_primordial_core.png', hp: 5000, attack: 180, defense: 90, exp: 700, gold: 600 }, rewards: { gold: 1500, exp: 2200, silver: 3500 }, trophy: { id: 'portal_7', name: 'Корона Лесного Владыки', bonus: { attack: 150, defense: 150, hp: 150 }, icon: 'assets/all_trophies/portal_trophies/5_crown_of_the_forest_lord.png' } }
     ],
 
-    // Сколько токенов портала нужно на вход
     getRequiredTokens: function(id) {
         return id * 3;
     },
@@ -47,10 +46,10 @@ Sherwood.Portal = {
     getAllPortals: function() { return this.PORTALS; },
 
     isPortalUnlocked: function(id) {
-    var portal = this.getPortal(id);
-    if (!portal) return false;
-    return true; 
-},
+        var portal = this.getPortal(id);
+        if (!portal) return false;
+        return true; 
+    },
 
     isPortalCompleted: function(id) {
         var player = Sherwood.getPlayer();
@@ -70,7 +69,6 @@ Sherwood.Portal = {
         return (player.portal.difficulty && player.portal.difficulty[id]) || 0;
     },
 
-    // Считает portalToken1 в сумке (id === 'portal_token_1')
     countTokens: function() {
         var total = 0;
         if (typeof Sherwood.Bag === 'undefined') return total;
@@ -81,7 +79,6 @@ Sherwood.Portal = {
         return total;
     },
 
-    // Списывает portalToken1 из сумки
     _spendTokens: function(amount) {
         if (typeof Sherwood.Bag === 'undefined') return false;
         var items = Sherwood.Bag.getItems();
@@ -98,14 +95,14 @@ Sherwood.Portal = {
     },
 
     canEnter: function(id) {
-    var portal = this.getPortal(id);
-    if (!portal) return { can: false, reason: 'Портал не найден' };
-    if (this._inPortal) return { can: false, reason: 'Ты уже в портале!' };
-    var required = this.getRequiredTokens(id);
-    var tokens = this.countTokens();
-    if (tokens < required) return { can: false, reason: 'Нужно ' + required + ' токенов портала (у тебя ' + tokens + ')' };
-    return { can: true };
-},
+        var portal = this.getPortal(id);
+        if (!portal) return { can: false, reason: 'Портал не найден' };
+        if (this._inPortal) return { can: false, reason: 'Ты уже в портале!' };
+        var required = this.getRequiredTokens(id);
+        var tokens = this.countTokens();
+        if (tokens < required) return { can: false, reason: 'Нужно ' + required + ' токенов портала (у тебя ' + tokens + ')' };
+        return { can: true };
+    },
 
     enterPortal: function(id) {
         var check = this.canEnter(id);
@@ -283,7 +280,7 @@ Sherwood.Portal = {
         // Информационная полоска с токенами сверху
         h += '<div style="position:absolute;top:6px;left:0;right:0;text-align:center;color:#c8a050;font-size:12px;font-weight:bold;text-shadow:0 0 6px #000;z-index:5;letter-spacing:1px;">Токены: ' + tokens + '</div>';
 
-                for (var i = 0; i < allPortals.length; i++) {
+        for (var i = 0; i < allPortals.length; i++) {
             var portal = allPortals[i];
             var iconFile = iconMap[portal.id] || 'invasion_portal.png';
             var requiredTokens = this.getRequiredTokens(portal.id);
