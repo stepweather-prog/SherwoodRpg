@@ -4,9 +4,9 @@
  * скиллы, HP-бар, сферы, кровь, нокбэк, тряска камеры.
  *
  * Подключение:
- *   <script src="battle_visuals.js"></script>
+ *   <script src="js/sherwood/battle_visuals.js"></script>
  * Далее:
- *   Sherwood.BattleVisuals.init({ ...ctx });
+ *   Sherwood.BattleVisuals.init({ THREE: THREE, scene: scene, ... });
  */
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
 
@@ -454,8 +454,6 @@ Sherwood.BattleVisuals = (function () {
             if (S.group) S.group.visible = false;
             if (S.ctx.onCameraEnter) {
                 try { S.ctx.onCameraEnter(); } catch (e) {}
-            } else if (S.camFPS) {
-                // fallback: сами переключаем камеру
             }
 
             var sprite = enemyObj.mesh;
@@ -942,6 +940,16 @@ Sherwood.BattleVisuals = (function () {
 
         init: function (ctx) {
             S.ctx = ctx || {};
+
+            // ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ THREE (так как модуль не использует import)
+            if (ctx.THREE) {
+                window.THREE = ctx.THREE;
+            }
+            if (typeof THREE === 'undefined') {
+                console.error('❌ THREE не передан в BattleVisuals!');
+                return;
+            }
+
             DOM.ensure();
 
             if (ctx.camFPS) {
