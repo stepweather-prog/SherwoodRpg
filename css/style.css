@@ -92,12 +92,12 @@ canvas {
     z-index: 500;
 }
 
-/* Статуи по бокам экрана */
+/* Статуи по бокам экрана (привязаны к ширине gameZone = 60vh) */
 #leftStatue {
     position: fixed;
     left: 0;
     top: 0;
-    width: max(0px, calc((100vw - 480px) / 2));
+    width: max(0px, calc((100vw - 60vh) / 2));
     height: 100vh;
     object-fit: fill;
     object-position: right center;
@@ -109,7 +109,7 @@ canvas {
     position: fixed;
     right: 0;
     top: 0;
-    width: max(0px, calc((100vw - 480px) / 2));
+    width: max(0px, calc((100vw - 60vh) / 2));
     height: 100vh;
     object-fit: fill;
     object-position: left center;
@@ -117,12 +117,12 @@ canvas {
     pointer-events: none;
 }
 
-/* Центральный игровой квадрат */
+/* Центральный игровой квадрат (заполняет 100vh, ширина подстраивается) */
 #gameZone {
     position: relative;
-    width: 480px;
     height: 100vh;
-    max-height: 800px;
+    width: 60vh; /* 480/800 = 0.6 = 60vh */
+    max-width: 100vw;
     overflow: hidden;
     z-index: 10;
     background: #111;
@@ -159,7 +159,7 @@ canvas {
    ========================================= */
 #leftDivider {
     position: fixed;
-    left: calc((100vw - 480px) / 2 - 20px);
+    left: calc((100vw - 60vh) / 2 - 20px);
     top: 0;
     height: 100vh;
     width: 50px;
@@ -170,7 +170,7 @@ canvas {
 
 #rightDivider {
     position: fixed;
-    right: calc((100vw - 480px) / 2 - 20px);
+    right: calc((100vw - 60vh) / 2 - 20px);
     top: 0;
     height: 100vh;
     width: 50px;
@@ -344,4 +344,3 @@ canvas {
     overflow: hidden;
     background: #000;
 }
-
