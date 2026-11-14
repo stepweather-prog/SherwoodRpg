@@ -4,9 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SherwoodRpg</title>
-    <link rel="icon" href="data:,">
-   <link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
+    
+    <!-- Favicon (можно оставить пустым или поставить иконку) -->
+    <link rel="icon" href="assets/interface/logo.png">
+    
+    <!-- PWA Манифест -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Цвет темы для мобильных браузеров (совпадает с manifest.json) -->
+    <meta name="theme-color" content="#0a0a0f">
+    
+    <!-- Для iOS (чтобы добавлялось на главный экран красиво) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sherwood">
+    <link rel="apple-touch-icon" href="assets/interface/logo.png">
+
+    <!-- Стили -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
 </head>
 <body>
 
@@ -110,6 +126,18 @@
 
 <!-- 7. РОУТЕР (ДОБАВЬ ЕГО В КОНЦЕ) -->
 <script src="js/sherwood/router.js"></script>
-
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(function(reg) {
+                    console.log('Service Worker зарегистрирован! Область:', reg.scope);
+                })
+                .catch(function(err) {
+                    console.log('Ошибка регистрации Service Worker:', err);
+                });
+        });
+    }
+</script>
 </body>
 </html>
