@@ -790,17 +790,53 @@ UI.camp = function() {
         url += '?returnGX=' + UI._campReturnInfo.gx + '&returnGY=' + UI._campReturnInfo.gy;
     }
 
-    var iframe = document.createElement('iframe');
-    iframe.src = url;
-    iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
-    if (UI._screenLayer) {
-        UI._screenLayer.innerHTML = '';
-        UI._screenLayer.appendChild(iframe);
-        UI._screenLayer.style.display = 'block';
+    // Если возвращаемся из подраздела (не с главной), видео не показываем
+        if (UI._campReturnInfo || sessionStorage.getItem('camp_video_shown')) {
+        var iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.appendChild(iframe);
+            UI._screenLayer.style.display = 'block';
+        }
+        return;
     }
+    sessionStorage.setItem('camp_video_shown', '1');
 
-    // НЕ сбрасываем _campReturnInfo — он нужен для следующего возврата
-    // Сброс происходит только в UI.loadHome()
+    // Первый вход в Лагерь — показываем видео
+    const video = document.createElement('video');
+    video.src = 'assets/assets2/animation/exit_game.webm';
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    
+    let videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+    if (window.innerWidth < 480) { video.style.cssText = videoStyles + 'width:100vw;height:100vh;'; }
+    else if (window.innerWidth >= 480 && window.innerHeight <= 800) { video.style.cssText = videoStyles + 'width:480px;height:100vh;'; }
+    else { video.style.cssText = videoStyles + 'width:480px;height:800px;'; }
+    
+    document.body.appendChild(video);
+    
+    var videoFinished = false;
+    function openCamp() {
+        if (videoFinished) return;
+        videoFinished = true;
+        try { video.remove(); } catch(e) {}
+        
+        var iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
+        if (UI._screenLayer) {
+            UI._screenLayer.innerHTML = '';
+            UI._screenLayer.appendChild(iframe);
+            UI._screenLayer.style.display = 'block';
+        }
+    }
+    
+    video.onended = openCamp;
+    video.onerror = openCamp;
+    setTimeout(openCamp, 8000);
 };
 UI.thicket = function() {
     UI._playSound('click');
