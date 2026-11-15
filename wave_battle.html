@@ -101,6 +101,7 @@
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
     </script>
+    <script src="js/sherwood/battle_visuals.js"></script>
     <script type="module">
         import * as THREE from 'three';
 
@@ -133,52 +134,72 @@
         setTimeout(function () { try { waveMusic.play().catch(function () {}); } catch (e) {} }, 300);
         window.addEventListener('click', function () { try { waveMusic.play().catch(function () {}); } catch (e) {} });
 
-        var playerArrows = 25; var ARROWS_MAX_START = 25;
-        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; updateArrowCounter(); return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; updateArrowCounter(); return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } updateArrowCounter(); }
-        function updateArrowCounter() { var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows; var counter = document.getElementById('arrow-counter'); if (counter) { if (playerArrows <= 3) counter.classList.add('low'); else counter.classList.remove('low'); } }
-        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; } return false; }
-        setTimeout(loadArrowsFromBag, 700);
+        // --- ПОДКЛЮЧЕНИЕ ЕДИНОГО МОДУЛЯ ---
+        window.Sherwood = window.Sherwood || {};
+        window.Sherwood.BattleVisuals.init({
+            THREE: THREE,
+            isPortalMode: true, // Используем этот же режим, чтобы модуль не лез в сцену
+            scene: scene,
+            camFPS: camera,
+            loader: new THREE.TextureLoader(),
+            bgPath: 'assets/assets2/backgrounds/Dark_magical.png',
+            camFPSOptions: { y: 0.55, z: 3.6, lookY: 0.45 },
+            getPlayer: function () { return parent.Sherwood.getPlayer(); },
+            Talents: parent.Sherwood.Talents,
+            UI: parent.UI,
+            getMobName: getMobName,
+            playSoundHit: function () { playSound(soundHit); },
+            playSoundAltar: function () { playSound(soundAltar); },
+            onCenterText: function (text, color) { showCenterText(text, color); },
+            onHpChanged: function () { if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); },
+            onCameraEnter: function () { },
+            onCameraExit: function () { },
+            onBattleStop: function () { },
+            onEnemyKilled: function () { },
+            onDeath: function () { },
+            onAttackButton: function () { }
+        });
+
+        setTimeout(function () {
+            window.Sherwood.BattleVisuals.loadArrowsFromBag();
+            window.Sherwood.BattleVisuals.renderLearnedTalents();
+        }, 700);
 
         var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
-        var battleTimer = null, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0, playerHitFirst = false, enemyStunned = 0, playerStunned = 0;
+        var battleTimer = null, playerHitFirst = false, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0;
         var cameraShake = 0;
-        var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png', 'assets/assets2/animation/blood_5.png'];
-        var bloodTextures = bloodSprites.map(function(path) { return new THREE.TextureLoader().load(path); });
-        var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
-        hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false; scene.add(hitFlashSprite);
 
         function updateHeroSpheres() {
             var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
             var hpPercent = p.stats.hp / p.stats.maxHp; var lifeFill = document.getElementById('life-fill'); if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
             var hpText = document.getElementById('hp-text'); if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+            
+            if (typeof p.stats.filth === 'undefined') p.stats.filth = 0;
+            if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
+            var fPct = p.stats.filth / p.stats.maxFilth;
+            var manaFill = document.getElementById('mana-fill'); if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - fPct) * 100) + '% 0 0 0)';
+            var manaText = document.getElementById('mana-text'); if (manaText) manaText.textContent = 'Скверна: ' + Math.floor(p.stats.filth) + '%';
         }
         setTimeout(updateHeroSpheres, 500);
 
         function createEnemySprite(enemyData, callback) {
+            if (currentEnemySprite) { scene.remove(currentEnemySprite); currentEnemySprite = null; }
             var loader = new THREE.TextureLoader();
             loader.load(
                 enemyData.imagePath,
                 function(tex) {
                     tex.minFilter = tex.magFilter = THREE.LinearFilter;
                     currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-                    currentEnemySprite.scale.set(enemyData.isBoss ? 2.3 : 2.0, enemyData.isBoss ? 2.3 : 2.0, 1);
-                    currentEnemySprite.center.set(0.5, 0);
-                    currentEnemySprite.position.set(0, -0.4, 0);
-                    currentEnemySprite.material.depthTest = false;
-                    currentEnemySprite.material.depthWrite = false;
-                    currentEnemySprite.renderOrder = 10;
+                    window.Sherwood.BattleVisuals.setupEnemySprite(currentEnemySprite, enemyData.isBoss);
                     scene.add(currentEnemySprite);
                     if (callback) callback();
                 },
                 undefined,
                 function() {
-                    // Ошибка — заглушка, никакой стрелы
                     console.warn('Не нашёл текстуру: ' + enemyData.imagePath);
                     var fallbackTex = new THREE.TextureLoader().load('assets/interface/labyrinth_of_icons.png');
                     currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: fallbackTex, transparent: true }));
-                    currentEnemySprite.scale.set(enemyData.isBoss ? 2.3 : 2.0, enemyData.isBoss ? 2.3 : 2.0, 1);
-                    currentEnemySprite.center.set(0.5, 0);
-                    currentEnemySprite.position.set(0, -0.4, 0);
+                    window.Sherwood.BattleVisuals.setupEnemySprite(currentEnemySprite, enemyData.isBoss);
                     scene.add(currentEnemySprite);
                     if (callback) callback();
                 }
@@ -187,7 +208,7 @@
 
         function startBattle(obj) {
             if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemyObj = obj;
-            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
+            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def };
             
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
@@ -200,21 +221,21 @@
             if (battleTimer) clearInterval(battleTimer);
             battleTimer = setInterval(function() {
                 if (!isBattleActive || !playerHitFirst) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
-                if (enemyStunned > 0 || playerStunned > 0) return;
                 var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
-                p.stats.hp = Math.max(0, p.stats.hp - edmg); updateHeroSpheres(); showBloodOverlay();
+                p.stats.hp = Math.max(0, p.stats.hp - edmg); updateHeroSpheres(); 
+                window.Sherwood.BattleVisuals.showBloodOverlay();
                 if (p.stats.hp <= 0) { stopBattle(); onDefeat(); }
             }, 1000);
         }
 
         function stopBattle() {
-            isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0;
+            isBattleActive = false; playerHitFirst = false;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
         }
 
         function onEnemyKilled() {
-            if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
+            if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
             playSound(soundVictory);
             
@@ -227,41 +248,41 @@
 
         function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats || !parent.Sherwood || !parent.Sherwood.getPlayer) return;
-            if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
+            if (window.Sherwood.BattleVisuals.getPlayerAttackCooldown() > 0) return;
+            
+            playerHitFirst = true;
             var p = parent.Sherwood.getPlayer(); playSound(soundHit);
             
-            var arrowsNeeded = 3; var hasArrows = (playerArrows >= arrowsNeeded);
-            if (hasArrows) { useArrow(arrowsNeeded); } else { if (playerArrows > 0) useArrow(playerArrows); showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
+            // Стрелы
+            var arrowMult = window.Sherwood.BattleVisuals.spendArrowsForAttack();
             
+            // Урон
             var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
-            if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
+            if (arrowMult < 1) baseDmg = Math.floor(baseDmg * arrowMult);
 
             currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - baseDmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
             document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+            
             if (currentEnemySprite) {
-                var spriteW = currentEnemySprite.scale.x, spriteH = currentEnemySprite.scale.y; var ox = (Math.random() - 0.5) * spriteW * 0.7, oy = (Math.random() - 0.5) * spriteH * 0.7;
-                hitFlashSprite.position.copy(currentEnemySprite.position); hitFlashSprite.position.x += ox; hitFlashSprite.position.y += oy;
-                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)]; hitFlashSprite.material.needsUpdate = true;
-                hitFlashSprite.visible = true; setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+                window.Sherwood.BattleVisuals.showHitEffect(currentEnemySprite, camera);
                 cameraShake = 0.06;
             }
+            
             if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
             var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
-            p.stats.hp = Math.max(0, p.stats.hp - edmg); updateHeroSpheres(); showBloodOverlay();
+            p.stats.hp = Math.max(0, p.stats.hp - edmg); updateHeroSpheres(); 
+            window.Sherwood.BattleVisuals.showBloodOverlay();
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
 
         function updateMobHpBar() {
             if (!isBattleActive || !currentEnemySprite) return;
-            var worldPos = currentEnemySprite.position.clone();
-            worldPos.y += (currentEnemySprite.scale.y * 0.5) + 0.1; worldPos.project(camera);
-            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth; var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
-            var el = document.getElementById('mob-hp'); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.transform = 'translate(-50%, -140%)';
+            window.Sherwood.BattleVisuals.updateMobHpBar(currentEnemySprite, camera, 'mob-hp');
         }
 
-        function showBloodOverlay() { var el = document.getElementById('blood-overlay'); if (!el) return; var texs = ['assets/assets2/animation/Fine_blood_spray_texture.png', 'assets/assets2/animation/Fine_blood_spray_texture (1).png', 'assets/assets2/animation/Fine_blood_spray_texture (2).png']; el.style.backgroundImage = 'url("' + texs[Math.floor(Math.random() * texs.length)] + '")'; el.style.opacity = '1'; setTimeout(function() { el.style.opacity = '0'; }, 200); }
-        function showCenterText(text, color) { var el = document.createElement('div'); el.textContent = text; el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:36px;font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;'; document.body.appendChild(el); requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; }); setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900); setTimeout(function() { el.remove(); }, 1900); }
+        function showBloodOverlay() { window.Sherwood.BattleVisuals.showBloodOverlay(); }
+        function showCenterText(text, color) { if (parent.UI && parent.UI._showToast) parent.UI._showToast(text); }
 
         function exitWave() {
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
@@ -303,18 +324,27 @@
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.05);
 
-            if (isBattleActive) {
-                updateMobHpBar();
-                if (cameraShake > 0.001) { camera.position.x = (Math.random() - 0.5) * cameraShake; camera.position.y = 0.55 + (Math.random() - 0.5) * cameraShake; camera.position.z = 3.6 + (Math.random() - 0.5) * cameraShake; camera.lookAt(0, 0.45, 0); cameraShake *= 0.85; }
-                else { camera.position.set(0, 0.55, 3.6); camera.lookAt(0, 0.45, 0); cameraShake = 0; }
+            window.Sherwood.BattleVisuals.update(dt);
+            if (isBattleActive) updateMobHpBar();
+
+            if (cameraShake > 0.001) {
+                camera.position.x = (Math.random() - 0.5) * cameraShake;
+                camera.position.y = 0.55 + (Math.random() - 0.5) * cameraShake;
+                camera.position.z = 3.6 + (Math.random() - 0.5) * cameraShake;
+                camera.lookAt(0, 0.45, 0);
+                cameraShake *= 0.85;
+            } else if (cameraShake !== 0) {
+                camera.position.set(0, 0.55, 3.6);
+                camera.lookAt(0, 0.45, 0);
+                cameraShake = 0;
             }
+
             if (currentEnemySprite && !isBattleActive) {
                 currentEnemySprite.position.y = -0.4 + Math.sin(clock.elapsedTime * 2.5) * 0.02;
             }
             renderer.render(scene, camera);
         }
 
-        // Слушаем сообщение от родителя о загрузке следующего врага
         window.addEventListener('message', function(e) {
             if (e.data && e.data.type === 'next_enemy') {
                 var enemyData = parent.Sherwood.Wave.getCurrentEnemy();
@@ -329,7 +359,6 @@
             }
         });
 
-        // Первая загрузка
         var firstEnemy = parent.Sherwood.Wave.getCurrentEnemy();
         if (firstEnemy) {
             document.getElementById('kill-count-text').textContent = 'Убито: 0 / ' + parent.Sherwood.Wave.getTotalEnemies();
