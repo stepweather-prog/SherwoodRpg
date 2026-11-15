@@ -348,40 +348,43 @@ Sherwood.Forge = {
             
             h += '<div style="text-align:center;color:#e0c080;font-size:0.9em;margin-top:20px;text-shadow:0 2px 4px #000;">Всего стрел в сумке: ' + arrowInfo.arrowsCount + '</div>';
             
-        } else if (this._currentTab === 'jewelry') {
+                } else if (this._currentTab === 'jewelry') {
             var ringInfo = this.getRingCraftInfo();
             var amuletInfo = this.getAmuletCraftInfo();
             
             h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:15px;padding:5px;">';
             
-            // Кольцо
+            // --- КАРТОЧКА КОЛЬЦА ---
             h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;">';
             var ringIconSrc = bag._equipment && bag._equipment.ring ? bag._equipment.ring.icon : 'assets/interface/ring_first_level.png';
-            h += '<img src="' + ringIconSrc + '" style="width:60px;height:60px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
-            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:4px;text-shadow:0 2px 4px #000;">Кольцо ' + (ringInfo.isNew ? '' : 'Ур. ' + ringInfo.currentLevel) + '</div>';
-            h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:12px;text-align:center;text-shadow:0 2px 4px #000;">Скрижали: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
+            h += '<img src="' + ringIconSrc + '" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
+            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;height:36px;line-height:1.2;overflow:hidden;margin-bottom:6px;text-shadow:0 2px 4px #000;">Кольцо ' + (ringInfo.isNew ? '' : 'Ур. ' + ringInfo.currentLevel) + '</div>';
+            
             if (ringInfo.canCraft) {
+                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
                 h += '<button onclick="Sherwood.Forge._craftRingFromUI()" style="margin-top:auto;background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:8px 12px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.9em;width:100%;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
             } else {
+                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
                 h += '<div style="color:#e0c080;font-size:0.85em;font-weight:bold;margin-top:auto;text-shadow:0 2px 4px #000;">🔒 Мало скрижалей</div>';
             }
             h += '</div>';
 
-            // Амулет
+            // --- КАРТОЧКА АМУЛЕТА ---
             h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;">';
             var amuletIconSrc = bag._equipment && bag._equipment.amulet ? bag._equipment.amulet.icon : 'assets/interface/sherwood_amulet_level_one.png';
-            h += '<img src="' + amuletIconSrc + '" style="width:60px;height:60px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
-            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:4px;text-shadow:0 2px 4px #000;">Амулет ' + (amuletInfo.isNew ? '' : 'Ур. ' + amuletInfo.currentLevel) + '</div>';
-            h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:12px;text-align:center;text-shadow:0 2px 4px #000;">Скрижали: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
+            h += '<img src="' + amuletIconSrc + '" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
+            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;height:36px;line-height:1.2;overflow:hidden;margin-bottom:6px;text-shadow:0 2px 4px #000;">Амулет ' + (amuletInfo.isNew ? '' : 'Ур. ' + amuletInfo.currentLevel) + '</div>';
+            
             if (amuletInfo.canCraft) {
+                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
                 h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" style="margin-top:auto;background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:8px 12px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.9em;width:100%;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
             } else {
+                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
                 h += '<div style="color:#e0c080;font-size:0.85em;font-weight:bold;margin-top:auto;text-shadow:0 2px 4px #000;">🔒 Мало скрижалей</div>';
             }
             h += '</div>';
             
             h += '</div>';
-
         } else if (this._currentTab === 'skins') {
             var skins = this.getCraftSkins();
             
