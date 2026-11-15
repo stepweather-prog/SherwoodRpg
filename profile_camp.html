@@ -218,7 +218,7 @@
         
         // ВАЖНО: Как только видео загрузится, перематываем в конец, чтобы персонаж стоял
         video.addEventListener('loadeddata', function() {
-            video.currentTime = 2.99;
+            video.currentTime = 0;
             processHeroFrame(player.facing < 0); // Принудительно отрисовываем кадр
         });
 
@@ -307,7 +307,7 @@
                 // Мгновенная остановка
                 if (!video.paused || !isStopping) {
                     video.pause();
-                    video.currentTime = 2.99; // Мгновенный переход в конец
+                    video.currentTime = 0; 
                     isStopping = true;
                     // Принудительная отрисовка кадра
                     setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
