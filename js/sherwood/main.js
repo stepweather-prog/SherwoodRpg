@@ -495,7 +495,7 @@ function loadSavedSkin() {
 // ============================================================
 function playExitVideo(onComplete) {
     const video = document.createElement('video');
-    video.src = 'assets/assets2/animation/Loading_dangeon.mp4';
+    video.src = 'assets/assets2/animation/exit_game.webm';
     video.autoplay = true;
     video.muted = true;
     video.playsInline = true;
