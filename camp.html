@@ -70,11 +70,14 @@
     { key: 'tavern',   name: 'Таверна',   icon: 'assets/assets2/icons/tavern.png',          x: 16, open: function() { try { parent.UI.tavern(); } catch(e) {} } },
     { key: 'portals',  name: 'Порталы',   icon: 'assets/assets2/icons/portal.png',          x: 24, open: function() { try { parent.UI.portals(); } catch(e) {} } },
     
-    // === НОВАЯ ДВЕРЬ ===
-    { key: 'wave',     name: 'Скверная волна', icon: 'assets/assets2/icons/wave_of_corruption.png', x: 28, open: function() { try { parent.Sherwood.Wave.startWave(); } catch(e) { console.error(e); } } },
+    // === НОВАЯ ДВЕРЬ (Сдвинута на 32) ===
+    { key: 'wave',     name: 'Скверная волна', icon: 'assets/assets2/icons/wave_of_corruption.png', x: 32, open: function() { try { parent.Sherwood.Wave.startWave(); } catch(e) { console.error(e); } } },
     
-    { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          x: 32, open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
-    { key: 'thicket',  name: 'Шервудская чащоба', icon: 'assets/assets2/icons/quest.png',   x: 40, open: function() { try { parent.UI.thicket(); } catch(e) {} } },
+    // === ПОДЗЕМКА (Сдвинута на 40) ===
+    { key: 'dungeon',  name: 'Подземка',  icon: 'assets/assets2/icons/subway.png',          x: 40, open: function() { try { parent.UI.dungeon(); } catch(e) {} } },
+    
+    // === ОСТАЛЬНЫЕ (Сдвинуты на +8) ===
+    { key: 'thicket',  name: 'Шервудская чащоба', icon: 'assets/assets2/icons/quest.png',   x: 48, open: function() { try { parent.UI.thicket(); } catch(e) {} } },
     { key: 'forge',    name: 'Кузница',   icon: 'assets/assets2/icons/forge.png',           x: 56, open: function() { try { parent.UI.forge(); } catch(e) {} } },
     { key: 'bestiary', name: 'Бестиарий', icon: 'assets/assets2/icons/bestiary.png',        x: 64, open: function() { try { parent.UI.bestiary(); } catch(e) {} } },
     { key: 'settings', name: 'Настройки', icon: 'assets/assets2/icons/settings.png',        x: 72, open: function() { try { parent.UI.settings(); } catch(e) {} } }
