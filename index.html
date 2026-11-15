@@ -132,10 +132,32 @@
             navigator.serviceWorker.register('service-worker.js')
                 .then(function(reg) {
                     console.log('Service Worker зарегистрирован! Область:', reg.scope);
+
+                    // Слушаем, когда появится новый SW
+                    reg.addEventListener('updatefound', function() {
+                        var newWorker = reg.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener('statechange', function() {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('🆕 Доступно обновление. Применяем...');
+                                if (typeof UI !== 'undefined' && UI._showToast) {
+                                    UI._showToast('🆕 Обновление установлено. Перезагрузка...');
+                                }
+                                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        });
+                    });
                 })
                 .catch(function(err) {
                     console.log('Ошибка регистрации Service Worker:', err);
                 });
+        });
+
+        // Перезагрузка при смене контроллера
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (window._isReloading) return;
+            window._isReloading = true;
+            window.location.reload();
         });
     }
 </script>
