@@ -183,25 +183,34 @@ window.Settings = {
         setTimeout(function() { window.location.reload(); }, 1500);
     },
 
-    forceUpdateGame: function(silent) {
+        forceUpdateGame: function(silent) {
         if (!silent && !confirm('Проверить и установить обновления? Страница перезагрузится.')) return;
         
         if (UI && UI._showToast && !silent) UI._showToast('⏳ Проверка обновлений...');
 
+        // 1. Удаляем все Service Workers
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for (let registration of registrations) { registration.unregister(); }
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
             });
         }
+
+        // 2. Удаляем все кэши (с ожиданием завершения)
         if ('caches' in window) {
-            caches.keys().then(function(names) { for (let name of names) { caches.delete(name); } });
+            caches.keys().then(function(names) {
+                return Promise.all(names.map(function(name) {
+                    return caches.delete(name);
+                }));
+            });
         }
 
+        // 3. Через 1.5 секунды перезагружаем с обходом кэша
         setTimeout(function() {
             var url = window.location.href.split('?')[0];
-            window.location.href = url + '?updated=' + Date.now();
-        }, silent ? 100 : 1000);
+            window.location.href = url + '?v=' + Date.now();
+        }, silent ? 200 : 1500);
     }
-};
-
+}; 
 console.log('⚙️ Настройки загружены!');
