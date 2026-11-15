@@ -33,7 +33,7 @@ window.Settings = {
         } catch(e) {}
     },
 
-    // === ГЕТТЕРЫ ДЛЯ AUDIO.JS И UI ===
+    // === ГЕТТЕРЫ ДЛЯ AUDIO.JS ===
     getMusicVolume: function() { return this._settings.musicVolume; },
     getSoundVolume: function() { return this._settings.soundVolume; },
     isMusicEnabled: function() { return true; },
@@ -41,11 +41,19 @@ window.Settings = {
 
     _applyVolumes: function() {
         var self = this;
-        // Привязка к AudioManager
+        // 1. Обновляем AudioManager
         if (window.AudioManager && AudioManager.updateVolume) {
             AudioManager.updateVolume();
         }
-        // Применяем ко всем <audio> на странице
+        // 2. Обновляем audioPlayer из main.js (главная музыка)
+        try {
+            if (window.audioPlayer) window.audioPlayer.volume = this._settings.musicVolume;
+        } catch(e) {}
+        // 3. Обновляем UI._currentMusic
+        if (typeof UI !== 'undefined' && UI._currentMusic) {
+            try { UI._currentMusic.volume = this._settings.musicVolume; } catch(e) {}
+        }
+        // 4. Пробегаемся по всем <audio> на странице
         document.querySelectorAll('audio').forEach(function(audio) {
             try {
                 var src = audio.src || '';
@@ -80,7 +88,7 @@ window.Settings = {
 
         // --- ОПАСНАЯ ЗОНА (УДАЛЕНИЕ) ---
         h += '<div style="margin-top:40px; text-align:center; border-top:1px solid rgba(90,50,0,0.3); padding-top:20px;">';
-        h += '<div style="font-size:1em; margin-bottom:10px;">⚠️ Опасная зона</div>';
+        
         h += '<button onclick="Settings.resetCharacter()" style="background:#3a1010; border:2px solid #aa3333; border-radius:8px; padding:10px 20px; color:#ff8888; font-family:Georgia,serif; font-size:16px; font-weight:bold; cursor:pointer;">';
         h += '🗑️ Удалить персонажа';
         h += '</button>';
@@ -91,7 +99,7 @@ window.Settings = {
         h += '<div style="margin-top:20px; text-align:center; padding-top:20px;">';
         
         h += '<button onclick="Settings.forceUpdateGame()" style="background:linear-gradient(180deg,#3a2a10,#1a1208); border:2px solid #c8a050; border-radius:8px; padding:10px 20px; color:#ffd700; font-family:Georgia,serif; font-size:16px; font-weight:bold; cursor:pointer;">';
-        h += 'ОБНОВИТЬ ИГРУ';
+        h += 'Очистить игру';
         h += '</button>';
         h += '</div>';
 
@@ -105,6 +113,7 @@ window.Settings = {
         var valEl = document.getElementById('soundVolumeVal');
         if (valEl) valEl.textContent = Math.round(this._settings.soundVolume * 100) + '%';
         this.saveSettings();
+        // Проверка звука
         if (window.AudioManager) AudioManager.playSoundEffect('click');
     },
 
@@ -112,10 +121,21 @@ window.Settings = {
         this._settings.musicVolume = parseFloat(val);
         var valEl = document.getElementById('musicVolumeVal');
         if (valEl) valEl.textContent = Math.round(this._settings.musicVolume * 100) + '%';
-        this.saveSettings();
+        
+        // ВАЖНО: принудительно обновляем audioPlayer из main.js
+        try {
+            if (window.audioPlayer) window.audioPlayer.volume = this._settings.musicVolume;
+        } catch(e) {}
+        
+        // А также AudioManager и UI._currentMusic
         if (window.AudioManager && AudioManager.updateVolume) {
             AudioManager.updateVolume();
         }
+        if (typeof UI !== 'undefined' && UI._currentMusic) {
+            try { UI._currentMusic.volume = this._settings.musicVolume; } catch(e) {}
+        }
+        
+        this.saveSettings();
     },
 
     resetCharacter: function() {
