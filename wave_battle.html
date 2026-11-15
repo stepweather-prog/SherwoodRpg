@@ -11,10 +11,10 @@
         canvas { display: block; background: transparent; touch-action: none; position: relative; z-index: 2; }
 
         #portal-bg {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: url('assets/assets2/backgrounds/Dark_magical.png') center center / cover no-repeat;
-    z-index: 0; pointer-events: none;
-}
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('assets/assets2/backgrounds/Dark_magical.png') center center / cover no-repeat;
+            z-index: 0; pointer-events: none;
+        }
 
         #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.75) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
@@ -32,6 +32,7 @@
         #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; border-radius: 50%; border: 3px solid #6b5a3a; background: radial-gradient(circle at center, rgba(200,160,80,0.25), rgba(0,0,0,0.7)); box-shadow: 0 0 20px rgba(139,107,58,0.5); display: flex; align-items: center; justify-content: center; transition: transform 0.1s; margin-bottom: 20px; }
         #attack-icon:active { transform: scale(0.92); }
         #attack-icon img { width: 60px; height: 60px; object-fit: contain; }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
 
         #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
         .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
@@ -79,7 +80,7 @@
     <div id="wave-label">Скверная волна</div>
 
     <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">0</span></div>
-    <div id="kill-counter"><span id="kill-count-text">Убито: 0 / 33</span></div>
+    <div id="kill-counter"><span id="kill-count-text">Убито: 0 / 109</span></div>
 
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
@@ -124,9 +125,6 @@
 
     <script type="module">
         import * as THREE from 'three';
-
-        var urlParams = new URLSearchParams(window.location.search);
-        var waveId = urlParams.get('wave') || '1';
 
         const scene = new THREE.Scene();
 
@@ -175,7 +173,7 @@
             group: null,
             loader: new THREE.TextureLoader(),
             camFPS: camera,
-            bgPath: 'assets/assets2/Sherwood_Square/ceiling_quest.png',
+            bgPath: 'assets/assets2/backgrounds/Dark_magical.png',
             camFPSOptions: { y: 0.55, z: 3.6, lookY: 0.45 },
             mapSize: 16,
             getPlayer: function () { return parent.Sherwood.getPlayer(); },
@@ -202,7 +200,6 @@
                 }
             },
             onDeath: function (reason) {
-                // Если игрок умер — выходим
                 exitWave();
             }
         });
@@ -212,18 +209,15 @@
             window.Sherwood.BattleVisuals.renderLearnedTalents();
         }, 700);
 
-        // Загружаем первого врага
         function loadNextEnemy() {
             if (!parent.Sherwood || !parent.Sherwood.Wave) return;
             var enemyData = parent.Sherwood.Wave.getCurrentEnemy();
             if (!enemyData) return;
 
-            // Обновляем UI
             document.getElementById('mob-hp-name').textContent = enemyData.name;
             document.getElementById('kill-count-text').textContent = 
                 'Убито: ' + parent.Sherwood.Wave.getKillCount() + ' / ' + parent.Sherwood.Wave.getTotalEnemies();
             
-            // Создаём спрайт
             if (enemySprite) {
                 scene.remove(enemySprite);
                 enemySprite = null;
@@ -235,9 +229,8 @@
                 enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
                     map: tex, transparent: true, alphaTest: 0.05
                 }));
-                window.Sherwood.BattleVisuals.setupEnemySprite(enemySprite, enemyData.isBoss);
-                scene.add(enemySprite);
                 
+                // НЕ ВЫЗЫВАЕМ setupEnemySprite, а передаём спрайт прямо в start()
                 window.Sherwood.BattleVisuals.start({
                     hp: enemyData.hp, maxHp: enemyData.hp,
                     atk: enemyData.atk, def: enemyData.def,
@@ -273,6 +266,13 @@
         document.getElementById('attack-icon').addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); attackEnemy(); });
         document.addEventListener('keydown', function (e) { if (e.key === ' ' || e.key.toLowerCase() === 'enter') { e.preventDefault(); attackEnemy(); } });
 
+        // Слушаем сообщение от родителя о загрузке следующего врага
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'next_enemy') {
+                loadNextEnemy();
+            }
+        });
+
         const clock = new THREE.Clock();
 
         function animate() {
@@ -289,10 +289,6 @@
             }
 
             renderer.render(scene, camera);
-
-            if (isBattleActive && enemySprite) {
-                window.Sherwood.BattleVisuals.updateMobHpBar();
-            }
         }
 
         loadNextEnemy();
@@ -301,7 +297,6 @@
         // Слушаем колбэк от Wave, чтобы загрузить нового врага
         setInterval(function() {
             if (!isBattleActive && parent.Sherwood.Wave && parent.Sherwood.Wave._isActive) {
-                // Если волна активна, но бой не идёт — загружаем следующего
                 loadNextEnemy();
             }
         }, 500);
