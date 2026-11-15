@@ -179,7 +179,7 @@
                     map: enemyTexture, transparent: true, alphaTest: 0.05
                 }));
                 
-                // === ИСПОЛЬЗУЕМ МЕТОД ИЗ МОДУЛЯ ===
+                // Вызов через новый API
                 window.Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
                 scene.add(enemySprite);
             });
@@ -204,7 +204,6 @@
 
         window.Sherwood = window.Sherwood || {};
 
-        // === ИНИЦИАЛИЗАЦИЯ МОДУЛЯ ===
         window.Sherwood.BattleVisuals.init({
             THREE: THREE,
             scene: scene,
@@ -240,45 +239,37 @@
             window.Sherwood.BattleVisuals.renderLearnedTalents();
         }, 700);
 
-        function updateMobHpBarFill(hp, maxHp) {
-            if (!maxHp) maxHp = 1;
-            var pct = Math.max(0, Math.min(1, hp / maxHp));
-            var fill = document.getElementById('mob-hp-fill');
-            if (fill) fill.style.clipPath = 'inset(0 ' + (1 - pct) * 100 + '% 0 0)';
-            var txt = document.getElementById('mob-hp-text');
-            if (txt) txt.textContent = 'HP: ' + Math.max(0, hp) + '/' + maxHp;
-        }
-
         function loadBattle() {
             if (!parent.Sherwood || !parent.Sherwood.Portal) return;
             battleData = parent.Sherwood.Portal.getCurrentBattle();
             if (!battleData) return;
-            var e = battleData.enemy;
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + Math.max(0, e.hp) + '/' + e.maxHp;
-            updateMobHpBarFill(e.hp, e.maxHp);
+            
+            // Обновляем UI портала
             document.getElementById('wave-label').textContent =
                 battleData.portal.name + ' — Волна ' + battleData.level + '/' + battleData.totalLevels;
-            createEnemySprite(e.image || 'plague_crow.png', !!e.isBoss);
+            
+            createEnemySprite(battleData.enemy.image || 'plague_crow.png', !!battleData.enemy.isBoss);
             document.getElementById('mob-hp').style.display = 'block';
             document.getElementById('battle-controls').style.display = 'flex';
             document.getElementById('skills-row').style.display = 'flex';
             isBattleActive = true;
 
-            if (battleTimer) clearInterval(battleTimer);
-            battleTimer = setInterval(function () {
-                if (!isBattleActive) return;
-                if (!parent.Sherwood || !parent.Sherwood.getPlayer) return;
-                var p = parent.Sherwood.getPlayer();
-                if (!p || !battleData || !battleData.enemy) return;
-                // Урон по игроку считается в portalAttack(), здесь его нет
-            }, 1500);
+            // В бой вступаем через новый метод
+            window.Sherwood.BattleVisuals.start({
+                hp: battleData.enemy.hp,
+                maxHp: battleData.enemy.maxHp,
+                atk: battleData.enemy.atk,
+                def: battleData.enemy.defense,
+                isBoss: battleData.enemy.isBoss,
+                img: battleData.enemy.image,
+                x: 0, y: 0
+            });
         }
 
-        // === ВЫЗОВ БОЯ ЧЕРЕЗ МОДУЛЬ ===
         function attackEnemy() {
             if (!isBattleActive || !battleData) return;
             
-            // Вызываем единый удар
+            // Вызываем единый удар из модуля
             window.Sherwood.BattleVisuals.attack();
             
             // Логика портала (волны)
@@ -291,26 +282,22 @@
 
             if (r.enemyDead) {
                 isBattleActive = false;
+                window.Sherwood.BattleVisuals.stop();
                 if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
                 setTimeout(function () {
                     var next = parent.Sherwood.Portal.getCurrentBattle();
                     if (!next) { onPortalComplete(r); return; }
                     battleData = next;
-                    var e2 = next.enemy;
-                    document.getElementById('wave-label').textContent =
-                        next.portal.name + ' — Волна ' + next.level + '/' + next.totalLevels;
-                    createEnemySprite(e2.image || 'plague_crow.png', !!e2.isBoss);
-                    updateMobHpBarFill(e2.hp, e2.maxHp);
+                    createEnemySprite(next.enemy.image || 'plague_crow.png', !!next.enemy.isBoss);
                     loadBattle();
                 }, 700);
                 return;
             }
-
-            if (r.enemyHp !== undefined) updateMobHpBarFill(r.enemyHp, r.enemyMaxHp);
         }
 
         function onPortalComplete(r) {
             isBattleActive = false;
+            window.Sherwood.BattleVisuals.stop();
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             playSound(soundVictory);
             try { portalMusic.pause(); } catch (e) {}
@@ -328,6 +315,7 @@
 
         function onPortalFailed(r) {
             isBattleActive = false;
+            window.Sherwood.BattleVisuals.stop();
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             playSound(soundDefeat);
             try { portalMusic.pause(); } catch (e) {}
@@ -386,22 +374,9 @@
 
             renderer.render(scene, camera);
 
+            // Модуль сам двигает HP-бар, но если мы хотим, чтобы он двигался только для портала, мы можем использовать его метод.
             if (isBattleActive && enemySprite) {
-                window.Sherwood.BattleVisuals.updateMobHpBar(enemySprite, camera, 'mob-hp');
-            }
-
-            var cd = window.Sherwood.BattleVisuals.getPlayerAttackCooldown ? window.Sherwood.BattleVisuals.getPlayerAttackCooldown() : 0;
-            var overlay = document.getElementById('attack-cooldown-overlay');
-            var iconImg = document.getElementById('attack-icon-img');
-            if (overlay && iconImg) {
-                if (cd > 0) {
-                    overlay.style.display = 'flex';
-                    overlay.textContent = cd.toFixed(1) + 's';
-                    iconImg.style.opacity = '0.4';
-                } else {
-                    overlay.style.display = 'none';
-                    iconImg.style.opacity = '1';
-                }
+                window.Sherwood.BattleVisuals.updateMobHpBar();
             }
         }
 
