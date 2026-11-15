@@ -12,8 +12,16 @@ const ASSETS_TO_CACHE = [
     './css/style.css',
     './css/mobile.css',
     './assets/interface/logo.png',
-    
-    // JS-файлы
+
+    // === HTML-ФАЙЛЫ РЕЖИМОВ (их надо кешировать, иначе в офлайне будет ошибка) ===
+    './camp.html',
+    './dungeon.html',
+    './portal_battle.html',
+    './thicket_hall.html',
+    './wave_battle.html',     // <-- твой новый режим
+    // Если есть ещё другие режимы (например, profile_camp.html), добавь их сюда же
+
+    // === JS-ФАЙЛЫ ===
     './js/sherwood/core.js',
     './js/sherwood/models.js',
     './js/sherwood/ui_screens.js',
@@ -32,9 +40,9 @@ const ASSETS_TO_CACHE = [
     './js/sherwood/combat.js',
     './js/sherwood/hearth.js',
     './js/sherwood/router.js',
-    './js/sherwood/crypto-worker.js' // <-- добавил твой воркер
+    './js/sherwood/battle_visuals.js',
+    './js/sherwood/wave.js'  
 ];
-
 // 1. Установка: кэшируем все файлы из списка
 self.addEventListener('install', function(event) {
     event.waitUntil(
