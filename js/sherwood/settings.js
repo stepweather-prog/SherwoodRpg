@@ -11,14 +11,34 @@ window.Settings = {
         graphics: 'high'
     },
 
-    // Версия игры (можешь менять тут, когда обновляешь игру, и в service-worker.js)
-    GAME_VERSION: 'v1.0.2',
+    // Версия будет подтянута автоматически из service-worker.js
+    GAME_VERSION: '...',
 
     init: function() {
         this._loadSettings();
         this._applyVolumes();
         this._applyGraphics();
+        this._loadVersionFromSW();
         console.log('⚙️ Настройки загружены');
+    },
+
+    _loadVersionFromSW: function() {
+        var self = this;
+        fetch('service-worker.js?t=' + Date.now())
+            .then(function(response) { return response.text(); })
+            .then(function(text) {
+                var match = text.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
+                if (match && match[1]) {
+                    // 'sherwood-v1.0.3' -> 'v1.0.3'
+                    self.GAME_VERSION = match[1].replace('sherwood-', '');
+                    console.log('📦 Версия из service-worker.js: ' + self.GAME_VERSION);
+                } else {
+                    self.GAME_VERSION = 'unknown';
+                }
+            })
+            .catch(function() {
+                self.GAME_VERSION = 'unknown';
+            });
     },
 
     _loadSettings: function() {
@@ -39,13 +59,11 @@ window.Settings = {
         } catch(e) {}
     },
 
-    // === ГЕТТЕРЫ ДЛЯ AUDIO.JS ===
     getMusicVolume: function() { return this._settings.musicVolume; },
     getSoundVolume: function() { return this._settings.soundVolume; },
     isMusicEnabled: function() { return true; },
     isSoundEnabled: function() { return true; },
 
-    // === ГРАФИКА ===
     _applyGraphics: function() {
         var val = this._settings.graphics;
         if (val === 'low') {
@@ -85,7 +103,6 @@ window.Settings = {
         if (typeof UI === 'undefined') return;
         UI._playSound('click');
 
-        // Отступ сверху 70px, чтобы кнопка "Назад" не перекрывала контент
         var h = '<div style="max-width:400px; margin:0 auto; padding:70px 20px 30px 20px; color:#e0c080; font-family:Georgia,serif;">';
         
         // --- ГРОМКОСТЬ ЗВУКОВ ---
@@ -183,12 +200,11 @@ window.Settings = {
         setTimeout(function() { window.location.reload(); }, 1500);
     },
 
-        forceUpdateGame: function(silent) {
+    forceUpdateGame: function(silent) {
         if (!silent && !confirm('Проверить и установить обновления? Страница перезагрузится.')) return;
         
         if (UI && UI._showToast && !silent) UI._showToast('⏳ Проверка обновлений...');
 
-        // 1. Удаляем все Service Workers
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for (let registration of registrations) {
@@ -197,7 +213,6 @@ window.Settings = {
             });
         }
 
-        // 2. Удаляем все кэши (с ожиданием завершения)
         if ('caches' in window) {
             caches.keys().then(function(names) {
                 return Promise.all(names.map(function(name) {
@@ -206,11 +221,11 @@ window.Settings = {
             });
         }
 
-        // 3. Через 1.5 секунды перезагружаем с обходом кэша
         setTimeout(function() {
             var url = window.location.href.split('?')[0];
             window.location.href = url + '?v=' + Date.now();
         }, silent ? 200 : 1500);
     }
-}; 
+};
+
 console.log('⚙️ Настройки загружены!');
