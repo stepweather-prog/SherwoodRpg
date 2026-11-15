@@ -70,6 +70,7 @@ const AudioManager = {
         return true;
     },
 
+    // === ЗАПУСК ГЛАВНОЙ ТЕМЫ ===
     playCityTheme() {
         if (!this._isMusicEnabled()) return;
 
@@ -78,7 +79,7 @@ const AudioManager = {
         const trackSrc = this.cityTracks[this.currentTrackIndex];
         this.currentMusic = new Audio(trackSrc);
         this.currentMusic.loop = false;
-        this.currentMusic.volume = this._getMusicVolume();   // ← из Settings
+        this.currentMusic.volume = this._getMusicVolume();
 
         this.currentMusic.addEventListener('ended', () => {
             this.playNextTrack();
@@ -88,6 +89,7 @@ const AudioManager = {
         this.currentTrackIndex = (this.currentTrackIndex + 1) % this.cityTracks.length;
     },
 
+    // === ЗАПУСК СЛЕДУЮЩЕГО ТРЕКА (для главного меню) ===
     playNextTrack() {
         if (!this._isMusicEnabled()) return;
 
@@ -96,7 +98,7 @@ const AudioManager = {
         const trackSrc = this.cityTracks[this.currentTrackIndex];
         this.currentMusic = new Audio(trackSrc);
         this.currentMusic.loop = false;
-        this.currentMusic.volume = this._getMusicVolume();   // ← из Settings
+        this.currentMusic.volume = this._getMusicVolume();
 
         this.currentMusic.addEventListener('ended', () => {
             this.playNextTrack();
@@ -106,13 +108,52 @@ const AudioManager = {
         this.currentTrackIndex = (this.currentTrackIndex + 1) % this.cityTracks.length;
     },
 
-    // === ОБНОВИТЬ ГРОМКОСТЬ УЖЕ ИГРАЮЩЕГО ТРЕКА ===
-    updateVolume: function() {
-        if (this.currentMusic) {
-            try { this.currentMusic.volume = this._getMusicVolume(); } catch(e) {}
+    // === ЗАПУСК КОНКРЕТНОГО ТРЕКА (подземка, чащоба) ===
+    playSpecificTrack: function(trackKey) {
+        if (!this._isMusicEnabled()) return;
+        
+        var trackMap = {
+            'dungeon_1': 'assets/assets2/music/dungeon_1.ogg',
+            'dungeon_2': 'assets/assets2/music/dungeon_2.ogg',
+            'dungeon_3': 'assets/assets2/music/dungeon_3.ogg'
+        };
+        
+        var src = trackMap[trackKey];
+        if (!src) {
+            console.warn('Неизвестный трек:', trackKey);
+            return;
         }
+        
+        this.stopCityTheme();
+        
+        this.currentMusic = new Audio(src);
+        this.currentMusic.loop = true; // Подземка и чащоба зациклены
+        this.currentMusic.volume = this._getMusicVolume();
+        
+        this.currentMusic.play().catch(function(){});
     },
 
+    // === ОБНОВИТЬ ГРОМКОСТЬ УЖЕ ИГРАЮЩЕГО ТРЕКА ===
+    updateVolume: function() {
+        var vol = this._getMusicVolume();
+        
+        // 1. Текущий трек AudioManager
+        if (this.currentMusic) {
+            try { this.currentMusic.volume = vol; } catch(e) {}
+        }
+        
+        // 2. audioPlayer из main.js (главное меню)
+        try { if (window.audioPlayer) window.audioPlayer.volume = vol; } catch(e) {}
+        
+        // 3. Все <audio> на странице (включая музыку в боях)
+        document.querySelectorAll('audio').forEach(function(a){
+            try {
+                if (a.src.indexOf('music') !== -1 || a.loop) a.volume = vol;
+            } catch(e) {}
+        });
+    },
+
+    // === ЗВУКОВЫЕ ЭФФЕКТЫ ===
     playSoundEffect(soundKey) {
         if (!this._isSoundEnabled()) return;
 
@@ -138,7 +179,7 @@ const AudioManager = {
         if (!soundMap[soundKey]) return;
 
         const audio = new Audio(soundMap[soundKey]);
-        audio.volume = this._getSoundVolume();   // ← из Settings
+        audio.volume = this._getSoundVolume();
         audio.play().catch(() => {});
     },
 
