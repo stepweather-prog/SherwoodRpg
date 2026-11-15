@@ -122,70 +122,19 @@ UI._initSounds = function() {
     try { UI._sounds['dungeon_3'].loop = true; UI._sounds['dungeon_3'].volume = 0.4; } catch(e) {}
 };
 
-UI._playSound = function(k) {
-    try {
-        if (typeof Settings !== 'undefined' && !Settings.isSoundEnabled()) return;
-        var s = UI._sounds[k];
-        if (s) { s.currentTime = 0; s.play().catch(function() {}); }
-    } catch(e) {}
-};
-
+// ============================================================
+//  ОБЕРТКИ ДЛЯ СОВМЕСТИМОСТИ (теперь всё через AudioManager)
+// ============================================================
 UI._playMusic = function(k) {
     try {
-        if (typeof Settings !== 'undefined' && !Settings.isMusicEnabled()) return;
-        if (UI._currentMusicKey === k && UI._currentMusic && !UI._currentMusic.paused) return;
-        UI._stopMusic();
-        var m = UI._sounds[k];
-        if (m) {
-            // Громкость = базовая * ползунок из настроек
-            var baseVol = (k.indexOf('dungeon_') === 0) ? 0.5 : 0.6;
-            var musicVol = (typeof Settings !== 'undefined' && Settings.getMusicVolume) ? Settings.getMusicVolume() : 0.6;
-            m.volume = baseVol * musicVol;
-            m.currentTime = 0;
-            m.play().catch(function() {});
-            UI._currentMusic = m;
-            UI._currentMusicKey = k;
-            
-            // ГЛАВНАЯ: ЦИКЛ ИЗ 7 ТРЕКОВ
-            if (k === 'main_theme') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('main_theme_2'); };
-            }
-            if (k === 'main_theme_2') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('main_theme_3'); };
-            }
-            if (k === 'main_theme_3') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('main_theme_4'); };
-            }
-            if (k === 'main_theme_4') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('main_theme_5'); };
-            }
-            if (k === 'main_theme_5') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('main_theme_6'); };
-            }
-            if (k === 'main_theme_6') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('city_theme1'); };
-            }
-            if (k === 'city_theme1') {
-                m.loop = false;
-                var self = UI;
-                m.onended = function() { self._playMusic('main_theme'); };
-            }
-            
-            // ПОДЗЕМКА: ЗАЦИКЛИВАЕМ
-            if (k === 'dungeon_1' || k === 'dungeon_2' || k === 'dungeon_3') {
-                m.loop = true;
+        if (typeof AudioManager !== 'undefined') {
+            // Превращаем ключ 'main_theme' в вызов AudioManager
+            if (k === 'main_theme' || k.indexOf('main_theme') !== -1 || k === 'city_theme1') {
+                AudioManager.playCityTheme();
+            } else if (k.indexOf('dungeon_') === 0) {
+                // В подземке мы пока оставим старую логику, если она важна
+                // (или можно сделать свой метод для подземки)
+                AudioManager.playSoundEffect('click'); 
             }
         }
     } catch(e) {}
@@ -193,26 +142,26 @@ UI._playMusic = function(k) {
 
 UI._stopMusic = function() {
     try {
-        if (UI._currentMusic) {
-            UI._currentMusic.pause();
-            UI._currentMusic.currentTime = 0;
-            UI._currentMusic = null;
-            UI._currentMusicKey = null;
-        }
+        if (typeof AudioManager !== 'undefined') AudioManager.stopCityTheme();
+        if (window.audioPlayer) { window.audioPlayer.pause(); window.audioPlayer.currentTime = 0; }
     } catch(e) {}
 };
 
 UI._pauseMusic = function() {
-    try { if (UI._currentMusic) { UI._currentMusic.pause(); } } catch(e) {}
+    try {
+        if (typeof AudioManager !== 'undefined' && AudioManager.currentMusic) AudioManager.currentMusic.pause();
+        if (window.audioPlayer) window.audioPlayer.pause();
+    } catch(e) {}
 };
 
 UI._resumeMusic = function() {
     try {
-        if (UI._currentMusic && (typeof Settings === 'undefined' || Settings.isMusicEnabled())) {
-            UI._currentMusic.play().catch(function() {});
-        }
+        if (typeof AudioManager !== 'undefined' && AudioManager.currentMusic) AudioManager.currentMusic.play().catch(function(){});
+        if (window.audioPlayer) window.audioPlayer.play().catch(function(){});
     } catch(e) {}
 };
+
+
 
 // ============================================================
 //  ОБНОВЛЕНИЕ ДИСПЛЕЯ
