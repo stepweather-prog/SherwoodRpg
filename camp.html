@@ -228,7 +228,7 @@
         
         // ВАЖНО: Как только видео загрузится, перематываем в конец, чтобы персонаж стоял
         video.addEventListener('loadeddata', function() {
-            video.currentTime = 2.99;
+            video.currentTime = 0;
             processHeroFrame(player.facing < 0); // Принудительно отрисовываем кадр
         });
 
@@ -318,7 +318,7 @@
                 // Мгновенная остановка
                 if (!video.paused || !isStopping) {
                     video.pause();
-                    video.currentTime = 2.99;
+                    video.currentTime = 0;
                     isStopping = true;
                     // Принудительная отрисовка кадра
                     setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
@@ -341,7 +341,7 @@
         soundSteps.loop = true;
         var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var campMusic = new Audio('assets/assets2/music/main_theme_2.ogg');
-        campMusic.loop = true; campMusic.volume = 0.35;
+        campMusic.loop = true; campMusic.volume = 0.55;
 
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function(){}); } catch(e) {} }
         var stepsPlaying = false;
