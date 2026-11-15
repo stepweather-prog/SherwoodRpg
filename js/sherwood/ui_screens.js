@@ -121,7 +121,16 @@ UI._initSounds = function() {
     try { UI._sounds['dungeon_2'].loop = true; UI._sounds['dungeon_2'].volume = 0.4; } catch(e) {}
     try { UI._sounds['dungeon_3'].loop = true; UI._sounds['dungeon_3'].volume = 0.4; } catch(e) {}
 };
-
+// ============================================================
+//  ЗВУКИ (теперь через AudioManager)
+// ============================================================
+UI._playSound = function(key) {
+    try {
+        if (window.AudioManager && AudioManager.playSoundEffect) {
+            AudioManager.playSoundEffect(key);
+        }
+    } catch(e) {}
+};
 // ============================================================
 //  ОБЕРТКИ ДЛЯ СОВМЕСТИМОСТИ (теперь всё через AudioManager)
 // ============================================================
