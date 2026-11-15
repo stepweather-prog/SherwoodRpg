@@ -2,85 +2,69 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Скверная волна</title>
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 600px)">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; font-family: Georgia, serif; }
-        canvas { display: block; background: transparent; touch-action: none; position: relative; z-index: 2; }
-
-        #portal-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('assets/assets2/backgrounds/Dark_magical.png') center center / cover no-repeat;
-            z-index: 0; pointer-events: none;
-        }
-
-        #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.75) 100%); }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; }
+        canvas { display: block; background: #000; touch-action: none; cursor: pointer; }
+        #vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%); }
         #scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
 
-        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; transform: translate(-50%, -140%); display: none; pointer-events: none; }
+        #mob-hp { position: absolute; width: 300px; height: 200px; z-index: 50; left: 50%; top: 30%; transform: translate(-50%, -50%); display: none; pointer-events: none; }
         #mob-hp .frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; }
         #mob-hp .fill { position: absolute; top: 45%; left: 10%; width: 80%; height: 12%; object-fit: cover; clip-path: inset(0 50% 0 0); z-index: 1; }
-        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 15px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
-        #mob-hp-name { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 13px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
-
-        #exit-btn { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); border: 2px solid #6b5a3a; border-radius: 4px; padding: 8px 16px; color: #c8a050; font-size: 16px; font-weight: bold; cursor: pointer; }
-
-        #battle-controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 45; width: 100%; }
-
-        #attack-icon { position: relative; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; border-radius: 50%; border: 3px solid #6b5a3a; background: radial-gradient(circle at center, rgba(200,160,80,0.25), rgba(0,0,0,0.7)); box-shadow: 0 0 20px rgba(139,107,58,0.5); display: flex; align-items: center; justify-content: center; transition: transform 0.1s; margin-bottom: 20px; }
-        #attack-icon:active { transform: scale(0.92); }
-        #attack-icon img { width: 60px; height: 60px; object-fit: contain; }
-        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
-
-        #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
-        .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
-        .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
-        .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-
+        #mob-hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 20px; font-weight: bold; z-index: 3; text-shadow: 0 0 6px #000, 0 2px 6px #000; }
+        #mob-hp-name { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #ffd27a; font-size: 16px; font-weight: bold; text-shadow: 0 0 6px #000, 0 2px 4px #000; white-space: nowrap; z-index: 4; pointer-events: none; }
+        
         #hero-life { position: absolute; bottom: 10px; left: -20px; width: 110px; height: 110px; z-index: 50; }
         #hero-life img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #life-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-life span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
-
+        
         #hero-mana { position: absolute; bottom: 10px; right: 10px; width: 110px; height: 110px; z-index: 50; }
         #hero-mana img { position: absolute; top: 0; left: 0; width: 135%; height: 135%; object-fit: contain; }
         #mana-fill { clip-path: inset(0 0 0 0); top: -10px !important; }
         #hero-mana span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 4px #000, 0 0 8px #000; }
 
+        #battle-controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 45; }
+        /* Кнопка атаки зафиксирована, чтобы не прыгала */
+        #attack-icon { position: absolute; bottom: 100%; left: 50%; transform: translateX(calc(-50% - 20px)); margin-bottom: 70px; width: 85px; height: 85px; cursor: pointer; pointer-events: auto; padding: 0; border: none; background: none; flex-shrink: 0; display: none; }
+        #attack-icon:active { transform: translateX(calc(-50% - 20px)) scale(0.9); }
+        #attack-icon img { width: 85px; height: 85px; object-fit: contain; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; transition: all 0.2s; display: block; box-sizing: border-box; }
+        #attack-cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 8px; display: none; align-items: center; justify-content: center; color: #ff5555; font-weight: bold; font-size: 20px; }
+        
+        #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
+        .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
+        .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
-
+        
         #wave-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 14px; font-weight: bold; text-shadow: 0 0 6px #000; z-index: 40; letter-spacing: 1px; text-align: center; }
-
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% - 70px)); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
-
         #kill-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% + 70px)); color: #ff8080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b3a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 
-        @media (max-width: 600px) {
-            #exit-btn { padding: 6px 12px !important; font-size: 14px !important; top: 8px !important; left: 8px !important; }
-            #wave-label { font-size: 12px !important; top: 6px !important; max-width: 90% !important; }
-            #mob-hp { width: 220px !important; height: 150px !important; }
-            #mob-hp-text { font-size: 13px !important; }
-            #mob-hp-name { font-size: 12px !important; top: -10px !important; }
-            #battle-controls { bottom: 100px; gap: 10px; }
-            #attack-icon { width: 70px !important; height: 70px !important; margin-bottom: 10px !important; }
-            #attack-icon img { width: 50px !important; height: 50px !important; }
-            .skill-btn { width: 70px; height: 70px; }
-            #skills-row { gap: 10px; }
+        @media (max-width: 900px) {
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
             #hero-life span, #hero-mana span { font-size: 13px !important; }
+            #mob-hp { width: 220px !important; height: 150px !important; }
+            #mob-hp-text { font-size: 15px !important; }
+            #mob-hp-name { font-size: 13px !important; top: -12px !important; }
+            #battle-controls { bottom: 100px; gap: 10px; }
+            #attack-icon { width: 70px; height: 70px; margin-bottom: 50px; }
+            #attack-icon img { width: 70px; height: 70px; }
+            .skill-btn { width: 70px; height: 70px; }
+            #skills-row { gap: 10px; }
             #arrow-counter { transform: translateX(calc(-50% - 55px)); font-size: 13px !important; padding: 3px 10px !important; }
             #kill-counter { transform: translateX(calc(-50% + 55px)); font-size: 13px !important; padding: 3px 10px !important; }
         }
     </style>
 </head>
 <body>
-    <div id="portal-bg"></div>
     <div id="wave-label">Скверная волна</div>
-
-    <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">0</span></div>
-    <div id="kill-counter"><span id="kill-count-text">Убито: 0 / 109</span></div>
+    <div id="arrow-counter"><img src="assets/interface/sherwood_hollow_arrow.png" alt=""><span id="arrow-count-text">25</span></div>
+    <div id="kill-counter"><span id="kill-count-text">Убито: 0 / 0</span></div>
 
     <div id="mob-hp">
         <div id="mob-hp-name">Враг</div>
@@ -96,18 +80,17 @@
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
         <span id="hp-text">HP: 0</span>
     </div>
-
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
         <img id="mana-fill" src="assets/assets2/game_details/filling_with_filth.png" alt="">
-        <span id="mana-text">MP: 0</span>
+        <span id="mana-text">Скверна: 0%</span>
     </div>
 
-    <button id="exit-btn" onclick="exitWave();">← Сдаться</button>
+    <button onclick="exitWave();" style="position:fixed;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.8);border:2px solid #6b5a3a;border-radius:4px;padding:8px 16px;color:#c8a050;font-size:16px;font-weight:bold;cursor:pointer;">← Сдаться</button>
 
     <div id="battle-controls">
         <div id="attack-icon">
-            <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png" alt="">
+            <img id="attack-icon-img" src="assets/assets2/talents/simple_attack.png">
             <div id="attack-cooldown-overlay">0.0s</div>
         </div>
         <div id="skills-row"></div>
@@ -119,194 +102,226 @@
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
     </script>
-
-    <!-- ЕДИНАЯ СИСТЕМА БОЯ -->
-    <script src="js/sherwood/battle_visuals.js"></script>
-
     <script type="module">
         import * as THREE from 'three';
 
-        const scene = new THREE.Scene();
+        // === НАЗВАНИЯ ВРАГОВ (1-В-1 ИЗ DUNGEON.HTML) ===
+        var MOB_NAMES = {
+            'plague_crow.png': 'Чумной Ворон', 'bone_vulture.png': 'Костяной Стервятник', 'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси', 'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб', 'warped_imp.png': 'Искажённый Бес', 'bristle_boar.png': 'Шипастый Секач', 'quill_beast.png': 'Кристальный Иглобрюх', 'grave_borer.png': 'Личинка Короеда', 'acid_devourer.png': 'Кислотный Короед-Пожиратель', 'shard_back.png': 'Шервудский Дикобраз', 'bone_borer.png': 'Костяной Короед-Трупоед', 'bark_beetle.png': 'Жук-Короед', 'blight_beetle_warden.png': 'Чумной Короед-Страж', 'armored_beetle.png': 'Бронированный Короед', 'blighted_werewolf.png': 'Осквернённый Оборотень', 'blight_lord_beetle.png': 'Повелитель Гнили', 'blight_alpha.png': 'Альфа-Скверноискатель', 'yew_blight_wolf.png': 'Волк Тисовой Скверны', 'swamp_slugmouth.png': 'Болотный Слизнерот', 'swamp_gorgymouth.png': 'Скверножаб', 'swamp_drowner.png': 'Болотный Утопленник', 'bog_brute.png': 'Торфяной Труп', 'blighted_oak_golem.png': 'Голем Скверного Дуба', 'oak_golem.png': 'Голем Дуба', 'twigtangle.png': 'Хворост', 'woodland_terror.png': 'Древесный Ужас', 'leshy.png': 'Леший', 'root_executioner.png': 'Корневой Палач', 'leshy_servant.png': 'Слуга Лешего', 'spectral_stag.png': 'Призрачный Олень', 'forest_blight_cyclops.png': 'Лесное Лихо', 'blight_troglodyte.png': 'Лихо-Троглодит', 'blight_oozemouth.png': 'Слизнерот-Громила', 'blight_lord_leshy.png': 'Древний Владыка', 'bog_trapper.png': 'Болотный Капкан', 'blight_spitter.png': 'Скверноплюй', 'swamp_spider.png': 'Болотный Паук', 'ocular_arachnid.png': 'Окулярный Арахнид', 'blight_horn_worm.png': 'Болотный Рогохвост', 'searing_arachnid.png': 'Выжигающий Арахнид', 'swamp_centipede.png': 'Болотная Сколопендра', 'water_hag.png': 'Водная Баба', 'marsh_witch.png': 'Болотная Ведунья', 'blight_snail.png': 'Улитка Скверны', 'ancient_blight_snail.png': 'Древняя Улитка Скверны', 'sherwood_lizard.png': 'Шервудский Ящер', 'peat_lord.png': 'Торфяной Владыка', 'lost_maiden.png': 'Заблудшая Дева', 'bog_witch.png': 'Болотная Ведьма', 'swamp_kikimora.png': 'Болотная Кикимора', 'blight_boletus.png': 'Боровик Скверны', 'swamp_vodyanoy.png': 'Водяной Скверны', 'swamp_drake.png': 'Болотный Дракончик', 'blight_cerberus.png': 'Цербер Скверны', 'putrid_wolf.png': 'Гниющий Волк', 'ripper_wolf.png': 'Волк-Потрошитель', 'blight_fox.png': 'Гнилостная Лиса', 'fox_pack_lord.png': 'Повелитель Стаи', 'swamp_viper.png': 'Болотная Гадюка', 'putrid_rat.png': 'Гнилостная Крыса', 'oppressor_firefly.png': 'Светляк-Угнетатель', 'executioner_cricket.png': 'Сверчок-Палач', 'thorn_moth.png': 'Терновый Мотыль', 'plague_bat.png': 'Чумная Летучая Мышь', 'ash_stalker.png': 'Пепельный Охотник', 'ash_assassin.png': 'Пепельный Ассасин', 'bone_keeper.png': 'Хранитель Костей', 'blight_blade.png': 'Клинок Скверны', 'ash_wraith.png': 'Призрак Пепла', 'ash_overlord.png': 'Владыка Пепла', 'basalt_devourer.png': 'Базальтовый Пожиратель', 'grotto_brute.png': 'Громила Грота', 'cave_watcher.png': 'Пещерный Наблюдатель', 'runic_sentinel.png': 'Рунический Страж', 'ancient_watcher.png': 'Древний Наблюдатель', 'lost_treasure_hunter.png': 'Пропавший Кладоискатель', 'blight_moss_ogre.png': 'Огр Скверного Мха', 'warped_worm.png': 'Искажённый Червь', 'grotto_slug.png': 'Гротный Слизень', 'underground_terror.png': 'Подземный Ужас', 'shadow_maiden.png': 'Теневая Дева', 'cursed_priestess.png': 'Проклятая Жрица', 'mistress_of_the_roots.png': 'Повелительница Корней', 'bone_arachnid.png': 'Костяной Арахнид', 'necromantic_arachnid.png': 'Арахнид-Некромант', 'root_daughter.png': 'Дочь Корней', 'animated_yew.png': 'Оживший Тис', 'rusty_servant.png': 'Ржавый Слуга', 'tormentor.png': 'Истязатель', 'grave_archer.png': 'Могильный Лучник', 'rusty_dread.png': 'Ржавый Страх', 'chaos_swordsman.png': 'Мечник Хаоса', 'chaos_knight.png': 'Рыцарь Хаоса', 'chaos_lord.png': 'Лорд Хаоса', 'chaos_harpy.png': 'Гарпия Хаоса', 'blight_kite.png': 'Коршун Скверны', 'harpy_witch.png': 'Гарпия-Ведьма', 'harpy_hatchling.png': 'Птенец Гарпии', 'harpy_chieftain.png': 'Вождь Гарпий', 'lord_of_the_feathered.png': 'Хозяин Пернатых', 'cave_tormentor.png': 'Пещерный Терзатель', 'blight_keeper.png': 'Хранитель Скверны', 'blight_king.png': 'Скверный Король', 'underground_guardian.png': 'Страж Преисподней', 'corruption_raccoon.png': 'Енот Порчи', 'blind_render.png': 'Слепой Терзатель', 'the_cursed_outlaw_king.png': 'Проклятый Король Разбойников', 'ancient_crypt_warden.png': 'Древний Хранитель Склепа', 'echo_of_the_triumvirate.png': 'Эхо Трех Порталов', 'sacred_tree_executioner.png': 'Палач Священного Древа', 'sherwood_abomination.png': 'Шервудское Отродье', 'the_primordial_core.png': 'Изначальный Стержень'
+        };
+        function getMobName(imgPath) { if (!imgPath) return 'Враг'; var fname = imgPath.split('/').pop(); return MOB_NAMES[fname] || 'Враг'; }
 
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0805);
         const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30);
-        camera.position.set(0, 0.55, 3.6);
-        camera.rotation.order = 'YXZ';
-        camera.lookAt(0, 0.45, 0);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+        camera.position.set(0, 0.55, 3.6); camera.rotation.order = 'YXZ'; camera.lookAt(0, 0.45, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: false }); 
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        renderer.setClearColor(0x000000, 0);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
+        renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-        var keyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
-        keyLight.position.set(2, 4, 3);
-        scene.add(keyLight);
-        var fillLight = new THREE.HemisphereLight(0x8b6b3a, 0x000000, 0.6);
-        scene.add(fillLight);
+        const bgTexture = new THREE.TextureLoader().load('assets/assets2/backgrounds/Dark_magical.png');
+        const bgGeometry = new THREE.PlaneGeometry(30, 20);
+        const bgMesh = new THREE.Mesh(bgGeometry, new THREE.MeshBasicMaterial({ map: bgTexture }));
+        bgMesh.position.set(0, 0, -8);
+        scene.add(bgMesh);
 
-        var enemySprite = null;
-        var enemyTexture = null;
-
-        var soundHit = new Audio('assets/assets2/tune/hit.wav');
-        var soundVictory = new Audio('assets/assets2/tune/victory.wav');
-        var soundDefeat = new Audio('assets/assets2/tune/defeat.wav');
-        var soundAltar = new Audio('assets/assets2/tune/altar.wav');
-        var waveMusic = new Audio('assets/assets2/music/dungeon_1.ogg');
-        waveMusic.loop = true;
-        waveMusic.volume = 0.4;
-
+        var soundHit = new Audio('assets/assets2/tune/hit.wav'); var soundVictory = new Audio('assets/assets2/tune/victory.wav'); var soundDefeat = new Audio('assets/assets2/tune/defeat.wav'); var soundAltar = new Audio('assets/assets2/tune/altar.wav');
+        var waveMusic = new Audio('assets/assets2/music/dungeon_1.ogg'); waveMusic.loop = true; waveMusic.volume = 0.4;
         function playSound(a) { try { a.currentTime = 0; a.play().catch(function () {}); } catch (e) {} }
 
         setTimeout(function () { try { waveMusic.play().catch(function () {}); } catch (e) {} }, 300);
         window.addEventListener('click', function () { try { waveMusic.play().catch(function () {}); } catch (e) {} });
 
-        var isBattleActive = false;
-        var battleTimer = null;
+        var playerArrows = 25; var ARROWS_MAX_START = 25;
+        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; updateArrowCounter(); return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; updateArrowCounter(); return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } updateArrowCounter(); }
+        function updateArrowCounter() { var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows; var counter = document.getElementById('arrow-counter'); if (counter) { if (playerArrows <= 3) counter.classList.add('low'); else counter.classList.remove('low'); } }
+        function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; } return false; }
+        setTimeout(loadArrowsFromBag, 700);
 
-        window.Sherwood = window.Sherwood || {};
+        var isBattleActive = false, currentEnemySprite = null, currentEnemyStats = null, currentEnemyObj = null;
+        var battleTimer = null, playerAttackCooldown = 0, PLAYER_ATTACK_CD = 1.0, playerHitFirst = false, enemyStunned = 0, playerStunned = 0;
+        var cameraShake = 0;
+        var bloodSprites = ['assets/assets2/animation/blood_1.png', 'assets/assets2/animation/blood_2.png', 'assets/assets2/animation/blood_3.png', 'assets/assets2/animation/blood_4.png', 'assets/assets2/animation/blood_5.png'];
+        var bloodTextures = bloodSprites.map(function(path) { return new THREE.TextureLoader().load(path); });
+        var hitFlashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bloodTextures[0], transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+        hitFlashSprite.scale.set(0.4, 0.4, 1); hitFlashSprite.visible = false; scene.add(hitFlashSprite);
 
-        window.Sherwood.BattleVisuals.init({
-            THREE: THREE,
-            scene: scene,
-            group: null,
-            loader: new THREE.TextureLoader(),
-            camFPS: camera,
-            bgPath: 'assets/assets2/backgrounds/Dark_magical.png',
-            camFPSOptions: { y: 0.55, z: 3.6, lookY: 0.45 },
-            mapSize: 16,
-            getPlayer: function () { return parent.Sherwood.getPlayer(); },
-            Talents: parent.Sherwood.Talents,
-            UI: parent.UI,
-            getMobName: function (img) {
-                if (!img) return 'Враг';
-                var f = img.split('/').pop().replace('.png', '');
-                return f;
-            },
-            playSoundHit: function () { playSound(soundHit); },
-            playSoundAltar: function () { playSound(soundAltar); },
-            onCenterText: function (text, color) {
-                if (parent.UI && parent.UI._showToast) parent.UI._showToast(text);
-            },
-            onHpChanged: function () { if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); },
-            onCameraEnter: function () { },
-            onCameraExit: function () { },
-            onBattleStop: function () { },
-            onEnemyKilled: function (enemyObj) {
-                // Когда враг убит, вызываем логику волны
-                if (parent.Sherwood && parent.Sherwood.Wave) {
-                    parent.Sherwood.Wave.onEnemyKilled();
-                }
-            },
-            onDeath: function (reason) {
-                exitWave();
-            }
-        });
+        function updateHeroSpheres() {
+            var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
+            var hpPercent = p.stats.hp / p.stats.maxHp; var lifeFill = document.getElementById('life-fill'); if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
+            var hpText = document.getElementById('hp-text'); if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+        }
+        setTimeout(updateHeroSpheres, 500);
 
-        setTimeout(function () {
-            window.Sherwood.BattleVisuals.loadArrowsFromBag();
-            window.Sherwood.BattleVisuals.renderLearnedTalents();
-        }, 700);
-
-        function loadNextEnemy() {
-            if (!parent.Sherwood || !parent.Sherwood.Wave) return;
-            var enemyData = parent.Sherwood.Wave.getCurrentEnemy();
-            if (!enemyData) return;
-
-            document.getElementById('mob-hp-name').textContent = enemyData.name;
-            document.getElementById('kill-count-text').textContent = 
-                'Убито: ' + parent.Sherwood.Wave.getKillCount() + ' / ' + parent.Sherwood.Wave.getTotalEnemies();
+        function startBattle(obj) {
+            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
+            currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             
-            if (enemySprite) {
-                scene.remove(enemySprite);
-                enemySprite = null;
+            document.getElementById('mob-hp').style.display = 'block';
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            var nameEl = document.getElementById('mob-hp-name'); if (nameEl) nameEl.textContent = getMobName(obj.img);
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)'; playSound(soundHit);
+            document.getElementById('battle-controls').style.display = 'flex';
+            document.getElementById('attack-icon').style.display = 'block';
+            document.getElementById('skills-row').style.display = 'flex';
+
+            if (battleTimer) clearInterval(battleTimer);
+            battleTimer = setInterval(function() {
+                if (!isBattleActive || !playerHitFirst) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
+                if (enemyStunned > 0 || playerStunned > 0) return;
+                var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
+                p.stats.hp = Math.max(0, p.stats.hp - edmg); updateHeroSpheres(); showBloodOverlay();
+                if (p.stats.hp <= 0) { stopBattle(); onDefeat(); }
+            }, 1000);
+        }
+
+        function stopBattle() {
+            isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            document.getElementById('mob-hp').style.display = 'none';
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
+        }
+
+        function onEnemyKilled() {
+            if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
+            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
+            playSound(soundVictory);
+            
+            if (parent.Sherwood.Wave) {
+                parent.Sherwood.Wave.onEnemyKilled();
             }
-            var loader = new THREE.TextureLoader();
-            loader.load(enemyData.imagePath, function(tex) {
-                tex.minFilter = THREE.LinearFilter;
-                tex.magFilter = THREE.LinearFilter;
-                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: tex, transparent: true, alphaTest: 0.05
-                }));
-                
-                // НЕ ВЫЗЫВАЕМ setupEnemySprite, а передаём спрайт прямо в start()
-                window.Sherwood.BattleVisuals.start({
-                    hp: enemyData.hp, maxHp: enemyData.hp,
-                    atk: enemyData.atk, def: enemyData.def,
-                    isBoss: enemyData.isBoss, img: enemyData.imagePath,
-                    x: 0, y: 0, mesh: enemySprite
-                });
-                
-                document.getElementById('battle-controls').style.display = 'flex';
-                document.getElementById('skills-row').style.display = 'flex';
-                document.getElementById('mob-hp').style.display = 'block';
-                isBattleActive = true;
-            });
         }
 
         function attackEnemy() {
-            if (!isBattleActive) return;
-            window.Sherwood.BattleVisuals.attack();
+            if (!isBattleActive || !currentEnemyStats || !parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
+            var p = parent.Sherwood.getPlayer(); playSound(soundHit);
+            
+            var arrowsNeeded = 3; var hasArrows = (playerArrows >= arrowsNeeded);
+            if (hasArrows) { useArrow(arrowsNeeded); } else { if (playerArrows > 0) useArrow(playerArrows); showCenterText('НЕТ СТРЕЛ! -50% урона', '#ff5555'); }
+            
+            var baseDmg = Math.max(50, Math.floor(p.stats.attack * 1.5) - Math.floor(currentEnemyStats.def * 0.5) + Math.floor(Math.random() * 20));
+            if (!hasArrows) baseDmg = Math.floor(baseDmg * 0.5);
+
+            currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - baseDmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+            if (currentEnemySprite) {
+                var spriteW = currentEnemySprite.scale.x, spriteH = currentEnemySprite.scale.y; var ox = (Math.random() - 0.5) * spriteW * 0.7, oy = (Math.random() - 0.5) * spriteH * 0.7;
+                hitFlashSprite.position.copy(currentEnemySprite.position); hitFlashSprite.position.x += ox; hitFlashSprite.position.y += oy;
+                hitFlashSprite.material.map = bloodTextures[Math.floor(Math.random() * bloodTextures.length)]; hitFlashSprite.material.needsUpdate = true;
+                hitFlashSprite.visible = true; setTimeout(function() { hitFlashSprite.visible = false; }, 150);
+                cameraShake = 0.06;
+            }
+            if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
+            var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
+            p.stats.hp = Math.max(0, p.stats.hp - edmg); updateHeroSpheres(); showBloodOverlay();
+            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); onDefeat(); }
         }
+
+        function updateMobHpBar() {
+            if (!isBattleActive || !currentEnemySprite) return;
+            var worldPos = currentEnemySprite.position.clone();
+            worldPos.y += (currentEnemySprite.scale.y * 0.5) + 0.1; worldPos.project(camera);
+            var x = (worldPos.x * 0.5 + 0.5) * window.innerWidth; var y = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            var el = document.getElementById('mob-hp'); el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.transform = 'translate(-50%, -140%)';
+        }
+
+        function showBloodOverlay() { var el = document.getElementById('blood-overlay'); if (!el) return; var texs = ['assets/assets2/animation/Fine_blood_spray_texture.png', 'assets/assets2/animation/Fine_blood_spray_texture (1).png', 'assets/assets2/animation/Fine_blood_spray_texture (2).png']; el.style.backgroundImage = 'url("' + texs[Math.floor(Math.random() * texs.length)] + '")'; el.style.opacity = '1'; setTimeout(function() { el.style.opacity = '0'; }, 200); }
+        function showCenterText(text, color) { var el = document.createElement('div'); el.textContent = text; el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);opacity:0;color:' + (color || '#fff') + ';font-size:36px;font-weight:bold;text-shadow:0 0 12px #000, 0 4px 8px #000;pointer-events:none;z-index:200;transition:all 0.9s cubic-bezier(.2,.7,.3,1);font-family:"Times New Roman",serif;'; document.body.appendChild(el); requestAnimationFrame(function() { el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1.1)'; }); setTimeout(function() { el.style.opacity = '0'; el.style.transform = 'translate(-50%,-120%) scale(0.9)'; }, 900); setTimeout(function() { el.remove(); }, 1900); }
 
         function exitWave() {
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             try { waveMusic.pause(); waveMusic.currentTime = 0; } catch(e) {}
-            try {
-                if (parent.UI) {
-                    parent.UI._lastWave = null;
-                    parent.UI.camp();
-                }
-            } catch(e) {}
+            try { if (parent.UI) { parent.UI.camp(); } } catch(e) {}
         }
         window.exitWave = exitWave;
 
-        document.getElementById('attack-icon').addEventListener('click', function (e) { e.stopPropagation(); attackEnemy(); });
-        document.getElementById('attack-icon').addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); attackEnemy(); });
-        document.addEventListener('keydown', function (e) { if (e.key === ' ' || e.key.toLowerCase() === 'enter') { e.preventDefault(); attackEnemy(); } });
+        function onDefeat() {
+            playSound(soundDefeat);
+            try { waveMusic.pause(); } catch(e){}
+            
+            var killCount = 0;
+            var elapsedTime = 0;
+            try {
+                killCount = parent.Sherwood.Wave.getKillCount();
+                elapsedTime = parent.Sherwood.Wave.getElapsedTime();
+            } catch(e) {}
+
+            var mins = Math.floor(elapsedTime / 60);
+            var secs = elapsedTime % 60;
+
+            var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ff5555;font-family:Georgia,serif;">';
+            h += '<div style="font-size:2em;font-weight:bold;margin-bottom:10px;">ВЫ ПОГИБЛИ</div>';
+            h += '<div style="font-size:1.2em;margin-bottom:20px;">Повержено врагов: ' + killCount + '</div>';
+            h += '<div style="font-size:1.2em;margin-bottom:20px;">Время забега: ' + mins + 'м ' + secs + 'с</div>';
+            h += '<button onclick="parent.UI.camp()" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:1.2em;">В лагерь</button>';
+            h += '</div>';
+
+            var el = document.createElement('div');
+            el.innerHTML = h;
+            document.body.appendChild(el);
+        }
+
+        document.getElementById('attack-icon').addEventListener('click', (e) => { e.stopPropagation(); attackEnemy(); });
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.05);
+
+            if (isBattleActive) {
+                updateMobHpBar();
+                if (cameraShake > 0.001) { camera.position.x = (Math.random() - 0.5) * cameraShake; camera.position.y = 0.55 + (Math.random() - 0.5) * cameraShake; camera.position.z = 3.6 + (Math.random() - 0.5) * cameraShake; camera.lookAt(0, 0.45, 0); cameraShake *= 0.85; }
+                else { camera.position.set(0, 0.55, 3.6); camera.lookAt(0, 0.45, 0); cameraShake = 0; }
+            }
+            if (currentEnemySprite && !isBattleActive) {
+                currentEnemySprite.position.y = -0.4 + Math.sin(clock.elapsedTime * 2.5) * 0.02;
+            }
+            renderer.render(scene, camera);
+        }
 
         // Слушаем сообщение от родителя о загрузке следующего врага
         window.addEventListener('message', function(e) {
             if (e.data && e.data.type === 'next_enemy') {
-                loadNextEnemy();
+                var enemyData = parent.Sherwood.Wave.getCurrentEnemy();
+                if (!enemyData) return;
+                if (currentEnemySprite) scene.remove(currentEnemySprite);
+                
+                document.getElementById('mob-hp-name').textContent = getMobName(enemyData.imagePath);
+                document.getElementById('kill-count-text').textContent = 'Убито: ' + parent.Sherwood.Wave.getKillCount() + ' / ' + parent.Sherwood.Wave.getTotalEnemies();
+
+                new THREE.TextureLoader().load(enemyData.imagePath, function(tex) {
+                    currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05 }));
+                    currentEnemySprite.scale.set(enemyData.isBoss ? 2.3 : 2.0, enemyData.isBoss ? 2.3 : 2.0, 1);
+                    currentEnemySprite.center.set(0.5, 0); currentEnemySprite.position.set(0, -0.4, 0);
+                    currentEnemySprite.material.depthTest = false; currentEnemySprite.material.depthWrite = false; currentEnemySprite.renderOrder = 10;
+                    scene.add(currentEnemySprite);
+                    
+                    startBattle({ hp: enemyData.hp, maxHp: enemyData.hp, atk: enemyData.atk, def: enemyData.def, mesh: currentEnemySprite, img: enemyData.imagePath });
+                });
             }
         });
 
-        const clock = new THREE.Clock();
-
-        function animate() {
-            requestAnimationFrame(animate);
-            var dt = Math.min(clock.getDelta(), 0.05);
-
-            window.Sherwood.BattleVisuals.update(dt);
-
-            if (enemySprite) {
-                var t = clock.elapsedTime;
-                if (!enemySprite.userData || !enemySprite.userData._kb) {
-                    enemySprite.position.y = -0.4 + Math.sin(t * 2.5) * 0.02;
-                }
-            }
-
-            renderer.render(scene, camera);
+        // Первая загрузка
+        var firstEnemy = parent.Sherwood.Wave.getCurrentEnemy();
+        if (firstEnemy) {
+            document.getElementById('kill-count-text').textContent = 'Убито: 0 / ' + parent.Sherwood.Wave.getTotalEnemies();
+            new THREE.TextureLoader().load(firstEnemy.imagePath, function(tex) {
+                currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05 }));
+                currentEnemySprite.scale.set(firstEnemy.isBoss ? 2.3 : 2.0, firstEnemy.isBoss ? 2.3 : 2.0, 1);
+                currentEnemySprite.center.set(0.5, 0); currentEnemySprite.position.set(0, -0.4, 0);
+                currentEnemySprite.material.depthTest = false; currentEnemySprite.material.depthWrite = false; currentEnemySprite.renderOrder = 10;
+                scene.add(currentEnemySprite);
+                startBattle({ hp: firstEnemy.hp, maxHp: firstEnemy.hp, atk: firstEnemy.atk, def: firstEnemy.def, mesh: currentEnemySprite, img: firstEnemy.imagePath });
+            });
         }
 
-        loadNextEnemy();
         animate();
-
-        // Слушаем колбэк от Wave, чтобы загрузить нового врага
-        setInterval(function() {
-            if (!isBattleActive && parent.Sherwood.Wave && parent.Sherwood.Wave._isActive) {
-                loadNextEnemy();
-            }
-        }, 500);
-
-        addEventListener('resize', function () {
-            camera.aspect = innerWidth / innerHeight;
-            camera.lookAt(0, 0.45, 0);
-            camera.updateProjectionMatrix();
-            renderer.setSize(innerWidth, innerHeight);
-        });
     </script>
 </body>
 </html>
