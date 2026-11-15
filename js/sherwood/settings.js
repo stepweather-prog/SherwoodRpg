@@ -1,6 +1,5 @@
 /**
  * Sherwood Settings — Настройки игры
- * Громкость, обновление, сброс.
  */
 
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
@@ -34,30 +33,34 @@ window.Settings = {
         } catch(e) {}
     },
 
+    // === ГЕТТЕРЫ ДЛЯ AUDIO.JS И UI ===
+    getMusicVolume: function() { return this._settings.musicVolume; },
+    getSoundVolume: function() { return this._settings.soundVolume; },
+    isMusicEnabled: function() { return true; },
+    isSoundEnabled: function() { return true; },
+
     _applyVolumes: function() {
-        // Применяем ко всем звукам
-        if (UI && UI._sounds) {
-            for (var key in UI._sounds) {
-                if (key.indexOf('theme') !== -1 || key.indexOf('dungeon') !== -1) {
-                    // Музыка
-                    UI._sounds[key].volume = this._settings.musicVolume;
+        var self = this;
+        // Привязка к AudioManager
+        if (window.AudioManager && AudioManager.updateVolume) {
+            AudioManager.updateVolume();
+        }
+        // Применяем ко всем <audio> на странице
+        document.querySelectorAll('audio').forEach(function(audio) {
+            try {
+                var src = audio.src || '';
+                if (src.indexOf('music') !== -1 || audio.loop) {
+                    audio.volume = self._settings.musicVolume;
                 } else {
-                    // Звуки
-                    UI._sounds[key].volume = this._settings.soundVolume;
+                    audio.volume = self._settings.soundVolume;
                 }
-            }
-        }
-        // Применяем к текущей музыке
-        if (UI && UI._currentMusic) {
-            UI._currentMusic.volume = this._settings.musicVolume;
-        }
+            } catch(e) {}
+        });
     },
 
     showUI: function() {
         if (typeof UI === 'undefined') return;
         UI._playSound('click');
-
-        var self = this;
 
         var h = '<div style="max-width:400px; margin:0 auto; padding:20px; color:#e0c080; font-family:Georgia,serif;">';
         
@@ -75,13 +78,21 @@ window.Settings = {
         h += '<div style="text-align:right; color:#aaa; font-size:0.8em;" id="musicVolumeVal">' + Math.round(this._settings.musicVolume * 100) + '%</div>';
         h += '</div>';
 
-        // --- КНОПКА ОБНОВЛЕНИЯ ---
+        // --- ОПАСНАЯ ЗОНА (УДАЛЕНИЕ) ---
         h += '<div style="margin-top:40px; text-align:center; border-top:1px solid rgba(90,50,0,0.3); padding-top:20px;">';
-        h += '<div style="font-size:1em; margin-bottom:10px;">🔄 Обновление</div>';
-        h += '<button onclick="Settings.forceUpdateGame()" style="background:linear-gradient(180deg,#3a2a10,#1a1208); border:2px solid #c8a050; border-radius:8px; padding:10px 20px; color:#ffd700; font-family:Georgia,serif; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.5); display:inline-flex; align-items:center; gap:8px;">';
-        h += '<span style="font-size:20px;">🔄</span> Очистить кэш и обновить';
+        h += '<div style="font-size:1em; margin-bottom:10px;">⚠️ Опасная зона</div>';
+        h += '<button onclick="Settings.resetCharacter()" style="background:#3a1010; border:2px solid #aa3333; border-radius:8px; padding:10px 20px; color:#ff8888; font-family:Georgia,serif; font-size:16px; font-weight:bold; cursor:pointer;">';
+        h += '🗑️ Удалить персонажа';
         h += '</button>';
-        h += '<div style="color:#888; font-size:0.8em; margin-top:10px;">Нажми, если видишь старые картинки или ошибки</div>';
+        h += '<div style="color:#888; font-size:0.8em; margin-top:10px;">Удалит весь прогресс, ресурсы и скины.</div>';
+        h += '</div>';
+
+        // --- ОБНОВЛЕНИЕ ---
+        h += '<div style="margin-top:20px; text-align:center; padding-top:20px;">';
+        
+        h += '<button onclick="Settings.forceUpdateGame()" style="background:linear-gradient(180deg,#3a2a10,#1a1208); border:2px solid #c8a050; border-radius:8px; padding:10px 20px; color:#ffd700; font-family:Georgia,serif; font-size:16px; font-weight:bold; cursor:pointer;">';
+        h += 'ОБНОВИТЬ ИГРУ';
+        h += '</button>';
         h += '</div>';
 
         h += '</div>';
@@ -93,55 +104,43 @@ window.Settings = {
         this._settings.soundVolume = parseFloat(val);
         var valEl = document.getElementById('soundVolumeVal');
         if (valEl) valEl.textContent = Math.round(this._settings.soundVolume * 100) + '%';
-        
-        // Применяем ко всем звукам, кроме музыки
-        if (UI && UI._sounds) {
-            for (var key in UI._sounds) {
-                if (key.indexOf('theme') === -1 && key.indexOf('dungeon') === -1) {
-                    UI._sounds[key].volume = this._settings.soundVolume;
-                }
-            }
-        }
         this.saveSettings();
-        UI._playSound('click'); // Проверка, что звук играет
+        if (window.AudioManager) AudioManager.playSoundEffect('click');
     },
 
     _setMusicVolume: function(val) {
         this._settings.musicVolume = parseFloat(val);
         var valEl = document.getElementById('musicVolumeVal');
         if (valEl) valEl.textContent = Math.round(this._settings.musicVolume * 100) + '%';
-        
-        // Применяем к текущей музыке
-        if (UI && UI._currentMusic) {
-            UI._currentMusic.volume = this._settings.musicVolume;
-        }
         this.saveSettings();
+        if (window.AudioManager && AudioManager.updateVolume) {
+            AudioManager.updateVolume();
+        }
+    },
+
+    resetCharacter: function() {
+        if (!confirm('Ты уверен, что хочешь УДАЛИТЬ ПЕРСОНАЖА? Весь прогресс будет потерян навсегда.')) return;
+        if (!confirm('Точно? Это действие нельзя отменить!')) return;
+        try {
+            localStorage.removeItem('sherwood_save');
+            localStorage.removeItem('active_skin');
+            localStorage.removeItem('sherwood_settings');
+        } catch(e) {}
+        if (UI && UI._showToast) UI._showToast('🗑️ Персонаж удалён. Перезагрузка...');
+        setTimeout(function() { window.location.reload(); }, 1500);
     },
 
     forceUpdateGame: function() {
         if (!confirm('Обновить игру до последней версии? Это очистит кэш и перезагрузит страницу.')) return;
-
         if (UI && UI._showToast) UI._showToast('⏳ Обновление...');
-
-        // 1. Удаляем Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for (let registration of registrations) {
-                    registration.unregister();
-                }
+                for (let registration of registrations) { registration.unregister(); }
             });
         }
-
-        // 2. Удаляем все кэши
         if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) {
-                    caches.delete(name);
-                }
-            });
+            caches.keys().then(function(names) { for (let name of names) { caches.delete(name); } });
         }
-
-        // 3. Перезагружаем страницу с обходом кэша
         setTimeout(function() {
             var url = window.location.href.split('?')[0];
             window.location.href = url + '?updated=' + Date.now();
