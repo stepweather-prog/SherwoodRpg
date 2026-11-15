@@ -52,6 +52,13 @@ function playNextMusic() {
         audioPlayer.loop = false;
         audioPlayer.addEventListener('ended', playNextMusic);
     }
+    // ВОТ ЭТА СТРОКА: берем громкость из настроек при смене трека
+    try {
+        if (typeof Settings !== 'undefined' && Settings.getMusicVolume) {
+            audioPlayer.volume = Settings.getMusicVolume();
+        }
+    } catch(e) {}
+
     audioPlayer.src = musicPlaylist[currentMusicIndex];
     audioPlayer.play().catch(() => {});
     currentMusicIndex++;
@@ -60,6 +67,14 @@ function playNextMusic() {
 
 function startMainMusic() {
     isMusicPlaying = true;
+    // Если audioPlayer уже есть, сразу ставим громкость
+    if (audioPlayer) {
+        try {
+            if (typeof Settings !== 'undefined' && Settings.getMusicVolume) {
+                audioPlayer.volume = Settings.getMusicVolume();
+            }
+        } catch(e) {}
+    }
     playNextMusic();
 }
 
