@@ -433,27 +433,33 @@ Sherwood.Forge = {
             else h += '<div style="color:#a04040;font-size:0.75em;font-weight:bold;">🔒 Не хватает скрижалей</div>';
             h += '</div></div>';
 
-        } else if (this._currentTab === 'skins') {
+                } else if (this._currentTab === 'skins') {
             var skins = this.getCraftSkins();
             
-            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;">';
+            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:15px;padding:10px;">';
             for (var s = 0; s < skins.length; s++) {
                 var sk = skins[s];
                 var sLvl = (player && player.skinLevels && player.skinLevels[sk.id]) ? player.skinLevels[sk.id] : 0;
                 var isUnlocked = sLvl > 0;
                 var nextCost = sLvl === 0 ? sk.costCreate : (sk.costCreate + sk.costUpgrade * sLvl);
-                var btnText = sLvl === 0 ? 'Создать' : (sLvl >= 100 ? 'Макс' : 'Улучшить');
+                var btnText = sLvl === 0 ? 'Создать' : (sLvl >= 100 ? 'Максимум' : 'Улучшить');
                 var iconPath = this._getSkinIcon(sk.id, sLvl);
 
-                h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.1);border:1px solid rgba(0,0,0,0.2);border-radius:8px;padding:8px;">';
-                h += '<img src="' + iconPath + '" style="width:60px;height:60px;object-fit:contain;margin-bottom:4px;">';
-                h += '<div style="color:#e0c080;font-size:0.75em;font-weight:bold;text-align:center;height:24px;line-height:1.2;overflow:hidden;">' + sk.name + '</div>';
+                // Карточка скина
+                h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;">';
                 
+                // Картинка скина (увеличена)
+                h += '<img src="' + iconPath + '" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
+                
+                // Название скина (высота фиксирована, чтобы кнопки были на одном уровне)
+                h += '<div style="color:#e0c080;font-size:0.85em;font-weight:bold;text-align:center;height:36px;line-height:1.2;overflow:hidden;margin-bottom:6px;text-shadow:0 1px 3px #000;">' + sk.name + '</div>';
+                
+                // Информация и кнопка
                 if (sLvl >= 100) {
-                    h += '<div style="color:#52b788;font-size:0.7em;margin-top:4px;">✅ Максимум</div>';
+                    h += '<div style="color:#52b788;font-size:0.8em;font-weight:bold;margin-top:auto;">✅ Максимум</div>';
                 } else {
-                    h += '<div style="color:#aaa;font-size:0.65em;margin-top:4px;text-align:center;">' + (isUnlocked ? 'Ур. '+sLvl+' | ' : '') + 'Цена: ' + nextCost + '</div>';
-                    h += '<button onclick="Sherwood.Forge._craftSkinFromUI(\'' + sk.id + '\')" style="margin-top:4px;background:#5a3a00;border:1px solid #c8a050;border-radius:4px;padding:4px 8px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.7em;width:100%;">' + btnText + '</button>';
+                    h += '<div style="color:#5a3a00;font-size:0.75em;margin-bottom:8px;text-align:center;font-weight:bold;">' + (isUnlocked ? 'Ур. '+sLvl+' | ' : '') + 'Цена: ' + nextCost + ' скр.</div>';
+                    h += '<button onclick="Sherwood.Forge._craftSkinFromUI(\'' + sk.id + '\')" style="margin-top:auto;background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:6px 12px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.8em;width:100%;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + btnText + '</button>';
                 }
                 h += '</div>';
             }
