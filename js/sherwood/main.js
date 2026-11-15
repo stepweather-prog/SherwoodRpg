@@ -46,46 +46,22 @@ let isMusicPlaying = false;
 let audioPlayer = null;
 
 function playNextMusic() {
-    if (!isMusicPlaying) return;
-    if (!audioPlayer) {
-        audioPlayer = new Audio();
-        audioPlayer.loop = false;
-        audioPlayer.addEventListener('ended', playNextMusic);
+    if (window.AudioManager) {
+        AudioManager.playCityTheme();
     }
-    // ВОТ ЭТА СТРОКА: берем громкость из настроек при смене трека
-    try {
-        if (typeof Settings !== 'undefined' && Settings.getMusicVolume) {
-            audioPlayer.volume = Settings.getMusicVolume();
-        }
-    } catch(e) {}
-
-    audioPlayer.src = musicPlaylist[currentMusicIndex];
-    audioPlayer.play().catch(() => {});
-    currentMusicIndex++;
-    if (currentMusicIndex >= musicPlaylist.length) currentMusicIndex = 0;
 }
 
 function startMainMusic() {
     isMusicPlaying = true;
-    // Если audioPlayer уже есть, сразу ставим громкость
-    if (audioPlayer) {
-        try {
-            if (typeof Settings !== 'undefined' && Settings.getMusicVolume) {
-                audioPlayer.volume = Settings.getMusicVolume();
-            }
-        } catch(e) {}
+    if (window.AudioManager) {
+        AudioManager.playCityTheme();
     }
-    playNextMusic();
 }
 
 function stopMainMusic() {
     isMusicPlaying = false;
-    if (audioPlayer) {
-        try {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
-            audioPlayer.src = '';
-        } catch(e){}
+    if (window.AudioManager) {
+        AudioManager.stopCityTheme();
     }
 }
 
