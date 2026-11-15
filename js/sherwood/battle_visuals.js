@@ -1008,6 +1008,11 @@ Sherwood.BattleVisuals = (function () {
         showBloodOverlay: function () { DOM.showBlood(); },
         showCenterText: function (t, c) { DOM.centerText(t, c); },
         showHitEffect: function (sprite, cam) { DOM.showHitEffect(sprite, cam); },
+        
+        // --- ВАЖНО: функция для настройки спрайта извне! ---
+        setupEnemySprite: function (sprite, isBoss) {
+            Scene.setupEnemySprite(sprite, isBoss);
+        },
 
         // --- геттеры состояния ---
         isBattleActive: function () { return S.active; },
