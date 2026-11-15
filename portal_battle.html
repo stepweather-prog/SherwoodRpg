@@ -42,6 +42,7 @@
         
         #wave-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #c8a050; font-size: 14px; font-weight: bold; text-shadow: 0 0 6px #000; z-index: 40; letter-spacing: 1px; text-align: center; }
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% - 70px)); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+        #arrow-counter img { width: 22px; height: 22px; object-fit: contain; }
 
         @media (max-width: 900px) {
             #hero-life, #hero-mana { width: 90px !important; height: 90px !important; bottom: 6px !important; }
@@ -55,6 +56,7 @@
             .skill-btn { width: 70px; height: 70px; }
             #skills-row { gap: 10px; }
             #arrow-counter { transform: translateX(calc(-50% - 55px)); font-size: 13px !important; padding: 3px 10px !important; }
+            #arrow-counter img { width: 18px !important; height: 18px !important; }
         }
     </style>
 </head>
@@ -109,22 +111,18 @@
         };
         function getMobName(imgPath) { if (!imgPath) return 'Враг'; var fname = imgPath.split('/').pop(); return MOB_NAMES[fname] || 'Враг'; }
 
-        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0805);
+        const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 30);
         camera.position.set(0, 0.55, 3.6); camera.rotation.order = 'YXZ'; camera.lookAt(0, 0.45, 0);
         
         const renderer = new THREE.WebGLRenderer({ antialias: false }); 
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
-        renderer.setClearColor(0x0a0805, 1);
+        renderer.setClearColor(0x000000, 0);
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-
-        const bgTexture = new THREE.TextureLoader().load('assets/assets2/Sherwood_Square/ceiling_quest.png');
-        const bgGeometry = new THREE.PlaneGeometry(30, 20);
-        const bgMesh = new THREE.Mesh(bgGeometry, new THREE.MeshBasicMaterial({ map: bgTexture }));
-        bgMesh.position.set(0, 0, -8);
-        scene.add(bgMesh);
+        var keyLight = new THREE.DirectionalLight(0xffe8c0, 1.0);
+        keyLight.position.set(2, 4, 3); scene.add(keyLight);
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav'); var soundVictory = new Audio('assets/assets2/tune/victory.wav'); var soundDefeat = new Audio('assets/assets2/tune/defeat.wav'); var soundAltar = new Audio('assets/assets2/tune/altar.wav');
         var portalMusic = new Audio('assets/assets2/music/dungeon_2.ogg'); portalMusic.loop = true; portalMusic.volume = 0.35;
@@ -154,8 +152,38 @@
         }
         setTimeout(updateHeroSpheres, 500);
 
+        function createEnemySprite(enemyData, callback) {
+            var loader = new THREE.TextureLoader();
+            loader.load(
+                enemyData.imagePath,
+                function(tex) {
+                    tex.minFilter = tex.magFilter = THREE.LinearFilter;
+                    currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                    currentEnemySprite.scale.set(enemyData.isBoss ? 2.3 : 2.0, enemyData.isBoss ? 2.3 : 2.0, 1);
+                    currentEnemySprite.center.set(0.5, 0);
+                    currentEnemySprite.position.set(0, -0.4, 0);
+                    currentEnemySprite.material.depthTest = false;
+                    currentEnemySprite.material.depthWrite = false;
+                    currentEnemySprite.renderOrder = 10;
+                    scene.add(currentEnemySprite);
+                    if (callback) callback();
+                },
+                undefined,
+                function() {
+                    console.warn('Не нашёл текстуру: ' + enemyData.imagePath);
+                    var fallbackTex = new THREE.TextureLoader().load('assets/interface/labyrinth_of_icons.png');
+                    currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: fallbackTex, transparent: true }));
+                    currentEnemySprite.scale.set(enemyData.isBoss ? 2.3 : 2.0, enemyData.isBoss ? 2.3 : 2.0, 1);
+                    currentEnemySprite.center.set(0.5, 0);
+                    currentEnemySprite.position.set(0, -0.4, 0);
+                    scene.add(currentEnemySprite);
+                    if (callback) callback();
+                }
+            );
+        }
+
         function startBattle(obj) {
-            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
+            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             
             document.getElementById('mob-hp').style.display = 'block';
@@ -180,14 +208,14 @@
             isBattleActive = false; playerHitFirst = false; enemyStunned = 0; playerAttackCooldown = 0;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
         }
 
         function onEnemyKilled() {
             if (!isBattleActive) return; isBattleActive = false; playerHitFirst = false; enemyStunned = 0;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
-            currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
             playSound(soundVictory);
+            
+            if (currentEnemySprite) { scene.remove(currentEnemySprite); currentEnemySprite = null; }
             
             if (parent.Sherwood.Portal) {
                 var r = parent.Sherwood.Portal.portalAttack();
@@ -199,11 +227,27 @@
                         setTimeout(function() {
                             var next = parent.Sherwood.Portal.getCurrentBattle();
                             if (!next) { onPortalComplete(r); return; }
-                            loadBattle(next);
+                            loadNextEnemy(next);
                         }, 700);
                     }
                 }
             }
+        }
+
+        function loadNextEnemy(battleData) {
+            if (!battleData || !battleData.enemy) return;
+            var e = battleData.enemy;
+            document.getElementById('wave-label').textContent = battleData.portal.name + ' — Волна ' + battleData.level + '/' + battleData.totalLevels;
+            
+            var enemyData = {
+                imagePath: e.imagePath || ('assets/portal_beasts/visual_portals/' + e.image),
+                isBoss: !!e.isBoss,
+                hp: e.hp, maxHp: e.hp, atk: e.attack || e.atk || 50, def: e.defense || e.def || 10
+            };
+            
+            createEnemySprite(enemyData, function() {
+                startBattle({ hp: enemyData.hp, maxHp: enemyData.maxHp, atk: enemyData.atk, def: enemyData.def, mesh: currentEnemySprite, img: enemyData.imagePath });
+            });
         }
 
         function attackEnemy() {
@@ -246,9 +290,8 @@
 
         function exitPortal() {
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
-            try { if (parent.Sherwood.Portal) { if (parent.Sherwood.Portal.isInPortal()) parent.Sherwood.Portal.fleePortal(); } } catch (e) {}
-            try { if (parent.UI) { parent.UI._lastPortal = portalId; parent.UI._lastDungeon = null; } } catch (e) {}
-            try { if (parent.Sherwood && parent.Sherwood.Portal && parent.Sherwood.Portal.showUI) { parent.Sherwood.Portal.showUI(); } else if (parent.UI && parent.UI.camp) { parent.UI.camp(); } } catch (e) {}
+            try { portalMusic.pause(); portalMusic.currentTime = 0; } catch(e) {}
+            try { if (parent.UI) { parent.UI.camp(); } } catch(e) {}
         }
         window.exitPortal = exitPortal;
 
@@ -259,6 +302,34 @@
             h += '<div style="font-size:2em;font-weight:bold;margin-bottom:20px;">ПОРАЖЕНИЕ</div>';
             h += '<button onclick="parent.UI.camp()" style="background:#c9a040;border:none;border-radius:8px;padding:10px 30px;color:#000;font-weight:bold;cursor:pointer;font-size:1.2em;">В лагерь</button></div>';
             var el = document.createElement('div'); el.innerHTML = h; document.body.appendChild(el);
+        }
+
+        function onPortalComplete(r) {
+            playSound(soundVictory);
+            try { portalMusic.pause(); } catch(e){}
+            var rewards = { exp: r.rewards.exp, gold: r.rewards.gold, silver: r.rewards.silver, items: [] };
+            if (r.trophy) rewards.items.push({ icon: r.trophyIcon || 'assets/all_trophies/portal_trophies/1_wolf_fang.png', name: r.trophy, quantity: 1 });
+            try {
+                if (parent.UI && parent.UI._showVictoryScreen) {
+                    parent.UI._lastPortal = portalId;
+                    parent.UI._lastDungeon = null;
+                    parent.UI._afterRewardAction = function () { try { parent.Sherwood.Portal.showUI(); } catch (e) { exitPortal(); } };
+                    parent.UI._showVictoryScreen(rewards);
+                } else { exitPortal(); }
+            } catch (e) { exitPortal(); }
+        }
+
+        function onPortalFailed(r) {
+            playSound(soundDefeat);
+            try { portalMusic.pause(); } catch(e){}
+            try {
+                if (parent.UI && parent.UI._showDefeatScreen) {
+                    parent.UI._lastPortal = portalId;
+                    parent.UI._lastDungeon = null;
+                    parent.UI._afterRewardAction = function () { try { parent.Sherwood.Portal.showUI(); } catch (e) { exitPortal(); } };
+                    parent.UI._showDefeatScreen({ exp: 10, silver: 50, gold: 0, items: [] });
+                } else { exitPortal(); }
+            } catch (e) { exitPortal(); }
         }
 
         function onPlayerDeath(r) {
@@ -290,25 +361,19 @@
             renderer.render(scene, camera);
         }
 
-        function loadBattle(battleData) {
-            if (!battleData || !battleData.enemy) return;
-            var e = battleData.enemy;
-            document.getElementById('wave-label').textContent = battleData.portal.name + ' — Волна ' + battleData.level + '/' + battleData.totalLevels;
-            
-            if (currentEnemySprite) scene.remove(currentEnemySprite);
-            
-            new THREE.TextureLoader().load(e.imagePath || ('assets/portal_beasts/visual_portals/' + e.image), function(tex) {
-                currentEnemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05 }));
-                currentEnemySprite.scale.set(e.isBoss ? 2.3 : 2.0, e.isBoss ? 2.3 : 2.0, 1);
-                currentEnemySprite.center.set(0.5, 0); currentEnemySprite.position.set(0, -0.4, 0);
-                currentEnemySprite.material.depthTest = false; currentEnemySprite.material.depthWrite = false; currentEnemySprite.renderOrder = 10;
-                scene.add(currentEnemySprite);
-                startBattle({ hp: e.hp, maxHp: e.maxHp, atk: e.attack || e.atk, def: e.defense || e.def, mesh: currentEnemySprite, img: e.image });
+        var bData = parent.Sherwood.Portal.getCurrentBattle();
+        if (bData) {
+            var e = bData.enemy;
+            document.getElementById('wave-label').textContent = bData.portal.name + ' — Волна ' + bData.level + '/' + bData.totalLevels;
+            var enemyData = {
+                imagePath: e.imagePath || ('assets/portal_beasts/visual_portals/' + e.image),
+                isBoss: !!e.isBoss,
+                hp: e.hp, maxHp: e.hp, atk: e.attack || e.atk || 50, def: e.defense || e.def || 10
+            };
+            createEnemySprite(enemyData, function() {
+                startBattle({ hp: enemyData.hp, maxHp: enemyData.maxHp, atk: enemyData.atk, def: enemyData.def, mesh: currentEnemySprite, img: enemyData.imagePath });
             });
         }
-
-        var bData = parent.Sherwood.Portal.getCurrentBattle();
-        if (bData) loadBattle(bData);
 
         animate();
     </script>
