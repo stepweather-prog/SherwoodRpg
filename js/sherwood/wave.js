@@ -95,15 +95,45 @@ Sherwood.Wave = {
         console.log('🌊 Скверная волна: ' + this._uniqueEnemies.length + ' уникальных врагов.');
     },
 
-    startWave: function() {
+        startWave: function() {
         if (this._uniqueEnemies.length === 0) this.init();
-        this._currentIndex = 0;
-        this._killCount = 0;
-        this._startTime = Date.now();
-        this._isActive = true;
-        this._openBattle();
+        
+        var self = this;
+        // Показываем видео перед стартом
+        this._playIntroVideo(function() {
+            self._currentIndex = 0;
+            self._killCount = 0;
+            self._startTime = Date.now();
+            self._isActive = true;
+            self._openBattle();
+        });
     },
+    _playIntroVideo: function(onComplete) {
+        var video = document.createElement('video');
+        video.src = 'assets/assets2/animation/raid_entrance.webm'; 
+        video.autoplay = true;
+        video.muted = true; 
+        video.playsInline = true;
+        
+        var videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:99999;background:#000;';
+        if (window.innerWidth < 480) { video.style.cssText = videoStyles + 'width:100vw;height:100vh;'; }
+        else if (window.innerWidth >= 480 && window.innerHeight <= 800) { video.style.cssText = videoStyles + 'width:480px;height:100vh;'; }
+        else { video.style.cssText = videoStyles + 'width:480px;height:800px;'; }
+        
+        document.body.appendChild(video);
+        
+        var finished = false;
+        function finish() {
+            if (finished) return;
+            finished = true;
+            try { video.remove(); } catch(e) {}
+            if (onComplete) onComplete();
+        }
 
+        video.onended = finish;
+        video.onerror = finish;
+        setTimeout(finish, 10000); 
+    },
     getCurrentEnemy: function() {
         if (!this._isActive) return null;
         if (this._currentIndex >= this._uniqueEnemies.length) return null;
