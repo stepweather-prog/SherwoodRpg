@@ -51,6 +51,7 @@ Sherwood.BattleVisuals = (function () {
         enemySprite: null,
 
         arrows: 25,
+        arrowsStart: 0,
         filthTimer: 0,
         filthFullSince: 0,
         filthDamageTimer: 0,
@@ -506,11 +507,30 @@ Sherwood.BattleVisuals = (function () {
         },
 
         // ===== СТРЕЛЫ =====
+        // Стрелы лежат в сумке ПРЕДМЕТАМИ (id sherwood_arrow);
+        // player.resources.arrows — зеркало, которое читает dungeon.html (эталон)
+        _bagArrowCount: function () {
+            try {
+                var bag = (typeof Sherwood !== 'undefined') ? Sherwood.Bag : null;
+                if (bag && bag.getItems) {
+                    var items = bag.getItems();
+                    var total = 0;
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i] && items[i].id === 'sherwood_arrow') total += items[i].quantity || 0;
+                    }
+                    return total;
+                }
+            } catch (e) {}
+            return -1;
+        },
+
         loadArrows: function () {
             var p = Logic.getPlayer();
-            if (p && p.resources && typeof p.resources.arrows === 'number') {
-                S.arrows = Math.min(p.resources.arrows, CFG.ARROWS_MAX_START);
-            }
+            var fromResources = (p && p.resources && typeof p.resources.arrows === 'number') ? p.resources.arrows : -1;
+            var fromBag = Logic._bagArrowCount();
+            var cnt = (fromResources >= 0) ? fromResources : Math.max(fromBag, 0);
+            S.arrowsStart = Math.max(cnt, 0);
+            S.arrows = Math.min(S.arrowsStart, CFG.ARROWS_MAX_START);
             DOM.updateArrowCounter(S.arrows);
         },
 
@@ -521,7 +541,38 @@ Sherwood.BattleVisuals = (function () {
 
         returnArrowsToBag: function () {
             var p = Logic.getPlayer();
-            if (p && p.resources) p.resources.arrows = S.arrows;
+            // Колчан в бою ограничен 25, но всё сверх лимита остаётся в сумке
+            var overflow = Math.max(0, (S.arrowsStart || 0) - CFG.ARROWS_MAX_START);
+            var newTotal = S.arrows + overflow;
+            if (p) {
+                if (!p.resources) p.resources = {};
+                p.resources.arrows = newTotal;
+            }
+            try {
+                var bag = (typeof Sherwood !== 'undefined') ? Sherwood.Bag : null;
+                if (bag && bag.getItems) {
+                    var items = bag.getItems();
+                    var total = 0;
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i] && items[i].id === 'sherwood_arrow') total += items[i].quantity || 0;
+                    }
+                    var diff = newTotal - total;
+                    if (diff > 0 && bag._addAsItem) {
+                        bag._addAsItem('arrows', diff);
+                    } else if (diff < 0) {
+                        var need = -diff;
+                        for (var j = items.length - 1; j >= 0 && need > 0; j--) {
+                            if (items[j] && items[j].id === 'sherwood_arrow') {
+                                var q = items[j].quantity || 0;
+                                var take = Math.min(q, need);
+                                if (bag.removeItem) bag.removeItem(j, take);
+                                need -= take;
+                            }
+                        }
+                    }
+                    if (diff !== 0 && bag._save) bag._save();
+                }
+            } catch (e) {}
         },
 
         spendArrowsForAttack: function () {
