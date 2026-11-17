@@ -1,6 +1,5 @@
 /**
- * Sherwood Bag — Сумка
- */
+ * Sherwood Bag — Сумка */
 
  if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
@@ -81,6 +80,15 @@ Sherwood.Bag = {
         return total;
     },
 
+    // Стрелы: зеркало в player.resources.arrows — его читают боевые режимы
+    // и dungeon.html (эталон). Единая точка синхронизации.
+    _syncArrowsMirror: function() {
+        var player = Sherwood.getPlayer();
+        if (!player) return;
+        if (!player.resources) player.resources = {};
+        player.resources.arrows = this._countDef('arrows');
+    },
+
     init: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
@@ -91,6 +99,14 @@ Sherwood.Bag = {
         // Миграция старых сейвов: сервисные предметы в ячейках помечаются —
         // они перестают занимать слоты и уходят в полосу над ячейками
         this._flagServiceItems();
+
+        // Миграция стрел: если в сумке их больше, чем в resources.arrows —
+        // синхронизируем (старые сейвы: стрелы скрафчены, а боёвка видела 0)
+        var bagArrows = this._countDef('arrows');
+        if (!player.resources) player.resources = {};
+        if (bagArrows > (player.resources.arrows || 0)) {
+            player.resources.arrows = bagArrows;
+        }
 
         // Если bagSize уже сохранён — берём его, иначе 10
         this._maxSlots = player.bagSize || 10;
@@ -218,7 +234,7 @@ Sherwood.Bag = {
                 this._save();
                 console.log('🔑 Начислено ' + canAdd + ' ключей подземки (регенерация)');
             }
-            // Если после добавления всё равно меньше максимуму — таймер сдвинут правильно
+            // Если после добавления всё равно меньше максимума — таймер сдвинут правильно
             if (this.getTicketCount('entrance') >= max) {
                 regen.lastRegenTime = now;
             }
@@ -377,6 +393,8 @@ Sherwood.Bag = {
             this._inventory.push(stack);
             remaining -= put;
         }
+
+        if (defKey === 'arrows') this._syncArrowsMirror();
     },
 
     addItem: function(item) {
