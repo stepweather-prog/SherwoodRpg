@@ -1,5 +1,6 @@
 /**
- * battle_visuals.js — ЕДИНАЯ БОЕВАЯ СИСТЕМА */
+ * battle_visuals.js — ЕДИНАЯ БОЕВАЯ СИСТЕМА (точный порт эталона из dungeon.html)
+ */
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
 
 Sherwood.BattleVisuals = (function () {
@@ -64,13 +65,14 @@ Sherwood.BattleVisuals = (function () {
         'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
     ];
 
-        var FX_DIR = 'assets/assets2/animation/';
+    var FX_DIR = 'assets/assets2/animation/';
     var HIT_EFFECT_IMG = FX_DIR + 'strike_claws.png';
     var BLOOD_OVERLAYS = [
         FX_DIR + 'Fine_blood_spray_texture.png',
         FX_DIR + 'Fine_blood_spray_texture (1).png',
         FX_DIR + 'Fine_blood_spray_texture (2).png'
     ];
+    var ARROW_FX_VIDEO = FX_DIR + 'sherwood_hollow_arrow.webm';
 
     var DOM = {
         els: {},
@@ -226,6 +228,75 @@ Sherwood.BattleVisuals = (function () {
                 if (total > 0 && killed >= total) box.classList.add('clear');
                 else box.classList.remove('clear');
             }
+        },
+
+        arrowFlight: function (sprite, camera) {
+            var self = this;
+            if (!sprite || !camera) return;
+            if (this._arrowfx) { cancelAnimationFrame(this._arrowfx); this._arrowfx = null; }
+            if (this._arrowCanvas && this._arrowCanvas.parentNode) this._arrowCanvas.parentNode.removeChild(this._arrowCanvas);
+
+            var video = this._arrowVideo;
+            if (!video) {
+                video = document.createElement('video');
+                video.src = ARROW_FX_VIDEO;
+                video.muted = true;
+                video.playsInline = true;
+                video.preload = 'auto';
+                video.style.display = 'none';
+                document.body.appendChild(video);
+                video.onended = function () { self.hideArrowFlight(); };
+                video.onerror = function () { self.hideArrowFlight(); };
+                this._arrowVideo = video;
+            }
+
+            var canvas = document.createElement('canvas');
+            canvas.width = 360; canvas.height = 360;
+            var size = Math.min(380, Math.max(220, Math.floor(window.innerWidth * 0.35)));
+            canvas.style.cssText = 'position:fixed;pointer-events:none;z-index:40;width:' + size + 'px;height:' + size + 'px;left:0;top:0;display:none;';
+            document.body.appendChild(canvas);
+            this._arrowCanvas = canvas;
+
+            var worldPos = sprite.position.clone();
+            worldPos.y += sprite.scale.y * 0.5;
+            worldPos.project(camera);
+            var ex = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
+            var ey = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
+            canvas.style.left = (ex - size / 2) + 'px';
+            canvas.style.top = (ey - size * 0.29) + 'px';
+
+            var ctx2d = canvas.getContext('2d');
+            function keyFrame() {
+                self._arrowfx = null;
+                if (!self._arrowCanvas) return;
+                if (video.readyState < 2 || video.paused || video.ended) { self.hideArrowFlight(); return; }
+                ctx2d.drawImage(video, 0, 0, 360, 360);
+                var im = ctx2d.getImageData(0, 0, 360, 360);
+                var d = im.data;
+                for (var i = 0; i < d.length; i += 4) {
+                    var r = d[i], g = d[i + 1], b = d[i + 2];
+                    if (g > 50 && g > r * 1.15 && g > b * 1.15) {
+                        d[i + 3] = 0;
+                    } else if (g > 50 && g > r && g > b) {
+                        d[i + 1] = (r + b) >> 1;
+                    }
+                }
+                ctx2d.putImageData(im, 0, 0);
+                self._arrowfx = requestAnimationFrame(keyFrame);
+            }
+
+            try { video.currentTime = 0; } catch (e) {}
+            var pr = video.play();
+            var start = function () { canvas.style.display = 'block'; self._arrowfx = requestAnimationFrame(keyFrame); };
+            if (pr && pr.then) { pr.then(start).catch(function () { self.hideArrowFlight(); }); }
+            else { start(); }
+        },
+
+        hideArrowFlight: function () {
+            if (this._arrowfx) { cancelAnimationFrame(this._arrowfx); this._arrowfx = null; }
+            if (this._arrowCanvas && this._arrowCanvas.parentNode) this._arrowCanvas.parentNode.removeChild(this._arrowCanvas);
+            this._arrowCanvas = null;
+            if (this._arrowVideo) { try { this._arrowVideo.pause(); } catch (e) {} }
         },
 
         showBlood: function () {
@@ -572,6 +643,7 @@ Sherwood.BattleVisuals = (function () {
             Logic.stopTimer();
             S.active = false;
             S.playerHitFirst = false;
+            DOM.hideArrowFlight();
             DOM.showBattleUI(false);
         },
 
@@ -590,6 +662,7 @@ Sherwood.BattleVisuals = (function () {
             var mult = 1;
             if (S.arrows >= CFG.ARROWS_NEEDED) {
                 S.arrows -= CFG.ARROWS_NEEDED;
+                DOM.arrowFlight(S.enemySprite, S.camFPS);
             } else {
                 mult = 0.5;
                 DOM.centerText('НЕТ СТРЕЛ!', '#ffaa00');
@@ -823,6 +896,8 @@ Sherwood.BattleVisuals = (function () {
         showBloodOverlay: function () { DOM.showBlood(); },
         showCenterText: function (text, color) { DOM.centerText(text, color); },
         showHitEffect: function (sprite, camera) { DOM.showHitEffect(sprite, camera); },
+        showArrowFlight: function (sprite, camera) { DOM.arrowFlight(sprite, camera); },
+        hideArrowFlight: function () { DOM.hideArrowFlight(); },
 
         getPlayerAttackCooldown: function () { return S.playerAttackCooldown; },
         getPlayerStunned: function () { return S.playerStunned; },
