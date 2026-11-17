@@ -1,9 +1,9 @@
 /**
- * Sherwood Wallet — Кесет (сейф-копилка)
- *  — при прохождении этажа сюда падает рандомно золото или серебро
- *  — не более 50% от полученного за проходку
- *  — одна ячейка = одно попадание (без лимита, без долива)
- *  — когда все 6 ячеек заняты, можно забрать всё
+ * Sherwood Wallet — Кошелёк (кесет, сейф-копилка)
+ *
+ * Копилка — сам кошелёк ЦЕЛИКОМ: после прохождения этажа подземки
+ * 25% заработанного серебра добавляется к общему накоплению.
+ *
  */
 
 if (typeof Sherwood === 'undefined') {
@@ -11,228 +11,148 @@ if (typeof Sherwood === 'undefined') {
 }
 
 Sherwood.Wallet = {
-    CELLS_COUNT: 6,
+    CELLS: 6,
+    CELL_CAPACITY: 20000,
+    RUN_PERCENT: 25,
 
-    init: function() {
+    _state: function () {
         var p = Sherwood.getPlayer();
-        if (!p) return;
-        if (!p.keset) {
-            p.keset = { cells: [], totalGold: 0, totalSilver: 0 };
-        }
-        if (!p.keset.cells || p.keset.cells.length === 0) {
-            p.keset.cells = [];
-            for (var i = 0; i < this.CELLS_COUNT; i++) {
-                p.keset.cells.push({ type: null, amount: 0 });
-            }
-            p.keset.totalGold = 0;
-            p.keset.totalSilver = 0;
-            Sherwood.saveGame();
-        }
-        // Миграция со старого формата
-        for (var i = 0; i < p.keset.cells.length; i++) {
-            if (typeof p.keset.cells[i] === 'number') {
-                p.keset.cells[i] = { type: null, amount: 0 };
-            }
-        }
-        console.log('👛 Кесет инициализирован');
-    },
+        if (!p) return null;
+        if (!p.keset || typeof p.keset !== 'object') p.keset = {};
 
-    getTotalGold: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) return 0;
         var total = 0;
-        for (var i = 0; i < p.keset.cells.length; i++) {
-            if (p.keset.cells[i].type === 'gold') total += p.keset.cells[i].amount;
+
+        if (typeof p.keset.totalSilver === 'number' && isFinite(p.keset.totalSilver)) {
+            total = Math.max(0, Math.floor(p.keset.totalSilver));
         }
-        return total;
-    },
 
-    getTotalSilver: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) return 0;
-        var total = 0;
-        for (var i = 0; i < p.keset.cells.length; i++) {
-            if (p.keset.cells[i].type === 'silver') total += p.keset.cells[i].amount;
-        }
-        return total;
-    },
-
-    getCells: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) return [];
-        return p.keset.cells;
-    },
-
-    isFull: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) return false;
-        for (var i = 0; i < p.keset.cells.length; i++) {
-            if (p.keset.cells[i].type === null) return false;
-        }
-        return true;
-    },
-
-    /**
-     * Кладёт награду в первую свободную ячейку.
-     * @param {string} type — 'gold' или 'silver'
-     * @param {number} amount — сколько класть
-     * @returns {boolean} — удалось ли
-     */
-    _addToFreeCell: function(type, amount) {
-        if (!amount || amount <= 0) return false;
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) return false;
-
-        for (var i = 0; i < p.keset.cells.length; i++) {
-            if (p.keset.cells[i].type === null) {
-                p.keset.cells[i].type = type;
-                p.keset.cells[i].amount = amount;
-                p.keset.totalGold = this.getTotalGold();
-                p.keset.totalSilver = this.getTotalSilver();
-                Sherwood.saveGame();
-                return true;
+        // Миграция старых форматов (массив ячеек): числа или {type, amount}.
+        // Берём максимум из totalSilver и суммы ячеек — ничего не теряется.
+        if (p.keset.cells && p.keset.cells.length) {
+            var cellsSum = 0;
+            for (var i = 0; i < p.keset.cells.length; i++) {
+                var c = p.keset.cells[i];
+                if (typeof c === 'number' && isFinite(c)) cellsSum += Math.max(0, Math.floor(c));
+                else if (c && typeof c === 'object' && c.type === 'silver' && isFinite(c.amount)) cellsSum += Math.max(0, Math.floor(c.amount));
             }
+            if (cellsSum > total) total = cellsSum;
         }
-        return false; // нет свободных ячеек
+
+        if (p.keset.cells) delete p.keset.cells;
+
+        p.keset.totalSilver = total;
+        return p.keset;
     },
 
-    /**
-     * Вызывается после прохождения этажа.
-     * @param {number} goldEarned — сколько золота дали за проходку
-     * @param {number} silverEarned — сколько серебра дали за проходку
-     * @returns {object} { goldAdded, silverAdded, cellUsed }
-     */
-    addFromRun: function(goldEarned, silverEarned) {
-        var result = { goldAdded: 0, silverAdded: 0, cellUsed: false };
-        if (!goldEarned && !silverEarned) return result;
-
-        var maxGold = Math.floor((goldEarned || 0) * 0.5);
-        var maxSilver = Math.floor((silverEarned || 0) * 0.5);
-
-        // Случайно: золото ИЛИ серебро
-        if (maxGold > 0 && maxSilver > 0) {
-            if (Math.random() < 0.5) {
-                var amt = Math.floor(Math.random() * (maxGold + 1));
-                if (amt > 0 && this._addToFreeCell('gold', amt)) {
-                    result.goldAdded = amt;
-                    result.cellUsed = true;
-                }
-            } else {
-                var amt = Math.floor(Math.random() * (maxSilver + 1));
-                if (amt > 0 && this._addToFreeCell('silver', amt)) {
-                    result.silverAdded = amt;
-                    result.cellUsed = true;
-                }
-            }
-        } else if (maxGold > 0) {
-            var amt = Math.floor(Math.random() * (maxGold + 1));
-            if (amt > 0 && this._addToFreeCell('gold', amt)) {
-                result.goldAdded = amt;
-                result.cellUsed = true;
-            }
-        } else if (maxSilver > 0) {
-            var amt = Math.floor(Math.random() * (maxSilver + 1));
-            if (amt > 0 && this._addToFreeCell('silver', amt)) {
-                result.silverAdded = amt;
-                result.cellUsed = true;
-            }
+    getInfo: function () {
+        var st = this._state();
+        if (!st) return { total: 0, capacity: this.CELLS * this.CELL_CAPACITY, isFull: false, filledCells: 0, cells: [] };
+        var capacity = this.CELLS * this.CELL_CAPACITY;
+        var total = Math.min(st.totalSilver, capacity);
+        var cells = [];
+        var remaining = total;
+        for (var i = 0; i < this.CELLS; i++) {
+            var inCell = Math.max(0, Math.min(this.CELL_CAPACITY, remaining));
+            cells.push(inCell);
+            remaining -= inCell;
         }
-
-        return result;
+        return {
+            total: total,
+            capacity: capacity,
+            isFull: st.totalSilver >= capacity,
+            filledCells: cells.filter(function (v) { return v >= Sherwood.Wallet.CELL_CAPACITY; }).length,
+            cells: cells
+        };
     },
 
-    withdrawAll: function() {
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) return { success: false, reason: 'Нет данных' };
+    addFromRun: function (gold, silver) {
+        var share = Math.floor(((silver || 0) * this.RUN_PERCENT) / 100);
+        if (share <= 0) return { success: true, stored: 0, overflow: 0, isFull: this.getInfo().isFull };
+        return this.addSilver(share);
+    },
 
-        if (!this.isFull()) {
-            return { success: false, reason: 'Кесет ещё не заполнен' };
-        }
-
-        var totalGold = this.getTotalGold();
-        var totalSilver = this.getTotalSilver();
-
-        if (totalGold > 0) Sherwood.addResource('gold', totalGold);
-        if (totalSilver > 0) Sherwood.addResource('silver', totalSilver);
-
-        for (var i = 0; i < p.keset.cells.length; i++) {
-            p.keset.cells[i] = { type: null, amount: 0 };
-        }
-        p.keset.totalGold = 0;
-        p.keset.totalSilver = 0;
+    addSilver: function (amount) {
+        var st = this._state();
+        if (!st || !(amount > 0)) return { success: false, stored: 0, overflow: 0, isFull: this.getInfo().isFull };
+        var capacity = this.CELLS * this.CELL_CAPACITY;
+        var free = capacity - st.totalSilver;
+        var stored = Math.min(Math.floor(amount), Math.max(0, free));
+        st.totalSilver += stored;
+        var overflow = Math.floor(amount) - stored;
         Sherwood.saveGame();
-
-        return { success: true, gold: totalGold, silver: totalSilver };
+        return { success: true, stored: stored, overflow: overflow, isFull: st.totalSilver >= capacity };
     },
 
-    // ========== UI ==========
-    showUI: function() {
-        if (typeof UI === 'undefined') {
-            if (typeof showGenericScreen === 'function') showGenericScreen('Кошелёк', '👛');
-            return;
+    withdrawAll: function () {
+        var info = this.getInfo();
+        if (!info.isFull) {
+            return { success: false, reason: 'Заполни все ' + this.CELLS + ' ячейки, чтобы забрать серебро' };
         }
+        var st = this._state();
+        var total = info.total;
+        Sherwood.addResource('silver', total);
+        st.totalSilver = 0;
+        Sherwood.saveGame();
+        return { success: true, withdrawn: total };
+    }
+};
+
+// ============================================================
+//  UI КОШЕЛЬКА (замена UI.wallet из ui_screens.js)
+// ============================================================
+(function () {
+    if (typeof UI === 'undefined') return;
+
+    UI.wallet = function () {
         UI._playSound('click');
+        var info = Sherwood.Wallet.getInfo();
 
-        var p = Sherwood.getPlayer();
-        if (!p || !p.keset) {
-            UI._showToast('❌ Нет данных');
-            return;
-        }
+        var h = '<div style="text-align:center;padding:10px;">';
+        h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:4px;">Кошелёк</div>';
+        h += '<div style="color:#c0c0c0;font-size:0.9em;margin-bottom:12px;">Накоплено: <span style="color:#e0e0ff;font-weight:bold;">' + info.total + '</span> / ' + info.capacity + ' серебра</div>';
 
-        var cells = p.keset.cells;
-        var totalGold = this.getTotalGold();
-        var totalSilver = this.getTotalSilver();
-        var full = this.isFull();
-
-        var h = '<div style="padding:20px;text-align:center;max-width:400px;margin:0 auto;">';
-        h += '<div style="color:#e0c080;font-size:1.2em;font-weight:bold;margin-bottom:4px;">👛 Кесет</div>';
-        h += '<div style="color:#c0c0c0;font-size:0.85em;margin-bottom:12px;">';
-        h += 'Золото: <span style="color:#ffd700;font-weight:bold;">' + totalGold + '</span> | ';
-        h += 'Серебро: <span style="color:#c0c0c0;font-weight:bold;">' + totalSilver + '</span>';
-        h += '</div>';
-
-        h += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:220px;margin:0 auto 20px;">';
-        for (var i = 0; i < cells.length; i++) {
-            var cell = cells[i];
-            var isGold = cell.type === 'gold';
-            var isSilver = cell.type === 'silver';
-            var isEmpty = !cell.type;
-            var borderColor = isEmpty ? '#555' : (isGold ? '#ffd700' : '#c0c0c0');
-            var icon = isGold ? 'assets/interface/resource_gold.png' : (isSilver ? 'assets/interface/resource_silver.png' : null);
-
-            h += '<div style="position:relative;width:100px;height:100px;background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid ' + borderColor + ';border-radius:8px;display:flex;align-items:center;justify-content:center;">';
-            if (icon) {
-                h += '<img src="' + icon + '" style="width:40px;height:40px;object-fit:contain;">';
-                h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.5em;font-weight:bold;text-shadow:0 0 4px #000;">' + cell.amount + '</span>';
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto 20px;">';
+        for (var i = 0; i < info.cells.length; i++) {
+            var cellSilver = info.cells[i];
+            var pct = Math.min(100, Math.round((cellSilver / Sherwood.Wallet.CELL_CAPACITY) * 100));
+            var full = pct >= 100;
+            h += '<div style="position:relative;width:86px;height:86px;background:url(\'assets/interface/wallet_cell.png\') center/contain no-repeat;background-size:cover;border:2px solid ' + (full ? '#ffd700' : (cellSilver > 0 ? '#c9a040' : '#555')) + ';border-radius:8px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;">';
+            if (cellSilver > 0) {
+                h += '<img src="assets/interface/resource_silver.png" style="width:44px;height:44px;object-fit:contain;opacity:' + (0.3 + (pct / 100) * 0.7) + ';">';
+                h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.65em;font-weight:bold;text-shadow:0 0 4px #000;">' + pct + '%</span>';
             }
             h += '</div>';
         }
         h += '</div>';
 
-        if (full) {
-            h += '<button onclick="Sherwood.Wallet._withdrawFromUI()" class="btn btn-gold" style="padding:12px 30px;font-size:1em;font-weight:bold;width:100%;">💰 Забрать всё (' + totalGold + ' 🪙, ' + totalSilver + ' 🥈)</button>';
+        if (info.isFull) {
+            h += '<button onclick="UI._withdrawWallet()" style="background:#c9a040;border:none;border-radius:8px;padding:14px 36px;color:#000;font-weight:bold;cursor:pointer;font-size:0.95em;margin-bottom:8px;">Забрать всё: ' + info.total + ' серебра</button>';
         } else {
-            h += '<div style="color:#888;font-size:0.8em;">Заполните все ' + this.CELLS_COUNT + ' ячеек, чтобы забрать</div>';
+            h += '<div style="color:#888;font-size:0.85em;margin-bottom:8px;">Заполни все ячейки, чтобы забрать серебро</div>';
+            h += '<div style="color:#6b5a3a;font-size:0.8em;">25% серебра за этаж подземки падает сюда</div>';
         }
         h += '</div>';
 
-        UI._openScreenScrollable('👛 Кошелёк', 'wallet', h);
-    },
+        UI._openScreen('Кошелёк', 'profile', h, 'UI.profile()');
+    };
 
-    _withdrawFromUI: function() {
-        var r = this.withdrawAll();
+    UI._withdrawWallet = function () {
+        var r = Sherwood.Wallet.withdrawAll();
         if (r.success) {
-            UI._playSound('loot_fly');
-            UI._showToast('✅ Забрано: ' + r.gold + ' 🪙 и ' + r.silver + ' 🥈');
+            UI._showToast('💰 Забрано ' + r.withdrawn + ' серебра!');
             UI.updateDisplay();
-            this.showUI();
+            UI.wallet();
         } else {
-            UI._showToast('❌ ' + r.reason);
+            UI._showToast(r.reason);
         }
-    }
-};
+    };
+
+    UI._addWalletSilver = function (amount) {
+        Sherwood.Wallet.addSilver(amount);
+    };
+})();
 
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Wallet = Sherwood.Wallet;
 
-console.log('👛 Кошелёк загружен!');
+console.log('💰 Кошелёк загружен!');
