@@ -64,12 +64,12 @@ Sherwood.BattleVisuals = (function () {
         'strike_claws_4.png', 'strike_claws_5.png', 'strike_claws_6.png'
     ];
 
-    var FX_DIR = 'assets/assets2/game_details/';
+        var FX_DIR = 'assets/assets2/animation/';
     var HIT_EFFECT_IMG = FX_DIR + 'strike_claws.png';
     var BLOOD_OVERLAYS = [
-        FX_DIR + 'Fine_blood_spray_1.png',
-        FX_DIR + 'Fine_blood_spray_2.png',
-        FX_DIR + 'Fine_blood_spray_3.png'
+        FX_DIR + 'Fine_blood_spray_texture.png',
+        FX_DIR + 'Fine_blood_spray_texture (1).png',
+        FX_DIR + 'Fine_blood_spray_texture (2).png'
     ];
 
     var DOM = {
