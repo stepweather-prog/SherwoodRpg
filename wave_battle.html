@@ -187,8 +187,18 @@
             onDeath: onPlayerDeath
         });
 
+        function disposeEnemySprite() {
+            if (!enemySprite) return;
+            scene.remove(enemySprite);
+            if (enemySprite.material) {
+                if (enemySprite.material.map) enemySprite.material.map.dispose();
+                enemySprite.material.dispose();
+            }
+            enemySprite = null;
+        }
+
         function createEnemySprite(enemyData, callback) {
-            if (enemySprite) { scene.remove(enemySprite); enemySprite = null; }
+            disposeEnemySprite();
             var loader = new THREE.TextureLoader();
             loader.load(
                 enemyData.imagePath,
@@ -225,11 +235,14 @@
 
         function onEnemyKilled() {
             playSound(soundVictory);
-            if (enemySprite) { scene.remove(enemySprite); enemySprite = null; }
+            disposeEnemySprite();
             try { parent.Sherwood.Wave.onEnemyKilled(); } catch (e) {}
         }
 
+        var deathHandled = false;
         function onPlayerDeath() {
+            if (deathHandled) return;
+            deathHandled = true;
             playSound(soundDefeat);
             try { waveMusic.pause(); } catch (e) {}
             try { window.Sherwood.BattleVisuals.returnArrowsToBag(); } catch (e) {}
