@@ -64,17 +64,38 @@ window.Settings = {
     isMusicEnabled: function() { return true; },
     isSoundEnabled: function() { return true; },
 
+    getGraphics: function() { return this._settings.graphics; },
+
+    getPixelRatio: function() {
+        var g = this._settings.graphics;
+        if (g === 'low') return 0.75;
+        if (g === 'medium') return 1;
+        return Math.min(window.devicePixelRatio || 1, 2);
+    },
+
     _applyGraphics: function() {
         var val = this._settings.graphics;
-        if (val === 'low') {
-            document.querySelectorAll('img').forEach(function(img) { img.style.imageRendering = 'pixelated'; });
-            if (typeof renderer !== 'undefined' && renderer) renderer.setPixelRatio(0.75);
-        } else if (val === 'medium') {
-            document.querySelectorAll('img').forEach(function(img) { img.style.imageRendering = 'auto'; });
-            if (typeof renderer !== 'undefined' && renderer) renderer.setPixelRatio(1);
-        } else {
-            document.querySelectorAll('img').forEach(function(img) { img.style.imageRendering = 'auto'; });
-            if (typeof renderer !== 'undefined' && renderer) renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // 1) Резкость картинок: через <style>, чтобы правило покрывало и динамически добавленные img
+        var style = document.getElementById('graphics-style');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'graphics-style';
+            document.head.appendChild(style);
+        }
+        style.textContent = (val === 'low') ? 'img { image-rendering: pixelated; }' : '';
+
+        // 2) WebGL-рендереры на этой странице (регистрируются через Sherwood._registerRenderer)
+        if (window.Sherwood && window.Sherwood._renderers) {
+            for (var i = 0; i < window.Sherwood._renderers.length; i++) {
+                try { window.Sherwood._renderers[i].setPixelRatio(this.getPixelRatio()); } catch(e) {}
+            }
+        }
+
+        // 3) Боевые сцены живут в iframe — broadcast туда
+        var frames = document.querySelectorAll('iframe');
+        for (var f = 0; f < frames.length; f++) {
+            try { frames[f].contentWindow.postMessage({ type: 'sherwood_graphics', mode: val }, '*'); } catch(e) {}
         }
     },
 
@@ -191,11 +212,8 @@ window.Settings = {
     resetCharacter: function() {
         if (!confirm('Ты уверен, что хочешь УДАЛИТЬ ПЕРСОНАЖА? Весь прогресс будет потерян навсегда.')) return;
         if (!confirm('Точно? Это действие нельзя отменить!')) return;
-        try {
-            localStorage.removeItem('sherwood_save');
-            localStorage.removeItem('active_skin');
-            localStorage.removeItem('sherwood_settings');
-        } catch(e) {}
+        try { localStorage.clear(); } catch(e) {}
+        try { sessionStorage.clear(); } catch(e) {}
         if (UI && UI._showToast) UI._showToast('🗑️ Персонаж удалён. Перезагрузка...');
         setTimeout(function() { window.location.reload(); }, 1500);
     },
@@ -227,5 +245,18 @@ window.Settings = {
         }, silent ? 200 : 1500);
     }
 };
+
+// Реестр WebGL-рендереров текущей страницы: каждый новый renderer
+// регистрируется через Sherwood._registerRenderer(renderer) и сразу
+// получает актуальный pixelRatio из настроек графики.
+if (window.Sherwood) {
+    window.Sherwood._renderers = window.Sherwood._renderers || [];
+    window.Sherwood._registerRenderer = function (r) {
+        if (r && window.Sherwood._renderers.indexOf(r) === -1) {
+            window.Sherwood._renderers.push(r);
+            try { r.setPixelRatio(window.Settings.getPixelRatio()); } catch (e) {}
+        }
+    };
+}
 
 console.log('⚙️ Настройки загружены!');
