@@ -201,9 +201,21 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 0);
         document.body.appendChild(renderer.domElement);
+
+        // === КАЧЕСТВО ГРАФИКИ (Настройки → Графика) ===
+        function applyGraphicsMode(mode) {
+            var pr = mode === 'low' ? 0.75 : (mode === 'medium' ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setPixelRatio(pr);
+        }
+        try {
+            var gs = localStorage.getItem('sherwood_settings');
+            applyGraphicsMode((gs && JSON.parse(gs).graphics) || 'high');
+        } catch (e) { applyGraphicsMode('high'); }
+        window.addEventListener('message', function (e) {
+            if (e.data && e.data.type === 'sherwood_graphics') applyGraphicsMode(e.data.mode);
+        });
 
         battleScene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const dirLight = new THREE.DirectionalLight(0xffd0a0, 1.5);
