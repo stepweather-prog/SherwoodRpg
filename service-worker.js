@@ -2,7 +2,7 @@
 //  SERVICE-WORKER.JS — Офлайн-режим для Sherwood RPG
 // ============================================================
 
-const CACHE_NAME = 'sherwood-v1.1.4';
+const CACHE_NAME = 'sherwood-v1.1.6';
 
 // Список файлов, которые нужно закэшировать при установке
 const ASSETS_TO_CACHE = [
@@ -13,7 +13,7 @@ const ASSETS_TO_CACHE = [
     './css/mobile.css',
     './assets/interface/logo.png',
 
-    // === HTML-ФАЙЛЫ РЕЖИМОВ (их надо кешировать, иначе в офлайне будет ошибка) ===
+    // === HTML-ФАЙЛЫ РЕЖИМОВ (их надо кэшировать, иначе в офлайне будет ошибка) ===
     './camp.html',
     './dungeon.html',
     './portal_battle.html',
@@ -41,7 +41,8 @@ const ASSETS_TO_CACHE = [
     './js/sherwood/hearth.js',
     './js/sherwood/router.js',
     './js/sherwood/battle_visuals.js',
-    './js/sherwood/wave.js'  
+    './js/sherwood/wave.js',
+    './js/sherwood/wallet.js'
 ];
 // 1. Установка: кэшируем все файлы из списка
 self.addEventListener('install', function(event) {
