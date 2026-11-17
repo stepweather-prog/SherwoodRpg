@@ -1,16 +1,10 @@
 /**
  * Sherwood Wave — Режим "Скверная волна"
- * Все враги по 5 штук, в конце - Изначальный Ужас.
- * Порядок: Чащоба -> Подземка -> Порталы -> Босс.
- */
-
+ * Каждый уникальный враг убивается 5 раз, финальный босс — 1 раз.
+  */
 if (typeof Sherwood === 'undefined') { window.Sherwood = {}; }
 
 Sherwood.Wave = {
-    // 1. ЧАЩОБА (все 64 узла)
-    // 2. ПОДЗЕМКА (уникальные враги)
-    // 3. ПОРТАЛЫ (боссы и стражи)
-    // 4. ФИНАЛЬНЫЙ БОСС
     ENEMIES: [
         // --- ЧАЩОБА (по порядку узлов) ---
         'plague_crow.png', 'bog_trapper.png', 'basalt_devourer.png', 'fallen_forester.png', // Глава 1
@@ -34,50 +28,32 @@ Sherwood.Wave = {
         'bark_beetle.png', 'armored_beetle.png', 'yew_blight_wolf.png', 'swamp_slugmouth.png',
         'swamp_gorgymouth.png', 'swamp_drowner.png', 'twigtangle.png', 'woodland_terror.png',
         'leshy.png', 'root_executioner.png', 'spectral_stag.png', 'forest_blight_cyclops.png',
-        'blight_troglodyte.png', 'blight_oozemouth.png', 'blight_spitter.png', // Дубль, убираем? Оставляем один раз.
-        'bog_trapper.png', 'swamp_centipede.png', 'blight_horn_worm.png', 'searing_arachnid.png',
+        'blight_troglodyte.png', 'blight_oozemouth.png',
+        'swamp_centipede.png', 'blight_horn_worm.png', 'searing_arachnid.png',
         'lost_maiden.png', 'bog_witch.png', 'swamp_kikimora.png', 'blight_boletus.png',
-        'swamp_vodyanoy.png', 'sherwood_lizard.png', 'blight_cerberus.png', // Дубль
-        'blight_fox.png', 'fox_pack_lord.png', 'putrid_rat.png', 'executioner_cricket.png',
+        'swamp_vodyanoy.png', 'sherwood_lizard.png',
+        'fox_pack_lord.png', 'putrid_rat.png', 'executioner_cricket.png',
         'plague_bat.png', 'ash_stalker.png', 'ash_assassin.png', 'bone_keeper.png',
-        'blight_blade.png', 'ash_wraith.png', 'ash_overlord.png', // Дубль
-        'basalt_devourer.png', // Дубль
-        'grotto_brute.png', // Дубль
-        'cave_watcher.png', // Дубль
-        'runic_sentinel.png', // Дубль
-        'ancient_watcher.png', 'lost_treasure_hunter.png', 'warped_worm.png', // Дубль
-        'underground_terror.png', // Дубль
-        'shadow_maiden.png', 'cursed_priestess.png', 'mistress_of_the_roots.png', 'necromantic_arachnid.png', // Дубль
-        'root_daughter.png', // Дубль
-        'animated_yew.png', // Дубль
-        'rusty_servant.png', 'tormentor.png', 'grave_archer.png', 'chaos_swordsman.png', // Дубль
-        'chaos_knight.png', // Дубль
-        'chaos_lord.png', 'blight_kite.png', // Дубль
-        'harpy_witch.png', 'harpy_hatchling.png', 'harpy_chieftain.png', 'lord_of_the_feathered.png', // Дубль
-        'cave_tormentor.png', // Дубль
-        'blight_keeper.png', // Дубль
-        'blight_king.png', // Дубль
-        'underground_guardian.png', // Дубль
-        'corruption_raccoon.png', // Дубль
-        'blind_render.png', // Дубль
-        'the_cursed_outlaw_king.png', // Дубль
-        'ancient_crypt_warden.png', // Дубль
-        'echo_of_the_triumvirate.png', // Дубль
-        'sacred_tree_executioner.png', // Дубль
-        'sherwood_abomination.png', // Дубль
-        'the_primordial_core.png' // Дубль
+        'blight_blade.png', 'ash_wraith.png',
+        'ancient_watcher.png', 'lost_treasure_hunter.png',
+        'shadow_maiden.png', 'cursed_priestess.png', 'mistress_of_the_roots.png',
+        'rusty_servant.png', 'tormentor.png', 'grave_archer.png',
+        'chaos_lord.png',
+        'harpy_witch.png', 'harpy_hatchling.png', 'harpy_chieftain.png'
     ],
 
-    // Босс в конце (уже есть в списке, но можно вынести отдельно, если нужно)
     BOSS: 'the_primordial_core.png',
+    KILLS_PER_ENEMY: 5,
+
+    MOB_NAMES: {},
 
     _currentIndex: 0,
     _killCount: 0,
+    _killsForCurrent: 0,
     _startTime: 0,
     _isActive: false,
     _uniqueEnemies: [],
 
-    // Убираем дубли при инициализации
     init: function() {
         var seen = {};
         this._uniqueEnemies = [];
@@ -88,40 +64,52 @@ Sherwood.Wave = {
                 this._uniqueEnemies.push(e);
             }
         }
-        // Добавляем босса в конец, если его там нет
-        if (seen[this.BOSS] === undefined) {
-            this._uniqueEnemies.push(this.BOSS);
-        }
+        if (!seen[this.BOSS]) this._uniqueEnemies.push(this.BOSS);
         console.log('🌊 Скверная волна: ' + this._uniqueEnemies.length + ' уникальных врагов.');
     },
 
-        startWave: function() {
+    getMobName: function(imgPath) {
+        if (!imgPath) return 'Враг';
+        var file = imgPath.split('/').pop().replace('.png', '');
+        if (this.MOB_NAMES[file]) return this.MOB_NAMES[file];
+        if (typeof Sherwood.Dungeon !== 'undefined' && Sherwood.Dungeon.getMobName) {
+            try { return Sherwood.Dungeon.getMobName(imgPath); } catch (e) {}
+        }
+        var words = file.split('_');
+        for (var i = 0; i < words.length; i++) {
+            words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+        }
+        return words.join(' ');
+    },
+
+    startWave: function() {
         if (this._uniqueEnemies.length === 0) this.init();
-        
+
         var self = this;
-        // Показываем видео перед стартом
         this._playIntroVideo(function() {
             self._currentIndex = 0;
             self._killCount = 0;
+            self._killsForCurrent = 0;
             self._startTime = Date.now();
             self._isActive = true;
             self._openBattle();
         });
     },
+
     _playIntroVideo: function(onComplete) {
         var video = document.createElement('video');
-        video.src = 'assets/assets2/animation/raid_entrance.webm'; 
+        video.src = 'assets/assets2/animation/raid_entrance.webm';
         video.autoplay = true;
-        video.muted = true; 
+        video.muted = true;
         video.playsInline = true;
-        
+
         var videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:99999;background:#000;';
         if (window.innerWidth < 480) { video.style.cssText = videoStyles + 'width:100vw;height:100vh;'; }
         else if (window.innerWidth >= 480 && window.innerHeight <= 800) { video.style.cssText = videoStyles + 'width:480px;height:100vh;'; }
         else { video.style.cssText = videoStyles + 'width:480px;height:800px;'; }
-        
+
         document.body.appendChild(video);
-        
+
         var finished = false;
         function finish() {
             if (finished) return;
@@ -132,20 +120,20 @@ Sherwood.Wave = {
 
         video.onended = finish;
         video.onerror = finish;
-        setTimeout(finish, 10000); 
+        setTimeout(finish, 10000);
     },
+
     getCurrentEnemy: function() {
         if (!this._isActive) return null;
         if (this._currentIndex >= this._uniqueEnemies.length) return null;
-        
+
         var fileName = this._uniqueEnemies[this._currentIndex];
         var isBoss = (fileName === this.BOSS);
-        
-        // Определяем путь: если босс - из beast_quest, иначе из all_beasts
+
         var path = isBoss ? 'assets/beast_quest/' + fileName : 'assets/all_beasts/' + fileName;
 
         return {
-            name: fileName.replace('.png', ''),
+            name: this.getMobName(fileName),
             imagePath: path,
             isBoss: isBoss,
             hp: 1000 + (this._currentIndex * 300),
@@ -155,22 +143,26 @@ Sherwood.Wave = {
     },
 
     onEnemyKilled: function() {
+        if (!this._isActive) return;
         this._killCount++;
-        this._currentIndex++;
+        this._killsForCurrent++;
 
-        if (this._currentIndex >= this._uniqueEnemies.length) {
-            this.finishWave();
-            return;
+        var current = this._uniqueEnemies[this._currentIndex];
+        var needed = (current === this.BOSS) ? 1 : this.KILLS_PER_ENEMY;
+
+        if (this._killsForCurrent >= needed) {
+            this._killsForCurrent = 0;
+            this._currentIndex++;
+            if (this._currentIndex >= this._uniqueEnemies.length) {
+                this.finishWave();
+                return;
+            }
         }
 
-        // Сигнал в iframe, что нужно загрузить следующего
-        if (window.parent && window.parent.Sherwood && window.parent.Sherwood.Wave) {
-            window.parent.Sherwood.Wave._loadNext();
-        }
+        this._loadNext();
     },
 
     _loadNext: function() {
-        // Отправляем сообщение в iframe
         var iframe = document.querySelector('iframe[src*="wave_battle"]');
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage({ type: 'next_enemy' }, '*');
@@ -182,7 +174,7 @@ Sherwood.Wave = {
         var timeSec = Math.floor((Date.now() - this._startTime) / 1000);
         var mins = Math.floor(timeSec / 60);
         var secs = timeSec % 60;
-        
+
         var reward = {
             exp: 10000 + this._killCount * 200,
             gold: 5000 + this._killCount * 100,
@@ -193,20 +185,31 @@ Sherwood.Wave = {
         Sherwood.addResource('gold', reward.gold);
         Sherwood.addResource('silver', reward.silver);
         Sherwood.saveGame();
-        
-        if (parent.UI && parent.UI._showToast) {
-            parent.UI._showToast('🏆 Волна пройдена! Время: ' + mins + 'м ' + secs + 'с. Убито: ' + this._killCount);
+
+        try {
+            if (typeof UI !== 'undefined' && UI._showVictoryScreen) {
+                UI._afterRewardAction = function() { UI.camp(); };
+                UI._showVictoryScreen({ exp: reward.exp, gold: reward.gold, silver: reward.silver, items: [] });
+            } else if (typeof UI !== 'undefined' && UI._showToast) {
+                UI._showToast('🏆 Волна пройдена! Время: ' + mins + 'м ' + secs + 'с. Убито: ' + this._killCount);
+                setTimeout(function() { UI.camp(); }, 2000);
+            }
+        } catch (e) {
+            console.warn('Не удалось показать экран победы:', e);
         }
-        
-        setTimeout(function() {
-            parent.UI.camp();
-        }, 2000);
+    },
+
+    abortWave: function() {
+        this._isActive = false;
+        this._currentIndex = 0;
+        this._killCount = 0;
+        this._killsForCurrent = 0;
     },
 
     _openBattle: function() {
         if (typeof UI === 'undefined') return;
         UI._stopMusic();
-        
+
         var iframe = document.createElement('iframe');
         iframe.src = 'wave_battle.html';
         iframe.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0;z-index:100;';
@@ -225,16 +228,21 @@ Sherwood.Wave = {
     getKillCount: function() {
         return this._killCount;
     },
-    
+
     getTotalEnemies: function() {
         return this._uniqueEnemies.length;
+    },
+
+    getTotalFights: function() {
+        var n = this._uniqueEnemies.length;
+        if (n === 0) return 0;
+        return (n - 1) * this.KILLS_PER_ENEMY + 1;
     }
 };
 
 window.Sherwood = window.Sherwood || {};
 window.Sherwood.Wave = Sherwood.Wave;
 
-// Инициализируем при загрузке
 setTimeout(function() { Sherwood.Wave.init(); }, 100);
 
 console.log('🌊 Скверная волна загружена!');
