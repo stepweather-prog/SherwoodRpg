@@ -135,9 +135,21 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.setClearColor(0x0a0805, 1);
         document.body.appendChild(renderer.domElement);
+
+        // === КАЧЕСТВО ГРАФИКИ (Настройки → Графика) ===
+        function applyGraphicsMode(mode) {
+            var pr = mode === 'low' ? 0.75 : (mode === 'medium' ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+            renderer.setPixelRatio(pr);
+        }
+        try {
+            var gs = localStorage.getItem('sherwood_settings');
+            applyGraphicsMode((gs && JSON.parse(gs).graphics) || 'high');
+        } catch (e) { applyGraphicsMode('high'); }
+        window.addEventListener('message', function (e) {
+            if (e.data && e.data.type === 'sherwood_graphics') applyGraphicsMode(e.data.mode);
+        });
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
         var soundHit = new Audio('assets/assets2/tune/hit.wav');
@@ -188,8 +200,18 @@
             onDeath: onPlayerDeath
         });
 
+        function disposeEnemySprite() {
+            if (!enemySprite) return;
+            scene.remove(enemySprite);
+            if (enemySprite.material) {
+                if (enemySprite.material.map) enemySprite.material.map.dispose();
+                enemySprite.material.dispose();
+            }
+            enemySprite = null;
+        }
+
         function createEnemySprite(imgPath, isBoss, callback) {
-            if (enemySprite) { scene.remove(enemySprite); enemySprite = null; }
+            disposeEnemySprite();
             var loader = new THREE.TextureLoader();
             loader.load(
                 imgPath,
@@ -233,7 +255,7 @@
 
         function onEnemyKilled() {
             playSound(soundVictory);
-            if (enemySprite) { scene.remove(enemySprite); enemySprite = null; }
+            disposeEnemySprite();
             var r = null;
             try { r = parent.Sherwood.Portal.portalEnemyDefeated(); } catch (e) {}
             if (!r) return;
