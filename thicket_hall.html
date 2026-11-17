@@ -135,7 +135,12 @@
             'executioner_crow.png': 'Ворон-Палач', 'plague_pixie.png': 'Чумная Пикси',
             'putrid_sprite.png': 'Гнилостный Спрайт', 'forest_strangler.png': 'Лесной Душегуб'
         };
-        function getMobName(p) { if (!p) return 'Враг'; var f = p.split('/').pop(); return MOB_NAMES[f] || 'Враг'; }
+        function getMobName(p) {
+            if (enemyData && enemyData.name) return enemyData.name;
+            if (!p) return 'Враг';
+            var f = String(p).split('/').pop();
+            return MOB_NAMES[f] || 'Враг';
+        }
 
         // ============================================================
         //  ЗВУКИ
@@ -158,7 +163,12 @@
         }
         setTimeout(function () { stopAllParentMusic(); thicketMusic.play().catch(function () {}); }, 300);
 
+        // ============================================================
+        //  ВЫХОД ИЗ ЧАЩОБЫ
+        // ============================================================
         function exitThicket() {
+            window.Sherwood.BattleVisuals.stopBattle();
+            window.Sherwood.BattleVisuals.returnArrowsToBag();
             try { thicketMusic.pause(); thicketMusic.currentTime = 0; } catch (e) {}
             try { parent.Sherwood.Thicket._flee(); } catch (e) {}
         }
@@ -219,32 +229,24 @@
         window.Sherwood.BattleVisuals.init({
             THREE: THREE,
             scene: battleScene,
-            group: null,                 // в сюжетке нет карты-группы
             loader: loader,
             camFPS: battleCamera,
-            bgPath: 'assets/assets2/dungeon_details/swamp_tiles_6.png',
             camFPSOptions: { y: 0.55, z: 3.6, lookY: 0.45 },
-            mapSize: 16,
             getPlayer: function () { return parent.Sherwood.getPlayer(); },
-            Talents: parent.Sherwood.Talents,
-            UI: parent.UI,
             getMobName: getMobName,
             playSoundHit: function () { playSound(soundHit); },
             playSoundAltar: function () { playSound(soundAltar); },
             onCenterText: showCenterText,
             onHpChanged: function () { if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); },
-
-            // В сюжетке группа/камера фиксированные — просто ничего не делаем
-            onCameraEnter: function () { },
-            onCameraExit: function () { },
-
+            onBattleStart: function () { },
             onBattleStop: function () { },
 
             onEnemyKilled: function (enemyObj) {
                 playSound(soundVictory);
+                window.Sherwood.BattleVisuals.updateKillCounter(1, 1);
                 try {
                     if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) {
-                        var imgFile = enemyObj.img.split('/').pop();
+                        var imgFile = String(enemyObj.img || '').split('/').pop();
                         parent.Sherwood.Bestiary.registerKill(imgFile);
                     }
                 } catch (e) {}
@@ -255,6 +257,7 @@
 
             onDeath: function (reason) {
                 playSound(soundDefeat);
+                window.Sherwood.BattleVisuals.returnArrowsToBag();
                 try { parent.Sherwood.Thicket._onDefeat(nodeId); } catch (e) {}
             }
         });
@@ -264,36 +267,53 @@
         // ============================================================
         var enemyObj = null;
         var enemySprite = null;
+        var FALLBACK_IMG = 'assets/interface/labyrinth_of_icons.png';
 
         function createEnemyAndStartBattle() {
             var path = (enemyData && enemyData.imagePath) ? enemyData.imagePath : 'assets/all_beasts/plague_crow.png';
             var isBoss = (enemyData && enemyData.isBoss) ? true : false;
-            var mult = 1.0 + (diff - 1) * 0.2;
+            // ВАЖНО: thicket.js уже применил множитель сложности (DIFF_MULT) в getCurrentEnemy() —
+            // здесь НЕ умножаем повторно, берём значения как есть (как в portal_battle.html)
             var hp = (enemyData && enemyData.hp) ? enemyData.hp : (1000 + Math.floor(Math.random() * 500));
             var atk = (enemyData && enemyData.atk) ? enemyData.atk : (50 + Math.floor(Math.random() * 20));
             var def = (enemyData && enemyData.def) ? enemyData.def : (10 + Math.floor(Math.random() * 10));
+            var name = (enemyData && enemyData.name) ? enemyData.name : getMobName(path);
 
             enemyObj = {
-                x: 0, y: 0,
                 isBoss: isBoss,
                 img: path,
-                hp: Math.floor(hp * mult),
-                maxHp: Math.floor(hp * mult),
-                atk: Math.floor(atk * mult),
-                def: Math.floor(def * mult),
-                collected: false,
-                mesh: null
+                name: name,
+                hp: hp,
+                maxHp: hp,
+                atk: atk,
+                def: def
             };
 
             loader.load(path, function (t) {
                 t.minFilter = t.magFilter = THREE.LinearFilter;
-                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: 0.05 }));
-                // setupEnemySprite сделает модуль внутри start()
+                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true }));
+                window.Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
                 battleScene.add(enemySprite);
-                enemyObj.mesh = enemySprite;
-                window.Sherwood.BattleVisuals.start(enemyObj);
+                enemyObj.sprite = enemySprite;
+                window.Sherwood.BattleVisuals.startBattle(enemyObj);
+            }, undefined, function () {
+                console.warn('Не нашёл текстуру: ' + path);
+                var fallbackTex = new THREE.TextureLoader().load(FALLBACK_IMG);
+                enemySprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: fallbackTex, transparent: true }));
+                window.Sherwood.BattleVisuals.setupEnemySprite(enemySprite, isBoss);
+                battleScene.add(enemySprite);
+                enemyObj.sprite = enemySprite;
+                window.Sherwood.BattleVisuals.startBattle(enemyObj);
             });
         }
+
+        // ============================================================
+        //  АТАКА (модуль сам не вешает клики — вешает хост, как в портале)
+        // ============================================================
+        function attackEnemy() { window.Sherwood.BattleVisuals.attack(); }
+        document.getElementById('attack-icon').addEventListener('click', function (e) { e.stopPropagation(); attackEnemy(); });
+        document.getElementById('attack-icon').addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); attackEnemy(); });
+        document.addEventListener('keydown', function (e) { if (e.key === ' ' || e.key.toLowerCase() === 'enter') { e.preventDefault(); attackEnemy(); } });
 
         // ============================================================
         //  АНИМАЦИЯ
@@ -307,18 +327,14 @@
             // единая система боя: таймеры, скверна, кулдаун, тряска, нокбэк, HP-бар
             window.Sherwood.BattleVisuals.update(dt);
 
-            // лёгкое покачивание врага, когда он не в нокбэке
-            if (enemySprite && !window.Sherwood.BattleVisuals.isActive()) { /* бой окончен */ }
+            // HP-бар следует за спрайтом врага (как в эталоне)
             if (enemySprite && window.Sherwood.BattleVisuals.isActive()) {
-                var t = clock.elapsedTime;
-                // модуль двигает нокбэк сам; покачивание — по y, чтобы не ломать knockback
-                if (enemySprite.position.y > -1) {
-                    // мягкое дыхание
-                    var baseY = -0.4;
-                    if (Math.abs(enemySprite.position.y - baseY) < 0.5) {
-                        enemySprite.position.y = baseY + Math.sin(t * 2.5) * 0.02;
-                    }
-                }
+                window.Sherwood.BattleVisuals.updateMobHpBar(enemySprite, battleCamera);
+            }
+
+            // лёгкое покачивание врага, когда бой не активен (как в portal_battle.html)
+            if (enemySprite && !window.Sherwood.BattleVisuals.isActive()) {
+                enemySprite.position.y = -0.4 + Math.sin(clock.elapsedTime * 2.5) * 0.02;
             }
 
             renderer.render(battleScene, battleCamera);
@@ -327,13 +343,15 @@
         // ============================================================
         //  ЗАПУСК
         // ============================================================
-        createEnemyAndStartBattle();
-        animate();
+        window.Sherwood.BattleVisuals.updateKillCounter(0, 1);
 
         setTimeout(function () {
             window.Sherwood.BattleVisuals.loadArrowsFromBag();
             window.Sherwood.BattleVisuals.renderLearnedTalents();
+            createEnemyAndStartBattle();
         }, 700);
+
+        animate();
 
         addEventListener('resize', function () {
             var aspect = window.innerWidth / window.innerHeight;
