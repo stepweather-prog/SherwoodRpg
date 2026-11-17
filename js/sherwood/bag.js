@@ -1,5 +1,6 @@
 /**
- * Sherwood Bag — Сумка */
+ * Sherwood Bag — Сумка
+ */
 
  if (typeof Sherwood === 'undefined') {
     window.Sherwood = {};
@@ -40,12 +41,56 @@ Sherwood.Bag = {
         arrows:           { id: 'sherwood_arrow', name: 'Шервудская стрела', icon: 'assets/interface/sherwood_hollow_arrow.png', maxStack: 50, sellPrice: 2 }
     },
 
+    // Сервисные ресурсы: отображаются НАД ячейками и слоты сумки НЕ занимают
+    // (шкуры, билеты подземки/авто-боя, токены порталов, скрижали, чертежи).
+    // В ячейках живут только лут для крафта стрел, стрелы и обычные предметы.
+    SERVICE_KEYS: ['skins', 'entranceTickets', 'autoFightTickets', 'amuletTablets', 'ringTablets', 'skinTablets', 'skinDrawings', 'portalToken1', 'portalToken2', 'portalToken3'],
+
+    _isServiceId: function(id) {
+        for (var k = 0; k < this.SERVICE_KEYS.length; k++) {
+            var def = this._resourceDefs[this.SERVICE_KEYS[k]];
+            if (def && def.id === id) return true;
+        }
+        return false;
+    },
+
+    _flagServiceItems: function() {
+        for (var i = 0; i < this._inventory.length; i++) {
+            if (this._inventory[i] && this._isServiceId(this._inventory[i].id)) {
+                this._inventory[i]._svc = true;
+            }
+        }
+    },
+
+    // Занятые ячейки — только обычные предметы (сервисные не считаются)
+    _usedSlots: function() {
+        var n = 0;
+        for (var i = 0; i < this._inventory.length; i++) {
+            if (this._inventory[i] && !this._inventory[i]._svc) n++;
+        }
+        return n;
+    },
+
+    _countDef: function(defKey) {
+        var def = this._resourceDefs[defKey];
+        if (!def) return 0;
+        var total = 0;
+        for (var i = 0; i < this._inventory.length; i++) {
+            if (this._inventory[i].id === def.id) total += this._inventory[i].quantity || 0;
+        }
+        return total;
+    },
+
     init: function() {
         var player = Sherwood.getPlayer();
         if (!player) return;
 
         this._inventory = player.inventory || [];
         this._equipment = player.equipment || this._equipment;
+
+        // Миграция старых сейвов: сервисные предметы в ячейках помечаются —
+        // они перестают занимать слоты и уходят в полосу над ячейками
+        this._flagServiceItems();
 
         // Если bagSize уже сохранён — берём его, иначе 10
         this._maxSlots = player.bagSize || 10;
@@ -173,7 +218,7 @@ Sherwood.Bag = {
                 this._save();
                 console.log('🔑 Начислено ' + canAdd + ' ключей подземки (регенерация)');
             }
-            // Если после добавления всё равно меньше максимума — таймер сдвинут правильно
+            // Если после добавления всё равно меньше максимуму — таймер сдвинут правильно
             if (this.getTicketCount('entrance') >= max) {
                 regen.lastRegenTime = now;
             }
@@ -183,8 +228,8 @@ Sherwood.Bag = {
     getItems: function() { return this._inventory; },
     getEquipment: function() { return this._equipment; },
     getMaxSlots: function() { return this._maxSlots; },
-    getFreeSlots: function() { return this._maxSlots - this._inventory.length; },
-    isFull: function() { return this._inventory.length >= this._maxSlots; },
+    getFreeSlots: function() { return this._maxSlots - this._usedSlots(); },
+    isFull: function() { return this._usedSlots() >= this._maxSlots; },
     getResources: function() { return this._resources; },
     getResource: function(type) { return this._resources[type] || 0; },
 
@@ -289,12 +334,15 @@ Sherwood.Bag = {
         return { success: true, bought: count, cost: costGold };
     },
 
-    // Добавить "ресурс" как предмет в ячейки (стак 50)
+    // Добавить "ресурс" как предмет (стак 50).
+    // Сервисные (SERVICE_KEYS) — без лимита ячеек, помечаются _svc;
+    // обычные — занимают ячейки, при переполнении BAG_FULL.
     _addAsItem: function(defKey, amount) {
         if (!amount || amount <= 0) return;
         var def = this._resourceDefs[defKey];
         if (!def) return;
 
+        var isService = this.SERVICE_KEYS.indexOf(defKey) !== -1;
         var remaining = amount;
         var maxStack = 50;
 
@@ -309,14 +357,14 @@ Sherwood.Bag = {
             }
         }
 
-        // Новые ячейки
+        // Новые стаки
         while (remaining > 0) {
-            if (this._inventory.length >= this._maxSlots) {
+            if (!isService && this._usedSlots() >= this._maxSlots) {
                 if (Sherwood.dispatch) Sherwood.dispatch({ type: 'BAG_FULL', payload: { item: def } });
                 break;
             }
             var put = Math.min(remaining, maxStack);
-            this._inventory.push({
+            var stack = {
                 id: def.id,
                 name: def.name,
                 icon: def.icon,
@@ -324,7 +372,9 @@ Sherwood.Bag = {
                 maxStack: maxStack,
                 sellPrice: def.sellPrice,
                 resKey: defKey
-            });
+            };
+            if (isService) stack._svc = true;
+            this._inventory.push(stack);
             remaining -= put;
         }
     },
@@ -546,44 +596,57 @@ Sherwood.Bag = {
 
         var items = this._inventory;
         var max = this._maxSlots;
-        var skinsCount = this.getSkinCount();
-        var entranceCount = this.getTicketCount('entrance');
-        var autofightCount = this.getTicketCount('autofight');
-        var portalTokenCount = this.getTicketCount('portal');
+        var used = this._usedSlots();
 
         // Фон fixed — не растягивается при скролле
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:url(\'assets/assets2/backgrounds/bag.png\') center/cover no-repeat fixed;overflow:hidden;">';
 
-        // Шапка с ресурсами
-        h += '<div style="position:absolute;top:56px;left:0;right:0;text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;text-shadow:0 2px 4px #000;z-index:5;padding:6px 0;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">';
+        // Верхний блок: валюта + сервисная полоса + счётчик ячеек
+        h += '<div style="position:absolute;top:52px;left:0;right:0;z-index:5;padding:0 8px;">';
+
+        // Шапка: золото/серебро
+        h += '<div style="text-align:center;color:#e0c080;font-size:0.8em;font-weight:bold;text-shadow:0 2px 4px #000;padding:2px 0;display:flex;justify-content:center;gap:16px;">';
         h += '<span>🪙 ' + this._resources.gold + '</span>';
         h += '<span>🥈 ' + this._resources.silver + '</span>';
-        h += '<span>🐺 ' + skinsCount + '</span>';
-        h += '<span>🔑 ' + entranceCount + '</span>';
-        h += '<span>⚔️ ' + autofightCount + '</span>';
-        h += '<span>🔮 ' + portalTokenCount + '</span>';
         h += '</div>';
 
-        // Счётчик ячеек чуть ниже
-        h += '<div style="position:absolute;top:90px;left:0;right:0;text-align:center;color:#aaa;font-size:0.75em;z-index:5;padding:4px 0;">📦 ' + items.length + ' / ' + max + ' ячеек</div>';
+        // Сервисная полоса НАД ячейками — слоты сумки не занимают
+        h += '<div style="display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:5px;">';
+        for (var s = 0; s < this.SERVICE_KEYS.length; s++) {
+            var sDef = this._resourceDefs[this.SERVICE_KEYS[s]];
+            var sCount = this._countDef(this.SERVICE_KEYS[s]);
+            h += '<span title="' + sDef.name + '" style="display:flex;align-items:center;gap:3px;background:rgba(0,0,0,0.55);border:1px solid #6b5a3a;border-radius:6px;padding:2px 6px;' + (sCount > 0 ? '' : 'opacity:0.35;') + '">';
+            h += '<img src="' + sDef.icon + '" style="width:20px;height:20px;object-fit:contain;pointer-events:none;" onerror="this.style.display=\'none\'">';
+            h += '<span style="color:#e0c080;font-size:0.68em;font-weight:bold;text-shadow:0 1px 3px #000;">' + sCount + '</span>';
+            h += '</span>';
+        }
+        h += '</div>';
+
+        // Счётчик ячеек — только обычные предметы (сервисные не считаются)
+        h += '<div style="text-align:center;color:#aaa;font-size:0.75em;margin-top:6px;">📦 ' + used + ' / ' + max + ' ячеек</div>';
+
+        h += '</div>';
 
         // Скролл-контейнер с сеткой
-        h += '<div class="bag-scroll" style="position:absolute;top:120px;left:0;right:0;bottom:0;overflow-y:auto;padding:10px 12px 20px 12px;">';
+        h += '<div class="bag-scroll" style="position:absolute;top:180px;left:0;right:0;bottom:0;overflow-y:auto;padding:10px 12px 20px 12px;">';
 
         h += '<div id="bag-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;justify-items:center;">';
-        for (var i = 0; i < max; i++) {
+        var rendered = 0;
+        for (var i = 0; i < items.length && rendered < max; i++) {
             var item = items[i];
-            if (item) {
-                var gc = Sherwood.GradeColors ? (Sherwood.GradeColors[item.grade] || '#9d9d9d') : '#9d9d9d';
-                h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="Sherwood.Bag._dragStart(event,' + i + ')" ondragover="Sherwood.Bag._dragOver(event)" ondragleave="Sherwood.Bag._dragLeave(event)" ondrop="Sherwood.Bag._drop(event,' + i + ')" onclick="Sherwood.Bag._action(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:grab;padding:4px;transition: border-color 0.15s;">';
-                h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;pointer-events:none;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
-                if ((item.quantity || 1) > 1) {
-                    h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;pointer-events:none;">' + item.quantity + '</span>';
-                }
-                h += '</div>';
-            } else {
-                h += '<div data-bag-index="' + i + '" ondragover="Sherwood.Bag._dragOver(event)" ondragleave="Sherwood.Bag._dragLeave(event)" ondrop="Sherwood.Bag._drop(event,' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid #555;border-radius:8px;transition: border-color 0.15s;"></div>';
+            if (item._svc) continue;
+            var gc = Sherwood.GradeColors ? (Sherwood.GradeColors[item.grade] || '#9d9d9d') : '#9d9d9d';
+            h += '<div draggable="true" data-bag-index="' + i + '" ondragstart="Sherwood.Bag._dragStart(event,' + i + ')" ondragover="Sherwood.Bag._dragOver(event)" ondragleave="Sherwood.Bag._dragLeave(event)" ondrop="Sherwood.Bag._drop(event,' + i + ')" onclick="Sherwood.Bag._action(' + i + ')" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid ' + gc + ';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:grab;padding:4px;transition: border-color 0.15s;">';
+            h += '<img src="' + (item.icon || 'assets/interface/labyrinth_of_icons.png') + '" style="width:36px;height:36px;object-fit:contain;pointer-events:none;" onerror="this.src=\'assets/interface/labyrinth_of_icons.png\'">';
+            if ((item.quantity || 1) > 1) {
+                h += '<span style="position:absolute;bottom:2px;right:4px;color:#fff;font-size:0.6em;font-weight:bold;background:rgba(0,0,0,0.8);padding:1px 6px;border-radius:4px;pointer-events:none;">' + item.quantity + '</span>';
             }
+            h += '</div>';
+            rendered++;
+        }
+        while (rendered < max) {
+            h += '<div data-bag-index="-1" ondragover="Sherwood.Bag._dragOver(event)" ondragleave="Sherwood.Bag._dragLeave(event)" ondrop="Sherwood.Bag._drop(event,-1)" style="background:url(\'assets/interface/bag_cell.png\') center/contain no-repeat;background-size:cover;width:80px;height:80px;border:2px solid #555;border-radius:8px;transition: border-color 0.15s;"></div>';
+            rendered++;
         }
         h += '</div>';
 
@@ -664,13 +727,25 @@ Sherwood.Bag = {
         
         // Убираем подсветку у целевой ячейки
         if (e.currentTarget) {
-            var tItem = this._inventory[targetIndex];
+            var tItem = targetIndex >= 0 ? this._inventory[targetIndex] : null;
             var gc = tItem && Sherwood.GradeColors ? (Sherwood.GradeColors[tItem.grade] || '#9d9d9d') : '#9d9d9d';
             e.currentTarget.style.borderColor = tItem ? gc : '#555';
         }
 
         var sourceIndex = parseInt(e.dataTransfer.getData('text/plain'));
-        if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+        if (isNaN(sourceIndex)) return;
+
+        // Пустая ячейка — переносим предмет в конец списка (сервисные не в сетке)
+        if (targetIndex === -1) {
+            if (sourceIndex < 0 || sourceIndex >= this._inventory.length) return;
+            var moved = this._inventory.splice(sourceIndex, 1)[0];
+            this._inventory.push(moved);
+            this._save();
+            this.showUI();
+            return;
+        }
+
+        if (sourceIndex === targetIndex) return;
         
         var items = this._inventory;
         if (sourceIndex >= items.length) return;
