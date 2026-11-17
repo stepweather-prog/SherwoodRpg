@@ -2,7 +2,7 @@
 //  SERVICE-WORKER.JS — Офлайн-режим для Sherwood RPG
 // ============================================================
 
-const CACHE_NAME = 'sherwood-v1.1.8';
+const CACHE_NAME = 'sherwood-v1.1.9';
 
 // Список файлов, которые нужно закэшировать при установке
 const ASSETS_TO_CACHE = [
@@ -13,13 +13,13 @@ const ASSETS_TO_CACHE = [
     './css/mobile.css',
     './assets/interface/logo.png',
 
-    // === HTML-ФАЙЛЫ РЕЖИМОВ (их надо кэшировать, иначе в офлайне будет ошибка) ===
+    // === HTML-ФАЙЛЫ РЕЖИМОВ (их надо кэшировать, иначе в оффлайне будет ошибка) ===
     './camp.html',
     './dungeon.html',
     './portal_battle.html',
     './thicket_hall.html',
-    './wave_battle.html',     // <-- твой новый режим
-    // Если есть ещё другие режимы (например, profile_camp.html), добавь их сюда же
+    './wave_battle.html',
+    './profile_camp.html',
 
     // === JS-ФАЙЛЫ ===
     './js/sherwood/core.js',
