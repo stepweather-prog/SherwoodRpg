@@ -80,9 +80,21 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
+
+        // === КАЧЕСТВО ГРАФИКИ (Настройки → Графика) ===
+        function applyGraphicsMode(mode) {
+            var pr = mode === 'low' ? 0.75 : (mode === 'medium' ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setPixelRatio(pr);
+        }
+        try {
+            var gs = localStorage.getItem('sherwood_settings');
+            applyGraphicsMode((gs && JSON.parse(gs).graphics) || 'high');
+        } catch (e) { applyGraphicsMode('high'); }
+        window.addEventListener('message', function (e) {
+            if (e.data && e.data.type === 'sherwood_graphics') applyGraphicsMode(e.data.mode);
+        });
 
         const labelRenderer = new CSS2DRenderer();
         labelRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -291,6 +303,13 @@
 
         var isStopping = false;
 
+        // === ЗВУК ШАГОВ (как в лагере) ===
+        var soundSteps = new Audio('assets/assets2/tune/steps.wav');
+        soundSteps.loop = true;
+        var stepsPlaying = false;
+        function startSteps() { if (stepsPlaying) return; stepsPlaying = true; try { soundSteps.currentTime = 0; soundSteps.play().catch(function(){}); } catch(e){} }
+        function stopSteps() { stepsPlaying = false; try { soundSteps.pause(); soundSteps.currentTime = 0; } catch(e){} }
+
         function updatePlayer(dt) {
             const p = player;
             let moveX = 0;
@@ -303,6 +322,7 @@
                 p.facing = moveX;
                 if (video.paused) video.play().catch(()=>{});
                 isStopping = false;
+                if (!stepsPlaying) startSteps();
             } else {
                 // Мгновенная остановка
                 if (!video.paused || !isStopping) {
@@ -312,6 +332,7 @@
                     // Принудительная отрисовка кадра
                     setTimeout(function() { processHeroFrame(p.facing < 0); }, 20);
                 }
+                if (stepsPlaying) stopSteps();
             }
 
             const newX = p.pos.x + p.vel.x * dt;
