@@ -37,9 +37,9 @@ Sherwood.Forge = {
         var branches = 0, feathers = 0, bones = 0, arrows = 0;
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
-            if (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew') branches += item.quantity || 1;
-            if (item.id === 'feather_beast_1' || item.resKey === 'feathers') feathers += item.quantity || 1;
-            if (item.id === 'bone_growth_of_the_beast' || item.resKey === 'bones') bones += item.quantity || 1;
+            if (item.id === 'branch_damned_yew' || item.id === 'branch' || item.resKey === 'branchDamnedYew') branches += item.quantity || 1;
+            if (item.id === 'feather_beast_1' || item.id === 'feather' || item.resKey === 'feathers') feathers += item.quantity || 1;
+            if (item.id === 'bone_growth_of_the_beast' || item.id === 'bone' || item.resKey === 'bones') bones += item.quantity || 1;
             if (item.id === 'sherwood_arrow') arrows += item.quantity || 1;
         }
         var canCraft = Math.min(
@@ -59,9 +59,9 @@ Sherwood.Forge = {
         var items = bag.getItems();
         for (var i = items.length - 1; i >= 0 && (needBranch > 0 || needFeather > 0 || needBone > 0); i--) {
             var item = items[i];
-            var isBranch = (item.id === 'branch_damned_yew' || item.resKey === 'branchDamnedYew');
-            var isFeather = (item.id === 'feather_beast_1' || item.resKey === 'feathers');
-            var isBone = (item.id === 'bone_growth_of_the_beast' || item.resKey === 'bones');
+            var isBranch = (item.id === 'branch_damned_yew' || item.id === 'branch' || item.resKey === 'branchDamnedYew');
+            var isFeather = (item.id === 'feather_beast_1' || item.id === 'feather' || item.resKey === 'feathers');
+            var isBone = (item.id === 'bone_growth_of_the_beast' || item.id === 'bone' || item.resKey === 'bones');
             if (isBranch && needBranch > 0) { var qty = item.quantity || 1; if (qty <= needBranch) { needBranch -= qty; bag.removeItem(i, qty); } else { bag.removeItem(i, needBranch); needBranch = 0; } }
             else if (isFeather && needFeather > 0) { var qty = item.quantity || 1; if (qty <= needFeather) { needFeather -= qty; bag.removeItem(i, qty); } else { bag.removeItem(i, needFeather); needFeather = 0; } }
             else if (isBone && needBone > 0) { var qty = item.quantity || 1; if (qty <= needBone) { needBone -= qty; bag.removeItem(i, qty); } else { bag.removeItem(i, needBone); needBone = 0; } }
@@ -283,112 +283,110 @@ Sherwood.Forge = {
         var self = this;
         var player = Sherwood.getPlayer();
         var bag = Sherwood.Bag;
-        
-        var skinTablets = 0, ringTablets = 0, amuletTablets = 0, skinDrawings = 0;
-        if (bag) {
-            var items = bag.getItems();
-            for (var i = 0; i < items.length; i++) {
-                if (items[i].id === 'skin_drawing') skinDrawings += items[i].quantity || 1;
-                if (items[i].id === 'skin_tablet') skinTablets += items[i].quantity || 1;
-                if (items[i].id === 'ring_tablet') ringTablets += items[i].quantity || 1;
-                if (items[i].id === 'amulet_tablet') amuletTablets += items[i].quantity || 1;
-            }
-        }
 
         if (UI._screenLayer) {
             UI._screenLayer.style.overflow = 'hidden';
         }
 
+        var BTN = 'background:#5a3a00;border:1px solid #c8a050;border-radius:8px;padding:10px 8px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.95em;box-shadow:0 2px 4px rgba(0,0,0,0.3);box-sizing:border-box;';
+        var CARD = 'display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;';
+
+        function tabBtn(tab, label) {
+            var active = (self._currentTab === tab);
+            return '<button onclick="Sherwood.Forge._currentTab=\'' + tab + '\'; Sherwood.Forge.showUI();" style="flex:1;max-width:150px;padding:10px 6px;border-radius:8px;border:2px solid ' + (active ? '#ffd700' : '#6b5a3a') + ';background:' + (active ? 'rgba(90,50,0,0.9)' : 'rgba(0,0,0,0.6)') + ';color:' + (active ? '#ffd700' : '#c8a050') + ';font-weight:bold;font-size:0.95em;cursor:pointer;text-shadow:0 2px 4px #000;box-sizing:border-box;">' + label + '</button>';
+        }
+
         var h = '<div style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background:url(\'assets/assets2/backgrounds/forge.png\') center/cover no-repeat;scrollbar-width:none;-ms-overflow-style:none;">';
         h += '<style>.forge-scroll::-webkit-scrollbar{display:none;}.forge-scroll{scrollbar-width:none;}</style>';
 
-        // --- СВОЯ КНОПКА НАЗАД ---
         h += '<button onclick="UI.camp()" style="position:absolute;top:15px;left:15px;z-index:9999;background:rgba(0,0,0,0.8);border:2px solid #c8a050;border-radius:8px;padding:8px 16px;color:#c8a050;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);">← Назад</button>';
 
-        // Контент поверх
-        h += '<div class="forge-scroll" style="position:relative;z-index:10;width:100%;min-height:100%;padding-top:60px;padding-bottom:40px;">';
+        h += '<div class="forge-scroll" style="position:relative;z-index:10;width:100%;min-height:100%;padding:70px 10px 40px;box-sizing:border-box;">';
 
-        // === ПЛАШКИ ВКЛАДОК ===
-        h += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:20px;">';
-        
-        h += '<div onclick="Sherwood.Forge._currentTab=\'arrows\'; Sherwood.Forge.showUI();" style="width:300px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;' + (this._currentTab === 'arrows' ? 'filter:drop-shadow(0 0 10px #ffd700);' : 'opacity:0.7;') + '">';
-        h += '<span style="color:#ffa500;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Стрелы</span></div>';
-
-        h += '<div onclick="Sherwood.Forge._currentTab=\'jewelry\'; Sherwood.Forge.showUI();" style="width:300px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;' + (this._currentTab === 'jewelry' ? 'filter:drop-shadow(0 0 10px #ffd700);' : 'opacity:0.7;') + '">';
-        h += '<span style="color:#ffa500;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Ювелирка</span></div>';
-
-        h += '<div onclick="Sherwood.Forge._currentTab=\'skins\'; Sherwood.Forge.showUI();" style="width:300px;height:60px;background:url(\'assets/interface/all_stat.png\') center/100% 100% no-repeat;display:flex;align-items:center;justify-content:center;cursor:pointer;' + (this._currentTab === 'skins' ? 'filter:drop-shadow(0 0 10px #ffd700);' : 'opacity:0.7;') + '">';
-        h += '<span style="color:#ffa500;font-size:18px;font-weight:bold;text-shadow:0 2px 4px #000;">Облики</span></div>';
+        // === ВКЛАДКИ (один ряд) ===
+        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">';
+        h += tabBtn('arrows', 'Стрелы');
+        h += tabBtn('jewelry', 'Ювелирка');
+        h += tabBtn('skins', 'Облики');
         h += '</div>';
 
         // === ПЕРГАМЕНТ ===
-        h += '<div style="width:95%;max-width:460px;margin:0 auto 30px auto;position:relative;">';
-        h += '<div style="width:100%;min-height:350px;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:40px 25px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;">';
+        h += '<div style="width:95%;max-width:460px;margin:0 auto;position:relative;">';
+        h += '<div style="width:100%;background:url(\'assets/assets2/game_details/parchment_tasks.png\') center/100% 100% no-repeat;padding:34px 22px;display:flex;flex-direction:column;">';
 
-        // --- КОНТЕНТ ВКЛАДОК ---
         if (this._currentTab === 'arrows') {
             var arrowInfo = this.getArrowCraftInfo();
-            h += '<div style="text-align:center;color:#e0c080;font-size:1.1em;font-weight:bold;margin-bottom:15px;text-shadow:0 2px 4px #000;">Крафт стрел</div>';
-            
-            // Иконки ресурсов
-            h += '<div style="display:flex;justify-content:center;gap:15px;margin-bottom:15px;">';
-            h += '<div style="text-align:center;"><img src="assets/interface/branch_of_the_damned_yew.png" style="width:40px;height:40px;object-fit:contain;"><div style="color:#e0c080;font-size:0.9em;margin-top:4px;text-shadow:0 2px 4px #000;">' + arrowInfo.branches + '</div></div>';
-            h += '<div style="text-align:center;"><img src="assets/interface/feather_beast_1.png" style="width:40px;height:40px;object-fit:contain;"><div style="color:#e0c080;font-size:0.9em;margin-top:4px;text-shadow:0 2px 4px #000;">' + arrowInfo.feathers + '</div></div>';
-            h += '<div style="text-align:center;"><img src="assets/interface/bone_growth_of_the_beast.png" style="width:40px;height:40px;object-fit:contain;"><div style="color:#e0c080;font-size:0.9em;margin-top:4px;text-shadow:0 2px 4px #000;">' + arrowInfo.bones + '</div></div>';
-            h += '</div>';
-            
-            h += '<div style="text-align:center;color:#e0c080;font-size:0.9em;margin-bottom:20px;text-shadow:0 2px 4px #000;">Рецепт: 1 ветка + 1 перо + 1 кость = 1 стрела</div>';
-            
-            // Кнопки крафта
-            h += '<div style="display:flex;flex-direction:column;gap:8px;max-width:200px;margin:0 auto;">';
-            h += '<button onclick="Sherwood.Forge._craftArrowFromUI(1)" style="background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:10px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.95em;box-shadow:0 2px 4px rgba(0,0,0,0.3);">Сделать 1</button>';
-            h += '<button onclick="Sherwood.Forge._craftArrowFromUI(5)" style="background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:10px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.95em;box-shadow:0 2px 4px rgba(0,0,0,0.3);">Сделать 5</button>';
-            h += '<button onclick="Sherwood.Forge._craftArrowFromUI(10)" style="background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:10px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.95em;box-shadow:0 2px 4px rgba(0,0,0,0.3);">Сделать 10</button>';
-            h += '</div>';
-            
-            h += '<div style="text-align:center;color:#e0c080;font-size:0.9em;margin-top:20px;text-shadow:0 2px 4px #000;">Всего стрел в сумке: ' + arrowInfo.arrowsCount + '</div>';
-            
-                } else if (this._currentTab === 'jewelry') {
-            var ringInfo = this.getRingCraftInfo();
-            var amuletInfo = this.getAmuletCraftInfo();
-            
-            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:15px;padding:5px;">';
-            
-            // --- КАРТОЧКА КОЛЬЦА ---
-            h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;">';
-            var ringIconSrc = bag._equipment && bag._equipment.ring ? bag._equipment.ring.icon : 'assets/interface/ring_first_level.png';
-            h += '<img src="' + ringIconSrc + '" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
-            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;height:36px;line-height:1.2;overflow:hidden;margin-bottom:6px;text-shadow:0 2px 4px #000;">Кольцо ' + (ringInfo.isNew ? '' : 'Ур. ' + ringInfo.currentLevel) + '</div>';
-            
-            if (ringInfo.canCraft) {
-                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
-                h += '<button onclick="Sherwood.Forge._craftRingFromUI()" style="margin-top:auto;background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:8px 12px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.9em;width:100%;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
-            } else {
-                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
-                h += '<div style="color:#e0c080;font-size:0.85em;font-weight:bold;margin-top:auto;text-shadow:0 2px 4px #000;">🔒 Мало скрижалей</div>';
+            h += '<div style="text-align:center;color:#5a3a00;font-size:1.15em;font-weight:bold;margin-bottom:16px;">Крафт стрел</div>';
+
+            var resList = [
+                { icon: 'assets/interface/branch_of_the_damned_yew.png', name: 'Ветки', n: arrowInfo.branches },
+                { icon: 'assets/interface/feather_beast_1.png', name: 'Перья', n: arrowInfo.feathers },
+                { icon: 'assets/interface/bone_growth_of_the_beast.png', name: 'Кости', n: arrowInfo.bones }
+            ];
+            h += '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:16px;">';
+            for (var r = 0; r < resList.length; r++) {
+                var res = resList[r];
+                var ok = res.n > 0;
+                h += '<div style="flex:1;max-width:110px;' + CARD + 'padding:8px 6px;">';
+                h += '<img src="' + res.icon + '" style="width:42px;height:42px;object-fit:contain;margin-bottom:4px;">';
+                h += '<div style="color:' + (ok ? '#3a5a20' : '#8a3a3a') + ';font-size:1.05em;font-weight:bold;line-height:1;">' + res.n + '</div>';
+                h += '<div style="color:#6a5a40;font-size:0.75em;margin-top:3px;">' + res.name + '</div>';
+                h += '</div>';
             }
             h += '</div>';
 
-            // --- КАРТОЧКА АМУЛЕТА ---
-            h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;">';
-            var amuletIconSrc = bag._equipment && bag._equipment.amulet ? bag._equipment.amulet.icon : 'assets/interface/sherwood_amulet_level_one.png';
-            h += '<img src="' + amuletIconSrc + '" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
-            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;height:36px;line-height:1.2;overflow:hidden;margin-bottom:6px;text-shadow:0 2px 4px #000;">Амулет ' + (amuletInfo.isNew ? '' : 'Ур. ' + amuletInfo.currentLevel) + '</div>';
-            
-            if (amuletInfo.canCraft) {
-                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
-                h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" style="margin-top:auto;background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:8px 12px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.9em;width:100%;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
+            h += '<div style="text-align:center;color:#6a5a40;font-size:0.9em;margin-bottom:16px;">Рецепт: 1 ветка + 1 перо + 1 кость = 1 стрела</div>';
+
+            if (arrowInfo.canCraft > 0) {
+                h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">';
+                h += '<button onclick="Sherwood.Forge._craftArrowFromUI(1)" style="' + BTN + 'flex:1;max-width:110px;">Сделать 1</button>';
+                h += '<button onclick="Sherwood.Forge._craftArrowFromUI(5)" style="' + BTN + 'flex:1;max-width:110px;">Сделать 5</button>';
+                h += '<button onclick="Sherwood.Forge._craftArrowFromUI(10)" style="' + BTN + 'flex:1;max-width:110px;">Сделать 10</button>';
+                h += '</div>';
+                h += '<div style="text-align:center;color:#3a5a20;font-size:0.9em;font-weight:bold;">Доступно к крафту: ' + arrowInfo.canCraft + '</div>';
             } else {
-                h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">Скрижали: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
-                h += '<div style="color:#e0c080;font-size:0.85em;font-weight:bold;margin-top:auto;text-shadow:0 2px 4px #000;">🔒 Мало скрижалей</div>';
+                h += '<div style="text-align:center;color:#8a3a3a;font-size:0.95em;font-weight:bold;margin-bottom:14px;">🔒 Не хватает запчастей</div>';
+                h += '<div style="text-align:center;color:#6a5a40;font-size:0.85em;">Запчасти продаются на Чёрном рынке и выпадают с врагов</div>';
+            }
+
+            h += '<div style="text-align:center;color:#6a5a40;font-size:0.9em;margin-top:16px;">Всего стрел в сумке: ' + arrowInfo.arrowsCount + '</div>';
+
+        } else if (this._currentTab === 'jewelry') {
+            var ringInfo = this.getRingCraftInfo();
+            var amuletInfo = this.getAmuletCraftInfo();
+
+            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">';
+
+            var ringIconSrc = bag._equipment && bag._equipment.ring ? bag._equipment.ring.icon : 'assets/interface/ring_first_level.png';
+            h += '<div style="' + CARD + '">';
+            h += '<img src="' + ringIconSrc + '" style="width:72px;height:72px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
+            h += '<div style="color:#5a3a00;font-size:0.95em;font-weight:bold;text-align:center;margin-bottom:4px;">' + (ringInfo.isNew ? 'Кольцо' : 'Кольцо, ур. ' + ringInfo.currentLevel) + '</div>';
+            h += '<div style="color:#6a5a40;font-size:0.85em;text-align:center;margin-bottom:10px;">Скрижали: ' + ringInfo.tablets + ' / ' + ringInfo.cost + '</div>';
+            if (ringInfo.canCraft) {
+                h += '<button onclick="Sherwood.Forge._craftRingFromUI()" style="' + BTN + 'width:100%;margin-top:auto;">' + (ringInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
+            } else {
+                h += '<div style="color:#8a3a3a;font-size:0.85em;font-weight:bold;margin-top:auto;">🔒 Мало скрижалей</div>';
             }
             h += '</div>';
-            
+
+            var amuletIconSrc = bag._equipment && bag._equipment.amulet ? bag._equipment.amulet.icon : 'assets/interface/sherwood_amulet_level_one.png';
+            h += '<div style="' + CARD + '">';
+            h += '<img src="' + amuletIconSrc + '" style="width:72px;height:72px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
+            h += '<div style="color:#5a3a00;font-size:0.95em;font-weight:bold;text-align:center;margin-bottom:4px;">' + (amuletInfo.isNew ? 'Амулет' : 'Амулет, ур. ' + amuletInfo.currentLevel) + '</div>';
+            h += '<div style="color:#6a5a40;font-size:0.85em;text-align:center;margin-bottom:10px;">Скрижали: ' + amuletInfo.tablets + ' / ' + amuletInfo.cost + '</div>';
+            if (amuletInfo.canCraft) {
+                h += '<button onclick="Sherwood.Forge._craftAmuletFromUI()" style="' + BTN + 'width:100%;margin-top:auto;">' + (amuletInfo.isNew ? 'Создать' : 'Улучшить') + '</button>';
+            } else {
+                h += '<div style="color:#8a3a3a;font-size:0.85em;font-weight:bold;margin-top:auto;">🔒 Мало скрижалей</div>';
+            }
             h += '</div>';
+
+            h += '</div>';
+
         } else if (this._currentTab === 'skins') {
             var skins = this.getCraftSkins();
-            
-            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:15px;padding:5px;">';
+
+            h += '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">';
             for (var s = 0; s < skins.length; s++) {
                 var sk = skins[s];
                 var sLvl = (player && player.skinLevels && player.skinLevels[sk.id]) ? player.skinLevels[sk.id] : 0;
@@ -397,17 +395,14 @@ Sherwood.Forge = {
                 var btnText = sLvl === 0 ? 'Создать' : (sLvl >= 100 ? 'Максимум' : 'Улучшить');
                 var iconPath = this._getSkinIcon(sk.id, sLvl);
 
-                h += '<div style="display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,0.06);border:2px solid rgba(90,50,0,0.4);border-radius:10px;padding:12px;box-sizing:border-box;">';
-                
-                h += '<img src="' + iconPath + '" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
-                
-                h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-align:center;height:36px;line-height:1.2;overflow:hidden;margin-bottom:6px;text-shadow:0 2px 4px #000;">' + sk.name + '</div>';
-                
+                h += '<div style="' + CARD + '">';
+                h += '<img src="' + iconPath + '" style="width:72px;height:72px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">';
+                h += '<div style="color:#5a3a00;font-size:0.9em;font-weight:bold;text-align:center;margin-bottom:4px;">' + sk.name + '</div>';
                 if (sLvl >= 100) {
-                    h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;margin-top:auto;text-shadow:0 2px 4px #000;">✅ Максимум</div>';
+                    h += '<div style="color:#3a5a20;font-size:0.9em;font-weight:bold;margin-top:auto;">✅ Максимум</div>';
                 } else {
-                    h += '<div style="color:#e0c080;font-size:0.85em;margin-bottom:10px;text-align:center;font-weight:bold;text-shadow:0 2px 4px #000;">' + (isUnlocked ? 'Ур. '+sLvl+' | ' : '') + 'Цена: ' + nextCost + '</div>';
-                    h += '<button onclick="Sherwood.Forge._craftSkinFromUI(\'' + sk.id + '\')" style="margin-top:auto;background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:8px 12px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.9em;width:100%;box-shadow:0 2px 4px rgba(0,0,0,0.3);">' + btnText + '</button>';
+                    h += '<div style="color:#6a5a40;font-size:0.85em;text-align:center;margin-bottom:10px;">' + (isUnlocked ? 'Ур. ' + sLvl + ' | ' : '') + 'Цена: ' + nextCost + '</div>';
+                    h += '<button onclick="Sherwood.Forge._craftSkinFromUI(\'' + sk.id + '\')" style="' + BTN + 'width:100%;margin-top:auto;">' + btnText + '</button>';
                 }
                 h += '</div>';
             }
@@ -416,21 +411,21 @@ Sherwood.Forge = {
 
         // --- ПОДВАЛ (УЛУЧШЕНИЕ СНАРЯЖЕНИЯ) ---
         var sharpenInfo = this.getSharpeningInfo();
-        h += '<div style="margin-top:20px;padding-top:15px;border-top:1px solid rgba(90,50,0,0.2);text-align:center;">';
-        h += '<div style="color:#e0c080;font-size:1em;font-weight:bold;margin-bottom:5px;text-shadow:0 2px 4px #000;">⚡ Улучшение снаряжения</div>';
-        h += '<div style="color:#e0c080;font-size:0.9em;margin-bottom:10px;text-shadow:0 2px 4px #000;">Чертежей: ' + sharpenInfo.drawings + ' / ' + sharpenInfo.cost + '</div>';
+        h += '<div style="margin-top:22px;padding-top:14px;border-top:1px solid rgba(90,50,0,0.25);text-align:center;">';
+        h += '<div style="color:#5a3a00;font-size:1em;font-weight:bold;margin-bottom:5px;">⚡ Улучшение снаряжения</div>';
+        h += '<div style="color:#6a5a40;font-size:0.9em;margin-bottom:10px;">Чертежей: ' + sharpenInfo.drawings + ' / ' + sharpenInfo.cost + '</div>';
         if (sharpenInfo.canSharpen) {
-            h += '<button onclick="Sherwood.Forge._sharpenFromUI()" style="background:#5a3a00;border:1px solid #c8a050;border-radius:6px;padding:8px 20px;color:#ffd700;font-weight:bold;cursor:pointer;font-size:0.9em;">Улучшить</button>';
+            h += '<button onclick="Sherwood.Forge._sharpenFromUI()" style="' + BTN + 'padding:8px 24px;">Улучшить</button>';
         } else {
-            h += '<div style="color:#e0c080;font-size:0.9em;font-weight:bold;text-shadow:0 2px 4px #000;">🔒 Недостаточно чертежей</div>';
+            h += '<div style="color:#8a3a3a;font-size:0.9em;font-weight:bold;">🔒 Недостаточно чертежей</div>';
         }
         h += '</div>';
 
-        h += '</div>'; // конец пергамента
-        h += '</div>'; // конец контейнера
+        h += '</div>';
+        h += '</div>';
 
-        h += '</div>'; // .forge-scroll
-        h += '</div>'; // фон
+        h += '</div>';
+        h += '</div>';
 
         UI._openScreenScrollable('Кузница', null, h, 'UI.camp()');
     },
