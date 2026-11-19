@@ -68,6 +68,7 @@ Sherwood.BattleVisuals = (function () {
         cameraShake: 0,
         knockback: { active: false, sprite: null, ox: 0, oz: 0, t: 0, dur: 0.25, dx: 0, dz: 0 },
         hitFlashTimer: null,
+        skillFx: { sprite: null, cache: {}, active: null, t: 0 },
         domReady: false
     };
 
@@ -90,6 +91,18 @@ Sherwood.BattleVisuals = (function () {
         FX_DIR + 'Fine_blood_spray_texture (2).png'
     ];
     var ARROW_FX_VIDEO = FX_DIR + 'sherwood_hollow_arrow.webm';
+
+    var SKILL_FX_DIR = 'assets/assets2/animation/skills/';
+    // Спрайт-анимации скилов временно отключены (будут переделаны).
+    // Вернуть: поставить true — и все вызовы playSkillFx заработают снова.
+    var SKILL_FX_ENABLED = false;
+    var SKILL_FX_SETS = {
+        'healing':   { frames: 8, fps: 12, scale: 3.2, y: 0.45, atEnemy: false },
+        'rage':      { frames: 8, fps: 12, scale: 3.6, y: 0.45, atEnemy: false },
+        'vampirism': { frames: 8, fps: 14, scale: 3.2, y: 0.45, atEnemy: false },
+        'ricochet':  { frames: 8, fps: 14, scale: 2.2, y: 0.6,  atEnemy: true },
+        'blocking':  { frames: 8, fps: 14, scale: 2.4, y: 0.35, atEnemy: false }
+    };
 
     var DOM = {
         els: {},
@@ -152,15 +165,106 @@ Sherwood.BattleVisuals = (function () {
         injectStyles: function () {
             if (document.getElementById('battle-system-styles')) return;
             var css = [
-                '.skill-btn { cursor:pointer;border-radius:8px;border:3px solid rgba(200,160,80,0.8);background:rgba(0,0,0,0.6);padding:3px;width:85px;height:85px;object-fit:contain;transition:all 0.2s;display:block;flex-shrink:0;box-sizing:border-box; }',
+                '.skill-btn { cursor:pointer;border-radius:8px;border:3px solid rgba(200,160,80,0.8);background:rgba(0,0,0,0.6);padding:3px;width:70px;height:70px;object-fit:contain;transition:all 0.2s;display:block;flex-shrink:0;box-sizing:border-box; }',
                 '.skill-btn.on-cooldown { opacity:0.3;filter:grayscale(1);cursor:not-allowed; }',
-                '@keyframes bvCenterFade { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.6); } 15% { opacity:1; transform:translate(-50%,-50%) scale(1.15); } 30% { transform:translate(-50%,-50%) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-80%) scale(1); } }',
-                '.bv-center-text { position:fixed;top:38%;left:50%;transform:translate(-50%,-50%);z-index:9000;pointer-events:none;font-family:Georgia,serif;font-size:2.2em;font-weight:bold;text-shadow:0 0 12px #000,0 2px 6px #000;animation:bvCenterFade 1.4s ease-out forwards;white-space:nowrap; }'
+                '@keyframes bvCenterFade { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.85); } 15% { opacity:1; transform:translate(-50%,-50%) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-90%) scale(1); } }',
+                '.bv-center-text { position:fixed;top:12%;left:50%;transform:translate(-50%,-50%);z-index:9000;pointer-events:none;font-family:Georgia,serif;font-size:1.15em;font-weight:bold;text-shadow:0 0 8px #000,0 2px 4px #000;animation:bvCenterFade 1.2s ease-out forwards;white-space:nowrap; }',
+                '#hero-avatar { position:fixed;bottom:6px;left:112px;width:64px;height:64px;z-index:55;border-radius:50%;border:3px solid rgba(200,160,80,0.85);background:#000;overflow:hidden;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.8); }',
+                '#hero-avatar img { position:absolute;height:280%;width:auto;max-width:none;top:-6%;left:50%;transform:translateX(-50%); }',
+                '#enemy-avatar { position:fixed;top:14%;left:calc(50% + 220px);width:64px;height:64px;z-index:55;border-radius:50%;border:3px solid rgba(180,60,60,0.85);background:#000;overflow:hidden;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.8);transform:translate(-50%,-50%);display:none; }',
+                '#enemy-avatar img { position:absolute;height:280%;width:auto;max-width:none;top:-36%;left:50%;transform:translateX(-50%); }',
+                '@keyframes bvAvatarHurt { 0% { filter:none; box-shadow:0 0 0 #f00; } 25% { filter:brightness(2.2) saturate(2) drop-shadow(0 0 14px #f33); } 100% { filter:none; } }',
+                '#hero-avatar.hurt { animation:bvAvatarHurt 0.5s ease-out; }',
+                '@keyframes bvAvatarHit { 0% { filter:none; } 30% { filter:brightness(2.5); } 100% { filter:none; } }',
+                '#enemy-avatar.hit { animation:bvAvatarHit 0.3s ease-out; }',
+                '@keyframes bvAvatarBlock { 0% { box-shadow:0 0 0 rgba(120,200,255,0); } 30% { box-shadow:0 0 24px 6px rgba(120,200,255,0.9); } 100% { box-shadow:0 0 0 rgba(120,200,255,0); } }',
+                '#hero-avatar.block { animation:bvAvatarBlock 0.6s ease-out; }',
+                '@keyframes bvDmgFloat { 0% { opacity:0; transform:translateY(10px) scale(0.8); } 20% { opacity:1; transform:translateY(0) scale(1.1); } 100% { opacity:0; transform:translateY(-52px) scale(1); } }',
+                '.bv-dmg-float { position:fixed;z-index:9100;pointer-events:none;font-family:Georgia,serif;font-size:22px;font-weight:bold;color:#ff5544;text-shadow:0 0 6px #000,0 2px 4px #000;animation:bvDmgFloat 1.1s ease-out forwards; }',
+                '#dmg-vignette { position:fixed;top:0;left:0;width:100%;height:100%;z-index:149;pointer-events:none;opacity:0;box-shadow:inset 0 0 140px 40px rgba(180,0,0,0.75);transition:opacity 0.12s ease-out; }'
             ].join('\n');
             var st = document.createElement('style');
             st.id = 'battle-system-styles';
             st.textContent = css;
             document.head.appendChild(st);
+        },
+
+        ensureAvatars: function () {
+            this.findOrCreate('hero-avatar', function () {
+                var d = document.createElement('div');
+                d.innerHTML = '<img src="" alt="">';
+                return d;
+            });
+            this.findOrCreate('enemy-avatar', function () {
+                var d = document.createElement('div');
+                d.innerHTML = '<img src="" alt="">';
+                return d;
+            });
+            this.findOrCreate('dmg-vignette', function () {
+                return document.createElement('div');
+            });
+            this.setHeroSkin();
+        },
+
+        setHeroSkin: function () {
+            var box = this.find('hero-avatar');
+            if (!box) return;
+            var img = box.querySelector('img') || box;
+            var skin = null;
+            try { skin = localStorage.getItem('active_skin'); } catch (e) {}
+            var url = 'assets/hero_skins/' + (skin || 'skin1_01.png');
+            img.src = url;
+        },
+
+        setEnemySkin: function (imgPath) {
+            var box = this.find('enemy-avatar');
+            if (!box) return;
+            var img = box.querySelector('img') || box;
+            img.src = imgPath || '';
+        },
+
+        _replayClass: function (el, cls) {
+            if (!el) return;
+            el.classList.remove(cls);
+            void el.offsetWidth;
+            el.classList.add(cls);
+            setTimeout(function () { el.classList.remove(cls); }, 700);
+        },
+
+        heroAvatarHurt: function () { this._replayClass(this.find('hero-avatar'), 'hurt'); },
+        heroAvatarBlock: function () { this._replayClass(this.find('hero-avatar'), 'block'); },
+        enemyAvatarHit: function () { this._replayClass(this.find('enemy-avatar'), 'hit'); },
+
+        showDamageVignette: function () {
+            var el = this.find('dmg-vignette');
+            if (!el) return;
+            el.style.opacity = '1';
+            clearTimeout(this._dmgVignetteT);
+            this._dmgVignetteT = setTimeout(function () { el.style.opacity = '0'; }, 220);
+        },
+
+        floatDamageNumber: function (text, color, target) {
+            var el = document.createElement('div');
+            el.className = 'bv-dmg-float';
+            el.style.color = color || '#ff5544';
+            el.textContent = text;
+            var placed = false;
+            if (target === 'hero' || target === 'enemy') {
+                var av = this.find(target === 'hero' ? 'hero-avatar' : 'enemy-avatar');
+                if (av && av.style.display !== 'none') {
+                    var r = av.getBoundingClientRect();
+                    el.style.left = Math.max(6, r.left + r.width / 2 - 20 + Math.floor(Math.random() * 40)) + 'px';
+                    el.style.top = (r.top + 4) + 'px';
+                    el.style.bottom = 'auto';
+                    placed = true;
+                }
+            }
+            if (!placed) {
+                el.style.left = (30 + Math.floor(Math.random() * 40)) + 'px';
+                el.style.bottom = '135px';
+            }
+            document.body.appendChild(el);
+            setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 1200);
         },
 
         showBattleUI: function (on) {
@@ -171,6 +275,8 @@ Sherwood.BattleVisuals = (function () {
             if (ai) ai.style.display = on ? 'block' : 'none';
             if (sr) sr.style.display = on ? 'flex' : 'none';
             if (this.els['mob-hp']) this.els['mob-hp'].style.display = on ? 'block' : 'none';
+            var ea = this.find('enemy-avatar');
+            if (ea) ea.style.display = on ? 'block' : 'none';
         },
 
         updateArrowCounter: function (n) {
@@ -282,7 +388,7 @@ Sherwood.BattleVisuals = (function () {
             canvas.style.left = (ex - size / 2) + 'px';
             canvas.style.top = (ey - size * 0.29) + 'px';
 
-            var ctx2d = canvas.getContext('2d');
+            var ctx2d = canvas.getContext('2d', { willReadFrequently: true });
             function keyFrame() {
                 self._arrowfx = null;
                 if (!self._arrowCanvas) return;
@@ -314,6 +420,100 @@ Sherwood.BattleVisuals = (function () {
             if (this._arrowCanvas && this._arrowCanvas.parentNode) this._arrowCanvas.parentNode.removeChild(this._arrowCanvas);
             this._arrowCanvas = null;
             if (this._arrowVideo) { try { this._arrowVideo.pause(); } catch (e) {} }
+        },
+
+        // ===== WEBM-ЭФФЕКТ СКИЛА: чёрный фон -> прозрачность (лумакей) =====
+        webmFx: function (name, opts) {
+            var self = this;
+            opts = opts || {};
+            if (!this._webmVideos) this._webmVideos = {};
+            var v = this._webmVideos[name];
+            if (!v) {
+                v = document.createElement('video');
+                v.src = SKILL_FX_DIR + name + '/' + name + '.webm';
+                v.muted = true;
+                v.playsInline = true;
+                v.preload = 'auto';
+                v.style.display = 'none';
+                document.body.appendChild(v);
+                v.onerror = function () { self._webmHideFx(name); };
+                this._webmVideos[name] = v;
+            }
+            if (this._webmCanvases && this._webmCanvases[name]) {
+                var old = this._webmCanvases[name];
+                if (this._webmRafs && this._webmRafs[name]) cancelAnimationFrame(this._webmRafs[name]);
+                if (old.parentNode) old.parentNode.removeChild(old);
+                delete this._webmCanvases[name];
+            }
+
+            var cw = opts.size || 512;
+            var canvas = document.createElement('canvas');
+            canvas.width = cw; canvas.height = cw;
+            var scr = Math.min(window.innerWidth, window.innerHeight);
+            var px = Math.floor(Math.min(cw, scr * (opts.scale || 0.55)));
+            var xf = (opts.x !== undefined) ? opts.x : 0.5;
+            var yf = (opts.y !== undefined) ? opts.y : 0.55;
+            var cl = Math.floor(window.innerWidth * xf - px / 2);
+            var ct = Math.floor(window.innerHeight * yf - px / 2);
+            if (opts.elId) {
+                var ael = document.getElementById(opts.elId);
+                if (ael && ael.style.display !== 'none') {
+                    var ar = ael.getBoundingClientRect();
+                    px = Math.max(90, Math.min(280, Math.round(ar.width * 2.6)));
+                    var acx = ar.left + ar.width / 2;
+                    var acy = ar.top + ar.height / 2;
+                    cl = Math.max(4, Math.min(window.innerWidth - px - 4, Math.floor(acx - px / 2)));
+                    ct = Math.max(4, Math.floor(acy - px / 2));
+                }
+            }
+            canvas.style.cssText = 'position:fixed;pointer-events:none;z-index:58;width:' + px + 'px;height:' + px + 'px;left:' + cl + 'px;top:' + ct + 'px;';
+            document.body.appendChild(canvas);
+            if (!this._webmCanvases) this._webmCanvases = {};
+            if (!this._webmRafs) this._webmRafs = {};
+            this._webmCanvases[name] = canvas;
+
+            var ctx2d = canvas.getContext('2d', { willReadFrequently: true });
+            var thrLow = (opts.keyLow !== undefined) ? opts.keyLow : 28;
+            var thrHigh = (opts.keyHigh !== undefined) ? opts.keyHigh : 105;
+            function frame() {
+                self._webmRafs[name] = null;
+                var c = self._webmCanvases && self._webmCanvases[name];
+                if (!c) return;
+                if (v.ended || v.paused) { self._webmHideFx(name); return; }
+                if (v.readyState >= 2) {
+                    try {
+                        ctx2d.drawImage(v, 0, 0, cw, cw);
+                        var im = ctx2d.getImageData(0, 0, cw, cw);
+                        var d = im.data;
+                        for (var i = 0; i < d.length; i += 4) {
+                            var m = d[i] > d[i + 1] ? (d[i] > d[i + 2] ? d[i] : d[i + 2]) : (d[i + 1] > d[i + 2] ? d[i + 1] : d[i + 2]);
+                            if (m <= thrLow) {
+                                d[i + 3] = 0;
+                            } else if (m < thrHigh) {
+                                d[i + 3] = Math.floor((m - thrLow) * 255 / (thrHigh - thrLow));
+                            }
+                        }
+                        ctx2d.putImageData(im, 0, 0);
+                    } catch (e) {}
+                }
+                self._webmRafs[name] = requestAnimationFrame(frame);
+            }
+            try { v.currentTime = 0; } catch (e) {}
+            this._webmCanvases[name] = canvas;
+            var pr = v.play();
+            var start = function () { self._webmRafs[name] = requestAnimationFrame(frame); };
+            if (pr && pr.then) { pr.then(start).catch(function () { self._webmHideFx(name); }); }
+            else { start(); }
+        },
+
+        _webmHideFx: function (name) {
+            if (this._webmRafs && this._webmRafs[name]) { cancelAnimationFrame(this._webmRafs[name]); this._webmRafs[name] = null; }
+            if (this._webmCanvases && this._webmCanvases[name]) {
+                var c = this._webmCanvases[name];
+                if (c.parentNode) c.parentNode.removeChild(c);
+                delete this._webmCanvases[name];
+            }
+            if (this._webmVideos && this._webmVideos[name]) { try { this._webmVideos[name].pause(); } catch (e) {} }
         },
 
         showBlood: function () {
@@ -362,6 +562,16 @@ Sherwood.BattleVisuals = (function () {
             for (var i = 0; i < HIT_SPRITES.length; i++) {
                 try { S.bloodTextures.push(S.loader.load(FX_DIR + HIT_SPRITES[i])); } catch (e) {}
             }
+            if (SKILL_FX_ENABLED) {
+                var skillSids = Object.keys(SKILL_FX_SETS);
+                for (var k = 0; k < skillSids.length; k++) {
+                    var ksid = skillSids[k], kset = SKILL_FX_SETS[ksid], kframes = [];
+                    for (var kf = 1; kf <= kset.frames; kf++) {
+                        try { kframes.push(S.loader.load(SKILL_FX_DIR + ksid + '/' + ksid + '_' + kf + '.png')); } catch (e) {}
+                    }
+                    if (kframes.length) S.skillFx.cache[ksid] = kframes;
+                }
+            }
             var mat = new T.SpriteMaterial({
                 map: S.bloodTextures[0] || null,
                 transparent: true,
@@ -407,6 +617,56 @@ Sherwood.BattleVisuals = (function () {
             S.hitFlashSprite.visible = true;
             clearTimeout(S.hitFlashTimer);
             S.hitFlashTimer = setTimeout(function () { S.hitFlashSprite.visible = false; }, 150);
+        },
+
+        playSkillFx: function (sid, enemySprite, scaleMult) {
+            if (!SKILL_FX_ENABLED) return;
+            var T = window.THREE;
+            var set = SKILL_FX_SETS[sid];
+            if (!set || !S.scene || !T) return;
+            if (!S.skillFx.cache[sid]) {
+                var frames = [];
+                if (S.loader) {
+                    for (var i = 1; i <= set.frames; i++) {
+                        try { frames.push(S.loader.load(SKILL_FX_DIR + sid + '/' + sid + '_' + i + '.png')); } catch (e) {}
+                    }
+                }
+                if (!frames.length) return;
+                S.skillFx.cache[sid] = frames;
+            }
+            if (!S.skillFx.sprite) {
+                var mat = new T.SpriteMaterial({ transparent: true, opacity: 1, depthTest: false, depthWrite: false });
+                S.skillFx.sprite = new T.Sprite(mat);
+                S.skillFx.sprite.renderOrder = 15;
+                S.scene.add(S.skillFx.sprite);
+            }
+            var spr = S.skillFx.sprite;
+            var sc = set.scale * (scaleMult || 1);
+            spr.scale.set(sc, sc, 1);
+            var atEnemy = set.atEnemy && enemySprite;
+            var baseX = atEnemy ? enemySprite.position.x : 0;
+            var baseY = atEnemy ? (enemySprite.position.y + enemySprite.scale.y * 0.5) : set.y;
+            spr.position.set(baseX, baseY, 1.2);
+            spr.material.map = S.skillFx.cache[sid][0];
+            spr.material.needsUpdate = true;
+            spr.visible = true;
+            S.skillFx.active = sid;
+            S.skillFx.t = 0;
+        },
+
+        updateSkillFx: function (dt) {
+            var fx = S.skillFx;
+            if (!fx.active || !fx.sprite) return;
+            var set = SKILL_FX_SETS[fx.active];
+            fx.t += dt;
+            var idx = Math.floor(fx.t * set.fps);
+            if (idx >= set.frames || fx.active === null) {
+                fx.active = null;
+                fx.sprite.visible = false;
+                return;
+            }
+            fx.sprite.material.map = fx.cache[fx.active][idx];
+            fx.sprite.material.needsUpdate = true;
         },
 
         shake: function (amount) {
@@ -482,6 +742,12 @@ Sherwood.BattleVisuals = (function () {
             el.style.left = x + 'px';
             el.style.top = y + 'px';
             el.style.transform = 'translate(-50%, -140%)';
+            var ea = DOM.find('enemy-avatar');
+            if (ea && ea.style.display !== 'none') {
+                var r = el.getBoundingClientRect();
+                ea.style.left = Math.min(r.right + 10, window.innerWidth - 70) + 'px';
+                ea.style.top = (r.top + r.height * 0.3) + 'px';
+            }
         }
     };
 
@@ -647,6 +913,7 @@ Sherwood.BattleVisuals = (function () {
             Logic._updateFilth(dt);
             FX.updateShake();
             FX.updateKnockback(dt);
+            FX.updateSkillFx(dt);
 
             if (S.active && S.enemy && S.enemySprite) {
                 FX.updateMobHpBarFor(S.enemySprite, S.camFPS);
@@ -678,7 +945,7 @@ Sherwood.BattleVisuals = (function () {
                 atk: enemy.atk || 0,
                 def: enemy.def || 0,
                 isBoss: !!enemy.isBoss,
-                img: enemy.img || enemy.imagePath || '',
+                img: enemy.img || enemy.imagePath || enemy.image || '',
                 name: enemy.name || ''
             };
             S.enemySprite = enemy.sprite || enemy.mesh || null;
@@ -687,10 +954,12 @@ Sherwood.BattleVisuals = (function () {
             S.vampirismReady = Math.random() < 0.30;
             if (S.vampirismReady) {
                 S.vampirismBuff = 30;
+                FX.playSkillFx('vampirism', S.enemySprite);
                 DOM.centerText('ВАМПИРИЗМ!', '#ff6666');
             }
 
             if (!S.enemy.name && S.ctx.getMobName) S.enemy.name = S.ctx.getMobName(S.enemy.img);
+            DOM.setEnemySkin(S.enemy.img);
 
             DOM.showBattleUI(true);
             DOM.updateMobName(S.enemy.name || 'Враг');
@@ -752,6 +1021,8 @@ Sherwood.BattleVisuals = (function () {
             if (S.vampirismBuff > 0) {
                 var heal = Math.floor(dmg * 0.3);
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                DOM.floatDamageNumber('+' + heal, '#66ff66', 'hero');
+                FX.playSkillFx('vampirism', S.enemySprite, 0.55);
             }
 
             DOM.updateMobHp(S.enemy.hp, S.enemy.maxHp);
@@ -761,6 +1032,8 @@ Sherwood.BattleVisuals = (function () {
                 FX.hitFlash(S.enemySprite);
                 FX.knockback(S.enemySprite, 0, 0);
             }
+            DOM.enemyAvatarHit();
+            DOM.floatDamageNumber('-' + dmg, '#ffcc55', 'enemy');
             FX.shake(CFG.CAMERA_SHAKE);
             DOM.showHitEffect(S.enemySprite, S.camFPS);
             if (S.ctx.playSoundHit) S.ctx.playSoundHit();
@@ -780,16 +1053,22 @@ Sherwood.BattleVisuals = (function () {
             var talents = (p.talents) ? p.talents : {};
 
             if (talents.blocking && Math.random() < 0.1 * talents.blocking) {
+                FX.playSkillFx('blocking');
                 DOM.centerText('БЛОК!', '#88ff88');
+                DOM.heroAvatarBlock();
                 return;
             }
             if (talents.numbness && Math.random() < 0.05 * talents.numbness) {
                 DOM.centerText('ОЦЕПЕНЕНИЕ!', '#88ccff');
+                DOM.heroAvatarBlock();
                 return;
             }
             if (talents.ricochet && Math.random() < 0.45) {
                 S.enemy.hp = Math.max(0, S.enemy.hp - edmg);
+                FX.playSkillFx('ricochet', S.enemySprite);
                 DOM.centerText('РИКОШЕТ!', '#ffcc00');
+                DOM.enemyAvatarHit();
+                DOM.floatDamageNumber('-' + edmg, '#ffcc55', 'enemy');
                 DOM.updateMobHp(S.enemy.hp, S.enemy.maxHp);
                 Logic._syncEnemyHp();
                 if (S.enemy.hp <= 0) Logic._enemyKilled();
@@ -799,6 +1078,10 @@ Sherwood.BattleVisuals = (function () {
             p.stats.hp = Math.max(0, p.stats.hp - edmg);
             Logic.addFilth(CFG.FILTH_HIT_AMOUNT);
             DOM.showBlood();
+            DOM.showDamageVignette();
+            DOM.heroAvatarHurt();
+            DOM.floatDamageNumber('-' + edmg, '#ff5544', 'hero');
+            FX.shake(CFG.CAMERA_SHAKE);
             DOM.updateHeroSpheres(p);
             if (S.ctx.onHpChanged) S.ctx.onHpChanged();
 
@@ -827,6 +1110,7 @@ Sherwood.BattleVisuals = (function () {
                 if (Logic.getFilth() < d.filthCost) { DOM.centerText('МАЛО СКВЕРНЫ!', '#ffaa00'); return; }
                 Logic.spendFilth(d.filthCost);
                 S.rageCharges = d.charges;
+                FX.playSkillFx('rage');
                 DOM.centerText('ЯРОСТЬ!', '#ff4444');
             } else if (sid === 'healing') {
                 var cost = d.filthPerLvl * lvl;
@@ -835,6 +1119,9 @@ Sherwood.BattleVisuals = (function () {
                 Logic.spendFilth(cost);
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
                 DOM.centerText('+' + heal + ' HP', '#66ff66');
+                DOM.floatDamageNumber('+' + heal, '#66ff66', 'hero');
+                FX.playSkillFx('healing');
+                DOM.webmFx('healing', { elId: 'hero-avatar' });
             }
 
             S.skillCooldowns[sid] = now + d.cooldown;
@@ -911,6 +1198,7 @@ Sherwood.BattleVisuals = (function () {
             throw new Error('BattleVisuals.init: не найден THREE — передай его в ctx.THREE');
         }
         DOM.ensure();
+        DOM.ensureAvatars();
         if (S.ctx.camFPS) S.camFPS = S.ctx.camFPS;
         if (S.ctx.camFPSOptions) S.camFPSBase = S.ctx.camFPSOptions;
         S.scene = S.ctx.scene || null;
@@ -970,6 +1258,8 @@ Sherwood.BattleVisuals = (function () {
         showHitEffect: function (sprite, camera) { DOM.showHitEffect(sprite, camera); },
         showArrowFlight: function (sprite, camera) { DOM.arrowFlight(sprite, camera); },
         hideArrowFlight: function () { DOM.hideArrowFlight(); },
+        playWebmFx: function (name, opts) { DOM.webmFx(name, opts); },
+        floatDamageText: function (text, color, target) { DOM.floatDamageNumber(text, color, target); },
 
         getPlayerAttackCooldown: function () { return S.playerAttackCooldown; },
         getPlayerStunned: function () { return S.playerStunned; },
