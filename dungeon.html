@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <script src="js/sherwood/audio_volume.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Проклятая чаща</title>
@@ -39,6 +40,8 @@
         .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
         .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        .skill-wrap { position: relative; flex-shrink: 0; }
+        .skill-cd-fill { position: absolute; top: 0; left: 0; width: 100%; height: 0%; background: rgba(0,0,0,0.7); border-radius: 8px; pointer-events: none; z-index: 2; }
         #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
         #arrow-counter { position: fixed; top: 12px; left: 50%; transform: translateX(calc(-50% - 70px)); color: #e0c080; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #000; z-index: 35; pointer-events: none; background: rgba(0,0,0,0.55); padding: 4px 14px; border: 2px solid #6b5a3a; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
@@ -76,7 +79,7 @@
         <div id="mob-hp-name">Враг</div>
         <img class="frame" src="assets/assets2/game_details/life_of_mobs.png" alt="">
         <img id="mob-hp-fill" class="fill" src="assets/assets2/game_details/mob_life_filling.png" alt="">
-        <span id="mob-hp-text">HP: 1000</span>
+        <span id="mob-hp-text">1000</span>
     </div>
 
     <div id="hit-effect"><img id="hit-effect-img" src="" alt=""></div>
@@ -92,7 +95,7 @@
     <div id="hero-life">
         <img src="assets/assets2/game_details/sphere_of_life.png" alt="">
         <img id="life-fill" src="assets/assets2/game_details/filling_life.png" alt="">
-        <span id="hp-text">HP: 0</span>
+        <span id="hp-text">0</span>
     </div>
     <div id="hero-mana">
         <img src="assets/assets2/game_details/sphere_of_filth.png" alt="">
@@ -107,6 +110,7 @@
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
     </script>
+    <script src="js/sherwood/battle_visuals.js"></script>
     <script type="module">
         import * as THREE from 'three';
 
@@ -139,9 +143,9 @@
 
         function getMobName(imgPath) { if (!imgPath) return 'Враг'; var fname = imgPath.split('/').pop(); return MOB_NAMES[fname] || 'Враг'; }
 
-        var playerArrows = 25; var ARROWS_MAX_START = 25;
-        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; updateArrowCounter(); return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; updateArrowCounter(); return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; } updateArrowCounter(); }
-        function updateArrowCounter() { var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows; var counter = document.getElementById('arrow-counter'); if (counter) { if (playerArrows <= 3) counter.classList.add('low'); else counter.classList.remove('low'); } }
+        var playerArrows = 25; var ARROWS_MAX_START = 25; var dungeonArrowsTotal = 0;
+        function loadArrowsFromBag() { try { if (!parent.Sherwood || !parent.Sherwood.getPlayer) { playerArrows = 0; dungeonArrowsTotal = 0; updateArrowCounter(); return; } var p = parent.Sherwood.getPlayer(); if (!p) { playerArrows = 0; dungeonArrowsTotal = 0; updateArrowCounter(); return; } var cnt = 0; if (p.resources && typeof p.resources.arrows === 'number') cnt = p.resources.arrows; dungeonArrowsTotal = Math.max(0, cnt); playerArrows = Math.min(ARROWS_MAX_START, cnt); } catch(e) { playerArrows = 0; dungeonArrowsTotal = 0; } updateArrowCounter(); }
+        function updateArrowCounter() { var el = document.getElementById('arrow-count-text'); if (el) el.textContent = playerArrows; var counter = document.getElementById('arrow-counter'); if (counter) { if (playerArrows <= 3) counter.classList.add('low'); else counter.classList.remove('low'); } try { var pB = parent.Sherwood.getPlayer(); if (pB) { if (!pB.resources) pB.resources = {}; } } catch (e) {} try { if (window.Sherwood && window.Sherwood.BattleVisuals && window.Sherwood.BattleVisuals.updateArrowCounter) window.Sherwood.BattleVisuals.updateArrowCounter(playerArrows); } catch (e) {} }
         function useArrow(n) { if (playerArrows >= n) { playerArrows -= n; updateArrowCounter(); return true; } return false; }
         function addArrows(n) { playerArrows += n; updateArrowCounter(); }
         setTimeout(loadArrowsFromBag, 700);
@@ -202,7 +206,23 @@
         function isWallCell(x, y) { if (x < 0 || y < 0 || x >= size || y >= size) return true; return map[y][x] === 1; }
 
         const loader = new THREE.TextureLoader();
-        const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
+
+        // Единая боевая система: аватары, webm-эффекты скилов, цифры урона (визуал как в портале)
+        try {
+            window.Sherwood = window.Sherwood || {};
+            window.Sherwood.BattleVisuals.init({
+                THREE: THREE,
+                scene: scene,
+                loader: loader,
+                camFPS: camFPS,
+                getPlayer: function () { return parent.Sherwood.getPlayer(); },
+                getMobName: getMobName,
+                playSoundHit: function () { playSound(soundHit); },
+                playSoundAltar: function () { playSound(soundAltar); },
+                onCenterText: showCenterText
+            });
+        } catch (e) { console.warn('BattleVisuals init failed', e); }
+        var battleStartAt = 0;        const doorTex = loader.load('assets/assets2/game_details/labyrinth_asset.png');
         const heroTex = loader.load("assets/assets2/game_details/hero's circle.png");
         const floorTex = loader.load('assets/assets2/Sherwood_Square/floors_quest.png');
         const wallBattleTex = loader.load('assets/assets2/Sherwood_Square/walls_quest.png');
@@ -469,6 +489,53 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             updateHeroSpheres(); if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); updateLootButton(); checkObjects();
         }
 
+                var LOOT_ICONS = {
+            skins: 'assets/interface/skin_of_the_sherwood_creature.png',
+            entranceTickets: 'assets/interface/resource_key_to_locked_levels.png',
+            autoFightTickets: 'assets/interface/ticket_autofight.png',
+            amuletTablets: 'assets/interface/amulet_crafting_tablet_resource.png',
+            ringTablets: 'assets/interface/ring_crafting_tablet_resource.png',
+            skinTablets: 'assets/interface/resource_appearance_crafting_tablet.png',
+            skinDrawings: 'assets/interface/skin_drawing.png',
+            portalToken1: 'assets/interface/resource_token_on_entrance_portal_1.png',
+            branchDamnedYew: 'assets/interface/branch_of_the_damned_yew.png',
+            bones: 'assets/interface/bone_growth_of_the_beast.png',
+            feathers: 'assets/interface/feather_beast_1.png',
+            arrows: 'assets/interface/sherwood_hollow_arrow.png'
+        };
+
+        function getBagTargetPoint() {
+            var b = document.getElementById('dungeon-loot-bag');
+            if (!b) return { x: window.innerWidth - 38, y: 38 };
+            var r = b.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }
+
+        function flyLootIcons(sx, sy, iconList) {
+            if (!iconList || !iconList.length) return;
+            if (sx === undefined || isNaN(sx)) { sx = window.innerWidth / 2; sy = window.innerHeight / 2; }
+            var tp = getBagTargetPoint();
+            iconList.forEach(function (icon, i) {
+                setTimeout(function () {
+                    var img = document.createElement('img');
+                    img.src = icon;
+                    img.className = 'loot-fly';
+                    img.style.left = (sx - 16) + 'px';
+                    img.style.top = (sy - 16) + 'px';
+                    img.style.opacity = '1';
+                    document.body.appendChild(img);
+                    void img.offsetWidth;
+                    img.style.transform = 'translate(' + (tp.x - sx) + 'px,' + (tp.y - sy) + 'px) scale(0.45)';
+                    img.style.opacity = '0.15';
+                    setTimeout(function () {
+                        if (img.parentNode) img.parentNode.removeChild(img);
+                        var bag = document.getElementById('dungeon-loot-bag');
+                        if (bag) { bag.classList.remove('pulse'); void bag.offsetWidth; bag.classList.add('pulse'); }
+                    }, 1150);
+                }, i * 280);
+            });
+        }
+
         function openLootBag(bag) {
             if (!bag || bag.opened) return; bag.opened = true; var openTex = bag.isBoss ? openChestTex : emptyBagTex;
             bag.mesh.material.map = openTex; bag.mesh.material.needsUpdate = true; playSound(soundChest);
@@ -519,21 +586,13 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             runLoot.exp += exp; runLoot.gold += gold; runLoot.silver += silver;
             for (var key in resources) { if (resources[key] > 0 && runLoot[key] !== undefined) runLoot[key] += resources[key]; }
             
-            var lootMsgs = [];
-            if (resources.entranceTickets > 0) lootMsgs.push('+1 Ключ подземки');
-            if (resources.autoFightTickets > 0) lootMsgs.push('+1 Билет автобоя');
-            if (resources.amuletTablets > 0) lootMsgs.push('+1 Скрижаль амулета');
-            if (resources.ringTablets > 0) lootMsgs.push('+1 Скрижаль кольца');
-            if (resources.skinTablets > 0) lootMsgs.push('+1 Скрижаль скина');
-            if (resources.skinDrawings > 0) lootMsgs.push('+1 Чертёж скина');
-            if (resources.portalToken1 > 0) lootMsgs.push('+1 Токен портала');
-            if (resources.branchDamnedYew > 0) lootMsgs.push('+1 Ветка тиса');
-            if (resources.bones > 0) lootMsgs.push('+1 Кость');
-            if (resources.feathers > 0) lootMsgs.push('+1 Перо');
-            
-            var msg = '+' + arrowDrop + ' стрел';
-            if (lootMsgs.length > 0) msg += ', ' + lootMsgs.join(', ');
-            showCenterText(msg, '#c9a040');
+                        
+            var flyIcons = [];
+            for (var fa = 0; fa < Math.min(2, arrowDrop); fa++) flyIcons.push(LOOT_ICONS.arrows);
+            for (var fk in LOOT_ICONS) { if (fk !== 'arrows' && resources[fk] > 0) flyIcons.push(LOOT_ICONS[fk]); }
+            var flyScreen = null;
+            try { var vp = bag.mesh.position.clone().project(camera); flyScreen = { x: (vp.x * 0.5 + 0.5) * window.innerWidth, y: (-vp.y * 0.5 + 0.5) * window.innerHeight }; } catch (e) {}
+            flyLootIcons(flyScreen ? flyScreen.x : undefined, flyScreen ? flyScreen.y : undefined, flyIcons);
             
             if (parent.Sherwood.saveGame) parent.Sherwood.saveGame(); 
             if (parent.UI && parent.UI.updateDisplay) parent.UI.updateDisplay(); 
@@ -562,7 +621,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
         function updateHeroSpheres() {
             var p = parent.Sherwood.getPlayer(); if (!p || !p.stats) return;
             var hpPercent = p.stats.hp / p.stats.maxHp; var lifeFill = document.getElementById('life-fill'); if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPercent) * 100) + '% 0 0 0)';
-            var hpText = document.getElementById('hp-text'); if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+            var hpText = document.getElementById('hp-text'); if (hpText) hpText.textContent = String(Math.floor(p.stats.hp));
             if (typeof p.stats.filth === 'undefined') p.stats.filth = 0; if (typeof p.stats.maxFilth === 'undefined') p.stats.maxFilth = 100;
             var filth = p.stats.filth, maxFilth = p.stats.maxFilth, filthPercent = filth / maxFilth;
             var manaFill = document.getElementById('mana-fill'); if (manaFill) manaFill.style.clipPath = 'inset(' + Math.max(0, (1 - filthPercent) * 100) + '% 0 0 0)';
@@ -667,7 +726,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
         }
 
         function startBattle(obj) {
-            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; currentEnemySprite = obj.mesh; currentEnemyObj = obj;
+            if (isBattleActive) return; isBattleActive = true; playerHitFirst = false; battleStartAt = Date.now(); currentEnemySprite = obj.mesh; currentEnemyObj = obj;
             currentEnemyStats = { hp: obj.hp, maxHp: obj.maxHp, atk: obj.atk, def: obj.def }; enemyStunned = 0;
             waypoints = []; moving = false; stopSteps();
             pendingBattle = null; pendingLoot = null;
@@ -679,9 +738,13 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             vampirismReady = false; var p = parent.Sherwood.getPlayer();
             if (p && p.talents && p.talents['vampirism'] > 0) { if (Math.random() < 0.30) { vampirismReady = true; vampirismBuff = 20; showCenterText('ВАМПИРИЗМ!', '#a020f0'); } }
             document.getElementById('mob-hp').style.display = 'block';
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp);
             var nameEl = document.getElementById('mob-hp-name'); if (nameEl) nameEl.textContent = getMobName(obj.img);
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 0 0 0)'; playSound(soundHit);
+
+            var ea = document.getElementById('enemy-avatar');
+            if (ea) { var eaImg = ea.querySelector('img'); if (eaImg) eaImg.src = obj.img; ea.style.display = 'block'; }
+            renderLearnedTalents();
 
             updateMobHpBar();
 
@@ -690,9 +753,12 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                 if (!isBattleActive || !playerHitFirst) return; var p = parent.Sherwood.getPlayer(); if (!p) return;
                 if (enemyStunned > 0 || playerStunned > 0) return;
                 var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
+                var eskill = rollEnemySkill(currentEnemyObj && currentEnemyObj.isBoss);
+                if (eskill && eskill.mult) edmg = Math.floor(edmg * eskill.mult);
+                else if (eskill) { updateHeroSpheres(); return; }
                 if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
-                if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp; document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
-                p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay();
+                if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp); document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); bvFloat('-' + edmg, '#ffcc55', 'enemy'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
+                p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay(); bvFloat('-' + edmg, '#ff5544', 'hero'); bvFlash('hero-avatar', 'hurt');
                 if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
             }, 1000);
         }
@@ -702,6 +768,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             pendingBattle = null; pendingLoot = null;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
             document.getElementById('mob-hp').style.display = 'none';
+            var eaHide = document.getElementById('enemy-avatar'); if (eaHide) eaHide.style.display = 'none';
 
             setBattleCamera(false);
 
@@ -715,6 +782,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             updateKillCounter(); 
             pendingBattle = null; pendingLoot = null;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
+            var eaHide2 = document.getElementById('enemy-avatar'); if (eaHide2) eaHide2.style.display = 'none';
             if (currentEnemyObj) {
                 spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
                 try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
@@ -728,8 +796,32 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             setBattleCamera(false);
         }
 
+        function bvFloat(text, color, target) { try { window.Sherwood.BattleVisuals.floatDamageText(text, color, target); } catch (e) {} }
+        function bvWebm(name, elId) { try { window.Sherwood.BattleVisuals.playWebmFx(name, { elId: elId }); } catch (e) {} }
+        function bvFlash(elId, cls) { try { var el = document.getElementById(elId); if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(function() { el.classList.remove(cls); }, 700); } catch (e) {} }
+
+        // Умения врага: обычные ~12% на ход, боссы ~22%. Тяжёлый удар / оглушение героя / самосцеление
+        function rollEnemySkill(isBoss) {
+            if (!isBattleActive || !currentEnemyStats) return null;
+            var chance = isBoss ? 0.22 : 0.12;
+            if (Math.random() >= chance) return null;
+            var roll = Math.random();
+            if (roll < 0.4) { showCenterText('ТЯЖЁЛЫЙ УДАР!', '#ff6622'); return { mult: 1.6 }; }
+            if (roll < 0.7) { playerStunned = 2; showCenterText('ВРАГ ОГЛУШАЕТ!', '#ffaa00'); return { stun: true }; }
+            var heal = Math.max(10, Math.floor(currentEnemyStats.maxHp * (isBoss ? 0.06 : 0.04)));
+            currentEnemyStats.hp = Math.min(currentEnemyStats.maxHp, currentEnemyStats.hp + heal);
+            if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
+            document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp);
+            document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
+            showCenterText('ВРАГ ИСЦЕЛЯЕТСЯ!', '#66ff66');
+            bvWebm('healing', 'enemy-avatar');
+            bvFloat('+' + heal, '#66ff66', 'enemy');
+            return { heal: true };
+        }
+
         function attackEnemy() {
             if (!isBattleActive || !currentEnemyStats || !parent.Sherwood || !parent.Sherwood.getPlayer) return;
+            if (battleStartAt && Date.now() - battleStartAt < 450) return;
             if (playerStunned > 0) { showCenterText('ОГЛУШЁН!', '#888'); return; }
             if (playerAttackCooldown > 0) return; playerAttackCooldown = PLAYER_ATTACK_CD; playerHitFirst = true;
             var p = parent.Sherwood.getPlayer(); playSound(soundHit);
@@ -748,8 +840,9 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             if (p.talents && p.talents['ignore']) baseDmg += Math.floor(baseDmg * p.talents['ignore'] * 0.05);
             if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
             var dmg = baseDmg; currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
-            if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) { var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100; var heal = Math.floor(dmg * vampPercent); if (heal > 0) { p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); updateHeroSpheres(); } }
-            document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp;
+            bvFloat('-' + dmg, '#ffcc55', 'enemy'); bvFlash('enemy-avatar', 'hit');
+            if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) { var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100; var heal = Math.floor(dmg * vampPercent); if (heal > 0) { p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); bvFloat('+' + heal, '#66ff66', 'hero'); bvWebm('vampirism', 'enemy-avatar'); updateHeroSpheres(); } }
+            document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp);
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
             if (currentEnemySprite) {
                 var spriteW = currentEnemySprite.scale.x, spriteH = currentEnemySprite.scale.y; var ox = (Math.random() - 0.5) * spriteW * 0.7, oy = (Math.random() - 0.5) * spriteH * 0.7;
@@ -762,9 +855,12 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; }
             if (enemyStunned > 0) { updateHeroSpheres(); return; }
             var edmg = Math.max(5, Math.floor(currentEnemyStats.atk * 0.5));
+            var eskill = rollEnemySkill(currentEnemyObj && currentEnemyObj.isBoss);
+            if (eskill && eskill.mult) edmg = Math.floor(edmg * eskill.mult);
+            else if (eskill) { updateHeroSpheres(); return; }
             if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
-            if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = 'HP: ' + currentEnemyStats.hp + '/' + currentEnemyStats.maxHp; document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
-            p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay();
+            if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp); document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); bvFloat('-' + edmg, '#ffcc55', 'enemy'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
+            p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay(); bvFloat('-' + edmg, '#ff5544', 'hero'); bvFlash('hero-avatar', 'hurt');
             if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showDeathVideoAndLose(); }
         }
 
@@ -784,6 +880,14 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             el.style.top = y + 'px';
             
             el.style.transform = 'translate(-50%, -140%)';
+
+            var ea = document.getElementById('enemy-avatar');
+            if (ea && ea.style.display !== 'none') {
+                var r = el.getBoundingClientRect();
+                ea.style.left = Math.min(window.innerWidth - 65, Math.max(r.right + 10, 260)) + 'px';
+                ea.style.top = (r.top + r.height * 0.5 + 20) + 'px';
+                ea.style.transform = 'none';
+            }
         }
 
         const raycaster = new THREE.Raycaster(); const ndc = new THREE.Vector2();
@@ -935,7 +1039,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             if (exitIsOpen && Math.abs(cur.gx - exitCell.gx) + Math.abs(cur.gy - exitCell.gy) <= 1) { winDungeon(); return; }
         });
 
-        var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение' }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость' }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение' } };
+        var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение', cooldown: 20000 }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость', cooldown: 25000 }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение', cooldown: 8000 } };
         var skillCooldowns = {};
         
         function renderLearnedTalents() {
@@ -944,11 +1048,15 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             for (var id in talentData) {
                 var lvl = 0;
                 try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(id); } catch(e) {}
+                if (!lvl && p.talents && p.talents[id]) lvl = p.talents[id];
                 if (lvl > 0) {
                     var img = document.createElement('img'); img.src = talentData[id].icon; img.className = 'skill-btn';
                     img.dataset.skillId = id;
                     img.onclick = (function(skillId) { return function() { useSkill(skillId); }; })(id);
-                    row.appendChild(img);
+                    var wrap = document.createElement('div'); wrap.className = 'skill-wrap';
+                    var fill = document.createElement('div'); fill.className = 'skill-cd-fill'; fill.style.height = '0%';
+                    wrap.appendChild(img); wrap.appendChild(fill);
+                    row.appendChild(wrap);
                 }
             }
         }
@@ -960,12 +1068,25 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             
             var lvl = 0;
             try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(skillId); } catch(e) {}
+            if (!lvl && p.talents && p.talents[skillId]) lvl = p.talents[skillId];
             if (lvl <= 0) { showCenterText('Скилл не изучен!', '#ff5555'); return; }
             
             if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 20000; }
-            else if (skillId === 'rage') { var f = getFilth(); if (f.cur < f.max) { showCenterText('Нужна полная скверна!', '#ff5555'); return; } if (!spendFilth(65)) return; rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
-            else if (skillId === 'healing') { if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; } var heal = 10 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
-            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); setTimeout(function() { icon.classList.remove('on-cooldown'); }, talentData[skillId].cooldown || 10000); }
+            else if (skillId === 'rage') { if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; } rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
+            else if (skillId === 'healing') { if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; } var heal = 10 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); bvFloat('+' + heal, '#66ff66', 'hero'); bvWebm('healing', 'hero-avatar'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
+            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); var cd = talentData[skillId].cooldown || 10000; var wrap = icon.parentNode; var fill = (wrap && wrap.classList && wrap.classList.contains('skill-wrap')) ? wrap.querySelector('.skill-cd-fill') : null; if (fill) { var rafLoop = function () { var rem = skillCooldowns[skillId] ? skillCooldowns[skillId] - Date.now() : 0; if (rem <= 0) { fill.style.height = '0%'; icon.classList.remove('on-cooldown'); return; } fill.style.top = '0'; fill.style.height = Math.max(0, Math.min(100, rem / cd * 100)) + '%'; requestAnimationFrame(rafLoop); }; requestAnimationFrame(rafLoop); } else { setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd); } }
+        }
+
+        // Тень кулдауна на кнопке удара: тёмный слой на кнопке плавно уходит снизу вверх
+        function updateAttackCooldownOverlay() {
+            var ov = document.getElementById('attack-cooldown-overlay'); if (!ov) return;
+            var icon = document.getElementById('attack-icon');
+            if (!isBattleActive || playerAttackCooldown <= 0) { ov.style.display = 'none'; ov._cdMax = 0; if (isBattleActive && icon) icon.style.pointerEvents = 'auto'; return; }
+            if (playerAttackCooldown > (ov._cdMax || 0)) ov._cdMax = playerAttackCooldown;
+            var pct = Math.max(2, Math.min(100, playerAttackCooldown / (ov._cdMax || 1) * 100));
+            ov.style.display = 'block'; ov.textContent = '';
+            ov.style.top = '0'; ov.style.height = pct + '%';
+            if (icon) icon.style.pointerEvents = 'none';
         }
 
         const clock = new THREE.Clock();
@@ -995,6 +1116,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
 
             updateFilth(dt);
             if (isBattleActive) updateMobHpBar();
+            updateAttackCooldownOverlay();
             updateLootButton();
 
             if (!isBattleActive) {
@@ -1084,7 +1206,7 @@ updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
 
             stopSteps(); playSound(soundVictory); try { dungeonMusic.pause(); dungeonMusic.currentTime = 0; } catch(e){}
             try { if (parent.UI && parent.UI._grantCup) parent.UI._grantCup(currentDungeon, currentFloor, currentDiff); if (parent.Sherwood && parent.Sherwood.Dungeon && parent.Sherwood.Dungeon.grantCup) parent.Sherwood.Dungeon.grantCup(currentFloor, currentDiff); } catch(e) {}
-            if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows; } }
+            if (parent.Sherwood && parent.Sherwood.getPlayer) { var p = parent.Sherwood.getPlayer(); if (p) { if (!p.resources) p.resources = {}; p.resources.arrows = playerArrows + Math.max(0, (dungeonArrowsTotal || 0) - ARROWS_MAX_START); } }
             try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { parent.Sherwood.Bestiary.registerKill(currentPool.boss); } } catch(e) {}
             
             // Формируем награды, добавляя выпавшие ресурсы
@@ -1145,5 +1267,13 @@ updateHighlights(); updateFog(); animate(); setTimeout(checkObjects, 800);
             try { if (parent.UI && parent.UI._showDefeatScreen) { parent.UI._lastPortal = null; parent.UI._lastDungeon = currentDungeon; parent.UI._afterRewardAction = function() { try { if (parent.UI._dungeonShowFloors) parent.UI._dungeonShowFloors(currentDungeon); else if (parent.UI.dungeon) parent.UI.dungeon(); } catch(e) { exitDungeon(); } }; parent.UI._showDefeatScreen(rewards); } else { exitDungeon(); } } catch(e) { exitDungeon(); }
         }
     </script>
+    <style>
+        #dungeon-loot-bag { position: fixed; top: 12px; right: 12px; width: 52px; height: 52px; z-index: 9200; pointer-events: none; background: rgba(0,0,0,0.45); border: 2px solid rgba(200,160,80,0.8); border-radius: 10px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7)); }
+        #dungeon-loot-bag img { width: 78%; height: 78%; object-fit: contain; }
+        #dungeon-loot-bag.pulse { animation: lootBagPulse 0.4s ease-out; }
+        @keyframes lootBagPulse { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }
+        .loot-fly { position: fixed; width: 32px; height: 32px; z-index: 9210; pointer-events: none; object-fit: contain; transition: transform 1.1s cubic-bezier(0.45,0.05,0.55,0.95), opacity 1.1s ease-in; will-change: transform, opacity; }
+    </style>
+    <div id="dungeon-loot-bag"><img src="assets/assets2/icons/hero_bag.png" alt=""></div>
 </body>
 </html>
