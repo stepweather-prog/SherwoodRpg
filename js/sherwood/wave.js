@@ -204,6 +204,10 @@ Sherwood.Wave = {
         if (!this._isActive) return;
         this._killCount++;
         this._killsForCurrent++;
+        if (Sherwood.Bag && Sherwood.Bag.rollTabletDrop) {
+            var curEnemy = this._uniqueEnemies ? this._uniqueEnemies[this._currentIndex] : null;
+            Sherwood.Bag.rollTabletDrop(curEnemy === this.BOSS);
+        }
 
         var current = this._uniqueEnemies[this._currentIndex];
         var needed = (current === this.BOSS) ? 1 : this.KILLS_PER_ENEMY;
