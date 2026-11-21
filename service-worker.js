@@ -2,7 +2,7 @@
 //  SERVICE-WORKER.JS — Офлайн-режим для Sherwood RPG
 // ============================================================
 
-const CACHE_NAME = 'sherwood-v1.3.0';
+const CACHE_NAME = 'sherwood-v1.4.1';
 
 // Список файлов, которые нужно закэшировать при установке
 const ASSETS_TO_CACHE = [
@@ -41,6 +41,7 @@ const ASSETS_TO_CACHE = [
     './js/sherwood/hearth.js',
     './js/sherwood/router.js',
     './js/sherwood/battle_visuals.js',
+    './js/sherwood/audio_volume.js',
     './js/sherwood/wave.js',
     './js/sherwood/wallet.js'
 ];
@@ -76,6 +77,30 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
     // Не кэшируем запросы к сторонним доменам (например, three.js с unpkg)
     if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
+    // HTML и JS — всегда из сети первыми (иначе правки не доходят до игрока).
+    // Кэш используется только как офлайн-фтолбэк.
+    var url = event.request.url;
+    var isHtml = event.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/');
+    var isJs = url.endsWith('.js');
+    if (isHtml || isJs) {
+        event.respondWith(
+            fetch(event.request).then(function(networkResponse) {
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                    var responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(function(cache) {
+                        cache.put(event.request, responseToCache);
+                    });
+                }
+                return networkResponse;
+            }).catch(function() {
+                return caches.match(event.request).then(function(cached) {
+                    return cached || caches.match('./index.html');
+                });
+            })
+        );
         return;
     }
 
