@@ -92,10 +92,12 @@ window.Settings = {
             }
         }
 
-        // 3) Боевые сцены живут в iframe — broadcast туда
+        // 3) Боевые сцены живут в iframe — broadcast туда (громкость и графика)
+        var volMode = { type: 'sherwood_volume', music: this._settings.musicVolume, sound: this._settings.soundVolume };
         var frames = document.querySelectorAll('iframe');
         for (var f = 0; f < frames.length; f++) {
             try { frames[f].contentWindow.postMessage({ type: 'sherwood_graphics', mode: val }, '*'); } catch(e) {}
+            try { frames[f].contentWindow.postMessage(volMode, '*'); } catch(e) {}
         }
     },
 
@@ -185,6 +187,7 @@ window.Settings = {
         var valEl = document.getElementById('soundVolumeVal');
         if (valEl) valEl.textContent = Math.round(this._settings.soundVolume * 100) + '%';
         this.saveSettings();
+        this._applyVolumes();
         if (window.AudioManager) AudioManager.playSoundEffect('click');
     },
 
@@ -197,8 +200,9 @@ window.Settings = {
         try { if (window.audioPlayer) window.audioPlayer.volume = vol; } catch(e) {}
         try { if (window.AudioManager && AudioManager.updateVolume) AudioManager.updateVolume(); } catch(e) {}
         try { if (typeof UI !== 'undefined' && UI._currentMusic) UI._currentMusic.volume = vol; } catch(e) {}
-        
+
         this.saveSettings();
+        this._applyVolumes();
     },
 
     _setGraphics: function(mode) {
