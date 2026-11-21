@@ -2,7 +2,7 @@
 //  SERVICE-WORKER.JS — Офлайн-режим для Sherwood RPG
 // ============================================================
 
-const CACHE_NAME = 'sherwood-v1.2.0';
+const CACHE_NAME = 'sherwood-v1.3.0';
 
 // Список файлов, которые нужно закэшировать при установке
 const ASSETS_TO_CACHE = [
