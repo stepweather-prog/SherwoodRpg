@@ -528,7 +528,7 @@ Sherwood.Combat = {
     _updateBattleUI: function() {
         if (this._battle) {
             var enemyHpEl = document.querySelector('[data-enemy-hp]');
-            if (enemyHpEl) enemyHpEl.textContent = 'HP: ' + this._battle.enemy.hp + '/' + this._battle.enemy.maxHp;
+            if (enemyHpEl) enemyHpEl.textContent = String(this._battle.enemy.hp);
         }
     },
 
