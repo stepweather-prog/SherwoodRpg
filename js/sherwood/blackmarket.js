@@ -20,6 +20,8 @@ Sherwood.BlackMarket = (function() {
         { id: 'dungeon_ticket', name: 'Тикет подземки', icon: 'assets/interface/resource_key_to_locked_levels.png', price: 200, currency: 'silver', gives: { entranceTickets: 1 }, desc: '+1 тикет входа' },
         { id: 'autofight_ticket', name: 'Тикет автобоя', icon: 'assets/interface/ticket_autofight.png', price: 300, currency: 'silver', gives: { autoFightTickets: 1 }, desc: '+1 тикет автобоя' },
         { id: 'portal_token_1', name: 'Токен портала I', icon: 'assets/interface/resource_token_on_entrance_portal_1.png', price: 500, currency: 'silver', gives: { portalToken1: 1 }, desc: '+1 токен' },
+        { id: 'potion_heal', name: 'Зелье лечения', icon: 'assets/assets2/game_details/resource_life_potion.png', price: 50, currency: 'gold', gives: { potionHeal: 1 }, desc: '+50% HP' },
+        { id: 'potion_filth', name: 'Зелье скверны', icon: 'assets/assets2/game_details/potion_of_filth.png', price: 50, currency: 'gold', gives: { potionFilth: 1 }, desc: '-80% скверны' },
         { id: 'skin_drawing', name: 'Чертёж заточки', icon: 'assets/interface/skin_drawing.png', price: 500, currency: 'gold', gives: { skinDrawings: 1 }, desc: '+1 чертёж заточки' }
     ];
 
@@ -31,7 +33,9 @@ Sherwood.BlackMarket = (function() {
         entranceTickets: { method: 'addResource', bagKey: 'entranceTickets' },
         autoFightTickets: { method: 'addResource', bagKey: 'autoFightTickets' },
         portalToken1: { method: 'addResource', bagKey: 'portalToken1' },
-        skinDrawings: { method: 'addResource', bagKey: 'skinTablets' }
+        skinDrawings: { method: 'addResource', bagKey: 'skinTablets' },
+        potionHeal: { method: 'addItem', itemDef: { id: 'potion_heal', name: 'Зелье лечения', icon: 'assets/assets2/game_details/resource_life_potion.png', grade: 'common', type: 'potion', maxStack: 20, sellPrice: 20 } },
+        potionFilth: { method: 'addItem', itemDef: { id: 'potion_filth', name: 'Зелье скверны', icon: 'assets/assets2/game_details/potion_of_filth.png', grade: 'common', type: 'potion', maxStack: 20, sellPrice: 20 } }
     };
 
     var _shopItems = [];
@@ -108,12 +112,20 @@ Sherwood.BlackMarket = (function() {
 
     function _generateShop() {
         var pool = _buildPool();
-        _shuffle(pool);
+        // Зелья для боевого пояса всегда в лавке
+        var always = [];
+        var rest = [];
+        for (var i = 0; i < pool.length; i++) {
+            if (pool[i].id === 'potion_heal' || pool[i].id === 'potion_filth') always.push(pool[i]);
+            else rest.push(pool[i]);
+        }
+        _shuffle(rest);
         var selected = [];
-        var count = Math.min(SHOP_SLOTS, pool.length);
-        for (var i = 0; i < count; i++) {
-            var item = Object.assign({}, pool[i], { slot: i, tab: 1 });
-            selected.push(item);
+        for (var a = 0; a < always.length && selected.length < SHOP_SLOTS; a++) {
+            selected.push(Object.assign({}, always[a], { slot: selected.length, tab: 1 }));
+        }
+        for (var b = 0; b < rest.length && selected.length < SHOP_SLOTS; b++) {
+            selected.push(Object.assign({}, rest[b], { slot: selected.length, tab: 1 }));
         }
         return selected;
     }
@@ -146,7 +158,9 @@ Sherwood.BlackMarket = (function() {
                 _shopItems = p.marketData.shopItems || [];
                 _refreshCountToday = p.marketData.refreshCountToday || 0;
                 _lastRefreshDate = p.marketData.lastRefreshDate;
-                if (_shopItems.length === 0) {
+                if (_shopItems.length === 0
+                    || !_shopItems.some(function(it){ return it && (it.id === 'potion_heal' || it.id === 'potion_filth'); })) {
+                    // Устаревший сейв лавки без зелий — перегенерировать
                     _shopItems = _generateShop();
                     _saveMarketData();
                 }
