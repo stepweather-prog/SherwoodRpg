@@ -169,6 +169,7 @@ Sherwood.Portal = {
             Sherwood.addExp(enemy.exp);
             Sherwood.addResource('gold', enemy.gold);
             Sherwood.addResource('silver', Math.floor(enemy.gold * 1.5));
+            if (Sherwood.Bag && Sherwood.Bag.rollTabletDrop) Sherwood.Bag.rollTabletDrop(enemy.isBoss || false);
         }
         this._currentLevel++;
         if (this._currentLevel >= this._currentEnemies.length) return this._completePortal();
@@ -207,6 +208,7 @@ Sherwood.Portal = {
             Sherwood.addExp(enemy.exp);
             Sherwood.addResource('gold', enemy.gold);
             Sherwood.addResource('silver', Math.floor(enemy.gold * 1.5));
+            if (Sherwood.Bag && Sherwood.Bag.rollTabletDrop) Sherwood.Bag.rollTabletDrop(enemy.isBoss || false);
             this._currentLevel++;
             if (this._currentLevel >= this._currentEnemies.length) return this._completePortal();
             result.nextEnemy = this._currentEnemies[this._currentLevel];
@@ -229,7 +231,7 @@ Sherwood.Portal = {
         else cost = { cost: 50 + (this._deathCount - 2) * 50, currency: 'gold' };
         if (cost.cost > 0 && (player.resources[cost.currency] || 0) < cost.cost) { this._exitPortal(false); return { dead: true, portalFailed: true, reason: 'Недостаточно ' + cost.currency + ' для воскрешения' }; }
         if (cost.cost > 0) player.resources[cost.currency] -= cost.cost;
-        player.stats.hp = player.stats.maxHp;
+        player.stats.hp = 1; // жив, но сфера пустая - полное HP даёт хост перед следующим боем
         Sherwood.saveGame();
         return { dead: true, deathCount: this._deathCount, cost: cost, resurrected: true, playerHp: player.stats.hp };
     },
