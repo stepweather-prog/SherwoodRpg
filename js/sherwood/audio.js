@@ -136,7 +136,10 @@ const AudioManager = {
     // === ОБНОВИТЬ ГРОМКОСТЬ УЖЕ ИГРАЮЩЕГО ТРЕКА ===
     updateVolume: function() {
         var vol = this._getMusicVolume();
-        
+
+        // 0. Все обёрнутые Audio во всей игре (audio_volume.js)
+        try { if (window.SherwoodVolume && window.SherwoodVolume.apply) window.SherwoodVolume.apply(); } catch(e) {}
+
         // 1. Текущий трек AudioManager
         if (this.currentMusic) {
             try { this.currentMusic.volume = vol; } catch(e) {}
