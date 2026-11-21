@@ -251,6 +251,7 @@ Sherwood.Thicket = {
         Sherwood.addExp(reward.exp);
         Sherwood.addResource('gold', reward.gold);
         Sherwood.addResource('silver', reward.silver);
+        if (Sherwood.Bag && Sherwood.Bag.rollTabletDrop) Sherwood.Bag.rollTabletDrop(node.isBoss);
 
         var ticketChance = diff === 1 ? 0.1 : (diff === 2 ? 0.3 : 0.5);
         if (Math.random() < ticketChance) {
