@@ -51,6 +51,7 @@ Sherwood.BattleVisuals = (function () {
         enemySprite: null,
 
         arrows: 25,
+        arrowsSynced: false,
         arrowsStart: 0,
         filthTimer: 0,
         filthFullSince: 0,
@@ -166,6 +167,8 @@ Sherwood.BattleVisuals = (function () {
             if (document.getElementById('battle-system-styles')) return;
             var css = [
                 '.skill-btn { cursor:pointer;border-radius:8px;border:3px solid rgba(200,160,80,0.8);background:rgba(0,0,0,0.6);padding:3px;width:70px;height:70px;object-fit:contain;transition:all 0.2s;display:block;flex-shrink:0;box-sizing:border-box; }',
+                '.skill-wrap { position:relative; flex-shrink:0; }',
+                '.skill-cd-fill { position:absolute; top:0; left:0; width:100%; height:0%; background:rgba(0,0,0,0.7); border-radius:8px; pointer-events:none; z-index:2; }',
                 '.skill-btn.on-cooldown { opacity:0.3;filter:grayscale(1);cursor:not-allowed; }',
                 '@keyframes bvCenterFade { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.85); } 15% { opacity:1; transform:translate(-50%,-50%) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-90%) scale(1); } }',
                 '.bv-center-text { position:fixed;top:12%;left:50%;transform:translate(-50%,-50%);z-index:9000;pointer-events:none;font-family:Georgia,serif;font-size:1.15em;font-weight:bold;text-shadow:0 0 8px #000,0 2px 4px #000;animation:bvCenterFade 1.2s ease-out forwards;white-space:nowrap; }',
@@ -181,7 +184,14 @@ Sherwood.BattleVisuals = (function () {
                 '#hero-avatar.block { animation:bvAvatarBlock 0.6s ease-out; }',
                 '@keyframes bvDmgFloat { 0% { opacity:0; transform:translateY(10px) scale(0.8); } 20% { opacity:1; transform:translateY(0) scale(1.1); } 100% { opacity:0; transform:translateY(-52px) scale(1); } }',
                 '.bv-dmg-float { position:fixed;z-index:9100;pointer-events:none;font-family:Georgia,serif;font-size:22px;font-weight:bold;color:#ff5544;text-shadow:0 0 6px #000,0 2px 4px #000;animation:bvDmgFloat 1.1s ease-out forwards; }',
-                '#dmg-vignette { position:fixed;top:0;left:0;width:100%;height:100%;z-index:149;pointer-events:none;opacity:0;box-shadow:inset 0 0 140px 40px rgba(180,0,0,0.75);transition:opacity 0.12s ease-out; }'
+                '#dmg-vignette { position:fixed;top:0;left:0;width:100%;height:100%;z-index:149;pointer-events:none;opacity:0;box-shadow:inset 0 0 140px 40px rgba(180,0,0,0.75);transition:opacity 0.12s ease-out; }',
+                // Пояс героя: левый карман — стрелы, два правых — зелья (лекарство / скверна)
+                '#arrow-counter { display:none !important; }',
+                '#hero-belt { position:fixed;bottom:6px;left:190px;width:300px;aspect-ratio:38/11;z-index:54;pointer-events:none;background:url("assets/assets2/game_details/sash.png") center/cover no-repeat; }',
+                '.belt-slot { position:absolute;top:14%;height:69%;border-radius:8px;pointer-events:auto;cursor:pointer;display:flex;align-items:center;justify-content:center; }',
+                '.belt-slot img { width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,0,0,0.9));display:block;pointer-events:none; }',
+                '.belt-slot.belt-slot-empty img { opacity:0.28; }',
+                '.belt-badge { position:absolute;right:-6px;bottom:-6px;min-width:22px;height:22px;padding:0 4px;background:rgba(0,0,0,0.85);border:1px solid rgba(200,160,80,0.9);border-radius:11px;color:#ffd27a;font-size:13px;font-weight:bold;text-align:center;line-height:22px;box-sizing:border-box;z-index:3;pointer-events:none; }'
             ].join('\n');
             var st = document.createElement('style');
             st.id = 'battle-system-styles';
@@ -214,6 +224,112 @@ Sherwood.BattleVisuals = (function () {
             try { skin = localStorage.getItem('active_skin'); } catch (e) {}
             var url = 'assets/hero_skins/' + (skin || 'skin1_01.png');
             img.src = url;
+        },
+
+        // ===== ПОЯС ГЕРОЯ (sash.png): карман стрел + 2 кармана зелий =====
+        ensureBelt: function () {
+            if (this.find('hero-belt')) return;
+            var b = document.createElement('div');
+            b.id = 'hero-belt';
+            b.innerHTML =
+                '<div class="belt-slot belt-slot-empty" id="belt-sl-arrows" style="left:9.3%;width:17.1%;">' +
+                    '<img src="assets/interface/sherwood_hollow_arrow.png" alt="">' +
+                    '<div class="belt-badge" id="belt-count-arrows">0</div>' +
+                '</div>' +
+                '<div class="belt-slot belt-slot-empty" id="belt-sl-healing" style="left:61%;width:17.6%;" data-potion="healing">' +
+                    '<img src="assets/assets2/game_details/resource_life_potion.png" alt="">' +
+                    '<div class="belt-badge" id="belt-count-healing">0</div>' +
+                '</div>' +
+                '<div class="belt-slot belt-slot-empty" id="belt-sl-filth" style="left:79.6%;width:17.6%;" data-potion="filth">' +
+                    '<img src="assets/assets2/game_details/potion_of_filth.png" alt="">' +
+                    '<div class="belt-badge" id="belt-count-filth">0</div>' +
+                '</div>';
+            document.body.appendChild(b);
+            var self = this;
+            var slots = b.querySelectorAll('.belt-slot');
+            for (var i = 0; i < slots.length; i++) {
+                (function (slot) {
+                    var type = slot.getAttribute('data-potion');
+                    if (!type) return;
+                    var drink = function (e) { e.preventDefault(); e.stopPropagation(); self.useBeltPotion(type); };
+                    slot.addEventListener('click', drink);
+                    slot.addEventListener('touchstart', drink);
+                })(slots[i]);
+            }
+            this.updateBelt();
+            this._layoutBelt();
+            var self2 = this;
+            if (!this._beltResizeBound) {
+                this._beltResizeBound = true;
+                window.addEventListener('resize', function () { self2._layoutBelt(); });
+            }
+        },
+
+        // Пояс располагается из JS: между аватаром героя и сферой маны (у сферы img 135% — учесть свес)
+        _layoutBelt: function () {
+            var belt = this.find('hero-belt');
+            if (!belt) return;
+            var av = document.getElementById('hero-avatar');
+            if (!av) return;
+            var left = av.getBoundingClientRect().right + 10;
+            var rightLimit = window.innerWidth - 145; // фолбэк, если сферы нет
+            var mana = document.getElementById('hero-mana');
+            if (mana) {
+                var mr = mana.getBoundingClientRect();
+                var overhang = mr.width * 0.35 / 2 + 5; // img 135% вылезает за элемент
+                rightLimit = mr.left - overhang - 10;
+            }
+            var width = rightLimit - left;
+            var minW = Math.min(200, Math.max(90, window.innerWidth - left));
+            if (width < minW) width = minW;
+            belt.style.left = left + 'px';
+            belt.style.width = Math.min(width, window.innerWidth - left) + 'px';
+            belt.style.bottom = '6px';
+        },
+
+        updateBelt: function () {
+            var p = null;
+            try { p = Logic.getPlayer(); } catch (e) {}
+            var arrows = 0;
+            if (S.active || S.arrowsSynced) arrows = S.arrows;
+            else if (p && p.resources && typeof p.resources.arrows === 'number') arrows = p.resources.arrows;
+            arrows = Math.max(0, Math.min(25, arrows));
+            var belt = (p && p.belt) ? p.belt : {};
+            var healing = Math.max(0, Math.min(2, belt.healing || 0));
+            var filth = Math.max(0, Math.min(2, belt.filth || 0));
+            var map = [['belt-count-arrows', arrows, 'belt-sl-arrows'], ['belt-count-healing', healing, 'belt-sl-healing'], ['belt-count-filth', filth, 'belt-sl-filth']];
+            for (var i = 0; i < map.length; i++) {
+                var t = document.getElementById(map[i][0]);
+                if (t) t.textContent = String(map[i][1]);
+                var slot = document.getElementById(map[i][2]);
+                if (slot) slot.classList[map[i][1] > 0 ? 'remove' : 'add']('belt-slot-empty');
+            }
+        },
+
+        useBeltPotion: function (type) {
+            var p = Logic.getPlayer();
+            if (!p || !p.stats) return false;
+            if (!p.belt) p.belt = { healing: 0, filth: 0 };
+            if (!(p.belt[type] > 0)) { DOM.centerText('КАРМАН ПУСТ!', '#ffaa00'); return false; }
+            p.belt[type]--;
+            if (type === 'healing') {
+                var heal = Math.floor((p.stats.maxHp || 100) * 0.5);
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                DOM.centerText('+' + heal + ' HP', '#66ff66');
+                DOM.floatDamageNumber('+' + heal, '#66ff66', 'hero');
+                DOM.webmFx('healing', { elId: 'hero-avatar' });
+            } else {
+                var max = p.stats.maxFilth || 100;
+                p.stats.filth = Math.max(0, (p.stats.filth || 0) - max * 0.8);
+                DOM.centerText('СКВЕРНА -80%', '#aa66ff');
+                DOM.floatDamageNumber('-СКВЕРНА', '#aa66ff', 'hero');
+            }
+            DOM.updateBelt();
+            DOM.updateHeroSpheres(p);
+            if (S.ctx && S.ctx.playSoundAltar) S.ctx.playSoundAltar();
+            if (S.ctx && S.ctx.onHpChanged) S.ctx.onHpChanged();
+            try { if (typeof Sherwood !== 'undefined' && Sherwood.saveGame) Sherwood.saveGame(); } catch (e) {}
+            return true;
         },
 
         setEnemySkin: function (imgPath) {
@@ -288,6 +404,7 @@ Sherwood.BattleVisuals = (function () {
                 if (n <= 3) box.classList.add('low');
                 else box.classList.remove('low');
             }
+            this.updateBelt();
         },
 
         updateMobHp: function (hp, maxHp) {
@@ -296,7 +413,7 @@ Sherwood.BattleVisuals = (function () {
             var fill = this.find('mob-hp-fill');
             if (fill) fill.style.clipPath = 'inset(0 ' + (1 - pct) * 100 + '% 0 0)';
             var txt = this.find('mob-hp-text');
-            if (txt) txt.textContent = 'HP: ' + Math.max(0, Math.floor(hp)) + '/' + maxHp;
+            if (txt) txt.textContent = String(Math.max(0, Math.floor(hp)));
         },
 
         updateMobName: function (name) {
@@ -310,7 +427,7 @@ Sherwood.BattleVisuals = (function () {
             var lifeFill = this.find('life-fill');
             if (lifeFill) lifeFill.style.clipPath = 'inset(' + Math.max(0, (1 - hpPct) * 100) + '% 0 0 0)';
             var hpText = this.find('hp-text');
-            if (hpText) hpText.textContent = 'HP: ' + Math.floor(p.stats.hp);
+            if (hpText) hpText.textContent = String(Math.floor(p.stats.hp));
             var filth = (typeof p.stats.filth === 'number') ? p.stats.filth : 0;
             var maxFilth = p.stats.maxFilth || 100;
             var fPct = Math.max(0, Math.min(1, filth / maxFilth));
@@ -325,6 +442,7 @@ Sherwood.BattleVisuals = (function () {
                 }
                 manaText.textContent = label;
             }
+            this.updateBelt();
         },
 
         updateAttackButton: function (cd) {
@@ -332,10 +450,15 @@ Sherwood.BattleVisuals = (function () {
             var icon = this.find('attack-icon');
             if (!ov) return;
             if (cd > 0) {
-                ov.style.display = 'flex';
-                ov.textContent = cd.toFixed(1) + 's';
+                if (cd > (this._attackCdMax || 0)) this._attackCdMax = cd;
+                var pct = Math.max(2, Math.min(100, (cd / (this._attackCdMax || 1)) * 100));
+                ov.style.display = 'block';
+                ov.textContent = '';
+                ov.style.top = '0';
+                ov.style.height = pct + '%';
                 if (icon) icon.style.pointerEvents = 'none';
             } else {
+                this._attackCdMax = 0;
                 ov.style.display = 'none';
                 if (icon) icon.style.pointerEvents = 'auto';
             }
@@ -375,7 +498,7 @@ Sherwood.BattleVisuals = (function () {
 
             var canvas = document.createElement('canvas');
             canvas.width = 360; canvas.height = 360;
-            var size = Math.min(380, Math.max(220, Math.floor(window.innerWidth * 0.35)));
+            var size = Math.min(460, Math.max(280, Math.floor(window.innerWidth * 0.42)));
             canvas.style.cssText = 'position:fixed;pointer-events:none;z-index:40;width:' + size + 'px;height:' + size + 'px;left:0;top:0;display:none;';
             document.body.appendChild(canvas);
             this._arrowCanvas = canvas;
@@ -386,7 +509,7 @@ Sherwood.BattleVisuals = (function () {
             var ex = (worldPos.x * 0.5 + 0.5) * window.innerWidth;
             var ey = (-worldPos.y * 0.5 + 0.5) * window.innerHeight;
             canvas.style.left = (ex - size / 2) + 'px';
-            canvas.style.top = (ey - size * 0.29) + 'px';
+            canvas.style.top = (ey - size * 0.22) + 'px';
 
             var ctx2d = canvas.getContext('2d', { willReadFrequently: true });
             function keyFrame() {
@@ -459,14 +582,22 @@ Sherwood.BattleVisuals = (function () {
                 var ael = document.getElementById(opts.elId);
                 if (ael && ael.style.display !== 'none') {
                     var ar = ael.getBoundingClientRect();
-                    px = Math.max(90, Math.min(280, Math.round(ar.width * 2.6)));
                     var acx = ar.left + ar.width / 2;
-                    var acy = ar.top + ar.height / 2;
-                    cl = Math.max(4, Math.min(window.innerWidth - px - 4, Math.floor(acx - px / 2)));
-                    ct = Math.max(4, Math.floor(acy - px / 2));
+                    if (opts.circle) {
+                        // Режим круга: вписать эффект в кружок элемента, по центру
+                        var mul = (opts.sizeMul !== undefined) ? opts.sizeMul : 1.1;
+                        px = Math.max(70, Math.min(200, Math.round(ar.width * mul)));
+                        var acy = ar.top + ar.height / 2;
+                        cl = Math.max(4, Math.min(window.innerWidth - px - 4, Math.floor(acx - px / 2)));
+                        ct = Math.max(4, Math.floor(acy - px / 2));
+                    } else {
+                        px = Math.max(80, Math.min(200, Math.round(ar.width * 2.0)));
+                        cl = Math.max(4, Math.min(window.innerWidth - px - 4, Math.floor(acx - px / 2)));
+                        ct = Math.max(4, Math.floor(ar.top + 6 - px));
+                    }
                 }
             }
-            canvas.style.cssText = 'position:fixed;pointer-events:none;z-index:58;width:' + px + 'px;height:' + px + 'px;left:' + cl + 'px;top:' + ct + 'px;';
+            canvas.style.cssText = 'position:fixed;pointer-events:none;z-index:58;width:' + px + 'px;height:' + px + 'px;left:' + cl + 'px;top:' + ct + 'px;' + (opts.circle ? 'border-radius:50%;' : '');
             document.body.appendChild(canvas);
             if (!this._webmCanvases) this._webmCanvases = {};
             if (!this._webmRafs) this._webmRafs = {};
@@ -745,8 +876,8 @@ Sherwood.BattleVisuals = (function () {
             var ea = DOM.find('enemy-avatar');
             if (ea && ea.style.display !== 'none') {
                 var r = el.getBoundingClientRect();
-                ea.style.left = Math.min(r.right + 10, window.innerWidth - 70) + 'px';
-                ea.style.top = (r.top + r.height * 0.3) + 'px';
+                ea.style.left = Math.min(window.innerWidth - 65, Math.max(r.right + 10, 260)) + 'px';
+                ea.style.top = (r.top + r.height * 0.5 + 20) + 'px';
             }
         }
     };
@@ -797,6 +928,7 @@ Sherwood.BattleVisuals = (function () {
             var cnt = (fromResources >= 0) ? fromResources : Math.max(fromBag, 0);
             S.arrowsStart = Math.max(cnt, 0);
             S.arrows = Math.min(S.arrowsStart, CFG.ARROWS_MAX_START);
+            S.arrowsSynced = true;
             DOM.updateArrowCounter(S.arrows);
         },
 
@@ -933,6 +1065,7 @@ Sherwood.BattleVisuals = (function () {
             Logic.stopTimer();
             S.active = true;
             S.dead = false;
+            S.battleStartAt = Date.now();
             S.playerHitFirst = false;
             S.playerAttackCooldown = 0;
             S.playerStunned = 0;
@@ -965,6 +1098,7 @@ Sherwood.BattleVisuals = (function () {
             DOM.updateMobName(S.enemy.name || 'Враг');
             DOM.updateMobHp(S.enemy.hp, S.enemy.maxHp);
             DOM.updateArrowCounter(S.arrows);
+            if (S.vampirismReady) DOM.webmFx('vampirism', { elId: 'enemy-avatar', circle: true, sizeMul: 1.1, keyLow: 40, keyHigh: 130 });
             if (S.ctx.playSoundHit) S.ctx.playSoundHit();
             FX.updateMobHpBarFor(S.enemySprite, S.camFPS);
 
@@ -986,11 +1120,18 @@ Sherwood.BattleVisuals = (function () {
             DOM.showBattleUI(false);
         },
 
+        // Защита от «призрачного» тапа: тап/клик, которым игрок входил в бой,
+        // может доехать до кнопки удара уже в новом iframe — игнорируем 450мс с начала боя
+        _entryGuard: function () {
+            return (S.battleStartAt && Date.now() - S.battleStartAt < 450);
+        },
+
         // ===== УДАР ИГРОКА (эталон) =====
         attack: function () {
             if (!S.active || !S.enemy) return;
             if (S.playerStunned > 0) { DOM.centerText('ОГЛУШЁН!', '#ffaa00'); return; }
             if (S.playerAttackCooldown > 0) return;
+            if (Logic._entryGuard()) return;
 
             var p = Logic.getPlayer();
             if (!p || !p.stats) return;
@@ -1023,6 +1164,7 @@ Sherwood.BattleVisuals = (function () {
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
                 DOM.floatDamageNumber('+' + heal, '#66ff66', 'hero');
                 FX.playSkillFx('vampirism', S.enemySprite, 0.55);
+                DOM.webmFx('vampirism', { elId: 'enemy-avatar', circle: true, sizeMul: 1.1, keyLow: 40, keyHigh: 130 });
             }
 
             DOM.updateMobHp(S.enemy.hp, S.enemy.maxHp);
@@ -1043,6 +1185,33 @@ Sherwood.BattleVisuals = (function () {
             Logic._enemyHitsPlayer();
         },
 
+        // ===== УМЕНИЯ ВРАГА: обычные враги ~12% на ход, боссы ~22% =====
+        _enemySkill: function () {
+            if (!S.enemy) return null;
+            var chance = S.enemy.isBoss ? 0.22 : 0.12;
+            if (Math.random() >= chance) return null;
+            var roll = Math.random();
+            if (roll < 0.4) {
+                DOM.centerText('ТЯЖЁЛЫЙ УДАР!', '#ff6622');
+                return { mult: 1.6 };
+            }
+            if (roll < 0.7) {
+                S.playerStunned = 2;
+                DOM.centerText('ВРАГ ОГЛУШАЕТ!', '#ffaa00');
+                return { stun: true };
+            }
+            var heal = Math.max(10, Math.floor(S.enemy.maxHp * (S.enemy.isBoss ? 0.06 : 0.04)));
+            S.enemy.hp = Math.min(S.enemy.maxHp, S.enemy.hp + heal);
+            DOM.updateMobHp(S.enemy.hp, S.enemy.maxHp);
+            Logic._syncEnemyHp();
+            DOM.centerText('ВРАГ ИСЦЕЛЯЕТСЯ!', '#66ff66');
+            DOM.enemyAvatarHit();
+            FX.playSkillFx('healing', S.enemySprite);
+            DOM.webmFx('healing', { elId: 'enemy-avatar' });
+            DOM.floatDamageNumber('+' + heal, '#66ff66', 'enemy');
+            return { heal: true };
+        },
+
         // ===== ОТВЕТ ВРАГА (эталон) =====
         _enemyHitsPlayer: function () {
             if (!S.active || !S.enemy) return;
@@ -1051,6 +1220,10 @@ Sherwood.BattleVisuals = (function () {
 
             var edmg = Math.max(5, Math.floor(S.enemy.atk * 0.5));
             var talents = (p.talents) ? p.talents : {};
+
+            var enemySkill = Logic._enemySkill();
+            if (enemySkill && enemySkill.mult) edmg = Math.floor(edmg * enemySkill.mult);
+            else if (enemySkill) return;
 
             if (talents.blocking && Math.random() < 0.1 * talents.blocking) {
                 FX.playSkillFx('blocking');
@@ -1091,6 +1264,7 @@ Sherwood.BattleVisuals = (function () {
         // ===== ТАЛАНТЫ (эталон) =====
         useSkill: function (sid) {
             if (!S.active || !S.enemy) return;
+            if (Logic._entryGuard()) return;
             var d = TALENT_DATA[sid];
             if (!d) return;
             var p = Logic.getPlayer();
@@ -1135,11 +1309,32 @@ Sherwood.BattleVisuals = (function () {
             if (!row) return;
             var now = Date.now();
             var btns = row.querySelectorAll('.skill-btn');
+            var anyActive = false;
             for (var i = 0; i < btns.length; i++) {
                 var sid = btns[i].getAttribute('data-skill');
                 var cdEnd = S.skillCooldowns[sid] || 0;
-                if (cdEnd > now) btns[i].classList.add('on-cooldown');
-                else btns[i].classList.remove('on-cooldown');
+                var remain = cdEnd - now;
+                if (remain > 0) {
+                    btns[i].classList.add('on-cooldown');
+                    anyActive = true;
+                } else {
+                    btns[i].classList.remove('on-cooldown');
+                }
+                // Тёмное заполнение, убывающее снизу вверх — как тень кулдауна на кнопке удара
+                var wrap = btns[i].parentNode;
+                var fill = (wrap && wrap.classList && wrap.classList.contains('skill-wrap')) ? wrap.querySelector('.skill-cd-fill') : null;
+                if (fill) {
+                    var d = TALENT_DATA[sid];
+                    var total = (d && d.cooldown) ? d.cooldown : cdEnd - now;
+                    var pct = (remain > 0 && total > 0) ? Math.max(0, Math.min(100, (remain / total) * 100)) : 0;
+                    fill.style.top = '0';
+                    fill.style.height = pct + '%';
+                }
+            }
+            if (this._skillCdRaf) { cancelAnimationFrame(this._skillCdRaf); this._skillCdRaf = null; }
+            if (anyActive) {
+                var self = this;
+                this._skillCdRaf = requestAnimationFrame(function () { self.updateSkillCooldowns(); });
             }
         },
 
@@ -1156,11 +1351,18 @@ Sherwood.BattleVisuals = (function () {
                 img.src = d.icon;
                 img.className = 'skill-btn';
                 img.setAttribute('data-skill', sid);
+                var wrap = document.createElement('div');
+                wrap.className = 'skill-wrap';
+                var fill = document.createElement('div');
+                fill.className = 'skill-cd-fill';
+                fill.style.height = '0%';
+                wrap.appendChild(img);
+                wrap.appendChild(fill);
                 img.addEventListener('click', function (e) {
                     e.stopPropagation();
                     window.Sherwood.BattleVisuals.useSkill(sid);
                 });
-                row.appendChild(img);
+                row.appendChild(wrap);
             });
         },
 
@@ -1199,6 +1401,7 @@ Sherwood.BattleVisuals = (function () {
         }
         DOM.ensure();
         DOM.ensureAvatars();
+        DOM.ensureBelt();
         if (S.ctx.camFPS) S.camFPS = S.ctx.camFPS;
         if (S.ctx.camFPSOptions) S.camFPSBase = S.ctx.camFPSOptions;
         S.scene = S.ctx.scene || null;
@@ -1240,7 +1443,7 @@ Sherwood.BattleVisuals = (function () {
         returnArrowsToBag: Logic.returnArrowsToBag,
         spendArrowsForAttack: Logic.spendArrowsForAttack,
         updateArrowCounter: function (n) {
-            if (typeof n === 'number') S.arrows = n;
+            if (typeof n === 'number') { S.arrows = n; S.arrowsSynced = true; }
             DOM.updateArrowCounter(S.arrows);
         },
 
@@ -1260,6 +1463,8 @@ Sherwood.BattleVisuals = (function () {
         hideArrowFlight: function () { DOM.hideArrowFlight(); },
         playWebmFx: function (name, opts) { DOM.webmFx(name, opts); },
         floatDamageText: function (text, color, target) { DOM.floatDamageNumber(text, color, target); },
+        useBeltPotion: function (type) { return DOM.useBeltPotion(type); },
+        updateBelt: function () { DOM.updateBelt(); },
 
         getPlayerAttackCooldown: function () { return S.playerAttackCooldown; },
         getPlayerStunned: function () { return S.playerStunned; },
