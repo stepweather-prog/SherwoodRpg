@@ -510,6 +510,52 @@ Sherwood.Bag = {
         return true;
     },
 
+    // Убрать предмет в боевой пояс: стрелы -> колчан (до 25), зелья -> карманы (до 2 каждого вида)
+    moveToBelt: function(index) {
+        if (index < 0 || index >= this._inventory.length) return false;
+        var item = this._inventory[index];
+        if (!item) return false;
+        var player = (typeof Sherwood !== 'undefined') ? Sherwood.getPlayer() : null;
+        if (!player) return false;
+        if (!player.resources) player.resources = {};
+
+        var cap, cur, key;
+        if (item.id === 'sherwood_arrow') {
+            cap = 25;
+            if (typeof player.resources.arrows !== 'number') player.resources.arrows = 0;
+            cur = player.resources.arrows;
+        } else {
+            if (!player.belt) player.belt = { healing: 0, filth: 0 };
+            key = (item.id === 'potion_heal') ? 'healing' : 'filth';
+            cap = 2;
+            cur = player.belt[key] || 0;
+        }
+
+        var free = Math.max(0, cap - cur);
+        var qty = item.quantity || 1;
+        if (free <= 0) {
+            if (typeof UI !== 'undefined' && UI._showToast) UI._showToast(item.id === 'sherwood_arrow' ? 'Колчан полон (25)' : 'Карман полон (2)');
+            return false;
+        }
+
+        var n = Math.min(qty, free);
+        if (item.id === 'sherwood_arrow') {
+            player.resources.arrows = cur + n;
+        } else {
+            player.belt[key] = cur + n;
+        }
+
+        if (n >= qty) {
+            this._inventory.splice(index, 1);
+        } else {
+            item.quantity = qty - n;
+        }
+        this._save();
+        if (typeof Sherwood !== 'undefined' && Sherwood.saveGame) Sherwood.saveGame();
+        if (typeof UI !== 'undefined' && UI._showToast) UI._showToast('Убрано в пояс: ' + n + ' шт.');
+        return true;
+    },
+
     sellItem: function(index, amount) {
         if (index < 0 || index >= this._inventory.length) return false;
         var item = this._inventory[index];
@@ -536,6 +582,21 @@ Sherwood.Bag = {
 
         this._save();
         return { success: true, price: totalPrice };
+    },
+
+    rollTabletDrop: function (isBoss) {
+        var chance = isBoss ? 0.30 : 0.10;
+        if (Math.random() >= chance) return null;
+        var kind = Math.random() < 0.5 ? 'ringTablets' : 'amuletTablets';
+        var n = 1 + Math.floor(Math.random() * (isBoss ? 3 : 1));
+        this._addAsItem(kind, n);
+        this._save();
+        try {
+            if (typeof UI !== 'undefined' && UI._showToast) {
+                UI._showToast('📜 Выпала ' + (kind === 'ringTablets' ? 'скрижаль кольца' : 'скрижаль амулета') + (n > 1 ? ' x' + n : '') + '!');
+            }
+        } catch (e) {}
+        return kind;
     },
 
     addLoot: function(loot) {
@@ -802,6 +863,12 @@ Sherwood.Bag = {
         var a = '';
         if (item.part) {
             a += '<button onclick="Sherwood.Bag.equipItem(' + i + ');Sherwood.Bag.showUI();" style="background:#4caf50;border:none;border-radius:6px;padding:4px 12px;color:#fff;font-weight:bold;cursor:pointer;margin:0 4px;font-size:0.7em;">🔧 Надеть</button>';
+        }
+
+        // Кнопка "Убрать в пояс" (стрелы и зелья)
+        var isBeltItem = (item.id === 'sherwood_arrow' || item.id === 'potion_heal' || item.id === 'potion_filth');
+        if (isBeltItem) {
+            a += '<button onclick="Sherwood.Bag.moveToBelt(' + i + ');Sherwood.Bag.showUI();" style="background:#7a5c2e;border:1px solid #c8a050;border-radius:6px;padding:4px 12px;color:#ffd27a;font-weight:bold;cursor:pointer;margin:0 4px;font-size:0.7em;">🎒 Убрать в пояс</button>';
         }
 
         // Продажа: ползунок и кнопки
