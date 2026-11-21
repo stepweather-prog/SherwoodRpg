@@ -467,8 +467,13 @@ function loadSavedSkin() {
         }
         
         document.body.appendChild(video);
-        
-        video.onended = function() {
+
+        let enterFinished = false;
+        const finishEnter = function() {
+            if (enterFinished) return;
+            enterFinished = true;
+            video.onended = video.onerror = null;
+            try { video.pause(); } catch (e) {}
             video.remove();
             currentScreen = 'home';
             updateTopBar();
@@ -477,16 +482,33 @@ function loadSavedSkin() {
             loadSavedSkin();
             console.log('🏠 Главная показана после видео');
         };
-        
+        let enterLoggedPlay = false;
+
+        video.onended = finishEnter;
+
         video.onerror = function() {
-            video.remove();
-            currentScreen = 'home';
-            updateTopBar();
-            initMainCarousel();
-            startMainMusic();
-            loadSavedSkin();
             console.log('⚠️ Видео не загрузилось, показана главная');
+            finishEnter();
         };
+
+        video.onplaying = function() { enterLoggedPlay = true; };
+
+        // Автоплей может быть отклонён политикой браузера или видео не грузится —
+        // тогда не оставляем чёрный экран: пропускаем ролик.
+        const enterPr = video.play();
+        if (enterPr && typeof enterPr.then === 'function') {
+            enterPr.then(function () { enterLoggedPlay = true; }).catch(function () {
+                console.log('⚠️ video.play() отклонён, пропускаю видео');
+                finishEnter();
+            });
+        }
+        // Страховка: если за 3с видео так и не начало играть — показываем главную
+        setTimeout(function () {
+            if (!enterLoggedPlay) {
+                console.log('⚠️ Видео не начало воспроизведение, пропускаю');
+                finishEnter();
+            }
+        }, 3000);
     });
 })();
 
@@ -511,16 +533,34 @@ function playExitVideo(onComplete) {
     }
     
     document.body.appendChild(video);
-    
-    video.onended = function() {
+
+    let exitFinished = false;
+    const finishExit = function() {
+        if (exitFinished) return;
+        exitFinished = true;
+        video.onended = video.onerror = null;
+        try { video.pause(); } catch (e) {}
         video.remove();
         if (onComplete) onComplete();
     };
-    
-    video.onerror = function() {
-        video.remove();
-        if (onComplete) onComplete();
-    };
+    let exitLoggedPlay = false;
+
+    video.onended = finishExit;
+
+    video.onerror = finishExit;
+
+    video.onplaying = function() { exitLoggedPlay = true; };
+
+    const exitPr = video.play();
+    if (exitPr && typeof exitPr.then === 'function') {
+        exitPr.then(function () { exitLoggedPlay = true; }).catch(finishExit);
+    }
+    setTimeout(function () {
+        if (!exitLoggedPlay) {
+            console.log('⚠️ Видео выхода не начало воспроизведение, пропускаю');
+            finishExit();
+        }
+    }, 3000);
 }
 
 // ============================================================
