@@ -40,7 +40,7 @@
         .skill-btn { cursor: pointer; border-radius: 8px; border: 3px solid rgba(200, 160, 80, 0.8); background: rgba(0, 0, 0, 0.6); padding: 3px; width: 85px; height: 85px; object-fit: contain; transition: all 0.2s; display: block; flex-shrink: 0; box-sizing: border-box; }
         .skill-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px #ffd700); }
         .skill-btn.on-cooldown { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-        .skill-wrap { position: relative; flex-shrink: 0; }
+        .skill-wrap { position: relative; flex-shrink: 0; width: 85px; height: 85px; }
         .skill-cd-fill { position: absolute; top: 0; left: 0; width: 100%; height: 0%; background: rgba(0,0,0,0.7); border-radius: 8px; pointer-events: none; z-index: 2; }
         #skills-row { display: none; flex-direction: row; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; }
         #blood-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; pointer-events: none; opacity: 0; background-position: center center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.1s ease-out; }
@@ -62,6 +62,7 @@
             #attack-icon { width: 70px; height: 70px; margin-bottom: 50px; }
             #attack-icon img { width: 70px; height: 70px; }
             .skill-btn { width: 70px; height: 70px; }
+            .skill-wrap { width: 70px; height: 70px; }
             #skills-row { gap: 10px; }
             #arrow-counter { transform: translateX(calc(-50% - 55px)); font-size: 13px !important; padding: 3px 10px !important; }
             #kill-counter { transform: translateX(calc(-50% + 55px)); font-size: 13px !important; padding: 3px 10px !important; }
@@ -693,6 +694,8 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                 document.getElementById('battle-controls').style.display = 'flex';
                 document.getElementById('attack-icon').style.display = 'block';
                 document.getElementById('skills-row').style.display = 'flex';
+                // В новом бою все скилы готовы
+                skillCdHits = {}; updateSkillCdFills();
 
             } else {
                 battleRoom.visible = false;
@@ -759,7 +762,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
                 if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
                 if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp); document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); bvFloat('-' + edmg, '#ffcc55', 'enemy'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
                 p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay(); bvFloat('-' + edmg, '#ff5544', 'hero'); bvFlash('hero-avatar', 'hurt');
-                if (p.stats.hp <= 0) { stopBattle(); showDeathVideoAndLose(); }
+                if (p.stats.hp <= 0) { stopBattle(); updateHeroSpheres(); try { window.Sherwood.BattleVisuals.hideAllWebmFx(); } catch(e){} showCenterText('ПОРАЖЕНИЕ...', '#ff4444'); setTimeout(showDeathVideoAndLose, 1200); }
             }, 1000);
         }
 
@@ -783,6 +786,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             pendingBattle = null; pendingLoot = null;
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; } document.getElementById('mob-hp').style.display = 'none';
             var eaHide2 = document.getElementById('enemy-avatar'); if (eaHide2) eaHide2.style.display = 'none';
+            try { window.Sherwood.BattleVisuals.hideAllWebmFx(); } catch(e) {}
             if (currentEnemyObj) {
                 spawnLootBag(currentEnemyObj.x, currentEnemyObj.y, currentEnemyObj.isBoss);
                 try { if (parent.Sherwood && parent.Sherwood.Bestiary && parent.Sherwood.Bestiary.registerKill) { var imgFile = currentEnemyObj.img.split('/').pop(); parent.Sherwood.Bestiary.registerKill(imgFile); } } catch(e) {}
@@ -793,7 +797,8 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             }
             currentEnemySprite = null; currentEnemyStats = null; currentEnemyObj = null;
             checkObjects();
-            setBattleCamera(false);
+            // Возврат к лабиринту с небольшой паузой, чтобы игрок увидел победу
+            setTimeout(function () { if (!isBattleActive) setBattleCamera(false); }, 900);
         }
 
         function bvFloat(text, color, target) { try { window.Sherwood.BattleVisuals.floatDamageText(text, color, target); } catch (e) {} }
@@ -841,6 +846,8 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             if (rageCharges > 0) { baseDmg = Math.floor(baseDmg * 1.2); rageCharges--; if (rageCharges <= 0) showCenterText('Ярость кончилась', '#888'); }
             var dmg = baseDmg; currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - dmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp;
             bvFloat('-' + dmg, '#ffcc55', 'enemy'); bvFlash('enemy-avatar', 'hit');
+            // Обычный удар снимает 1/3 отката с каждого скила
+            skillHitTick(); updateSkillCdFills();
             if (vampirismReady && vampirismBuff > 0 && p.talents && p.talents['vampirism'] > 0) { var vampPercent = Math.min(50, 5 + (p.talents['vampirism'] - 1) * 5) / 100; var heal = Math.floor(dmg * vampPercent); if (heal > 0) { p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); bvFloat('+' + heal, '#66ff66', 'hero'); bvWebm('vampirism', 'enemy-avatar'); updateHeroSpheres(); } }
             document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp);
             document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)';
@@ -861,7 +868,7 @@ sprite.position.set(x, scale / 2 + 0.1, z);
             if (p.talents) { if (p.talents['blocking']) edmg = Math.floor(edmg * (1 - 0.1 * p.talents['blocking'])); if (p.talents['numbness']) edmg = Math.floor(edmg * (1 - 0.08 * p.talents['numbness'])); }
             if (p.talents && p.talents['ricochet'] > 0) { if (Math.random() < 0.45) { currentEnemyStats.hp = Math.max(0, currentEnemyStats.hp - edmg); if (currentEnemyObj) currentEnemyObj.hp = currentEnemyStats.hp; document.getElementById('mob-hp-text').textContent = String(currentEnemyStats.hp); document.getElementById('mob-hp-fill').style.clipPath = 'inset(0 ' + (100 - (currentEnemyStats.hp / currentEnemyStats.maxHp * 100)) + '% 0 0)'; showCenterText('РИКОШЕТ!', '#a020f0'); bvFloat('-' + edmg, '#ffcc55', 'enemy'); if (currentEnemyStats.hp <= 0) { onEnemyKilled(); return; } return; } }
             p.stats.hp = Math.max(0, p.stats.hp - edmg); addFilth(FILTH_HIT_AMOUNT); if (parent.UI.updateDisplay) parent.UI.updateDisplay(); updateHeroSpheres(); showBloodOverlay(); bvFloat('-' + edmg, '#ff5544', 'hero'); bvFlash('hero-avatar', 'hurt');
-            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showDeathVideoAndLose(); }
+            if (p.stats.hp <= 0) { playSound(soundDefeat); stopBattle(); showCenterText('ПОРАЖЕНИЕ...', '#ff4444'); updateHeroSpheres(); try { window.Sherwood.BattleVisuals.hideAllWebmFx(); } catch(e){} setTimeout(showDeathVideoAndLose, 1200); }
         }
 
         function updateMobHpBar() {
@@ -1041,6 +1048,26 @@ sprite.position.set(x, scale / 2 + 0.1, z);
 
         var talentData = { 'stunning': { icon: 'assets/assets2/talents/stunning.png', name: 'Оглушение', cooldown: 20000 }, 'rage': { icon: 'assets/assets2/talents/Riot.png', name: 'Ярость', cooldown: 25000 }, 'healing': { icon: 'assets/assets2/talents/healing.png', name: 'Лечение', cooldown: 8000 } };
         var skillCooldowns = {};
+        // Кулдаун скилов по ударам: после применения нужно 3 обычных удара,
+        // затенение снимается по 1/3 после каждого удара
+        var SKILL_CD_HITS = 3;
+        var skillCdHits = {};
+        function skillHitTick() {
+            var changed = false;
+            for (var id in skillCdHits) { if (skillCdHits[id] > 0) { skillCdHits[id]--; changed = true; } }
+            if (changed) updateSkillCdFills();
+        }
+        function updateSkillCdFills() {
+            for (var id in talentData) {
+                var icon = document.querySelector('img[data-skill-id="' + id + '"]');
+                if (!icon) continue;
+                var hits = skillCdHits[id] || 0;
+                if (hits > 0) icon.classList.add('on-cooldown'); else icon.classList.remove('on-cooldown');
+                var wrap = icon.parentNode;
+                var fill = (wrap && wrap.classList && wrap.classList.contains('skill-wrap')) ? wrap.querySelector('.skill-cd-fill') : null;
+                if (fill) fill.style.height = Math.round(Math.max(0, Math.min(1, hits / SKILL_CD_HITS)) * 100) + '%';
+            }
+        }
         
         function renderLearnedTalents() {
             var row = document.getElementById('skills-row'); if (!row) return;
@@ -1063,18 +1090,19 @@ sprite.position.set(x, scale / 2 + 0.1, z);
         setTimeout(renderLearnedTalents, 500);
 
         function useSkill(skillId) {
-            if (!isBattleActive || !currentEnemyStats) return; if (skillCooldowns[skillId] && Date.now() < skillCooldowns[skillId]) return;
-            var p = parent.Sherwood.getPlayer(); if (!p) return; 
+            if (!isBattleActive || !currentEnemyStats) return; if (skillCdHits[skillId] > 0) return;
+var p = parent.Sherwood.getPlayer(); if (!p) return; 
             
             var lvl = 0;
             try { if (parent.Sherwood && parent.Sherwood.Talents && parent.Sherwood.Talents.getTalentLevel) lvl = parent.Sherwood.Talents.getTalentLevel(skillId); } catch(e) {}
             if (!lvl && p.talents && p.talents[skillId]) lvl = p.talents[skillId];
             if (lvl <= 0) { showCenterText('Скилл не изучен!', '#ff5555'); return; }
             
-            if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 20000; }
-            else if (skillId === 'rage') { if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; } rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCooldowns[skillId] = Date.now() + 25000; }
-            else if (skillId === 'healing') { if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; } var heal = 10 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); bvFloat('+' + heal, '#66ff66', 'hero'); bvWebm('healing', 'hero-avatar'); updateHeroSpheres(); playSound(soundAltar); skillCooldowns[skillId] = Date.now() + 8000; }
-            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); var cd = talentData[skillId].cooldown || 10000; var wrap = icon.parentNode; var fill = (wrap && wrap.classList && wrap.classList.contains('skill-wrap')) ? wrap.querySelector('.skill-cd-fill') : null; if (fill) { var rafLoop = function () { var rem = skillCooldowns[skillId] ? skillCooldowns[skillId] - Date.now() : 0; if (rem <= 0) { fill.style.height = '0%'; icon.classList.remove('on-cooldown'); return; } fill.style.top = '0'; fill.style.height = Math.max(0, Math.min(100, rem / cd * 100)) + '%'; requestAnimationFrame(rafLoop); }; requestAnimationFrame(rafLoop); } else { setTimeout(function() { icon.classList.remove('on-cooldown'); }, cd); } }
+            if (skillId === 'stunning') { if (!spendFilth(20)) { showCenterText('Мало скверны!', '#ff5555'); return; } enemyStunned = 10; showCenterText('ОГЛУШЕНИЕ!', '#ffd700'); playSound(soundAltar); skillCdHits[skillId] = SKILL_CD_HITS; }
+            else if (skillId === 'rage') { if (!spendFilth(65)) { showCenterText('Мало скверны!', '#ff5555'); return; } rageCharges = 3; showCenterText('ЯРОСТЬ!', '#ff4400'); playSound(soundHit); skillCdHits[skillId] = SKILL_CD_HITS; }
+            else if (skillId === 'healing') { if (!spendFilth(5 * lvl)) { showCenterText('Мало скверны!', '#ff5555'); return; } var heal = 10 * lvl; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal); showCenterText('+' + heal + ' HP', '#4caf50'); bvFloat('+' + heal, '#66ff66', 'hero'); bvWebm('healing', 'hero-avatar'); updateHeroSpheres(); playSound(soundAltar); skillCdHits[skillId] = SKILL_CD_HITS; }
+            updateSkillCdFills(); }
+            var icon = document.querySelector('img[data-skill-id="' + skillId + '"]'); if (icon) { icon.classList.add('on-cooldown'); }
         }
 
         // Тень кулдауна на кнопке удара: тёмный слой на кнопке плавно уходит снизу вверх
