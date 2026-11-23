@@ -130,7 +130,8 @@
 <!-- 7. РОУТЕР (ДОБАВЬ ЕГО В КОНЦЕ) -->
 <script src="js/sherwood/router.js"></script>
 <script>
-    if ('serviceWorker' in navigator) {
+    // SW не регистрируется из file:// (в EXE-версии игры кеш не нужен)
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('service-worker.js')
                 .then(function(reg) {
