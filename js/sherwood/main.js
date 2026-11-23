@@ -1,0 +1,630 @@
+// ============================================================
+//  js/main.js — ПОЛНАЯ ВЕРСИЯ
+// ============================================================
+
+// ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
+const loadingScreen = document.getElementById('loadingScreen');
+const homeScreen = document.getElementById('homeScreen');
+const playButton = document.getElementById('playButton');
+const hero = document.getElementById('hero');
+const menuScreen = document.getElementById('menuScreen');
+const gameZone = document.getElementById('gameZone');
+
+let currentScreen = 'loading';
+
+// ---------- ДАННЫЕ ИГРОКА ----------
+const PlayerStats = {
+    exp: 100,
+    damage: 150,
+    armor: 150,
+    hp: 150,
+    gold: 150,
+    silver: 150,
+    level: 1,
+    skillPoints: 3,
+    stats: {
+        strength: 5,
+        armor: 3,
+        health: 5
+    },
+    skills: {
+        heal: false,
+        fireball: false,
+        shield: false
+    }
+};
+
+// ---------- МУЗЫКА ----------
+const musicPlaylist = [
+        'assets/assets2/music/city_theme1.ogg',
+        'assets/assets2/music/main_theme_3.ogg',
+        'assets/assets2/music/main_theme_2.ogg',
+        'assets/assets2/music/main_theme_6.ogg'
+];
+let currentMusicIndex = 0;
+let isMusicPlaying = false;
+let audioPlayer = null;
+
+function playNextMusic() {
+    if (window.AudioManager) {
+        AudioManager.playCityTheme();
+    }
+}
+
+function startMainMusic() {
+    isMusicPlaying = true;
+    if (window.AudioManager) {
+        AudioManager.playCityTheme();
+    }
+}
+
+function stopMainMusic() {
+    isMusicPlaying = false;
+    if (window.AudioManager) {
+        AudioManager.stopCityTheme();
+    }
+}
+
+// Жёсткая остановка — используется подземкой
+window.killMenuMusic = function() {
+    try {
+        isMusicPlaying = false;
+        if (audioPlayer) {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioPlayer.src = '';
+        }
+        // На всякий случай — вдруг ещё где-то играет
+        document.querySelectorAll('audio').forEach(function(a){
+            try { a.pause(); a.currentTime = 0; } catch(e){}
+        });
+    } catch(e){}
+};
+
+window.audioPlayerRef = function() { return audioPlayer; };
+window.isMusicPlayingRef = function() { return isMusicPlaying; };
+
+// ---------- СОХРАНЕНИЕ ----------
+function saveGameData() {
+    try {
+        const data = { player: PlayerStats, timestamp: Date.now() };
+        localStorage.setItem('sherwood_save', JSON.stringify(data));
+        console.log('💾 Игра сохранена');
+    } catch(e) {
+        console.error('❌ Ошибка сохранения:', e);
+    }
+}
+
+function loadGameData() {
+    try {
+        const raw = localStorage.getItem('sherwood_save');
+        if (raw) {
+            const data = JSON.parse(raw);
+            if (data.player) {
+                Object.assign(PlayerStats, data.player);
+                console.log('📂 Загружено сохранение');
+                updateTopBar();
+                return true;
+            }
+        }
+    } catch(e) {
+        console.error('❌ Ошибка загрузки:', e);
+    }
+    return false;
+}
+
+// ---------- ОБНОВЛЕНИЕ HUD ----------
+function updateTopBar() {
+    // СИНХРОНИЗАЦИЯ С SHERWOOD ПЕРЕД ОБНОВЛЕНИЕМ
+    if (typeof Sherwood !== 'undefined' && Sherwood.getPlayer) {
+        var sp = Sherwood.getPlayer();
+        if (sp) {
+            PlayerStats.exp = sp.exp || 0;
+            PlayerStats.gold = (sp.resources && sp.resources.gold) || 0;
+            PlayerStats.silver = (sp.resources && sp.resources.silver) || 0;
+            PlayerStats.level = sp.level || 1;
+            PlayerStats.damage = (sp.stats && sp.stats.attack) || 0;
+            PlayerStats.armor = (sp.stats && sp.stats.defense) || 0;
+            PlayerStats.hp = (sp.stats && sp.stats.hp) || 0;
+            
+        }
+    }
+
+    const ids = ['expVal', 'dmgVal', 'armorVal', 'hpVal', 'goldVal', 'silverVal', 'levelVal'];
+    const values = [
+        PlayerStats.exp,
+        PlayerStats.damage,
+        PlayerStats.armor,
+        PlayerStats.hp,
+        PlayerStats.gold,
+        PlayerStats.silver,
+        PlayerStats.level
+    ];
+    ids.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = values[i];
+    });
+
+    const levelEl = document.getElementById('hero-level');
+    if (levelEl) levelEl.textContent = PlayerStats.level;
+}
+// ---------- КАРУСЕЛЬ ----------
+let currentSectionIndex = 0;
+const sections = [
+    { name: 'Профиль',  icon: 'player_profile.png' },
+    { name: 'Лагерь',   icon: 'sherwood_camp.png' },
+    { name: 'Настройки', icon: 'settings.png' }
+];
+
+function initMainCarousel() {
+    const woodSign = document.getElementById('sectionName');
+    const sectionIcon = document.getElementById('sectionIcon');
+    const leftArrow = document.getElementById('carouselLeftArrow');
+    const rightArrow = document.getElementById('carouselRightArrow');
+
+    if (!woodSign || !sectionIcon) return;
+
+    if (leftArrow) leftArrow.onclick = (e) => { e.stopPropagation(); prevSection(); };
+    if (rightArrow) rightArrow.onclick = (e) => { e.stopPropagation(); nextSection(); };
+    if (hero) hero.onclick = () => cycleSkin();
+
+    if (gameZone) {
+        let touchStartX = 0;
+        gameZone.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        gameZone.addEventListener('touchend', (e) => {
+            const delta = e.changedTouches[0].clientX - touchStartX;
+            if (delta < -50) nextSection();
+            else if (delta > 50) prevSection();
+        });
+    }
+    updateSectionDisplay();
+}
+
+function updateSectionDisplay() {
+    const woodSign = document.getElementById('sectionName');
+    const sectionIcon = document.getElementById('sectionIcon');
+    if (!woodSign || !sectionIcon) return;
+    const section = sections[currentSectionIndex];
+    woodSign.textContent = section.name;
+    sectionIcon.src = `assets/assets2/icons/${section.icon}`;
+}
+
+function nextSection() {
+    currentSectionIndex = (currentSectionIndex + 1) % sections.length;
+    updateSectionDisplay();
+}
+
+function prevSection() {
+    currentSectionIndex = (currentSectionIndex - 1 + sections.length) % sections.length;
+    updateSectionDisplay();
+}
+
+// ============================================================
+//  СКРЫТИЕ / ПОКАЗ ЭЛЕМЕНТОВ ГЛАВНОГО ЭКРАНА
+// ============================================================
+
+function hideHomeElements() {
+    const ids = [
+        'arch', 'hero', 'sectionIcon', 'sectionName',
+        'carouselLeftArrow', 'carouselRightArrow',
+        'topBar', 'substrate'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.setProperty('display', 'none', 'important');
+        }
+    });
+}
+
+function showHomeElements() {
+    const ids = [
+        'arch', 'hero', 'sectionIcon', 'sectionName',
+        'carouselLeftArrow', 'carouselRightArrow',
+        'topBar', 'substrate'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (id === 'sectionName') {
+                el.style.setProperty('display', 'flex', 'important');
+            } else if (el.tagName === 'IMG') {
+                el.style.setProperty('display', 'block', 'important');
+            } else {
+                el.style.setProperty('display', '', 'important');
+            }
+        }
+    });
+}
+
+// ============================================================
+//  ВХОД В РАЗДЕЛ
+// ============================================================
+function enterSection() {
+    const section = sections[currentSectionIndex];
+    if (!section) return;
+    console.log(`🚪 Вход в раздел: ${section.name}`);
+
+    hideHomeElements();
+    
+    menuScreen.style.display = 'block';
+
+    const layer = document.getElementById('ui-screen-layer');
+    if (layer) {
+        layer.style.display = 'block';
+    }
+
+    switch(section.name) {
+        case 'Профиль':
+            UI.profile();
+            break;
+        case 'Лагерь':
+            UI.camp();
+            break;
+        case 'Настройки':
+            UI.settings();
+            break;
+        default:
+            showGenericScreen(section.name, '📌');
+    }
+}
+
+// ---------- ВОЗВРАТ НА ГЛАВНУЮ ----------
+function showHomeScreen() {
+    const layer = document.getElementById('ui-screen-layer');
+    if (layer) {
+        layer.style.display = 'none';
+        layer.innerHTML = '';
+    }
+    
+    if (gameZone) {
+        gameZone.style.display = 'block';
+    }
+    
+    showHomeElements();
+    
+    if (homeScreen) {
+        homeScreen.style.display = 'flex';
+    }
+    if (menuScreen) {
+        menuScreen.style.display = 'none';
+    }
+    
+    currentScreen = 'home';
+    updateTopBar();
+    initMainCarousel();
+    if (!isMusicPlaying) startMainMusic();
+    console.log('🏠 Возврат на главную');
+}
+
+// ---------- ЗАКРЫТИЕ ВСЕХ ЭКРАНОВ ----------
+function closeAllScreens() {
+    const ids = [
+        'quests-screen', 'tavern-screen', 'dungeon-screen',
+        'portals-screen', 'raid-screen', 'bestiary-screen',
+        'profile-screen', 'settings-screen', 'daily-screen',
+        'talents-screen', 'generic-screen', 'section-screen',
+        'battle-overlay', 'portal-battle-overlay', 'raid-battle-overlay',
+        'combat-overlay', 'dungeon2d5-container'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (id === 'dungeon2d5-container') {
+                el.style.display = 'none';
+            } else {
+                el.remove();
+            }
+        }
+    });
+}
+
+// ---------- УНИВЕРСАЛЬНЫЙ ЭКРАН-ЗАГЛУШКА ----------
+function showGenericScreen(title, icon) {
+    closeAllScreens();
+    const screenHTML = `
+    <div id="generic-screen" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:300;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,0,0,0.5);">
+            <button onclick="closeGenericScreen()" style="background:transparent;border:none;cursor:pointer;width:60px;height:60px;">
+                <img src="assets/assets2/icons/back.png" style="width:100%;height:100%;object-fit:contain;">
+            </button>
+            <span style="color:#e0c080;font-size:1.2em;">${title}</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:monospace;padding:20px;">
+            <div style="font-size:64px;margin-bottom:20px;">${icon}</div>
+            <div style="font-size:24px;color:#ffa500;">${title}</div>
+            <div style="color:#888;font-size:14px;margin-top:10px;">В разработке</div>
+            <button onclick="closeGenericScreen()" class="btn" style="margin-top:20px;padding:10px 30px;">Назад</button>
+        </div>
+    </div>`;
+    gameZone.insertAdjacentHTML('beforeend', screenHTML);
+}
+
+function closeGenericScreen() {
+    const screen = document.getElementById('generic-screen');
+    if (screen) screen.remove();
+    showHomeScreen();
+}
+
+// ---------- СМЕНА СКИНА (ВСЕ 62) ----------
+function cycleSkin() {
+        const skins = [
+        'skin1_01.png',
+        'skin9_01.png',
+        'skin8_01.png',
+        'skin4_01.png',
+        'skin16_03.png',
+        'bonus_skin_sec.png'
+    ];
+
+    const heroEl = document.getElementById('hero');
+    if (!heroEl) return;
+
+    const currentSrc = heroEl.src;
+    const currentSkin = currentSrc.split('/').pop();
+
+    let currentIndex = skins.indexOf(currentSkin);
+    if (currentIndex === -1) currentIndex = 0;
+
+    const nextIndex = (currentIndex + 1) % skins.length;
+    const nextSkin = skins[nextIndex];
+
+    heroEl.src = 'assets/hero_skins/' + nextSkin;
+    console.log('🎭 Скин изменён:', nextSkin);
+
+    try {
+        localStorage.setItem('active_skin', nextSkin);
+    } catch(e) {}
+}
+
+function loadSavedSkin() {
+    const heroEl = document.getElementById('hero');
+    if (!heroEl) return;
+
+    try {
+        const savedSkin = localStorage.getItem('active_skin');
+        if (savedSkin) {
+            heroEl.src = 'assets/hero_skins/' + savedSkin;
+            console.log('🎭 Загружен скин:', savedSkin);
+        }
+    } catch(e) {}
+}
+
+// ---------- КЛИКИ ----------
+(function setupClicks() {
+    setTimeout(function() {
+        console.log('🔧 Настройка кликов...');
+
+        const sectionIcon = document.getElementById('sectionIcon');
+        if (sectionIcon) {
+            sectionIcon.style.cursor = 'pointer';
+            sectionIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🖱️ Клик по иконке раздела!');
+                enterSection();
+            });
+            console.log('✅ Иконка раздела: вход');
+        }
+
+        const sectionName = document.getElementById('sectionName');
+        if (sectionName) {
+            sectionName.style.cursor = 'pointer';
+            sectionName.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🖱️ Клик по названию раздела!');
+                enterSection();
+            });
+            console.log('✅ Название раздела: вход');
+        }
+
+        const heroEl = document.getElementById('hero');
+        if (heroEl) {
+            heroEl.style.cursor = 'pointer';
+            heroEl.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🖱️ Клик по герою → смена скина!');
+                cycleSkin();
+            });
+            console.log('✅ Герой: смена скина');
+        }
+
+        console.log('🔧 Клики настроены!');
+    }, 1000);
+})();
+
+// ---------- ЗАПУСК ----------
+(function createPlayButton() {
+    const gameZone = document.getElementById('gameZone');
+    const loadingScreen = document.getElementById('loadingScreen');
+    
+    if (!gameZone || !loadingScreen) return;
+    
+    const btn = document.createElement('button');
+    btn.id = 'playButton';
+    btn.textContent = 'ВОЙТИ';
+    btn.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:60px;background:#c9a040;border:none;border-radius:10px;color:#000;font-weight:bold;font-size:1.2em;cursor:pointer;z-index:2001;font-family:Georgia,serif;letter-spacing:2px;box-shadow:0 4px 15px rgba(0,0,0,0.5);';
+    
+    loadingScreen.appendChild(btn);
+    
+    btn.addEventListener('click', function() {
+        btn.style.display = 'none';
+        loadingScreen.style.display = 'none';
+        
+        const video = document.createElement('video');
+        video.src = 'assets/assets2/animation/LoadingSherwoodRpg.webm';
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        
+        let videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+        
+        if (window.innerWidth < 480) {
+            video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
+        } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
+            video.style.cssText = videoStyles + 'width:480px;height:100vh;';
+        } else {
+            video.style.cssText = videoStyles + 'width:480px;height:800px;';
+        }
+        
+        document.body.appendChild(video);
+
+        let enterFinished = false;
+        const finishEnter = function() {
+            if (enterFinished) return;
+            enterFinished = true;
+            video.onended = video.onerror = null;
+            try { video.pause(); } catch (e) {}
+            video.remove();
+            currentScreen = 'home';
+            updateTopBar();
+            initMainCarousel();
+            startMainMusic();
+            loadSavedSkin();
+            console.log('🏠 Главная показана после видео');
+        };
+        let enterLoggedPlay = false;
+
+        video.onended = finishEnter;
+
+        video.onerror = function() {
+            console.log('⚠️ Видео не загрузилось, показана главная');
+            finishEnter();
+        };
+
+        video.onplaying = function() { enterLoggedPlay = true; };
+
+        // Автоплей может быть отклонён политикой браузера или видео не грузится —
+        // тогда не оставляем чёрный экран: пропускаем ролик.
+        const enterPr = video.play();
+        if (enterPr && typeof enterPr.then === 'function') {
+            enterPr.then(function () { enterLoggedPlay = true; }).catch(function () {
+                console.log('⚠️ video.play() отклонён, пропускаю видео');
+                finishEnter();
+            });
+        }
+        // Страховка: если за 3с видео так и не начало играть — показываем главную
+        setTimeout(function () {
+            if (!enterLoggedPlay) {
+                console.log('⚠️ Видео не начало воспроизведение, пропускаю');
+                finishEnter();
+            }
+        }, 3000);
+    });
+})();
+
+// ============================================================
+//  ВИДЕО ПРИ ВЫХОДЕ
+// ============================================================
+function playExitVideo(onComplete) {
+    const video = document.createElement('video');
+    video.src = 'assets/assets2/animation/exit_game.webm';
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    
+    let videoStyles = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:fill;z-index:3000;background:#000;';
+    
+    if (window.innerWidth < 480) {
+        video.style.cssText = videoStyles + 'width:100vw;height:100vh;';
+    } else if (window.innerWidth >= 480 && window.innerHeight <= 800) {
+        video.style.cssText = videoStyles + 'width:480px;height:100vh;';
+    } else {
+        video.style.cssText = videoStyles + 'width:480px;height:800px;';
+    }
+    
+    document.body.appendChild(video);
+
+    let exitFinished = false;
+    const finishExit = function() {
+        if (exitFinished) return;
+        exitFinished = true;
+        video.onended = video.onerror = null;
+        try { video.pause(); } catch (e) {}
+        video.remove();
+        if (onComplete) onComplete();
+    };
+    let exitLoggedPlay = false;
+
+    video.onended = finishExit;
+
+    video.onerror = finishExit;
+
+    video.onplaying = function() { exitLoggedPlay = true; };
+
+    const exitPr = video.play();
+    if (exitPr && typeof exitPr.then === 'function') {
+        exitPr.then(function () { exitLoggedPlay = true; }).catch(finishExit);
+    }
+    setTimeout(function () {
+        if (!exitLoggedPlay) {
+            console.log('⚠️ Видео выхода не начало воспроизведение, пропускаю');
+            finishExit();
+        }
+    }, 3000);
+}
+
+// ============================================================
+//  ИНИЦИАЛИЗАЦИЯ МОДУЛЕЙ
+// ============================================================
+
+function initGameModules() {
+    if (typeof UI !== 'undefined' && UI.init) {
+        UI.init();
+        console.log('✅ UI инициализирован');
+    }
+    
+    if (typeof Settings !== 'undefined' && Settings.init) {
+        Settings.init();
+        console.log('✅ Settings инициализирован');
+    }
+    
+    if (typeof Sherwood !== 'undefined') {
+        const modules = [
+            'Quests', 'Tavern', 'Portal', 'Raid', 'Bestiary',
+            'Dungeon','Forge', 'BlackMarket',
+            'Bag', 'Wallet', 'Training', 'Hearth', 'Combat'
+        ];
+        modules.forEach(name => {
+            if (Sherwood[name] && typeof Sherwood[name].init === 'function') {
+                try {
+                    Sherwood[name].init();
+                    console.log(name + ' инициализирован');
+                } catch(e) {
+                    console.warn('Ошибка в ' + name + ':', e);
+                }
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        initGameModules();
+    }, 100);
+});
+
+// ============================================================
+//  ЭКСПОРТ
+// ============================================================
+
+window.PlayerStats = PlayerStats;
+window.updateTopBar = updateTopBar;
+window.showHomeScreen = showHomeScreen;
+window.enterSection = enterSection;
+window.closeAllScreens = closeAllScreens;
+window.showGenericScreen = showGenericScreen;
+window.closeGenericScreen = closeGenericScreen;
+window.cycleSkin = cycleSkin;
+window.loadSavedSkin = loadSavedSkin;
+window.saveGameData = saveGameData;
+window.loadGameData = loadGameData;
+window.startMainMusic = startMainMusic;
+window.stopMainMusic = stopMainMusic;
+window.hideHomeElements = hideHomeElements;
+window.showHomeElements = showHomeElements;
+window.initGameModules = initGameModules;
+window.playExitVideo = playExitVideo;
+
+console.log('🌳 Sherwood RPG загружена!');
+console.log(`📊 Уровень: ${PlayerStats.level}, HP: ${PlayerStats.hp}`);
+console.log('💾 Сохранение:', localStorage.getItem('sherwood_save') ? 'есть' : 'нет');
